@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
@@ -12,10 +13,17 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class AuthorizeParser
 {
+    // Each owner's import list retains its identity through syntax copies without adding public metadata.
+    static readonly ConditionalWeakTable<IReadOnlyList<FileImportSyntax>, object> _refusedOwners = [];
+
     static readonly LogicalConditionDiagnostics _diagnostics = new(
         DiagnosticCodes.UnexpectedTokenInAuthorize,
         DiagnosticCodes.UnclosedAuthorizeGroup,
         "authorize");
+
+    internal static void RecordOwnerRefusal(IReadOnlyList<FileImportSyntax> imports) => _refusedOwners.GetOrCreateValue(imports);
+
+    internal static bool OwnerWasRefused(IReadOnlyList<FileImportSyntax> imports) => _refusedOwners.TryGetValue(imports, out _);
 
     /// <summary>
     /// Parses an <c>authorize</c> declaration from its already consumed first line.

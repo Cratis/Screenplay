@@ -70,6 +70,28 @@ public class when_combining_authorization_depth
     }
 
     [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void should_not_restore_a_refused_gate_from_an_additional_file(bool feature, bool singleLine)
+    {
+        var compiler = new ScreenplayCompiler();
+        var prefix = feature ? "module Area\n  feature Portal\n" : "module Portal\n";
+        var indent = feature ? "    " : "  ";
+        var refused = singleLine
+            ? indent + "authorize " + string.Join(" and ", Enumerable.Repeat("Access", 129))
+            : string.Join('\n', Enumerable.Repeat(indent + "authorize Access", 129));
+        var result = PlayFolderMerge.Merge([
+            compiler.Parse(prefix + refused, "a.play"),
+            compiler.Parse(prefix + indent + "authorize Access", "b.play")]);
+        var module = result.Value!.Modules.First();
+        (feature ? module.Features.First().Authorize : module.Authorize).ShouldBeNull();
+        var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0860");
+        diagnostic.Location.Path.ShouldEqual("a.play");
+    }
+
+    [Theory]
     [InlineData(1)]
     [InlineData(2)]
     public void should_bound_gates_merged_from_additional_files(int count)

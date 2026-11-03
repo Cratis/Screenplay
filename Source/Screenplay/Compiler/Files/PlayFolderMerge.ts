@@ -9,12 +9,11 @@ import { LineReader } from '../Parsing/LineReader';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
-import { combineAuthorize } from '../Parsing/AuthorizeParser';
+import { authorizationWasRefused, combineAuthorize } from '../Parsing/AuthorizeParser';
 import { CompilationResult } from '../ScreenplayCompiler';
-import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
+import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
-import { toSyntaxJson } from '../Syntax/SyntaxJson';
 import { invalidSourceOptions, isAuthoredDocument, legacySourceOptions, SourceOptions, validatedSourceOptions } from '../Syntax/SourceOptions';
 import { InvalidSyntaxJson } from '../Syntax/InvalidSyntaxJson';
 
@@ -128,7 +127,9 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
             description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
-            authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
+            authorize: parts.some(part => authorizationWasRefused(part.fileImports))
+                ? null
+                : combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
             dependsOn: groupDependencies(parts),
         }, parts, diagnostics);
         return mergeStructuralInteractions({ ...owner, features: mergeFeatures(parts.flatMap(part => part.features), diagnostics) }, [owner]);
@@ -146,7 +147,9 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
             description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
-            authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
+            authorize: parts.some(part => authorizationWasRefused(part.fileImports))
+                ? null
+                : combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
             dependsOn: groupDependencies(parts),
         }, parts, diagnostics);
         return mergeStructuralInteractions({ ...owner,
@@ -178,7 +181,7 @@ function combineAuthorization(declarations: readonly (AuthorizeSyntax | null)[],
     const kept: AuthorizeSyntax[] = [];
     for (const authorization of declarations.filter(declaration => declaration !== null)) {
         const first = kept.find(earlier => earlier.location.path !== authorization.location.path
-            && JSON.stringify(toSyntaxJson(earlier)) === JSON.stringify(toSyntaxJson(authorization)));
+            && sameRequirement(earlier.requirement, authorization.requirement));
         if (first !== undefined) {
             diagnostics.push(warning(DiagnosticCodes.DuplicateAuthorizationAcrossFiles,
                 `An identical authorization is already declared on the ${owner} in '${describe(first.location.path)}' - this repeated gate is ignored`, authorization.location));
@@ -194,6 +197,22 @@ function combineAuthorization(declarations: readonly (AuthorizeSyntax | null)[],
     }
     diagnostics.push(...context.diagnostics);
     return combined;
+}
+
+function sameRequirement(first: PolicyRequirementSyntax, second: PolicyRequirementSyntax): boolean {
+    const pending = [{ first, second }];
+    while (pending.length > 0) {
+        const pair = pending.pop()!;
+        if (pair.first.kind === 'PolicyReferenceSyntax' && pair.second.kind === 'PolicyReferenceSyntax') {
+            if (pair.first.name !== pair.second.name) return false;
+        } else if (pair.first.kind === 'LogicalPolicyRequirementSyntax' && pair.second.kind === 'LogicalPolicyRequirementSyntax') {
+            if (pair.first.operator !== pair.second.operator) return false;
+            pending.push({ first: pair.first.left, second: pair.second.left }, { first: pair.first.right, second: pair.second.right });
+        } else {
+            return false;
+        }
+    }
+    return true;
 }
 
 function firstOfEach<T>(items: readonly T[], key: (item: T) => string): T[] {

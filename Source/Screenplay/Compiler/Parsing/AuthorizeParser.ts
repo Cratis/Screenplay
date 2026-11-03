@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax, LogicalOperator, PolicyRequirementSyntax } from '../Syntax/Authorization';
+import { FileImportSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
 import { ConditionDepthBudget } from './ConditionDepthBudget';
@@ -12,6 +13,13 @@ import { locationOf, SourceLine } from './SourceLine';
 const continuationPattern = pattern('^(?:(?:or|and)\\s+)?[A-Za-z_(][\\w\\s()]*$');
 const tokenPattern = new RegExp(pattern('\\(|\\)|[A-Za-z_]\\w*').source, 'gu');
 const namePattern = pattern('^[A-Z]\\w*$');
+
+// Each owner's import list retains its identity through syntax copies without adding public metadata.
+const refusedOwners = new WeakSet<readonly FileImportSyntax[]>();
+
+export function recordAuthorizationRefusal(imports: readonly FileImportSyntax[]): void { refusedOwners.add(imports); }
+
+export function authorizationWasRefused(imports: readonly FileImportSyntax[]): boolean { return refusedOwners.has(imports); }
 
 // The port of the C# AuthorizeParser: the requirement may continue on the lines below the 'authorize', and
 // two operands written side by side are joined by an implicit 'and'.

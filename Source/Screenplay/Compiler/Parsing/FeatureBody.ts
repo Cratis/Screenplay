@@ -8,7 +8,7 @@ import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ScreenToolbarSyntax } from '../Syntax/Screens';
 import { pattern } from '../Text/patterns';
-import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
+import { combineAuthorize, parseAuthorize, recordAuthorizationRefusal } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
 import { PurposeReferenceSyntax } from '../Syntax/Purposes';
 import { parsePurposeReference } from './PurposeParser';
@@ -70,12 +70,18 @@ export class FeatureBody {
                 parsePurposeReference(context, line, this.#purposes);
                 return true;
             case 'authorize': {
+                const diagnosticCount = context.diagnostics.length;
                 const next = parseAuthorize(context, line);
+                if (next === null && context.diagnostics.slice(diagnosticCount).some(diagnostic => diagnostic.code === DiagnosticCodes.ConditionDepthExceeded)) {
+                    this.#authorize = null;
+                    this.#authorizationDepthExceeded = true;
+                }
                 if (!this.#authorizationDepthExceeded) {
                     const previous = this.#authorize;
                     this.#authorize = combineAuthorize(this.#authorize, next, context);
                     this.#authorizationDepthExceeded = previous !== null && this.#authorize === null;
                 }
+                if (this.#authorizationDepthExceeded) recordAuthorizationRefusal(this.#fileImports);
                 return true;
             }
             case 'import':
