@@ -10,7 +10,7 @@ public class with_an_unknown_producer_key : given.a_structured_specification
 {
     CompilationResult<ApplicationSyntax> _result;
 
-    void Because() => _result = Compiler.Compile(Source.Replace("lines = lines", "lines = [{\"unknown\":\"A-1\"}]", StringComparison.Ordinal));
+    void Because() => _result = Compiler.Compile(Source.Replace("lines = lines", "lines\n            item\n              unknown = \"A-1\"", StringComparison.Ordinal));
 
     [Fact] void should_check_the_target_event_shape() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownStructuredValueMember).ShouldBeTrue();
 }

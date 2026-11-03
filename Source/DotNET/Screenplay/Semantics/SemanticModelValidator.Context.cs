@@ -78,6 +78,7 @@ internal static partial class SemanticModelValidator
 
             ValidateBoundary(ValidateEventSources);
             ValidateBoundary(ValidateTriggers);
+            ValidateBoundary(() => ValidateLifecycles(application));
             foreach (var slice in AllSlices(application))
             {
                 ValidateOwner(slice.Id, () => ValidateSlice(slice));

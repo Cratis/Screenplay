@@ -171,11 +171,11 @@ public class when_authoring_operations : given.a_compiler
     }
 
     [Theory]
-    [InlineData("{}", false)]
-    [InlineData("{\"recipient\":\"Ada\"}", true)]
+    [InlineData(" empty", false)]
+    [InlineData("\n            recipient = \"Ada\"", true)]
     void should_require_complete_known_composite_production_inputs(string value, bool success)
     {
-        var result = _compiler.Compile("type Contact\n  recipient String\n" + Prefix + "      operation Send\n        uses Mailer\n        contact Contact\n      command C\n        produces Send\n          contact = " + value);
+        var result = _compiler.Compile("type Contact\n  recipient String\n" + Prefix + "      operation Send\n        uses Mailer\n        contact Contact\n      command C\n        produces Send\n          contact" + value);
         result.Success.ShouldEqual(success);
     }
 

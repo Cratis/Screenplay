@@ -40,7 +40,10 @@ public class with_deferral_across_given_and_when : for_SemanticModelBinder.given
                   orderId = "00000000-0000-0000-0000-000000000001"
                 then readmodel OrderView
                   orderId = "00000000-0000-0000-0000-000000000001"
-                  lines = [{"lineNumber":1,"amount":10}]
+                  lines
+                    item
+                      lineNumber = 1
+                      amount = 10
         """;
 
     SemanticExecutionPlan _plan;

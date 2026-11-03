@@ -108,6 +108,16 @@ public record ApplicationSyntax(
     public IEnumerable<SystemSyntax> Systems { get; init; } = [];
 
     /// <summary>
+    /// Gets the state machines the document declares: where a subject is in its lifecycle, derived from the read model they follow.
+    /// </summary>
+    public IEnumerable<StateMachineSyntax> StateMachines { get; init; } = [];
+
+    /// <summary>
+    /// Gets the workflows the document declares: durable graphs of actions, decisions, waits and approvals that run once per subject.
+    /// </summary>
+    public IEnumerable<WorkflowSyntax> Workflows { get; init; } = [];
+
+    /// <summary>
     /// Gets the report-only processing purposes declared in the application.
     /// </summary>
     public IEnumerable<PurposeSyntax> Purposes { get; init; } = [];

@@ -11,6 +11,7 @@ import { parseModeledMappingSource as parseMappingSource } from './ExpressionPar
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
+import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 const headerPattern = new RegExp(`^seed(?:\\s+"(${stringBodyPattern})")?$`, 'u');
 const forPattern = new RegExp(`^for\\s+"(${stringBodyPattern})"$`, 'u');
@@ -51,7 +52,9 @@ export function parseSeed(context: ParserContext, header: SourceLine): SeedSynta
             for (let property = context.peekChild(event.indent); property !== undefined; property = context.peekChild(event.indent)) {
                 context.reader.takeSignificant();
                 const mapped = mappingPattern.exec(property.content);
+                const structured = mapped === null ? tryParseStructuredMapping(context, property) : undefined;
                 if (mapped !== null) properties.push({ kind: 'PropertyMappingSyntax', property: mapped[1], source: parseMappingSource(mapped[2], locationOf(property), context), location: locationOf(property) });
+                else if (structured !== undefined) properties.push(structured);
                 else context.error(DiagnosticCodes.InvalidSeedPropertyAssignment, `Invalid property assignment '${property.content}' - expected '<property> = <value>'`, locationOf(property));
             }
             events.push({ kind: 'SeedEventSyntax', event: event.content, properties, location: locationOf(event) });

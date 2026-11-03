@@ -15,7 +15,7 @@ import { bmpWordCharacters } from './bmp-word-characters';
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'runs', 'time']);
+const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'runs', 'time', 'statemachine', 'workflow']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',

@@ -157,6 +157,47 @@ static class ContractAdmission
                   shipmentId = "11111111-1111-4111-8111-111111111111"
         """;
 
+    internal const string Lifecycles = """
+        module M
+          feature F
+            slice StateChange S
+              command Place
+                orderId String identifier
+                produces Placed
+                  for orderId
+                  orderId = orderId
+              event Placed
+                orderId String
+              command Pay
+                orderId String identifier
+                produces Paid
+                  for orderId
+              event Paid
+            slice StateView V
+              readmodel Order
+                orderId String key
+                status String
+              projection Build => Order
+                no automap
+                from Placed
+                  status = "placed"
+                from Paid
+                  status = "paid"
+        statemachine Lifecycle
+          follows Order
+          state Placed initial
+            on Paid -> Done
+          state Done final
+        """;
+
+    internal const string Workflows = Lifecycles + "\n" + """
+        workflow Process
+          for Order
+          trigger on Placed
+            -> Charge
+          action Charge sends Pay
+        """;
+
     internal const string AnonymousPolicies = """
         policy Anyone
           require anonymous
@@ -234,6 +275,8 @@ static class ContractAdmission
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
         new("sticky", "persona Person\nsticky note on personas\n  description \"A note\"\n  position 10 20\n", Baseline: "persona Person\n"),
         new("system", "system External\n"),
+        new("statemachine", Lifecycles),
+        new("workflow", Workflows),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
         new("theme", "theme Theme\n  compatible with Cratis.Components\n"),
         new("sample", Slice + ReadModel + "sample data Demo\n  shape View\n    row\n      value = \"test\"\n"),

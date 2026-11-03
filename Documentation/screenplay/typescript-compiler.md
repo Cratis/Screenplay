@@ -116,6 +116,7 @@ The compiler reads what an event model is made of:
 - the domain, imports, concepts and types
 - application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only)
 - systems, operations and their phase/specification intent (syntax-only)
+- [state machines](statemachines.md) and [workflows](workflows.md), with the specifications written inside them (syntax shared with C# ESM v36 admission). The TypeScript compiler reads and validates their structure (`PLAY0834`, `PLAY0843` and the parse-time checks); the cross-reference checks (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`) and the run of their specifications are C# only
 - generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
 - modules, features (nested too) and slices
 - fenced Markdown documentation on modules, features, slices, commands, read models and reactions, and quoted or fenced-text specification descriptions (report-only authoring metadata)

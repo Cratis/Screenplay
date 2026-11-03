@@ -31,14 +31,14 @@ public class when_matching_removal_levels : for_McpConnection.given.a_connection
                   specification ChildRemoved
                     when append LineRemoved
                     then readmodel InvoiceDetails
-                      items = []
+                      items none
                   specification WrongLevel
                     when append OtherLineRemoved
                     then no readmodel InvoiceDetails for "invoice"
                   specification RootStillPresent
                     when append InvoiceRemoved
                     then readmodel InvoiceDetails
-                      items = []
+                      items none
                 slice StateView Variants
                   event Activated
                   event Archived

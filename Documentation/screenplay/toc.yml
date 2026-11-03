@@ -25,6 +25,8 @@
   href: purposes.md
 - name: Types
   href: types.md
+- name: Structured values
+  href: structured-values.md
 - name: Policies
   href: policies.md
 - name: Personas
@@ -55,6 +57,10 @@
   href: commands.md
 - name: Operations and external systems
   href: operations.md
+- name: State machines
+  href: statemachines.md
+- name: Workflows
+  href: workflows.md
 - name: Queries
   href: queries.md
 - name: Read models

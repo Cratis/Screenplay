@@ -31,7 +31,7 @@ public class and_response_values_use_semantic_equality : given.a_v6_scenario
     [InlineData(true)]
     void should_compare_composite_members_by_identity_and_array_elements_in_order(bool reversedArray)
     {
-        Compile("type Detail\n  label String\n  tags String[]\nmodule Billing\n  feature F\n    slice StateChange S\n      command C\n        detail Detail\n        returns detail\n      specification Accepted\n        when C\n          detail = {\"label\":\"hello\",\"tags\":[\"a\",\"b\"]}\n        then returns {\"label\":\"hello\",\"tags\":[\"a\",\"b\"]}");
+        Compile("type Detail\n  label String\n  tags String[]\nmodule Billing\n  feature F\n    slice StateChange S\n      command C\n        detail Detail\n        returns detail\n      specification Accepted\n        when C\n          detail\n            label = \"hello\"\n            tags\n              item \"a\"\n              item \"b\"\n        then returns value\n          label = \"hello\"\n          tags\n            item \"a\"\n            item \"b\"");
         Run("Accepted").Passed.ShouldBeTrue();
         var scalar = (SemanticScalarSpecificationResponse)_plan.Specifications.Values.Single().ThenReturns!;
         var composite = (SemanticCompositeValue)scalar.Value;

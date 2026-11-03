@@ -9,7 +9,7 @@ public class and_editing_a_value_beside_existing_debt : given.a_workspace_with_a
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith(Source.Replace("\"part\":\"old\"", "\"missing\":\"old\"", StringComparison.Ordinal));
+    void Establish() => CreateWith(Source.Replace("part = \"old\"", "missing = \"old\"", StringComparison.Ordinal));
 
     void Because()
     {
@@ -20,6 +20,6 @@ public class and_editing_a_value_beside_existing_debt : given.a_workspace_with_a
     }
 
     [Fact] void should_retain_the_proven_unchanged_debt_under_safe() => _result.Accepted.ShouldBeTrue();
-    [Fact] void should_write_the_edited_value() => Text(_result).ShouldContain("{\"id\":\"second\",\"detail\":{\"missing\":\"old\"}}");
+    [Fact] void should_write_the_edited_value() => Text(_result).ShouldContain(Key("second", "missing"));
     [Fact] void should_report_the_retained_debt() => AbsenceDebt(_result).Single().ShouldContain("'missing'");
 }

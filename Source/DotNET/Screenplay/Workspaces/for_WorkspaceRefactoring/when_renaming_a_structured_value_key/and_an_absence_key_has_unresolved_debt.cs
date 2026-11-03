@@ -9,7 +9,7 @@ public class and_an_absence_key_has_unresolved_debt : given.a_workspace_with_an_
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith(Source.Replace("\"part\":\"old\"", "\"segment\":\"old\"", StringComparison.Ordinal));
+    void Establish() => CreateWith(Source.Replace("part = \"old\"", "segment = \"old\"", StringComparison.Ordinal));
 
     void Because() => _result = Workspace.ProposeRename(Rename<PropertySyntax>("part", "segment"));
 

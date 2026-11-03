@@ -36,6 +36,10 @@ describe('when authoring operations', () => {
         [declaration + '      specification T\n        when C\n        then compensated Send\n          ignored = 1\n', 'PLAY0502'],
         [declaration + '      reaction R\n        when Recorded\n          produces Send\n', 'PLAY0499'],
     ])('should reject invalid intent %s', (body, code) => expect(parse(prefix + body).diagnostics.map(diagnostic => diagnostic.code)).toContain(code));
+    it('should refuse an unexpected line in an operation and skip its block', () => {
+        const result = parse(prefix + '      operation Send\n        uses Mailer\n        bogus here\n          nested\n');
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0496');
+    });
     it('should not drain phase siblings', () => {
         const result = parse(prefix + declaration + '        extra String optional\n' + command);
         expect(result.success).toBe(true);
@@ -109,16 +113,16 @@ describe('when authoring operations', () => {
     ])('should diagnose malformed and statically incompatible authoring %s', (source, code) => {
         expect(parse(source).diagnostics.map(diagnostic => diagnostic.code)).toContain(code);
     });
-    it.each(['{}', '{"recipient":"Ada"}'])('should require complete composite production inputs for %s', value => {
-        const result = parse('type Contact\n  recipient String\n' + prefix + '      operation Send\n        uses Mailer\n        contact Contact\n      command C\n        produces Send\n          contact = ' + value);
-        expect(result.success).toBe(value !== '{}');
+    it.each([' empty', '\n            recipient = "Ada"'])('should require complete composite production inputs for %j', value => {
+        const result = parse('type Contact\n  recipient String\n' + prefix + '      operation Send\n        uses Mailer\n        contact Contact\n      command C\n        produces Send\n          contact' + value);
+        expect(result.success).toBe(value !== ' empty');
     });
     it('should retain collection, optional, nominal and quoted enum shape checks without guessing imports', () => {
         const declarations = 'concept Channel : Enum\n  email\nconcept Name : String\ntype Contact\n  name Name\nimport External.Payload\n';
         const operation = '      operation Send\n        uses Mailer\n        channels Channel[]\n        contacts Contact[]\n        extra Payload\n        note String optional\n';
-        const input = '      command C\n        contacts Contact[]\n        produces Send\n          channels = ["email"]\n          contacts = contacts\n          extra.unknown = "not inferred"\n          extra = "unavailable shape"\n          note = null\n';
+        const input = '      command C\n        contacts Contact[]\n        produces Send\n          channels\n            item "email"\n          contacts = contacts\n          extra.unknown = "not inferred"\n          extra = "unavailable shape"\n          note = null\n';
         expect(parse(declarations + prefix + operation + input).diagnostics).toEqual([]);
-        expect(parse(declarations + prefix + operation + input.replace('["email"]', '["unknown"]')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0501');
+        expect(parse(declarations + prefix + operation + input.replace('item "email"', 'item "unknown"')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0501');
     });
     it('should accept complete nested composite paths and preserve optional parent types', () => {
         const types = 'type Contact\n  name String\n  note String optional\n';
@@ -204,10 +208,10 @@ describe('when authoring operations', () => {
         expect(parse(read).diagnostics).toEqual([]);
     });
     it('should validate required collection literals and recursive composites without claiming completeness', () => {
-        const source = 'type Contact\n  name String\n' + prefix + '      operation Send\n        uses Mailer\n        contacts Contact[]\n      command C\n        produces Send\n          contacts = [{"name":"Ada"}]\n';
+        const source = 'type Contact\n  name String\n' + prefix + '      operation Send\n        uses Mailer\n        contacts Contact[]\n      command C\n        produces Send\n          contacts\n            item\n              name = "Ada"\n';
         expect(parse(source).diagnostics).toEqual([]);
-        expect(parse(source.replace('[{"name":"Ada"}]', '[{}]')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0501');
-        const recursive = 'type Contact\n  next Contact\n' + prefix + '      operation Send\n        uses Mailer\n        contact Contact\n      command C\n        produces Send\n          contact.next = {}';
+        expect(parse(source.replace('            item\n              name = "Ada"\n', '            item empty\n')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0501');
+        const recursive = 'type Contact\n  next Contact\n' + prefix + '      operation Send\n        uses Mailer\n        contact Contact\n      command C\n        produces Send\n          contact.next empty';
         expect(parse(recursive).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0501');
     });
     it('should reject operation ambiguity before computing event defaults or reaction consequences', () => {

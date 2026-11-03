@@ -59,6 +59,8 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["specification"] = ("SpecificationDecl", "specifications.md"),
             ["sticky"] = ("StickyNoteDecl", "personas.md"),
             ["system"] = ("SystemDecl", "grammar.md"),
+            ["statemachine"] = ("StateMachineDecl", "statemachines.md"),
+            ["workflow"] = ("WorkflowDecl", "workflows.md"),
             ["template"] = ("TemplateRef", "templates.md"),
             ["toolbar"] = ("ToolbarDecl", "screens.md"),
             ["theme"] = ("ThemeDecl", "theme.md"),

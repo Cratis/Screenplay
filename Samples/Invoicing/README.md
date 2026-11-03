@@ -20,6 +20,12 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 Child records such as `InvoiceLineItem` are top-level `type` declarations referenced by read-model members. They are value shapes, not other read-model identities; a slice-local `type` is skipped with Warning `PLAY0029`, and referencing an unsupported member type produces Error `PLAY0273`. Use the [top-level composite pattern](../../Documentation/screenplay/types.md#read-model-child-shapes), including for collections populated by a children projection. This guidance does not change the showcase's executable admission.
 
+## State machines and workflows
+
+`InvoiceLifecycle` is a `statemachine` that follows `InvoiceDetailsReadModel`: Draft, Sent, Overdue, Paid and Cancelled. A state allows the targets of the transitions written under it, the first matching transition wins, and `InvoiceMarkedOverdue` moves a sent invoice on only when its guard `status == "overdue"` holds over the read model; a draft that is reported overdue is ignored, not refused. Entering Overdue sends `ApplyLateFee` and starts `CollectOverdue`.
+
+`CollectOverdue` is the `workflow` that entering Overdue sets off, one run at a time per invoice. It uses every node kind: three triggers (a state, a daily schedule and a manual start), an action with `attempts`, `timeout` and `retry after`, a wait for time, a decision, a `foreach` over the invoice lines with a `join`, a wait for `InvoicePaid` that expires, and an approval by the finance controller whose rejection offers a payment plan. The `specification` blocks written inside both constructs pin the transitions and the runs. They are ESM v36 (decision 0124); like the rest of the showcase, whole-model executable binding stops at the unrelated refusals, so the lifecycle specifications of the compiler pin the same constructs executably. The single-branch `join` reports information `PLAY0850` on purpose: it shows the shape of a fan-out join.
+
 ## Atomic reaction batches
 
 The root declares `reaction batches atomic` for all imported and local reactions. Direct productions from one trigger occurrence and each selected refusal branch form independent all-or-none batches (ESM v22); commands remain separate transactions. Omission preserves legacy per-fact behavior, not the default recommended for new models. The showcase still contains other constructs outside executable admission.
@@ -122,6 +128,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
+| Component properties holding a list of objects and an empty list as indented [structured values](../../Documentation/screenplay/structured-values.md) | InvoiceList (`invoiceGrid` `columns`, `rowActions none`) |
 | `policy` with `require` (`authenticated`, `anonymous`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
 | Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |

@@ -213,6 +213,8 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Policies, WritePolicy);
         WriteSection(writer, application.Personas ?? [], WritePersona);
         WriteSection(writer, application.StickyNotes, WriteStickyNote);
+        WriteSection(writer, application.StateMachines, WriteStateMachine);
+        WriteSection(writer, application.Workflows, WriteWorkflow);
     }
 
     void WriteApplicationExperience(ScreenplayWriter writer, ApplicationSyntax application)

@@ -43,10 +43,10 @@ public class when_executing_capture_boundaries : Specification
     {
         foreach (var (record, field) in new[]
         {
-            ("payload = {\"name\":\"present\"}", "payload"),
-            ("payload = [{\"name\":\"present\"}]", "payload"),
-            ("payload = []", "payload"),
-            ("payload = {\"name\":\"present\"}", "payload.name")
+            ("payload\n  name = \"present\"", "payload"),
+            ("payload\n  item\n    name = \"present\"", "payload"),
+            ("payload none", "payload"),
+            ("payload\n  name = \"present\"", "payload.name")
         })
         {
             foreach (var run in Runs(Capture(record, "String optional", field)))
@@ -90,7 +90,8 @@ public class when_executing_capture_boundaries : Specification
                       specification PresentRecord
                         given capture Records
                           id = "root"
-                          contact = {"name":"before"}
+                          contact
+                            name = "before"
                         when capture Records
                           id = "root"
                           {{contact}}
@@ -127,10 +128,14 @@ public class when_executing_capture_boundaries : Specification
                       specification PresentRecord
                         given capture Records
                           id = "root"
-                          items = [{"id":1}]
+                          items
+                            item
+                              id = 1
                         when capture Records
                           id = "root"
-                          items = [{"id":1}]
+                          items
+                            item
+                              id = 1
                         then Seen
                 """);
             var module = model.Application.Modules.Single();
@@ -185,7 +190,7 @@ public class when_executing_capture_boundaries : Specification
                 given clock "{{clock}}"
                 when capture Records
                   id = "root"
-                  {{record}}
+                  {{record.Replace("\n", "\n          ", StringComparison.Ordinal)}}
                 then Recorded
                   value = "{{(type.StartsWith("DateTime", StringComparison.Ordinal) ? "2026-10-02T12:00:00Z" : "expected")}}"
         """);
