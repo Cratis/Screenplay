@@ -63,7 +63,7 @@ internal static partial class ReadModelParser
                     directiveLocations["passive"] = line.Location;
                 }
             }
-            else if (LineText.FirstWord(line.Content) == "passive" && line.Content["passive".Length..].Trim() is "true" or "false")
+            else if (LineText.FirstWord(line.Content) == "passive" && IsBooleanLiteral(line.Content["passive".Length..].Trim()))
             {
                 context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
             }
@@ -93,6 +93,9 @@ internal static partial class ReadModelParser
 
         return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, IsPassive = passive, DirectiveLocations = directiveLocations };
     }
+
+    static bool IsBooleanLiteral(string value) =>
+        string.Equals(value, "true", StringComparison.Ordinal) || string.Equals(value, "false", StringComparison.Ordinal);
 
     [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
