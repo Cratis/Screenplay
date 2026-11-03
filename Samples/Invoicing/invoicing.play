@@ -3779,6 +3779,71 @@ module Invoicing
           sentAt  = "2026-09-01T09:00:00Z"
           channel = "sent"
 
+  // Reserve invoice numbers with private decision state, not another list or query.
+  form ReserveInvoiceNumberForm for ReserveInvoiceNumber
+    field invoiceId label "Invoice"
+    field invoiceNumber label "Invoice number"
+
+  feature InvoiceReservations
+    authorize IsInvoicingStaff
+
+    contribute to Navigation
+      navigate to ReserveInvoiceNumberScreen
+      label "Reserve an invoice number"
+      order 20
+      group "Billing"
+      destination dialog CommandDialog
+
+    slice StateChange ReserveInvoiceNumber
+      command ReserveInvoiceNumber
+        invoiceId InvoiceId identifier
+        invoiceNumber InvoiceNumber
+        reads InvoiceReservationState as reservation by invoiceId
+        validate
+          require reservation.isReserved == false
+        produces InvoiceNumberReserved
+          for invoiceId
+          invoiceNumber = invoiceNumber
+
+      event InvoiceNumberReserved
+        invoiceNumber InvoiceNumber
+
+      event InvoiceNumberReservationReleased
+
+      // Replayed for the command, with no query or screen data surface.
+      readmodel InvoiceReservationState
+        passive
+        invoiceId InvoiceId key
+        isReserved Bool
+
+      projection InvoiceReservations => InvoiceReservationState
+        from InvoiceNumberReserved
+          invoiceId = $eventSourceId
+          isReserved = true
+        remove with InvoiceNumberReservationReleased
+
+      screen ReserveInvoiceNumberScreen
+        template CommandDialog
+          body
+            title "Reserve an invoice number"
+          actions
+            action ReserveInvoiceNumber
+              label "Reserve"
+
+      specification ReservingAnInvoiceNumber
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given readmodel InvoiceReservationState
+          invoiceId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isReserved = false
+        when ReserveInvoiceNumber
+          invoiceId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          invoiceNumber = "INV-2026-001"
+        then InvoiceNumberReserved
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          invoiceNumber = "INV-2026-001"
+
 // ============================================================
 // A public module - no sign-in needed
 // ============================================================
