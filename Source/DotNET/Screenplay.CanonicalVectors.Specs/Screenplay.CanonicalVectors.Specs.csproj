@@ -190,5 +190,9 @@
                           Link="Golden/unbound-handler-context-v1.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.unbound-handler-context-v1.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/unbound-handler-context-v3.json"
+                          Link="Golden/unbound-handler-context-v3.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.unbound-handler-context-v3.json" />
     </ItemGroup>
 </Project>

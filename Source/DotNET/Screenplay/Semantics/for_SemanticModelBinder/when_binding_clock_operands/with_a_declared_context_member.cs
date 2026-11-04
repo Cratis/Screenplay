@@ -43,9 +43,14 @@ public class with_a_declared_context_member : given.a_clock_binder
         _undeclared = BindClock(Source("        calendar from $context.shopZone\n", Context));
         _withoutDeclarations = BindClock(Source("        calendar from $context.billingZone\n"));
         _empty = BindClock(Source(string.Empty, "context\n"));
+        _sidecar = GoldenBytes();
+    }
+
+    internal static byte[] GoldenBytes()
+    {
         const string source = when_describing_an_unbound_handler.Source;
-        var handler = BindClock(Context + source.Replace("        handler", "        calendar from $context.billingZone\n        handler", StringComparison.Ordinal));
-        _sidecar = SemanticTypedContextSerializer.Serialize(handler.TypedContextDescriptors);
+        var handler = new with_a_declared_context_member().BindClock(Context + source.Replace("        handler", "        calendar from $context.billingZone\n        handler", StringComparison.Ordinal));
+        return SemanticTypedContextSerializer.Serialize(handler.TypedContextDescriptors);
     }
 
     [Fact] void should_bind_the_declared_member() => Command(_declared.Value!).Calendar.ShouldEqual(new SemanticCommandCalendar(null, "billingZone"));
@@ -63,4 +68,13 @@ public class with_a_declared_context_member : given.a_clock_binder
             diagnostic.Message.EndsWith("the only trusted member is '$context.timeZone'.", StringComparison.Ordinal));
 
     [Fact] void should_write_the_revision_three_sidecar() => Encoding.UTF8.GetString(_sidecar).ShouldEqual(Encoding.UTF8.GetString(_expectedSidecar));
+
+    [Fact]
+    void should_pin_the_packaged_revision_three_vector()
+    {
+        using var stream = typeof(with_a_declared_context_member).Assembly.GetManifestResourceStream("Cratis.Screenplay.Semantics.Serialization.Golden.unbound-handler-context-v3.json")!;
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        buffer.ToArray().ShouldEqual(_sidecar);
+    }
 }

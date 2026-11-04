@@ -7,6 +7,7 @@ public class when_loading_the_packaged_context_vectors : Specification
 {
     [Fact] void should_package_the_bound_context_vector() => AssertPackaged("typed-contexts-v1.json");
     [Fact] void should_package_the_unbound_handler_vector() => AssertPackaged("unbound-handler-context-v1.json");
+    [Fact] void should_package_the_declared_context_member_vector() => AssertPackaged("unbound-handler-context-v3.json");
 
     static void AssertPackaged(string name)
     {
