@@ -37,9 +37,9 @@ internal static partial class MisplacedRuleHint
     static string? Predicate(string content)
     {
         var match = MisplacedRuleRegex().Match(content);
-        return match.Success ? match.Groups[1].Value : null;
+        return match.Success && ValidationRuleParser.IsDeclarativePredicate(match.Groups[1].Value) ? match.Groups[1].Value : null;
     }
 
-    [GeneratedRegex(@"^rule\s+((?:not\s+empty|(?:not\s+contains|contains|starts\s+with|ends\s+with|matches|length|decimals|all|max|min)\s+\S.*|(?:>=|<=|==|!=|>|<)\s*\S.*))$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^rule\s+(\S.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex MisplacedRuleRegex();
 }

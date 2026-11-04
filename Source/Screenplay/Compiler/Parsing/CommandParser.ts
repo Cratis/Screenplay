@@ -238,9 +238,17 @@ function parseValidationFile(context: ParserContext, header: SourceLine, body: S
 function hasValidationOperand(line: SourceLine): boolean {
     const match = rulePattern.exec(line.content);
     if (match === null) return false;
-    const rule = match[2];
+    return startsWithRuleOperand(match[2]);
+}
+
+function startsWithRuleOperand(rule: string): boolean {
     return (firstWord(rule) === 'not' && firstWord(rule.substring('not'.length).trimStart()) === 'empty') ||
         firstWord(rule) === 'checksum' || operandPattern.test(rule);
+}
+
+/** Recognizes a declarative predicate, with any message or severity suffix; a named 'rule <Name>' is not one. */
+export function isDeclarativePredicate(rule: string): boolean {
+    return startsWithRuleOperand(rule) && firstWord(rule) !== 'rule';
 }
 
 function isValidationFileBody(context: ParserContext, header: SourceLine, body: SourceLine): boolean {
