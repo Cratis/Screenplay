@@ -82,163 +82,235 @@ const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation'
 export function parseApplication(context: ParserContext, lines: readonly SourceLine[], placement: PlayPlacement = documentPlacement): ApplicationSyntax {
     context.deferIdentityValidation = true;
     warnOnTabIndentation(context, lines);
-    const moduleBody = placement.length === 1 ? new ModuleBody(placement[0]) : undefined;
-    const featureBody = placement.length > 1 ? new FeatureBody(placement[placement.length - 1]) : undefined;
-    const placedBody = moduleBody ?? featureBody;
-    let identity: IdentitySyntax | null = null;
-    let applicationContext: ApplicationContextSyntax | null = null;
-    let reactionProductionMode: ReactionProductionMode | null = null;
-    let sawReactionBatches = false;
-    let commandReadMode: CommandReadMode | null = null;
-    let timeZone: TimeZoneSyntax | null = null;
-    let sawTimeZone = false;
-    let sawCommandReads = false;
-    let domain: DomainSyntax | null = null;
-    const imports: ImportSyntax[] = [];
-    const fileImports: FileImportSyntax[] = [];
-    const concepts: ConceptSyntax[] = [];
-    const types: TypeSyntax[] = [];
-    const systems: SystemSyntax[] = [];
-    const stateMachines: StateMachineSyntax[] = [];
-    const workflows: WorkflowSyntax[] = [];
-    const eventSources: EventSourceSyntax[] = [];
-    const modules: ModuleSyntax[] = [];
-    const personas: PersonaSyntax[] = [];
-    const stickyNotes: StickyNoteSyntax[] = [];
-    const policies: PolicySyntax[] = [];
-    const purposes: PurposeSyntax[] = [];
-    const seeds: SeedSyntax[] = [];
-    const examples: SpecificationExampleSyntax[] = [];
-    const declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][] = [];
-    const exposures: ExposureSyntax[] = [];
-    const instanceContributions: InstanceContributionsSyntax[] = [];
-    let sawOtherConstruct = false;
+    const state = createRootState(placement);
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
-        const keyword = firstWord(line.content);
-        if (keyword === 'command' && /^command\s+reads(?:\s|$)/.test(line.content)) {
-            if (sawCommandReads || !isDocumentPlacement(placement) || !/^command\s+reads\s+protected$/.test(line.content)) {
-                context.error(DiagnosticCodes.InvalidCommandReadsDeclaration, "Declare 'command reads protected' once at the application root.", locationOf(line));
-            } else {
-                commandReadMode = CommandReadMode.Protected;
-            }
-            sawCommandReads = true;
-            continue;
-        }
-        if (keyword === 'time' && /^time\s+zone(?:\s|$)/.test(line.content)) {
-            const match = timeZonePattern.exec(line.content);
-            context.skipBlock(line.indent);
-            if (sawTimeZone || !isDocumentPlacement(placement) || match === null) {
-                context.error(DiagnosticCodes.InvalidTimeZoneDeclaration, "Declare 'time zone \"<id>\"' or 'time zone configurable default \"<id>\"' once at the application root.", locationOf(line));
-            } else {
-                timeZone = { kind: 'TimeZoneSyntax', id: unescapeString(match[2]), configurable: match[1] !== undefined, location: locationOf(line) };
-            }
-            sawTimeZone = true;
-            continue;
-        }
-        if (keyword === 'reaction') {
-            if (sawReactionBatches || !isDocumentPlacement(placement) || !/^reaction\s+batches\s+atomic$/.test(line.content)) {
-                context.error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", locationOf(line));
-            } else {
-                reactionProductionMode = ReactionProductionMode.Atomic;
-            }
-            sawReactionBatches = true;
-            continue;
-        }
-        if (keyword === 'runs') {
-            misplacedReactionIdentity(context, line);
-            continue;
-        }
-        if (keyword === 'domain') {
-            context.authoredDeclarations = true;
-            domain = parseDomain(context, line, domain, sawOtherConstruct);
-            continue;
-        }
-        // The C# parser asks whether anything was declared before the domain, so an import it rejected,
-        // a file import and an unknown construct do not count.
-        sawOtherConstruct ||= declaresConstruct(keyword, line, placement);
-        context.authoredDeclarations ||= keyword !== 'import' && declaresConstruct(keyword, line, placement);
-        if (keyword === 'import' && isFileImport(line.content)) {
-            // A top level import belongs to whatever the document's top level is - the application, or the
-            // module or feature the document was itself imported into.
-            if (placedBody !== undefined) {
-                placedBody.tryParse(context, line);
-            } else {
-                parseFileImport(context, line, fileImports);
-            }
-        } else if (keyword === 'import') {
-            const match = importPattern.exec(line.content);
-            if (match === null) {
-                context.error(DiagnosticCodes.InvalidImportDeclaration, `Invalid import '${line.content}' - expected 'import <Qualified.Name> [from "<origin>"]'`, locationOf(line));
-            } else {
-                const origin = match.groups?.origin === undefined ? null : unescapeString(match.groups.origin);
-                if (origin !== null && isBlankPublicEventOrigin(origin)) {
-                    context.error(DiagnosticCodes.InvalidImportDeclaration, 'An import origin must be a nonblank quoted string', locationOf(line));
-                }
-                imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], origin, visibility: origin === null ? EventVisibility.Private : EventVisibility.Public, location: locationOf(line) });
-            }
-        } else if (keyword === 'example') {
-            if (placedBody !== undefined) placedBody.tryParse(context, line);
-            else examples.push(parseExample(context, line));
-        } else if (keyword === 'eventsource') {
-            eventSources.push(parseEventSource(context, line));
-        } else if (keyword === 'system') {
-            systems.push(parseSystem(context, line));
-        } else if (keyword === 'statemachine') {
-            stateMachines.push(parseStateMachine(context, line));
-        } else if (keyword === 'workflow') {
-            workflows.push(parseWorkflow(context, line));
-        } else if (keyword === 'concept') {
-            concepts.push(parseConcept(context, line));
-        } else if (keyword === 'type') {
-            types.push(parseType(context, line));
-        } else if (keyword === 'module' && !isDocumentPlacement(placement)) {
-            parseModuleInPlacedFile(context, line, placement, moduleBody);
-        } else if (keyword === 'module') {
-            modules.push(parseModule(context, line));
-        } else if (keyword === 'persona') {
-            personas.push(parsePersona(context, line));
-        } else if (keyword === 'sticky') {
-            const stickyNote = parseStickyNote(context, line);
-            if (stickyNote !== null) stickyNotes.push(stickyNote);
-        } else if (keyword === 'seed') {
-            seeds.push(parseSeed(context.valueContext, line));
-        } else if (keyword === 'purpose' && placedBody !== undefined) {
-            placedBody.tryParse(context, line);
-        } else if (keyword === 'purpose') {
-            purposes.push(parsePurpose(context, line));
-        } else if (keyword === 'context') {
-            applicationContext = parseApplicationContext(context, line, applicationContext, placement);
-        } else if (keyword === 'identity') {
-            identity = parseIdentity(context, line, identity);
-        } else if (keyword === 'policy') {
-            const policy = parsePolicy(context, line);
-            if (policies.some(previous => previous.name === policy.name)) {
-                context.error(DiagnosticCodes.DuplicateDeclaration, `Duplicate declaration of policy '${policy.name}' - policy names must be unique`, policy.location);
-            }
-            policies.push(policy);
-        } else if (keyword === 'exposure') {
-            exposures.push(parseExposure(context, line));
-        } else if (keyword === 'instance') {
-            instanceContributions.push(parseInstance(context, line));
-        } else if (keyword === 'trigger') {
-            const data = parseTriggerDeclaration(context, line);
-            const name = /^trigger\s+([A-Za-z_]\w*)$/.exec(line.content)?.[1];
-            if (name !== undefined) declaredTriggers.push({ name, data });
-        } else if (opaqueTopLevel.has(keyword)) {
-            if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
-            else if (keyword === 'ui') parseUiProfile(context, line);
-            else context.skipOpaqueBlock(line.indent);
-        } else if (placedBody?.tryParse(context, line) !== true) {
-            reportUnexpectedTopLevel(context, line, placement);
-        }
+        dispatchRoot(context, line, state);
     }
+    return buildApplication(context, state);
+}
+
+// What the root loop gathers while it reads the lines of a document.
+interface RootState {
+    readonly placement: PlayPlacement;
+    readonly moduleBody: ModuleBody | undefined;
+    readonly featureBody: FeatureBody | undefined;
+    readonly placedBody: ModuleBody | FeatureBody | undefined;
+    identity: IdentitySyntax | null;
+    applicationContext: ApplicationContextSyntax | null;
+    reactionProductionMode: ReactionProductionMode | null;
+    sawReactionBatches: boolean;
+    commandReadMode: CommandReadMode | null;
+    timeZone: TimeZoneSyntax | null;
+    sawTimeZone: boolean;
+    sawCommandReads: boolean;
+    domain: DomainSyntax | null;
+    sawOtherConstruct: boolean;
+    readonly imports: ImportSyntax[];
+    readonly fileImports: FileImportSyntax[];
+    readonly concepts: ConceptSyntax[];
+    readonly types: TypeSyntax[];
+    readonly systems: SystemSyntax[];
+    readonly stateMachines: StateMachineSyntax[];
+    readonly workflows: WorkflowSyntax[];
+    readonly eventSources: EventSourceSyntax[];
+    readonly modules: ModuleSyntax[];
+    readonly personas: PersonaSyntax[];
+    readonly stickyNotes: StickyNoteSyntax[];
+    readonly policies: PolicySyntax[];
+    readonly purposes: PurposeSyntax[];
+    readonly seeds: SeedSyntax[];
+    readonly examples: SpecificationExampleSyntax[];
+    readonly declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][];
+    readonly exposures: ExposureSyntax[];
+    readonly instanceContributions: InstanceContributionsSyntax[];
+}
+
+interface RootRule {
+    readonly matches: (keyword: string, line: SourceLine, state: RootState) => boolean;
+    readonly parse: (context: ParserContext, line: SourceLine, state: RootState) => void;
+}
+
+function createRootState(placement: PlayPlacement): RootState {
+    const moduleBody = placement.length === 1 ? new ModuleBody(placement[0]) : undefined;
+    const featureBody = placement.length > 1 ? new FeatureBody(placement[placement.length - 1]) : undefined;
+    return {
+        placement, moduleBody, featureBody, placedBody: moduleBody ?? featureBody,
+        identity: null, applicationContext: null, reactionProductionMode: null, sawReactionBatches: false, commandReadMode: null,
+        timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
+        imports: [], fileImports: [], concepts: [], types: [], systems: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
+        personas: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: []
+    };
+}
+
+const isKeyword = (name: string) => (keyword: string): boolean => keyword === name;
+
+// The directives that open a document, tried before the bookkeeping that counts a construct as declared.
+const preambleRules: readonly RootRule[] = [
+    { matches: (keyword, line) => keyword === 'command' && /^command\s+reads(?:\s|$)/.test(line.content), parse: parseRootCommandReads },
+    { matches: (keyword, line) => keyword === 'time' && /^time\s+zone(?:\s|$)/.test(line.content), parse: parseRootTimeZone },
+    { matches: isKeyword('reaction'), parse: parseRootReactionBatches },
+    { matches: isKeyword('runs'), parse: (context, line) => { misplacedReactionIdentity(context, line); } },
+    { matches: isKeyword('domain'), parse: parseRootDomain }
+];
+
+// The rest of the root constructs in the order they are tried; a line none of them takes goes to the placed body, then to the unexpected top level report.
+const bodyRules: readonly RootRule[] = [
+    { matches: (keyword, line) => keyword === 'import' && isFileImport(line.content), parse: parseRootFileImport },
+    { matches: isKeyword('import'), parse: parseRootImport },
+    { matches: isKeyword('example'), parse: parseRootExample },
+    { matches: isKeyword('eventsource'), parse: (context, line, state) => { state.eventSources.push(parseEventSource(context, line)); } },
+    { matches: isKeyword('system'), parse: (context, line, state) => { state.systems.push(parseSystem(context, line)); } },
+    { matches: isKeyword('statemachine'), parse: (context, line, state) => { state.stateMachines.push(parseStateMachine(context, line)); } },
+    { matches: isKeyword('workflow'), parse: (context, line, state) => { state.workflows.push(parseWorkflow(context, line)); } },
+    { matches: isKeyword('concept'), parse: (context, line, state) => { state.concepts.push(parseConcept(context, line)); } },
+    { matches: isKeyword('type'), parse: (context, line, state) => { state.types.push(parseType(context, line)); } },
+    { matches: (keyword, _, state) => keyword === 'module' && !isDocumentPlacement(state.placement), parse: (context, line, state) => parseModuleInPlacedFile(context, line, state.placement, state.moduleBody) },
+    { matches: isKeyword('module'), parse: (context, line, state) => { state.modules.push(parseModule(context, line)); } },
+    { matches: isKeyword('persona'), parse: (context, line, state) => { state.personas.push(parsePersona(context, line)); } },
+    { matches: isKeyword('sticky'), parse: parseRootStickyNote },
+    { matches: isKeyword('seed'), parse: (context, line, state) => { state.seeds.push(parseSeed(context.valueContext, line)); } },
+    { matches: (keyword, _, state) => keyword === 'purpose' && state.placedBody !== undefined, parse: (context, line, state) => { state.placedBody?.tryParse(context, line); } },
+    { matches: isKeyword('purpose'), parse: (context, line, state) => { state.purposes.push(parsePurpose(context, line)); } },
+    { matches: isKeyword('context'), parse: (context, line, state) => { state.applicationContext = parseApplicationContext(context, line, state.applicationContext, state.placement); } },
+    { matches: isKeyword('identity'), parse: (context, line, state) => { state.identity = parseIdentity(context, line, state.identity); } },
+    { matches: isKeyword('policy'), parse: parseRootPolicy },
+    { matches: isKeyword('exposure'), parse: (context, line, state) => { state.exposures.push(parseExposure(context, line)); } },
+    { matches: isKeyword('instance'), parse: (context, line, state) => { state.instanceContributions.push(parseInstance(context, line)); } },
+    { matches: isKeyword('trigger'), parse: parseRootTrigger },
+    { matches: keyword => opaqueTopLevel.has(keyword), parse: parseRootOpaque }
+];
+
+function dispatchRoot(context: ParserContext, line: SourceLine, state: RootState): void {
+    const keyword = firstWord(line.content);
+    const preamble = preambleRules.find(rule => rule.matches(keyword, line, state));
+    if (preamble !== undefined) {
+        preamble.parse(context, line, state);
+        return;
+    }
+    // The C# parser asks whether anything was declared before the domain, so an import it rejected,
+    // a file import and an unknown construct do not count.
+    state.sawOtherConstruct ||= declaresConstruct(keyword, line, state.placement);
+    context.authoredDeclarations ||= keyword !== 'import' && declaresConstruct(keyword, line, state.placement);
+    const rule = bodyRules.find(candidate => candidate.matches(keyword, line, state));
+    if (rule !== undefined) {
+        rule.parse(context, line, state);
+    } else if (state.placedBody?.tryParse(context, line) !== true) {
+        reportUnexpectedTopLevel(context, line, state.placement);
+    }
+}
+
+function isRepeatedOrMisplaced(alreadyDeclared: boolean, state: RootState): boolean {
+    return alreadyDeclared || !isDocumentPlacement(state.placement);
+}
+
+function parseRootCommandReads(context: ParserContext, line: SourceLine, state: RootState): void {
+    if (isRepeatedOrMisplaced(state.sawCommandReads, state) || !/^command\s+reads\s+protected$/.test(line.content)) {
+        context.error(DiagnosticCodes.InvalidCommandReadsDeclaration, "Declare 'command reads protected' once at the application root.", locationOf(line));
+    } else {
+        state.commandReadMode = CommandReadMode.Protected;
+    }
+    state.sawCommandReads = true;
+}
+
+function parseRootTimeZone(context: ParserContext, line: SourceLine, state: RootState): void {
+    const match = timeZonePattern.exec(line.content);
+    context.skipBlock(line.indent);
+    if (isRepeatedOrMisplaced(state.sawTimeZone, state) || match === null) {
+        context.error(DiagnosticCodes.InvalidTimeZoneDeclaration, "Declare 'time zone \"<id>\"' or 'time zone configurable default \"<id>\"' once at the application root.", locationOf(line));
+    } else {
+        state.timeZone = { kind: 'TimeZoneSyntax', id: unescapeString(match[2]), configurable: match[1] !== undefined, location: locationOf(line) };
+    }
+    state.sawTimeZone = true;
+}
+
+function parseRootReactionBatches(context: ParserContext, line: SourceLine, state: RootState): void {
+    if (isRepeatedOrMisplaced(state.sawReactionBatches, state) || !/^reaction\s+batches\s+atomic$/.test(line.content)) {
+        context.error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", locationOf(line));
+    } else {
+        state.reactionProductionMode = ReactionProductionMode.Atomic;
+    }
+    state.sawReactionBatches = true;
+}
+
+function parseRootDomain(context: ParserContext, line: SourceLine, state: RootState): void {
+    context.authoredDeclarations = true;
+    state.domain = parseDomain(context, line, state.domain, state.sawOtherConstruct);
+}
+
+function parseRootFileImport(context: ParserContext, line: SourceLine, state: RootState): void {
+    // A top level import belongs to whatever the document's top level is - the application, or the
+    // module or feature the document was itself imported into.
+    if (state.placedBody !== undefined) {
+        state.placedBody.tryParse(context, line);
+    } else {
+        parseFileImport(context, line, state.fileImports);
+    }
+}
+
+function parseRootImport(context: ParserContext, line: SourceLine, state: RootState): void {
+    const match = importPattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidImportDeclaration, `Invalid import '${line.content}' - expected 'import <Qualified.Name> [from "<origin>"]'`, locationOf(line));
+        return;
+    }
+    const origin = match.groups?.origin === undefined ? null : unescapeString(match.groups.origin);
+    if (origin !== null && isBlankPublicEventOrigin(origin)) {
+        context.error(DiagnosticCodes.InvalidImportDeclaration, 'An import origin must be a nonblank quoted string', locationOf(line));
+    }
+    state.imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], origin, visibility: origin === null ? EventVisibility.Private : EventVisibility.Public, location: locationOf(line) });
+}
+
+function parseRootExample(context: ParserContext, line: SourceLine, state: RootState): void {
+    if (state.placedBody !== undefined) state.placedBody.tryParse(context, line);
+    else state.examples.push(parseExample(context, line));
+}
+
+function parseRootStickyNote(context: ParserContext, line: SourceLine, state: RootState): void {
+    const stickyNote = parseStickyNote(context, line);
+    if (stickyNote !== null) state.stickyNotes.push(stickyNote);
+}
+
+function parseRootPolicy(context: ParserContext, line: SourceLine, state: RootState): void {
+    const policy = parsePolicy(context, line);
+    if (state.policies.some(previous => previous.name === policy.name)) {
+        context.error(DiagnosticCodes.DuplicateDeclaration, `Duplicate declaration of policy '${policy.name}' - policy names must be unique`, policy.location);
+    }
+    state.policies.push(policy);
+}
+
+function parseRootTrigger(context: ParserContext, line: SourceLine, state: RootState): void {
+    const data = parseTriggerDeclaration(context, line);
+    const name = /^trigger\s+([A-Za-z_]\w*)$/.exec(line.content)?.[1];
+    if (name !== undefined) state.declaredTriggers.push({ name, data });
+}
+
+function parseRootOpaque(context: ParserContext, line: SourceLine): void {
+    const keyword = firstWord(line.content);
+    if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
+    else if (keyword === 'ui') parseUiProfile(context, line);
+    else context.skipOpaqueBlock(line.indent);
+}
+
+// A property the syntax only carries when it was declared.
+function presentOnly<K extends string, V>(key: K, value: V | null): { [P in K]?: V } {
+    return (value === null ? {} : { [key]: value }) as { [P in K]?: V };
+}
+
+// A list the syntax only carries when something was declared in it.
+function nonEmptyOnly<K extends string, V>(key: K, values: V[]): { [P in K]?: V[] } {
+    return (values.length > 0 ? { [key]: values } : {}) as { [P in K]?: V[] };
+}
+
+function buildApplication(context: ParserContext, state: RootState): ApplicationSyntax {
+    const { placement, moduleBody, featureBody, modules } = state;
     if (moduleBody !== undefined) {
         modules.unshift(moduleBody.build(context.start, true));
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(commandReadMode === null ? {} : { commandReadMode }), ...(timeZone === null ? {} : { timeZone }), ...(applicationContext === null ? {} : { context: applicationContext }), ...(reactionProductionMode === null ? {} : { reactionProductionMode }), ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...(stateMachines.length > 0 ? { stateMachines } : {}), ...(workflows.length > 0 ? { workflows } : {}), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(stickyNotes.length > 0 ? { stickyNotes } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

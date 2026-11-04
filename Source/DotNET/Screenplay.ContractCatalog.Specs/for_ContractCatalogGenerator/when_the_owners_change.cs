@@ -73,6 +73,62 @@ public class when_the_owners_change
         Assert.Equal(Generate(Catalog).GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString(), result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString());
     }
 
+    [Theory]
+    [InlineData("static readonly RootRule[]", "new(\"rootEntry\", \"otherArgument\")", true)]
+    [InlineData("static readonly RootRule[]", "new RootRule(\"rootEntry\", \"otherArgument\")", true)]
+    [InlineData("readonly RootRule[]", "new(\"rootEntry\", \"otherArgument\")", false)]
+    [InlineData("static RootRule[]", "new(\"rootEntry\", \"otherArgument\")", false)]
+    [InlineData("static readonly Other.RootRule[]", "new(\"rootEntry\", \"otherArgument\")", false)]
+    public void should_classify_only_root_rule_table_keywords_as_constructs(string declaration, string entry, bool isRoot)
+    {
+        var source = $$"""
+            namespace Other { public record RootRule(string Keyword, string Other); }
+            namespace Cratis.Screenplay.Parsing
+            {
+                public record RootRule(string Keyword, string Other);
+                public class Tables
+                {
+                    {{declaration}} _rules = [{{entry}}];
+                }
+            }
+            """;
+        var result = Generate(Catalog, CSharpSyntaxTree.ParseText(source, cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Empty(result.Diagnostics);
+        var output = result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString();
+        Assert.Equal(isRoot, Words(output, "Constructs").Contains("\"rootEntry\"", StringComparison.Ordinal));
+        Assert.Equal(isRoot, Words(output, "TopLevelConstructs").Contains("\"rootEntry\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("\"otherArgument\"", Words(output, "Constructs"), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("new([\"commandEntry\", \"anotherEntry\"], \"otherArgument\")")]
+    [InlineData("new CommandDirectiveRule(new[] { \"commandEntry\", \"anotherEntry\" }, \"otherArgument\")")]
+    public void should_keep_command_directives_as_keywords_and_root_clauses_out_of_constructs(string entry)
+    {
+        var source = $$"""
+            namespace Cratis.Screenplay.Parsing
+            {
+                public record RootRule(string Keyword);
+                public record CommandDirectiveRule(string[] Keywords, string Other);
+                public static class Tables
+                {
+                    static readonly RootRule[] _roots = [new("description")];
+                    static readonly CommandDirectiveRule[] _commands = [{{entry}}];
+                }
+            }
+            """;
+        var result = Generate(Catalog, CSharpSyntaxTree.ParseText(source, cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Empty(result.Diagnostics);
+        var output = result.GeneratedTrees.Single().GetText(TestContext.Current.CancellationToken).ToString();
+        Assert.Contains("\"commandEntry\"", Words(output, "Keywords"), StringComparison.Ordinal);
+        Assert.Contains("\"anotherEntry\"", Words(output, "Keywords"), StringComparison.Ordinal);
+        Assert.Contains("\"description\"", Words(output, "TopLevelConstructs"), StringComparison.Ordinal);
+        Assert.Equal("public static System.Collections.Generic.IReadOnlyList<string> Constructs { get; } = new string[] {\"newKeyword\"};", Words(output, "Constructs"));
+        Assert.DoesNotContain("\"commandEntry\"", Words(output, "TopLevelConstructs"), StringComparison.Ordinal);
+    }
+
+    static string Words(string output, string name) => output.Split('\n').Single(line => line.Contains(" " + name + " {", StringComparison.Ordinal));
+
     static GeneratorDriverRunResult Generate(string source, SyntaxTree? fixture = null)
     {
         var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator).Select(path => MetadataReference.CreateFromFile(path));
