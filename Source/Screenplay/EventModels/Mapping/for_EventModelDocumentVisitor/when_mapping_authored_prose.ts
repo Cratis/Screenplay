@@ -3,6 +3,7 @@
 
 import { describe, it } from 'vitest';
 import { parse } from '@cratis/screenplay-compiler';
+import { readEventModelDocument } from '@cratis/event-models';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
 import { problems_the_board_finds_in } from './given/the_board_schema';
 import { slice_named } from './given/the_constructs_document';
@@ -57,6 +58,12 @@ const source = `module Billing
           This view does not track **delivery**.
           \`\`\`
         number String
+      query InvoiceByNumber => InvoiceStatus?
+        description " One invoice by number "
+        by number String
+      query AllInvoices => InvoiceStatus[]
+        description "All issued invoices"
+        filter number String
 `;
 
 describe('when mapping authored prose', () => {
@@ -64,6 +71,8 @@ describe('when mapping authored prose', () => {
     const module = document.collections[0].modules[0];
     const feature = module.features[0];
     const slice = slice_named(document, 'IssueInvoice');
+    const queries = slice_named(document, 'InvoiceStatus').queries;
+    const readQueries = readEventModelDocument(document).collections[0].modules[0].features[0].slices.find(slice => slice.name === 'InvoiceStatus')!.queries;
 
     it('should describe the module', () => {
         module.description!.should.equal(' Billing context ');
@@ -95,6 +104,30 @@ describe('when mapping authored prose', () => {
         readModel.documentation!.should.equal('This view does not track **delivery**.');
     });
 
+    it('should preserve each authored query description exactly', () => {
+        queries.map(query => [query.name, query.description]).should.deep.equal([
+            ['InvoiceByNumber', ' One invoice by number '],
+            ['AllInvoices', 'All issued invoices'],
+        ]);
+    });
+
+    it('should preserve query descriptions through the real board reader', () => {
+        readQueries.map(query => [query.name, query.description]).should.deep.equal([
+            ['InvoiceByNumber', ' One invoice by number '],
+            ['AllInvoices', 'All issued invoices'],
+        ]);
+    });
+
+    it('should preserve query identities and parameters through the real board reader', () => {
+        readQueries.map(query => [query.id.toString(), query.name, query.parameters]).should.deep.equal(queries.map(query => [query.id, query.name, query.parameters]));
+    });
+
+    it('should never add unsupported query documentation', () => {
+        for (const query of [...queries, ...readQueries]) {
+            Object.hasOwn(query, 'documentation').should.be.false;
+        }
+    });
+
     it('should describe the specification', () => {
         slice.specifications[0].description!.should.equal('Witnesses issuance');
     });
@@ -122,11 +155,17 @@ describe('when mapping a model without authored prose', () => {
     slice StateView Status
       readmodel Status
         number String
+      query StatusByNumber => Status?
+        by number String
+      query AllStatuses => Status[]
+        filter number String
 `).value;
     const document = toEventModelDocument(application, 'Prose');
     const module = document.collections[0].modules[0];
     const feature = module.features[0];
     const slice = slice_named(document, 'S');
+    const queries = slice_named(document, 'Status').queries;
+    const readQueries = readEventModelDocument(document).collections[0].modules[0].features[0].slices.find(slice => slice.name === 'Status')!.queries;
 
     it('should omit prose members from undescribed constructs', () => {
         for (const node of [module, feature, slice.command!, slice.events[0], slice_named(document, 'Status').readModel!, slice.specifications[0]]) {
@@ -134,6 +173,19 @@ describe('when mapping a model without authored prose', () => {
             Object.hasOwn(node, 'documentation').should.be.false;
         }
         Object.hasOwn(slice, 'documentation').should.be.false;
+    });
+
+    it('should omit absent query prose before and after the real board reader', () => {
+        queries.should.have.lengthOf(2);
+        readQueries.should.have.lengthOf(2);
+        for (const query of [...queries, ...readQueries]) {
+            Object.hasOwn(query, 'description').should.be.false;
+            Object.hasOwn(query, 'documentation').should.be.false;
+        }
+    });
+
+    it('should conform to the board schema without query prose', () => {
+        problems_the_board_finds_in(document).should.deep.equal([]);
     });
 
     it('should omit blank prose members', () => {
@@ -145,6 +197,7 @@ describe('when mapping a model without authored prose', () => {
                 commands: slice.commands.map(command => ({ ...command, ...blank })),
                 events: slice.events.map(event => ({ ...event, ...blank })),
                 readModels: slice.readModels.map(readModel => ({ ...readModel, ...blank })),
+                queries: slice.queries.map(query => ({ ...query, description: blank.description })),
                 specifications: slice.specifications.map(specification => ({ ...specification, description: blank.description })),
             })),
         })) }));
@@ -157,5 +210,14 @@ describe('when mapping a model without authored prose', () => {
             Object.hasOwn(node, 'documentation').should.be.false;
         }
         Object.hasOwn(blankSlice, 'documentation').should.be.false;
+        const blankQueries = slice_named(blankDocument, 'Status').queries;
+        const readBlankQueries = readEventModelDocument(blankDocument).collections[0].modules[0].features[0].slices.find(slice => slice.name === 'Status')!.queries;
+        blankQueries.should.have.lengthOf(2);
+        readBlankQueries.should.have.lengthOf(2);
+        for (const query of [...blankQueries, ...readBlankQueries]) {
+            Object.hasOwn(query, 'description').should.be.false;
+            Object.hasOwn(query, 'documentation').should.be.false;
+        }
+        problems_the_board_finds_in(blankDocument).should.deep.equal([]);
     });
 });

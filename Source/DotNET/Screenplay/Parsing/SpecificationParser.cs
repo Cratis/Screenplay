@@ -85,12 +85,11 @@ internal static partial class SpecificationParser
 
         var parameters = new List<SpecificationParameterSyntax>();
         var cases = new List<SpecificationCaseSyntax>();
-        var given = new List<SpecificationEventSyntax>();
+        var givenState = new GivenBodyState();
         var givenOperationFailures = new List<SpecificationOperationFailureSyntax>();
         var thenOperations = new List<SpecificationOperationSyntax>();
         var thenCompensated = new List<SpecificationCompensatedSyntax>();
         var thenInvocations = new List<SpecificationInvocationSyntax>();
-        var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         SpecificationEventSyntax? whenAppended = null;
         SpecificationRedeliverySyntax? whenRedelivered = null;
@@ -103,17 +102,11 @@ internal static partial class SpecificationParser
         var thenAbsentReadModels = new List<SpecificationAbsentReadModelSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
-        SpecificationCallerSyntax? caller = null;
-        SpecificationCallerPersonaSyntax? callerPersona = null;
         SpecificationDeniedSyntax? denied = null;
         SpecificationReturnSyntax? thenReturns = null;
         FileReferenceSyntax? file = null;
         string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
-        SpecificationClockSyntax? givenClock = null;
-        SpecificationTimeZoneSyntax? givenTimeZone = null;
-        var givenCaptures = new List<SpecificationCaptureSyntax>();
-        var givenGenerated = new List<SpecificationGeneratedValueSyntax>();
         SpecificationClockSyntax? whenClock = null;
         SpecificationTriggerSyntax? whenTrigger = null;
         SpecificationCaptureSyntax? whenCapture = null;
@@ -150,72 +143,7 @@ internal static partial class SpecificationParser
                     }
                     break;
                 case "given":
-                    if (KeywordRegex("given", "clock").IsMatch(line.Content))
-                    {
-                        if (givenClock is not null)
-                        {
-                            context.Error(DiagnosticCodes.InvalidSpecificationClock, "A specification states its clock at most once.", line.Location);
-                            SkipBody(context, line.Indent);
-                        }
-                        else
-                        {
-                            givenClock = ParseClock(context, line, "given");
-                        }
-                    }
-                    else if (GivenTimeZonePrefixRegex().IsMatch(line.Content))
-                    {
-                        var parsedZone = ParseTimeZone(context, line);
-                        if (givenTimeZone is not null || parsedZone is null)
-                        {
-                            context.Error(DiagnosticCodes.InvalidSpecificationTimeZone, "A specification states its time zone at most once, as 'given time zone \"<id>\"'.", line.Location);
-                        }
-                        else
-                        {
-                            givenTimeZone = parsedZone;
-                        }
-                    }
-                    else if (GivenGeneratedPrefixRegex().IsMatch(line.Content))
-                    {
-                        if (ParseGivenGenerated(context, line) is { } pinned)
-                        {
-                            givenGenerated.Add(pinned);
-                        }
-                    }
-                    else if (KeywordRegex("given", "capture").IsMatch(line.Content))
-                    {
-                        if (ParseCapture(context, line, "given") is { } capture)
-                        {
-                            givenCaptures.Add(capture);
-                        }
-                    }
-                    else if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
-                    {
-                        if (caller is not null || callerPersona is not null)
-                        {
-                            context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", line.Location);
-                            SkipBody(context, line.Indent);
-                        }
-                        else if (line.Content.StartsWith("given caller as", StringComparison.Ordinal))
-                        {
-                            callerPersona = ParseCallerPersona(context, line);
-                        }
-                        else
-                        {
-                            caller = ParseCaller(context, line);
-                        }
-                    }
-                    else if (ReadModelPrefixRegex().IsMatch(line.Content))
-                    {
-                        if (ParseReadModel(context, line, GivenReadModelRegex(), "given") is { } givenReadModel)
-                        {
-                            givenReadModels.Add(givenReadModel);
-                        }
-                    }
-                    else if (ParseEventReference(context, line, GivenRegex(), "given") is { } givenEvent)
-                    {
-                        given.Add(givenEvent);
-                    }
-
+                    DispatchGiven(context, line, givenState);
                     break;
                 case "when":
                     if (whenDeclared)
@@ -367,7 +295,7 @@ internal static partial class SpecificationParser
                 directiveLocations["then no events"]);
         }
 
-        var specification = new SpecificationSyntax(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
+        var specification = new SpecificationSyntax(name, givenState.Events, when, thenEvents, thenErrors, header.Location, givenState.ReadModels, thenReadModels)
         {
             Parameters = parameters,
             Cases = cases,
@@ -376,8 +304,8 @@ internal static partial class SpecificationParser
             File = file,
             ThenQueries = thenQueries,
             ThenAbsentReadModels = thenAbsentReadModels,
-            GivenCaller = caller,
-            GivenCallerPersona = callerPersona,
+            GivenCaller = givenState.Caller,
+            GivenCallerPersona = givenState.CallerPersona,
             ThenDenied = denied,
             ThenReturns = thenReturns,
             GivenOperationFailures = givenOperationFailures,
@@ -388,10 +316,10 @@ internal static partial class SpecificationParser
             WhenRedelivered = whenRedelivered,
             ThenEventsInAnyOrder = eventsInAnyOrder,
             ThenNoEvents = thenNoEvents,
-            GivenClock = givenClock,
-            GivenTimeZone = givenTimeZone,
-            GivenCaptures = givenCaptures,
-            GivenGenerated = givenGenerated,
+            GivenClock = givenState.Clock,
+            GivenTimeZone = givenState.TimeZone,
+            GivenCaptures = givenState.Captures,
+            GivenGenerated = givenState.Generated,
             WhenClock = whenClock,
             WhenTrigger = whenTrigger,
             WhenCapture = whenCapture,

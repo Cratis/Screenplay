@@ -672,7 +672,7 @@ internal static partial class ScreenplayParser
             }
             else
             {
-                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason \"<text>\"'", child.Location);
+                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason \"<text>\"'{MisplacedRuleHint.ForConcept(child.Content)}", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }

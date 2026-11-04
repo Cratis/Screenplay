@@ -5,6 +5,7 @@ import { CommandReadMode } from '../Syntax/CommandReadMode';
 import { ReactionProductionMode } from '../Syntax/ReactionProductionMode';
 import { EnumerationMembers } from './EnumerationMembers';
 import { GenerationSyntax } from '../Syntax/GenerationSyntax';
+import { misplacedRuleHintForConcept } from './MisplacedRuleHint';
 import { parseGeneration } from './GenerationParser';
 import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
@@ -374,7 +375,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         } else if (type === 'Enum') {
             context.error(DiagnosticCodes.InvalidEnumerationValue, `Invalid enum value '${child.content}' - expected an identifier`, locationOf(child));
         } else {
-            context.error(DiagnosticCodes.UnknownConceptDirective, `Unexpected '${child.content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason "<text>"'`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownConceptDirective, `Unexpected '${child.content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason "<text>"'${misplacedRuleHintForConcept(child.content)}`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }

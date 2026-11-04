@@ -12,7 +12,7 @@ import { ShownModel } from '../ShownModel';
 import { hooks, invoke } from '../../Views/for_DependencyMapView/given/component_hooks';
 
 vi.mock('react', async importOriginal => ({ ...await importOriginal<typeof import('react')>(), ...(await import('../../Views/for_DependencyMapView/given/component_hooks')).componentHooks }));
-vi.mock('@cratis/event-models', () => ({ BoardToolbarFrame: () => null, BoardViewMenu: () => null, EventModelBoard: () => null, MenuDropdownOpenProvider: () => null, readEventModelDocument: (document: unknown) => document }));
+vi.mock('@cratis/event-models', () => ({ BoardToolbarFrame: () => null, BoardViewMenu: () => null, EventModelBoard: () => null, EventModelPresentationProvider: () => null, defaultDetailsVisibilityState: { global: false }, MenuDropdownOpenProvider: () => null, readEventModelDocument: (document: unknown) => document }));
 vi.mock('../BoardTools', () => ({ BoardTools: () => null }));
 vi.mock('../boardChrome', () => ({ boardChrome: {} }));
 vi.mock('../useHost', () => ({ useHost: () => ({ model: {}, refresh: vi.fn(), toggleFullscreen: vi.fn() }) }));

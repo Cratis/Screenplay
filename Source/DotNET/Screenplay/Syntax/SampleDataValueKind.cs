@@ -18,5 +18,10 @@ public enum SampleDataValueKind
     Flag = 2,
 
     /// <summary>The <c>null</c> literal.</summary>
-    Null = 3
+    Null = 3,
+
+    /// <summary>
+    /// Explicit rows of a composite collection, including an empty collection.
+    /// </summary>
+    Rows = 4
 }

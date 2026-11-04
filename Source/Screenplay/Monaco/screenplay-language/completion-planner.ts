@@ -70,6 +70,10 @@ function expansionEntry(text: string, indent: number): CompletionEntry {
 export function completionEntriesFor(chain: string[], where: CompletionScope = { headers: [], document: [] }): CompletionEntry[] {
     const construct = chain[0];
     if (construct === undefined || construct === 'domain') return topLevelEntries(where.document);
+    if (chain.includes('sample') && !chain.includes('ui')) {
+        if (construct === 'row') return scope.sampleRowItems;
+        if (chain[1] === 'row' && /^[A-Za-z_]\w*$/.test(where.headers[0] ?? construct)) return scope.sampleShapeItems;
+    }
     const subLanguage = getSubLanguage(construct);
     if (subLanguage) return subLanguage.completions ?? [];
     const header = where.headers[0];

@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, type EventModelBoardHandle, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, EventModelPresentationProvider, type EventModelBoardHandle, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay } from '@cratis/screenplay-views';
 import type { DependencyOverlay } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
@@ -14,7 +14,9 @@ import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { boardHeight } from './boardHeight';
 import { BoardTools } from './BoardTools';
 import { compileBoards } from './compileBoards';
+import { ReadabilityMenu } from './ReadabilityMenu';
 import { ShownModel } from './ShownModel';
+import { usePresentation } from './usePresentation';
 import { useHost } from './useHost';
 
 const noOverlay: DependencyOverlay = { scopes: [] };
@@ -23,6 +25,7 @@ const noOverlay: DependencyOverlay = { scopes: [] };
 // starts on what the change would make of the application, and the toolbar switches to how it is now.
 export const BoardApp = () => {
     const host = useHost();
+    const [presentation, changePresentation] = usePresentation();
     const [shown, setShown] = useState(ShownModel.Proposed);
     const [view, setView] = useState(DependencyView.Board);
     const [mapOptions, setMapOptions] = useState(defaultDependencyMapOptions);
@@ -100,7 +103,7 @@ export const BoardApp = () => {
         return <div className='screenplay-mcp-board__message' style={style}>Reading the model…</div>;
     }
 
-    const tools = (
+    const tools = <>
         <BoardTools
             shown={compiled?.proposed ? shown : undefined}
             currentLabel={changeSets && boardChangeLabel('Current', changeSets.current)}
@@ -111,20 +114,23 @@ export const BoardApp = () => {
             fullscreen={host.container?.displayMode === 'fullscreen'}
             onRefresh={host.refresh}
             onToggleFullscreen={host.toggleFullscreen} />
-    );
+        <ReadabilityMenu visible={view === DependencyView.Board} presentation={presentation} onChange={changePresentation} />
+    </>;
     return (
         <div ref={boardHost} className='screenplay-mcp-board' style={style}>
             <MenuDropdownOpenProvider>
-                <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
-                    {boardProblem !== undefined || model === undefined || model instanceof Error ? <>
-                        <BoardToolbarFrame showLogo chrome={boardChrome} label='Model and view'>{tools}</BoardToolbarFrame>
-                        <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
-                    </> : (
-                        <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
-                            <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
-                        </BoardErrorBoundary>
-                    )}
-                </div>
+                <EventModelPresentationProvider presentation={presentation} onChange={changePresentation}>
+                    <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
+                        {boardProblem !== undefined || model === undefined || model instanceof Error ? <>
+                            <BoardToolbarFrame showLogo chrome={boardChrome} label='Model and view'>{tools}</BoardToolbarFrame>
+                            <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
+                        </> : (
+                            <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
+                                <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                            </BoardErrorBoundary>
+                        )}
+                    </div>
+                </EventModelPresentationProvider>
                 <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
                     <BoardToolbarFrame showLogo chrome={boardChrome} label='Model and view'>
                         {tools}

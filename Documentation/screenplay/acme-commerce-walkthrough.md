@@ -401,7 +401,7 @@ saves them (`identity` stage) from `assets/logos`.
 ### Sample data
 
 `<Domain>/shell/sampledata.play` is the domain's [sample data](sample-data.md) pack (`AcmeStorefront`, `AcmeCatalog`, ..., locale `nb-NO`): one
-shape per read model that a screen shows. It is design and preview time only: a production build never sees it.
+shape per read model that a screen shows. The Storefront pack authors `BasketContents.lines` as two nested rows of the declared `BasketLine` type, matching the cart indicator's two lines and total of 647. A bare `lines` field without rows would mean an explicit empty list; leaving it out means generated data. These collection values require matching Stage/Studio conversion support for preview. It is design and preview time only: a production build never sees it.
 
 ### Navigation and the logo
 
