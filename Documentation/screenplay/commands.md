@@ -882,19 +882,19 @@ Inside either form, `context` is the [`CommandContext`](context.md) — the comm
 
 ### What a handler body can and cannot do
 
-A body is not an escape hatch from `produces`. The productions fix which events are appended, how many and in what order; the body only fills in their property values. Because of that, a command with a `handler` body that has no `produces`, or whose `produces` are conditional (`produces ... when`), is refused with `PLAY0800`. The refusal message names the failed condition when the command declares a `produces`. With no `produces`, the short, published message stays unchanged. In either case, use these repairs:
+A body is not an escape hatch. Either `produces` or a `may produce` block declares which events the command can append, and the body only fills in their values. A command with a `handler` body that has neither, or whose `produces` are conditional (`produces ... when`), is refused with `PLAY0800`. The refusal message names the failed condition when the command declares a `produces`. With no `produces`, the short, published message stays unchanged. In either case, use these repairs:
 
 | Condition | What to do |
 | --- | --- |
-| The command declares no `produces` | Declare an unconditional `produces <Event>` beside the handler body |
+| The command declares no `produces` | Declare an unconditional `produces <Event>`, or a `may produce` block inside the handler (see below) |
 | A `produces ... when` sits beside the body | Declare an unconditional `produces <Event>`, split conditional or variable outcomes into separate commands, or move them to declarative `produces ... when` without a body |
 | The body is empty, missing or a file the host did not supply | Attach a resolved, nonempty, language-tagged body |
 
 Authoring hints can stay beside an attached body; they are not part of its resolved executable requirement. A requirement that still carries hints is not a resolved body. Pending intent without a body is a different shape: conditional productions report `PLAY0697` and no productions report `PLAY0696`.
 
-A body that decides how many events to append, or which event type, is not expressible. Split the outcomes into separate commands, or express each branch with declarative `produces ... when`:
+A body that decides how many events to append, or which event type, declares them in a `may produce` block (handler result contract v2, ESM v35). The block lists the events the body may return, in order. The body returns an ordered subset or multiset of them with `result.Add`; a `for one of` destination picks among several streams. `may produce` cannot sit beside `produces`. Each listed event needs a destination.
 
-Refused with `PLAY0800` — the body has no `produces` beside it:
+Refused with `PLAY0800` — the body declares no events at all:
 
 ````text
 command ProcessBatch
@@ -926,7 +926,33 @@ event BatchCompleted
   completedAt DateTime
 ````
 
-A handler body cannot read views (read models). Put a decision that depends on a view in a declarative `require` on the command, as described under [what `reads` guarantees](#what-reads-guarantees). The [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) keeps `ProcessInvoiceBatch` as a deliberate example of the refusal.
+A body that must choose events declares them like this, from the [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play):
+
+````screenplay
+command ProcessInvoiceBatch
+  batchId    BatchId identifier
+  invoiceIds InvoiceId[]
+  action     String
+
+  handler
+    may produce
+      InvoiceBatchProcessingStarted for batchId
+      InvoiceSent for one of invoiceIds
+      InvoiceCancelled for one of invoiceIds
+      InvoiceBatchProcessingCompleted for batchId
+    ```csharp
+    result.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));
+    foreach (var id in InvoiceIds)
+        result.Add(id, Action switch {
+            "send"   => new InvoiceSent(context.Occurred, null),
+            "cancel" => new InvoiceCancelled("Batch", context.Occurred, context.Identity.Id, "Batch"),
+            _        => throw new InvalidOperationException($"Unknown action: {Action}")
+        });
+    result.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));
+    ```
+````
+
+A handler body cannot read views (read models). Put a decision that depends on a view in a declarative `require` on the command, as described under [what `reads` guarantees](#what-reads-guarantees). The [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) uses `ProcessInvoiceBatch` as the worked example of `may produce`.
 
 ### Implementation intent (handlers only)
 

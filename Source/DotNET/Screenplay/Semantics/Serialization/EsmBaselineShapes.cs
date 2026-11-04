@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace Cratis.Screenplay.Semantics.Serialization;
 
 /// <summary>
-/// Frozen C(M.0) structural vocabulary for the shipped majors 1–34, 36 and 37 (35 is reserved, decision 0119). The strict per-major
+/// Frozen C(M.0) structural vocabulary for the shipped majors 1–37. The strict per-major
 /// reader/writer supplies baseline field ordering, optionality, variants and array ordering.
 /// These tables identify extension boundaries independently of future semantic knowledge.
 /// The @major and @first-last annotations freeze the strict reader's sinceVersion gates
@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -47,7 +47,7 @@ internal static class EsmBaselineShapes
         ["PriorRevision"] = "contractRevision predecessor properties:Property tags",
         ["Command"] = "id name properties:Property validations:Validation codeValidations:CodeValidation produces:ProducedEvent requirements:Requirement authorization:Authorization destination:Destination response@7:Response route@8:CommandRoute handler@23:Handler reads@25:DecisionRead calendar@37:CommandCalendar",
         ["CodeValidation"] = "requirementId",
-        ["Handler"] = "requirementId resultVersion",
+        ["Handler"] = "requirementId resultVersion possibleEvents@35:ProducedEvent",
         ["DecisionRead"] = "name readModel key presence",
         ["ProducedEvent"] = "eventContract condition:Expression destination:Expression mappings:Mapping when:Condition tags destinationType@6:TypeReference route@10:CommandRoute",
         ["Destination"] = "type:TypeReference value:Expression",

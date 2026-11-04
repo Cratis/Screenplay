@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -31,15 +32,14 @@ public static class SemanticTypedContextSerializer
 
     /// <summary>Produces stable UTF-8 JSON bytes suitable for shared contract vectors.</summary>
     /// <param name="descriptors">The descriptors to serialize.</param>
-    /// <exception cref="InvalidOperationException">A descriptor contains a handler result contract.</exception>
     /// <remarks>
     /// Revision 1 carries no time-zone member. Revision 2 adds the <c>TimeZone</c> runtime token for <c>$context.timeZone</c>.
     /// Revision 3 (decision 0132) is written only when a declared application context member is read: it adds the
     /// <c>application-context</c> source kind and a top-level <c>contextMembers</c> registry, ordered by name.
+    /// A descriptor with a handler result contract carries a <c>result</c> member (decision 0119).
     /// </remarks>
     public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors)
     {
-        if (descriptors.Any(descriptor => descriptor.Result is not null)) throw new InvalidOperationException("Handler result descriptors are not yet portable.");
         var members = descriptors.SelectMany(descriptor => descriptor.Members).ToArray();
         var usesTimeZone = members.Any(member => member.Type.RuntimeToken == SemanticContextRuntimeTokens.TimeZone);
         var contextMembers = members
@@ -50,7 +50,7 @@ public static class SemanticTypedContextSerializer
             .Select(name => new { name, runtimeToken = SemanticContextRuntimeTokens.TimeZone })
             .ToArray();
         string[] runtimeTokens = [.. _runtimeTokens, .. usesTimeZone ? [SemanticContextRuntimeTokens.TimeZone] : Array.Empty<string>()];
-        var written = descriptors.Select(Descriptor);
+        var written = descriptors.Select(descriptor => WithResult(descriptor, Descriptor(descriptor)));
         object contract = contextMembers.Length > 0
             ? new
             {
@@ -109,6 +109,38 @@ public static class SemanticTypedContextSerializer
                 eventRevision = member.Source.EventRevision?.Value
             }
         })
+    };
+
+    static object WithResult(SemanticTypedContextDescriptor descriptor, object legacy)
+    {
+        if (descriptor.Result is null) return legacy;
+        var node = (JsonObject)JsonSerializer.SerializeToNode(legacy, _options)!;
+        node["result"] = JsonSerializer.SerializeToNode(DescribeResult(descriptor.Result), _options);
+        return node;
+    }
+
+    static object DescribeResult(SemanticHandlerResultDescriptor result) => new
+    {
+        result.ResultVersion,
+        entries = result.Entries.Select(entry => new
+        {
+            eventContract = entry.EventContract.ToString(),
+            entry.EventName,
+            entry.EventRevision,
+            payload = ContextType(entry.Payload),
+            entry.DestinationKind,
+            entry.DestinationProperty,
+            destinationType = entry.DestinationType is null ? null : ContextType(entry.DestinationType)
+        })
+    };
+
+    static object ContextType(SemanticContextType type) => new
+    {
+        type.Kind,
+        modelType = Reference(type.ModelType),
+        shape = type.Shape?.ToString(),
+        type.RuntimeToken,
+        properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
     };
 
     static object? Reference(SemanticTypeReference? type) => type is null ? null : new

@@ -11,9 +11,9 @@ internal static partial class SemanticModelRead
 {
     internal static SemanticExpression Expression(ref Utf8JsonReader reader) => Expression(ref reader, 0);
 
-    internal static SemanticExpression Expression(ref Utf8JsonReader reader, uint schemaVersion)
+    internal static SemanticExpression Expression(ref Utf8JsonReader reader, uint schemaVersion, bool possibleEventDestination = false)
     {
-        var state = new ExpressionState(schemaVersion);
+        var state = new ExpressionState(schemaVersion, possibleEventDestination);
         ExpressionState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -37,7 +37,7 @@ internal static partial class SemanticModelRead
     internal static SemanticValue? NullableValue(ref Utf8JsonReader reader, string name) =>
         NullableObject(ref reader, name, Value);
 
-    sealed class ExpressionState(uint schemaVersion) : ReadState(schemaVersion)
+    sealed class ExpressionState(uint schemaVersion, bool possibleEventDestination) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<ExpressionState> Fields = new FieldTable<ExpressionState>("expression")
             .Add("kind", (ref Utf8JsonReader reader, ExpressionState state, string property) => state.ReadKind(String(ref reader, property)))
@@ -75,6 +75,8 @@ internal static partial class SemanticModelRead
 
         public SemanticId ReadProperty { get; set; }
 
+        bool IsOneOfShape => possibleEventDestination && Read is null && ReadProperty.IsSet && !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is null && Member is null;
+
         bool HasNoReadPath => Read is null && !ReadProperty.IsSet;
 
         bool IsValueShape => ContentRead && Content is not null && Root is null && Source is null && !TargetRead && Member is null;
@@ -88,6 +90,10 @@ internal static partial class SemanticModelRead
             Kind = ParseExpressionKind(value);
             if (Kind == SemanticExpressionKind.ReadPath && SchemaVersion < LanguageVersion.V25.Major)
                 throw Malformed("expression kind", "readPath requires schema v25");
+            if (Kind == SemanticExpressionKind.OneOf && SchemaVersion < LanguageVersion.V35.Major)
+                throw Malformed("expression kind", "oneOf requires schema v35");
+            if (Kind == SemanticExpressionKind.OneOf && !possibleEventDestination)
+                throw Malformed("expression kind", "oneOf requires a possible-event destination");
         }
 
         public void ReadValue(ref Utf8JsonReader reader, string property)
@@ -102,7 +108,11 @@ internal static partial class SemanticModelRead
             Target = Identifier(ref reader, property);
         }
 
-        public SemanticExpression Build() => Kind switch
+        public SemanticExpression Build() => Kind == SemanticExpressionKind.OneOf ? BuildOneOf() : BuildScalar();
+
+        SemanticOneOfExpression BuildOneOf() => IsOneOfShape ? new SemanticOneOfExpression(ReadProperty) : throw Malformed("expression", "one exact expression variant");
+
+        SemanticExpression BuildScalar() => Kind switch
         {
             SemanticExpressionKind.Value when IsValueShape && HasNoReadPath => new SemanticValueExpression(Content!),
             SemanticExpressionKind.Resolved when IsResolvedShape && HasNoReadPath => new SemanticResolvedExpression(Root!.Value, Source!.Value, Target),

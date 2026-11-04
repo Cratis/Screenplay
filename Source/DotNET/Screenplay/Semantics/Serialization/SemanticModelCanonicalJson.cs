@@ -299,7 +299,6 @@ public static partial class SemanticModelCanonicalJson
 
     static void WriteCommand(Utf8JsonWriter writer, SemanticCommand command, SemanticVersion version)
     {
-        RefuseUnpublishedHandler(command.Handler, version);
         writer.WriteStartObject();
         WriteId(writer, command.Id);
         CanonicalJson.WriteString(writer, "name", command.Name);
@@ -338,10 +337,8 @@ public static partial class SemanticModelCanonicalJson
         if (command.Route is not null) WriteCommandRoute(writer, command.Route);
         if (command.Handler is { } handler)
         {
-            writer.WriteStartObject("handler");
-            writer.WriteString("requirementId", handler.RequirementId);
-            writer.WriteNumber("resultVersion", handler.ResultVersion);
-            writer.WriteEndObject();
+            writer.WritePropertyName("handler");
+            WriteCommandHandler(writer, handler, version);
         }
         if (!command.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", command.Reads, WriteDecisionRead);
         WriteCommandCalendar(writer, command.Calendar);
@@ -358,18 +355,19 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced, SemanticVersion version, bool reaction)
+    static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced, SemanticVersion version, bool reaction) =>
+        WriteProducedEvent(writer, produced, new ProducedEventWriteContext(version, reaction, false));
+
+    static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced, ProducedEventWriteContext context)
     {
-        if (produced.DestinationType is not null && (!reaction || !version.IsAtLeast(SemanticVersion.V6)))
+        if (produced.DestinationType is not null && (!context.Reaction || !context.Version.IsAtLeast(SemanticVersion.V6)))
         {
             throw new InvalidSemanticContract("A production destination type requires an ESM v6 reaction.");
         }
 
         writer.WriteStartObject();
         writer.WriteString("eventContract", produced.EventContract.ToString());
-        WriteOptionalExpression(writer, "condition", produced.Condition);
-        WriteOptionalExpression(writer, "destination", produced.Destination);
-        WriteArray(writer, "mappings", produced.Mappings, WriteMapping);
+        WriteProductionPayload(writer, produced, context.PossibleEvent);
         if (produced.When is not null)
         {
             writer.WritePropertyName("when");
@@ -385,6 +383,27 @@ public static partial class SemanticModelCanonicalJson
 
         if (produced.Route is not null) WriteCommandRoute(writer, produced.Route);
         writer.WriteEndObject();
+    }
+
+    static void WriteProductionPayload(Utf8JsonWriter writer, SemanticProducedEvent produced, bool possibleEvent)
+    {
+        if (possibleEvent)
+        {
+            WritePossibleEventDestination(writer, produced.Destination);
+        }
+        else
+        {
+            WriteOptionalExpression(writer, "condition", produced.Condition);
+            WriteOptionalExpression(writer, "destination", produced.Destination);
+            WriteArray(writer, "mappings", produced.Mappings, WriteMapping);
+        }
+    }
+
+    static void WritePossibleEventDestination(Utf8JsonWriter writer, SemanticExpression? destination)
+    {
+        if (destination is null) return;
+        writer.WritePropertyName("destination");
+        WriteExpression(writer, destination, true);
     }
 
     static void WriteMapping(Utf8JsonWriter writer, SemanticPropertyMapping mapping)
@@ -641,10 +660,26 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteExpression(Utf8JsonWriter writer, SemanticExpression expression)
+    static void WriteExpression(Utf8JsonWriter writer, SemanticExpression expression, bool possibleEventDestination = false)
     {
         writer.WriteStartObject();
         writer.WriteString("kind", ExpressionKind(expression.Kind));
+        if (expression is SemanticOneOfExpression oneOf) WriteOneOf(writer, oneOf, possibleEventDestination);
+        else WriteExpressionMembers(writer, expression);
+        writer.WriteEndObject();
+    }
+
+    static void WriteOneOf(Utf8JsonWriter writer, SemanticOneOfExpression oneOf, bool possibleEventDestination)
+    {
+        if (!CanWriteOneOf(oneOf, possibleEventDestination)) throw new InvalidSemanticContract("A semantic expression variant is malformed or unknown.");
+        writer.WriteString("property", oneOf.CollectionProperty.ToString());
+    }
+
+    static bool CanWriteOneOf(SemanticOneOfExpression oneOf, bool possibleEventDestination) =>
+        possibleEventDestination && oneOf.Kind == SemanticExpressionKind.OneOf && oneOf.CollectionProperty.IsSet;
+
+    static void WriteExpressionMembers(Utf8JsonWriter writer, SemanticExpression expression)
+    {
         switch (expression)
         {
             case SemanticValueExpression value:
@@ -673,8 +708,6 @@ public static partial class SemanticModelCanonicalJson
             default:
                 throw new InvalidSemanticContract("A semantic expression variant is malformed or unknown.");
         }
-
-        writer.WriteEndObject();
     }
 
     static void WriteValue(Utf8JsonWriter writer, SemanticValue value)
@@ -875,7 +908,9 @@ public static partial class SemanticModelCanonicalJson
         _ => throw Unknown(nameof(SemanticEventContextValueKind), kind)
     };
 
-    static string ExpressionKind(SemanticExpressionKind value) => value switch
+    static string ExpressionKind(SemanticExpressionKind value) => value == SemanticExpressionKind.OneOf ? "oneOf" : ScalarExpressionKind(value);
+
+    static string ScalarExpressionKind(SemanticExpressionKind value) => value switch
     {
         SemanticExpressionKind.Value => "value",
         SemanticExpressionKind.Resolved => "resolved",
