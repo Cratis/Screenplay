@@ -80,10 +80,21 @@ internal static partial class ValidationRuleParser
     {
         var match = RuleRegex().Match(line.Content);
         if (!match.Success) return false;
-        var rule = match.Groups[2].Value;
-        return (LineText.FirstWord(rule) == "not" && LineText.FirstWord(rule["not".Length..].TrimStart()) == "empty") ||
-            LineText.FirstWord(rule) == "checksum" || OperandRegex().IsMatch(rule);
+        return StartsWithRuleOperand(match.Groups[2].Value);
     }
+
+    /// <summary>
+    /// Recognizes a declarative predicate - the operand of a rule line without its property - including any
+    /// <c>message</c> or <c>severity</c> suffix. A named <c>rule &lt;Name&gt;</c> is not a declarative predicate.
+    /// </summary>
+    /// <param name="rule">The text after the property, or the whole line of a concept rule.</param>
+    /// <returns>Whether the text starts with a declarative validation predicate.</returns>
+    internal static bool IsDeclarativePredicate(string rule) =>
+        StartsWithRuleOperand(rule) && LineText.FirstWord(rule) != "rule";
+
+    static bool StartsWithRuleOperand(string rule) =>
+        (LineText.FirstWord(rule) == "not" && LineText.FirstWord(rule["not".Length..].TrimStart()) == "empty") ||
+        LineText.FirstWord(rule) == "checksum" || OperandRegex().IsMatch(rule);
 
     static (string Content, string? Message) SplitMessage(string content)
     {
