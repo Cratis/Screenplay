@@ -19,7 +19,7 @@ public class when_comparing_the_interoperability_version_table : Specification
         var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
         released.Length.ShouldEqual(37);
         (claimed.Length <= 1).ShouldBeTrue();
-        var rows = released.Concat(claimed).OrderBy(row => SemanticVersion.Parse(row[0]).Major).ToArray();
+        var rows = released.Concat(claimed).OrderBy(row => SemanticVersion.Parse(row[0]).Major).ThenBy(row => SemanticVersion.Parse(row[0]).Minor).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
         var semanticVersions = rows.Select(row => SemanticVersion.Parse(row[0])).ToArray();
         languageVersions.Distinct().Count().ShouldEqual(rows.Length);
@@ -35,8 +35,9 @@ public class when_comparing_the_interoperability_version_table : Specification
             var version = SemanticVersion.Parse(row[0]);
             row[2].ShouldEqual(version.Major.ToString(System.Globalization.CultureInfo.InvariantCulture));
             row[3].ShouldContain("https://github.com/Cratis/Screenplay/blob/main/decisions/");
-            row[4].ShouldEqual($"`full-esm-v{version.Major}.json`");
-            using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v{version.Major}.json")!;
+            var suffix = version.Minor == 0 ? version.Major.ToString(System.Globalization.CultureInfo.InvariantCulture) : version.ToString();
+            row[4].ShouldEqual($"`full-esm-v{suffix}.json`");
+            using var golden = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream($"Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v{suffix}.json")!;
             using var memory = new MemoryStream();
             golden.CopyTo(memory);
             SemanticModelSerializer.Deserialize(memory.ToArray()).SemanticVersion.ShouldEqual(version);
