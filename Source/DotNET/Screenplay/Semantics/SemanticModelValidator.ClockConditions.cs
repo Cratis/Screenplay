@@ -13,6 +13,16 @@ internal static partial class SemanticModelValidator
             if (clock.Kind == SemanticClockKind.Today && clock.Unit != SemanticClockUnit.Day) throw new InvalidSemanticContract("A today offset must be in days.");
         }
 
+        static SemanticPrimitiveType Primitive(SemanticClockOperand clock) =>
+            clock.Kind == SemanticClockKind.Today || clock.DateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
+
+        static SemanticPrimitiveType ClockPrimitive(SemanticConditionOperand operand, SemanticClockOperand clock)
+        {
+            if (operand.Property.IsSet || operand.DateOf) throw new InvalidSemanticContract("A clock operand must not also reference a property.");
+            ValidateClockOperand(clock);
+            return Primitive(clock);
+        }
+
         // A clock comparison (decisions 0106 and 0107) compares required scalar command instants with a clock; both sides share one primitive.
         void ValidateClockCondition(SemanticComparison comparison, Dictionary<SemanticId, SemanticProperty> properties, bool allowed)
         {
@@ -27,12 +37,11 @@ internal static partial class SemanticModelValidator
         {
             if (operand is null || operand.Value is not null || operand.Read is not null)
                 throw new InvalidSemanticContract("A clock comparison operand must be a clock or a command property.");
-            if (operand.Clock is { } clock)
-            {
-                if (operand.Property.IsSet || operand.DateOf) throw new InvalidSemanticContract("A clock operand must not also reference a property.");
-                ValidateClockOperand(clock);
-                return clock.Kind == SemanticClockKind.Today || clock.DateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
-            }
+            return operand.Clock is { } clock ? ClockPrimitive(operand, clock) : PropertyPrimitive(operand, properties);
+        }
+
+        SemanticPrimitiveType PropertyPrimitive(SemanticConditionOperand operand, Dictionary<SemanticId, SemanticProperty> properties)
+        {
             if (!operand.Property.IsSet || !properties.TryGetValue(operand.Property, out var property)) throw new InvalidSemanticContract("Condition property is not a command property.");
             if (property.Type.IsCollection || property.Type.IsOptional) throw new InvalidSemanticContract("Clock comparisons require required scalar command properties.");
             var primitive = UnderlyingPrimitive(property.Type);
@@ -48,8 +57,7 @@ internal static partial class SemanticModelValidator
             if (isConcept || validation.Operand is not null || propertyType.IsCollection || !SemanticDateComparison.IsComparison(validation.Kind))
                 throw new InvalidSemanticContract("A clock validation rule compares a scalar command property with a clock and carries no constant.");
             ValidateClockOperand(clock);
-            var clockPrimitive = clock.Kind == SemanticClockKind.Today || clock.DateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
-            if (UnderlyingPrimitive(propertyType) != clockPrimitive) throw new InvalidSemanticContract("A clock validation rule must compare operands of the same Date or DateTime primitive.");
+            if (UnderlyingPrimitive(propertyType) != Primitive(clock)) throw new InvalidSemanticContract("A clock validation rule must compare operands of the same Date or DateTime primitive.");
         }
     }
 }
