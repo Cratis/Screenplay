@@ -27,9 +27,12 @@ public sealed partial class SemanticModelBinder
             comparison.LeftExpression is not null || IsClockExpression(comparison.Right, properties) ||
             (IsClockName(comparison.Left) && !properties.ContainsKey(comparison.Left));
 
+        // A validation rule takes a clock operand, or the date of one: an offset, or a bare 'today' or 'now' no command property shadows.
         static bool IsClockRuleOperand(ExpressionSyntax? value, Dictionary<string, SemanticProperty> properties) =>
-            value is ClockOffsetExpressionSyntax || IsBareClock(value, properties) ||
-            value is DateOfExpressionSyntax { Operand: ClockOffsetExpressionSyntax };
+            IsClockInstant(value is DateOfExpressionSyntax dateOf ? dateOf.Operand : value, properties);
+
+        static bool IsClockInstant(ExpressionSyntax? value, Dictionary<string, SemanticProperty> properties) =>
+            value is ClockOffsetExpressionSyntax || IsBareClock(value, properties);
 
         static bool IsRequiredInstant(ValidationSubject subject, SemanticPrimitiveType? required) =>
             !subject.IsCollection && subject.IsDate && (required is null || subject.Primitive == required);

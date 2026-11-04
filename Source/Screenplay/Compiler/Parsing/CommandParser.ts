@@ -6,6 +6,7 @@ import { validateHandlerContracts } from './CommandHandlerValidator';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { RequirementSyntax } from '../Syntax/Conditions';
 import { parseCondition } from './ConditionParser';
+import { parseClockOperand } from './ClockOperandParser';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
@@ -332,7 +333,7 @@ function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'c
         valueContext.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${line.content}'`, locationOf(line));
         return undefined;
     }
-    const parsed = parseRule(valueContext, match[2], line);
+    const parsed = parseRule(valueContext, match[2], line, owner === 'command');
     if (parsed === undefined) {
         return undefined;
     }
@@ -396,7 +397,22 @@ function splitSeverity(context: ParserContext, line: SourceLine, text: string): 
     return { content: text.substring(0, match.index).trimEnd(), severity };
 }
 
-function parseRule(context: ParserContext, rule: string, line: SourceLine): { kind: ValidationRuleKind; value: ExpressionSyntax | null } | undefined {
+const clockComparisons = new Set(['>', '>=', '<', '<=', '==', '!=']);
+
+// The right operand of a comparison rule: a clock offset or 'date of' one (decisions 0106 and 0107), otherwise an ordinary value.
+// Bare 'today' and 'now' stay paths, so a command property of that name still wins in the binder.
+function parseClockComparisonValue(context: ParserContext, text: string, line: SourceLine): ExpressionSyntax | null | undefined {
+    const tokens = text.split(/\s+/).filter(token => token.length > 0);
+    const clock = parseClockOperand(context, tokens, 0, locationOf(line));
+    if (clock === null) return parseMappingSource(text, locationOf(line), context);
+    if (clock.expression === null) return undefined;
+    if (clock.position === tokens.length) return clock.expression;
+    context.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${line.content}'`, locationOf(line));
+    return undefined;
+}
+
+// Only a command property rule may compare with a clock operand (decision 0107, item 1); a concept rule keeps its ordinary value.
+function parseRule(context: ParserContext, rule: string, line: SourceLine, clockOperands: boolean): { kind: ValidationRuleKind; value: ExpressionSyntax | null } | undefined {
     if (rule === 'not empty') {
         return { kind: 'NotEmpty', value: null };
     }
@@ -422,5 +438,8 @@ function parseRule(context: ParserContext, rule: string, line: SourceLine): { ki
         }
         return { kind: 'Rule', value: { kind: 'PathExpressionSyntax', path: name, location: locationOf(line) } };
     }
-    return { kind: operandKinds[operator], value: parseMappingSource(operand[3], locationOf(line), context) };
+    const value = clockOperands && clockComparisons.has(operator)
+        ? parseClockComparisonValue(context, operand[3], line)
+        : parseMappingSource(operand[3], locationOf(line), context);
+    return value === undefined ? undefined : { kind: operandKinds[operator], value };
 }

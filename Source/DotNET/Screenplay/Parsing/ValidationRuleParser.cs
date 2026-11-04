@@ -13,6 +13,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ValidationRuleParser
 {
+    static readonly string[] _clockComparisons = [">", ">=", "<", "<=", "==", "!="];
+
     /// <summary>
     /// Parses a validation rule line.
     /// </summary>
@@ -36,7 +38,7 @@ internal static partial class ValidationRuleParser
 
         var property = match.Groups[1].Value;
         var rule = match.Groups[2].Value;
-        var (kind, value) = ParseRule(context, rule, line);
+        var (kind, value) = ParseRule(context, rule, line, clockOperands: owner == ValidationOwnerKind.Command);
         if (kind is null)
         {
             return null;
@@ -61,7 +63,7 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        var (kind, value) = ParseRule(context, content, line);
+        var (kind, value) = ParseRule(context, content, line, clockOperands: false);
         if (kind is null)
         {
             return null;
@@ -124,7 +126,8 @@ internal static partial class ValidationRuleParser
         return false;
     }
 
-    static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseRule(ParserContext context, string rule, SourceLine line)
+    // Only a command property rule may compare with a clock operand (decision 0107, item 1); a concept rule keeps its ordinary value.
+    static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseRule(ParserContext context, string rule, SourceLine line, bool clockOperands)
     {
         if (rule == "not empty")
         {
@@ -149,7 +152,14 @@ internal static partial class ValidationRuleParser
             return ParseNamedRule(context, operand.Groups[3].Value.Trim(), line);
         }
 
-        var value = ExpressionParser.ParseMappingSource(context, operand.Groups[3].Value, line.Location);
+        var value = clockOperands && IsClockComparison(ruleOperator)
+            ? ParseClockComparisonValue(context, operand.Groups[3].Value, line)
+            : ExpressionParser.ParseMappingSource(context, operand.Groups[3].Value, line.Location);
+        if (value is null)
+        {
+            return (null, null);
+        }
+
         ValidationRuleKind? kind = ruleOperator switch
         {
             "max" => ValidationRuleKind.Max,
@@ -179,6 +189,24 @@ internal static partial class ValidationRuleParser
         }
 
         return (kind, value);
+    }
+
+    static bool IsClockComparison(string ruleOperator) => _clockComparisons.Contains(ruleOperator, StringComparer.Ordinal);
+
+    // The right operand of a comparison rule: a clock offset or 'date of' one (decisions 0106 and 0107), otherwise an ordinary value.
+    // Bare 'today' and 'now' stay paths, so a command property of that name still wins in the binder.
+    static ExpressionSyntax? ParseClockComparisonValue(ParserContext context, string text, SourceLine line)
+    {
+        var tokens = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var position = 0;
+        var operands = new ClockOperandParser(context, tokens, line.Location);
+        var clock = operands.TryParse(ref position);
+        if (operands.Malformed) return null;
+        if (clock is null) return ExpressionParser.ParseMappingSource(context, text, line.Location);
+        if (position == tokens.Length) return clock;
+
+        context.Error(DiagnosticCodes.InvalidValidationRule, $"Invalid validation rule '{line.Content}'", line.Location);
+        return null;
     }
 
     /// <summary>
