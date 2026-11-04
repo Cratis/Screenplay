@@ -589,7 +589,7 @@ internal sealed partial class McpWorkspaces
 
     IMcpProposal RefreshProposal(IMcpProposal proposal)
     {
-        var refreshed = McpAttachmentContents.Refresh(Root, proposal.Workspace);
+        var refreshed = McpAttachmentContents.Refresh(Root, proposal.Workspace, AttachmentRequest);
         if (ReferenceEquals(refreshed, proposal.Workspace))
         {
             return proposal;
@@ -620,7 +620,7 @@ internal sealed partial class McpWorkspaces
         RefusePendingWorkspace();
         var workspace = _workspace ?? throw new McpFailure("Open a workspace first.");
         new McpManagedFiles(Root).Verify(McpState.FileName, _stateBytes);
-        var refreshed = McpAttachmentContents.Refresh(Root, workspace);
+        var refreshed = McpAttachmentContents.Refresh(Root, workspace, AttachmentRequest);
         if (!ReferenceEquals(workspace, refreshed))
         {
             _workspace = refreshed;
