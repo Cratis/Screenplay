@@ -438,6 +438,11 @@ function parseRule(context: ParserContext, rule: string, line: SourceLine, clock
         }
         return { kind: 'Rule', value: { kind: 'PathExpressionSyntax', path: name, location: locationOf(line) } };
     }
+    return parseOperandRule(context, operand, line, clockOperands);
+}
+
+function parseOperandRule(context: ParserContext, operand: RegExpExecArray, line: SourceLine, clockOperands: boolean): { kind: ValidationRuleKind; value: ExpressionSyntax | null } | undefined {
+    const operator = operand[1] ?? operand[2];
     const value = clockOperands && clockComparisons.has(operator)
         ? parseClockComparisonValue(context, operand[3], line)
         : parseMappingSource(operand[3], locationOf(line), context);

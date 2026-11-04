@@ -15,6 +15,27 @@ internal static partial class ValidationRuleParser
 {
     static readonly string[] _clockComparisons = [">", ">=", "<", "<=", "==", "!="];
 
+    static readonly Dictionary<string, ValidationRuleKind> _operandKinds = new(StringComparer.Ordinal)
+    {
+        ["max"] = ValidationRuleKind.Max,
+        ["min"] = ValidationRuleKind.Min,
+        [">"] = ValidationRuleKind.GreaterThan,
+        [">="] = ValidationRuleKind.GreaterThanOrEqual,
+        ["<"] = ValidationRuleKind.LessThan,
+        ["<="] = ValidationRuleKind.LessThanOrEqual,
+        ["=="] = ValidationRuleKind.Equal,
+        ["!="] = ValidationRuleKind.NotEqual,
+        ["length =="] = ValidationRuleKind.Length,
+        ["matches"] = ValidationRuleKind.Matches,
+        ["contains"] = ValidationRuleKind.Contains,
+        ["not contains"] = ValidationRuleKind.NotContains,
+        ["starts with"] = ValidationRuleKind.StartsWith,
+        ["ends with"] = ValidationRuleKind.EndsWith,
+        ["decimals <="] = ValidationRuleKind.DecimalPlaces,
+        ["all >"] = ValidationRuleKind.AllGreaterThan,
+        ["all >="] = ValidationRuleKind.AllGreaterThanOrEqual
+    };
+
     /// <summary>
     /// Parses a validation rule line.
     /// </summary>
@@ -140,7 +161,7 @@ internal static partial class ValidationRuleParser
         }
 
         var operand = OperandRegex().Match(rule);
-        var ruleOperator = operand.Groups[1].Success ? operand.Groups[1].Value : operand.Groups[2].Value;
+        var ruleOperator = Operator(operand);
         if (!operand.Success)
         {
             context.Error(DiagnosticCodes.InvalidValidationRule, $"Invalid validation rule '{line.Content}'", line.Location);
@@ -152,58 +173,43 @@ internal static partial class ValidationRuleParser
             return ParseNamedRule(context, operand.Groups[3].Value.Trim(), line);
         }
 
-        var value = clockOperands && IsClockComparison(ruleOperator)
-            ? ParseClockComparisonValue(context, operand.Groups[3].Value, line)
-            : ExpressionParser.ParseMappingSource(context, operand.Groups[3].Value, line.Location);
-        if (value is null)
+        return ParseOperandRule(context, operand, line, clockOperands);
+    }
+
+    static string Operator(Match operand) => operand.Groups[1].Success ? operand.Groups[1].Value : operand.Groups[2].Value;
+
+    static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseOperandRule(ParserContext context, Match operand, SourceLine line, bool clockOperands)
+    {
+        var ruleOperator = Operator(operand);
+        var text = operand.Groups[3].Value;
+        var value = clockOperands && _clockComparisons.Contains(ruleOperator, StringComparer.Ordinal)
+            ? ParseClockComparisonValue(context, text, line)
+            : new RuleValue(ExpressionParser.ParseMappingSource(context, text, line.Location));
+        if (value is not { } parsed)
         {
             return (null, null);
         }
 
-        ValidationRuleKind? kind = ruleOperator switch
-        {
-            "max" => ValidationRuleKind.Max,
-            "min" => ValidationRuleKind.Min,
-            ">" => ValidationRuleKind.GreaterThan,
-            ">=" => ValidationRuleKind.GreaterThanOrEqual,
-            "<" => ValidationRuleKind.LessThan,
-            "<=" => ValidationRuleKind.LessThanOrEqual,
-            "==" => ValidationRuleKind.Equal,
-            "!=" => ValidationRuleKind.NotEqual,
-            "length ==" => ValidationRuleKind.Length,
-            "matches" => ValidationRuleKind.Matches,
-            "contains" => ValidationRuleKind.Contains,
-            "not contains" => ValidationRuleKind.NotContains,
-            "starts with" => ValidationRuleKind.StartsWith,
-            "ends with" => ValidationRuleKind.EndsWith,
-            "decimals <=" => ValidationRuleKind.DecimalPlaces,
-            "all >" => ValidationRuleKind.AllGreaterThan,
-            "all >=" => ValidationRuleKind.AllGreaterThanOrEqual,
-            _ => null
-        };
-
-        if (kind is null)
+        if (!_operandKinds.TryGetValue(ruleOperator, out var kind))
         {
             context.Error(DiagnosticCodes.UnknownValidationRule, $"Unknown validation rule '{ruleOperator}'", line.Location);
             return (null, null);
         }
 
-        return (kind, value);
+        return (kind, parsed.Expression);
     }
 
-    static bool IsClockComparison(string ruleOperator) => _clockComparisons.Contains(ruleOperator, StringComparer.Ordinal);
-
     // The right operand of a comparison rule: a clock offset or 'date of' one (decisions 0106 and 0107), otherwise an ordinary value.
-    // Bare 'today' and 'now' stay paths, so a command property of that name still wins in the binder.
-    static ExpressionSyntax? ParseClockComparisonValue(ParserContext context, string text, SourceLine line)
+    // Bare 'today' and 'now' stay paths, so a command property of that name still wins in the binder. Null means malformed, already diagnosed.
+    static RuleValue? ParseClockComparisonValue(ParserContext context, string text, SourceLine line)
     {
         var tokens = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         var position = 0;
         var operands = new ClockOperandParser(context, tokens, line.Location);
         var clock = operands.TryParse(ref position);
         if (operands.Malformed) return null;
-        if (clock is null) return ExpressionParser.ParseMappingSource(context, text, line.Location);
-        if (position == tokens.Length) return clock;
+        if (clock is null) return new(ExpressionParser.ParseMappingSource(context, text, line.Location));
+        if (position == tokens.Length) return new(clock);
 
         context.Error(DiagnosticCodes.InvalidValidationRule, $"Invalid validation rule '{line.Content}'", line.Location);
         return null;
@@ -288,4 +294,6 @@ internal static partial class ValidationRuleParser
 
     [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
     private static partial Regex NameRegex();
+
+    readonly record struct RuleValue(ExpressionSyntax? Expression);
 }
