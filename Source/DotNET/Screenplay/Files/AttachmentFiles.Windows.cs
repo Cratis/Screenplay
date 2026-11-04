@@ -2,12 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Runtime.InteropServices;
+using Cratis.Screenplay.Diagnostics;
 using Microsoft.Win32.SafeHandles;
 
 namespace Cratis.Screenplay.Files;
 
 public static partial class AttachmentFiles
 {
+    const uint WindowsListDirectory = 0x1;
+    const uint WindowsTraverse = 0x20;
     const uint WindowsReadAttributes = 0x80;
     const uint WindowsGenericRead = 0x80000000;
     const uint WindowsShareRead = 0x1;
@@ -20,6 +23,14 @@ public static partial class AttachmentFiles
 
     internal static bool WindowsAttachmentMatchesPath(string rootFinalPath, string key, string attachmentFinalPath) =>
         string.Equals(NormalizeWindowsFinalPath(attachmentFinalPath), NormalizeWindowsFinalPath(rootFinalPath) + '\\' + key.Replace('/', '\\'), StringComparison.OrdinalIgnoreCase);
+
+    internal static string WindowsAttachmentRefusalCode(bool reparsePoint, bool matchesPath) =>
+        (reparsePoint, matchesPath) switch
+        {
+            (true, _) => DiagnosticCodes.AttachmentLinkRefused,
+            (false, false) => DiagnosticCodes.AttachmentPathRefused,
+            _ => DiagnosticCodes.AttachmentUnreadable
+        };
 
     static string NormalizeWindowsFinalPath(string path)
     {
@@ -36,8 +47,8 @@ public static partial class AttachmentFiles
         SafeFileHandle? handle = null;
         try
         {
-            // Holding the root without delete sharing keeps its identity stable during loading.
-            handle = CreateWindowsFile(root, WindowsReadAttributes, WindowsShareRead | WindowsShareWrite, 0, WindowsOpenExisting, WindowsBackupSemantics | WindowsOpenReparsePoint, 0);
+            // Directory list/traverse access participates in share checks; omitting delete sharing prevents renaming or deleting the held root.
+            handle = CreateWindowsFile(root, WindowsListDirectory | WindowsTraverse | WindowsReadAttributes, WindowsShareRead | WindowsShareWrite, 0, WindowsOpenExisting, WindowsBackupSemantics | WindowsOpenReparsePoint, 0);
             if (handle.IsInvalid || !TryReadWindowsAttributes(handle, out var attributes)) return null;
             linkRefused = attributes.HasFlag(FileAttributes.ReparsePoint);
             if (linkRefused) return null;
@@ -57,17 +68,17 @@ public static partial class AttachmentFiles
         }
     }
 
-    static FileStream? OpenWindowsAttachment(string rootFinalPath, string path, string key, out string reason, out bool linkRefused)
+    static FileStream? OpenWindowsAttachment(string rootFinalPath, string path, string key, out string reason, out string refusalCode)
     {
         reason = "cannot be opened";
-        linkRefused = false;
+        refusalCode = DiagnosticCodes.AttachmentUnreadable;
         if (!OperatingSystem.IsWindows()) return null;
         SafeFileHandle? handle = null;
         try
         {
             handle = CreateWindowsFile(path, WindowsGenericRead, WindowsShareRead, 0, WindowsOpenExisting, WindowsOpenReparsePoint, 0);
             if (handle.IsInvalid) return null;
-            if (!VerifyWindowsAttachment(handle, rootFinalPath, key, out reason, out linkRefused)) return null;
+            if (!VerifyWindowsAttachment(handle, rootFinalPath, key, out reason, out refusalCode)) return null;
             var stream = new FileStream(handle, FileAccess.Read);
             handle = null; // The stream owns the verified attachment handle from here on.
             return stream;
@@ -83,17 +94,17 @@ public static partial class AttachmentFiles
         }
     }
 
-    static bool VerifyWindowsAttachment(SafeFileHandle handle, string rootFinalPath, string key, out string reason, out bool linkRefused)
+    static bool VerifyWindowsAttachment(SafeFileHandle handle, string rootFinalPath, string key, out string reason, out string refusalCode)
     {
         reason = "is not a regular file";
-        linkRefused = false;
+        refusalCode = WindowsAttachmentRefusalCode(false, true);
         if (GetWindowsFileType(handle) != WindowsFileTypeDisk) return false;
         reason = "cannot be inspected";
         if (!TryReadWindowsAttributes(handle, out var attributes)) return false;
         if (attributes.HasFlag(FileAttributes.ReparsePoint))
         {
             reason = "crosses a symbolic link or reparse point";
-            linkRefused = true;
+            refusalCode = WindowsAttachmentRefusalCode(true, false);
             return false;
         }
 
@@ -102,9 +113,10 @@ public static partial class AttachmentFiles
         reason = "cannot be inspected";
         var finalPath = WindowsFinalPath(handle);
         if (finalPath is null) return false;
-        linkRefused = !WindowsAttachmentMatchesPath(rootFinalPath, key, finalPath);
-        reason = "crosses a symbolic link or reparse point";
-        return !linkRefused;
+        var matchesPath = WindowsAttachmentMatchesPath(rootFinalPath, key, finalPath);
+        refusalCode = WindowsAttachmentRefusalCode(false, matchesPath);
+        reason = "does not match its name on disk; short (8.3) names and trailing dots or spaces are not supported";
+        return matchesPath;
     }
 
     static bool TryReadWindowsAttributes(SafeFileHandle handle, out FileAttributes attributes)

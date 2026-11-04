@@ -248,13 +248,13 @@ public static partial class AttachmentFiles
 
                 beforeOpen?.Invoke(path);
                 var length = 0L;
-                var linkRefused = false;
+                var refusalCode = DiagnosticCodes.AttachmentUnreadable;
                 using var stream = OperatingSystem.IsWindows()
-                    ? OpenWindowsAttachment(windowsRootPath!, path, key, out reason, out linkRefused)
+                    ? OpenWindowsAttachment(windowsRootPath!, path, key, out reason, out refusalCode)
                     : OpenUnixAttachment(unixRoot, key, out length, out reason);
                 if (stream is null)
                 {
-                    diagnostics.Add(Diagnostic.Warning(linkRefused ? DiagnosticCodes.AttachmentLinkRefused : DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' {reason}.", reference.Location));
+                    diagnostics.Add(Diagnostic.Warning(refusalCode, $"File attachment '{reference.Path}' {reason}.", reference.Location));
                     continue;
                 }
 
