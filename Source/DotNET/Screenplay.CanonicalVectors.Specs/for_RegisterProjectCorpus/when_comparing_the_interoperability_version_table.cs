@@ -10,15 +10,15 @@ namespace Cratis.Screenplay.CanonicalVectors.Specs.for_RegisterProjectCorpus;
 public class when_comparing_the_interoperability_version_table : Specification
 {
     [Fact]
-    void should_match_the_versions_contract_and_allow_at_most_two_unreleased_entries()
+    void should_match_the_versions_contract_and_allow_only_one_unreleased_entry()
     {
         using var stream = typeof(when_comparing_the_interoperability_version_table).Assembly.GetManifestResourceStream("Cratis.Screenplay.CanonicalVectors.Documentation.interoperability.md")!;
         using var reader = new StreamReader(stream);
         var text = reader.ReadToEnd();
         var released = Rows(text, "#### Released versions");
         var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
-        released.Length.ShouldEqual(35);
-        (claimed.Length <= 2).ShouldBeTrue();
+        released.Length.ShouldEqual(36);
+        (claimed.Length <= 1).ShouldBeTrue();
         var rows = released.Concat(claimed).OrderBy(row => SemanticVersion.Parse(row[0]).Major).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
         var semanticVersions = rows.Select(row => SemanticVersion.Parse(row[0])).ToArray();
