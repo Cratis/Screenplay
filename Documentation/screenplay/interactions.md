@@ -102,7 +102,7 @@ The first matching branch runs once against the rendered item when the gesture o
 
 A table's click or double click uses the activated row; `select` uses the newly selected item; `change` uses the item that changed (see [Bind an item change to a command](#bind-an-item-change-to-a-command)). Clearing selection runs nothing. Other elements use the nearest enclosing container's single item or selected row, with the same sibling precedence as guarded actions. Named behaviors are checked at each `uses` site. A component's context binding or `selectedItem` does not supply a subject in this version; unresolved or equally near data subjects produce PLAY0346.
 
-`on submit` has no alternatives: `item` means populated data, not submitted form values. Event, change, interval and application triggers also have no alternatives. The one-line `on row-click navigate to … by …` stays unchanged.
+`on submit` has no alternatives: `item` means populated data, not submitted form values. Event, interval and application triggers also have no alternatives. The one-line `on row-click navigate to … by …` stays unchanged.
 
 Opaque `where` is deprecated **only** on click, double click and select (PLAY0564); a `change` keeps it. A strict item condition produces a warning and a C# typed repair to one `when` block with no fallback; repairs require individual review and refuse comment loss. Other guard text produces Information without a repair. Event/change/application `where` remains opaque and unchanged. TypeScript reports the same diagnostics but does not offer these repairs.
 
