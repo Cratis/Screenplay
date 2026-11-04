@@ -43,6 +43,13 @@ public sealed class ContractCatalogGenerator : ISourceGenerator
                     keywords.UnionWith(RegexLiterals((string)attribute.ConstructorArguments[0].Value!).Where(IsKeyword));
                 }
             }
+            foreach (var (word, isRoot) in RuleTableKeywords(tree.GetRoot(), model).Where(entry => IsKeyword(entry.Word)))
+            {
+                keywords.Add(word);
+                if (!isRoot) continue;
+                if (!clauses.Contains(word)) constructs.Add(word);
+                roots.Add(word);
+            }
             foreach (var literal in tree.GetRoot().DescendantNodes().OfType<LiteralExpressionSyntax>())
             {
                 if (literal.Token.Value is not string word || (!IsKeyword(word) && !(IsDispatch(literal) && word.All(character => char.IsLetter(character) || character == ' ')))) continue;
@@ -92,6 +99,31 @@ public sealed class ContractCatalogGenerator : ISourceGenerator
         }
         output.AppendLine("};\npublic sealed record DiagnosticFact(string Code, string Name, string Title, System.Collections.Generic.IReadOnlyList<Cratis.Screenplay.Diagnostics.DiagnosticSeverity> Severities, bool Reserved, bool Retired) { public System.Collections.Generic.IReadOnlyList<DiagnosticArgumentFact> Arguments { get; init; } = new DiagnosticArgumentFact[0]; }\npublic sealed record DiagnosticArgumentFact(string Name, string Kind, bool Optional, string Meaning, System.Collections.Generic.IReadOnlyList<string> Values);\n}");
         context.AddSource("CompilerContractCatalog.g.cs", output.ToString());
+    }
+
+    static IEnumerable<(string Word, bool IsRoot)> RuleTableKeywords(SyntaxNode root, SemanticModel model)
+    {
+        foreach (var variable in root.DescendantNodes().OfType<VariableDeclaratorSyntax>())
+        {
+            if (model.GetDeclaredSymbol(variable) is not IFieldSymbol { IsStatic: true, IsReadOnly: true, Type: IArrayTypeSymbol array } ||
+                array.ElementType.ContainingNamespace.ToDisplayString() != "Cratis.Screenplay.Parsing" ||
+                array.ElementType.Name is not ("RootRule" or "CommandDirectiveRule") || variable.Initializer is null)
+            {
+                continue;
+            }
+            foreach (var creation in variable.Initializer.Value.DescendantNodes().OfType<BaseObjectCreationExpressionSyntax>())
+            {
+                if (!SymbolEqualityComparer.Default.Equals(model.GetTypeInfo(creation).Type, array.ElementType) ||
+                    creation.ArgumentList?.Arguments.FirstOrDefault()?.Expression is not { } argument)
+                {
+                    continue;
+                }
+                foreach (var literal in argument.DescendantNodesAndSelf().OfType<LiteralExpressionSyntax>())
+                {
+                    if (literal.Token.Value is string word) yield return (word, array.ElementType.Name == "RootRule");
+                }
+            }
+        }
     }
 
     static bool IsKeyword(string word) => word.Length > 0 && char.IsLower(word[0]) && word.All(char.IsLetter);
