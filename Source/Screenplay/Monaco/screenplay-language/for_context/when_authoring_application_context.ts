@@ -31,8 +31,8 @@ describe('when authoring application context', () => {
         const entries = completionEntriesFor(['context']);
         entries.map(entry => entry.label).should.deep.equal(['time zone member', 'description']);
         entries[0].insertText.should.contain('time zone');
-        entries[0].documentation!.should.contain('#824');
-        keywordDocs.context.should.contain('PLAY0268');
+        entries[0].documentation!.should.contain('ESM v37');
+        keywordDocs.context.should.contain('$context.timeZone');
     });
 
     it('should not advertise a new executable context root', () => {

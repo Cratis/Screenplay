@@ -12,6 +12,16 @@ import {
 import { MonarchTokenRules, SubLanguage } from './sub-language-registry';
 import { bmpWordCharacters } from './bmp-word-characters';
 
+const clockRules: MonarchTokenRules = [
+    [/^(time)(\s+)(zone)(\s+)(configurable\s+default\s+)?(?=")/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
+    [/^(\s*)(calendar)(\s+)(?="|from\s+\$context\.)/, ['white', 'keyword', 'white']],
+    [/^(\s*)(given)(\s+)(time)(\s+)(zone)(?=\s+")/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
+    [/^(\s*)(given)(\s+)(clock)(?=\s+")/, ['white', 'keyword', 'white', 'keyword']],
+    [/\b(date)(\s+)(of)(\s+)(today|now)\b/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
+    [/\b(today|now)(\s*)([+-])(\s*)(\d+)(\s+)(days?|hours?|minutes?)\b/, ['keyword', 'white', 'operator', 'white', 'number', 'white', 'keyword']],
+    [/([<>=!]=?\s+)(now|today)\b/, ['operator', 'keyword']],
+];
+
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
@@ -61,9 +71,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         root: [
             [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
-            [/^(time)(\s+)(zone)(\s+)(configurable\s+default\s+)?(?=")/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
-            [/^(\s*)(calendar)(\s+)(?="|from\s+\$context\.)/, ['white', 'keyword', 'white']],
-            [/^(\s*)(given)(\s+)(time)(\s+)(zone)(?=\s+")/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
+            ...clockRules,
             [/^(\s*)(direction)(\s+)(inbound|outbound)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
             [new RegExp(`^()(purpose)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?://.*)?$)`), ['white', 'keyword', 'white', { token: 'type.identifier', next: '@purposeBody.$1' }]],
             [/^(\s*)(parameter)(\s+)([a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\s+optional)?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'identifier', 'white', 'type.identifier']],

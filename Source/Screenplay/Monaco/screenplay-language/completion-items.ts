@@ -39,14 +39,14 @@ export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntr
 }
 
 export const applicationContextItems: CompletionEntry[] = [
-    { label: 'time zone member', insertText: '${1:bookingZone} time zone', documentation: 'A named application time-zone input. Only time zone members are currently declared; binding reports PLAY0268 (#824).' },
+    { label: 'time zone member', insertText: '${1:bookingZone} time zone', documentation: 'A typed application time-zone input. ESM v37 admits calendar from $context.timeZone; other members remain authoring metadata.' },
     { label: 'description', insertText: 'description "${1:context intent}"', documentation: 'Describes the application context; does not supply a runtime value.' },
 ];
 
 export const topLevelItems: CompletionEntry[] = [
-    { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application context members (decision 0132). Syntax-only; binding reports PLAY0268 (#824). At most one block per application.' },
-    { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'Application calendar (decisions 0106/0107). Syntax-only; binding reports PLAY0268. Never falls back to the machine zone.' },
-    { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'Configurable application calendar default. Syntax-only; binding reports PLAY0268.' },
+    { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone only; other members remain authoring metadata. At most one block per application.' },
+    { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar using an IANA zone. Never falls back to the machine zone.' },
+    { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar default. Command calendar, scenario zone and execution-context zone take precedence.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
     { label: 'reaction batches atomic', insertText: 'reaction batches atomic', documentation: 'Opts the composed application into atomic direct and refusal-branch reaction batches (ESM v22). Omit only to retain legacy per-fact behavior.' },
     { label: 'identity', insertText: 'identity\n    ${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'Typed additional caller details; authoring metadata only, at most one block per application.' },
@@ -181,7 +181,8 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
-    { label: 'calendar', insertText: 'calendar "${1:Europe/Oslo}"', documentation: 'Command calendar. Syntax-only (decisions 0106/0107); binding reports PLAY0268. The contextual calendar from $context.<member> form is also syntax-only.' },
+    { label: 'calendar', insertText: 'calendar "${1:Europe/Oslo}"', documentation: 'ESM v37 command calendar using an IANA zone; takes precedence over scenario zone, execution-context zone and application default.' },
+    { label: 'calendar from', insertText: 'calendar from \\$context.timeZone', documentation: 'ESM v37 admits only $context.timeZone as a command calendar source.' },
     documentationItem,
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'An input of the command — a name and a type reference.' },
     { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
@@ -296,7 +297,8 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
-    { label: 'given time zone', insertText: 'given time zone "${1:Europe/Oslo}"', documentation: 'Specification calendar. Syntax-only (decisions 0106/0107); binding reports PLAY0268.' },
+    { label: 'given time zone', insertText: 'given time zone "${1:Europe/Oslo}"', documentation: 'ESM v37 deterministic scenario zone. Pair with given clock; overrides execution-context zone and application default, not a command calendar.' },
+    { label: 'given clock', insertText: 'given clock "${1:2026-10-02T09:00:00Z}"', documentation: 'Explicit UTC instant required for a clock-using specification. Pair with given time zone (ESM v37).' },
     { label: 'parameter', insertText: 'parameter ${1:name} ${2:Type}', documentation: 'One typed value, supplied exactly once by every case.' },
     { label: 'case', insertText: 'case ${1:Name}\n    ${2:parameter} = ${3:value}', documentation: 'One named complete set of concrete parameter values.' },
     { label: 'given caller as', insertText: 'given caller as ${1:Persona}', documentation: 'An authenticated deterministic witness of a top-level persona; no body. Use explicit callers for negation, ownership claims and implementations.' },
@@ -464,6 +466,15 @@ export const actionArgumentItems: CompletionEntry[] = [
 export const tableItems: CompletionEntry[] = [
     { label: 'column', insertText: 'column ${1:property} label "${2:text}"', documentation: 'A column bound to a property.' },
     { label: 'on row-click', insertText: 'on row-click navigate to ${1:ScreenName} by ${2:param}', documentation: 'Navigates when a row is clicked.' },
+];
+
+export const clockOperandItems: CompletionEntry[] = [
+    { label: 'today', insertText: 'today', documentation: 'ESM v37 calendar date; only integral day offsets. Command conditions and property rules only.' },
+    { label: 'now', insertText: 'now', documentation: 'ESM v37 instant; integral day/hour/minute offsets. Command conditions and property rules only.' },
+    { label: 'today - days', insertText: 'today - ${1:7} days', documentation: 'Subtract integral calendar days, not hours or minutes (ESM v37).' },
+    { label: 'now + hours', insertText: 'now + ${1:2} hours', documentation: 'Add an integral duration to the instant (ESM v37).' },
+    { label: 'date of now', insertText: 'date of now', documentation: 'Convert the instant to the selected calendar date (ESM v37).' },
+    { label: 'date of now + hours', insertText: 'date of now + ${1:2} hours', documentation: 'Apply the duration before calendar date conversion (ESM v37).' },
 ];
 
 export const contextVariableItems: CompletionEntry[] = [
