@@ -1941,7 +1941,10 @@
                     ]
                   },
                   "givenCaptures": [],
-                  "givenClock": null,
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-02T09:00:00Z"
+                  },
                   "givenOperationFailures": [],
                   "givenReadModels": [
                     {
@@ -1984,6 +1987,10 @@
                       ]
                     }
                   ],
+                  "givenTimeZone": {
+                    "kind": "SpecificationTimeZoneSyntax",
+                    "id": "Europe/Oslo"
+                  },
                   "name": "BorrowingAnAvailableBook",
                   "thenCompensated": [],
                   "thenDenied": null,
@@ -2072,7 +2079,10 @@
                     ]
                   },
                   "givenCaptures": [],
-                  "givenClock": null,
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-02T09:00:00Z"
+                  },
                   "givenOperationFailures": [],
                   "givenReadModels": [
                     {
@@ -2115,6 +2125,10 @@
                       ]
                     }
                   ],
+                  "givenTimeZone": {
+                    "kind": "SpecificationTimeZoneSyntax",
+                    "id": "Europe/Oslo"
+                  },
                   "name": "RefusingABookThatIsOnLoan",
                   "thenCompensated": [],
                   "thenDenied": null,
@@ -2122,6 +2136,122 @@
                     {
                       "kind": "SpecificationErrorSyntax",
                       "name": "That book is already on loan"
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "BorrowBook",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "memberId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dueDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-30"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Member"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-29T23:30:00Z"
+                  },
+                  "givenOperationFailures": [],
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "CatalogEntry",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "available",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": true
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenTimeZone": {
+                    "kind": "SpecificationTimeZoneSyntax",
+                    "id": "Europe/Oslo"
+                  },
+                  "name": "RefusingALoanDueAtMidnightInOslo",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "A loan must be due in the future"
                     }
                   ],
                   "thenEvents": [],
@@ -2893,5 +3023,10 @@
     }
   ],
   "systems": [],
+  "timeZone": {
+    "kind": "TimeZoneSyntax",
+    "configurable": true,
+    "id": "Europe/Oslo"
+  },
   "types": []
 }

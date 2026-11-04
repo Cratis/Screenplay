@@ -55,7 +55,7 @@ internal static partial class SemanticModelRead
     {
         public static readonly FieldTable<CommandState> Fields = TableFor<CommandState>("command")
             .Add("properties", (ref Utf8JsonReader reader, CommandState state, string property) => state.Properties = Array(ref reader, (ref Utf8JsonReader item) => Property(ref item, state.SchemaVersion), property))
-            .Add("validations", (ref Utf8JsonReader reader, CommandState state, string property) => state.Validations = Array(ref reader, Validation, property))
+            .Add("validations", (ref Utf8JsonReader reader, CommandState state, string property) => state.Validations = Array(ref reader, (ref Utf8JsonReader item) => Validation(ref item, state.SchemaVersion), property))
             .Add("codeValidations", (ref Utf8JsonReader reader, CommandState state, string property) => state.CodeValidations = Array(ref reader, CodeValidation, property))
             .Add("produces", (ref Utf8JsonReader reader, CommandState state, string property) => state.Produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, state.SchemaVersion, false), property))
             .Add("requirements", (ref Utf8JsonReader reader, CommandState state, string property) => state.Requirements = Array(ref reader, (ref Utf8JsonReader item) => Requirement(ref item, state.SchemaVersion), property))
@@ -64,7 +64,8 @@ internal static partial class SemanticModelRead
             .Add("response", 7, (ref Utf8JsonReader reader, CommandState state, string property) => state.Response = Nested(ref reader, SemanticModelRead.Response, property))
             .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property))
             .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, (ref Utf8JsonReader item) => CommandHandler(ref item, state.SchemaVersion), property))
-            .Add("reads", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Reads = Array(ref reader, DecisionRead, property));
+            .Add("reads", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Reads = Array(ref reader, DecisionRead, property))
+            .Add("calendar", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Calendar = Nested(ref reader, CommandCalendar, property));
 
         public ImmutableArray<SemanticProperty> Properties { get; set; }
 
@@ -88,6 +89,8 @@ internal static partial class SemanticModelRead
 
         public SemanticCommandHandler? Handler { get; set; }
 
+        public SemanticCommandCalendar? Calendar { get; set; }
+
         public SemanticCommand Build()
         {
             Required(HasIdentity && !Properties.IsDefault && !Validations.IsDefault && !Produces.IsDefault, "command");
@@ -100,7 +103,8 @@ internal static partial class SemanticModelRead
                 Response = Response,
                 Route = Route,
                 Handler = Handler,
-                Reads = Reads
+                Reads = Reads,
+                Calendar = Calendar
             };
         }
     }
@@ -155,7 +159,7 @@ internal static partial class SemanticModelRead
             .Add("condition", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.ReadCondition(ref reader, property))
             .Add("destination", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.ReadDestination(ref reader, property))
             .Add("mappings", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.Mappings = Array(ref reader, (ref Utf8JsonReader item) => Mapping(ref item, state.SchemaVersion), property))
-            .Add("when", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.When = Nested(ref reader, Condition, property))
+            .Add("when", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.When = Nested(ref reader, (ref Utf8JsonReader item) => Condition(ref item, state.SchemaVersion), property))
             .Add("tags", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.Tags = StringArray(ref reader, property))
             .Add("destinationType", 6, (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.DestinationType = Nested(ref reader, TypeReference, property), state => state.Reaction)
             .Add("route", 10, (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.Route = Nested(ref reader, CommandRoute, property), state => !state.Reaction);

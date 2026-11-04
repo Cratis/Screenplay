@@ -26,10 +26,13 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    internal static SemanticValidationRule Validation(ref Utf8JsonReader reader)
+    internal static SemanticValidationRule Validation(ref Utf8JsonReader reader) => Validation(ref reader, 0);
+
+    // Only a command validation rule passes its schema version: a clock operand is admitted there (ESM v37), never in a concept or type rule.
+    internal static SemanticValidationRule Validation(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "validation");
-        var state = new ValidationState();
+        var state = new ValidationState(schemaVersion);
         ValidationState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -134,7 +137,7 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class ValidationState() : ReadState(0)
+    sealed class ValidationState(uint schemaVersion) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<ValidationState> Fields = new FieldTable<ValidationState>("validation")
             .Add("property", (ref Utf8JsonReader reader, ValidationState state, string property) => state.ReadProperty(ref reader, property))
@@ -143,7 +146,8 @@ internal static partial class SemanticModelRead
             .Add("message", (ref Utf8JsonReader reader, ValidationState state, string property) => state.ReadMessage(ref reader, property))
             .Add("severity", (ref Utf8JsonReader reader, ValidationState state, string property) => state.Severity = ParseSeverity(String(ref reader, property)))
             .Add("name", (ref Utf8JsonReader reader, ValidationState state, string property) => state.PredicateName = String(ref reader, property))
-            .Add("requirementId", (ref Utf8JsonReader reader, ValidationState state, string property) => state.RequirementId = String(ref reader, property));
+            .Add("requirementId", (ref Utf8JsonReader reader, ValidationState state, string property) => state.RequirementId = String(ref reader, property))
+            .Add("clock", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ValidationState state, string property) => state.Clock = Nested(ref reader, ClockOperand, property));
 
         public SemanticId PropertyId { get; set; }
 
@@ -165,6 +169,8 @@ internal static partial class SemanticModelRead
 
         public string? RequirementId { get; set; }
 
+        public SemanticClockOperand? Clock { get; set; }
+
         public void ReadProperty(ref Utf8JsonReader reader, string property)
         {
             PropertyRead = true;
@@ -185,8 +191,8 @@ internal static partial class SemanticModelRead
 
         public SemanticValidationRule Build()
         {
-            Required(PropertyRead && Kind is not null && OperandRead && MessageRead, "validation");
-            return new(PropertyId, Kind!.Value, Operand, Message) { Severity = Severity, Name = PredicateName, RequirementId = RequirementId };
+            Required(PropertyRead && Kind is not null && OperandRead && MessageRead && (Clock is null || Operand is null), "validation");
+            return new(PropertyId, Kind!.Value, Operand, Message) { Severity = Severity, Name = PredicateName, RequirementId = RequirementId, ClockOperand = Clock };
         }
     }
 

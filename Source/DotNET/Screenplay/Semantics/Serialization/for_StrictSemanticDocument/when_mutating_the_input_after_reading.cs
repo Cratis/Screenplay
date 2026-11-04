@@ -14,7 +14,7 @@ public class when_mutating_the_input_after_reading : Specification
 
     void Establish()
     {
-        _input = [.. canonical_serialization_golden_vectors.EsmV36Bytes];
+        _input = [.. canonical_serialization_golden_vectors.EsmV37Bytes];
         using var json = JsonDocument.Parse(_input);
         _expectedRevision = SemanticRevision.Parse(json.RootElement.GetProperty("revision").GetString()!);
     }
@@ -25,6 +25,6 @@ public class when_mutating_the_input_after_reading : Specification
         Array.Fill(_input, (byte)0);
     }
 
-    [Fact] void should_keep_the_original_bytes() => _document.CopyBytes().ShouldEqual(canonical_serialization_golden_vectors.EsmV36Bytes);
+    [Fact] void should_keep_the_original_bytes() => _document.CopyBytes().ShouldEqual(canonical_serialization_golden_vectors.EsmV37Bytes);
     [Fact] void should_keep_the_document_revision() => _document.Revision.ShouldEqual(_expectedRevision);
 }

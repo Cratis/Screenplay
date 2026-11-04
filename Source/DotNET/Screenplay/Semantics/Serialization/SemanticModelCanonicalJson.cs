@@ -60,7 +60,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticRevision? revision,
         SemanticApplication application)
     {
-        RefuseUnpublishedClock(application);
+        RefuseUnpublishedClock(application, semanticVersion);
         try
         {
             var buffer = new ArrayBufferWriter<byte>();
@@ -102,6 +102,7 @@ public static partial class SemanticModelCanonicalJson
         if (!application.EventSources.IsDefaultOrEmpty) WriteArray(writer, "eventSources", application.EventSources.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventSourceDeclaration);
         if (application.ReactionProductionMode is not null) writer.WriteString("reactionProductionMode", "atomic");
         if (application.CommandReadMode is not null) writer.WriteString("commandReadMode", "protected");
+        WriteApplicationTimeZone(writer, application, version);
         writer.WriteEndObject();
     }
 
@@ -258,6 +259,7 @@ public static partial class SemanticModelCanonicalJson
             CanonicalJson.WriteString(writer, "name", validation.Name!);
             CanonicalJson.WriteString(writer, "requirementId", validation.RequirementId!);
         }
+        WriteClockOperand(writer, validation.ClockOperand);
         writer.WriteEndObject();
     }
 
@@ -339,6 +341,7 @@ public static partial class SemanticModelCanonicalJson
             WriteCommandHandler(writer, handler, version);
         }
         if (!command.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", command.Reads, WriteDecisionRead);
+        WriteCommandCalendar(writer, command.Calendar);
         writer.WriteEndObject();
     }
 
@@ -521,16 +524,7 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("givenCaller");
             WriteCaller(writer, specification.GivenCaller);
         }
-        if (specification.When is not null)
-        {
-            writer.WritePropertyName("when");
-            WriteSpecificationCommand(writer, specification.When);
-        }
-        if (specification.WhenAppended is not null)
-        {
-            writer.WritePropertyName("whenAppended");
-            WriteSpecificationAppend(writer, specification.WhenAppended);
-        }
+        WriteSpecificationWhen(writer, specification);
         WriteRecoverySpecification(writer, specification);
         if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
@@ -544,7 +538,22 @@ public static partial class SemanticModelCanonicalJson
             WriteThenReturns(writer, specification.ThenReturns);
         }
         WriteAutomationSpecification(writer, specification);
+        if (specification.GivenTimeZone is not null) CanonicalJson.WriteString(writer, "givenTimeZone", specification.GivenTimeZone);
         writer.WriteEndObject();
+    }
+
+    static void WriteSpecificationWhen(Utf8JsonWriter writer, SemanticSpecification specification)
+    {
+        if (specification.When is not null)
+        {
+            writer.WritePropertyName("when");
+            WriteSpecificationCommand(writer, specification.When);
+        }
+        if (specification.WhenAppended is not null)
+        {
+            writer.WritePropertyName("whenAppended");
+            WriteSpecificationAppend(writer, specification.WhenAppended);
+        }
     }
 
     static void WriteRecoverySpecification(Utf8JsonWriter writer, SemanticSpecification specification)

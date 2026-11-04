@@ -118,7 +118,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             }
 
             // Library now declares atomic reaction batches (#771); that member has its own conformance vector.
-            if (name == "library-sample") legacy = legacy with { ReactionProductionMode = null };
+            if (name == "library-sample") legacy = WithoutLibraryClock(legacy with { ReactionProductionMode = null });
 
             if (name == "invoicing-sample" || name == "invoicing-editor-sample")
             {
@@ -660,6 +660,23 @@ public partial class when_freezing_legacy_source_syntax_bytes
         Modules = application.Modules.Select(module => module with
         {
             Forms = module.Forms?.Where(form => form.Name is not ("AddBookInput" or "BorrowBookInput" or "ReturnBookInput"))
+        })
+    };
+
+    // The clock fixtures have their own ESM v37 vectors.
+    static ApplicationSyntax WithoutLibraryClock(ApplicationSyntax application) => application with
+    {
+        TimeZone = null,
+        Modules = application.Modules.Select(module => module with
+        {
+            Features = module.Features.Select(feature => feature with
+            {
+                Slices = feature.Slices.Select(slice => slice.Name == "BorrowBook" ? slice with
+                {
+                    Specifications = slice.Specifications.Where(specification => specification.Name != "RefusingALoanDueAtMidnightInOslo")
+                        .Select(specification => specification with { GivenClock = null, GivenTimeZone = null })
+                } : slice)
+            })
         })
     };
 

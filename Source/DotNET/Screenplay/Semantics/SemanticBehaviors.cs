@@ -228,7 +228,7 @@ public sealed record SemanticValidationRule(
     /// <summary>Gets the presentation severity; failures still reject at every level.</summary>
     public SemanticValidationSeverity Severity { get; init; } = SemanticValidationSeverity.Error;
 
-    /// <summary>Gets the clock operand that replaces <see cref="Operand"/> (decision 0106), or null; candidate-only.</summary>
+    /// <summary>Gets the clock operand that replaces <see cref="Operand"/> (decision 0106), or null (ESM v37).</summary>
     public SemanticClockOperand? ClockOperand { get; init; }
 }
 
@@ -417,7 +417,7 @@ public sealed record SemanticCommand(
     public SemanticStateChangeDestination? Destination { get; init; }
 
     /// <summary>
-    /// Gets the command calendar, or null when the command declares none; candidate-only until the application calendar and clock operands are admitted.
+    /// Gets the command calendar, or null when the command declares none (ESM v37).
     /// </summary>
     public SemanticCommandCalendar? Calendar { get; init; }
 

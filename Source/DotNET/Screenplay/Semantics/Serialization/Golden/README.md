@@ -54,6 +54,8 @@ These source models originally produced the full vectors:
 `full-esm-v18.json` pins query validation rejection specifications under 0072. The frozen v18 model adds actionless query requests with empty `results` and one `thenErrors` entry, both with and without a message, to the full v17 model. `QueryValidationCorpus.V18` pins key and filter rejections across equivalent source forms. Only this specification shape selects v18; concept validation of query arguments applies in every version without changing earlier bytes. Released v1–v17 vectors remain unchanged.
 `full-esm-v19.json` pins invocation refusal branches and String refusal expressions under 0030. `canonical_serialization_golden_vectors.CreateSemanticModelV19()` adds ordered selectors, a named constraint, acknowledgement and all three refusal members to the full v17 model. `InvocationRefusalsCorpus.V19` pins source-backed bytes, revision, branch cascades and acknowledgement with redelivery/no-event assertions across equivalent source forms. Prior golden and corpus bytes stay unchanged.
 
+`full-esm-v37.json` pins the application calendar and clock operands under 0106, 0107 and 0132. `canonical_serialization_golden_vectors.CreateSemanticModelV37()` adds a configurable application time zone, a declared context time-zone member, fixed, `$context.timeZone` and declared-member command calendars, `today` and `now` clocks with day, hour and minute offsets, `date of` on properties and clocks, clock validation rules and a specification `givenTimeZone` to the full v36 model. Older readers refuse the v37 members, and the writer refuses them below v37.
+
 The other files pin separate serialization contracts, not ESM bytes:
 
 | File | Source |
@@ -62,6 +64,7 @@ The other files pin separate serialization contracts, not ESM bytes:
 | `full-identity-catalog-v1.json` | `canonical_serialization_golden_vectors.CreateIdentityCatalog()` — identity catalog with its own catalog revision |
 | `typed-contexts-v1.json` | `when_describing_typed_contexts.GoldenBytes()` — typed-context descriptor sidecars for bound rule, policy, validation and reducer contexts |
 | `unbound-handler-context-v1.json` | `when_describing_an_unbound_handler.GoldenBytes()` — typed-context descriptor sidecar for an unbound command handler |
+| `unbound-handler-context-v3.json` | `with_a_declared_context_member.GoldenBytes()` — revision 3 sidecar for an unbound handler whose command reads a declared context time-zone member |
 
 The ESM, expression and identity-catalog sources live in `../given/canonical_serialization_golden_vectors*.cs`;
 the typed-context sources live in the binder specs. Specs in this project compare the serialized sources
@@ -69,7 +72,7 @@ and descriptor sidecars with these bytes.
 
 `Screenplay.CanonicalVectors.Specs.csproj` links the ESM and sidecar files as embedded resources:
 `full-esm-v1.json`, `full-esm-v2.json`, `full-esm-v3.json`, `full-esm-v4.json`, `full-esm-v5.json`, `full-esm-v6.json`, `full-esm-v7.json`,
-`full-esm-v8.json`, `full-esm-v9.json`, `full-esm-v10.json`, `full-esm-v11.json`, `full-esm-v12.json`, `full-esm-v13.json`, `policy-negation-v7.json`, `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
+`full-esm-v8.json`, `full-esm-v9.json`, `full-esm-v10.json`, `full-esm-v11.json`, `full-esm-v12.json`, `full-esm-v13.json`, `policy-negation-v7.json`, `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, `unbound-handler-context-v1.json`, and `unbound-handler-context-v3.json`.
 It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
 round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
 

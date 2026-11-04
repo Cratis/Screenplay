@@ -28,8 +28,6 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Command '{command.Name}' description is authoring metadata.", command.Location);
             }
 
-            RefuseCommandCalendar(command);
-
             foreach (var reads in syntax.CommandReadMode is null ? command.Reads ?? [] : [])
             {
                 Error(

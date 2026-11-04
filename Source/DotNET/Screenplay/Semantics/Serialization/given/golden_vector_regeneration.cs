@@ -63,7 +63,7 @@ public static class golden_vector_regeneration
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
         }
 
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV36();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV37();
         if (model.SemanticVersion.Major != current)
         {
             throw new GoldenVectorsRegenerated($"The current golden builder must select ESM v{current}; nothing was regenerated.");
@@ -75,6 +75,7 @@ public static class golden_vector_regeneration
             written.Add(Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog())));
             written.Add(Write(directory, "typed-contexts-v1.json", when_describing_typed_contexts.GoldenBytes()));
             written.Add(Write(directory, "unbound-handler-context-v1.json", when_describing_an_unbound_handler.GoldenBytes()));
+            written.Add(Write(directory, "unbound-handler-context-v3.json", for_SemanticModelBinder.when_binding_clock_operands.with_a_declared_context_member.GoldenBytes()));
         }
         throw new GoldenVectorsRegenerated($"Golden vectors regenerated ({string.Join(", ", written)}) in '{directory}'. Older full ESM goldens remain frozen. Review the diff, then rebuild and rerun without {Variable}.");
     }

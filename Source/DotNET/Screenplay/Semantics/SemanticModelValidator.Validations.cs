@@ -92,6 +92,9 @@ internal static partial class SemanticModelValidator
             // now classified as invalid. Plan compilation and generation classify both cases explicitly.
         }
 
+        static bool IsChecksumAlgorithm(SemanticValue? operand) =>
+            operand is SemanticTextValue algorithm && (algorithm.Value == "luhn" || algorithm.Value == "mod11" || algorithm.Value == "mod97");
+
         void ValidateValidation(
             SemanticValidationRule validation,
             bool isConcept,
@@ -109,6 +112,12 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A declarative rule cannot carry a predicate attachment.");
             }
 
+            if (validation.ClockOperand is { } clock)
+            {
+                ValidateClockValidation(validation, clock, isConcept, propertyType);
+                return;
+            }
+
             var requiresOperand = validation.Kind != SemanticValidationRuleKind.NotEmpty;
             if (requiresOperand != (validation.Operand is not null))
             {
@@ -117,12 +126,7 @@ internal static partial class SemanticModelValidator
 
             if (validation.Kind == SemanticValidationRuleKind.Checksum)
             {
-                if (!_semanticVersion.IsAtLeast(SemanticVersion.V21) || !isConcept || propertyType.IsCollection ||
-                    UnderlyingPrimitive(propertyType) != SemanticPrimitiveType.Text || IsEnumeration(propertyType) ||
-                    validation.Operand is not SemanticTextValue algorithm || !(algorithm.Value == "luhn" || algorithm.Value == "mod11" || algorithm.Value == "mod97"))
-                {
-                    throw new InvalidSemanticContract("Checksum validation requires a String concept, luhn/mod11/mod97 and ESM v21.");
-                }
+                ValidateChecksumValidation(validation, isConcept, propertyType);
                 return;
             }
 
@@ -142,6 +146,15 @@ internal static partial class SemanticModelValidator
             if (validation.Operand is not null)
             {
                 ValidateValidationOperand(validation, propertyType, shape.Text);
+            }
+        }
+
+        void ValidateChecksumValidation(SemanticValidationRule validation, bool isConcept, SemanticTypeReference propertyType)
+        {
+            if (!_semanticVersion.IsAtLeast(SemanticVersion.V21) || !isConcept || propertyType.IsCollection ||
+                UnderlyingPrimitive(propertyType) != SemanticPrimitiveType.Text || IsEnumeration(propertyType) || !IsChecksumAlgorithm(validation.Operand))
+            {
+                throw new InvalidSemanticContract("Checksum validation requires a String concept, luhn/mod11/mod97 and ESM v21.");
             }
         }
 

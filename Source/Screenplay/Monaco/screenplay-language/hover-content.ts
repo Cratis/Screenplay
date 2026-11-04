@@ -18,6 +18,12 @@ import { eventAnalysisSource } from './event-analysis-source';
 import { getSubLanguage } from './sub-language-registry';
 import { attributeDocs, contextVariableDocs, handlerIntentDocs, keywordDocs, specialCategoryDocs, specificationKeywordDocs } from './keyword-docs';
 
+function contextualKeywordDoc(word: string, line: string, before: string): string | undefined {
+    const clockWord = ['today', 'now', 'date', 'of', 'clock', 'calendar', 'zone'].includes(word);
+    const property = before === '.' || /^\s*@?[a-z_]\w*\s+(?:String|Date|DateTime|Int|Bool)\b/.test(line);
+    return clockWord && property ? undefined : keywordDocs[word];
+}
+
 // Produces the hover markdown for a word at a position, without any editor
 // dependency — the Monaco service and the VSCode extension share this content.
 // Columns are 1-based, matching both editors' word-at-position APIs.
@@ -247,7 +253,7 @@ export function hoverContent(
     }
 
     if (word === 'optional' || word === 'generated' || word === 'returns') return null;
-    const keywordDoc = keywordDocs[word];
+    const keywordDoc = contextualKeywordDoc(word, line, before);
     if (keywordDoc) return `**${word}** — ${keywordDoc}`;
 
     return null;

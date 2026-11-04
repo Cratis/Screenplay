@@ -262,6 +262,16 @@ export function planCompletions(
     if (/\$refusal\.\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: refusal === undefined ? [] : ['reason', 'message', ...(/^on\s+refused\s+by\s+constraint(?:\s|$)/.test(refusal) ? ['constraint'] : [])].map(member => ({ label: member, insertText: member, documentation: 'String refusal value in branch event mappings; executable from ESM v19. Constraint is available only in a by constraint branch.' })) };
     }
+    const clockChain = enclosingChain(lines, fences, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
+    if (clockChain[0] === 'command' && /^\s*calendar\s+from\s+(?:\$[\w.]*)?$/.test(textBefore)) {
+        const prefix = textBefore.match(/\$[\w.]*$/)?.[0];
+        return { kind: 'entries', entries: items.calendarContextEntries(lines, prefix) };
+    }
+    if (clockChain.includes('command') && (clockChain[0] === 'validate' || (clockChain[0] === 'command' && /^\s*produces\s+when\b/.test(textBefore))) &&
+        /^\s*(?:require\s+|produces\s+when\s+)?[a-z_]\w*(?:\.\w+)*\s*(?:==|!=|>=|<=|>|<)\s+(?:[a-z ]*)$/.test(textBefore)) {
+        const afterDateOf = /\bdate\s+of\s+\w*$/.test(textBefore);
+        return { kind: 'entries', entries: afterDateOf ? items.clockOperandItems.filter(item => ['today', 'now'].includes(item.label)) : items.clockOperandItems };
+    }
     const contextVariableMatch = textBefore.match(/\$[\w.]*$/);
     if (contextVariableMatch) {
         return { kind: 'contextVariables', replaceLength: contextVariableMatch[0].length };

@@ -54,8 +54,8 @@ CommandReadsPreamble = "command", "reads", "protected", NL ;
    command declaration. Without it, legacy command reads remain refused. *)
 
 TimeZoneDecl = "time", "zone", [ "configurable", "default" ], StringLiteral, NL ;
-(* At most once across composed application-root documents. Syntax-only: PLAY0268,
-   decisions 0106/0107. Zone ids are retained verbatim; no machine-local time zone is inferred. *)
+(* At most once across composed application-root documents. ESM v37, decisions
+   0106/0107. Zone ids are canonical IANA ids; no machine-local time zone is inferred. *)
 
 NumericPreamble = "numbers", "exact", NL ;
 
@@ -75,14 +75,13 @@ NumericPreamble = "numbers", "exact", NL ;
 
 DomainDecl     = "domain", QualifiedName, NL ;
 
-(* Named application time-zone members, authoring only (decision 0132, #824). *)
+(* Named application time-zone members (decision 0132, ESM v37). *)
 ContextDecl    = "context", NL, [ INDENT, { DescriptionDecl | ContextMember }, DEDENT ] ;
 ContextMember  = PropertyName, "time", "zone", NL ;
 (* Exactly one block per application folder, at the application root. Members
    have unique unescaped names and no body. Names cannot be timeZone or an
    existing $context root (command, arguments, tenant, causedBy, causation,
-   occurred, identity). Binding the
-   declaration reports PLAY0268 until #824 admits time-zone execution. *)
+   occurred, identity). A command reads a member as its calendar. *)
 
 (* Caller detail authoring metadata, not executable behavior. *)
 IdentityDecl   = "identity", NL, [ INDENT, { DescriptionDecl | IdentityDetail }, DEDENT ] ;
@@ -978,7 +977,7 @@ CommandDecl    = "command", Ident, NL,
    block; repeated authorize lines combine with and in authored order. *)
 
 CommandCalendarDecl = "calendar", ( StringLiteral | "from", "$context.", QualifiedName ), NL ;
-(* At most once per command. Both forms are syntax-only, refused by PLAY0268. *)
+(* At most once per command (ESM v37). "from" names $context.timeZone or a declared member. *)
 
 CommandStreamDecl = "stream", Ident, ".", Ident, NL,
                     [ INDENT, ( "streamId", "=", MappingSource, NL | CommandStreamIdParts ), DEDENT ] ;
@@ -1191,7 +1190,8 @@ ConditionOperand = ( Path | ClockOffset | DateOf ), CompOp, ( Value | ClockOffse
 ClockOffset    = ( "today" | "now" ), ( "+" | "-" ), Integer, ClockUnit ;
 ClockUnit      = "day" | "days" | "hour" | "hours" | "minute" | "minutes" ;
 DateOf         = "date", "of", ( Path | ClockOffset ) ;
-(* Clock offsets and date-of are syntax-only (PLAY0268, decisions 0106/0107).
+(* Clock offsets and date-of are admitted in command conditions and validate
+   comparison rules (ESM v37, decisions 0106/0107); elsewhere they report PLAY0268.
    Integer is nonnegative and at most 2147483647. Bare today/now remain paths;
    property names are not globally reserved by these contextual spellings. *)
 

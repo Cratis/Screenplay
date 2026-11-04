@@ -118,7 +118,8 @@ internal static partial class SemanticModelRead
             .Add("thenReturns", 7, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Returns = Nested(ref reader, ThenReturns, property))
             .AddAll(["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"], 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
             .Add("givenGenerated", 30, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
-            .Add("thenInvocations", 34, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenInvocations = Array(ref reader, SpecificationInvocation, property));
+            .Add("thenInvocations", 34, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenInvocations = Array(ref reader, SpecificationInvocation, property))
+            .Add("givenTimeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenTimeZone = String(ref reader, property));
 
         public ImmutableArray<SemanticSpecificationEvent> GivenEvents { get; set; }
 
@@ -154,6 +155,8 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticSpecificationInvocation> ThenInvocations { get; set; } = [];
 
+        public string? GivenTimeZone { get; set; }
+
         bool HasGiven => !GivenEvents.IsDefault && !GivenReadModels.IsDefault;
 
         bool HasThen => !ThenEvents.IsDefault && !ThenReadModels.IsDefault && !ThenQueries.IsDefault && !ThenErrors.IsDefault;
@@ -179,7 +182,8 @@ internal static partial class SemanticModelRead
                 WhenClock = Automation.WhenClock,
                 WhenTrigger = Automation.WhenTrigger,
                 WhenCapture = Automation.WhenCapture,
-                ThenInvocations = ThenInvocations
+                ThenInvocations = ThenInvocations,
+                GivenTimeZone = GivenTimeZone
             };
         }
     }

@@ -136,9 +136,14 @@ public sealed record SemanticApplication(
     public SemanticCommandReadMode? CommandReadMode { get; init; }
 
     /// <summary>
-    /// Gets the application time zone, or null when none is declared (the calendar is then UTC); candidate-only until the application calendar and clock operands are admitted.
+    /// Gets the application time zone, or null when the model reads no clock. A clock model without a declared zone binds non-configurable UTC (ESM v37, decision 0106).
     /// </summary>
     public SemanticTimeZone? TimeZone { get; init; }
+
+    /// <summary>
+    /// Gets the time-zone members the application declares in its <c>context</c> block, in declaration order (ESM v37, decision 0132).
+    /// </summary>
+    public ImmutableArray<string> ContextMembers { get; init; } = [];
 }
 
 /// <summary>

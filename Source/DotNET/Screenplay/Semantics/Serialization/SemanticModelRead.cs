@@ -71,7 +71,9 @@ internal static partial class SemanticModelRead
             .Add("workflows", LanguageVersion.V36.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Workflows = Array(ref reader, Workflow, property))
             .Add("eventSources", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadEventSources(ref reader, property))
             .Add("reactionProductionMode", LanguageVersion.V22.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReactionProductionMode = String(ref reader, property) == "atomic" ? SemanticReactionProductionMode.Atomic : throw new InvalidSemanticContract("Unknown reaction production mode."))
-            .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."));
+            .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."))
+            .Add("timeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.TimeZone = Nested(ref reader, ApplicationTimeZone, property))
+            .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 
@@ -93,7 +95,17 @@ internal static partial class SemanticModelRead
 
         public SemanticCommandReadMode? CommandReadMode { get; set; }
 
+        public SemanticTimeZone? TimeZone { get; set; }
+
+        public ImmutableArray<string> ContextMembers { get; set; } = [];
+
         bool HasCollections => !Concepts.IsDefault && !Types.IsDefault && !Modules.IsDefault;
+
+        public void ReadContextMembers(ref Utf8JsonReader reader, string property)
+        {
+            ContextMembers = Array(ref reader, ContextMember, property);
+            Required(!ContextMembers.IsEmpty, "context members");
+        }
 
         public void ReadEventSources(ref Utf8JsonReader reader, string property)
         {
@@ -103,8 +115,8 @@ internal static partial class SemanticModelRead
 
         public SemanticApplication Build()
         {
-            Required(HasIdentity && HasCollections, "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode };
+            Required(HasIdentity && HasCollections && (SchemaVersion < LanguageVersion.V37.Major || TimeZone is not null), "application");
+            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers };
         }
     }
 

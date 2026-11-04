@@ -8,17 +8,17 @@ public class when_reporting_an_application_context : Specification
     [Theory]
     [InlineData("context\n  businessTimeZone time zone\n")]
     [InlineData("context\n")]
-    public void should_disclose_the_declaration_as_unadmitted(string source)
+    public void should_report_the_declaration_as_admitted(string source)
     {
         var syntax = new ScreenplayCompiler().Parse(source).Value!;
         var readiness = new AuthoringReadiness(syntax);
-        readiness.ModelSyntaxOnly.ShouldBeTrue();
-        readiness.ModelExecutionReadiness!.ShouldContain("#824");
-        readiness.SyntaxOnly(syntax.Context!).ShouldBeTrue();
+        readiness.ModelSyntaxOnly.ShouldBeFalse();
+        readiness.ModelExecutionReadiness.ShouldBeNull();
+        readiness.SyntaxOnly(syntax.Context!).ShouldBeFalse();
         foreach (var member in syntax.Context!.Members)
         {
-            readiness.SyntaxOnly(member).ShouldBeTrue();
-            readiness.ExecutionReadiness(member)!.ShouldContain("#824");
+            readiness.SyntaxOnly(member).ShouldBeFalse();
+            readiness.ExecutionReadiness(member).ShouldBeNull();
         }
     }
 }

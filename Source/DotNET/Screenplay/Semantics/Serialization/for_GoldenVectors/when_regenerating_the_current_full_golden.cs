@@ -29,8 +29,8 @@ public class when_regenerating_the_current_full_golden : Specification
         error.Message.ShouldContain("regenerated");
         var fullName = $"full-esm-v{current}.json";
         Directory.GetFiles(_directory, "full-esm-*.json").Select(Path.GetFileName).ShouldContainOnly([fullName]);
-        File.ReadAllBytes(Path.Combine(_directory, fullName)).ShouldEqual(canonical_serialization_golden_vectors.EsmV36Bytes);
-        Directory.GetFiles(_directory).Length.ShouldEqual(includeSidecars ? 5 : 1);
+        File.ReadAllBytes(Path.Combine(_directory, fullName)).ShouldEqual(canonical_serialization_golden_vectors.EsmV37Bytes);
+        Directory.GetFiles(_directory).Length.ShouldEqual(includeSidecars ? 6 : 1);
     }
 
     void Destroy() => Directory.Delete(_directory, recursive: true);
