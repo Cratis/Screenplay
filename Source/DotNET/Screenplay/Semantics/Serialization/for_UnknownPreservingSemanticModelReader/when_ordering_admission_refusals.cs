@@ -14,13 +14,13 @@ public class when_ordering_admission_refusals : Specification
     void Because()
     {
         var root = given.documents.Minimal();
-        root["schemaVersion"] = 37;
-        root["languageVersion"] = $"37.{uint.MaxValue}";
-        root["semanticVersion"] = $"37.{uint.MaxValue}";
+        root["schemaVersion"] = 38;
+        root["languageVersion"] = $"38.{uint.MaxValue}";
+        root["semanticVersion"] = $"38.{uint.MaxValue}";
         var bytes = given.documents.Seal(root);
         _outsideRange = Catch.Exception(() => UnknownPreservingSemanticModelReader.Read(bytes, given.documents.Range()));
-        _unknownMajor = Catch.Exception(() => UnknownPreservingSemanticModelReader.Read(bytes, new(37, 0, uint.MaxValue)));
-        root["languageVersion"] = $"38.{uint.MaxValue}";
+        _unknownMajor = Catch.Exception(() => UnknownPreservingSemanticModelReader.Read(bytes, new(38, 0, uint.MaxValue)));
+        root["languageVersion"] = $"39.{uint.MaxValue}";
         _mismatchedPair = Catch.Exception(() => UnknownPreservingSemanticModelReader.Read(given.documents.Seal(root), given.documents.Range()));
         var duplicateEnvelope = """{"languageVersion":"1.0","languageVersion":"2.0","semanticVersion":"3.0"}"""u8.ToArray();
         _duplicateEnvelope = Catch.Exception(() => UnknownPreservingSemanticModelReader.Read(duplicateEnvelope, given.documents.Range()));
