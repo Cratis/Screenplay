@@ -107,7 +107,7 @@ public class when_holding_invoicing_to_the_language : Specification
         _clockPreviewCalendar = SyntaxNodes.Under(clockFixture.Value!).OfType<CommandCalendarSyntax>().Single();
 
         var calendarExample = File.ReadAllText(Path.Combine(root, "Documentation/screenplay/commands.md"))
-            .Split('`').Single(example => example.StartsWith("calendar from $context.", StringComparison.Ordinal));
+            .Split('`').First(example => example.StartsWith("calendar from $context.", StringComparison.Ordinal));
         var calendarApplication = compiler.Parse($"module Clocks\n  feature Scheduling\n    slice StateChange Schedule\n      command ScheduleAppointment\n        {calendarExample}\n").Value!;
         _documentedClockCalendar = SyntaxNodes.Under(calendarApplication).OfType<CommandCalendarSyntax>().Single();
 
