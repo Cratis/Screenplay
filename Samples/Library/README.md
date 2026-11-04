@@ -29,8 +29,9 @@ Library/
   already on loan with a `require` rule.
 - **A rule against the calendar.** `BorrowBook` compares `dueDate` with `today`; its specifications pin
   `given clock` and `given time zone`, because each library configures its own zone.
-  These specifications are not executable yet because the catalog projection has no removal lifecycle,
-  which protected reads require (`NoRemoval`).
+  These specifications are not executable yet: legacy `reads` reports `PLAY0271` and `book.available`
+  reports `PLAY0268`; adding `command reads protected` would then report `PLAY0781` (`NoRemoval`)
+  because the catalog projection has no removal lifecycle.
 - **A view built from events, and one that is not.** `BookCatalog` and `MyLoans` are projections; `OpeningHours`
   comes from the municipality's calendar through a query `performer`, so no event builds it.
 - **Something that happens on its own.** `WelcomeNewMembers` reacts to `MemberRegistered`.
