@@ -155,6 +155,7 @@ internal static partial class SemanticModelValidator
         ValidateTypedCaptureKeyVersion(application, semanticVersion);
         ValidateEventSourceCaptureKeyVersion(application, semanticVersion);
         ValidateThenInvocationVersion(application, semanticVersion);
+        ValidateHandlerResultV2Version(application, semanticVersion);
         ValidateDescribedHandlerVersion(application, semanticVersion);
         ValidateTextRuleVersion(application, semanticVersion);
         ValidateQueryRejectionVersion(application, semanticVersion);

@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -13,10 +14,8 @@ public static class SemanticTypedContextSerializer
 
     /// <summary>Produces stable UTF-8 JSON bytes suitable for shared contract vectors.</summary>
     /// <param name="descriptors">The descriptors to serialize.</param>
-    /// <exception cref="InvalidOperationException">A descriptor contains a handler result contract.</exception>
     public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors)
     {
-        if (descriptors.Any(descriptor => descriptor.Result is not null)) throw new InvalidOperationException("Handler result descriptors are not yet portable.");
         var usesTimeZone = descriptors.Any(descriptor => descriptor.Members.Any(member => member.Type.RuntimeToken == SemanticContextRuntimeTokens.TimeZone));
         string[] runtimeTokens =
         [
@@ -39,7 +38,7 @@ public static class SemanticTypedContextSerializer
                     SemanticContextSourceKinds.CommandIdentifier, SemanticContextSourceKinds.QueryKey, SemanticContextSourceKinds.Unavailable
                 },
                 runtimeTokens,
-                descriptors = descriptors.Select(descriptor => new
+                descriptors = descriptors.Select(descriptor => WithResult(descriptor, new
                 {
                     descriptor.RequirementId,
                     role = descriptor.Role.ToString(),
@@ -76,10 +75,42 @@ public static class SemanticTypedContextSerializer
                             eventRevision = member.Source.EventRevision?.Value
                         }
                     })
-                })
+                }))
             },
             _options);
     }
+
+    static object WithResult(SemanticTypedContextDescriptor descriptor, object legacy)
+    {
+        if (descriptor.Result is null) return legacy;
+        var node = (JsonObject)JsonSerializer.SerializeToNode(legacy, _options)!;
+        node["result"] = JsonSerializer.SerializeToNode(DescribeResult(descriptor.Result), _options);
+        return node;
+    }
+
+    static object DescribeResult(SemanticHandlerResultDescriptor result) => new
+    {
+        result.ResultVersion,
+        entries = result.Entries.Select(entry => new
+        {
+            eventContract = entry.EventContract.ToString(),
+            entry.EventName,
+            entry.EventRevision,
+            payload = ContextType(entry.Payload),
+            entry.DestinationKind,
+            entry.DestinationProperty,
+            destinationType = entry.DestinationType is null ? null : ContextType(entry.DestinationType)
+        })
+    };
+
+    static object ContextType(SemanticContextType type) => new
+    {
+        type.Kind,
+        modelType = Reference(type.ModelType),
+        shape = type.Shape?.ToString(),
+        type.RuntimeToken,
+        properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = Reference(property.Type) })
+    };
 
     static object? Reference(SemanticTypeReference? type) => type is null ? null : new
     {

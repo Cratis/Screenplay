@@ -132,6 +132,13 @@ The public `SemanticContextTypeKinds` vocabulary is `runtime`, `shape`, `model`;
 
 These are sidecars of the **same compilation** as the ESM: canonical v1–v4 bytes and revisions do not include them. An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations. ValueGeneration descriptors have only non-null Now (`DateTime`) and Tenant (`TenantId`) runtime members. Compilation checks owner/rule identity, role, context/result versions, capability and sole body-source linkage; an ESM-only loader can check the requirement id format but cannot fabricate this sidecar.
 
+A command handler descriptor also carries a `result` object when its body declares `may produce` (result contract v2). Its members are:
+
+- `resultVersion`: the result contract version.
+- `entries`: one per possible event, in declaration order. Each has `eventContract`, `eventName`, `eventRevision`, `payload` (a context type), `destinationKind`, `destinationProperty` and `destinationType`.
+
+The destination members say where the event is appended: the kind, the command property that names the stream, and that property's type.
+
 ## The values they carry
 
 | Type | Carries |

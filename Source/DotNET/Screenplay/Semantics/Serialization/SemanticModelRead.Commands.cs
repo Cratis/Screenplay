@@ -25,10 +25,10 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader, uint schemaVersion, bool reaction)
+    internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader, uint schemaVersion, bool reaction, bool possibleEvent = false)
     {
         Object(ref reader, "produced event");
-        var state = new ProducedEventState(schemaVersion, reaction);
+        var state = new ProducedEventState(schemaVersion, reaction, possibleEvent);
         ProducedEventState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -43,10 +43,10 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    static SemanticCommandHandler CommandHandler(ref Utf8JsonReader reader)
+    static SemanticCommandHandler CommandHandler(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "command handler");
-        var state = new CommandHandlerState();
+        var state = new CommandHandlerState(schemaVersion);
         CommandHandlerState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -63,7 +63,7 @@ internal static partial class SemanticModelRead
             .Add("destination", (ref Utf8JsonReader reader, CommandState state, string property) => state.Destination = Nested(ref reader, StateChangeDestination, property))
             .Add("response", 7, (ref Utf8JsonReader reader, CommandState state, string property) => state.Response = Nested(ref reader, SemanticModelRead.Response, property))
             .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property))
-            .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, CommandHandler, property))
+            .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, (ref Utf8JsonReader item) => CommandHandler(ref item, state.SchemaVersion), property))
             .Add("reads", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Reads = Array(ref reader, DecisionRead, property));
 
         public ImmutableArray<SemanticProperty> Properties { get; set; }
@@ -105,20 +105,32 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class CommandHandlerState() : ReadState(0)
+    sealed class CommandHandlerState(uint schemaVersion) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<CommandHandlerState> Fields = new FieldTable<CommandHandlerState>("command handler")
             .Add("requirementId", (ref Utf8JsonReader reader, CommandHandlerState state, string property) => state.RequirementId = String(ref reader, property))
-            .Add("resultVersion", (ref Utf8JsonReader reader, CommandHandlerState state, string property) => state.ResultVersion = UInt32(ref reader, property));
+            .Add("resultVersion", (ref Utf8JsonReader reader, CommandHandlerState state, string property) => state.ResultVersion = UInt32(ref reader, property))
+            .Add("possibleEvents", 35, (ref Utf8JsonReader reader, CommandHandlerState state, string property) => state.ReadPossibleEvents(ref reader, property));
 
         public string? RequirementId { get; set; }
 
         public uint? ResultVersion { get; set; }
 
+        public ImmutableArray<SemanticProducedEvent> PossibleEvents { get; set; } = [];
+
+        public bool PossibleEventsRead { get; set; }
+
         public SemanticCommandHandler Build()
         {
-            Required(RequirementId is not null && ResultVersion.HasValue, "command handler");
-            return new(RequirementId!, ResultVersion!.Value);
+            var validResultSet = ResultVersion == 2 ? PossibleEventsRead : !PossibleEventsRead;
+            Required(RequirementId is not null && ResultVersion.HasValue && validResultSet, "command handler");
+            return new(RequirementId!, ResultVersion!.Value) { PossibleEvents = PossibleEvents };
+        }
+
+        void ReadPossibleEvents(ref Utf8JsonReader reader, string property)
+        {
+            PossibleEventsRead = true;
+            PossibleEvents = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, SchemaVersion, false, true), property);
         }
     }
 
@@ -136,7 +148,7 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class ProducedEventState(uint schemaVersion, bool reaction) : ReadState(schemaVersion)
+    sealed class ProducedEventState(uint schemaVersion, bool reaction, bool possibleEvent) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<ProducedEventState> Fields = new FieldTable<ProducedEventState>("produced event")
             .Add("eventContract", (ref Utf8JsonReader reader, ProducedEventState state, string property) => state.EventContract = Identifier(ref reader, property))
@@ -179,13 +191,13 @@ internal static partial class SemanticModelRead
         public void ReadDestination(ref Utf8JsonReader reader, string property)
         {
             DestinationRead = true;
-            DestinationExpression = NullableExpression(ref reader, property);
+            DestinationExpression = NullableObject(ref reader, property, (ref Utf8JsonReader item) => Expression(ref item, SchemaVersion, possibleEvent));
         }
 
         public SemanticProducedEvent Build()
         {
-            Required(EventContract.IsSet && ConditionRead && DestinationRead && !Mappings.IsDefault, "produced event");
-            return new(EventContract, ConditionExpression, DestinationExpression, Mappings) { When = When, Tags = Tags, DestinationType = DestinationType, Route = Route };
+            Required(EventContract.IsSet && (possibleEvent || (ConditionRead && DestinationRead && !Mappings.IsDefault)), "produced event");
+            return new(EventContract, ConditionExpression, DestinationExpression, possibleEvent && Mappings.IsDefault ? [] : Mappings) { When = When, Tags = Tags, DestinationType = DestinationType, Route = Route };
         }
     }
 

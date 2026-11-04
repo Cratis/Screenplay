@@ -94,6 +94,8 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `full-esm-v26.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV26()` under decision 0087. It pins command Date/DateTime conditions and validation rules, with text literals typed from the property and canonicalized to calendar dates or UTC tick-precision instants. `DateComparisonsCorpus.V26` separately pins equivalent file/folder forms, UTC ordering across offsets, instant equality, distinct ticks and calendar production guards. Other equality and all earlier golden bytes stay unchanged. The full v26 golden is frozen. Regenerate the separate source corpus with `SCREENPLAY_REGENERATE_DATE_COMPARISONS_CORPUS_V26=1`; it fails deliberately, so review, rebuild and rerun strictly without it.
 
+`full-esm-v35.json` pins handler result contract v2 under decision 0119: ordered `possibleEvents`, scalar and `oneOf` destinations, an entry route and an audit tag. `canonical_serialization_golden_vectors.CreateSemanticModelV35()` binds the dedicated batch-processing source; `PossibleEventsCorpus.V35` separately pins equivalent source forms. Inline bodies are not reference-executed, so these vectors have no specifications. The full v35 golden is frozen, as is every earlier golden. Regenerate only the current full golden (v36) with `SCREENPLAY_REGENERATE_GOLDEN=36`.
+
 ## Regenerating
 
 From a source checkout, update the current version's source model only for an intentional contract change, then run:
@@ -102,8 +104,8 @@ From a source checkout, update the current version's source model only for an in
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-`1` rewrites only the current full ESM golden (`full-esm-v28.json`) plus the four non-ESM sidecars:
-expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=28`
+`1` rewrites only the current full ESM golden (`full-esm-v36.json`) plus the four non-ESM sidecars:
+expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=36`
 to rewrite only the current full ESM golden. Older version selectors fail with a frozen-golden message
 before writing anything. The legacy `SCREENPLAY_REGENERATE_EVENT_ROUTES=1` switch also fails because v8 is frozen.
 Regeneration deliberately throws `GoldenVectorsRegenerated`; review the diff, rebuild embedded resources,
