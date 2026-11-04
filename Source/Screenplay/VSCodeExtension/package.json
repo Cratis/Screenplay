@@ -155,14 +155,22 @@
                 },
                 "screenplay.eventModelBoard.density": {
                     "type": "string",
-                    "enum": ["compact", "comfortable", "spacious"],
+                    "enum": [
+                        "compact",
+                        "comfortable",
+                        "spacious"
+                    ],
                     "default": "comfortable",
                     "scope": "application",
                     "description": "Spacing between elements on the event model board. Compact fits more on screen; comfortable is the readable default; spacious gives elements more room."
                 },
                 "screenplay.eventModelBoard.textSize": {
                     "type": "string",
-                    "enum": ["small", "medium", "large"],
+                    "enum": [
+                        "small",
+                        "medium",
+                        "large"
+                    ],
                     "default": "medium",
                     "scope": "application",
                     "description": "Text size on the event model board, independent of spacing density and canvas zoom."
