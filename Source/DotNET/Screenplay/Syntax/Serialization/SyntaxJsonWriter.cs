@@ -40,6 +40,7 @@ internal static class SyntaxJsonWriter
             if ((member.Name == "examples" || (node is Specifications.SpecificationSyntax && (member.Name == "parameters" || member.Name == "cases"))) && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
             if (node is Specifications.SpecificationErrorSyntax && member.Name == "caseValue" && value is null) continue;
             if (member.Name == "purposes" && value is IEnumerable purposes && !purposes.Cast<object>().Any()) continue;
+            if (OmitSampleRows(node, member.Name, value)) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
             if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;
@@ -61,6 +62,9 @@ internal static class SyntaxJsonWriter
         if (value is null) return true;
         return value is PossibleEventsSyntax possible && !possible.Events.Any();
     }
+
+    static bool OmitSampleRows(SyntaxNode node, string name, object? value) =>
+        node is SampleDataFieldSyntax && name == "rows" && value is IEnumerable<SampleDataRowSyntax> rows && !rows.Any();
 
     static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
         ClockSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||

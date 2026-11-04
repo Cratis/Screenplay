@@ -135,23 +135,15 @@ internal static partial class SampleDataPackParser
         while (context.TryPeekChild(row.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            var match = FieldRegex().Match(line.Content);
-            if (!match.Success)
-            {
-                context.Error(DiagnosticCodes.InvalidSampleDataValue, $"Invalid row field '{line.Content}' - expected '<field> = <literal>'", line.Location);
-                continue;
-            }
-
-            var name = match.Groups[1].Value;
-            var field = ParseValue(context, name, match.Groups[2].Value.Trim(), line);
+            var field = ParseField(context, line);
             if (field is null)
             {
                 continue;
             }
 
-            if (!seen.Add(name))
+            if (!seen.Add(field.Name))
             {
-                context.Error(DiagnosticCodes.DuplicateSampleDataField, $"This row already sets field '{name}'", line.Location);
+                context.Error(DiagnosticCodes.DuplicateSampleDataField, $"This row already sets field '{field.Name}'", line.Location);
                 continue;
             }
 
