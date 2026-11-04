@@ -167,6 +167,9 @@ jobs:
       - name: Check native Windows missing short-name admission
         if: runner.os == 'Windows'
         run: dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --configuration Debug --filter 'FullyQualifiedName~when_refusing_repair_write_conflicts|FullyQualifiedName~when_comparing_missing_windows_aliases'
+      - name: Check native Windows attachment opens
+        if: runner.os == 'Windows'
+        run: dotnet test Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj --configuration Debug --filter 'FullyQualifiedName~when_opening_windows_attachments'
       - name: Build self-contained server and packages
         env:
           VERSION: ${{ inputs.version || '0.0.0-desktop-ci' }}
