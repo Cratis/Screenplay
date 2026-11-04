@@ -10,12 +10,14 @@ import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { stringBodyPattern } from '../Text/StringLiteral';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
+import { ConditionDepthBudget } from './ConditionDepthBudget';
 
 const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'NotEqual', '>': 'GreaterThan', '>=': 'GreaterThanOrEqual', '<': 'LessThan', '<=': 'LessThanOrEqual', contains: 'Contains', 'starts with': 'StartsWith' };
 
 // The existing C# condition grammar: comparisons, left-associative and/or, and grouped conditions.
 // Previously omitted Legacy operands gain structure, not new parser diagnostics.
-export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false): ConditionSyntax | null {
+export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false, budgetContext: ParserContext = context): ConditionSyntax | null {
+    const budget = new ConditionDepthBudget(budgetContext, location);
     const clockContext = context;
     if (!strict) context = context.valueContext;
     const whitespace = strict ? dotNetWhitespace : '\\s';
@@ -47,11 +49,15 @@ export function parseCondition(context: ParserContext, text: string, location: S
     };
     const group = (): ConditionSyntax | null => {
         if (tokens[position] === '(') {
+            if (!budget.enter()) return null;
             position++;
-            const condition = or();
-            if (tokens[position] === ')') position++;
-            else if (strict || context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.UnclosedConditionGroup, "Expected ')' in condition", location);
-            return condition;
+            try {
+                const condition = or();
+                if (budget.exceeded) return null;
+                if (tokens[position] === ')') position++;
+                else if (strict || context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.UnclosedConditionGroup, "Expected ')' in condition", location);
+                return condition;
+            } finally { budget.leave(); }
         }
         const leftOperand = operand(DiagnosticCodes.ExpectedCondition, 'Expected a condition');
         if (leftOperand === null) return null;
@@ -73,7 +79,8 @@ export function parseCondition(context: ParserContext, text: string, location: S
             position++;
             const right = group();
             if (right === null) return null;
-            left = { kind: 'LogicalConditionSyntax', left, operator: 'And', right, location };
+            const previous: ConditionSyntax = left;
+            left = budget.build<ConditionSyntax>([previous, right], () => ({ kind: 'LogicalConditionSyntax', left: previous, operator: 'And', right, location }));
         }
         return left;
     };
@@ -83,12 +90,13 @@ export function parseCondition(context: ParserContext, text: string, location: S
             position++;
             const right = and();
             if (right === null) return null;
-            left = { kind: 'LogicalConditionSyntax', left, operator: 'Or', right, location };
+            const previous: ConditionSyntax = left;
+            left = budget.build<ConditionSyntax>([previous, right], () => ({ kind: 'LogicalConditionSyntax', left: previous, operator: 'Or', right, location }));
         }
         return left;
     };
     const condition = or();
-    if (strict || context.sourceOptions.numericMode === 'exact') {
+    if (!budget.exceeded && (strict || context.sourceOptions.numericMode === 'exact')) {
         if (condition === null && !strict) context.error(DiagnosticCodes.ExpectedCondition, 'Expected a condition', location);
         else if (condition !== null && position < tokens.length) context.error(DiagnosticCodes.UnexpectedTokenInCondition, `Unexpected '${tokens[position]}' in condition`, location);
     }

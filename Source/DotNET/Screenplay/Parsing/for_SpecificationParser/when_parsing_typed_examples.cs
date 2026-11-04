@@ -65,13 +65,23 @@ public class when_parsing_typed_examples : Specification
     [InlineData("given readmodel", "GivenReadModels")]
     [InlineData("then readmodel", "ThenReadModels")]
     [InlineData("then readmodel", "ThenReadModels", " exactly")]
-    void should_accept_a_qualified_name_and_one_structured_inline_value(string keyword, string member, string suffix = "")
+    void should_accept_a_qualified_name_with_a_structured_value_under_the_header(string keyword, string member, string suffix = "")
     {
-        var result = new ScreenplayCompiler().CompileSpecification($"specification S\n  {keyword} M.F.AcmeInvoice{suffix} lines = [{{\"quantity\":2}}]\n    total = 5000");
+        var result = new ScreenplayCompiler().CompileSpecification($"specification S\n  {keyword} M.F.AcmeInvoice{suffix}\n    lines\n      item\n        quantity = 2\n    total = 5000");
         result.Diagnostics.ShouldBeEmpty();
         var step = typeof(SpecificationSyntax).GetProperty(member)!.GetValue(result.Value);
         var node = step is IEnumerable<SyntaxNode> nodes ? nodes.Single() : (SyntaxNode)step;
-        node.GetType().GetProperty("InlineProperty")!.GetValue(node).ShouldEqual("lines");
+        node.GetType().GetProperty("InlineProperty")!.GetValue(node).ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("given")]
+    [InlineData("when")]
+    [InlineData("then readmodel")]
+    void should_refuse_an_inline_json_value_on_the_header(string keyword)
+    {
+        var result = new ScreenplayCompiler().CompileSpecification($"specification S\n  {keyword} AcmeInvoice lines = [{{\"quantity\":2}}]");
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.InlineJsonValue);
     }
 
     [Theory]

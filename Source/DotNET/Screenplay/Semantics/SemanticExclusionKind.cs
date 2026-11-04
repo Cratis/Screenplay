@@ -26,5 +26,10 @@ public enum SemanticExclusionKind
     /// <summary>
     /// An application-level policy.
     /// </summary>
-    Policy
+    Policy,
+
+    /// <summary>
+    /// An application-level trigger; reactions and specifications it sets off are excluded on later passes.
+    /// </summary>
+    Trigger
 }

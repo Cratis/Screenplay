@@ -199,6 +199,7 @@ public sealed partial class ScreenplayPrinter :
         }
 
         WriteTimeZone(writer, application.TimeZone);
+        WriteApplicationContext(writer, application.Context);
 
         WriteFileImports(writer, application.FileImports);
     }
@@ -213,11 +214,14 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Policies, WritePolicy);
         WriteSection(writer, application.Personas ?? [], WritePersona);
         WriteSection(writer, application.StickyNotes, WriteStickyNote);
+        WriteSection(writer, application.StateMachines, WriteStateMachine);
+        WriteSection(writer, application.Workflows, WriteWorkflow);
     }
 
     void WriteApplicationExperience(ScreenplayWriter writer, ApplicationSyntax application)
     {
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
+        WriteOptionalSection(writer, application.Onboarding, WriteOnboarding);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
         WriteSection(writer, application.Themes ?? [], WriteTheme);
         WriteSection(writer, application.SampleDataPacks, WriteSampleDataPack);
@@ -491,6 +495,7 @@ public sealed partial class ScreenplayPrinter :
             WriteDescription(writer, readModel.Description, readModel);
             WriteDocumentation(writer, readModel.Documentation, readModel);
             WriteFile(writer, readModel.File);
+            if (readModel.IsPassive) writer.Line("passive");
             WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
         }
     }

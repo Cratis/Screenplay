@@ -7,7 +7,7 @@ jump to the slice that uses it.
 
 ```text
 Invoicing/
-  invoicing.play         the whole application - 34 slices in one module
+  invoicing.play         the whole application - 36 slices in two modules
   invoicing.en.strings   English text for every $strings key the document references
   invoicing.nb.strings   the same keys in Norwegian
 ```
@@ -16,9 +16,19 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+## Passive decision state
+
+In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from the invoice's real history (`InvoiceRegistered` starts it unreserved, `InvoiceNumberReserved` reserves it and `InvoiceNumberReservationReleased` resets it), with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).
+
 ## Reusable read-model member shapes
 
 Child records such as `InvoiceLineItem` are top-level `type` declarations referenced by read-model members. They are value shapes, not other read-model identities; a slice-local `type` is skipped with Warning `PLAY0029`, and referencing an unsupported member type produces Error `PLAY0273`. Use the [top-level composite pattern](../../Documentation/screenplay/types.md#read-model-child-shapes), including for collections populated by a children projection. This guidance does not change the showcase's executable admission.
+
+## State machines and workflows
+
+`InvoiceLifecycle` is a `statemachine` that follows `InvoiceDetailsReadModel`: Draft, Sent, Overdue, Paid and Cancelled. A state allows the targets of the transitions written under it, the first matching transition wins, and `InvoiceMarkedOverdue` moves a sent invoice on only when its guard `status == "overdue"` holds over the read model; a draft that is reported overdue is ignored, not refused. Entering Overdue sends `ApplyLateFee` and starts `CollectOverdue`.
+
+`CollectOverdue` is the `workflow` that entering Overdue sets off, one run at a time per invoice. It uses every node kind: three triggers (a state, a daily schedule and a manual start), an action with `attempts`, `timeout` and `retry after`, a wait for time, a decision, a `foreach` over the invoice lines with a `join`, a wait for `InvoicePaid` that expires, and an approval by the finance controller whose rejection offers a payment plan. The `specification` blocks written inside both constructs pin the transitions and the runs. They are ESM v36 (decision 0124); like the rest of the showcase, whole-model executable binding stops at the unrelated refusals, so the lifecycle specifications of the compiler pin the same constructs executably. The single-branch `join` reports information `PLAY0850` on purpose: it shows the shape of a fan-out join.
 
 ## Atomic reaction batches
 
@@ -97,6 +107,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | CustomerPortal | RequestPaymentPlan | MyInvoices, CreditStatus | | |
 | Auditing | | CancelledInvoices, SystemActivity | | |
 | Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory, MarkInvoicePaidFromLegacyPayment | LegacyInvoiceSync, InvoiceSentPublication |
+| InvoiceReservations | ReserveInvoiceNumber | | | |
 | PublicVerification › InvoiceVerification | | VerifyingAnInvoice | | |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
@@ -122,10 +133,12 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
+| Component properties holding a list of objects and an empty list as indented [structured values](../../Documentation/screenplay/structured-values.md) | InvoiceList (`invoiceGrid` `columns`, `rowActions none`) |
 | `policy` with `require` (`authenticated`, `anonymous`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
 | Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
+| `onboarding` with open self-signup, tenant and member invitations, legal terms, an offering and email templates; the sender and mail server are [environment values](../../Documentation/screenplay/environments.md) | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
 | `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
@@ -141,7 +154,8 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
 | `produces` with `for`, `tag`, every mapping source (`$identity.*`, `$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
-| `reads … as … by` and `require` over read state | RecordPayment |
+| `reads … as … by` and `require` over read state | RecordPayment, ReserveInvoiceNumber |
+| `readmodel` with explicit `passive`, consumed only by a command `reads` | InvoiceReservations |
 | Pending `handler implementation` with hint and unconditional `produces`; attached inline/file handlers; `concurrency` | ApplyLateFee (ESM v23 result contract), ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |

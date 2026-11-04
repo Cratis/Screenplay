@@ -11,7 +11,7 @@ public class when_exhausting_the_position_budget : Specification
     void should_bound_nested_nullable_repeat_unrolling(string pattern, int length)
     {
         var expression = new RegexFragmentR(pattern, length).Parse();
-        var error = Catch.Exception(() => new GlushkovAutomaton(expression));
+        var error = Catch.Exception(() => _ = new GlushkovAutomaton(expression));
         error.ShouldBeOfExactType<RegexStateBudgetExceeded>();
         error!.Message.ShouldEqual("position budget exceeded");
     }
@@ -20,13 +20,13 @@ public class when_exhausting_the_position_budget : Specification
     void should_count_positions_not_the_authored_repeat_nodes()
     {
         var expression = RegexExpression.Repeat(RegexExpression.Character("a"), GlushkovAutomaton.PositionBudget + 1, GlushkovAutomaton.PositionBudget + 1);
-        Catch.Exception(() => new GlushkovAutomaton(expression)).ShouldBeOfExactType<RegexStateBudgetExceeded>();
+        Catch.Exception(() => _ = new GlushkovAutomaton(expression)).ShouldBeOfExactType<RegexStateBudgetExceeded>();
     }
 
     [Fact]
     void should_admit_exactly_the_position_budget()
     {
         var expression = RegexExpression.Repeat(RegexExpression.Character("a"), GlushkovAutomaton.PositionBudget, GlushkovAutomaton.PositionBudget);
-        Catch.Exception(() => new GlushkovAutomaton(expression)).ShouldBeNull();
+        Catch.Exception(() => _ = new GlushkovAutomaton(expression)).ShouldBeNull();
     }
 }

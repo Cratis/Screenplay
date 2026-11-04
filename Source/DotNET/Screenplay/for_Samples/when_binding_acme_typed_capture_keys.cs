@@ -24,8 +24,9 @@ public class when_binding_acme_typed_capture_keys : Specification
         _model = result.Value!.Model;
     }
 
-    // The automation specifications state what they invoke with `then invokes`, which selects v34
-    [Fact] void should_select_v34() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V34);
+    // The automation specifications state what they invoke with `then invokes` (v34); the order lifecycle state machine and the
+    // fulfilment workflow select v36, which builds on it.
+    [Fact] void should_select_v36() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V36);
 
     [Theory]
     [InlineData("OrderReceived")]

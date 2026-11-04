@@ -44,6 +44,7 @@ internal static partial class ScreenplayValidator
 
         ValidateDeclarations(application, slices, names, allowUnresolvedPersonaPolicies, context);
         ValidateSlices(application, slices, names, context);
+        LifecycleValidator.Validate(application, slices, names, context);
         ReadModelMemberTypeValidator.Validate(application, context);
         ValidateScopedReferences(application, expansion, names, context);
         ValidatePresentation(application, context);
@@ -155,6 +156,7 @@ internal static partial class ScreenplayValidator
 
         ValidatePersonaPolicies(application, names.Policies, allowUnresolvedPersonaPolicies, context);
         ValidateDuplicateProviders(application, context);
+        ValidateOnboarding(application, allowUnresolvedPersonaPolicies, context);
         ValidateSeeds(application, names.Events, context);
     }
 

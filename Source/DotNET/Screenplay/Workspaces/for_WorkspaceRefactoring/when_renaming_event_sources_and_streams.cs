@@ -211,7 +211,7 @@ public class when_renaming_event_sources_and_streams
         Accepted(renamed);
         var nodes = Nodes(renamed);
         nodes.OfType<ObserverFilterSyntax>().All(filter => filter.EventSource == "Customer").ShouldBeTrue();
-        nodes.OfType<ProducesSyntax>().Where(produced => produced.Stream is not null).Single().Stream!.EventSource.ShouldEqual("Customer");
+        nodes.OfType<ProducesSyntax>().Single(produced => produced.Stream is not null).Stream!.EventSource.ShouldEqual("Customer");
         var streamRename = Rename<EventStreamSyntax>(renamed.Workspace!, "Profile", "Details", formatting);
         Accepted(streamRename);
         var renamedNodes = Nodes(streamRename);

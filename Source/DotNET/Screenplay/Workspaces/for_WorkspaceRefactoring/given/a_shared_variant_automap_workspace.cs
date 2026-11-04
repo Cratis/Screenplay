@@ -37,14 +37,14 @@ public class a_shared_variant_automap_workspace : a_multi_source_property_worksp
 
     protected int InsertedMappings => WorkspaceSyntaxIndex.Create(Result.Workspace).Entries.Count(entry => entry.Node is SetMappingSyntax);
 
-    protected (string Target, string Source)[] Flows => new WorkspacePropertyPlan(WorkspaceSyntaxIndex.Create(Result.Workspace)).Links.ProjectionEffects
-        .Select(effect => (Target: effect.Targets.Single().Address, Source: effect.Sources.Single().Members.Single().Address)).OrderBy(flow => flow.Target, StringComparer.Ordinal).ToArray();
+    protected (string Target, string Source)[] Flows => [.. new WorkspacePropertyPlan(WorkspaceSyntaxIndex.Create(Result.Workspace)).Links.ProjectionEffects
+        .Select(effect => (Target: effect.Targets.Single().Address, Source: effect.Sources.Single().Members.Single().Address)).OrderBy(flow => flow.Target, StringComparer.Ordinal)];
 
-    protected (string Target, string Source)[] ExpectedFlows(string targetName, string sourceName) => new WorkspacePropertyPlan(WorkspaceSyntaxIndex.Create(Workspace)).Links.ProjectionEffects
+    protected (string Target, string Source)[] ExpectedFlows(string targetName, string sourceName) => [.. new WorkspacePropertyPlan(WorkspaceSyntaxIndex.Create(Workspace)).Links.ProjectionEffects
         .Select(effect => (Target: effect.Targets.Single().Address.Replace(".name", $".{targetName}", StringComparison.Ordinal), Source: effect.Sources.Single().Members.Single().Address.Replace(".name", $".{sourceName}", StringComparison.Ordinal)))
-        .OrderBy(flow => flow.Target, StringComparer.Ordinal).ToArray();
+        .OrderBy(flow => flow.Target, StringComparer.Ordinal)];
 
-    protected object[] VariantProperties(ScreenplayWorkspace workspace) => WorkspaceSyntaxIndex.Create(workspace).Entries
+    protected object[] VariantProperties(ScreenplayWorkspace workspace) => [.. WorkspaceSyntaxIndex.Create(workspace).Entries
         .Where(entry => entry.Node is PropertySyntax && entry.Address?.OwnerKind == Semantics.SemanticKind.ReadModel)
-        .OrderBy(entry => entry.Address!, WorkspaceSemanticAddressComparer.Instance).Select(entry => (object)(entry.Address, entry.SemanticId)).ToArray();
+        .OrderBy(entry => entry.Address!, WorkspaceSemanticAddressComparer.Instance).Select(entry => (object)(entry.Address, entry.SemanticId))];
 }

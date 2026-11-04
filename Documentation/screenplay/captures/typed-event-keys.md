@@ -9,7 +9,8 @@ A key can also be marked `is event source`, which selects ESM v33 instead; see [
 
 A capture over `source events` can obtain its event-source identity type from its `key`.
 When every consumed event declares exactly one required, scalar property of that name,
-and all captures appending the same event agree on its type, the appended event uses that
+and all captures appending the same event agree on its type, and no reaction producer
+supplies a different identity type for that event, the appended event uses that
 type instead of Text. For example:
 
 ```screenplay
@@ -37,8 +38,9 @@ The incoming foreign event's optional `for` remains opaque text: the capture's i
 comes from `orderId` in its payload, not that foreign routing value.
 
 Commands retain their existing identity inference. When no command supplies a type,
-untyped sources (including webhook and poll records), non-scalar keys, and disagreeing
-capture key types retain the Text fallback. A plain String key therefore keeps the same
+untyped sources (including webhook and poll records), non-scalar keys, disagreeing
+capture key types, and reaction producers that supply a different identity type retain
+the Text fallback. A plain String key therefore keeps the same
 model and version as before. An invalid or missing event key still fails the existing
 source-events key validation; inference does not weaken that check.
 

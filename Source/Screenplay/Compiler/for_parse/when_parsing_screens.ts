@@ -174,8 +174,14 @@ describe('when parsing every UI binding source form', () => {
             '          property componentValue from component other.selected null preserve',
             '          property exactComponentValue from component "other:list".selected null preserve',
             '          property literalValue from literal true mode oneWay',
-            '          property objectLiteral from literal {"label":"Done","count":2}',
-            '          property arrayLiteral from literal ["one",2,false,null]',
+            '          property objectLiteral from literal',
+            '            label = "Done"',
+            '            count = 2',
+            '          property arrayLiteral from literal mode oneWay',
+            '            item "one"',
+            '            item 2',
+            '            item false',
+            '            item null',
             '          property invalidLiteral from literal true mode sideways',
             '          property invalidQuery from query 123',
             '          property invalidComponent from component other',
@@ -195,6 +201,7 @@ describe('when parsing every UI binding source form', () => {
     it('should read typed literal bindings', () => properties[4].binding!.should.deep.include({ bindingKind: 'Literal', mode: 'OneWay' }));
     it('should read object literal bindings', () => properties[5].binding!.literal!.kind.should.equal('ObjectExpressionSyntax'));
     it('should read array literal bindings', () => properties[6].binding!.literal!.kind.should.equal('ListExpressionSyntax'));
+    it('should read modifiers before a literal block', () => properties[6].binding!.mode!.should.equal('OneWay'));
     it('should preserve invalid literal modifier text', () => properties[7].binding!.rawText!.should.equal('mode sideways'));
     it('should preserve invalid query text', () => properties[8].binding!.rawText!.should.equal('from query 123'));
     it('should preserve invalid component text', () => properties[9].binding!.rawText!.should.equal('from component other'));

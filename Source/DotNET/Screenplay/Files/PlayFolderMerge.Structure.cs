@@ -43,7 +43,9 @@ internal static partial class PlayFolderMerge
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"module '{group.Key}'", context),
             Purposes = [.. parts.SelectMany(part => part.Purposes).DistinctBy(purpose => purpose.Name)],
-            Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
+            Authorize = parts.Exists(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
+                ? null
+                : CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             ScreenTemplates = DeclaredInOneFile(
                 parts.SelectMany(part => part.ScreenTemplates),
@@ -104,7 +106,9 @@ internal static partial class PlayFolderMerge
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"feature '{group.Key}'", context),
             Purposes = [.. parts.SelectMany(part => part.Purposes).DistinctBy(purpose => purpose.Name)],
-            Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
+            Authorize = parts.Exists(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
+                ? null
+                : CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Templates = TemplatesOnce(parts.SelectMany(part => part.Templates)),
@@ -142,7 +146,7 @@ internal static partial class PlayFolderMerge
         {
             var first = kept.Find(earlier =>
                 !string.Equals(earlier.Location.Path, authorization.Location.Path, StringComparison.Ordinal) &&
-                SyntaxJson.StructurallyEqual(earlier, authorization));
+                SameRequirement(earlier.Requirement, authorization.Requirement));
             if (first is not null)
             {
                 context.Warning(
@@ -158,7 +162,9 @@ internal static partial class PlayFolderMerge
         var requirement = WithoutComments(kept[0].Requirement);
         foreach (var next in kept.Skip(1))
         {
-            requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, WithoutComments(next.Requirement), requirement.Location);
+            var combined = AuthorizeParser.Combine(new AuthorizeSyntax(requirement, requirement.Location), next with { Requirement = WithoutComments(next.Requirement) }, context);
+            if (combined is null) return null;
+            requirement = combined.Requirement;
         }
 
         // Every gate - kept or ignored - may carry comments on itself and on its requirements, for
@@ -172,6 +178,29 @@ internal static partial class PlayFolderMerge
             .Select(comment => comment with { Line = line, Placement = SourceCommentPlacement.Leading, AnchorLine = line });
 
         return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
+    }
+
+    // Compare the bounded requirement trees directly: the transport serializer has a lower depth limit.
+    static bool SameRequirement(PolicyRequirementSyntax left, PolicyRequirementSyntax right)
+    {
+        var pending = new Stack<(PolicyRequirementSyntax Left, PolicyRequirementSyntax Right)>();
+        pending.Push((left, right));
+        while (pending.TryPop(out var pair))
+        {
+            if (pair.Left is LogicalPolicyRequirementSyntax first && pair.Right is LogicalPolicyRequirementSyntax second)
+            {
+                if (first.Operator != second.Operator) return false;
+                pending.Push((first.Left, second.Left));
+                pending.Push((first.Right, second.Right));
+            }
+            else if (pair.Left is not PolicyReferenceSyntax firstReference || pair.Right is not PolicyReferenceSyntax secondReference ||
+                !string.Equals(firstReference.Name, secondReference.Name, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // Identical comments in different files are separate occurrences. Other parts' header comments move

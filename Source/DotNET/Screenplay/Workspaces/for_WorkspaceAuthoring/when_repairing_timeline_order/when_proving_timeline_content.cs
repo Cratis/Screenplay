@@ -124,10 +124,18 @@ public class when_proving_timeline_content : given.a_timeline
                   specification Example
                     when Write
                       id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                      data = {"kind":"ApplicationSyntax","modules":["b","a"]}
+                      data
+                        kind = "ApplicationSyntax"
+                        modules
+                          item "b"
+                          item "a"
                     then E
                       for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                      data = {"kind":"ApplicationSyntax","modules":["b","a"]}
+                      data
+                        kind = "ApplicationSyntax"
+                        modules
+                          item "b"
+                          item "a"
                 slice StateView View
                   readmodel ViewRead
                     id Uuid
@@ -137,7 +145,7 @@ public class when_proving_timeline_content : given.a_timeline
                       id = $eventSourceId
             """;
         var before = Create(("root.play", source));
-        var after = Create(("root.play", source.Replace("[\"b\",\"a\"]", "[\"a\",\"b\"]", StringComparison.Ordinal)));
+        var after = Create(("root.play", source.Replace("item \"b\"\n              item \"a\"", "item \"a\"\n              item \"b\"", StringComparison.Ordinal)));
         before.Compilation.Value.ShouldBeNull();
         after.Compilation.Value.ShouldBeNull();
         WorkspaceTimelineRepairs.Timeline(before).SourceValid.ShouldBeTrue();

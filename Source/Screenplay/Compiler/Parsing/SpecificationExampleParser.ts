@@ -13,6 +13,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcrete, parseConcreteMapping } from './SpecificationResponseParser';
+import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 const header = nativePattern('^example\\s+([A-Z]\\w*)\\s*:\\s*([A-Z]\\w*(?:\\.\\w+)*)$'.replaceAll('\\s', dotNetWhitespace));
 const mapping = nativePattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$'.replaceAll('\\s', dotNetWhitespace));
@@ -60,6 +61,7 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
     addInlineValue(context, parent, inline, values);
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
+        let structured: PropertyMappingSyntax | undefined;
         if (example !== undefined && firstWord(child.content) === 'description') {
             description = parseDescription(context, child, description, `Example '${example}'`);
             continue;
@@ -97,6 +99,8 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
             if (source.length === 0) context.error(DiagnosticCodes.InvalidSpecificationEventSource, "Invalid event-source assertion 'for' - expected 'for <value>'", locationOf(child));
             else if (eventSource !== null) context.error(DiagnosticCodes.DuplicateSpecificationEventSource, 'A specification step can declare its event-source assertion only once', locationOf(child));
             else eventSource = parseMappingSource(source, locationOf(child), context);
+        } else if ((structured = tryParseStructuredMapping(context, child)) !== undefined) {
+            addFixtureValue(context, values, structured, generatedValues);
         } else {
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
         }

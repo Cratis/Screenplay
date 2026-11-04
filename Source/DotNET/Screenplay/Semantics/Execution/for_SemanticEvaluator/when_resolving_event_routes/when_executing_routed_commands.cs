@@ -58,15 +58,19 @@ public class when_executing_routed_commands : given.event_route_models
             }
         };
         ((SemanticAccepted)Execute(Plan(command, Source with { Streams = [stream] }), SemanticValue.Text("a|b%"))).Facts[0].Route!.StreamId.ShouldEqual("a%7Cb%25|3fa85f64-5717-4562-b3fc-2c963f66afa6");
-        AssertRejected(Execute(Plan(command, Source with { Streams = [stream] }), SemanticValue.Text(string.Empty)), SemanticRejectionCategory.Contract,
+        AssertRejected(
+            Execute(Plan(command, Source with { Streams = [stream] }), SemanticValue.Text(string.Empty)),
+            SemanticRejectionCategory.Contract,
             SemanticStreamIdFormatter.FailureMessage(StreamIdFormatFailure.Empty));
     }
 
     [Fact]
     void should_keep_authorization_ahead_of_an_unformattable_id()
     {
-        AssertRejected(Execute(Plan(Command with { Authorization = new SemanticPolicyReference("Authenticated") }), SemanticValue.Text(string.Empty)),
-            SemanticRejectionCategory.Unauthorized, "Caller is not authorized.");
+        AssertRejected(
+            Execute(Plan(Command with { Authorization = new SemanticPolicyReference("Authenticated") }), SemanticValue.Text(string.Empty)),
+            SemanticRejectionCategory.Unauthorized,
+            "Caller is not authorized.");
     }
 
     [Fact]
@@ -76,8 +80,12 @@ public class when_executing_routed_commands : given.event_route_models
         AssertRejected(Execute(Plan(validation), SemanticValue.Text(string.Empty)), SemanticRejectionCategory.Validation, "key required");
         var requirement = Command with
         {
-            Requirements = [new(new SemanticComparison(new(Key.Id, null), SemanticComparisonOperator.NotEqual,
-                new(default, SemanticValue.Text(string.Empty))), "requirement failed")]
+            Requirements = [new(
+                new SemanticComparison(
+                    new(Key.Id, null),
+                    SemanticComparisonOperator.NotEqual,
+                    new(default, SemanticValue.Text(string.Empty))),
+                "requirement failed")]
         };
         AssertRejected(Execute(Plan(requirement), SemanticValue.Text(string.Empty)), SemanticRejectionCategory.Validation, "requirement failed");
     }
@@ -104,12 +112,16 @@ public class when_executing_routed_commands : given.event_route_models
             Command with { Destination = null, Produces = [new(Event.Id, null, null, [])] }
         })
         {
-            AssertRejected(Execute(Plan(command), SemanticValue.Text(string.Empty)), SemanticRejectionCategory.Contract,
+            AssertRejected(
+                Execute(Plan(command), SemanticValue.Text(string.Empty)),
+                SemanticRejectionCategory.Contract,
                 SemanticStreamIdFormatter.FailureMessage(StreamIdFormatFailure.Empty));
         }
         var property = Key with { Type = Integer };
-        AssertRejected(Execute(Plan(Command with { Properties = [Identity, property] }, Source with { Streams = [Stream with { StreamIdType = Integer }] }), SemanticValue.Number(9007199254740992m)),
-            SemanticRejectionCategory.Contract, SemanticStreamIdFormatter.FailureMessage(StreamIdFormatFailure.OutOfRange));
+        AssertRejected(
+            Execute(Plan(Command with { Properties = [Identity, property] }, Source with { Streams = [Stream with { StreamIdType = Integer }] }), SemanticValue.Number(9007199254740992m)),
+            SemanticRejectionCategory.Contract,
+            SemanticStreamIdFormatter.FailureMessage(StreamIdFormatFailure.OutOfRange));
     }
 
     [Fact]

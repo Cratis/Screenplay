@@ -72,6 +72,10 @@ Monaco and VS Code use typed source declarations and command routes from the com
 
 The C# binder and reference runner admit routing in executable semantic model (ESM) v8, including specification routes and composite stream ids. Editor validation and the board do not execute routes. A specification's routes appear as an information badge beside its title, whose tooltip lists every authored route; the title itself is not lengthened. The slice header shows a matching badge that lists the routes of all its specifications. Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No automatic source/stream rename, route selection or inferred-routing inlay is provided. Saved-file C# repairs can remove an identical production override with `PLAY0664`. See [the source/stream support matrix](event-sources.md#tooling-support).
 
+## State machines and workflows
+
+Both Monaco and VS Code highlight [state machines](statemachines.md) and [workflows](workflows.md), complete their top-level keywords, and report the structure diagnostics `PLAY0834` and `PLAY0843` while you type. The words inside the two blocks (`follows`, `state`, `entering`, `on`, `action`, `decide`, `wait`, `approval`, `foreach`, `join`, the outlet names) are contextual and never end a highlighting block. The CLI reports the rest (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`), and the event model board lists the declarations. Rename follows events, commands, read models, state machines, workflows, personas and policies into them; renaming a node or a state is not supported and the state or node names are plain text.
+
 ## Operation and system intent (syntax-only)
 
 Both Monaco and VS Code recognize [systems and operations](operations.md), inline/standalone declarations and operation specification steps. Assistance resolves explicit declaration kinds over the assembled application and uses the current typed source for command inputs, including unsaved and import-placed files. Input/source suggestions retain concept, composite, optional and collection shapes; ambiguous references are not linked to an arbitrary declaration. Phase hover distinguishes pending, file and inline sources and ordered hints. Existing attachment navigation applies to phase files.
@@ -104,8 +108,8 @@ Completion in the text editor offers only what the block under the cursor can ho
 - A `slice` offers the members of its type: a `StateChange` slice, a `StateView` slice, an `Automation` slice and a `Translate` slice each get their own list.
 - A module offers, among others, `feature`, `screen`, `form`, `contribute`, `import` and `depends on`; a feature offers its slices, nested features, `contribute` and `depends on`.
 - After `depends on `, completion offers sibling features first, then the siblings of enclosing features, root modules and qualified paths to features elsewhere. It excludes self, ancestors, descendants and targets already declared by that container, including declarations in other workspace files. After a qualifier such as `Timesheets.`, it inserts only the feature name. Each suggestion describes the target's full address and its relation to the current container.
-- `readmodel`, `reducer`, `form`, `contribute`, `behavior`, `persona`, `authentication`, `seed`, `theme`, `ui profile`, `sample data`, `layout`, and screen and dialog templates offer their own members.
-- At the top level, `domain` and `authentication` are not offered again once the document declares them.
+- `readmodel`, `reducer`, `form`, `contribute`, `behavior`, `persona`, `authentication`, `onboarding`, `seed`, `theme`, `ui profile`, `sample data`, `layout`, and screen and dialog templates offer their own members.
+- At the top level, `domain`, `authentication` and `onboarding` are not offered again once the document declares them.
 
 ### Expand an empty command
 

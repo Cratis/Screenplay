@@ -141,6 +141,7 @@ export function parseTag(context: ParserContext, line: SourceLine, eventDeclarat
 
 export function parseReadModel(context: ParserContext, header: SourceLine): ReadModelSyntax {
     let bodyIndent: number | undefined;
+    let passive = false;
     const name = readModelHeader.exec(header.content)?.[1] ?? '';
     if (name === '') {
         context.error(DiagnosticCodes.InvalidReadModelDeclaration, `Invalid read model declaration '${header.content}' - expected 'readmodel <Name>'`, locationOf(header));
@@ -155,6 +156,13 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
             description = parseDescription(context, line, description, `Read model '${name}'`);
         } else if (firstWord(line.content) === 'documentation' && tryParseProperty(line) === undefined) {
             documentation = parseDocumentation(context, line, documentation, `Read model '${name}'`);
+        } else if (line.content === 'passive') {
+            if (passive) {
+                context.warning(DiagnosticCodes.RepeatedPassiveDirective, "A read model repeats 'passive'; the directive is idempotent.", locationOf(line));
+            }
+            passive = true;
+        } else if (firstWord(line.content) === 'passive' && ['true', 'false'].includes(line.content.slice('passive'.length).trim())) {
+            context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
         } else if (isFileDirectiveAmongProperties(line)) {
             continue;
         } else {
@@ -170,5 +178,6 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
                 `Property '${property.name}' of read model '${name}' cannot be marked identifier - only a command property can be`));
         }
     }
-    return { kind: 'ReadModelSyntax', name, properties, description, documentation, location: locationOf(header) };
+    const model: ReadModelSyntax = { kind: 'ReadModelSyntax', name, properties, description, documentation, location: locationOf(header) };
+    return passive ? { ...model, isPassive: true } : model;
 }

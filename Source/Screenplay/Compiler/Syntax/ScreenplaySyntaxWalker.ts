@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
+import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import { IdentitySyntax } from './IdentitySyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
@@ -40,6 +41,7 @@ import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { PossibleEventsSyntax } from './PossibleEventsSyntax';
+import { LifecycleSpecificationSyntax, StateEntrySyntax, StateMachineSyntax, StateSyntax, StateTransitionSyntax, WorkflowEdgeSyntax, WorkflowNodeSyntax, WorkflowSyntax } from './Lifecycles';
 import { PossibleEventSyntax } from './PossibleEventSyntax';
 import { ReadsSyntax, ConcurrencySyntax, ReducerSyntax, ReducerRuleSyntax, FormSyntax, TriggerDataSyntax } from './DependencySources';
 
@@ -53,9 +55,12 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         if (syntax.domain !== null) this.visitDomain(syntax.domain);
         if (syntax.timeZone != null) this.visitTimeZone(syntax.timeZone);
+        if (syntax.context != null) this.visitApplicationContext(syntax.context);
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         syntax.systems?.forEach(node => this.visitSystem(node));
+        syntax.stateMachines?.forEach(node => this.visitStateMachine(node));
+        syntax.workflows?.forEach(node => this.visitWorkflow(node));
         syntax.eventSources?.forEach(node => this.visitEventSource(node));
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
@@ -280,6 +285,13 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.onSubmit !== null) this.visitScreenDirective(syntax.onSubmit);
     }
 
+    visitApplicationContext(syntax: ApplicationContextSyntax): void {
+        this.visitNode(syntax);
+        syntax.members.forEach(member => this.visitContextMember(member));
+    }
+
+    visitContextMember(syntax: ContextMemberSyntax): void { this.visitNode(syntax); }
+
     visitTimeZone(syntax: TimeZoneSyntax): void { this.visitNode(syntax); }
 
     visitCommandCalendar(syntax: CommandCalendarSyntax): void { this.visitNode(syntax); }
@@ -323,6 +335,53 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitSystem(syntax: SystemSyntax): void { this.visitNode(syntax); }
+
+    visitStateMachine(syntax: StateMachineSyntax): void {
+        this.visitNode(syntax);
+        syntax.states.forEach(node => this.visitState(node));
+        syntax.specifications.forEach(node => this.visitLifecycleSpecification(node));
+    }
+
+    visitState(syntax: StateSyntax): void {
+        this.visitNode(syntax);
+        syntax.entering.forEach(node => this.visitStateEntry(node));
+        syntax.transitions.forEach(node => this.visitStateTransition(node));
+    }
+
+    visitStateEntry(syntax: StateEntrySyntax): void { this.visitNode(syntax); }
+
+    visitStateTransition(syntax: StateTransitionSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.when !== null) this.visitCondition(syntax.when);
+    }
+
+    visitWorkflow(syntax: WorkflowSyntax): void {
+        this.visitNode(syntax);
+        syntax.nodes.forEach(node => this.visitWorkflowNode(node));
+        syntax.specifications.forEach(node => this.visitLifecycleSpecification(node));
+    }
+
+    visitWorkflowNode(syntax: WorkflowNodeSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.schedule !== null) this.visitNode(syntax.schedule);
+        if (syntax.timeout !== null) this.visitNode(syntax.timeout);
+        if (syntax.retryAfter !== null) this.visitNode(syntax.retryAfter);
+        if (syntax.condition !== null) this.visitCondition(syntax.condition);
+        if (syntax.duration !== null) this.visitNode(syntax.duration);
+        if (syntax.expiresAfter !== null) this.visitNode(syntax.expiresAfter);
+        syntax.edges.forEach(node => this.visitWorkflowEdge(node));
+    }
+
+    visitWorkflowEdge(syntax: WorkflowEdgeSyntax): void { this.visitNode(syntax); }
+
+    visitLifecycleSpecification(syntax: LifecycleSpecificationSyntax): void {
+        this.visitNode(syntax);
+        syntax.given.forEach(node => this.visitSpecificationEvent(node));
+        if (syntax.whenAppended !== null) this.visitSpecificationEvent(syntax.whenAppended);
+        if (syntax.whenStarted !== null) this.visitExpression(syntax.whenStarted);
+        syntax.outcomes.forEach(node => this.visitNode(node));
+        syntax.then.forEach(node => this.visitNode(node));
+    }
     visitOperation(syntax: OperationSyntax): void {
         this.visitNode(syntax);
         syntax.inputs.forEach(input => this.visitProperty(input));

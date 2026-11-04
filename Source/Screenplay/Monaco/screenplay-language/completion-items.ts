@@ -38,7 +38,13 @@ export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntr
     return [...contextVariableItems, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
 }
 
+export const applicationContextItems: CompletionEntry[] = [
+    { label: 'time zone member', insertText: '${1:bookingZone} time zone', documentation: 'A named application time-zone input. Only time zone members are currently declared; binding reports PLAY0268 (#824).' },
+    { label: 'description', insertText: 'description "${1:context intent}"', documentation: 'Describes the application context; does not supply a runtime value.' },
+];
+
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application context members (decision 0132). Syntax-only; binding reports PLAY0268 (#824). At most one block per application.' },
     { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'Application calendar (decisions 0106/0107). Syntax-only; binding reports PLAY0268. Never falls back to the machine zone.' },
     { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'Configurable application calendar default. Syntax-only; binding reports PLAY0268.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
@@ -48,6 +54,8 @@ export const topLevelItems: CompletionEntry[] = [
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
+    { label: 'statemachine', insertText: 'statemachine ${1:Name}\n    follows ${2:ReadModel}\n    state ${3:Placed} initial\n        on ${4:Event} -> ${5:Paid}\n    state ${5:Paid} final', documentation: 'Where a thing is in its lifecycle, derived from the read model it follows (ESM v36). Exactly one initial state; a transition is `on <Event> [when <condition>] -> <State>`; `entering send <Command>` or `entering start <Workflow>` says what entering a state does.' },
+    { label: 'workflow', insertText: 'workflow ${1:Name}\n    for ${2:ReadModel}\n    trigger on ${3:Event}\n        -> ${4:Step}\n    action ${4:Step} sends ${5:Command}', documentation: 'A durable process that runs one at a time per subject (ESM v36): trigger, action, decide, wait, approval, foreach and join nodes connected by outlets. An unconnected failed, rejected or expired outlet fails the run.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import from', insertText: 'import ${1:Module}.${2:Event} from "${3:origin}"', documentation: 'Imports a public event contract with a nonblank opaque origin, not a file path. An import has no local shape, so executable binding still refuses it with PLAY0268.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
@@ -60,7 +68,8 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'domain', insertText: 'domain ${1:Name}', documentation: 'The domain the file belongs to — optional, at most one per file, before everything else.' },
     { label: 'sticky', insertText: 'sticky note on ${4|personas,eventsources,givencontexts,seeddata|}\n    description "${1:what the note says}"\n    position ${2:0} ${3:0}', documentation: 'A sticky note on a domain canvas: personas, eventsources, givencontexts or seeddata.' },
     { label: 'persona', insertText: 'persona ${1:Name}\n    description "${2:who they are}"', documentation: 'A named role interacting with the application, with the policies it holds.' },
-    { label: 'authentication', insertText: 'authentication\n    provider ${1:Name}\n        ${2:setting} ${3:value}', documentation: 'Declares the identity providers of the application — at most one block per file.' },
+    { label: 'authentication', insertText: 'authentication\n    provider ${1:Name}', documentation: 'Declares the identity providers of the application — at most one block per file.' },
+    { label: 'onboarding', insertText: 'onboarding\n    signup open creates tenant\n    invite member\n        by ${1:Persona}\n        grant ${2:Persona}', documentation: 'Declares how people get into the application: self-signup, invitations, legal terms, an offering and emails. Needs authentication; at most one block per application.' },
     { label: 'seed', insertText: 'seed\n    for ${1:EventSourceId}\n        ${2:EventType}', documentation: 'Declares events to seed into the event store per event source id.' },
     { label: 'layout', insertText: 'layout ${1:Name}\n    ${2:slot}', documentation: 'Declares the application shell with named slots.' },
     { label: 'theme', insertText: 'theme ${1:Name}\n    compatible with ${2:Package}', documentation: 'Declares a theme and the component packages it is compatible with.' },
@@ -68,6 +77,36 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'ui profile', insertText: 'ui profile ${1:Name}\n    target platform ${2:web}\n    layout ${3:Layout}\n    theme ${4:Theme}', documentation: 'Binds a target platform and size to a layout, theme and component packages.' },
     { label: 'behavior', insertText: 'behavior ${1:Name}\n    on ${2:click}\n        ${3:execute command}', documentation: 'A named interaction wiring, attached to a screen, form or dialog with `uses`.' },
     { label: 'trigger', insertText: 'trigger ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an integration signal a reaction can run on.' },
+];
+
+export const stateMachineItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what it tracks}"', documentation: 'Describes the state machine.' },
+    { label: 'follows', insertText: 'follows ${1:ReadModel}', documentation: 'The read model the state machine follows; its key identifies one instance.' },
+    { label: 'state', insertText: 'state ${1:Name}\n    on ${2:Event} -> ${3:State}', documentation: 'A state. Add `initial` (exactly one) or `final` (no transitions out).' },
+    { label: 'specification', insertText: 'specification ${1:Name}\n    given ${2:Event}\n        for "${3:key}"\n    when append ${4:Event}\n        for "${3:key}"\n    then is ${5:State}', documentation: 'Pins the state machine with Given/When/Then.' },
+];
+
+export const stateItems: CompletionEntry[] = [
+    { label: 'on', insertText: 'on ${1:Event} -> ${2:State}', documentation: 'The first transition on the event whose condition holds and whose target the current state allows is taken; anything else is ignored.' },
+    { label: 'on … when', insertText: 'on ${1:Event} when ${2:property} == ${3:"value"} -> ${4:State}', documentation: 'A guarded transition; the condition is over the followed read model after the event.' },
+    { label: 'entering send', insertText: 'entering send ${1:Command}', documentation: 'Sends a command when the state is entered. It may run again on redelivery.' },
+    { label: 'entering start', insertText: 'entering start ${1:Workflow}', documentation: 'Starts a workflow when the state is entered. It may run again on redelivery.' },
+];
+
+export const workflowItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what the process does}"', documentation: 'Describes the workflow.' },
+    { label: 'for', insertText: 'for ${1:ReadModel}', documentation: 'The read model whose key is the subject; a workflow runs one at a time per subject.' },
+    { label: 'trigger on', insertText: 'trigger on ${1:Event}\n    -> ${2:Node}', documentation: 'Starts a run when the event happens.' },
+    { label: 'trigger when … enters', insertText: 'trigger when ${1:StateMachine} enters ${2:State}\n    -> ${3:Node}', documentation: 'Starts a run when the state machine enters the state.' },
+    { label: 'trigger every', insertText: 'trigger every ${1:1} ${2|minutes,hours,days|}\n    -> ${3:Node}', documentation: 'Starts a run on a schedule.' },
+    { label: 'trigger manual', insertText: 'trigger manual\n    -> ${1:Node}', documentation: 'Starts a run by hand.' },
+    { label: 'action', insertText: 'action ${1:Name} sends ${2:Command}\n    next -> ${3:Node}\n    failed -> ${4:Node}', documentation: 'Sends a command. Optional `attempts n`, `timeout n unit`, `retry after n unit`. Outlets next and failed.' },
+    { label: 'decide', insertText: 'decide ${1:Name} when ${2:property} == ${3:true}\n    "${4:yes}" -> ${5:Node}\n    "${6:no}" -> ${7:Node}', documentation: 'Chooses between two outlets of your own: the first when the condition holds.' },
+    { label: 'wait for', insertText: 'wait ${1:Name} for ${2:Event} expires after ${3:1} ${4|days,hours,minutes|}\n    resumed -> ${5:Node}\n    expired -> ${6:Node}', documentation: 'Waits for an event about the subject. Outlets resumed and expired.' },
+    { label: 'approval', insertText: 'approval ${1:Name} by ${2:Persona} expires after ${3:1} ${4|days,hours,minutes|}\n    approved -> ${5:Node}\n    rejected -> ${6:Node}\n    expired -> ${7:Node}', documentation: 'Asks a persona or policy to approve.' },
+    { label: 'foreach', insertText: 'foreach ${1:Name} over ${2:items} parallel ${3:2}\n    each -> ${4:Node}\n    completed -> ${5:Node}', documentation: 'Runs the each branch once per item of a collection property of the subject.' },
+    { label: 'join', insertText: 'join ${1:Name} ${2|all,any,at least 2|}', documentation: 'Joins parallel branches back together.' },
+    { label: 'specification', insertText: 'specification ${1:Name}\n    given ${2:Event}\n        for "${3:key}"\n    when append ${4:Event}\n        for "${3:key}"\n    then completes', documentation: 'Pins a run with Given/When/Then.' },
 ];
 
 export const operationItems: CompletionEntry[] = [

@@ -16,10 +16,18 @@ public static class SemanticTypedContextSerializer
     /// <param name="descriptors">The descriptors to serialize.</param>
     public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors)
     {
+        var usesTimeZone = descriptors.Any(descriptor => descriptor.Members.Any(member => member.Type.RuntimeToken == SemanticContextRuntimeTokens.TimeZone));
+        string[] runtimeTokens =
+        [
+            SemanticContextRuntimeTokens.Text, SemanticContextRuntimeTokens.WholeNumber, SemanticContextRuntimeTokens.Boolean,
+            SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId, SemanticContextRuntimeTokens.Identity,
+            SemanticContextRuntimeTokens.CausedBy, SemanticContextRuntimeTokens.Causation,
+            .. usesTimeZone ? [SemanticContextRuntimeTokens.TimeZone] : Array.Empty<string>()
+        ];
         return JsonSerializer.SerializeToUtf8Bytes(
             new
             {
-                contractRevision = SemanticTypedContextDescriptor.ContractRevision,
+                contractRevision = usesTimeZone ? SemanticTypedContextDescriptor.TimeZoneContractRevision : SemanticTypedContextDescriptor.ContractRevision,
                 typeKinds = new[] { SemanticContextTypeKinds.Runtime, SemanticContextTypeKinds.Shape, SemanticContextTypeKinds.Model },
                 sourceKinds = new[]
                 {
@@ -29,12 +37,7 @@ public static class SemanticTypedContextSerializer
                     SemanticContextSourceKinds.ValidatedArtifact, SemanticContextSourceKinds.AuthorizedOperation,
                     SemanticContextSourceKinds.CommandIdentifier, SemanticContextSourceKinds.QueryKey, SemanticContextSourceKinds.Unavailable
                 },
-                runtimeTokens = new[]
-                {
-                    SemanticContextRuntimeTokens.Text, SemanticContextRuntimeTokens.WholeNumber, SemanticContextRuntimeTokens.Boolean,
-                    SemanticContextRuntimeTokens.DateTime, SemanticContextRuntimeTokens.TenantId, SemanticContextRuntimeTokens.Identity,
-                    SemanticContextRuntimeTokens.CausedBy, SemanticContextRuntimeTokens.Causation
-                },
+                runtimeTokens,
                 descriptors = descriptors.Select(descriptor => WithResult(descriptor, new
                 {
                     descriptor.RequirementId,
@@ -111,8 +114,10 @@ public static class SemanticTypedContextSerializer
 
     static object? Reference(SemanticTypeReference? type) => type is null ? null : new
     {
-        kind = type.Kind.ToString(), primitive = type.Primitive.ToString(),
+        kind = type.Kind.ToString(),
+        primitive = type.Primitive.ToString(),
         target = type.Kind == SemanticTypeReferenceKind.Primitive ? null : type.Target.ToString(),
-        type.IsCollection, type.IsOptional
+        type.IsCollection,
+        type.IsOptional
     };
 }

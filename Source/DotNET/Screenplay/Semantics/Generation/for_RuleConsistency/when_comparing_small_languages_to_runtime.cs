@@ -38,7 +38,9 @@ public class when_comparing_small_languages_to_runtime
             var result = RuleConsistency.Check(generation, SemanticPrimitiveType.Text, new(default, SemanticValidationRuleKind.Matches, new SemanticTextValue(pattern), null));
             var expression = new RegexFragmentR(pattern, length, boundToShape: false).Parse();
             var deterministic = new GlushkovAutomaton(expression).IsDeterministic;
-            result.Status.ShouldEqual(witness is not null ? RuleConsistencyStatus.Refuted : deterministic ? RuleConsistencyStatus.Proven : RuleConsistencyStatus.Unproven);
+            var expectedStatus = deterministic ? RuleConsistencyStatus.Proven : RuleConsistencyStatus.Unproven;
+            if (witness is not null) expectedStatus = RuleConsistencyStatus.Refuted;
+            result.Status.ShouldEqual(expectedStatus);
             result.Witness.ShouldEqual(witness);
             result.Reason.ShouldEqual(witness is null && !deterministic ? RegexContainment.AmbiguousPatternReason : null);
         }

@@ -27,6 +27,6 @@ public class when_a_profile_has_an_invalid_appearance : given.a_compiler
 
     [Fact] void should_report_the_scheme_and_the_accent() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidAppearanceValue).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(3, 4);
     [Fact] void should_report_errors() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidAppearanceValue).ShouldEachConformTo(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-    [Fact] void should_name_the_scheme() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidAppearanceValue).First().Message.ShouldContain("'sepia'");
-    [Fact] void should_name_the_accent() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidAppearanceValue).Last().Message.ShouldContain("'teal'");
+    [Fact] void should_name_the_scheme() => _result.Diagnostics.First(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidAppearanceValue).Message.ShouldContain("'sepia'");
+    [Fact] void should_name_the_accent() => _result.Diagnostics.Last(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidAppearanceValue).Message.ShouldContain("'teal'");
 }

@@ -11,7 +11,7 @@ public class and_capabilities_are_role_specific : given.a_command_handler
         var body = Bodies.Single();
         body.Requirement.RequiredCapability.ShouldEqual("provider-defined");
         new SemanticRuleBodyExecution(Provider, Bodies).FindBody(body.Requirement.RequirementId, SemanticImplementationRole.CommandHandler).ShouldEqual(body);
-        Execute().ShouldBeOfExactType<SemanticAccepted>();
+        Execute(TestContext.Current.CancellationToken).ShouldBeOfExactType<SemanticAccepted>();
     }
 
     [Fact]

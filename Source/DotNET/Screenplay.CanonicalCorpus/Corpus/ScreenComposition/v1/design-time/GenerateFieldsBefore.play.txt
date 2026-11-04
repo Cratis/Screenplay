@@ -18,7 +18,7 @@ module Inspections
       component Acme.Inspections.Checklist checklist
         id "inspection:checklist"
         property columns = 1
-        property items = []
+        property items none
 
   feature Sites
     slice StateChange RecordInspection

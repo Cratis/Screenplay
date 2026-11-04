@@ -16,6 +16,7 @@ import { PolicySyntax } from './Policies';
 import { SeedSyntax } from './Seeds';
 import { EventSourceSyntax } from './EventSources';
 import { OperationSyntax, SystemSyntax } from './Operations';
+import { StateMachineSyntax, WorkflowSyntax } from './Lifecycles';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
 import { ScreenSyntax, ScreenToolbarSyntax } from './Screens';
@@ -102,10 +103,22 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly isPlacement: boolean;
 }
 
+export interface ApplicationContextSyntax extends SyntaxNode {
+    readonly kind: 'ApplicationContextSyntax';
+    readonly members: readonly ContextMemberSyntax[];
+    readonly description: string | null;
+}
+
+export interface ContextMemberSyntax extends SyntaxNode {
+    readonly kind: 'ContextMemberSyntax';
+    readonly name: string;
+}
+
 export interface ApplicationSyntax extends SyntaxNode {
     readonly reactionProductionMode?: ReactionProductionMode | null;
     readonly commandReadMode?: CommandReadMode | null;
     readonly timeZone?: TimeZoneSyntax | null;
+    readonly context?: ApplicationContextSyntax | null;
     readonly identity?: IdentitySyntax | null;
     readonly purposes?: readonly PurposeSyntax[];
     readonly kind: 'ApplicationSyntax';
@@ -115,6 +128,8 @@ export interface ApplicationSyntax extends SyntaxNode {
     readonly policies?: readonly PolicySyntax[];
     readonly seeds?: readonly SeedSyntax[];
     readonly systems?: readonly SystemSyntax[];
+    readonly stateMachines?: readonly StateMachineSyntax[];
+    readonly workflows?: readonly WorkflowSyntax[];
     readonly eventSources?: readonly EventSourceSyntax[];
     readonly imports: readonly ImportSyntax[];
     readonly concepts: readonly ConceptSyntax[];

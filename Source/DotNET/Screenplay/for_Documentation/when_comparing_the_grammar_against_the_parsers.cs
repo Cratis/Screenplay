@@ -14,7 +14,9 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
         new Dictionary<string, (string, string)>(StringComparer.Ordinal)
         {
             ["identity"] = ("IdentityDecl", "identity.md"),
+            ["context"] = ("ContextDecl", "context.md"),
             ["authentication"] = ("AuthenticationDecl", "authentication.md"),
+            ["onboarding"] = ("OnboardingDecl", "onboarding.md"),
             ["authorize"] = ("AuthorizeDecl", "policies.md"),
             ["behavior"] = ("BehaviorDecl", "interactions.md"),
             ["capture"] = ("CaptureDecl", "captures.md"),
@@ -58,6 +60,8 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["specification"] = ("SpecificationDecl", "specifications.md"),
             ["sticky"] = ("StickyNoteDecl", "personas.md"),
             ["system"] = ("SystemDecl", "grammar.md"),
+            ["statemachine"] = ("StateMachineDecl", "statemachines.md"),
+            ["workflow"] = ("WorkflowDecl", "workflows.md"),
             ["template"] = ("TemplateRef", "templates.md"),
             ["toolbar"] = ("ToolbarDecl", "screens.md"),
             ["theme"] = ("ThemeDecl", "theme.md"),

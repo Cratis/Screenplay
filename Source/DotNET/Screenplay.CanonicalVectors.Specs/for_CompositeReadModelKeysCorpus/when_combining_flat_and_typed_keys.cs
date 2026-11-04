@@ -21,10 +21,14 @@ public class when_combining_flat_and_typed_keys : given.a_flat_key_model
                     by identity Identity
                   specification TypedLookup
                     given readmodel TypedRow
-                      identity = {"first":"a","second":"b"}
+                      identity
+                        first = "a"
+                        second = "b"
                       quantity = 3
                     when query Typed
-                      identity = {"second":"b","first":"a"}
+                      identity
+                        second = "b"
+                        first = "a"
                     then result
                       quantity = 3
             """;

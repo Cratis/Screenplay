@@ -25,12 +25,18 @@
   href: purposes.md
 - name: Types
   href: types.md
+- name: Structured values
+  href: structured-values.md
 - name: Policies
   href: policies.md
 - name: Personas
   href: personas.md
 - name: Authentication
   href: authentication.md
+- name: Onboarding
+  href: onboarding.md
+- name: Environments
+  href: environments.md
 - name: Identity details
   href: identity.md
 - name: UI profile
@@ -51,6 +57,10 @@
   href: commands.md
 - name: Operations and external systems
   href: operations.md
+- name: State machines
+  href: statemachines.md
+- name: Workflows
+  href: workflows.md
 - name: Queries
   href: queries.md
 - name: Read models

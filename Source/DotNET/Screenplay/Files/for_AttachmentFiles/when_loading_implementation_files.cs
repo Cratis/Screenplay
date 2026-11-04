@@ -10,7 +10,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Files.for_AttachmentFiles;
 
-public class when_loading_implementation_files : Specification
+public partial class when_loading_implementation_files : Specification
 {
     string _root = null!;
 
@@ -296,8 +296,9 @@ public class when_loading_implementation_files : Specification
         File.WriteAllText(full, text);
     }
 
-    [DllImport("libc", SetLastError = true)]
-    static extern int mkfifo(string path, uint mode);
+    [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.SafeDirectories)]
+    private static partial int mkfifo(string path, uint mode);
 
     void Destroy() => Directory.Delete(_root, true);
 }

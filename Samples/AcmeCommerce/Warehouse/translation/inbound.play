@@ -106,7 +106,10 @@ module Stock
           receivedAt      = "2026-10-02T09:00:00Z"
         when append OrderConfirmedAtWarehouse
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":3}]
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
         then ReservationRequested
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
@@ -128,10 +131,16 @@ module Stock
           receivedAt      = "2026-10-02T09:00:00Z"
         given OrderConfirmedAtWarehouse
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-          lines   = [{"sku":"ACM-1000","quantity":3}]
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
         when append OrderConfirmedAtWarehouse
           orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          lines   = [{"sku":"ACM-1000","quantity":5}]
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 5
         then ReservationRequested
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"

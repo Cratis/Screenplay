@@ -37,7 +37,7 @@ public static partial class canonical_serialization_golden_vectors
 
     public static ExecutableSemanticModel CreateSemanticModelV31()
     {
-        var source = AnonymousPolicyGoldenSource;
+        const string source = AnonymousPolicyGoldenSource;
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Catalog"));
         const string key = "application-document";
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", source);

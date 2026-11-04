@@ -123,7 +123,7 @@ public class when_validating_response_boundaries : given.a_compiler
     [Fact]
     void should_round_trip_nested_numeric_return_values()
     {
-        var parsed = _compiler.Parse("type Payload\n  amount Decimal\n  amounts Decimal[]\n" + Prefix + "      command C\n        value Payload\n        returns value\n      specification Accepts\n        when C\n        then returns {\"amount\":0.0000001,\"amounts\":[1000000000000000000000000000000]}");
+        var parsed = _compiler.Parse("type Payload\n  amount Decimal\n  amounts Decimal[]\n" + Prefix + "      command C\n        value Payload\n        returns value\n      specification Accepts\n        when C\n        then returns value\n          amount = 0.0000001\n          amounts\n            item 1000000000000000000000000000000");
         parsed.Success.ShouldBeTrue();
         var printed = new ScreenplayPrinter().Print(parsed.Value!);
         var reparsed = _compiler.Parse(printed);
@@ -145,9 +145,9 @@ public class when_validating_response_boundaries : given.a_compiler
     [InlineData("123456789012345678901234567890.5")]
     void should_round_trip_numeric_generated_fixtures_for_imported_unknown_shapes(string number)
     {
-        foreach (var value in new[] { number, "[" + number + "]", "{\"amount\":" + number + ",\"amounts\":[" + number + "]}" })
+        foreach (var value in new[] { " = " + number, "\n            item " + number, "\n            amount = " + number + "\n            amounts\n              item " + number })
         {
-            var parsed = _compiler.Parse("import External.Id\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        receipt Id generated\n      specification Accepts\n        when C\n          generated receipt = " + value);
+            var parsed = _compiler.Parse("import External.Id\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        receipt Id generated\n      specification Accepts\n        when C\n          generated receipt" + value);
             parsed.Success.ShouldBeTrue();
             var printed = new ScreenplayPrinter().Print(parsed.Value!);
             printed.ShouldNotContain("E-");

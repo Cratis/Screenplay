@@ -149,7 +149,7 @@ public class when_preserving_for_identifiers_in_screen_headers : given.a_compile
               query for => Row
               screen Details
                 data Row[] via query Rows
-        """ + "\n" + string.Join("\n", directives.Split('\n').Select(line => "        " + line)));
+        """ + "\n" + string.Join('\n', directives.Split('\n').Select(line => "        " + line)));
 
     static ScreenSyntax Screen(CompilationResult<ApplicationSyntax> result) => result.Value!.Modules.Single().Features.Single().Slices.Single().Screens.Single();
 }

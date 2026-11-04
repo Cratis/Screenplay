@@ -87,9 +87,26 @@ Passing `context` to Fundamentals APIs is valid only on the Cratis C# target. Se
 
 It returns the String primitive in context/result contract version 1. There are no command inputs, caller, injected entropy source or random-state members. `TenantOrderId` can use this context when the shop needs a tenant-bearing value; built-in TypeID has no tenant slot. A provider adapts Now/Tenant explicitly rather than reading ambient time/tenant APIs or comparing raw `"Default"` strings. The reference runner consumes a fixture and never invokes the body; opaque validation still remains Unsupported. Input-derived generation belongs to #308.
 
-These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
+These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()`, `EventAs<T>()` and `KeyAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
 A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. ESM v23 admits described command handlers: a pending intent with unconditional `produces` gets a Pending CommandHandler requirement and a typed `CommandContext` descriptor (context/result v1). The descriptor retains generated properties available before the body. Reference execution stops at the body with Unsupported (`ImplementationBody`); the descriptor is not proof that a body exists or ran. Resolved, nonempty file/inline handlers with unconditional `produces` use the same v23 context/result v1 descriptor; their sidecars carry a language, content hash and span or file reference, not pending hints. Reference execution remains Unsupported at the body, and target-language admission is separate.
+
+## Application-declared context members
+
+Decision 0132 adds an application-root `context` block for named business time zones:
+
+```play
+context
+  description "Time zones the business reasons in."
+  businessTimeZone time zone
+  customerTimeZone time zone
+```
+
+This declaration is **syntax-only**. It is parsed, printed, serialized and indexed, but binding any document that declares it reports `PLAY0268` until #824 admits time-zone execution. It does not extend today's executable `$context` roots or change an existing command calendar operand.
+
+Declare at most one block per application folder, across all its files, as with `identity`. The block may be empty and may have one description. Members have a lower-case-leading name and the type `time zone`; no other type or member body is supported. Names are unique after removing an `@` escape. `timeZone` and every existing `$context` root (`command`, `arguments`, `tenant`, `causedBy`, `causation`, `occurred` and `identity`) are reserved. Escape a member named `description` as `@description`; the printer retains that escape.
+
+The printer places `context` immediately after an application `time zone` declaration when one exists. The block declares names, not runtime values or time-zone defaults. See the [grammar](grammar.md) and [context diagnostics](diagnostics.md#application-declared-context-members).
 
 ## Implementation wrapper support
 
@@ -234,9 +251,11 @@ Use the typed accessor for code that calls extension methods such as LINQ. For e
 | `QueryContext` | `ArgumentsAs<T>()` |
 | `RuleContext` | `ArtifactAs<T>()`, `ValueAs<T>()` |
 | `PolicyContext` | `ArtifactAs<T>()` |
-| `ReducerContext` | `StateAs<T>()`, `EventAs<T>()` |
+| `ReducerContext` | `StateAs<T>()`, `EventAs<T>()`, `KeyAs<T>()` |
 
 `StateAs<T>()` returns null for the first event if `T` permits null (a reference or nullable value type); it throws `ContextPayloadTypeMismatch` for a non-nullable value type. Check `context.IsFirst` before reading a non-nullable state. The original `dynamic` members remain available, including for existing code that assigns one to a static local before using LINQ. These accessors require the caller to name `T`; they do not infer the shape from the Screenplay declaration.
+
+`ReducerContext.Key` stays text. `KeyAs<T>()` converts it to `string` (unchanged), `Guid` (case-insensitive N/D/B/P UUID text, without whitespace), or a type with exactly one public instance constructor taking one `string` or `Guid`, such as a key concept: `context.KeyAs<TalkId>()`. Malformed UUIDs and unsupported types throw `ContextKeyNotConvertible` without including the raw key; a concept's own validation exception propagates unchanged. Composite keys and reducers that target an event keep using `Key`. Renderers use `SemanticReducerKeyConversion.KeyType` to admit `KeyAs<T>()` only for the read model's single required, non-collection Uuid/Text key type, preserving its concept reference when present.
 
 Inside a `policy` block, `context` is the `PolicyContext` and the block answers with a `bool` — the same answer a `require` condition gives, so the two forms compose identically. See [Policies](policies.md#custom-logic).
 

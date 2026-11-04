@@ -13,6 +13,8 @@ export const defaultPresentation: EventModelPresentation = {
     visualizationMode: 'simplified',
     detailsVisibility: defaultDetailsVisibilityState,
     showStatuses: false,
+    density: 'comfortable',
+    textSize: 'medium',
 };
 
 const toPresentation = (options: BoardViewOptions): EventModelPresentation => ({
@@ -20,12 +22,16 @@ const toPresentation = (options: BoardViewOptions): EventModelPresentation => ({
     detailLevel: options.detailLevel,
     visualizationMode: options.visualizationMode,
     detailsVisibility: { ...defaultDetailsVisibilityState, global: options.showProperties },
+    density: options.density,
+    textSize: options.textSize,
 });
 
 const toViewOptions = (presentation: EventModelPresentation): BoardViewOptions => ({
     detailLevel: presentation.detailLevel,
     showProperties: presentation.detailsVisibility.global,
     visualizationMode: presentation.visualizationMode,
+    density: presentation.density ?? defaultPresentation.density!,
+    textSize: presentation.textSize ?? defaultPresentation.textSize!,
 });
 
 // How the board is presented - detail level, properties and how connections are drawn. The extension

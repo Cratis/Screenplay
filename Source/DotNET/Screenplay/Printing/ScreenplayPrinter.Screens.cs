@@ -116,8 +116,22 @@ public partial class ScreenplayPrinter
 
         foreach (var parameter in navigate.Parameters)
         {
-            writer.Line($"parameter {parameter.Name} {WriteUiBinding(writer, parameter.Binding)}", parameter);
+            WriteBindingLine(writer, $"parameter {parameter.Name}", parameter.Binding, parameter);
         }
+    }
+
+    // A structured literal binding ends its line with 'from literal' and its modifiers; the value follows as an indented block.
+    void WriteBindingLine(ScreenplayWriter writer, string prefix, UiBindingSyntax binding, SyntaxNode node)
+    {
+        var text = $"{prefix} {WriteUiBinding(writer, binding)}";
+        if (binding is { BindingKind: UiBindingKind.Literal, Literal: { } literal } && ScreenplaySyntaxText.IsStructured(literal))
+        {
+            using var anchor = writer.Anchor(node);
+            writer.Structured(text, literal);
+            return;
+        }
+
+        writer.Line(text, node);
     }
 
     string WriteUiBinding(ScreenplayWriter writer, UiBindingSyntax binding)
@@ -127,6 +141,7 @@ public partial class ScreenplayPrinter
             UiBindingKind.DataContext => $"from data {binding.Path}",
             UiBindingKind.QueryResult => string.IsNullOrWhiteSpace(binding.Path) ? $"from query {binding.Query}" : $"from query {binding.Query}.{binding.Path}",
             UiBindingKind.ComponentProperty => $"from component {WriteStableComponentId(binding.ComponentId)}.{binding.ComponentPropertyPath ?? binding.Path}",
+            UiBindingKind.Literal when binding.Literal is not null && ScreenplaySyntaxText.IsStructured(binding.Literal) => "from literal",
             UiBindingKind.Literal => $"from literal {writer.Expression(binding.Literal ?? new LiteralExpressionSyntax(null, binding.Location))}",
             _ => binding.RawText ?? binding.Path
         };
@@ -271,11 +286,8 @@ public partial class ScreenplayPrinter
 
             foreach (var property in component.Properties)
             {
-                writer.Line(
-                    property.Binding is not null
-                        ? $"property {property.Property} {WriteUiBinding(writer, property.Binding)}"
-                        : $"property {property.Property} = {writer.Expression(property.Value ?? new LiteralExpressionSyntax(null, property.Location))}",
-                    property);
+                if (property.Binding is not null) WriteBindingLine(writer, $"property {property.Property}", property.Binding, property);
+                else writer.Assignment($"property {property.Property}", property.Value ?? new LiteralExpressionSyntax(null, property.Location), property);
             }
 
             if (component.Icon is not null)
@@ -290,7 +302,7 @@ public partial class ScreenplayPrinter
 
             foreach (var exposed in component.Exposes)
             {
-                writer.Line($"exposes {exposed.Name} {WriteUiBinding(writer, exposed.Binding)}", exposed);
+                WriteBindingLine(writer, $"exposes {exposed.Name}", exposed.Binding, exposed);
             }
 
             foreach (var outlet in component.Outlets)
@@ -395,7 +407,7 @@ public partial class ScreenplayPrinter
 
             foreach (var parameter in item.Parameters)
             {
-                writer.Line($"parameter {parameter.Name} {WriteUiBinding(writer, parameter.Binding)}", parameter);
+                WriteBindingLine(writer, $"parameter {parameter.Name}", parameter.Binding, parameter);
             }
 
             foreach (var value in item.Presentation)

@@ -36,12 +36,18 @@ public class with_equivalent_structured_content : for_SemanticSpecificationRunne
                   specification S
                     given Arrived
                       id = "parcel"
-                      payload = {"label":"same"}
-                      items = [{"label":"same"}]
+                      payload
+                        label = "same"
+                      items
+                        item
+                          label = "same"
                     when append Updated
                       id = "parcel"
-                      payload = {"label":"same"}
-                      items = [{"label":"same"}]
+                      payload
+                        label = "same"
+                      items
+                        item
+                          label = "same"
                     then no events
             """);
         _run = Run("S");

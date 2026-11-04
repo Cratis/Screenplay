@@ -60,6 +60,8 @@ partial board as success.
 
 Run `screenplay report processing ./specifications --format json` for a controller inventory, or choose `markdown` (the default) or `csv`. Supply `--controller-name` and `--controller-contact` explicitly. The inventory is generated from model declarations, not legal advice or evidence that runtime protection is installed. MCP hosts can page the same facts with `processing-record`.
 
+Run `screenplay environment ./specifications` to list the keys a model needs from the environment it runs in - for example `authentication.providers.EntraId.clientId` and the `clientSecret` that goes with it - and which of them must be secrets. Choose `--format json` for tooling.
+
 ## CLI alternative
 
 CLI hosting shipped in 3.11.0 as `cratis screenplay mcp ./specifications`.

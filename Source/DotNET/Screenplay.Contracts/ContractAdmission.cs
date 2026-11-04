@@ -157,6 +157,47 @@ static class ContractAdmission
                   shipmentId = "11111111-1111-4111-8111-111111111111"
         """;
 
+    internal const string Lifecycles = """
+        module M
+          feature F
+            slice StateChange S
+              command Place
+                orderId String identifier
+                produces Placed
+                  for orderId
+                  orderId = orderId
+              event Placed
+                orderId String
+              command Pay
+                orderId String identifier
+                produces Paid
+                  for orderId
+              event Paid
+            slice StateView V
+              readmodel Order
+                orderId String key
+                status String
+              projection Build => Order
+                no automap
+                from Placed
+                  status = "placed"
+                from Paid
+                  status = "paid"
+        statemachine Lifecycle
+          follows Order
+          state Placed initial
+            on Paid -> Done
+          state Done final
+        """;
+
+    internal const string Workflows = Lifecycles + "\n" + """
+        workflow Process
+          for Order
+          trigger on Placed
+            -> Charge
+          action Charge sends Pay
+        """;
+
     internal const string AnonymousPolicies = """
         policy Anyone
           require anonymous
@@ -212,6 +253,7 @@ static class ContractAdmission
     internal static readonly Probe[] Probes =
     [
         new("authentication", "authentication\n  provider GitHub\n"),
+        new("onboarding", "authentication\n  provider GitHub\nonboarding\n  signup open creates tenant\n", Baseline: "authentication\n  provider GitHub\n"),
         new("identity", "identity\n  department String from claim \"department\"\n", ["identity\n  department String from claim \"department\"\n" + Slice + Event + Command.Replace("value = value", "value = $identity.department", StringComparison.Ordinal)], Baseline: string.Empty),
         new("behavior", "behavior B\n  parameter command\n"),
         new("concept", "concept Value : String\n", ["concept Id : Uuid\n  generate uuidv7\n", "concept Code : String\n  generate nanoid\n", "concept InviteCode : String\n  generate nanoid\n  validate\n    matches \"^[A-Za-z0-9_-]{21}$\"\n", "concept Preview : String\n  generate pattern \"ORD-#{7}\"\n", "concept Ticket : Int\n  generate random 1..9\n", "concept Ref : String\n  validate checksum luhn\n", "concept Ref : String\n  validate\n    contains \"A\"\n    not contains \"B\"\n    starts with \"A\"\n    ends with \"A\"\n", "concept Ref : String\n  generate rule Make\n    ```csharp\n    return value;\n    ```\n", "concept Reserved : String\n  generate sequence\n", "concept Status : Enum\n  draft = 1\n  issued = 4\n", "concept Status : Enum\n  draft = 0\n  issued = 1\n", "concept Value : String\n  description \"Value intent\"\n", "concept Value : String pii\n  pii reason \"Personal data\"\n", "concept Value : String pii\n  pii special health\n  pii criminal\n", "concept Value : String secret\n  secret scope namespace\n", "concept Value : String pii secret\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
@@ -225,6 +267,7 @@ static class ContractAdmission
         new("layout", "layout Shell\n  content\n"),
         new("module", Slice),
         new("numbers", "numbers exact\n"),
+        new("context", "context\n  businessTimeZone time zone\n"),
         new("time", "time zone \"Europe/Oslo\"\n", ["time zone configurable default \"Europe/Oslo\"\n"]),
         new("persona", "persona Person\n"),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
@@ -233,6 +276,8 @@ static class ContractAdmission
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
         new("sticky", "persona Person\nsticky note on personas\n  description \"A note\"\n  position 10 20\n", Baseline: "persona Person\n"),
         new("system", "system External\n"),
+        new("statemachine", Lifecycles),
+        new("workflow", Workflows),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
         new("theme", "theme Theme\n  compatible with Cratis.Components\n"),
         new("sample", Slice + ReadModel + "sample data Demo\n  shape View\n    row\n      value = \"test\"\n"),

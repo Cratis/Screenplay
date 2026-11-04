@@ -53,7 +53,7 @@ public class and_the_answer_is_invalid : given.a_command_handler
             "later-slot" => SemanticCommandBodyResult.Produced([first, SemanticValue.Composite([])]),
             _ => SemanticCommandBodyResult.Produced([SemanticValue.Composite([property with { Value = SemanticValue.Number(7) }]), Payloads[1]])
         };
-        var result = (SemanticUnsupported)Execute();
+        var result = (SemanticUnsupported)Execute(TestContext.Current.CancellationToken);
         result.Capability.ShouldEqual(SemanticExecutionCapability.ImplementationBody);
         result.Details.ShouldContain("Place");
         result.Details.ShouldContain(Bodies.Single().Requirement.RequirementId);

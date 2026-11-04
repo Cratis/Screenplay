@@ -50,6 +50,7 @@ export const featureScopeItems: CompletionEntry[] = [
 
 export const readModelItems: CompletionEntry[] = [
     documentationItem,
+    { label: 'passive', insertText: 'passive', documentation: 'Opts into replay on demand for command decisions, not materialization. Default active, never inferred; queries and screens cannot observe this model.' },
     { label: 'description', insertText: 'description "${1:what one instance holds}"', documentation: 'A human-readable description.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the file this read model is realized by.' },
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the read model — a name and a type reference.' },
@@ -114,6 +115,32 @@ export const personaItems: CompletionEntry[] = [
 export const authenticationItems: CompletionEntry[] = [
     { label: 'provider', insertText: 'provider ${1:Name}', documentation: 'An identity provider.' },
     { label: 'provider (named)', insertText: 'provider ${1:Kind} name ${2:Name}', documentation: 'An identity provider of a kind, under its own name.' },
+];
+
+export const onboardingItems: CompletionEntry[] = [
+    { label: 'signup (creates tenant)', insertText: 'signup open creates tenant', documentation: 'Turns self-signup on; a sign-up creates a tenant for the person signing up.' },
+    { label: 'signup (joins tenant)', insertText: 'signup open joins tenant', documentation: 'Turns self-signup on; a sign-up asks to join an existing tenant.' },
+    { label: 'invite tenant', insertText: 'invite tenant as ${1:Persona}', documentation: 'An invitation that creates a tenant for the invitee, who becomes the persona.' },
+    { label: 'invite member', insertText: 'invite member\n    by ${1:Persona}\n    grant ${2:Persona}', documentation: 'An invitation into an existing tenant: who may send it and which personas it grants.' },
+    { label: 'legal terms', insertText: 'legal terms\n    file ${1:Legal/terms-of-service.md}', documentation: 'The documents a newcomer must accept, as files relative to the repository root.' },
+    { label: 'offering', insertText: 'offering ${1:Name}', documentation: 'The offering a new tenant starts on. The name is opaque to the model.' },
+    { label: 'emails', insertText: 'emails\n    invitation file ${1:Emails/invitation.html}\n    welcome file ${2:Emails/welcome.html}\n    images ${3:Emails/Images}', documentation: 'A template file per onboarding email and the folder holding their images.' },
+];
+
+export const inviteMemberItems: CompletionEntry[] = [
+    { label: 'by', insertText: 'by ${1:Persona}', documentation: 'The personas that may send the invitation.' },
+    { label: 'grant', insertText: 'grant ${1:Persona}', documentation: 'The personas the invitation gives the invitee.' },
+];
+
+export const legalTermsItems: CompletionEntry[] = [
+    { label: 'file', insertText: 'file ${1:Legal/terms-of-service.md}', documentation: 'A document the newcomer must accept, relative to the repository root.' },
+];
+
+export const emailItems: CompletionEntry[] = [
+    { label: 'invitation', insertText: 'invitation file ${1:Emails/invitation.html}', documentation: 'The template of the invitation email.' },
+    { label: 'welcome', insertText: 'welcome file ${1:Emails/welcome.html}', documentation: 'The template of the welcome email.' },
+    { label: 'signupDeclined', insertText: 'signupDeclined file ${1:Emails/signup-declined.html}', documentation: 'The template of the email sent when a sign-up is declined.' },
+    { label: 'images', insertText: 'images ${1:Emails/Images}', documentation: 'The folder, relative to the repository root, holding the images the templates use.' },
 ];
 
 export const seedItems: CompletionEntry[] = [

@@ -27,7 +27,11 @@ public static partial class canonical_serialization_golden_vectors
         var id = new SemanticProperty(Id(10521), "Id", identity, true) { IsGenerated = true };
         var receipt = new SemanticProperty(Id(10522), "Receipt", code, false) { IsGenerated = true };
         var created = Event(ApplicationIdentity.Create("Canonical Golden Application"), Id(10530), "StrategyEntityCreated", [new(Id(10531), "Receipt", code, false)]);
-        var command = new SemanticCommand(Id(10520), "CreateStrategyEntity", [id, receipt], [],
+        var command = new SemanticCommand(
+            Id(10520),
+            "CreateStrategyEntity",
+            [id, receipt],
+            [],
             [new(created.Id, null, SemanticExpression.Property(SemanticExpressionRootKind.Command, id.Id), [new(Id(10531), SemanticExpression.Property(SemanticExpressionRootKind.Command, receipt.Id))])])
         {
             Destination = new(identity, SemanticExpression.Property(SemanticExpressionRootKind.Command, id.Id))

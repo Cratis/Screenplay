@@ -180,6 +180,54 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitAuthenticationProvider(AuthenticationProviderSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits an <see cref="OnboardingSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="OnboardingSyntax"/> to visit.</param>
+    public virtual void VisitOnboarding(OnboardingSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.Signup is { } signup)
+        {
+            VisitNode(signup);
+        }
+
+        foreach (var invitation in syntax.Invitations)
+        {
+            VisitNode(invitation);
+        }
+
+        if (syntax.LegalTerms is { } terms)
+        {
+            VisitNode(terms);
+            foreach (var document in terms.Documents)
+            {
+                VisitFileReference(document);
+            }
+        }
+
+        if (syntax.Offering is { } offering)
+        {
+            VisitNode(offering);
+        }
+
+        if (syntax.Emails is { } emails)
+        {
+            VisitNode(emails);
+            foreach (var template in emails.Templates)
+            {
+                VisitNode(template);
+                VisitFileReference(template.File);
+            }
+
+            if (emails.Images is { } images)
+            {
+                VisitNode(images);
+            }
+        }
+    }
+
+    /// <summary>
     /// Visits a <see cref="UiProfileSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="UiProfileSyntax"/> to visit.</param>

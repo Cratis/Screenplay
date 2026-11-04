@@ -30,7 +30,7 @@ public class when_validating_query_concepts : Specification
 
     [Fact] void should_reject_an_out_of_rule_key() => ((SemanticRejected)Execute("Lookup", "a")).Category.ShouldEqual(SemanticRejectionCategory.Validation);
     [Fact] void should_preserve_the_first_message() => ((SemanticRejected)Execute("Lookup", "a")).Details.ShouldEqual("Search text is too short");
-    [Fact] void should_retain_every_failure_in_rule_order() => ((SemanticRejected)Execute("Lookup", "a")).ValidationFailures.Select(failure => failure.Message).ShouldEqual(new[] { "Search text is too short", "Search text needs three characters" });
+    [Fact] void should_retain_every_failure_in_rule_order() => ((SemanticRejected)Execute("Lookup", "a")).ValidationFailures.Select(failure => failure.Message).ShouldEqual(["Search text is too short", "Search text needs three characters"]);
     [Fact] void should_answer_no_instance_for_a_valid_absent_key() => ((SemanticAccepted)Execute("Lookup", "missing")).Queries.Single().Results.ShouldBeEmpty();
     [Fact] void should_not_validate_an_omitted_optional_filter() => Execute("Filtered", null).Kind.ShouldEqual(SemanticExecutionOutcomeKind.Accepted);
     [Fact] void should_reject_a_supplied_filter() => ((SemanticRejected)Execute("Filtered", null, "a")).Category.ShouldEqual(SemanticRejectionCategory.Validation);
@@ -90,7 +90,9 @@ public class when_validating_query_concepts : Specification
         {
             Filters = filter is null ? [] : [new(query.Filters.Single().Id, SemanticValue.Text(filter))]
         };
-        return new SemanticEvaluator().Execute(plan, SemanticWorld.Empty,
-            new SemanticExecutionRequest(default, [], [request], ImmutableDictionary<SemanticId, SemanticValue>.Empty) { IsReadOnly = true });
+        return new SemanticEvaluator().Execute(
+            plan,
+            SemanticWorld.Empty,
+            new SemanticExecutionRequest(default, [], [request], []) { IsReadOnly = true });
     }
 }

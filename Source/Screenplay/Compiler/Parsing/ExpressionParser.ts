@@ -13,13 +13,15 @@ import { InvalidStructuredValue, StructuredValueParser } from './StructuredValue
 const pathPattern = pattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 const nativePathPattern = nativePattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 const numberPattern = pattern('^-?\\d+(\\.\\d+)?$');
-const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
+export const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
 const causedByProperties = ['subject', 'name', 'userName'];
 export const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles', 'claims'];
 
 // Reads the right-hand side of a mapping or a rule operand - the port of the C# ExpressionParser's
 // ParseMappingSource. With a context it also reports what the C# compiler reports while reading one: an
 // unknown $context path, and an inline structured value that is not valid JSON.
+export const inlineJsonMessage = "Screenplay has no JSON values - write the object or list as an indented block: one 'member = value' line per member, one 'item' line per list element, and '<name> none' for an empty list";
+
 export function parseModeledMappingSource(text: string, location: SourceLocation, context: ParserContext): ExpressionSyntax {
     return parseMappingSource(text, location, context, true);
 }
@@ -59,6 +61,8 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
         return { kind: 'SourceItemExpressionSyntax', path: text.substring('$.'.length), location };
     }
     if (text.startsWith('{') || text.startsWith('[')) {
+        // Screenplay has no JSON. The value is still read so the tree stays whole and printing it writes the block form.
+        context?.error(DiagnosticCodes.InlineJsonValue, inlineJsonMessage, location);
         try {
             return new StructuredValueParser(text, location, context).parse();
         } catch (error) {

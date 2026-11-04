@@ -51,6 +51,11 @@ public record ApplicationSyntax(
     public IdentitySyntax? Identity { get; init; }
 
     /// <summary>
+    /// Gets the authoring-only <c>onboarding</c> block - how people sign up, are invited and accept terms.
+    /// </summary>
+    public OnboardingSyntax? Onboarding { get; init; }
+
+    /// <summary>
     /// Gets the explicit reaction production mode, inherited by the composed application.
     /// Absence preserves legacy per-fact production.
     /// </summary>
@@ -66,6 +71,11 @@ public record ApplicationSyntax(
     /// Gets the application <c>time zone</c> declaration (decisions 0106/0107); absence leaves the application calendar undeclared.
     /// </summary>
     public TimeZoneSyntax? TimeZone { get; init; }
+
+    /// <summary>
+    /// Gets the application's named time-zone context members.
+    /// </summary>
+    public ApplicationContextSyntax? Context { get; init; }
 
     /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
@@ -101,6 +111,16 @@ public record ApplicationSyntax(
     /// Gets the application-scoped external systems.
     /// </summary>
     public IEnumerable<SystemSyntax> Systems { get; init; } = [];
+
+    /// <summary>
+    /// Gets the state machines the document declares: where a subject is in its lifecycle, derived from the read model they follow.
+    /// </summary>
+    public IEnumerable<StateMachineSyntax> StateMachines { get; init; } = [];
+
+    /// <summary>
+    /// Gets the workflows the document declares: durable graphs of actions, decisions, waits and approvals that run once per subject.
+    /// </summary>
+    public IEnumerable<WorkflowSyntax> Workflows { get; init; } = [];
 
     /// <summary>
     /// Gets the report-only processing purposes declared in the application.

@@ -14,7 +14,8 @@ public class with_the_first_event_for_a_key : given.an_event_capture
           when id and status
         append Removed
           when removed
-        """, """
+        """,
+        """
         when append Arrived
           id = "parcel"
           status = "sent"

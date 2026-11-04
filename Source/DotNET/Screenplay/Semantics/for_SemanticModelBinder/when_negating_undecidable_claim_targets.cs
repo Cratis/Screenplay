@@ -43,7 +43,7 @@ public class when_negating_undecidable_claim_targets : given.a_semantic_binder
     {
         var model = Model("role \"A\" or not claim \"owner\" matches owner", "String optional");
         var command = model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
-        var decision = SemanticPolicyEvaluation.Evaluate(command.Authorization, SemanticExecutionPlan.Compile(model).Plan!, new(true, ["A"], []), new Dictionary<string, SemanticValue>(), null, command.Properties);
+        var decision = SemanticPolicyEvaluation.Evaluate(command.Authorization, SemanticExecutionPlan.Compile(model).Plan!, new(true, ["A"], []), new Dictionary<string, SemanticValue>(), null, command.Properties, cancellationToken: TestContext.Current.CancellationToken);
         decision.Outcome.ShouldEqual(SemanticPolicyOutcome.Allow);
     }
 

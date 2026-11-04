@@ -32,7 +32,7 @@ public class with_a_money_concept : Specification
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("prices"), "prices", "Prices.play", Source);
         var compilation = new SemanticModelCompiler().Compile("Prices", SemanticDocumentSet.Create([document], catalog));
         Assert.True(compilation.Success, string.Join('\n', compilation.Diagnostics.Select(_ => _.Message)));
-        var plan = SemanticExecutionPlan.Compile(compilation.Value!.Model, compilation.Value.Model.Application.Modules.SelectMany(_ => _.Features).SelectMany(_ => _.Slices).Select(_ => _.Id).ToArray());
+        var plan = SemanticExecutionPlan.Compile(compilation.Value!.Model, [.. compilation.Value.Model.Application.Modules.SelectMany(_ => _.Features).SelectMany(_ => _.Slices).Select(_ => _.Id)]);
         plan.Success.ShouldBeTrue();
         _plan = plan.Plan!;
         _command = _plan.Commands.Values.Single();

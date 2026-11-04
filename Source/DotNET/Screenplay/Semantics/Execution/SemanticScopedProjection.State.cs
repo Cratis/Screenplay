@@ -17,14 +17,26 @@ internal sealed partial class SemanticScopedProjection
     {
         for (var index = 0; index < elements.Length; index++)
         {
-            if (elements[index] is SemanticCompositeValue element &&
-                element.Properties.Any(_ => _.TargetProperty == step.IdentifiedBy && SemanticValueRules.AreEqual(_.Value, step.Identity)))
+            if (elements[index] is SemanticCompositeValue element && HasIdentity(element, step))
             {
                 return index;
             }
         }
 
         return -1;
+    }
+
+    static bool HasIdentity(SemanticCompositeValue element, ElementStep step)
+    {
+        foreach (var property in element.Properties)
+        {
+            if (property.TargetProperty == step.IdentifiedBy && SemanticValueRules.AreEqual(property.Value, step.Identity))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     static Dictionary<SemanticId, SemanticValue> State(SemanticValue value) =>

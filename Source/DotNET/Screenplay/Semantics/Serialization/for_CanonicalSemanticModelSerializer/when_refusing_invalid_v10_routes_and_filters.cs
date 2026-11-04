@@ -56,7 +56,9 @@ public class when_refusing_invalid_v10_routes_and_filters : Specification
         var invalidFilterFeature = feature with { Slices = feature.Slices.SetItem(1, automation with { Reactions = [automation.Reactions[0] with { From = new(automation.Reactions[0].From!.Source, foreign) }] }) };
         Assert.Throws<InvalidSemanticContract>(() => Create(invalidFilterFeature));
 
-        ExecutableSemanticModel Create(SemanticFeature replacement) => ExecutableSemanticModel.Create(LanguageVersion.V10, SemanticVersion.V10,
+        ExecutableSemanticModel Create(SemanticFeature replacement) => ExecutableSemanticModel.Create(
+            LanguageVersion.V10,
+            SemanticVersion.V10,
             application with { Modules = application.Modules.SetItem(0, module with { Features = [.. module.Features.Select(value => value.Id == feature.Id ? replacement : value)] }) });
     }
 }

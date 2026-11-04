@@ -17,6 +17,10 @@ Preserve concept attributes and their typed `scope`, `specialCategory` and `crim
 
 `ConceptSyntax.valueNumbers` is optional and nullable. Omit it for an unnumbered enum; otherwise supply unique int32 numbers parallel to `values`. Non-enums and cardinality mismatches are rejected. Replacements must preserve authored numbers. Use `WorkspaceEnumerationRefactorings.ProposeNumberMembers` or MCP `propose-number-enum-members` to pin a wholly unnumbered enum to its current positions, with the concept's revision-bound handle and explicit `CanonicalizeTouchedDocuments` consent. Numbered and mixed enums are never renumbered. The proposal preserves catalog assignments, comments and known executable bytes; review before explicit apply. Pins equal to positions keep the prior executable version, bytes and revision; non-positional numbers bind as ESM v12. Consumers must explicitly admit v12 before accepting these models.
 
+## Passive read models
+
+Preserve optional Boolean `ReadModelSyntax.isPassive` when replacing a read model. The bare body directive opts into replay on demand for command decisions; absence/false means active and writers omit false. It is never inferred. Queries or screen data over the model fail native validation (`PLAY0859`); no command read warns (`PLAY0860`); repetition warns in both parsers (`PLAY0858`). Passivity is realization metadata, not portable ESM. Native consumers use `SemanticCompilation.PassiveReadModels` and must include it in hashed render input, since executable bytes and revision stay unchanged.
+
 ## Keys, production routes and observer filters
 
 `PropertySyntax.isKey` is an optional Boolean. It defaults to false and is omitted when false. `QuerySyntax.byParts` holds ordered query parameters. `ReadsSyntax.byParts` holds ordered property mappings. Each defaults to an empty collection and is mutually exclusive with `by`.
@@ -133,8 +137,8 @@ incorrect child types, invalid enums and illegal nulls are rejected.
   matching the Legacy parser. Other admitted numeric CLR literal types use typed
   `literalType`/`value` envelopes to retain precision and type. Exact source trees
   require the `ExactNumber` envelope described below; no implicit conversion occurs.
-- Inline JSON-shaped objects and lists have typed value nodes and individually
-  addressable keys. Existing code blocks and raw expressions remain language
+- Objects and lists - written in source as indented [structured values](structured-values.md),
+  never as JSON - have typed value nodes and individually addressable members. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.
 
 Being a well-typed AST does not guarantee that every hand-built combination can
@@ -340,8 +344,8 @@ for explicit coordinated edits outside the automatic planner's supported cases.
 Opaque syntax (freeform raw expressions, code blocks, imports, file references,
 capture sources and template triggers, and form `compose using` callbacks)
 refuses a rename only when its text contains the current or new name as a whole
-identifier. The scan includes strings and keys inside *opaque* text, but valid
-JSON-shaped mapping values are typed: renaming a composite-type property rewrites
+identifier. The scan includes strings and keys inside *opaque* text, but structured
+mapping values are typed: renaming a composite-type property rewrites
 only its bound object keys, not string values or keys of another type. The conflict names the document path, line and
 column, the syntax pointer, and the matched name.
 

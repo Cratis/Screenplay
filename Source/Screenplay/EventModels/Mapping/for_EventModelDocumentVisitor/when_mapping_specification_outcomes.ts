@@ -40,7 +40,8 @@ module Projects
         when RegisterProject
           name = "Apollo"
         then no readmodel Project for "11111111-1111-1111-1111-111111111111"
-        then no readmodel ProjectSummary for { "id": 42 }
+        then no readmodel ProjectSummary for
+          id = 42
       specification NoAdditiveMembers
         when RegisterProject
           name = "Apollo"
@@ -76,7 +77,7 @@ describe('when mapping specification outcomes', () => {
     it('should carry absence assertions with their read model names and keys', () => {
         specifications[2].thenAbsentReadModels!.should.deep.equal([
             { name: 'Project', key: '11111111-1111-1111-1111-111111111111' },
-            { name: 'ProjectSummary', key: '{ "id": 42 }' },
+            { name: 'ProjectSummary', key: '(id = 42)' },
         ]);
     });
     it('should render generated fixtures and scalar returns in the published board header', () => {
@@ -93,7 +94,7 @@ describe('when mapping specification outcomes', () => {
     it('should render every absence assertion in the published board header', () => {
         const markup = headerOf(document, 2);
         markup.should.contain('then no readmodel Project for &quot;11111111-1111-1111-1111-111111111111&quot;');
-        markup.should.contain('then no readmodel ProjectSummary for { &quot;id&quot;: 42 }');
+        markup.should.contain('then no readmodel ProjectSummary for (id = 42)');
     });
     it('should remain readable by the published board schema', () => {
         problems_the_board_finds_in(document).should.deep.equal([]);

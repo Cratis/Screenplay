@@ -51,7 +51,9 @@ module Projects
         when RegisterProject
           projectId = "11111111-1111-1111-1111-111111111111"
           name = "Apollo"
-          owner = {"email": "ada@example.com", "name": "Ada"}
+          owner
+            email = "ada@example.com"
+            name  = "Ada"
           delivery = "immediate"
         then operation SendWelcomeEmail
           recipient = "ada@example.com"
@@ -60,7 +62,9 @@ module Projects
         when RegisterProject
           projectId = "11111111-1111-1111-1111-111111111111"
           name = "Apollo"
-          owner = {"email": "ada@example.com", "name": "Ada"}
+          owner
+            email = "ada@example.com"
+            name  = "Ada"
           delivery = "immediate"
         then compensated SendWelcomeEmail
     slice StateChange Reconcile

@@ -24,7 +24,7 @@ internal sealed partial class SemanticCommandExecution
         ImmutableArray<ImmutableArray<SemanticPropertyValue>> payloads;
         try
         {
-            var result = handlers.Handle(command, CreateContext(), cancellationToken);
+            var result = handlers.Handle(plan, command, CreateContext(), cancellationToken);
             if (!result.Items.IsDefault) return HandlerUnsupported(requirement, "result v1 handlers return payloads");
             payloads = SemanticCommandPayloads.Validate(plan, command, result);
         }

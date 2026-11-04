@@ -75,7 +75,9 @@ public class a_not_empty_plan : Specification
             compilation.Success.ShouldBeTrue();
             var plan = compilation.Plan!;
             var command = plan.Commands.Values.Single(command => command.Name == commandName);
-            yield return new SemanticEvaluator().Execute(plan, SemanticWorld.Empty,
+            yield return new SemanticEvaluator().Execute(
+                plan,
+                SemanticWorld.Empty,
                 SemanticExecutionRequest.Create(command.Id, [new(command.Properties.Single().Id, value)], []));
         }
     }

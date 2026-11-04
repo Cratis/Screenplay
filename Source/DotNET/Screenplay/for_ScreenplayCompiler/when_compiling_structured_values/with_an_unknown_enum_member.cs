@@ -10,7 +10,7 @@ public class with_an_unknown_enum_member : given.a_structured_specification
 {
     CompilationResult<ApplicationSyntax> _result;
 
-    void Because() => _result = Compiler.Compile(Source.Replace("\"status\":\"open\"", "\"status\":\"missing\"", StringComparison.Ordinal));
+    void Because() => _result = Compiler.Compile(Source.Replace("status = \"open\"\n          status", "status = \"missing\"\n          status", StringComparison.Ordinal));
 
     [Fact] void should_check_the_nested_enum() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownSpecificationEnumMember).ShouldBeTrue();
 }

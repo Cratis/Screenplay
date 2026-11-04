@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Parsing.for_SpecificationParser;
 
 public class when_recording_nested_absence_key_source_spans : Specification
 {
-    const string Source = "specification NoItem\n  then no readmodel InvoiceView for {\"id\":{\"part\":\"old\"},\"scope\":\"fixed\"}";
+    const string Source = "specification NoItem\n  then no readmodel InvoiceView for\n    id\n      part = \"old\"\n    scope = \"fixed\"";
     LiteralExpressionSyntax _literal = null!;
 
     void Because()
@@ -19,7 +19,7 @@ public class when_recording_nested_absence_key_source_spans : Specification
         _literal = (LiteralExpressionSyntax)id.Members.Single(member => member.Name == "part").Value;
     }
 
-    [Fact] void should_record_the_nested_literals_actual_column() => _literal.RawLocation!.Column.ShouldEqual(51);
+    [Fact] void should_record_the_nested_literals_actual_column() => _literal.RawLocation!.Column.ShouldEqual("      part = ".Length + 1);
     [Fact] void should_record_the_nested_literals_authored_length() => _literal.RawLength.ShouldEqual(5);
     [Fact] void should_record_a_scalar_absence_key_source_span()
     {

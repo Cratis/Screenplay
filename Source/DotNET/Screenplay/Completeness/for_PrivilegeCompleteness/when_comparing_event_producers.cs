@@ -32,14 +32,14 @@ public class when_comparing_event_producers : Specification
     [Fact]
     void should_check_every_declared_role()
     {
-        var source = "policy Access\n  require role \"Automation\"\nmodule M\n  feature F\n    slice Automation S\n      event E\n      command C\n        authorize Access\n        produces E\n          for \"one\"\n      reaction R\n        runs as system role \"Automation\" and role \"Auditor\"\n        when E\n          invokes C";
+        const string source = "policy Access\n  require role \"Automation\"\nmodule M\n  feature F\n    slice Automation S\n      event E\n      command C\n        authorize Access\n        produces E\n          for \"one\"\n      reaction R\n        runs as system role \"Automation\" and role \"Auditor\"\n        when E\n          invokes C";
         ModelCompleteness.Check(new ScreenplayCompiler().Compile(source), new([CompletenessCheck.Privilege])).Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
     }
 
     [Fact]
     void should_count_captures_and_other_reactions_as_unprivileged_producers()
     {
-        var source = "module M\n  feature F\n    slice Automation S\n      event E\n      event Input\n      command C\n      reaction Producer\n        when Input\n          produces E\n            for \"one\"\n      reaction Elevated\n        runs as system role \"Automation\"\n        when E\n          invokes C\n    slice Translate Import\n      capture Imported\n        source api\n        append E";
+        const string source = "module M\n  feature F\n    slice Automation S\n      event E\n      event Input\n      command C\n      reaction Producer\n        when Input\n          produces E\n            for \"one\"\n      reaction Elevated\n        runs as system role \"Automation\"\n        when E\n          invokes C\n    slice Translate Import\n      capture Imported\n        source api\n        append E";
         var findings = ModelCompleteness.Check(new ScreenplayCompiler().Compile(source), new([CompletenessCheck.Privilege]));
         findings.Select(finding => finding.Message).Any(message => message.Contains("capture 'Imported'", StringComparison.Ordinal)).ShouldBeTrue();
         findings.Select(finding => finding.Message).Any(message => message.Contains("reaction 'Producer'", StringComparison.Ordinal)).ShouldBeTrue();

@@ -51,3 +51,13 @@ describe('when parsing the domain canvases', () => {
         [note.colour, note.width, note.height].should.deep.equal(['pink', 240, 140]);
     });
 });
+
+describe('when a sticky note carries an unknown directive', () => {
+    let result: CompilationResult<ApplicationSyntax>;
+
+    beforeEach(() => {
+        result = a_parsed_document('sticky note on personas', '  description "Question"', '  bogus here', '    nested');
+    });
+
+    it('should refuse the directive', () => result.diagnostics.map(diagnostic => diagnostic.code).should.include('PLAY0032'));
+});

@@ -44,6 +44,16 @@ public record ReadModelSyntax(
     public FileReferenceSyntax? File { get; init; }
 
     /// <summary>
+    /// Gets whether this read model is replayed for command decisions rather than materialized.
+    /// The default is false: passivity is an explicit realization choice, never inferred.
+    /// </summary>
+    /// <remarks>
+    /// An init property preserves the constructor and Deconstruct signatures for binary compatibility,
+    /// just like File. This realization metadata is not part of the executable semantic model.
+    /// </remarks>
+    public bool IsPassive { get; init; }
+
+    /// <summary>
     /// Gets the authoring-only markdown explaining this read model.
     /// </summary>
     public string? Documentation { get; init; }

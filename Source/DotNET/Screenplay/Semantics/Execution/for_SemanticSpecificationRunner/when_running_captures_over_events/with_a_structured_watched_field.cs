@@ -27,7 +27,8 @@ public class with_a_structured_watched_field : for_SemanticSpecificationRunner.g
                   specification S
                     when append Arrived
                       id = "parcel"
-                      labels = ["priority"]
+                      labels
+                        item "priority"
                     then Local
             """);
         _run = Run("S");

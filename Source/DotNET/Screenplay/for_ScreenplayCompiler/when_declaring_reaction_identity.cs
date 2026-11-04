@@ -49,7 +49,7 @@ public class when_declaring_reaction_identity : given.a_compiler
             .Replace("      command C", "      command C\n        authorize Access", StringComparison.Ordinal)
             + (refusal ? "\n            on refused by authorization\n              acknowledge" : string.Empty);
         var result = _compiler.Compile(source);
-        result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldEqual(expected is null ? [] : new[] { expected });
+        result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldEqual(expected is null ? [] : [expected]);
     }
 
     [Fact]

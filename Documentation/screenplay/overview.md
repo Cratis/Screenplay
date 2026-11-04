@@ -24,7 +24,7 @@ Screenplay files use the `.play` extension.
 <domain>
 <imports>
 <concepts and composite types>
-<policies, personas, and authentication>
+<policies, personas, authentication, and onboarding>
 <triggers>
 <layouts, themes, and UI profiles>
 <module>+

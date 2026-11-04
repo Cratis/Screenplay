@@ -71,7 +71,7 @@ public class with_reactions_and_several_captures : for_SemanticSpecificationRunn
     }
 
     [Fact] void should_settle_its_own_appends() => Assert.True(_run.Passed, string.Join('\n', _run.Failures));
-    [Fact] void should_settle_the_source_reaction_before_capture_delivery() => ((SemanticAccepted)_run.Execution).Facts.Take(2).Select(fact => _plan.Events[fact.EventContract].Name).ShouldEqual(new[] { "Arrived", "SourceReacted" });
+    [Fact] void should_settle_the_source_reaction_before_capture_delivery() => ((SemanticAccepted)_run.Execution).Facts.Take(2).Select(fact => _plan.Events[fact.EventContract].Name).ShouldEqual(["Arrived", "SourceReacted"]);
     [Fact] void should_deliver_in_semantic_identity_order() => ((SemanticAccepted)_run.Execution).Facts.Skip(2).Where(fact => _plan.Events[fact.EventContract].Name == "First").Select(fact => ((SemanticTextValue)fact.Values.Single().Value).Value).ShouldEqual(_plan.Captures.Values.OrderBy(capture => capture.Id.ToString(), StringComparer.Ordinal).Select(capture => capture.Name));
-    [Fact] void should_settle_each_capture_append_before_the_next() => ((SemanticAccepted)_run.Execution).Facts.Skip(2).Select(fact => _plan.Events[fact.EventContract].Name).ShouldEqual(new[] { "First", "Second", "First", "Second" });
+    [Fact] void should_settle_each_capture_append_before_the_next() => ((SemanticAccepted)_run.Execution).Facts.Skip(2).Select(fact => _plan.Events[fact.EventContract].Name).ShouldEqual(["First", "Second", "First", "Second"]);
 }

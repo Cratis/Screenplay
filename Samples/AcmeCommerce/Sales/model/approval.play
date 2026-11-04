@@ -34,8 +34,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         then invokes ApproveOrder
@@ -103,8 +111,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         when ApplyDiscount
@@ -149,8 +165,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         when ApplyLargeDiscount
@@ -193,8 +217,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           email       = "grace@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
-          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 2
+              unitPrice = 899
+          shipTo
+            street     = "1 Compiler Road"
+            city       = "Bergen"
+            postalCode = "5003"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 1798
         when append OrderApproved
@@ -244,8 +276,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 1
+              unitPrice = 899
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 899
         when ConfirmOrder
@@ -261,8 +301,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c02"
           email       = "grace@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
-          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 2
+              unitPrice = 899
+          shipTo
+            street     = "1 Compiler Road"
+            city       = "Bergen"
+            postalCode = "5003"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 1798
         given OrderApproved
@@ -273,8 +321,16 @@ module Orders
         then OrderConfirmationIssued
           for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
-          lines       = [{"sku":"ACM-2000","quantity":2,"unitPrice":899}]
-          shipTo      = {"street":"1 Compiler Road","city":"Bergen","postalCode":"5003","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 2
+              unitPrice = 899
+          shipTo
+            street     = "1 Compiler Road"
+            city       = "Bergen"
+            postalCode = "5003"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 1798
 
@@ -309,8 +365,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-1000","quantity":2,"unitPrice":49}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-1000"
+              quantity  = 2
+              unitPrice = 49
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 98
         when ApproveOrder
@@ -336,8 +400,16 @@ module Orders
           orderId     = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b09"
           customerId  = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
           email       = "ada@example.com"
-          lines       = [{"sku":"ACM-2000","quantity":1,"unitPrice":899}]
-          shipTo      = {"street":"12 Analytical Way","city":"Oslo","postalCode":"0150","country":"NO"}
+          lines
+            item
+              sku       = "ACM-2000"
+              quantity  = 1
+              unitPrice = 899
+          shipTo
+            street     = "12 Analytical Way"
+            city       = "Oslo"
+            postalCode = "0150"
+            country    = "NO"
           market      = "NO"
           quotedTotal = 899
         given OrderRejected

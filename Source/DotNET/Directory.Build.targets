@@ -18,11 +18,12 @@
     </ItemGroup>
 
     <!--
-        Strips the inline specs (when_*/, for_*/, given/ and Specs/ folders) from Release builds. This lives in
-        Directory.Build.targets - not Directory.Build.props - because the SDK's default Compile items do not
+        Strips the inline specs (when_*/, for_*/, given/ and Specs/ folders) from Release builds, and from every
+        configuration of a project whose inline specs compile in a separate spec project (<SeparateInlineSpecs>true</SeparateInlineSpecs>).
+        This lives in Directory.Build.targets - not Directory.Build.props - because the SDK's default Compile items do not
         exist yet when the props evaluate, which would make the removes silent no-ops.
     -->
-    <ItemGroup Condition="'$(Configuration)' == 'Release' AND '$(DedicatedSpecsProject)' != 'true'">
+    <ItemGroup Condition="('$(Configuration)' == 'Release' OR '$(SeparateInlineSpecs)' == 'true') AND '$(DedicatedSpecsProject)' != 'true'">
         <Compile Remove="$(MSBuildProjectDirectory)/**/when_*/**/*.cs" />
         <Compile Remove="$(MSBuildProjectDirectory)/**/for_*/**/*.cs" />
         <Compile Remove="$(MSBuildProjectDirectory)/**/given/**/*.cs" />

@@ -114,6 +114,7 @@ public sealed partial class SemanticModelBinder
                 Route = BindCommandRoute(command, propertiesByName, CommandResults(handler, produced)),
                 CodeValidations = codeValidations,
                 Requirements = requirements,
+                Calendar = BindCommandCalendar(command),
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
             };
         }
@@ -183,7 +184,7 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (BindValidationRule(rule, property.Id, subject, requirement?.RequirementId) is { } bound)
+                    if (BindRule(rule, subject, properties, requirement?.RequirementId) is { } bound)
                     {
                         validations.Add(bound);
                     }

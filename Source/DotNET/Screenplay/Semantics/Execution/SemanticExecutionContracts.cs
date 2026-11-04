@@ -250,6 +250,21 @@ public sealed record SemanticExecutionRequest(
     /// </summary>
     public SemanticCommandOccurrence? Occurrence { get; init; }
 
+    /// <summary>
+    /// Gets the IANA time zone the host supplies as <c>$context.timeZone</c> (the <c>TimeZone</c> runtime token), or null; candidate-only.
+    /// </summary>
+    public string? ContextTimeZone { get; init; }
+
+    /// <summary>
+    /// Gets the time zone the deployment configures, applied only when the application time zone is declared configurable, or null; candidate-only.
+    /// </summary>
+    public string? ConfiguredTimeZone { get; init; }
+
+    /// <summary>
+    /// Gets the IANA time zone a specification pins with <c>given time zone</c>, or null; it replaces the application zone, and a command calendar still wins. Candidate-only.
+    /// </summary>
+    public string? ScenarioTimeZone { get; init; }
+
     /// <summary>Gets the tenant supplied to host-owned rule execution, if known.</summary>
     public string? Tenant { get; init; }
 

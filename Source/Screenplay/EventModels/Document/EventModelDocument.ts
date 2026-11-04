@@ -72,6 +72,8 @@ export interface PrototypeElementDocument {
 export interface ModuleDocument {
     id: string;
     name: string;
+    description?: string;
+    documentation?: string;
     features: FeatureDocument[];
     collapsed: boolean;
     sortOrder: number;
@@ -81,6 +83,8 @@ export interface ModuleDocument {
 export interface FeatureDocument {
     id: string;
     name: string;
+    description?: string;
+    documentation?: string;
     subFeatures: FeatureDocument[];
     slices: SliceDocument[];
     collapsed: boolean;
@@ -95,6 +99,7 @@ export interface SliceDocument {
     name: string;
     sliceType: number;
     description: string;
+    documentation?: string;
     status: number;
     collapsed: boolean;
     sortOrder: number;
@@ -135,6 +140,8 @@ export interface EventItemDocument {
     origin?: string;
     id: string;
     name: string;
+    description?: string;
+    documentation?: string;
     schema: JsonSchemaObject;
     sourceEventId?: string;
     constraints?: { unique?: EventConstraintDocument; uniqueEventType?: EventConstraintDocument };
@@ -148,6 +155,8 @@ export interface CommandRuleDocument {
 export interface CommandItemDocument {
     id: string;
     name: string;
+    description?: string;
+    documentation?: string;
     schema: JsonSchemaObject;
     stateSchema: JsonSchemaObject;
     logicDescription: string;
@@ -157,6 +166,8 @@ export interface CommandItemDocument {
 export interface ReadModelItemDocument {
     id: string;
     name: string;
+    description?: string;
+    documentation?: string;
     schema: JsonSchemaObject;
     materializes: boolean;
 }
@@ -222,6 +233,7 @@ export interface SpecificationScreenplayMetadata {
 export interface SliceSpecificationDocument {
     id: string;
     name: string;
+    description?: string;
     given: SpecificationStepDocument[];
     when?: { id: string; commandId?: string; name: string; values: Record<string, unknown>; generatedValues?: Record<string, unknown> };
     whenEvent?: SpecificationWhenEventDocument;

@@ -80,6 +80,12 @@ internal static partial class SeedParser
         {
             context.Reader.TakeSignificant();
             var match = MappingRegex().Match(child.Content);
+            if (!match.Success && StructuredBlockParser.TryParseMapping(context, child, out var structured))
+            {
+                properties.Add(structured);
+                continue;
+            }
+
             if (!match.Success)
             {
                 context.Error(DiagnosticCodes.InvalidSeedPropertyAssignment, $"Invalid property assignment '{child.Content}' - expected '<property> = <value>'", child.Location);

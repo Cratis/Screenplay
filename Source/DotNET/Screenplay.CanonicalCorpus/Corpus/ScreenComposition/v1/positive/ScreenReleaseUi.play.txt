@@ -75,7 +75,7 @@ module Workspaces
       component scene.web.Header shellHeader
         id "shell:header"
         property title = "Workspace"
-        property actions = []
+        property actions none
 
     arrangement flow
       column gap 8
@@ -223,7 +223,10 @@ module Workspaces
           property title = "Work items"
           property pageSize = 25
           property selectable = true
-          property emptyState = {"title":"No work items","actions":["create"]}
+          property emptyState
+            title = "No work items"
+            actions
+              item "create"
           property noSelection = null
           icon table
           presentation density "compact"

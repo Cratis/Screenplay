@@ -76,7 +76,10 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         if (syntax.TimeZone is not null) VisitTimeZone(syntax.TimeZone);
+        if (syntax.Context is not null) VisitApplicationContext(syntax.Context);
         foreach (var system in syntax.Systems) VisitSystem(system);
+        foreach (var machine in syntax.StateMachines) VisitStateMachine(machine);
+        foreach (var workflow in syntax.Workflows) VisitWorkflow(workflow);
         foreach (var source in syntax.EventSources) VisitEventSource(source);
 
         foreach (var concept in syntax.Concepts)
@@ -106,6 +109,11 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Authentication is not null)
         {
             VisitAuthentication(syntax.Authentication);
+        }
+
+        if (syntax.Onboarding is not null)
+        {
+            VisitOnboarding(syntax.Onboarding);
         }
 
         foreach (var theme in syntax.Themes ?? [])

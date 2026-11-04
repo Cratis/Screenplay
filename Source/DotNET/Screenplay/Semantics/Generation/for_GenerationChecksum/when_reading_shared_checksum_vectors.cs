@@ -28,8 +28,8 @@ public class when_reading_shared_checksum_vectors : Specification
 
     [Fact] void should_check_a_nonempty_generation_population() => _generation.ShouldNotBeEmpty();
     [Fact] void should_check_a_nonempty_validation_population() => _validation.ShouldNotBeEmpty();
-    [Fact] void should_produce_every_expected_check_digit() => _suffixes.ShouldEqual(_generation.Select(vector => vector.GetProperty("suffix").GetString()).ToArray());
-    [Fact] void should_validate_only_the_exact_trailing_check_digits() => _matches.ShouldEqual(_validation.Select(vector => vector.GetProperty("valid").GetBoolean()).ToArray());
+    [Fact] void should_produce_every_expected_check_digit() => _suffixes.ShouldEqual([.. _generation.Select(vector => vector.GetProperty("suffix").GetString())]);
+    [Fact] void should_validate_only_the_exact_trailing_check_digits() => _matches.ShouldEqual([.. _validation.Select(vector => vector.GetProperty("valid").GetBoolean())]);
 
     static JsonElement Vectors([CallerFilePath] string path = "")
     {

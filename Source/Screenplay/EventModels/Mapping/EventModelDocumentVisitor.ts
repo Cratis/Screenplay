@@ -7,6 +7,7 @@ import { guidFor } from '../Document/identity';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { Audience } from './Audience';
 import { EventOwners } from './EventOwners';
+import { proseOf } from './proseOf';
 import { SliceScope } from './SliceScope';
 import { systemActor } from './systemActor';
 import { toSlice } from './toSlice';
@@ -67,6 +68,7 @@ function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners, 
     return {
         id: scope.id,
         name: module.name,
+        ...proseOf(module),
         features: ordered(module.features, [module.name], order).map(feature => toFeature(feature, scope.feature(feature.name), owners, within, [module.name, feature.name], order)),
         collapsed: false,
         sortOrder,
@@ -79,6 +81,7 @@ function toFeature(feature: FeatureSyntax, scope: SliceScope, owners: EventOwner
     return {
         id: scope.id,
         name: feature.name,
+        ...proseOf(feature),
         subFeatures: ordered(feature.features, path, order).map(child => toFeature(child, scope.feature(child.name), owners, within, [...path, child.name], order)),
         slices: ordered(feature.slices, path, order).map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners, within.actorsFor(slice))),
         collapsed: false,

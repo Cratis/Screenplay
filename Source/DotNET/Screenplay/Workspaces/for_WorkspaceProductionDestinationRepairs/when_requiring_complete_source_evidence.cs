@@ -61,8 +61,11 @@ public class when_requiring_complete_source_evidence : given.a_destination_model
     {
         var initial = Propose(Create()).Workspace!;
         var original = initial.Documents.Single();
-        var invalid = ScreenplayWorkspace.Create(initial.IdentityCatalog.Application, initial.ApplicationName,
-            [WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, System.Text.Encoding.UTF8.GetBytes(Source))], initial.IdentityCatalog);
+        var invalid = ScreenplayWorkspace.Create(
+            initial.IdentityCatalog.Application,
+            initial.ApplicationName,
+            [WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, System.Text.Encoding.UTF8.GetBytes(Source))],
+            initial.IdentityCatalog);
         var result = Propose(invalid);
         result.Accepted.ShouldBeTrue();
         var catalog = result.Workspace!.IdentityCatalog;

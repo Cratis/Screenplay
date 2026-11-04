@@ -14,7 +14,7 @@ public class and_authorizing_queries : given.a_policy
         Request = readOnly ? QueryRequest() : Request with { Queries = QueryRequest().Queries };
         var calls = 0;
         Provider = new((_, _) => ++calls == 1 && !readOnly ? SemanticPolicyBodyResult.Allow() : SemanticPolicyBodyResult.Deny());
-        var result = Execute();
+        var result = Execute(TestContext.Current.CancellationToken);
         ((SemanticRejected)result).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
         ReferenceEquals(result.World, SemanticWorld.Empty).ShouldBeTrue();
         result.World.Facts.ShouldBeEmpty();

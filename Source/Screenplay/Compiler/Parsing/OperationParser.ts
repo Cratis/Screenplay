@@ -14,6 +14,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProperty, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { parseStructuredValue, trailingMarker } from './StructuredBlockParser';
 
 const systemHeader = pattern('^system\\s+([A-Za-z_]\\w*)$');
 const operationHeader = pattern('^operation\\s+([A-Za-z_]\\w*)$');
@@ -59,7 +60,11 @@ export function parseOperation(context: ParserContext, header: SourceLine, inlin
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         const typed = typedMapping.exec(line.content);
-        const propertyLine = inline && typed !== null ? { ...line, content: typed[1].trimEnd() } : line;
+        const marker = inline && typed === null ? trailingMarker(line.content) : undefined;
+        let propertyLine = line;
+        if (inline && typed !== null) propertyLine = { ...line, content: typed[1].trimEnd() };
+        else if (marker !== undefined) propertyLine = { ...line, content: line.content.substring(0, line.content.length - marker.length - 1) };
+        const structured = inline && typed === null && (marker !== undefined || context.peekChild(line.indent) !== undefined);
         if (typed === null && eventMetadata.has(firstWord(line.content))) {
             context.error(DiagnosticCodes.InvalidOperationDeclaration, 'Operations cannot declare event routing or metadata; escape a keyword-named input with @.', locationOf(line));
             context.skipBlock(line.indent);
@@ -67,13 +72,14 @@ export function parseOperation(context: ParserContext, header: SourceLine, inlin
         }
         if (!usesPattern.test(line.content) && tryParseProperty(propertyLine) !== undefined) {
             const property = parseProperty(context, propertyLine)!;
-            if (inline && typed === null) context.error(DiagnosticCodes.InvalidOperationMapping, "An inline operation input requires '<property> <Type> = <source>'.", locationOf(line));
+            if (inline && typed === null && !structured) context.error(DiagnosticCodes.InvalidOperationMapping, "An inline operation input requires '<property> <Type> = <source>'.", locationOf(line));
             if (property.isSubject) context.error(DiagnosticCodes.InvalidSubjectOwner, 'The subject modifier is only valid on event properties, not operation inputs (decision 0008: one data subject per event).', locationOf(line));
             if (property.isIdentifier || property.isGenerated) context.error(DiagnosticCodes.InvalidOperationDeclaration, 'Operation inputs cannot be identifier or generated properties.', locationOf(line));
             if (names.has(property.name)) context.error(DiagnosticCodes.DuplicateDeclaration, `Operation '${name}' already declares input '${property.name}'.`, locationOf(line));
             names.add(property.name);
             inputs.push(property);
             if (inline && typed !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: property.name, source: parseMappingSource(typed[2], { ...locationOf(line), column: line.indent + line.content.length - typed[2].length + 1 }, context), location: locationOf(line) });
+            if (structured) mappings.push({ kind: 'PropertyMappingSyntax', property: property.name, source: parseStructuredValue(context, line, marker), location: locationOf(line) });
             rejectOperationChildren(context, line, DiagnosticCodes.InvalidOperationDeclaration, 'An operation input cannot have children.');
         } else if (firstWord(line.content) === 'description') description = parseDescription(context, line, description, `Operation '${name}'`);
         else if (usesPattern.test(line.content)) {

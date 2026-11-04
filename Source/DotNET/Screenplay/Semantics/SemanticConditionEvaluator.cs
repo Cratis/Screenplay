@@ -21,13 +21,27 @@ public static class SemanticConditionEvaluator
         SemanticCondition condition,
         IReadOnlyDictionary<SemanticId, SemanticValue> values,
         IReadOnlyDictionary<SemanticId, SemanticPrimitiveType>? dateTypes = null,
-        IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? reads = null) => condition switch
-        {
-            SemanticLogicalCondition { Operator: SemanticLogicalOperator.And } logical => Evaluate(logical.Left, values, dateTypes, reads) && Evaluate(logical.Right, values, dateTypes, reads),
-            SemanticLogicalCondition { Operator: SemanticLogicalOperator.Or } logical => Evaluate(logical.Left, values, dateTypes, reads) || Evaluate(logical.Right, values, dateTypes, reads),
-            SemanticComparison comparison => Compare(comparison, values, reads, dateTypes),
-            _ => throw new InvalidSemanticContract("Unknown condition node or operator.")
-        };
+        IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? reads = null) => Evaluate(condition, new SemanticConditionInputs(values, dateTypes, reads));
+
+    internal static bool Evaluate(SemanticCondition condition, SemanticConditionInputs inputs) => condition switch
+    {
+        SemanticLogicalCondition { Operator: SemanticLogicalOperator.And } logical => Evaluate(logical.Left, inputs) && Evaluate(logical.Right, inputs),
+        SemanticLogicalCondition { Operator: SemanticLogicalOperator.Or } logical => Evaluate(logical.Left, inputs) || Evaluate(logical.Right, inputs),
+        SemanticComparison comparison when SemanticClockComparison.Uses(comparison) => SemanticClockComparison.Compare(comparison, inputs),
+        SemanticComparison comparison => Compare(comparison, inputs.Values, inputs.Reads, inputs.DateTypes),
+        _ => throw new InvalidSemanticContract("Unknown condition node or operator.")
+    };
+
+    internal static bool CompareDate(SemanticComparisonOperator op, int result) => op switch
+    {
+        SemanticComparisonOperator.Equal => result == 0,
+        SemanticComparisonOperator.NotEqual => result != 0,
+        SemanticComparisonOperator.GreaterThan => result > 0,
+        SemanticComparisonOperator.GreaterThanOrEqual => result >= 0,
+        SemanticComparisonOperator.LessThan => result < 0,
+        SemanticComparisonOperator.LessThanOrEqual => result <= 0,
+        _ => throw new InvalidSemanticContract("Unknown date comparison operator.")
+    };
 
     static bool Compare(
         SemanticComparison comparison,
@@ -52,17 +66,6 @@ public static class SemanticConditionEvaluator
             _ => throw new InvalidSemanticContract("Unknown comparison operator.")
         };
     }
-
-    static bool CompareDate(SemanticComparisonOperator op, int result) => op switch
-    {
-        SemanticComparisonOperator.Equal => result == 0,
-        SemanticComparisonOperator.NotEqual => result != 0,
-        SemanticComparisonOperator.GreaterThan => result > 0,
-        SemanticComparisonOperator.GreaterThanOrEqual => result >= 0,
-        SemanticComparisonOperator.LessThan => result < 0,
-        SemanticComparisonOperator.LessThanOrEqual => result <= 0,
-        _ => throw new InvalidSemanticContract("Unknown date comparison operator.")
-    };
 
     static SemanticValue Operand(
         SemanticConditionOperand operand,
