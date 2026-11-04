@@ -5,7 +5,7 @@ import { describe, it } from 'vitest';
 import { should } from 'chai';
 import { parse } from '../../../ScreenplayCompiler';
 import { toSyntaxJson } from '../../../Syntax/SyntaxJson';
-import { commandBodyCases } from './given/cases';
+import { commandCases } from './given/cases';
 
 should();
 const prefix = 'concept AccountId : Uuid\n\neventsource Account\n  identifier AccountId\n  stream Transactions\n  stream Other\n\nmodule M\n  feature F\n    slice StateChange S\n      command C\n';
@@ -33,8 +33,8 @@ export function snapshot(source: string): string {
     return [...result.diagnostics.map(d => `${d.severity} ${d.code} ${d.location.line}:${d.location.column} ${d.message}`), command === undefined ? 'no command' : JSON.stringify(command)].join('\n');
 }
 
-describe('when dispatching command body', () => {
-    it.each(commandBodyCases.map(c => [c.name, c] as const))('should keep the diagnostics, recovery and syntax for %s', (_, c) => {
+describe('when disambiguating properties and responses', () => {
+    it.each(commandCases.map(c => [c.name, c] as const))('should keep the diagnostics, recovery and syntax for %s', (_, c) => {
         snapshot(c.source).should.equal(c.expected);
     });
 });

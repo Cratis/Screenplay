@@ -4,13 +4,13 @@
 using System.Text.Json;
 using Cratis.Screenplay.Syntax.Serialization;
 
-namespace Cratis.Screenplay.Parsing.for_CommandParser.when_dispatching_command_body;
+namespace Cratis.Screenplay.Parsing.for_CommandParser.when_disambiguating_properties_and_responses;
 
-public class when_dispatching_command_body
+public class when_disambiguating_properties_and_responses
 {
     const string Prefix = "concept AccountId : Uuid\n\neventsource Account\n  identifier AccountId\n  stream Transactions\n  stream Other\n\nmodule M\n  feature F\n    slice StateChange S\n      command C\n";
 
-    public static IEnumerable<object[]> Cases => CommandBodyCases.All;
+    public static IEnumerable<object[]> Cases => CommandCases.All;
 
     [Theory]
     [MemberData(nameof(Cases))]

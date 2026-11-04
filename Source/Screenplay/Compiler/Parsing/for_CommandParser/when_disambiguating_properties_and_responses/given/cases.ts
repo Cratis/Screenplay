@@ -10,7 +10,7 @@ export interface Case {
     readonly expected: string;
 }
 
-export const commandBodyCases: readonly Case[] = [
+export const commandCases: readonly Case[] = [
     {
         name: 'plain properties',
         source: '        name String\n        age Int optional\n        id Uuid identifier',

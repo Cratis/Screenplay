@@ -1,14 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Parsing.for_CommandParser.when_dispatching_command_body;
+namespace Cratis.Screenplay.Parsing.for_CommandParser.when_disambiguating_properties_and_responses;
 
 /// <summary>
 /// The command body characterization matrix, shared with the TypeScript specification of the same name. Every case is the body of
 /// 'command C' followed by a sibling 'command Marker', so recovery and the reader position after each directive are pinned. Each
 /// expectation is the diagnostics (severity, code, line:column, text) in order, then the serialized syntax of command C.
 /// </summary>
-static class CommandBodyCases
+static class CommandCases
 {
     public static IEnumerable<object[]> All =>
     [
