@@ -24,13 +24,25 @@ public static partial class AttachmentFiles
     internal static bool WindowsAttachmentMatchesPath(string rootFinalPath, string key, string attachmentFinalPath) =>
         string.Equals(NormalizeWindowsFinalPath(attachmentFinalPath), NormalizeWindowsFinalPath(rootFinalPath) + '\\' + key.Replace('/', '\\'), StringComparison.OrdinalIgnoreCase);
 
-    internal static string WindowsAttachmentRefusalCode(bool reparsePoint, bool matchesPath) =>
-        (reparsePoint, matchesPath) switch
-        {
-            (true, _) => DiagnosticCodes.AttachmentLinkRefused,
-            (false, false) => DiagnosticCodes.AttachmentPathRefused,
-            _ => DiagnosticCodes.AttachmentUnreadable
-        };
+    // A mismatch is a name alias only when the opened file stays under the held root with one final segment per key segment,
+    // each equal to its key segment or explainable as a short (8.3) name or a stripped trailing dot or space.
+    // Any other mismatch means a directory on the path was followed through a link after it was checked.
+    internal static bool WindowsAttachmentIsNameAlias(string rootFinalPath, string key, string attachmentFinalPath)
+    {
+        var root = NormalizeWindowsFinalPath(rootFinalPath) + '\\';
+        var final = NormalizeWindowsFinalPath(attachmentFinalPath);
+        if (!final.StartsWith(root, StringComparison.OrdinalIgnoreCase)) return false;
+        var finalSegments = final[root.Length..].Split('\\');
+        var keySegments = key.Replace('\\', '/').Split('/');
+        return finalSegments.Length == keySegments.Length && finalSegments.Zip(keySegments).All(pair => IsWindowsSegmentAlias(pair.First, pair.Second));
+    }
+
+    internal static string WindowsAttachmentMismatchCode(string rootFinalPath, string key, string attachmentFinalPath) =>
+        WindowsAttachmentIsNameAlias(rootFinalPath, key, attachmentFinalPath) ? DiagnosticCodes.AttachmentPathRefused : DiagnosticCodes.AttachmentLinkRefused;
+
+    static bool IsWindowsSegmentAlias(string finalSegment, string keySegment) =>
+        keySegment.Contains('~', StringComparison.Ordinal) ||
+        string.Equals(finalSegment, keySegment.TrimEnd('.', ' '), StringComparison.OrdinalIgnoreCase);
 
     static string NormalizeWindowsFinalPath(string path)
     {
@@ -97,14 +109,14 @@ public static partial class AttachmentFiles
     static bool VerifyWindowsAttachment(SafeFileHandle handle, string rootFinalPath, string key, out string reason, out string refusalCode)
     {
         reason = "is not a regular file";
-        refusalCode = WindowsAttachmentRefusalCode(false, true);
+        refusalCode = DiagnosticCodes.AttachmentUnreadable;
         if (GetWindowsFileType(handle) != WindowsFileTypeDisk) return false;
         reason = "cannot be inspected";
         if (!TryReadWindowsAttributes(handle, out var attributes)) return false;
         if (attributes.HasFlag(FileAttributes.ReparsePoint))
         {
             reason = "crosses a symbolic link or reparse point";
-            refusalCode = WindowsAttachmentRefusalCode(true, false);
+            refusalCode = DiagnosticCodes.AttachmentLinkRefused;
             return false;
         }
 
@@ -113,10 +125,12 @@ public static partial class AttachmentFiles
         reason = "cannot be inspected";
         var finalPath = WindowsFinalPath(handle);
         if (finalPath is null) return false;
-        var matchesPath = WindowsAttachmentMatchesPath(rootFinalPath, key, finalPath);
-        refusalCode = WindowsAttachmentRefusalCode(false, matchesPath);
-        reason = "does not match its name on disk; short (8.3) names and trailing dots or spaces are not supported";
-        return matchesPath;
+        if (WindowsAttachmentMatchesPath(rootFinalPath, key, finalPath)) return true;
+        refusalCode = WindowsAttachmentMismatchCode(rootFinalPath, key, finalPath);
+        reason = refusalCode == DiagnosticCodes.AttachmentLinkRefused
+            ? "crosses a symbolic link or reparse point"
+            : "does not match its name on disk; short (8.3) names and trailing dots or spaces are not supported";
+        return false;
     }
 
     static bool TryReadWindowsAttributes(SafeFileHandle handle, out FileAttributes attributes)

@@ -39,8 +39,8 @@ public class when_opening_windows_attachments : Specification
         result.Contents.ShouldBeEmpty();
         result.Contents.Values.ShouldNotContain("outside contents");
         var diagnostic = result.Diagnostics.Single();
-        diagnostic.Code.ShouldEqual(DiagnosticCodes.AttachmentPathRefused);
-        diagnostic.Message.ShouldEqual("File attachment 'nested/implementation/handler.cs' does not match its name on disk; short (8.3) names and trailing dots or spaces are not supported.");
+        diagnostic.Code.ShouldEqual(DiagnosticCodes.AttachmentLinkRefused);
+        diagnostic.Message.ShouldEqual("File attachment 'nested/implementation/handler.cs' crosses a symbolic link or reparse point.");
     }
 
     [Fact]

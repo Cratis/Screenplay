@@ -30,13 +30,19 @@ public class when_comparing_windows_attachment_paths : Specification
     [InlineData("LONGDI~1/handler.cs", @"C:\root\LongDirectory\handler.cs")]
     [InlineData("nested./handler.cs", @"C:\root\nested\handler.cs")]
     [InlineData("nested /handler.cs", @"C:\root\nested\handler.cs")]
-    [InlineData("nested/handler.cs", @"C:\outside\handler.cs")]
-    void should_classify_a_name_mismatch_without_a_reparse_point_as_a_refused_path(string key, string finalPath) =>
-        AttachmentFiles.WindowsAttachmentRefusalCode(false, AttachmentFiles.WindowsAttachmentMatchesPath(@"C:\root", key, finalPath)).ShouldEqual(DiagnosticCodes.AttachmentPathRefused);
+    [InlineData("nested/HANDLE~1.CS", @"\\?\C:\root\nested\handler.cs")]
+    void should_classify_a_name_alias_inside_the_root_as_a_refused_path(string key, string finalPath) =>
+        AttachmentFiles.WindowsAttachmentMismatchCode(@"C:\root", key, finalPath).ShouldEqual(DiagnosticCodes.AttachmentPathRefused);
 
-    [Fact]
-    void should_classify_a_reparse_point_as_a_refused_link() =>
-        AttachmentFiles.WindowsAttachmentRefusalCode(true, false).ShouldEqual(DiagnosticCodes.AttachmentLinkRefused);
+    [Theory]
+    [InlineData("nested/handler.cs", @"C:\outside\handler.cs")]
+    [InlineData("nested/handler.cs", @"C:\root2\nested\handler.cs")]
+    [InlineData("nested/handler.cs", @"C:\root\other\handler.cs")]
+    [InlineData("nested/handler.cs", @"C:\root\elsewhere\deeper\handler.cs")]
+    [InlineData("a/b/handler.cs", @"C:\root\a\handler.cs")]
+    [InlineData("nested/handler.cs", @"D:\root\nested\handler.cs")]
+    void should_classify_a_mismatch_that_no_name_alias_explains_as_a_refused_link(string key, string finalPath) =>
+        AttachmentFiles.WindowsAttachmentMismatchCode(@"C:\root", key, finalPath).ShouldEqual(DiagnosticCodes.AttachmentLinkRefused);
 
     [Fact]
     void should_not_refuse_a_literal_tilde_in_a_matching_name() =>
