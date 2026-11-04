@@ -33,7 +33,7 @@ describe('when authoring clock operands', () => {
             entries(source).some(entry => entry.label === 'today').should.equal(false);
         }
     });
-    it('should complete only the admitted calendar context member', () => {
+    it('should offer the builtin calendar source without a context declaration', () => {
         for (const partial of ['', '$', '$context.', '$context.t']) {
             const result = entries(command + `        calendar from ${partial}`);
             result.map(entry => entry.label).should.deep.equal(['$context.timeZone']);
@@ -48,7 +48,7 @@ describe('when authoring clock operands', () => {
     });
     it('should explain v37 without claiming a blanket refusal', () => {
         for (const word of ['today', 'now', 'calendar', 'zone', 'Date']) {
-            keywordDocs[word].should.not.match(/syntax-only|remain refused|binding reports PLAY0268/i);
+            keywordDocs[word].should.not.match(/syntax-only|binding reports PLAY0268|context and today remain refused/i);
         }
         hover('        require dueDate > today', 'today')!.should.include('integral day');
         hover('        require dueDate > date of now + 2 hours', 'now')!.should.include('before converting');

@@ -40,7 +40,7 @@ export const keywordDocs: Record<string, string> = {
     colour: 'The colour of a sticky note: yellow, pink, green or blue.',
     size: 'How big a persona or sticky note is on its canvas: `size <width> <height>` in whole canvas units.',
     position: 'Where a persona, event source or sticky note sits on its canvas: `position <x> <y>` in whole canvas units.',
-    context: 'Declares named application context inputs: `context` with `<name> time zone` members (decision 0132). At most one application-root block; optional description. ESM v37 admits calendar from $context.timeZone only; arbitrary named members remain authoring metadata. No defaults, values, sources or optional modifiers.',
+    context: 'Declares named application context inputs: `context` with `<name> time zone` members (decision 0132). At most one application-root block; optional description. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. No defaults, values, sources or optional modifiers.',
     identity: 'Declares typed additional caller details from a claim, a keyed single-result query, inline code or a file. Authoring metadata only; executable use of `$identity.<detail>` reports PLAY0268 until admitted (#600).',
     authentication: 'Declares the identity providers of the application — at most one block per file.',
     provider: 'An identity provider within `authentication`: `provider <Kind>` or `provider <Kind> name <Alias>`. How to reach it is configured where the application runs, never in the model.',
@@ -195,7 +195,7 @@ export const keywordDocs: Record<string, string> = {
     now: 'ESM v37 instant, with integral day/hour/minute offsets. date of now + 2 hours applies the duration before converting to the selected calendar date. Only command conditions and command property rules admit clock operands; not concepts, reactions, read paths or arbitrary context paths.',
     date: 'date of converts a DateTime command property or a clock operand to the selected calendar date. ESM v37 command conditions; property rules accept date of today or date of now, not date of a property.',
     of: 'date of converts to the selected calendar date after applying a clock offset (ESM v37).',
-    calendar: 'ESM v37 command calendar: calendar "<IANA id>" or calendar from $context.timeZone, the only admitted context calendar source. Selection order: command calendar, scenario zone, execution-context zone, application default. A property named calendar remains a property.',
+    calendar: 'ESM v37 command calendar: calendar "<IANA id>" or calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. Selection order: command calendar, scenario zone, execution-context zone, application default. A property named calendar remains a property.',
     zone: 'ESM v37 application time zone "<IANA id>" or time zone configurable default "<IANA id>"; a specification pins given time zone "<IANA id>" and given clock. Selection order: command calendar, scenario zone, execution-context zone, application default.',
     empty: 'Ends a structured value header for an object without members: `<name> empty`. Also used with `not empty` — text needs a non-whitespace character; null, empty and whitespace-only text fail. Unicode White_Space is U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A, U+2028, U+2029, U+202F, U+205F and U+3000 (not U+FEFF). Collections need at least one element. Applies to concept and command rules in every ESM version; no trimming. Identity text is unchanged: whitespace is a value.',
     not: 'Negates a validation condition, as in `not empty`.',
@@ -244,7 +244,7 @@ export const attributeDocs: Record<string, string> = {
 };
 
 export const contextVariableDocs: Record<string, string> = {
-    '$context.timeZone': 'Execution-context IANA time zone. ESM v37 admits only calendar from $context.timeZone; not an arbitrary condition path. Selection order: command calendar, scenario zone, execution-context zone, application default.',
+    '$context.timeZone': 'Execution-context IANA time zone. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. Not an arbitrary condition path. Selection order: command calendar, scenario zone, execution-context zone, application default.',
     '$context.occurred': 'When the command or query was received.',
     '$context.tenant': 'The tenant the command or query is executing for.',
     '$context.command': 'The command being handled, shaped by its `command` declaration.',

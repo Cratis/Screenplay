@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { parse } from '@cratis/screenplay-compiler';
 import type { DocumentSymbols } from './symbols';
 import { documentationItem } from './documentation-item';
 import { purposeReferenceItem } from './purpose-items';
@@ -38,13 +39,22 @@ export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntr
     return [...contextVariableItems, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
 }
 
+export function calendarContextEntries(lines: string[], prefix = ''): CompletionEntry[] {
+    const members = parse(lines.join('\n')).value.context?.members.map(member => member.name) ?? [];
+    return [...new Set(['timeZone', ...members])].map(member => ({
+        label: `$context.${member}`,
+        insertText: prefix.startsWith('$context.') ? member : prefix ? `context.${member}` : `\\$context.${member}`,
+        documentation: 'ESM v37 admits $context.timeZone or a member declared in the context block; other context paths remain refused. Command calendar, scenario zone, execution-context zone, application default.',
+    }));
+}
+
 export const applicationContextItems: CompletionEntry[] = [
-    { label: 'time zone member', insertText: '${1:bookingZone} time zone', documentation: 'A typed application time-zone input. ESM v37 admits calendar from $context.timeZone; other members remain authoring metadata.' },
+    { label: 'time zone member', insertText: '${1:bookingZone} time zone', documentation: 'A typed application time-zone input. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused.' },
     { label: 'description', insertText: 'description "${1:context intent}"', documentation: 'Describes the application context; does not supply a runtime value.' },
 ];
 
 export const topLevelItems: CompletionEntry[] = [
-    { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone only; other members remain authoring metadata. At most one block per application.' },
+    { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. At most one block per application.' },
     { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar using an IANA zone. Never falls back to the machine zone.' },
     { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar default. Command calendar, scenario zone and execution-context zone take precedence.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
@@ -182,7 +192,7 @@ export const sliceItems: CompletionEntry[] = [
 
 export const commandItems: CompletionEntry[] = [
     { label: 'calendar', insertText: 'calendar "${1:Europe/Oslo}"', documentation: 'ESM v37 command calendar using an IANA zone; takes precedence over scenario zone, execution-context zone and application default.' },
-    { label: 'calendar from', insertText: 'calendar from \\$context.timeZone', documentation: 'ESM v37 admits only $context.timeZone as a command calendar source.' },
+    { label: 'calendar from', insertText: 'calendar from \\$context.timeZone', documentation: 'ESM v37 admits $context.timeZone or a member declared in the context block; other context paths remain refused.' },
     documentationItem,
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'An input of the command — a name and a type reference.' },
     { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },

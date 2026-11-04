@@ -265,8 +265,7 @@ export function planCompletions(
     const clockChain = enclosingChain(lines, fences, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
     if (clockChain[0] === 'command' && /^\s*calendar\s+from\s+(?:\$[\w.]*)?$/.test(textBefore)) {
         const prefix = textBefore.match(/\$[\w.]*$/)?.[0];
-        const insertText = prefix?.startsWith('$context.') ? 'timeZone' : prefix ? 'context.timeZone' : '\\$context.timeZone';
-        return { kind: 'entries', entries: [{ label: '$context.timeZone', insertText, documentation: 'The only admitted context calendar source (ESM v37). Command calendar, scenario zone, execution-context zone, application default.' }] };
+        return { kind: 'entries', entries: items.calendarContextEntries(lines, prefix) };
     }
     if (clockChain.includes('command') && (clockChain[0] === 'validate' || (clockChain[0] === 'command' && /^\s*produces\s+when\b/.test(textBefore))) &&
         /^\s*(?:require\s+|produces\s+when\s+)?[a-z_]\w*(?:\.\w+)*\s*(?:==|!=|>=|<=|>|<)\s+(?:[a-z ]*)$/.test(textBefore)) {
