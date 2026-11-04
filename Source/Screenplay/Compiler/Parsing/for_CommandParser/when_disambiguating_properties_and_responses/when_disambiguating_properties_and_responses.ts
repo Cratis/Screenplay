@@ -27,8 +27,17 @@ function findCommand(node: unknown, name: string): unknown {
     return undefined;
 }
 
+function parseWithMarker(source: string) {
+    return parse(`${prefix}${source}\n      command Marker\n        marker String\n`, 'fragment.play');
+}
+
+function markerProperties(source: string): string {
+    const marker = findCommand(toSyntaxJson(parseWithMarker(source).value), 'Marker') as { properties: { name: string; type: { name: string } }[] } | undefined;
+    return marker === undefined ? 'no marker command' : marker.properties.map(p => `${p.name} ${p.type.name}`).join(',');
+}
+
 export function snapshot(source: string): string {
-    const result = parse(`${prefix}${source}\n      command Marker\n        marker String\n`, 'fragment.play');
+    const result = parseWithMarker(source);
     const command = findCommand(toSyntaxJson(result.value), 'C');
     return [...result.diagnostics.map(d => `${d.severity} ${d.code} ${d.location.line}:${d.location.column} ${d.message}`), command === undefined ? 'no command' : JSON.stringify(command)].join('\n');
 }
@@ -36,5 +45,9 @@ export function snapshot(source: string): string {
 describe('when disambiguating properties and responses', () => {
     it.each(commandCases.map(c => [c.name, c] as const))('should keep the diagnostics, recovery and syntax for %s', (_, c) => {
         snapshot(c.source).should.equal(c.expected);
+    });
+
+    it.each(commandCases.map(c => [c.name, c] as const))('should recover into the sibling marker command for %s', (_, c) => {
+        markerProperties(c.source).should.equal('marker String');
     });
 });
