@@ -27,10 +27,44 @@ sample data <Name>
 - `title` - the display title a selector shows (`CRM · Nordic SMB`). Without one the pack is shown by its name. At most one.
 - `locale` - the locale of the data, a BCP 47 tag such as `nb-NO` or `en-GB`. It also decides which names, cities and formats generated rows use for a shape the pack does not cover. At most one.
 - `shape <ReadModel>` - the rows for one shape. A shape supplies rows for the read model of the same name, or for the read model a `ui profile` maps it to (see below). A shape appears at most once per pack.
-- `row` - one record, with a `<field> = <literal>` line per field. Fields are in authored order and may be omitted; a missing field is generated.
+- `row` - one record, with a `<field> = <literal>` line per scalar field, or a bare field name containing child `row` blocks for a composite collection. Fields and rows keep authored order. Fields may be omitted; a missing field is generated.
 - A literal is a quoted string, a number, `true`, `false` or `null`. Numbers keep their authored token.
 
 The compiler checks every field against the read model: the field must be one of its properties (`PLAY0710`), and the literal must fit the type (`PLAY0711`) - a string for text, `Uuid`, `Date` and `DateTime`, one of the values for an enum concept, a whole number for `Int`, a number for `Decimal`, `true` or `false` for `Bool`, and `null` only for an `optional` property. A shape that names no read model is a warning (`PLAY0709`), because a blueprint may supply the read model.
+
+## Composite collections
+
+Use a bare field name and nested `row` blocks for a collection whose element is a declared top-level `type`. Child fields are checked against that element's properties, recursively. Primitive collections and a single composite object do not accept nested rows (`PLAY0711`).
+
+```screenplay
+type Line
+  sku String
+  quantity Int
+
+module Shop
+  feature Baskets
+    slice StateView BasketList
+      readmodel Basket
+        lines Line[]
+
+sample data Demo
+  shape Basket
+    row
+      lines
+        row
+          sku = "BOOK"
+          quantity = 2
+        row
+          sku = "PEN"
+          quantity = 1
+    row
+      lines
+    row
+```
+
+The first record supplies two lines. The second supplies an **explicit empty list**: `lines` is present but has no child rows. The third omits `lines`, leaving generation or fallback to the preview. Omitting the field is not the same as authoring an empty list. Scalar-list literals and JSON are not collection syntax.
+
+In syntax JSON, a collection field has `syntaxKind: "Rows"`, a null `value`, and ordered `rows` containing `SampleDataRowSyntax` nodes. Empty `rows` is omitted from JSON and defaults to an empty sequence on deserialization. The `Rows` kind still distinguishes an explicit empty collection from an absent field. Existing scalar fields keep their JSON shape. See [decision 0136](https://github.com/Cratis/Screenplay/blob/main/decisions/0136-collection-sample-values-are-explicit-nested-rows.md).
 
 ## Choosing the active pack: once, in the ui profile
 
@@ -98,6 +132,6 @@ ui profile Desktop
 - **TypeScript compiler, Monaco, VS Code.** The TypeScript compiler skips `sample data` whole, as it does `ui profile` and `theme`, so the C# compiler alone reports its diagnostics ([TypeScript compiler](typescript-compiler.md)). Monaco and the VS Code grammar highlight, document and complete the blocks.
 - **MCP.** `read-ast` and `propose-ast` read and edit `SampleDataPackSyntax`, `SampleDataSelectionSyntax` and their children as typed nodes: replace a row value, change the profile's active pack, remove a pack or the selection. An active pack nothing declares is refused with `PLAY0714`.
 - **Binding.** Each pack is reported as deferred (`PLAY0269`); it adds nothing to the executable model.
-- **Scene and Stage.** The Scene converter turns the blocks into Scene's `SampleDataPack` and the UI profile's `sampleData`; production builds never include sample data.
+- **Scene and Stage.** Scalar packs convert to Scene's `SampleDataPack` and the UI profile's `sampleData`. Nested `Rows` require matching Stage conversion and Studio export support; this syntax change alone does not enable downstream preview conversion. Production builds never include sample data.
 
 The ruling behind the single choice point is [decision 0081](https://github.com/Cratis/Screenplay/blob/main/decisions/0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md).

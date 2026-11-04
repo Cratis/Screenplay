@@ -396,6 +396,10 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var field in syntax.Fields)
         {
             VisitNode(field);
+            foreach (var row in field.Rows)
+            {
+                VisitSampleDataRow(row);
+            }
         }
     }
 }

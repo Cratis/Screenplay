@@ -599,6 +599,10 @@
                     }
                 },
                 {
+                    "match": "^\\s*(row)\\s*$",
+                    "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                {
                     "match": "\\brow-click\\b",
                     "name": "keyword.other.screenplay"
                 },

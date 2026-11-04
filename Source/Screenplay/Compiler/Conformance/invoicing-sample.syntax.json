@@ -6085,11 +6085,48 @@
                     "kind": "HandlerSyntax",
                     "code": {
                       "kind": "CodeBlockSyntax",
-                      "code": "var events = new List<object>();\nevents.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));\nforeach (var id in InvoiceIds)\n    events.Add(Action switch {\n        \"send\"   => new InvoiceSent(context.Occurred, null),\n        \"cancel\" => new InvoiceCancelled(\"Batch\", context.Occurred, context.Identity.Id, \"Batch\"),\n        _        => throw new InvalidOperationException($\"Unknown action: {Action}\")\n    });\nevents.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));\nreturn events;",
+                      "code": "result.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));\nforeach (var id in InvoiceIds)\n    result.Add(id, Action switch {\n        \"send\"   => new InvoiceSent(context.Occurred, null),\n        \"cancel\" => new InvoiceCancelled(\"Batch\", context.Occurred, context.Identity.Id, \"Batch\"),\n        _        => throw new InvalidOperationException($\"Unknown action: {Action}\")\n    });\nresult.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));",
                       "language": "csharp"
                     },
                     "file": null,
-                    "implementation": null
+                    "implementation": null,
+                    "possibleEvents": {
+                      "kind": "PossibleEventsSyntax",
+                      "events": [
+                        {
+                          "kind": "PossibleEventSyntax",
+                          "event": "InvoiceBatchProcessingStarted",
+                          "oneOf": false,
+                          "property": "batchId",
+                          "stream": null,
+                          "tags": []
+                        },
+                        {
+                          "kind": "PossibleEventSyntax",
+                          "event": "InvoiceSent",
+                          "oneOf": true,
+                          "property": "invoiceIds",
+                          "stream": null,
+                          "tags": []
+                        },
+                        {
+                          "kind": "PossibleEventSyntax",
+                          "event": "InvoiceCancelled",
+                          "oneOf": true,
+                          "property": "invoiceIds",
+                          "stream": null,
+                          "tags": []
+                        },
+                        {
+                          "kind": "PossibleEventSyntax",
+                          "event": "InvoiceBatchProcessingCompleted",
+                          "oneOf": false,
+                          "property": "batchId",
+                          "stream": null,
+                          "tags": []
+                        }
+                      ]
+                    }
                   },
                   "name": "ProcessInvoiceBatch",
                   "produces": [],

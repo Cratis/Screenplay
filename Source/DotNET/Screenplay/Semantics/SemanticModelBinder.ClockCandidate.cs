@@ -22,7 +22,9 @@ public sealed partial class SemanticModelBinder
         if (admission.Count > 0) return CompilationResult<ClockOperandsBinding>.Failed(admission);
         var expansion = SpecificationExamples.Expand(syntax);
         if (expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) return CompilationResult<ClockOperandsBinding>.Failed(expansion.Diagnostics);
-        var context = new BindingContext(applicationName, expansion.Application, documents, PossibleEventSteps(expansion), expansion, _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year) { AllowClockOperands = true };
+        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
+        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
+        var context = new BindingContext(applicationName, expansion.Application, documents, steps, expansion, _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year) { AllowClockOperands = true };
         try
         {
             var application = context.BindApplication();

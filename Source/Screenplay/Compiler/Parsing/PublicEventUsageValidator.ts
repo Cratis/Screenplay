@@ -171,9 +171,18 @@ function resolve(application: ApplicationSyntax, resolver: AuthoringProductionRe
     }
     if (imports.length > 1) context.warning(DiagnosticCodes.AmbiguousReference, `Ambiguous imported event reference '${name}'; use its qualified name.`, use.location);
     else if (((output && use.kind !== 'CaptureAppendSyntax') || use.kind === 'CaptureSourceSettingSyntax') && !context.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.UnknownEvent && diagnostic.location.path === use.location.path && diagnostic.location.line === use.location.line && diagnostic.location.column === use.location.column)) {
-        context.warning(DiagnosticCodes.UnknownEvent, `Unknown event '${name}' - declare its contract before classifying its usage.`, use.location);
+        reportUnknownEvent(name, use, context);
     }
     return undefined;
+}
+
+function reportUnknownEvent(name: string, use: SyntaxNode, context: ParserContext): void {
+    const message = `Unknown event '${name}' - declare its contract before classifying its usage.`;
+    if (use.kind === 'CaptureSourceSettingSyntax' && name.includes('.')) {
+        context.error(DiagnosticCodes.UnknownEvent, message, use.location);
+    } else {
+        context.warning(DiagnosticCodes.UnknownEvent, message, use.location);
+    }
 }
 
 function usesEventSource(slice: SliceSyntax): boolean {
