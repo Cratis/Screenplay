@@ -11,6 +11,21 @@ Application-root `command reads protected` selects protected command-read admiss
 
 Application-root `reaction batches atomic` selects ESM v22 for the composed application. No CLI flag or dependency update opts existing files in. Formatting and export preserve the declaration; omission retains legacy per-fact reaction semantics. Execution and rendering consumers must explicitly admit v22.
 
+## Choose the check you need
+
+For a copyable first model and pinned released tool, use [Getting started](getting-started.md). This page is the command and API reference. You can use the compiler and reference runner without Stage, Studio, an AI client, or a running Arc/Chronicle application.
+
+| Question | Operation | Limit |
+| --- | --- | --- |
+| Is this source valid? | `screenplay library.play --warnaserror` | Does not execute specifications or establish consumer support |
+| Are structural connections missing? | `screenplay library.play --check all` | Opt-in findings are review prompts, not behavior proofs |
+| Do supported scenarios match expectations? | `screenplay test library.play --format json` | In-memory reference execution only |
+| Can a renderer or runtime preserve it? | Inspect that consumer's admitted ESM version and capabilities | A clean compile or reference pass is not conformance |
+
+These examples assume the complete `library.play` from the walkthrough and the
+released tool it pins. Folder and file arguments select different source sets;
+see the compilation rules below before replacing a file argument with a folder.
+
 ## Install the CLI
 
 The CLI is a [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools) published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:
@@ -439,7 +454,9 @@ screenplay test path/to/invoicing.play --filter Billing.Invoices.Send.SendingAnI
 
 The CLI does not read MCP workspace state from `.screenplay/identities.json`. Its printed semantic ids are derived from addresses and may differ from MCP's persisted identities after renames. A CLI-derived semantic id is also accepted by `--filter`; use MCP `run-specifications` for identity-stable selection.
 
-The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass. Failures include expected and actual facts, read models, command responses and query results; example-based failures also include effective fixture provenance.
+For an interpretable first result, run the complete [library model](getting-started.md). Expect three selected, executed, passing scenarios and zero failed or unsupported scenarios. Change only `AddingABook`'s `then BookAdded` expected title to `"A Different Title"`, leaving its input and production unchanged: the contradictory expectation causes binding diagnostic `PLAY0285` and exit `3`. The report is `unbound`, with three discovered but zero selected or executed scenarios and no results; it is not a runtime assertion failure or a pass. Restore the expected title to `"Introduction to Algorithms"` and rerun: expect exit `0`, with three discovered, selected, executed and passed, and zero failed or unsupported. A zero-count report is not a substitute for those outcomes.
+
+The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. It does not deploy an application, commit events to Chronicle, or prove a renderer's conformance. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass. Failures include expected and actual facts, read models, command responses and query results; example-based failures also include effective fixture provenance.
 
 A projection the reference evaluator cannot execute does not stop unrelated specifications. A specification is `unsupported` if its given, appended, produced or reaction-cascade events reach that projection, or if it supplies, reads, queries or asserts the projection's read model (including an absence assertion). Application-level capability issues still prevent every selected specification from running. `planIssues` lists both application-level and deferred slice-level issues, even when the selected specifications pass.
 
@@ -451,6 +468,12 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `1` | At least one selected specification failed, even if others were unsupported |
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
+
+For CI, preserve the command's exit status and inspect counts, diagnostics,
+capability reasons, and `planIssues`; do not accept a report merely because it
+contains no failed scenarios. The `0` outcome covers the selected scenarios, not
+unselected behavior or application-runtime tests. Use [Interoperability](interoperability.md)
+when handing the model to a consumer.
 
 ## Export the language and tool contract
 

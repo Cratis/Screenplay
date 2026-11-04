@@ -14,32 +14,33 @@ A single "register an invoice" feature, built by hand, is spread across four art
 - the **projection and read model** that turn those events into queryable state,
 - the **React screen** that renders it — through generated proxies that have to be regenerated whenever the backend shifts.
 
-Nothing keeps them honest with each other. Rename a field on the event and the projection, the proxy, and the screen quietly fall out of sync until something breaks at runtime. The model in your head — the thing you actually reasoned about — exists nowhere as a single artifact. It has been shredded across layers.
+Types, generated proxies, and tests can catch many mismatches, but they do not by themselves keep the business design in one place. Rename an event field and you still need to coordinate its consumers. The model you reasoned about is spread across implementation artifacts.
+
+Screenplay is an **optional model-first path** through the Cratis Platform. You can use [Arc](/arc/) or [Chronicle](/chronicle/) directly without adopting it, Stage, or Studio. Choose Screenplay when keeping the intended behavior explicit is worth maintaining a model; keep handwritten slices when they already express the design clearly.
 
 ## The relief: describe it once
 
-A Screenplay `.play` file *is* that model, written down once:
+A Screenplay `.play` model puts that intent together. This excerpt shows the command-and-event part of an invoicing slice; concepts and its authorization policy are declared elsewhere:
 
 ```screenplay
 slice StateChange RegisterInvoice
   command RegisterInvoice
-    invoiceId     InvoiceId
+    invoiceId     InvoiceId identifier
     invoiceNumber InvoiceNumber
     authorize CanManageInvoice
     validate
       invoiceNumber matches "^INV-[0-9]{6}$"  message "Must look like INV-000000"
     produces InvoiceRegistered
-      invoiceId     = invoiceId
+      for invoiceId
       invoiceNumber = invoiceNumber
       registeredAt  = $context.occurred
 
   event InvoiceRegistered
-    invoiceId     InvoiceId
     invoiceNumber InvoiceNumber
     registeredAt  DateTime
 ```
 
-The command, its rules, and the fact it records sit together in one place, in the order you reasoned about them. Screenplay now owns a versioned portable semantic foundation, and the compiler and downstream products are being connected to it capability by capability. Stage, Studio, and generated applications may not redefine that meaning or silently ignore a capability they cannot preserve.
+The command, its rules, and the fact it records sit together in the order you reasoned about them. `for invoiceId` routes the fact to the invoice's event source; the payload contains business data rather than a duplicate routing identifier. Screenplay now owns a versioned portable semantic foundation, and the compiler and downstream products are being connected to it capability by capability. Stage, Studio, and generated applications may not redefine that meaning or silently ignore a capability they cannot preserve.
 
 ```mermaid
 flowchart LR
@@ -59,10 +60,10 @@ flowchart LR
 
 ## What makes it hold together
 
-Three design choices keep the single file both complete and honest — they are covered in depth in the [language overview](overview.md):
+Three design choices keep the model readable and its intent explicit — they are covered in depth in the [language overview](overview.md):
 
-- **Slices are the atom.** Every construct lives inside a typed slice aligned with Event Modeling's vocabulary, so the file's structure *is* the model's structure — not a technical layering of it.
-- **Concepts carry compliance.** A value type declares `@pii` or `@sensitive` once, and every place that value appears inherits it. Compliance stops being a per-field decision you can forget.
+- **Slices group behavior.** Commands, facts, and views sit in typed slices aligned with Event Modeling's vocabulary. Shared concepts and policies can sit outside slices; the structure follows the model rather than implementation layers.
+- **Concepts carry data classification.** A value type declares `pii` or `sensitive` once, and usages inherit it. Those declarations keep classification visible; they do not by themselves establish legal compliance.
 - **Declarative first, with bounded escape hatches.** The business meaning stays declarative. Selected implementation points can carry constrained inline code or a `file` reference without turning code into the semantic authority.
 
 ## When a hand-written slice is the better fit
@@ -70,7 +71,13 @@ Three design choices keep the single file both complete and honest — they are 
 Screenplay is not always the right tool, and pretending otherwise would waste your time:
 
 - **Your system is not naturally command- and fact-oriented.** Screenplay is grounded in Event Modeling, event sourcing, commands, views, and vertical slices. It should not be forced onto a problem that has no useful expression in those terms.
-- **Almost every construct needs custom logic.** The escape hatch is there for the hard 10%. If a slice is 90% inline C#, the declarative wrapper is adding ceremony rather than removing it — write that slice by hand.
+- **Almost every construct needs custom logic.** If most of the behavior would live in opaque code attachments, a declarative wrapper may add ceremony rather than clarity. Write that slice by hand.
 - **You need behavior the portable model cannot yet express.** Do not hide that gap behind a large code block or assume every runtime behaves the same way. Keep the implementation explicit and contribute evidence for the smallest missing semantic capability.
 
-Convinced it fits? [Write your first `.play` file →](./getting-started.md)
+## What the first result proves
+
+Start by checking a command's business rules with the in-memory reference evaluator, not by generating a whole application. A passing specification shows that the supported declarative behavior matches its stated expectation. It does not append to Chronicle, run attached code, or prove a renderer conforms.
+
+If you need a live application, evaluate the intended consumer and its admitted ESM version separately. The [interoperability reference](interoperability.md) explains that handoff.
+
+Convinced it fits? [Write and test your first `.play` file →](./getting-started.md)

@@ -1,11 +1,11 @@
 - name: Overview
   href: index.mdx
-- name: Getting started
+- name: Why Screenplay
+  href: why-screenplay.md
+- name: Write and test a first model
   href: getting-started.md
 - name: See your event model
   href: see-your-event-model.md
-- name: Why Screenplay
-  href: why-screenplay.md
 - name: Language overview
   href: overview.md
 - name: Domain

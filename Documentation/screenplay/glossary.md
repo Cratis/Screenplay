@@ -3,12 +3,16 @@ title: Glossary
 description: One precise line per Screenplay term — the structure of a .play file, its constructs, its sub-languages, and the tools that run and visualize it.
 ---
 
-The vocabulary of the Screenplay language, defined once. For the underlying event-sourcing terms these build on — event, event source, read model, projection, reducer, reactor, observer — see the shared [Cratis glossary](/glossary/); this page defines what is specific to Screenplay.
+Use this vocabulary when reading a model or interpreting a tool result. In the [first library model](getting-started.md), `AddBook` is intent, `BookAdded` is a fact, and a specification compares expected and actual reference outcomes. Those are different from the board that draws them or the application a consumer may build.
+
+For the underlying event-sourcing terms — event, event source, read model, projection, reducer, reactor, observer — see the shared [Cratis glossary](/glossary/).
 
 ## Structure
 
-- **`.play` file** — a Screenplay source file. Describes one bounded context, top to bottom, in one declarative document.
-- **Module** — the top-level namespace of a `.play` file; maps to a bounded context. One module per file by convention.
+- **`.play` file** — a Screenplay source document. May contain a complete small model or part of a larger application; a physical file is not necessarily a bounded context.
+- **Application** — the source set compiled together: a folder's discovered files, or a root file and its quoted imports. Unimported siblings of a root file are not included automatically.
+- **Domain** — an optional qualified business-area name declared first in a file. Groups related files; does not import them or configure runtime isolation. See [Domain](domain.md).
+- **Module** — a top-level namespace grouping features and slices, commonly representing a bounded context. One module per file is a convention, not a requirement.
 - **Feature** — a vertical grouping of related slices inside a module. Nests arbitrarily deep for sub-features.
 - **Slice** — the atomic unit of behavior, aligned with Event Modeling. Has a type and a name and contains the constructs that implement one behavior.
 - **Construct** — a declaration inside a slice: `event`, `command`, `query`, `projection`, `capture`, `constraint`, `reaction`, or `screen`.
@@ -76,10 +80,23 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Identity** — the authorization view of the caller: identifier, display name, user name, whether authenticated, roles and claims. What a policy decides on.
 - **Caused by** — the audit view of the same caller: subject, name and user name — the three values that travel with an appended event and that a projection reads through `$eventContext.causedBy` (the short form `$causedBy` parses, but Chronicle cannot yet evaluate it - Cratis/Chronicle#4119).
 
+## Verification and consumption
+
+- **Source validation** — compilation checks syntax and source references. Success is not proof of executable binding, scenario coverage, or consumer support.
+- **Executable semantic model (ESM)** — Screenplay's versioned, portable behavioral contract, bound from supported source. Consumers must admit its version and required capabilities; see [Interoperability](interoperability.md).
+- **Specification** — an authored scenario or table of cases describing inputs and expected outcomes, including facts, errors, denial, reads, or query results.
+- **Reference evaluation** — deterministic in-memory execution of supported declarative behavior against specification expectations. Does not run attached code, contact services, or deploy an application.
+- **Unsupported** — an explicit reference outcome with a missing capability and reason, not a passing test. A positive selected count and zero failures alone are insufficient if scenarios are unsupported.
+- **Completeness check** — an opt-in structural review of connections such as event consumers or issuing screens. Not a semantic, runtime, or compliance proof.
+- **Consumer conformance** — the separate obligation of a renderer or runtime to preserve the admitted semantic contract. Source compilation and reference results do not establish it.
+- **Event model board** — a visualization of declarations and authored expectations. Cards are not evidence of specification execution.
+
 ## Tools and runtime
 
-- **Stage** — the runtime that interprets a `.play` file and runs it as a live application.
-- **Studio** — the tool that reads the same `.play` file to visualize and generate.
+These are optional consumers and authoring surfaces, not prerequisites for using Arc or Chronicle directly.
+
+- **Stage** — the runtime consumer for running models as live applications, subject to its admitted semantic versions and capabilities.
+- **Studio** — visualization, editing, and generation surfaces for `.play` models. Import/export and compiler support have their own limits; see [See your event model](see-your-event-model.md).
 - **`@cratis/screenplay-language`** — the Monaco language service: highlighting, completions, hover, and diagnostics for `.play` files.
 - **Screenplay editor** — the standalone browser editor host that embeds the language service.
 - **Screenplay VS Code extension** — the extension bringing the same language support to VS Code.

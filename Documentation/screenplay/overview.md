@@ -5,15 +5,32 @@ description: The design principles of the Screenplay language, the top-level str
 
 Screenplay is a business-oriented language for specifying the desired functionality of an information system. It describes concepts, commands, facts, views, queries, automations, policies, and specifications without making a particular runtime authoritative. Screenplay now owns the versioned semantic foundation; Stage, Studio, and generated applications are being migrated to consume it capability by capability.
 
+## Choose what you want to model
+
+Suppose a librarian adds a book. Before choosing a database or UI framework, you can name the inputs, the librarian's permission, the ISBN rule, and the `BookAdded` fact. Those declarations are the model. Specifications make its acceptance and refusal cases checkable; views and screens describe how people use the resulting information.
+
+This is an optional way to develop with the Cratis Platform, not a prerequisite for [Arc](/arc/) or [Chronicle](/chronicle/). If your handwritten implementation already makes the behavior clear, you do not need a `.play` model to keep using those components. [Why Screenplay](why-screenplay.md) discusses the trade-offs.
+
+## From source to a consumer
+
+| Step | What you have | What still needs checking |
+| --- | --- | --- |
+| Compile `.play` source | A syntax tree and source diagnostics | Whether the behavior binds to executable semantics |
+| Bind supported behavior | A versioned executable semantic model (ESM) | Whether the chosen evaluator, renderer, or runtime admits its capabilities |
+| Run reference specifications | Expected and actual outcomes for supported scenarios, evaluated in memory | Attached code, external systems, deployment, and consumer conformance |
+| Render or run with a consumer | A consumer-specific realization | Its declared support, configuration, and application-level tests |
+
+A board visualizes the declarations; it is not another execution step. Start with the [complete reference-tested model](getting-started.md), then [see its board](see-your-event-model.md). For the consumer contract, use [Interoperability](interoperability.md).
+
 ## File extension
 
-Screenplay files use the `.play` extension.
+Screenplay files use the `.play` extension. You may keep a small model in one file or split an application across [folders and imported files](folders.md); one physical file is not a limit on system size.
 
 ## Design principles
 
 - **Indentation-based** — Python-style, no braces. Structure follows the offside rule: a construct owns everything indented beneath it.
 - **Declarative first, bounded escape hatches** — behavior remains meaningful without implementation code. Selected implementation points can carry inline code or `file` references as realization attachments.
-- **Slices are the atom** — everything lives inside a typed slice aligned with Event Modeling's vocabulary.
+- **Slices are the atom of behavior** — commands, facts, and views live inside typed slices aligned with Event Modeling's vocabulary. Shared concepts, policies, and other application declarations can live outside them.
 - **First-class sub-languages** — the Projection Declaration Language (PDL) and Change Data Capture Language (CDL) are built-in, independently consumable grammars. Inline language tags are extensible, while host construct keywords remain closed.
 - **Concepts carry compliance** — value types declare PII and sensitivity attributes once, with the reason they are personal data; all usages inherit them.
 - **`file` is never required** — a document must be expressible, and meaningful, before any code exists. Code pointers are realization metadata a slice gains once it is built.
@@ -23,6 +40,7 @@ Screenplay files use the `.play` extension.
 ```text
 <domain>
 <imports>
+<application mode declarations>
 <concepts and composite types>
 <policies, personas, authentication, and onboarding>
 <triggers>
@@ -38,14 +56,18 @@ Screenplay files use the `.play` extension.
 <seeds>
 ```
 
+The outline is a map, not a copyable file. The optional [domain](domain.md) names the business area; modules group features; each slice describes one behavior. [Concepts](concepts.md) name domain values such as `BookId`, rather than leaving every identifier as an interchangeable primitive. New models use `reaction batches atomic` and `command reads protected`; see [getting started](getting-started.md) for their placement and version requirement.
+
 ## Imports
 
-Cross-module references. Imported types are available by their short name within the module.
+An unquoted, qualified import names a cross-module contract. Imported types are available by their short name within the module:
 
 ```screenplay
 import Customers.CustomerRegistered
 import Customers.CustomerDetailsReadModel
 ```
+
+These are declaration examples, not a complete application. Quoted imports instead load model source from a path or glob. Giving files the same domain does not load them; see [Imports](imports.md) for resolution rules.
 
 ## Comments
 

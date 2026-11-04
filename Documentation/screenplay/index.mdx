@@ -8,10 +8,12 @@ import SimpleCard from '@components/SimpleCard.astro';
 import TopicHero from '@components/TopicHero.astro';
 
 <TopicHero icon="open-book" eyebrow="Screenplay" title="Specify the behavior once">
-Cratis Screenplay is a business-oriented declarative language for specifying the desired functionality of an information system in one portable `.play` model. You already model a feature end to end on the whiteboard — the events, the command that produces them, and the read model they build. Then implementation details scatter that meaning across several layers. The `.play` model keeps it in one place. Its versioned semantic model is the contract runtimes and renderers are being migrated to consume; none of them gets to redefine or silently weaken what it says. [Get started →](/screenplay/getting-started/) · [Why Screenplay →](/screenplay/why-screenplay/)
+Screenplay is the Cratis Platform's optional model-first path. Describe a business action, the rules that allow it, and the fact it records in a portable `.play` model. Then check examples of that behavior before choosing how to build the application. You can keep using Arc and Chronicle directly without adopting Screenplay or its consumers. [Write and test a first model →](/screenplay/getting-started/) · [Decide whether it fits →](/screenplay/why-screenplay/)
 </TopicHero>
 
-## Start here
+## Choose your next step
+
+For a library catalog, start with who may add a book, what makes an ISBN valid, and what `BookAdded` must contain. The first walkthrough needs only the released .NET tool: no event store, AI client, Stage, or Studio. If code already exists, the viewing guide offers a generation-and-review path instead of asking you to rewrite it.
 
 <CardGrid>
   <SimpleCard title="Why Screenplay" icon="approve-check" link="/screenplay/why-screenplay/">
@@ -21,7 +23,7 @@ Cratis Screenplay is a business-oriented declarative language for specifying the
     Open the same board in VS Code, an AI chat, your Arc app, the CLI, or Studio. Start with a model or generate one from code.
   </SimpleCard>
   <SimpleCard title="Get started" icon="rocket" link="/screenplay/getting-started/">
-    Write your first `.play` file and watch the editor light up with highlighting, completions, and live diagnostics — in minutes.
+    Copy one complete library model. Check three reference scenarios, observe a deliberately wrong expectation cause a binding error, and restore it to recover the passing results.
   </SimpleCard>
   <SimpleCard title="Language overview" icon="open-book" link="/screenplay/overview/">
     The design principles, the top-level structure of a `.play` file, and a map of every construct.
@@ -34,14 +36,16 @@ Cratis Screenplay is a business-oriented declarative language for specifying the
   </SimpleCard>
 </CardGrid>
 
-## The whole production in one file
+## Keep the behavior together
+
+A model may be one file or [split across folders](folders.md). Commands, facts, views, and specifications remain related even when the source grows. The domain names its business area; modules group features; typed slices describe individual behaviors.
 
 <CardGrid>
   <SimpleCard title="Modules, features, and slices" icon="puzzle" link="/screenplay/slices/">
     A `.play` file is a set of typed slices aligned with Event Modeling — the atomic units of behavior.
   </SimpleCard>
   <SimpleCard title="Concepts" icon="seti:folder" link="/screenplay/concepts/">
-    Strongly-typed value types that declare their compliance attributes once, so every usage inherits them.
+    Named domain values such as BookId, with PII and sensitivity attributes inherited by their usages. Declarations alone do not establish legal compliance.
   </SimpleCard>
   <SimpleCard title="Commands and events" icon="right-arrow" link="/screenplay/commands/">
     Declare the intent, the validation, the authorization, and the facts it produces — all together.
@@ -57,6 +61,12 @@ Cratis Screenplay is a business-oriented declarative language for specifying the
   </SimpleCard>
 </CardGrid>
 
+## Know what a check proves
+
+Compilation validates source and references. Executable binding builds the supported semantic model. Reference specifications evaluate supported scenarios in memory; they do not execute attached code, contact services, or deploy an application. A drawn board is a visualization, not another execution step.
+
+A renderer or runtime must separately admit the model's executable semantic model (ESM) version and capabilities. A clean compile does not prove it can perform the model. Use [Interoperability](interoperability.md) for that contract, or the [CLI reference](tool.md) to automate the checks.
+
 ## Go deeper
 
 <CardGrid>
@@ -67,8 +77,8 @@ Cratis Screenplay is a business-oriented declarative language for specifying the
     The full EBNF grammar — the precise, exhaustive definition of the language.
   </SimpleCard>
   <SimpleCard title="Frequently asked questions" icon="approve-check" link="/screenplay/faq/">
-    Indentation vs. braces, the escape hatch to C#/React, how Screenplay relates to Arc and Chronicle.
+    Optional adoption, code-first entry, reference-test limits, and the separate roles of the language and its consumers.
   </SimpleCard>
 </CardGrid>
 
-Screenplay owns the script, not the cast. A `.play` file expresses portable desired functionality; Stage and generated applications are replaceable performances of that meaning. Cratis [Arc](/arc/) and [Chronicle](/chronicle/) are the first realization target, not dependencies of the language or its semantic authority. See [Why developers choose Cratis](/why-cratis/) for how that realization fits into the wider platform.
+Screenplay owns the intended behavior, not a mandatory stack. Stage and generated applications are consumers of that meaning, with capability-specific support. Cratis [Arc](/arc/) and [Chronicle](/chronicle/) are independently usable components as well as the first realization target. See [Why developers choose Cratis](/why-cratis/) for the wider Platform paths.

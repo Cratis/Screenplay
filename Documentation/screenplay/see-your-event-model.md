@@ -8,14 +8,33 @@ and read model. The same event model board is available in VS Code, an MCP App,
 your running Arc application, the CLI's browser explorer, and Cratis Studio.
 You do not need to redraw the diagram for each place.
 
-**Allow about 10 minutes.** Start in VS Code, then choose the other place that
-fits your work. You need VS Code with its `code` command on `PATH` and a `.play`
-model. For a ready-made example, open the
+## Choose a viewing path
+
+If you followed [getting started](getting-started.md), keep using `library.play`.
+Its reference results already check three scenarios; a board adds a way to inspect
+the declarations, not another test verdict. In VS Code, find `AddBook`,
+`BookAdded`, and their specifications. The Commerce instructions and screenshots
+below show a larger model; you do not need to replace your library file to view it.
+
+| What you have | Choose | Additional requirement |
+| --- | --- | --- |
+| A local authored `.play` model | [VS Code](#open-the-board-in-vs-code) | Screenplay extension |
+| A model open through an AI client | [MCP App](#ask-for-the-board-in-an-ai-chat) | MCP Apps-capable host and the configured server |
+| An Arc app under development | [Embedded explorer](#open-it-in-your-running-arc-app) | Build-time generation and guarded local hosting |
+| A .NET project to inspect without running it | [CLI explorer](#view-a-project-without-starting-its-app) | Compatible SDK, restored project, and Cratis CLI |
+| A public-safe self-contained model | [Studio viewer](#share-a-public-model-with-studio) | Public raw file URL; no file imports |
+
+**Allow about 10 minutes for the VS Code path.** You need VS Code with its `code`
+command on `PATH` and a `.play` model. For a larger ready-made example, open the
 [Commerce sample](https://github.com/Cratis/Screenplay/tree/main/Samples/Commerce)
 from a Screenplay checkout; keep the whole folder, not just one slice file.
 The AI path needs .NET 10 and an MCP Apps-capable host. The code paths need a
 compatible .NET SDK, restored project dependencies, and the
 [Cratis CLI](/cli/getting-started/).
+
+None of these paths is required to run reference specifications. You can also
+use Arc and Chronicle directly without adopting a model. Generation from existing
+code is a review aid, not a requirement to switch development approaches.
 
 ## Open the board in VS Code
 
@@ -241,5 +260,8 @@ alternative is `screenplay ./MyApp.play --warnaserror`; its flag is different.
 - **Sharing exposes structure.** Keep runtime routes local and public viewer URLs
   public-safe. No viewing step here requires applying an AI proposal.
 
-Next, [model your first feature](getting-started.md) or
-[review a change with MCP](mcp/edit.md).
+If you came from the library walkthrough, keep the restored, passing source as
+your authored model. Next, add a [projection](projections/index.md) and
+[query](queries.md), or [review a change with MCP](mcp/edit.md). If you started
+from generated code, decide whether maintaining that output as authored source
+would help your team; inspecting it does not commit you to model-first development.

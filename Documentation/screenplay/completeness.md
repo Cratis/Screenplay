@@ -3,7 +3,21 @@ title: Completeness checks
 description: Select structural warnings for missing connections in a valid Screenplay model.
 ---
 
-Use opt-in structural checks to find missing connections in an otherwise valid model:
+A command can compile and its specifications can pass while nobody has a screen
+that invokes it. An event can be produced without any modeled consumer. Use
+opt-in structural checks to bring these connections into review after fixing
+source errors; they are not additional reference scenarios.
+
+If you followed [getting started](getting-started.md), the library intentionally
+models only adding a book. It has no issuing screen or event consumer yet. An
+`input-surfaces` or `event-consumers` finding can therefore be a useful next design
+question, not evidence that the three reference results were wrong.
+
+## Run selected checks
+
+These commands assume a Screenplay checkout containing `Samples/Library`, or your
+own model folder named `model`. They are alternatives, not steps to run against
+the single-file tutorial unchanged:
 
 ```bash
 screenplay Samples/Library --check data-bindings,input-surfaces,field-origins,query-keys --warnaserror
@@ -15,6 +29,23 @@ Repeat `--check` to combine selections. Names and diagnostic codes are case-sens
 Checks require the **whole application** to have no source errors, even when checking one scope. Otherwise the CLI prints `completeness checks skipped: the model has N error(s)`. Fix source errors before treating an empty completeness result as evidence. Source warnings do not prevent checks.
 
 MCP `diagnostics` accepts the same comma-separated selection as `checks`. Findings share its severity summary, revision-bound pages, document filter and scoped declaration selection. `completenessStatus` reports skipped checks; `completenessCoverage` says `structure only; a finding is a prompt to look`.
+
+## Interpret a finding
+
+1. Confirm ordinary compilation succeeds for the whole application. A skipped
+   check has not examined completeness, even if its findings list is empty.
+2. Read the code and affected declaration. Decide whether the connection belongs
+   in the model: add the screen or consumer when it is intended, or record the
+   external/API-only boundary in your team's review. There is no general
+   acknowledgement mechanism that makes an omitted connection verified.
+3. Rerun the selected checks and the relevant specifications after a model change.
+   Use `--warnaserror` when warnings in the reported set should block CI;
+   information findings are not promoted by that flag.
+
+A clean result covers the selected structural rules only. It does not establish
+reference execution, renderer or runtime support, GDPR lawfulness, or the behavior
+of opaque attachments. [Compiler and CLI](tool.md) separates these checks from
+`screenplay test`; [Interoperability](interoperability.md) covers consumer admission.
 
 ## Rules
 

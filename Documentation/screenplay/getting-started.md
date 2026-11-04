@@ -1,122 +1,187 @@
 ---
-title: Getting started
-description: Write your first Screenplay .play file and watch the editor highlight it, complete it, and flag mistakes live — in a few minutes.
+title: "Getting started"
+description: "Write a complete library model, check three reference specifications with the released tool, and recover from a deliberate binding error before optionally viewing the board."
 ---
 
-By the end of this page you'll have a `.play` file that models a small feature — a command, the event it produces, and a screen that reads it — open in an editor that **highlights** the language, **completes** it as you type, and **flags mistakes live**. That editor is what this repository ships; running a `.play` as an application is [Stage](./faq.md#what-are-stage-and-studio)'s job, and this tutorial gets you to the point where a Screenplay is ready for it.
+A librarian may add a book with a valid ISBN; a member may not. Model that rule, the request, and the resulting fact in one file. Then run three specifications without generating an application or starting an event store.
 
-## Before you start
+This is the Cratis Platform's optional model-first path. You can use Arc and Chronicle directly without Screenplay. Here you will get a **reference specification result**, not a deployed app. Allow about 15 minutes; no AI client, Stage, Studio, or Cratis CLI is required.
 
-You need [Node.js](https://nodejs.org) 20 or newer. Clone the repository and open a terminal in its root:
+## 1. Install the released tool
 
-```bash
-git clone https://github.com/Cratis/Screenplay.git
-cd Screenplay
-```
-
-## Run the editor
-
-Install the workspace and start the standalone editor:
+You need the **.NET 10 SDK**, a text editor, and access to NuGet. The commands below use a POSIX shell on macOS or Linux. Start in an empty folder so the sample cannot be confused with an existing model:
 
 ```bash
-yarn install
-yarn build
-yarn dev
+mkdir library-model
+cd library-model
+dotnet tool install Cratis.Screenplay.Tool --tool-path .tools --version 4.259.0
+.tools/screenplay --version
 ```
 
-`yarn dev` serves the editor at [http://localhost:9200](http://localhost:9200). It opens on a complete sample — the invoicing `.play` — so the very first thing you see is the language rendered with full syntax highlighting, including the embedded C#, TypeScript, and React blocks.
+The version output should identify **4.259.0**. This walkthrough pins that release so the syntax and reference runner stay aligned. If the tool is already in `.tools`, inspect its version rather than installing over it; use `dotnet tool update Cratis.Screenplay.Tool --tool-path .tools --version 4.259.0` to select this version deliberately.
 
-> [!TIP]
-> Prefer your own editor? The same language support ships as a VS Code extension. Press **F5** in VS Code with this repository open and an Extension Development Host launches with `.play` highlighting, IntelliSense, hover, and diagnostics.
+Use `.tools/screenplay` throughout, not an unrelated global `screenplay` or the separate `cratis` CLI. If installation or startup fails, check the SDK with `dotnet --list-sdks` and resolve that prerequisite before proceeding.
 
-## Model a slice
+## 2. Save the complete model
 
-Clear the editor and start a bounded context. Begin your new model's root file
-with `command reads protected` for [protected command reads](commands.md#what-reads-guarantees)
-and `reaction batches atomic` for [atomic production batches](reactions.md#atomic-production-batches).
-Together these select ESM v25 or later, so the targets you render to must admit
-that version. Existing models retain their mode unless you explicitly opt in.
-
-A `.play` file is indentation-based — structure follows the offside rule, and a construct owns everything indented beneath it. Type the outline of a module with one feature and one slice:
+Create **`library.play`** in `library-model` and copy the entire block below. It is a complete single-file application with no imports or implementation attachments, adapted from the maintained [Library sample](https://github.com/Cratis/Screenplay/tree/main/Samples/Library).
 
 ```screenplay
+domain Library
+
 reaction batches atomic
 command reads protected
 
-module Library
+concept BookId     : Uuid
+concept Isbn       : String
+concept BookTitle  : String
+concept AuthorName : String
 
-  feature Lending
+policy IsLibrarian
+  require role "Librarian"
 
-    slice StateChange BorrowBook
-```
-
-As you type `slice`, the completions offer the four slice types — `StateChange`, `StateView`, `Automation`, `Translate`. `StateChange` is the one that accepts a command and records what happened.
-
-## Add the command and the event
-
-Inside the slice, declare the command, the rule that guards it, and the fact it produces:
-
-```screenplay
-    slice StateChange BorrowBook
-      command BorrowBook
-        bookId     BookId
-        borrowedBy MemberId
-        authorize  IsMember
+module Lending
+  feature Catalog
+    slice StateChange AddBook
+      command AddBook
+        bookId BookId identifier
+        isbn   Isbn
+        title  BookTitle
+        author AuthorName
+        authorize IsLibrarian
         validate
-          bookId not empty  message "A book is required"
-        produces BookBorrowed
-          bookId       = bookId
-          borrowedBy   = borrowedBy
-          borrowedAt   = $context.occurred
+          isbn matches "^[0-9]{13}$"  message "An ISBN has 13 digits"
+          title not empty             message "A book needs a title"
+        produces BookAdded
+          for bookId
+          isbn   = isbn
+          title  = title
+          author = author
 
-      event BookBorrowed
-        bookId     BookId
-        borrowedBy MemberId
-        borrowedAt DateTime
+      event BookAdded
+        isbn   Isbn
+        title  BookTitle
+        author AuthorName
+
+      specification AddingABook
+        given caller
+          authenticated
+          role "Librarian"
+        when AddBook
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        then BookAdded
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+
+      specification RejectingAMalformedIsbn
+        given caller
+          authenticated
+          role "Librarian"
+        when AddBook
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "12345"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        then error "An ISBN has 13 digits"
+
+      specification RefusingAMemberAddingBooks
+        given caller
+          authenticated
+          role "Member"
+        when AddBook
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        then denied
 ```
 
-Notice what the file is saying in one read: who may call it (`authorize`), what has to be true (`validate`), and the past-tense fact it appends (`produces` → `event`). The event never carries an identity of its own — `$context.occurred` and the event source come from the surrounding context, not the payload.
+Read the file from the business boundary down:
 
-## Watch a mistake get caught
+- `domain Library` names the business area; it does not provision infrastructure. `Lending.Catalog.AddBook` is the module, feature, and slice address.
+- The two application modes select atomic reaction batches and protected command reads. This small example has no reactions or reads, but retains those modes as its behavior grows. Atomic batches require ESM v22; protected reads require v25. A consumer must admit those capabilities rather than silently relax them.
+- Concepts name domain values. `BookId` is not just an arbitrary UUID in the design; `Isbn` has a business meaning even though its underlying type is `String`.
+- `AddBook` is an intent. Authorization requires the librarian role; validation checks 13 digits and a nonempty title. This ISBN rule is deliberately small: it does **not** verify the ISBN checksum or catalog uniqueness.
+- `BookAdded` is the fact. `for bookId` routes it to the book's event source; the payload contains ISBN, title, and author, not a duplicate routing identifier.
+- Each specification supplies a caller and a request, then states the expected outcome. No `given` events are needed for this command.
 
-That slice references a policy, `IsMember`, that you haven't declared. The language service knows it: `IsMember` is underlined with a diagnostic — *reference to an undeclared policy*. This is the live feedback the editor gives you for the whole language — unknown slice types, unknown primitive types, references to undeclared policies or events, and tab indentation are all flagged as you type.
+The first scenario expects a routed `BookAdded` fact with exactly the supplied values. The second expects the ISBN validation message. The third expects denial because a member lacks the librarian role.
 
-Declare the policy at the top of the file, above the `module`, and the diagnostic clears:
+## 3. Compile the exact file
 
-```screenplay
-policy IsMember
-  require authenticated
+From `library-model`, run:
+
+```bash
+.tools/screenplay --warnaserror library.play
 ```
 
-> [!NOTE]
-> Concepts like `BookId` and `MemberId` are strongly-typed value types. Declare them once — `concept BookId : Uuid` — and every construct that uses them is typed end to end. See [Concepts](concepts.md).
+Expect exit **0** and no source errors or warnings. Compilation checks the declarations and references; it does not run the scenarios. If this fails, fix the first reported diagnostic before continuing. Check indentation, spelling, and that you copied the whole file rather than only the slice.
 
-## Read it back on a screen
+## 4. Run the reference specifications
 
-A command that records facts is only half a feature. Add a second slice — a `StateView` — that projects the event into a read model and puts it on screen:
-
-```screenplay
-    slice StateView OnLoan
-      query BooksOnLoan => OnLoanReadModel[]
-
-      projection OnLoan => OnLoanReadModel
-        from BookBorrowed key bookId
-          borrowedBy = borrowedBy
-          borrowedAt = borrowedAt
-
-      screen OnLoan
-        data OnLoanReadModel[] via query BooksOnLoan
+```bash
+.tools/screenplay test library.play --format json
 ```
 
-The `projection` uses the embedded [Projection Declaration Language](projections/index.md) to fold events into a read model; the `query` exposes it; the `screen` renders it. No update code, no proxy to regenerate by hand — the whole read path is declared in six lines.
+The command evaluates the supported declarative behavior deterministically **in memory**. Look for exit **0**, `outcome: "passed"`, and these report fields:
 
-## What you've built
+| Field | Expected value |
+| --- | --- |
+| `discovered` | `3` |
+| `selected` | `3` |
+| `executed` | `3` |
+| `passed` | `3` |
+| `failed` | `0` |
+| `unsupported` | `0` |
 
-You have a `.play` file that models a complete slice of behavior — command, event, projection, query, and screen — with authorization and validation, all in one file the editor understands. That file is a Screenplay ready to hand to Stage.
+In `results`, find `Lending.Catalog.AddBook.AddingABook`, `Lending.Catalog.AddBook.RejectingAMalformedIsbn`, and `Lending.Catalog.AddBook.RefusingAMemberAddingBooks`, each with `outcome: "passed"`. Read any `diagnostics` and `planIssues` too; an empty selection is not scenario coverage.
 
-Where to go next:
+For these three requests, the evaluator checked the authorization and validation outcomes and compared the successful production's route and payload with the expected fact. It did **not** deploy a service, commit events to Chronicle, execute attached code, contact external services, or test a renderer. Source validity, reference execution, and consumer conformance are different verdicts.
 
-- **[Language overview](overview.md)** — the design principles and the full map of constructs.
-- **[Modules, features, and slices](slices.md)** — the four slice types and what goes in each.
-- **[Why Screenplay](./why-screenplay.md)** — the reasoning behind modeling a bounded context in one file, and when not to.
-- **[Glossary](./glossary.md)** — the vocabulary, defined once.
+## 5. See a binding error, then recover
+
+In **`AddingABook` only**, find the `then BookAdded` block. Change its expected `title` from `"Introduction to Algorithms"` to `"A Different Title"`. Leave the `when AddBook` input and the command's `title = title` production unchanged. This intentionally asks the model to produce a fact different from the requested title.
+
+Run the same command again:
+
+```bash
+.tools/screenplay test library.play --format json
+```
+
+Expect exit **3** and `outcome: "unbound"`. In `diagnostics`, find **`PLAY0285`**: the expected `BookAdded` cannot be produced from the stated `when` values under the declared mappings. The command copies the requested title unchanged, so the compiler rejects the contradictory expectation before reference execution.
+
+The report has `discovered: 3`, but `selected`, `executed`, `passed`, `failed`, and `unsupported` are all **0**, and `results` is empty. This is a binding error, not a failed runtime assertion or a successful reference run. None of the three scenarios executed; zero failures here does not mean they passed.
+
+Restore the expected title to `"Introduction to Algorithms"` and rerun the command. Expect exit **0**, with `discovered`, `selected`, `executed`, and `passed` all **3**, and `failed` and `unsupported` both **0**. Continue only when all three pass again. If they do not, compare the `when` and `then` blocks with the complete file above.
+
+Other outcomes need different action:
+
+- Exit **2** means invalid arguments, selection, or input, or that the command could not run. Check the path and tool version.
+- Exit **3** means the model did not bind, or nothing failed but reference execution was unsupported. Inspect diagnostics and capability reasons; do not treat unsupported scenarios as passes.
+- Zero selected or executed scenarios is not evidence that these business rules were checked.
+
+The [CLI reference](tool.md#run-the-models-specifications) defines the complete report and exit contract, including mixed failed/unsupported selections.
+
+## 6. Optionally view the same model
+
+The file is already useful as a reviewed, reference-tested description. To see its structure, install the Screenplay VS Code extension and open this folder:
+
+```bash
+code --install-extension cratis.screenplay
+code .
+```
+
+Open `library.play`; choose **Show Source** to keep the text beside the board. Find `AddBook`, `BookAdded`, and the specifications. The board shows declarations and authored expectations, not a new execution result. A released extension may bundle a different compiler from the pinned tool; keep using the tool for this walkthrough's acceptance check. See [See your event model](see-your-event-model.md) for other viewing paths and sharing limits.
+
+## Continue with one concern
+
+- Add a read side: [Projections](projections/index.md) builds a read model from events; [Queries](queries.md) exposes it.
+- Describe interaction: [Screens](screens.md) names what people see and which commands they invoke.
+- Organize a larger model: [Modules, features, and slices](slices.md), [Folders](folders.md), and [Imports](imports.md).
+- Add review checks: [Completeness checks](completeness.md) finds structural gaps beyond ordinary compilation.
+- Choose a consumer: [Interoperability](interoperability.md) explains the ESM version and capability boundary. A reference pass alone does not establish renderer or runtime support.

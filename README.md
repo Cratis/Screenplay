@@ -26,6 +26,26 @@ model: [**Stage**](https://github.com/Cratis/Stage) is being built to render it 
 while [**Studio**](https://github.com/Cratis/Studio) visualizes and edits it. The goal is one script with
 explicit capability checks, not a claim that every downstream surface already performs every construct.
 
+## Choose your development path
+
+Screenplay is optional. You can build directly with [Arc](https://www.cratis.io/arc/)
+and [Chronicle](https://www.cratis.io/chronicle/) without Screenplay, Stage, Studio,
+Scene, or Prologue. Keep handwritten slices when they already make the business
+behavior clear; use a model when you want the intent and its examples reviewed together.
+
+For a first model, [copy the complete library walkthrough](Documentation/screenplay/getting-started.md).
+With the pinned released .NET tool, check that a librarian can add a valid book,
+a malformed ISBN is rejected, and a member is denied. Then change an expected
+title deliberately, observe a binding error before any scenarios execute, and
+restore it to recover the passing results. No event store, AI client, or generated
+application is needed.
+
+This produces a **reference specification result**: deterministic in-memory
+execution of supported declarative behavior. It does not commit to Chronicle,
+run attached code, deploy an application, or establish renderer conformance.
+[Source validation, reference execution, and consumer admission](Documentation/screenplay/interoperability.md)
+are separate checks.
+
 ## See your event model
 
 [Open the board in VS Code, an AI chat, your Arc app, the CLI, or Studio](https://www.cratis.io/screenplay/see-your-event-model/).
@@ -37,8 +57,8 @@ The board visualizes the model; it does not execute it.
 Four reasons, and they all line up:
 
 - **It's the script for the whole show.** A screenplay holds an entire production in one document — cast,
-  scenes, stage directions, dialogue. A `.play` file holds an entire system the same way: nothing
-  about the behavior hides in another layer or another file.
+  scenes, stage directions, dialogue. A `.play` model keeps the intended behavior together;
+  larger applications can split that source across imported files and folders.
 - **It's written to be performed, not just read.** A screenplay isn't the finished film — it's the thing you
   perform. Screenplay now owns the versioned semantic foundation that runtimes and renderers are being
   migrated to consume. The language is moving from descriptive syntax to verifiable execution without
@@ -51,7 +71,8 @@ Four reasons, and they all line up:
 ## 🎭 What a scene looks like
 
 A `.play` file reads top to bottom like a script — indentation-based, no braces, each construct owning
-everything beneath it:
+everything beneath it. This invoicing excerpt omits the concepts and authorization policy;
+use the [library walkthrough](Documentation/screenplay/getting-started.md) for a complete copyable file:
 
 ```screenplay
 module Invoicing
@@ -60,7 +81,7 @@ module Invoicing
 
     slice StateChange RegisterInvoice
       command RegisterInvoice
-        invoiceId     InvoiceId
+        invoiceId     InvoiceId identifier
         invoiceNumber InvoiceNumber
         dueDate       Date
 
@@ -70,13 +91,12 @@ module Invoicing
           dueDate > today                          message "Due date must be in the future"
 
         produces InvoiceRegistered
-          invoiceId     = invoiceId
+          for invoiceId
           invoiceNumber = invoiceNumber
           dueDate       = dueDate
           registeredAt  = $context.occurred
 
       event InvoiceRegistered
-        invoiceId     InvoiceId
         invoiceNumber InvoiceNumber
         dueDate       Date
         registeredAt  DateTime
@@ -114,8 +134,8 @@ Three ideas keep the script both readable and complete:
   files. Selected implementation points — such as a command handler, query performer, or rule predicate —
   can carry inline code or a `file` reference. These bodies are realization attachments, not a second
   application model, and the language is evolving toward typed, capability-limited contexts.
-- **Concepts carry compliance.** Value types declare their attributes once — `@pii`, `@sensitive` — and every
-  usage inherits them, so GDPR and sensitivity travel with the data instead of being re-litigated per field.
+- **Concepts carry data classification.** Value types declare attributes such as `pii` and `sensitive`
+  once, and usages inherit them. These declarations make intent reviewable; they do not establish legal compliance.
 - **First-class sub-languages.** Projections use the **Projection Declaration Language (PDL)** and captures
   use the **Change Data Capture Language (CDL)**. Both are independently consumable built-in grammars.
   Inline language tags are extensible and carried as opaque text; host-language construct keywords remain
@@ -187,7 +207,10 @@ Review revision-bound proposals before applying them. Stable identities persist 
 and interrupted writes require explicit recovery. Source validity and executable backend
 readiness remain separate verdicts.
 
-## 🚀 Quick start
+## 🚀 Run the editor from source
+
+These commands are for contributors working in this repository. To write and test
+a first model without building the editor, use [Getting started](Documentation/screenplay/getting-started.md).
 
 ```shell
 yarn install
