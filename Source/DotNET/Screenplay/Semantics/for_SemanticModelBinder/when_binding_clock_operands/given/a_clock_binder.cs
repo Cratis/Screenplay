@@ -15,7 +15,13 @@ public class a_clock_binder : for_SemanticModelBinder.given.a_semantic_binder
         var catalog = SemanticIdentityCatalog.Empty(_applicationIdentity);
         const string key = "application-document";
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "application.play", source);
-        return _binder.BindForClockOperands("Projects", parsed.Value!, SemanticDocumentSet.Create([document], catalog));
+        var result = _binder.Bind("Projects", parsed.Value!, SemanticDocumentSet.Create([document], catalog));
+        var model = result.Value?.Model;
+        return new(model is null ? null : new(model.Application, model.LanguageVersion, model.SemanticVersion), result.Diagnostics)
+        {
+            ImplementationRequirements = result.ImplementationRequirements,
+            TypedContextDescriptors = result.TypedContextDescriptors
+        };
     }
 
     private protected static SemanticCommand Command(ClockOperandsBinding binding) => binding.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();

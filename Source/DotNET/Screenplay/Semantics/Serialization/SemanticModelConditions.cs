@@ -45,10 +45,15 @@ public static partial class SemanticModelCanonicalJson
     {
         writer.WritePropertyName(name);
         writer.WriteStartObject();
-        if (operand.Property.IsSet)
+        if (operand.Clock is not null)
+        {
+            WriteClockOperand(writer, operand.Clock);
+        }
+        else if (operand.Property.IsSet)
         {
             if (operand.Read is not null) CanonicalJson.WriteString(writer, "read", operand.Read);
             writer.WriteString("property", operand.Property.ToString());
+            if (operand.DateOf) writer.WriteBoolean("dateOf", true);
         }
         else
         {
@@ -132,19 +137,29 @@ internal static partial class SemanticModelRead
         SemanticValue? value = null;
         var valueRead = false;
         string? read = null;
+        SemanticClockOperand? clock = null;
+        var dateOf = false;
         while (NextProperty(ref reader, seen, "condition operand") is { } property)
         {
             switch (property)
             {
                 case "read" when schemaVersion >= LanguageVersion.V25.Major: read = String(ref reader, property); break;
+                case "clock" when schemaVersion >= LanguageVersion.V37.Major: clock = Nested(ref reader, ClockOperand, property); break;
+                case "dateOf" when schemaVersion >= LanguageVersion.V37.Major: dateOf = OnlyTrue(ref reader, property, "condition operand"); break;
                 case "property": propertyId = SemanticId.Parse(String(ref reader, property)); break;
                 case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "condition operand");
             }
         }
 
-        Required(propertyId.IsSet != valueRead && (read is null || propertyId.IsSet), "condition operand");
-        return new(propertyId, value) { Read = read };
+        if (clock is not null)
+        {
+            Required(!propertyId.IsSet && !valueRead && read is null && !dateOf, "condition operand");
+            return new(default, null) { Clock = clock };
+        }
+
+        Required(propertyId.IsSet != valueRead && (read is null || propertyId.IsSet) && (!dateOf || propertyId.IsSet), "condition operand");
+        return new(propertyId, value) { Read = read, DateOf = dateOf };
     }
 
     internal static SemanticRequirement Requirement(ref Utf8JsonReader reader, uint schemaVersion)

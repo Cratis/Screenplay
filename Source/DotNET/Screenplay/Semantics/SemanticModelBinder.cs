@@ -46,6 +46,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticClockUsage.Uses(application)) return (LanguageVersion.V37, SemanticVersion.V37);
         if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
         if (application.Modules.SelectMany(module => module.Features).SelectMany(PossibleEventSlices).SelectMany(slice => slice.Commands).Any(command => command.Handler is { ResultVersion: 2 })) return (new(35, 0), new(35, 0));
         if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
@@ -253,7 +254,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV36Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV37Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -436,10 +437,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 EventSources = eventSources,
                 ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
                 TimeZone = timeZone,
+                ContextMembers = [.. _contextMembers],
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);
             application = BindRoutedFixtureSources(application);
+
+            // A clock model states its effective zone; an undeclared one is non-configurable UTC (decision 0106), so canonical bytes round-trip.
+            if (application.TimeZone is null && SemanticClockUsage.Uses(application)) application = application with { TimeZone = new("UTC", false) };
             UsesEventRoutes = SemanticEventRouting.Uses(application);
             ReportLegacyDecisionReads();
 

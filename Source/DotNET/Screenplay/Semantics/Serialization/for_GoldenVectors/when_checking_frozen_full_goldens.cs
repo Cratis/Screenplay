@@ -16,7 +16,7 @@ public class when_checking_frozen_full_goldens(ITestOutputHelper output) : Speci
         var manifest = frozen_esm_goldens.Sha256;
 
         // Versions are numbered at admission (0025): a reserved number such as v35 (0119) has no golden until it is admitted.
-        var expected = EsmSchemaV36Support.SemanticVersions.Select(version => (int)version.Major).Where(version => version < frozen_esm_goldens.CurrentVersion).Order().ToArray();
+        var expected = EsmSchemaV37Support.SemanticVersions.Select(version => (int)version.Major).Where(version => version < frozen_esm_goldens.CurrentVersion).Order().ToArray();
         expected.ShouldNotBeEmpty();
         manifest.Keys.Order().ShouldEqual(expected);
         foreach (var version in expected)

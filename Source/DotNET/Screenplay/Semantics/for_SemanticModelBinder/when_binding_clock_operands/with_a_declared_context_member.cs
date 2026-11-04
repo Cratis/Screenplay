@@ -4,6 +4,8 @@
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
 
+using Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_clock_operands.given;
+
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_clock_operands;
 
 public class with_a_declared_context_member : given.a_clock_binder

@@ -159,21 +159,17 @@ public class when_parsing_clock_operands : Specification
     }
 
     [Fact]
-    void should_refuse_every_form_in_the_semantic_binder_until_admitted()
+    void should_bind_every_form_at_v37()
     {
         var source = Source(
-            "        calendar \"Europe/Oslo\"\n        produces when dueDate < today - 7 days\n          Recorded\n",
-            "      specification Case\n        given time zone \"Europe/Oslo\"\n");
+            "        id String identifier\n        dueDate Date\n        calendar \"Europe/Oslo\"\n        produces when dueDate < today - 7 days\n          Recorded\n            for id\n",
+            "      event Recorded\n      specification Case\n        given time zone \"Europe/Oslo\"\n        given clock \"2025-03-10T10:00:00Z\"\n        when Submit\n          value = \"v\"\n          id = \"a\"\n          dueDate = \"2025-03-01\"\n        then Recorded\n          for \"a\"\n");
         var syntax = new ScreenplayCompiler().Parse(source).Value!;
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Clocks"));
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("single"), "single", "single.play", source);
         var result = new SemanticModelBinder().Bind("Clocks", syntax, SemanticDocumentSet.Create([document], catalog));
-        result.Success.ShouldBeFalse();
-        var messages = result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).Select(diagnostic => diagnostic.Message).ToArray();
-        messages.ShouldContain(message => message.Contains("time zone is not yet admitted", StringComparison.Ordinal));
-        messages.ShouldContain(message => message.Contains("declares a calendar", StringComparison.Ordinal));
-        messages.ShouldContain(message => message.Contains("given time zone", StringComparison.Ordinal));
-        messages.ShouldContain(message => message.Contains("Clock operands", StringComparison.Ordinal));
+        result.Diagnostics.ShouldBeEmpty();
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V37);
     }
 
     static ComparisonConditionSyntax Condition(string validate)

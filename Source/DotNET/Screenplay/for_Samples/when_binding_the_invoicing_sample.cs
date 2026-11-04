@@ -129,8 +129,8 @@ public class when_binding_the_invoicing_sample : Specification
     }
 
     [Fact]
-    void should_keep_today_refused() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax &&
-        diagnostic.Message.Contains("'dueDate'", StringComparison.Ordinal) && diagnostic.Message.Contains("date", StringComparison.Ordinal)).ShouldBeTrue();
+    void should_admit_today_in_command_rules() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax &&
+        diagnostic.Message.Contains("'dueDate'", StringComparison.Ordinal)).ShouldBeFalse();
 
     [Fact]
     void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(4);

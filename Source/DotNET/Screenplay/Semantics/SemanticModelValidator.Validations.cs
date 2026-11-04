@@ -109,6 +109,12 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A declarative rule cannot carry a predicate attachment.");
             }
 
+            if (validation.ClockOperand is { } clock)
+            {
+                ValidateClockValidation(validation, clock, isConcept, propertyType);
+                return;
+            }
+
             var requiresOperand = validation.Kind != SemanticValidationRuleKind.NotEmpty;
             if (requiresOperand != (validation.Operand is not null))
             {

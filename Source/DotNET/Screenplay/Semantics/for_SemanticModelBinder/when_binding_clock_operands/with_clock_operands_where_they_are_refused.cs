@@ -54,12 +54,4 @@ public class with_clock_operands_where_they_are_refused : given.a_clock_binder
         SemanticClockUsage.UsesCommand(Command(result.Value!)).ShouldBeFalse();
         result.Value!.LanguageVersion.Major.ShouldBeLessThan(36u);
     }
-
-    [Fact]
-    void should_refuse_the_clock_operand_in_the_public_binding()
-    {
-        var result = Bind(Source("        validate\n          require dueDate >= today\n"));
-        result.Success.ShouldBeFalse();
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
-    }
 }

@@ -251,7 +251,7 @@ public sealed record SemanticExecutionRequest(
     public SemanticCommandOccurrence? Occurrence { get; init; }
 
     /// <summary>
-    /// Gets the IANA time zone the host supplies as <c>$context.timeZone</c> (the <c>TimeZone</c> runtime token), or null; candidate-only.
+    /// Gets the IANA time zone the host supplies as <c>$context.timeZone</c> (the <c>TimeZone</c> runtime token), or null.
     /// </summary>
     public string? ContextTimeZone { get; init; }
 
@@ -262,7 +262,7 @@ public sealed record SemanticExecutionRequest(
     public ImmutableDictionary<string, string> ContextTimeZones { get; init; } = ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.Ordinal);
 
     /// <summary>
-    /// Gets the time zone the deployment configures, applied only when the application time zone is declared configurable, or null; candidate-only.
+    /// Gets the time zone the deployment configures, applied only when the application time zone is declared configurable, or null.
     /// </summary>
     public string? ConfiguredTimeZone { get; init; }
 

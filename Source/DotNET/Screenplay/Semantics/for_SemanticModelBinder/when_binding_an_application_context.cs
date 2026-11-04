@@ -1,26 +1,25 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
-
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 public class when_binding_an_application_context : given.a_semantic_binder
 {
-    [Theory]
-    [InlineData("context\n  businessTimeZone time zone\n  customerTimeZone time zone\n")]
-    [InlineData("context\n")]
-    void should_refuse_the_declaration_without_emitting_an_executable_model(string source)
+    [Fact]
+    void should_bind_declared_time_zone_members_at_v37()
     {
-        var parsed = new ScreenplayCompiler().Compile(source);
-        parsed.Diagnostics.ShouldBeEmpty();
-        var result = Bind(source);
-        result.Success.ShouldBeFalse();
-        result.Value.ShouldBeNull();
-        var diagnostic = result.Diagnostics.Single();
-        diagnostic.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
-        diagnostic.Location.Line.ShouldEqual(1);
-        diagnostic.Message.ShouldContain("0132");
-        diagnostic.Message.ShouldContain("(#824)");
+        var result = Bind("context\n  businessTimeZone time zone\n  customerTimeZone time zone\n");
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V37);
+        result.Value.Model.Application.ContextMembers.ShouldContainOnly("businessTimeZone", "customerTimeZone");
+    }
+
+    [Fact]
+    void should_bind_an_empty_declaration_without_selecting_v37()
+    {
+        var result = Bind("context\n");
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.SemanticVersion.ShouldNotEqual(SemanticVersion.V37);
+        result.Value.Model.Application.ContextMembers.ShouldBeEmpty();
     }
 }

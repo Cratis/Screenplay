@@ -39,8 +39,6 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (DiagnosticCodes.PreservedLegacySemanticSyntax, "Command 'RegisterInvoice' concurrency metadata"),
         (Unsupported, "Validation rule on 'lines.quantity'"),
         (Unsupported, "Validation rule on 'lines.unitPrice'"),
-        (Unsupported, "Validation rule '>' on 'dueDate'"),
-        (Unsupported, "Validation rule '<' on 'olderThan'"),
         (Unsupported, "Tag is not admitted: $context tag values"),
         (Unsupported, "$context.tenant has no scalar counterpart"),
         (Unsupported, "$context.causation.type has no scalar counterpart"),

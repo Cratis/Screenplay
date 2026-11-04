@@ -23,14 +23,19 @@ public class when_holding_invoicing_to_the_language : Specification
 
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
-        ("`context`, `time zone`, `calendar`, `given time zone`, clock offsets and `date of`", 824,
-            [("Documentation/screenplay/fixtures/clock-preview.play", [typeof(ApplicationContextSyntax), typeof(ContextMemberSyntax), typeof(TimeZoneSyntax), typeof(CommandCalendarSyntax), typeof(SpecificationTimeZoneSyntax), typeof(ClockOffsetExpressionSyntax), typeof(DateOfExpressionSyntax)])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
+        (typeof(ApplicationContextSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(ContextMemberSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(TimeZoneSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(CommandCalendarSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(SpecificationTimeZoneSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(ClockOffsetExpressionSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(DateOfExpressionSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(SpecificationGeneratedValueSyntax), "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play", "Pinned generated values need a reaction that invokes a command with a generated identifier; the conformance vector and the Acme Commerce sample show it."),
@@ -88,10 +93,18 @@ public class when_holding_invoicing_to_the_language : Specification
                     _fixtureFindings.Add($"{fixture.Path}: must refuse binding with PLAY0268 naming (#{preview.Issue})");
                 }
 
-                if (preview.Issue == 824) _clockPreviewCalendar = SyntaxNodes.Under(application).OfType<CommandCalendarSyntax>().Single();
                 if (preview.Issue == 285) _exact = application;
             }
         }
+
+        var clockSource = File.ReadAllText(Path.Combine(root, "Documentation/screenplay/fixtures/clock-preview.play"));
+        var clockFixture = compiler.Compile(clockSource);
+        _fixtureFindings.AddRange(clockFixture.Diagnostics.Select(diagnostic => $"Documentation/screenplay/fixtures/clock-preview.play: {diagnostic.Code} {diagnostic.Message}"));
+        var clockWorkspace = ScreenplayWorkspace.Create("Clock",
+            [WorkspaceDocument.Create("clock", PortablePlayPath.Parse("clock.play"), Encoding.UTF8.GetBytes(clockSource))],
+            SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Clock")));
+        _fixtureFindings.AddRange(clockWorkspace.Compilation.Diagnostics.Select(diagnostic => $"Documentation/screenplay/fixtures/clock-preview.play: must bind, but {diagnostic.Code} {diagnostic.Message}"));
+        _clockPreviewCalendar = SyntaxNodes.Under(clockFixture.Value!).OfType<CommandCalendarSyntax>().Single();
 
         var calendarExample = File.ReadAllText(Path.Combine(root, "Documentation/screenplay/commands.md"))
             .Split('`').Single(example => example.StartsWith("calendar from $context.", StringComparison.Ordinal));

@@ -20,6 +20,11 @@ internal static partial class SemanticModelValidator
                     ValidateCondition(logical.Right, properties, depth + 1, allowCommandComparisons);
                     break;
                 case SemanticComparison comparison:
+                    if (SemanticClockComparison.Uses(comparison))
+                    {
+                        ValidateClockCondition(comparison, properties, allowCommandComparisons);
+                        break;
+                    }
                     if (!Enum.IsDefined(comparison.Operator)) throw new InvalidSemanticContract("Unknown comparison operator.");
                     var left = ConditionOperandType(comparison.Left, properties);
                     var right = ConditionOperandType(comparison.Right, properties);

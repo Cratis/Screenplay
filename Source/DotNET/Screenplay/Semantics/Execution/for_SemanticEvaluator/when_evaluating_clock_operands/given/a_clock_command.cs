@@ -12,8 +12,9 @@ public class a_clock_command : Semantics.for_SemanticModelBinder.when_binding_cl
 
     protected void Compile(string source)
     {
-        var binding = BindClock(source).Value!;
-        var model = ExecutableSemanticModel.CreateClockCandidate(binding);
+        var result = BindClock(source);
+        var binding = result.Value ?? throw new InvalidOperationException(string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        var model = ExecutableSemanticModel.Create(binding.LanguageVersion, binding.SemanticVersion, binding.Application);
         Plan = SemanticExecutionPlan.Compile(model).Plan!;
         CommandModel = Command(binding);
     }

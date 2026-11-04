@@ -10,7 +10,7 @@ public class with_a_reaction_invoked_command : given.a_clock_command
         """
         module M
           feature F
-            slice StateChange S
+            slice Automation S
               event Seen
                 id String
                 dueDate Date
