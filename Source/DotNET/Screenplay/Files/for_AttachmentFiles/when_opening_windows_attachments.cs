@@ -7,6 +7,8 @@ using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Files.for_AttachmentFiles;
 
+// Every fact changes the folder it loads from, so each one needs its own folder.
+[PerFactSpecificationLifecycle]
 public class when_opening_windows_attachments : Specification
 {
     string _root = null!;
@@ -90,8 +92,10 @@ public class when_opening_windows_attachments : Specification
     void Destroy()
     {
         if (!OperatingSystem.IsWindows()) return;
+        var junction = Path.Combine(_root, "nested", "implementation");
+        if (Directory.Exists(junction) && File.GetAttributes(junction).HasFlag(FileAttributes.ReparsePoint)) Directory.Delete(junction);
         if (Directory.Exists(_root)) Directory.Delete(_root, true);
         if (Directory.Exists(_root + ".saved")) Directory.Delete(_root + ".saved", true);
-        Directory.Delete(_outside, true);
+        if (Directory.Exists(_outside)) Directory.Delete(_outside, true);
     }
 }
