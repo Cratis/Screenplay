@@ -524,16 +524,7 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("givenCaller");
             WriteCaller(writer, specification.GivenCaller);
         }
-        if (specification.When is not null)
-        {
-            writer.WritePropertyName("when");
-            WriteSpecificationCommand(writer, specification.When);
-        }
-        if (specification.WhenAppended is not null)
-        {
-            writer.WritePropertyName("whenAppended");
-            WriteSpecificationAppend(writer, specification.WhenAppended);
-        }
+        WriteSpecificationWhen(writer, specification);
         WriteRecoverySpecification(writer, specification);
         if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
@@ -549,6 +540,20 @@ public static partial class SemanticModelCanonicalJson
         WriteAutomationSpecification(writer, specification);
         if (specification.GivenTimeZone is not null) CanonicalJson.WriteString(writer, "givenTimeZone", specification.GivenTimeZone);
         writer.WriteEndObject();
+    }
+
+    static void WriteSpecificationWhen(Utf8JsonWriter writer, SemanticSpecification specification)
+    {
+        if (specification.When is not null)
+        {
+            writer.WritePropertyName("when");
+            WriteSpecificationCommand(writer, specification.When);
+        }
+        if (specification.WhenAppended is not null)
+        {
+            writer.WritePropertyName("whenAppended");
+            WriteSpecificationAppend(writer, specification.WhenAppended);
+        }
     }
 
     static void WriteRecoverySpecification(Utf8JsonWriter writer, SemanticSpecification specification)

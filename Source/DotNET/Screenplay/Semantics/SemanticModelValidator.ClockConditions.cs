@@ -16,6 +16,13 @@ internal static partial class SemanticModelValidator
         static SemanticPrimitiveType Primitive(SemanticClockOperand clock) =>
             clock.Kind == SemanticClockKind.Today || clock.DateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
 
+        // Date of reduces a DateTime to its date; it never applies to a Date.
+        static bool IsClockComparable(SemanticPrimitiveType primitive, bool dateOf) =>
+            SemanticDateComparison.IsDate(primitive) && (!dateOf || primitive == SemanticPrimitiveType.DateTime);
+
+        static bool IsScalarClockRule(SemanticValidationRule validation, SemanticTypeReference propertyType) =>
+            validation.Operand is null && !propertyType.IsCollection && SemanticDateComparison.IsComparison(validation.Kind);
+
         static SemanticPrimitiveType ClockPrimitive(SemanticConditionOperand operand, SemanticClockOperand clock)
         {
             if (operand.Property.IsSet || operand.DateOf) throw new InvalidSemanticContract("A clock operand must not also reference a property.");
@@ -45,7 +52,7 @@ internal static partial class SemanticModelValidator
             if (!operand.Property.IsSet || !properties.TryGetValue(operand.Property, out var property)) throw new InvalidSemanticContract("Condition property is not a command property.");
             if (property.Type.IsCollection || property.Type.IsOptional) throw new InvalidSemanticContract("Clock comparisons require required scalar command properties.");
             var primitive = UnderlyingPrimitive(property.Type);
-            if (!SemanticDateComparison.IsDate(primitive) || (operand.DateOf && primitive != SemanticPrimitiveType.DateTime))
+            if (!IsClockComparable(primitive, operand.DateOf))
                 throw new InvalidSemanticContract("Clock comparisons require Date or DateTime command properties; date of reduces a DateTime.");
             return operand.DateOf ? SemanticPrimitiveType.Date : primitive;
         }
@@ -54,7 +61,7 @@ internal static partial class SemanticModelValidator
         void ValidateClockValidation(SemanticValidationRule validation, SemanticClockOperand clock, bool isConcept, SemanticTypeReference propertyType)
         {
             if (!_semanticVersion.IsAtLeast(SemanticVersion.V37)) throw new InvalidSemanticContract("Clock operands require ESM v37.");
-            if (isConcept || validation.Operand is not null || propertyType.IsCollection || !SemanticDateComparison.IsComparison(validation.Kind))
+            if (isConcept || !IsScalarClockRule(validation, propertyType))
                 throw new InvalidSemanticContract("A clock validation rule compares a scalar command property with a clock and carries no constant.");
             ValidateClockOperand(clock);
             if (UnderlyingPrimitive(propertyType) != Primitive(clock)) throw new InvalidSemanticContract("A clock validation rule must compare operands of the same Date or DateTime primitive.");

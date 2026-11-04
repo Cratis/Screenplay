@@ -393,6 +393,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal static SemanticApplication PromoteV2Destinations(SemanticApplication application) =>
             application with { Modules = [.. application.Modules.Select(PromoteV2Destinations)] };
 
+        // A clock model states its effective zone; an undeclared one is non-configurable UTC (decision 0106), so canonical bytes round-trip.
+        internal static SemanticApplication WithEffectiveTimeZone(SemanticApplication application) =>
+            application.TimeZone is null && SemanticClockUsage.Uses(application) ? application with { TimeZone = new("UTC", false) } : application;
+
         internal SemanticApplication BindApplication()
         {
             ReportTopLevelDispositions();
@@ -439,10 +443,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);
-            application = BindRoutedFixtureSources(application);
-
-            // A clock model states its effective zone; an undeclared one is non-configurable UTC (decision 0106), so canonical bytes round-trip.
-            if (application.TimeZone is null && SemanticClockUsage.Uses(application)) application = application with { TimeZone = new("UTC", false) };
+            application = WithEffectiveTimeZone(BindRoutedFixtureSources(application));
             UsesEventRoutes = SemanticEventRouting.Uses(application);
             ReportLegacyDecisionReads();
 

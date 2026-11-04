@@ -9,6 +9,16 @@ internal static partial class SemanticModelValidator
 {
     private sealed partial class ValidationContext
     {
+        static bool IsNumber(SemanticPrimitiveType primitive) => primitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber;
+
+        static bool IsScalarPair(SemanticTypeReference left, SemanticTypeReference right, SemanticPrimitiveType leftPrimitive, SemanticPrimitiveType rightPrimitive) =>
+            !left.IsCollection && !right.IsCollection && !left.IsOptional && !right.IsOptional &&
+            (leftPrimitive == rightPrimitive || (IsNumber(leftPrimitive) && IsNumber(rightPrimitive)));
+
+        static bool SupportsOperator(SemanticComparisonOperator comparisonOperator, SemanticPrimitiveType primitive) =>
+            IsNumber(primitive) ||
+            (primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean && comparisonOperator is SemanticComparisonOperator.Equal or SemanticComparisonOperator.NotEqual);
+
         void ValidateCondition(SemanticCondition condition, Dictionary<SemanticId, SemanticProperty> properties, int depth = 0, bool allowCommandComparisons = false)
         {
             if (depth > 32) throw new InvalidSemanticContract("Condition nesting exceeds the portable limit of 32.");
@@ -20,37 +30,36 @@ internal static partial class SemanticModelValidator
                     ValidateCondition(logical.Right, properties, depth + 1, allowCommandComparisons);
                     break;
                 case SemanticComparison comparison:
-                    if (SemanticClockComparison.Uses(comparison))
-                    {
-                        ValidateClockCondition(comparison, properties, allowCommandComparisons);
-                        break;
-                    }
-                    if (!Enum.IsDefined(comparison.Operator)) throw new InvalidSemanticContract("Unknown comparison operator.");
-                    var left = ConditionOperandType(comparison.Left, properties);
-                    var right = ConditionOperandType(comparison.Right, properties);
-                    var leftPrimitive = UnderlyingPrimitive(left);
-                    if (SemanticDateComparison.IsDate(leftPrimitive) && _semanticVersion.IsAtLeast(SemanticVersion.V26))
-                    {
-                        ValidateDateCondition(comparison, left, right, leftPrimitive, allowCommandComparisons);
-                        break;
-                    }
-                    if (leftPrimitive == SemanticPrimitiveType.Uuid && _semanticVersion.IsAtLeast(SemanticVersion.V28))
-                    {
-                        ValidateUuidCondition(comparison, left, right, allowCommandComparisons);
-                        break;
-                    }
-                    var rightPrimitive = UnderlyingPrimitive(right);
-                    if (left.IsCollection || right.IsCollection || left.IsOptional || right.IsOptional ||
-                        (leftPrimitive != rightPrimitive && !(leftPrimitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber && rightPrimitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber)) ||
-                        (leftPrimitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean or SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber)) ||
-                        (comparison.Operator is not (SemanticComparisonOperator.Equal or SemanticComparisonOperator.NotEqual) &&
-                         leftPrimitive is not (SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber)))
-                    {
-                        throw new InvalidSemanticContract("Condition operands must have compatible scalar types; ordering requires numbers and equality requires text, enum, number or boolean.");
-                    }
-
+                    ValidateComparison(comparison, properties, allowCommandComparisons);
                     break;
                 default: throw new InvalidSemanticContract("Unknown condition node.");
+            }
+        }
+
+        void ValidateComparison(SemanticComparison comparison, Dictionary<SemanticId, SemanticProperty> properties, bool allowCommandComparisons)
+        {
+            if (SemanticClockComparison.Uses(comparison))
+            {
+                ValidateClockCondition(comparison, properties, allowCommandComparisons);
+                return;
+            }
+            if (!Enum.IsDefined(comparison.Operator)) throw new InvalidSemanticContract("Unknown comparison operator.");
+            var left = ConditionOperandType(comparison.Left, properties);
+            var right = ConditionOperandType(comparison.Right, properties);
+            var leftPrimitive = UnderlyingPrimitive(left);
+            if (SemanticDateComparison.IsDate(leftPrimitive) && _semanticVersion.IsAtLeast(SemanticVersion.V26))
+            {
+                ValidateDateCondition(comparison, left, right, leftPrimitive, allowCommandComparisons);
+                return;
+            }
+            if (leftPrimitive == SemanticPrimitiveType.Uuid && _semanticVersion.IsAtLeast(SemanticVersion.V28))
+            {
+                ValidateUuidCondition(comparison, left, right, allowCommandComparisons);
+                return;
+            }
+            if (!IsScalarPair(left, right, leftPrimitive, UnderlyingPrimitive(right)) || !SupportsOperator(comparison.Operator, leftPrimitive))
+            {
+                throw new InvalidSemanticContract("Condition operands must have compatible scalar types; ordering requires numbers and equality requires text, enum, number or boolean.");
             }
         }
 

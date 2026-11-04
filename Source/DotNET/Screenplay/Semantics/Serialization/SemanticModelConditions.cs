@@ -152,14 +152,8 @@ internal static partial class SemanticModelRead
             }
         }
 
-        if (clock is not null)
-        {
-            Required(!propertyId.IsSet && !valueRead && read is null && !dateOf, "condition operand");
-            return new(default, null) { Clock = clock };
-        }
-
-        Required(propertyId.IsSet != valueRead && (read is null || propertyId.IsSet) && (!dateOf || propertyId.IsSet), "condition operand");
-        return new(propertyId, value) { Read = read, DateOf = dateOf };
+        var fields = new ConditionOperandFields(propertyId, value, valueRead, read, dateOf);
+        return clock is null ? fields.PropertyOperand() : fields.ClockOperand(clock);
     }
 
     internal static SemanticRequirement Requirement(ref Utf8JsonReader reader, uint schemaVersion)
@@ -183,5 +177,21 @@ internal static partial class SemanticModelRead
 
         Required(condition is not null && messageRead, "requirement");
         return new(condition!, message) { Severity = severity };
+    }
+
+    readonly record struct ConditionOperandFields(SemanticId PropertyId, SemanticValue? Value, bool ValueRead, string? Read, bool DateOf)
+    {
+        // A clock operand stands alone: it carries no property, value, read or date of.
+        public SemanticConditionOperand ClockOperand(SemanticClockOperand clock)
+        {
+            Required(!PropertyId.IsSet && !ValueRead && Read is null && !DateOf, "condition operand");
+            return new(default, null) { Clock = clock };
+        }
+
+        public SemanticConditionOperand PropertyOperand()
+        {
+            Required(PropertyId.IsSet != ValueRead && (Read is null || PropertyId.IsSet) && (!DateOf || PropertyId.IsSet), "condition operand");
+            return new(PropertyId, Value) { Read = Read, DateOf = DateOf };
+        }
     }
 }

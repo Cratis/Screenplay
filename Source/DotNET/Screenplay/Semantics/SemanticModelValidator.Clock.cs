@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
@@ -22,16 +24,26 @@ internal static partial class SemanticModelValidator
     {
         if (application.TimeZone is { } zone && !IanaTimeZones.IsKnown(zone.Id)) throw new InvalidSemanticContract("The application time zone must be an IANA time zone id.");
         var members = application.ContextMembers.IsDefault ? [] : application.ContextMembers;
-        if (members.Any(member => member.Length == 0 || member == SemanticTypedContextCatalog.CalendarContextMember)) throw new InvalidSemanticContract("A declared context member must be named and must not reuse the fixed timeZone member.");
-        if (members.Distinct(StringComparer.Ordinal).Count() != members.Length) throw new InvalidSemanticContract("Declared context members must be unique.");
+        ValidateContextMembers(members);
         foreach (var calendar in SlicesOf(application).SelectMany(slice => slice.Commands).Select(command => command.Calendar).OfType<SemanticCommandCalendar>())
         {
-            if ((calendar.TimeZone is null) == (calendar.ContextMember is null)) throw new InvalidSemanticContract("A command calendar names exactly one time zone or context member.");
-            if (calendar.TimeZone is { } literal && !IanaTimeZones.IsKnown(literal)) throw new InvalidSemanticContract("A command calendar time zone must be an IANA time zone id.");
-            if (calendar.ContextMember is { } member && member != SemanticTypedContextCatalog.CalendarContextMember && !members.Contains(member, StringComparer.Ordinal))
-            {
-                throw new InvalidSemanticContract("A command calendar reads an undeclared context member.");
-            }
+            ValidateCommandCalendar(calendar, members);
+        }
+    }
+
+    static void ValidateContextMembers(ImmutableArray<string> members)
+    {
+        if (members.Any(member => member.Length == 0 || member == SemanticTypedContextCatalog.CalendarContextMember)) throw new InvalidSemanticContract("A declared context member must be named and must not reuse the fixed timeZone member.");
+        if (members.Distinct(StringComparer.Ordinal).Count() != members.Length) throw new InvalidSemanticContract("Declared context members must be unique.");
+    }
+
+    static void ValidateCommandCalendar(SemanticCommandCalendar calendar, ImmutableArray<string> members)
+    {
+        if ((calendar.TimeZone is null) == (calendar.ContextMember is null)) throw new InvalidSemanticContract("A command calendar names exactly one time zone or context member.");
+        if (calendar.TimeZone is { } literal && !IanaTimeZones.IsKnown(literal)) throw new InvalidSemanticContract("A command calendar time zone must be an IANA time zone id.");
+        if (calendar.ContextMember is { } member && member != SemanticTypedContextCatalog.CalendarContextMember && !members.Contains(member, StringComparer.Ordinal))
+        {
+            throw new InvalidSemanticContract("A command calendar reads an undeclared context member.");
         }
     }
 }

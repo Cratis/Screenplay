@@ -78,7 +78,7 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "kind": kind = String(ref reader, property) switch { "today" => SemanticClockKind.Today, "now" => SemanticClockKind.Now, _ => throw new InvalidSemanticContract("Unknown clock kind.") }; break;
+                case "kind": kind = ClockKind(String(ref reader, property)); break;
                 case "offset": offset = Nested(ref reader, ClockOffset, property); break;
                 case "dateOf": dateOf = OnlyTrue(ref reader, property, "clock operand"); break;
                 default: throw Unknown(property, "clock operand");
@@ -100,13 +100,31 @@ internal static partial class SemanticModelRead
             switch (property)
             {
                 case "amount": amount = Int32(ref reader, property); break;
-                case "unit": unit = String(ref reader, property) switch { "day" => SemanticClockUnit.Day, "hour" => SemanticClockUnit.Hour, "minute" => SemanticClockUnit.Minute, _ => throw new InvalidSemanticContract("Unknown clock unit.") }; break;
+                case "unit": unit = ClockUnit(String(ref reader, property)); break;
                 default: throw Unknown(property, "clock offset");
             }
         }
 
-        // A zero offset in days is written as no offset, so it is never read back as one.
-        Required(amount is not null && unit is not null && (amount != 0 || unit != SemanticClockUnit.Day), "clock offset");
+        Required(IsWrittenOffset(amount, unit), "clock offset");
         return (amount!.Value, unit!.Value);
     }
+
+    static SemanticClockKind ClockKind(string kind) => kind switch
+    {
+        "today" => SemanticClockKind.Today,
+        "now" => SemanticClockKind.Now,
+        _ => throw new InvalidSemanticContract("Unknown clock kind.")
+    };
+
+    static SemanticClockUnit ClockUnit(string unit) => unit switch
+    {
+        "day" => SemanticClockUnit.Day,
+        "hour" => SemanticClockUnit.Hour,
+        "minute" => SemanticClockUnit.Minute,
+        _ => throw new InvalidSemanticContract("Unknown clock unit.")
+    };
+
+    // A zero offset in days is written as no offset, so it is never read back as one.
+    static bool IsWrittenOffset(int? amount, SemanticClockUnit? unit) =>
+        amount is not null && unit is not null && (amount != 0 || unit != SemanticClockUnit.Day);
 }
