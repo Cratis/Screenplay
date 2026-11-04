@@ -202,6 +202,11 @@ export const sampleShapeItems: CompletionEntry[] = [
     { label: 'row', insertText: 'row\n    ${1:field} = ${2:"value"}', documentation: 'One row of the shape.' },
 ];
 
+export const sampleRowItems: CompletionEntry[] = [
+    { label: 'field', insertText: '${1:field} = ${2:"value"}', documentation: 'One literal field of the row.' },
+    { label: 'collection', insertText: '${1:field}\n    row\n        ${2:field} = ${3:"value"}', documentation: 'Explicit rows for a composite collection. A bare field without rows is an empty list.' },
+];
+
 export const layoutItems: CompletionEntry[] = [
     { label: 'slot', insertText: '${1:slot}', documentation: 'A named slot of the shell.' },
     { label: 'slot contributes', insertText: '${1:slot} contributes ${2:Name}', documentation: 'A slot other declarations contribute to, such as `navigation contributes Navigation`.' },
