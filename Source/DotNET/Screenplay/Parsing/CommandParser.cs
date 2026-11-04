@@ -35,179 +35,37 @@ internal static partial class CommandParser
             context.Error(DiagnosticCodes.InvalidCommandDeclaration, $"Invalid command declaration '{header.Content}' - expected 'command <Name>'", header.Location);
         }
 
-        var properties = new List<PropertySyntax>();
-        var responses = new List<(SourceLine Line, PropertySyntax? Candidate, CommandResponseSyntax? Response)>();
-        AuthorizeSyntax? authorize = null;
-        var authorizationDepthExceeded = false;
-        var validations = new List<ValidateSyntax>();
-        var produces = new List<ProducesSyntax>();
-        var reads = new List<ReadsSyntax>();
-        HandlerSyntax? handler = null;
-        var handlers = new List<(HandlerSyntax? Handler, SourceLocation Location)>();
-        ConcurrencySyntax? concurrency = null;
-        CommandStreamSyntax? stream = null;
-        CommandCalendarSyntax? calendar = null;
-        var streamCandidates = new List<CommandStreamSyntax>();
-        string? description = null;
-        string? documentation = null;
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-
+        var state = new CommandBodyState(name.Groups[1].Value, responseNames, context.StreamCandidates);
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(line.Content))
-            {
-                case "runs" when ReactionIdentityParser.IsDeclarationLine(line):
-                    ReactionIdentityParser.Misplaced(context, line);
-                    break;
-
-                // The bare directives below cannot take a type reference, so a line that has property shape
-                // is a property no matter which keyword it starts with - 'description String' declares a
-                // property called description. Only the directives that do take an identifier operand
-                // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
-                case "calendar" when CommandCalendarParser.IsDeclaration(line.Content):
-                    var parsedCalendar = CommandCalendarParser.Parse(line);
-                    if (calendar is not null || parsedCalendar is null)
-                    {
-                        context.Error(DiagnosticCodes.InvalidCommandCalendar, "A command declares at most one 'calendar \"<id>\"' or 'calendar from $context.<member>'.", line.Location);
-                    }
-                    else
-                    {
-                        calendar = parsedCalendar;
-                    }
-
-                    break;
-                case "description" or "documentation" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
-                    AddProperty(context, properties, named, name.Groups[1].Value, line);
-                    break;
-                case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
-                    AddProperty(context, properties, validated, name.Groups[1].Value, line);
-                    break;
-                case "returns":
-                    if (ScalarResponseRegex().Match(line.Content) is { Success: true } scalar && !scalar.Groups[1].Value.StartsWith('@') && PropertyLineParser.TryParse(line) is { } candidate)
-                    {
-                        if (responseNames is null)
-                        {
-                            properties.Add(candidate);
-                            responses.Add((line, candidate, null));
-                        }
-                        else if (responseNames.Contains(candidate.Type.Name))
-                        {
-                            responses.Add((line, null, ParseResponse(context, line)));
-                        }
-                        else
-                        {
-                            AddProperty(context, properties, candidate, name.Groups[1].Value, line);
-                        }
-                    }
-                    else if (PropertyLineParser.TryParse(line) is { } returnsProperty)
-                    {
-                        AddProperty(context, properties, returnsProperty, name.Groups[1].Value, line);
-                    }
-                    else if (PropertyLineParser.ReportInvalidModifierOrder(context, line))
-                    {
-                        context.SkipBlock(line.Indent);
-                    }
-                    else
-                    {
-                        responses.Add((line, null, ParseResponse(context, line)));
-                    }
-
-                    break;
-                case "stream" when RouteRegex().IsMatch(line.Content) && PropertyLineParser.TryParse(line) is { } streamProperty && context.StreamCandidates?.HasSource(streamProperty.Type.Name.Split('.')[0]) == true:
-                    var segments = streamProperty.Type.Name.Split('.');
-                    var ambiguous = context.StreamCandidates.HasPropertyType(streamProperty.Type.Name) && context.StreamCandidates.HasUniqueStream(segments[0], segments[1]);
-                    var route = EventSourceParser.ParseRoute(context, line, streamProperty, ambiguous);
-                    if (stream is not null || streamCandidates.Count > 0) context.Error(DiagnosticCodes.InvalidCommandStream, "A command declares at most one stream route.", line.Location);
-                    if (ambiguous || stream is not null) streamCandidates.Add(route);
-                    else stream = route;
-                    break;
-                case "description":
-                    var previousDescription = description;
-                    description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
-                    if (previousDescription is null && description is not null)
-                    {
-                        directiveLocations["description"] = line.Location;
-                    }
-
-                    break;
-                case "documentation":
-                    documentation = DocumentationParser.Parse(context, line, documentation, $"Command '{name.Groups[1].Value}'", directiveLocations);
-                    break;
-                case "authorize":
-                    var next = AuthorizeParser.Parse(context, line);
-                    if (!authorizationDepthExceeded)
-                    {
-                        var previous = authorize;
-                        authorize = AuthorizeParser.Combine(authorize, next, context);
-                        authorizationDepthExceeded = previous is not null && authorize is null;
-                    }
-
-                    break;
-                case "concurrency":
-                    concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
-                    break;
-                case "validate":
-                    if (ValidateParser.Parse(context, line, ValidationOwnerKind.Command) is { } validate)
-                    {
-                        validations.Add(validate);
-                    }
-
-                    break;
-                case "produces":
-                    if (ProducesParser.Parse(context, line, true) is { } production)
-                    {
-                        produces.Add(production);
-                    }
-
-                    break;
-                case "reads":
-                    if (ReadsParser.Parse(context, line) is { } read)
-                    {
-                        reads.Add(read);
-                    }
-
-                    break;
-                case "handler":
-                    var parsedHandler = ParseHandler(context, line);
-                    handlers.Add((parsedHandler, line.Location));
-                    if (parsedHandler is not null && handler is not null)
-                    {
-                        // Duplicate handlers are diagnosed below. Keep the replaced source locations
-                        // for recovery printing, so their comments stay beside the retained handler
-                        // instead of merging into the command header.
-                        directiveLocations[$"omitted:handler:{handler.Location.Line}"] = handler.Location;
-                        if (handler.File is { } replacedFile)
-                        {
-                            directiveLocations[$"omitted:handler:{replacedFile.Location.Line}"] = replacedFile.Location;
-                        }
-
-                        if (handler.Code is { } replacedCode)
-                        {
-                            directiveLocations[$"omitted:handler:{replacedCode.Location.Line}"] = replacedCode.Location;
-                        }
-                    }
-
-                    handler = parsedHandler;
-                    break;
-                default:
-                    if (PropertyLineParser.TryParse(line) is { } property)
-                    {
-                        AddProperty(context, properties, property, name.Groups[1].Value, line);
-                    }
-                    else
-                    {
-                        PropertyLineParser.ReportInvalidModifierOrder(context, line);
-                        context.Error(DiagnosticCodes.UnknownCommandDirective, $"Unexpected '{line.Content}' in command body{MisplacedRuleHint.ForCommand(line.Content)}", line.Location);
-                        context.SkipBlock(line.Indent);
-                    }
-
-                    break;
-            }
+            DispatchDirective(context, line, state);
         }
 
+        return BuildCommand(context, header, state, discoveredNames);
+    }
+
+    static CommandSyntax BuildCommand(ParserContext context, SourceLine header, CommandBodyState state, HashSet<string>? discoveredNames)
+    {
+        var (response, properties) = ResolveResponse(context, state, discoveredNames);
+        CommandHandlerValidator.Validate(state.Handlers, state.Handler, state.Produces.Count > 0, context);
+
+        return new(state.CommandName, properties, state.Authorize, state.Validations, state.Produces, state.Handler, header.Location, state.Concurrency, state.Description, state.Reads)
+        {
+            Documentation = state.Documentation,
+            DirectiveLocations = state.DirectiveLocations,
+            Response = response,
+            Stream = state.Stream,
+            Calendar = state.Calendar,
+            StreamCandidates = state.StreamRoutes
+        };
+    }
+
+    static (CommandResponseSyntax? Response, List<PropertySyntax> Properties) ResolveResponse(ParserContext context, CommandBodyState state, HashSet<string>? discoveredNames)
+    {
+        var responses = state.Responses;
         var candidates = responses.Where(entry => entry.Candidate is not null).Select(entry => entry.Candidate).ToHashSet();
-        var names = properties.Where(property => !candidates.Contains(property)).Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
+        var names = state.Properties.Where(property => !candidates.Contains(property)).Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
         if (responses.Exists(entry => entry.Candidate is { } candidate && !names.Contains(candidate.Type.Name) && candidate.Type.Name != "returns"))
         {
             names.Add("returns");
@@ -237,18 +95,7 @@ internal static partial class CommandParser
             }
         }
 
-        properties = [.. properties.Where(property => !removed.Contains(property))];
-        CommandHandlerValidator.Validate(handlers, handler, produces.Count > 0, context);
-
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
-        {
-            Documentation = documentation,
-            DirectiveLocations = directiveLocations,
-            Response = response,
-            Stream = stream,
-            Calendar = calendar,
-            StreamCandidates = streamCandidates
-        };
+        return (response, [.. state.Properties.Where(property => !removed.Contains(property))]);
     }
 
     /// <summary>

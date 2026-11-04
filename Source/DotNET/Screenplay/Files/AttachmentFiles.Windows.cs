@@ -20,6 +20,7 @@ public static partial class AttachmentFiles
     const uint WindowsBackupSemantics = 0x02000000;
     const uint WindowsFileTypeDisk = 1;
     const int WindowsFileAttributeTagInfo = 9;
+    const int WindowsFileStandardInfo = 1;
 
     internal static bool WindowsAttachmentMatchesPath(string rootFinalPath, string key, string attachmentFinalPath) =>
         string.Equals(NormalizeWindowsFinalPath(attachmentFinalPath), NormalizeWindowsFinalPath(rootFinalPath) + '\\' + key.Replace('/', '\\'), StringComparison.OrdinalIgnoreCase);
@@ -123,6 +124,14 @@ public static partial class AttachmentFiles
         reason = "is a directory";
         if (attributes.HasFlag(FileAttributes.Directory)) return false;
         reason = "cannot be inspected";
+        if (!GetWindowsFileInformation(handle, WindowsFileStandardInfo, out WindowsStandardInformation information, (uint)Marshal.SizeOf<WindowsStandardInformation>())) return false;
+        if (information.NumberOfLinks > 1)
+        {
+            reason = "has more than one hard link";
+            refusalCode = DiagnosticCodes.AttachmentLinkRefused;
+            return false;
+        }
+
         var finalPath = WindowsFinalPath(handle);
         if (finalPath is null) return false;
         if (WindowsAttachmentMatchesPath(rootFinalPath, key, finalPath)) return true;
@@ -135,7 +144,7 @@ public static partial class AttachmentFiles
 
     static bool TryReadWindowsAttributes(SafeFileHandle handle, out FileAttributes attributes)
     {
-        var succeeded = GetWindowsFileInformation(handle, WindowsFileAttributeTagInfo, out var information, (uint)Marshal.SizeOf<WindowsAttributeTagInformation>());
+        var succeeded = GetWindowsFileInformation(handle, WindowsFileAttributeTagInfo, out WindowsAttributeTagInformation information, (uint)Marshal.SizeOf<WindowsAttributeTagInformation>());
         attributes = (FileAttributes)information.Attributes;
         return succeeded;
     }
@@ -164,12 +173,27 @@ public static partial class AttachmentFiles
     private static partial bool GetWindowsFileInformation(SafeFileHandle handle, int informationClass, out WindowsAttributeTagInformation information, uint size);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "GetFileInformationByHandleEx", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowsFileInformation(SafeFileHandle handle, int informationClass, out WindowsStandardInformation information, uint size);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", EntryPoint = "GetFileType", SetLastError = true)]
     private static partial uint GetWindowsFileType(SafeFileHandle handle);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
     private static partial uint GetWindowsFinalPath(SafeFileHandle handle, [Out] char[] path, uint length, uint flags);
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct WindowsStandardInformation
+    {
+        internal long AllocationSize;
+        internal long EndOfFile;
+        internal uint NumberOfLinks;
+        internal byte DeletePending;
+        internal byte Directory;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     struct WindowsAttributeTagInformation

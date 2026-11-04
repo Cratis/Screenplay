@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 
@@ -9,7 +10,7 @@ namespace Cratis.Screenplay.Files.for_AttachmentFiles;
 
 // Every fact changes the folder it loads from, so each one needs its own folder.
 [PerFactSpecificationLifecycle]
-public class when_opening_windows_attachments : Specification
+public partial class when_opening_windows_attachments : Specification
 {
     string _root = null!;
     string _outside = null!;
@@ -62,6 +63,26 @@ public class when_opening_windows_attachments : Specification
         result.Contents.ShouldBeEmpty();
         result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.AttachmentTooLarge);
     }
+
+    [Fact]
+    void should_refuse_an_attachment_with_more_than_one_hard_link()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var result = Load(path =>
+        {
+            File.Delete(path);
+            Assert.True(CreateHardLink(path, Path.Combine(_outside, "handler.cs"), 0), $"Hard link creation failed with error {Marshal.GetLastPInvokeError()}.");
+        });
+        result.Contents.ShouldBeEmpty();
+        var diagnostic = result.Diagnostics.Single();
+        diagnostic.Code.ShouldEqual(DiagnosticCodes.AttachmentLinkRefused);
+        diagnostic.Message.ShouldEqual("File attachment 'nested/implementation/handler.cs' has more than one hard link.");
+    }
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("kernel32.dll", EntryPoint = "CreateHardLinkW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CreateHardLink(string path, string existingPath, nint securityAttributes);
 
     static void CreateJunction(string path, string target)
     {

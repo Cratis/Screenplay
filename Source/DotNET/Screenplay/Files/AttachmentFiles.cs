@@ -251,7 +251,7 @@ public static partial class AttachmentFiles
                 var refusalCode = DiagnosticCodes.AttachmentUnreadable;
                 using var stream = OperatingSystem.IsWindows()
                     ? OpenWindowsAttachment(windowsRootPath!, path, key, out reason, out refusalCode)
-                    : OpenUnixAttachment(unixRoot, key, out length, out reason);
+                    : OpenUnixAttachment(unixRoot, key, out length, out reason, out refusalCode);
                 if (stream is null)
                 {
                     diagnostics.Add(Diagnostic.Warning(refusalCode, $"File attachment '{reference.Path}' {reason}.", reference.Location));
