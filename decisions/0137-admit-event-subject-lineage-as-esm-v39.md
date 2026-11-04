@@ -34,7 +34,7 @@ Screenplay records an event's subject in the executable model as ESM v39. It emi
 1. **Semantics.** One subject per event ([0008](0008-one-data-subject-per-event.md)). Each event contract, and each generation (prior revision) of it, carries an optional `subject` that names the property marked as the subject. An absent `subject` means the event source is the subject. The reference is a single field per revision, so a second subject cannot be written.
 2. **Lifting the v13 refusal.** Under v39, an event with a marked subject may carry `pii` and `secret scope subject` values. The binder, validator and reader refuse them under any earlier version, as 0068 does today. A canonical model below v39 never carries a `subject`.
 3. **Release intent: MINOR, behind an ordering gate.** Source that renders today must keep rendering.
-   - v39 bytes are emitted only after a released Stage contains Cratis/Stage#28 support. Until then v39 is selected only by an explicit opt-in.
+   - Until a released Stage contains Cratis/Stage#28 support, v39 bytes are emitted only for a model that explicitly opts in. A modeler who opts in before that release accepts that no released Stage renders v39 yet.
    - Existing phase-1 models keep their current bytes and version by default. The `subject` mark stays authoring metadata with `PLAY0270`, as in 0047.
    - Selecting v39 automatically for marked models is not part of this record. Changing it is a bytes change for phase-1 models and needs its own record, written after a released Stage admits v39.
 4. **Proposed opt-in.** An application-root declaration, `event subjects recorded`, following the pattern of `command reads protected` and `reaction batches atomic`. The name is proposed and can change at implementation.
@@ -84,7 +84,7 @@ Out of scope: rendering C# (Stage#28), erasure and export guarantees, read-model
 
 ## Consequences
 
-Models can state whose data an event holds in a form that Stage and other consumers can realize, and the personal-data refusal can be lifted for marked events. Nothing that renders today changes, because emission is opt-in until Stage supports v39. The cost is that a modeler must declare the opt-in, and only after a Stage release that admits v39. Marked models do not get lineage by default until a later record changes that. A provisional version number may be renumbered at admission, so goldens and corpus paths are produced from the one constant. Per-property subjects and multiple subjects per event stay closed off unless Chronicle gains them.
+Models can state whose data an event holds in a form that Stage and other consumers can realize, and the personal-data refusal can be lifted for marked events. Nothing that renders today changes, because emission is opt-in until Stage supports v39. The cost is that a modeler must declare the opt-in, and a model that opts in before a Stage release admits v39 cannot yet be rendered by a released Stage. Marked models do not get lineage by default until a later record changes that. A provisional version number may be renumbered at admission, so goldens and corpus paths are produced from the one constant. Per-property subjects and multiple subjects per event stay closed off unless Chronicle gains them.
 
 ## Related issues
 
