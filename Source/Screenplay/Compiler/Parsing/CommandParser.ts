@@ -97,103 +97,165 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     if (name === '') {
         context.error(DiagnosticCodes.InvalidCommandDeclaration, `Invalid command declaration '${line.content}' - expected 'command <Name>'`, locationOf(line));
     }
-    const properties: PropertySyntax[] = [];
-    const responses: { line: SourceLine; candidate: PropertySyntax | null; response: CommandResponseSyntax | null }[] = [];
-    let identifier: PropertySyntax | undefined;
-    const validations: ValidateSyntax[] = [];
-    const produces: ProducesSyntax[] = [];
-    const reads: { readModel: string; alias: string | null }[] = [];
-    const referenceReads: ReadsSyntax[] = [];
-    let concurrency: ConcurrencySyntax | undefined;
-    let description: string | null = null;
-    let documentation: string | null = null;
-    let authorize: AuthorizeSyntax | null = null;
-    let authorizationDepthExceeded = false;
-    let handler: HandlerSyntax | null = null;
-    const handlers: { handler: HandlerSyntax | null; location: SourceLocation }[] = [];
-    let stream: CommandStreamSyntax | null = null;
-    const streamCandidates: CommandStreamSyntax[] = [];
-    let calendar: CommandCalendarSyntax | null = null;
+    const state = createCommandBodyState(name, responseNames);
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        const keyword = firstWord(child.content);
-        const asProperty = tryParseProperty(child);
-        if (keyword === 'calendar' && calendarPrefix.test(child.content)) {
-            const match = calendarPattern.exec(child.content);
-            if (calendar !== null || match === null) {
-                context.error(DiagnosticCodes.InvalidCommandCalendar, 'A command declares at most one \'calendar "<id>"\' or \'calendar from $context.<member>\'.', locationOf(child));
-            } else {
-                calendar = { kind: 'CommandCalendarSyntax', id: match[1] === undefined ? null : unescapeString(match[1]), contextMember: match[2] ?? null, location: locationOf(child) };
-            }
-        } else if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
-            identifier = addProperty(context, properties, asProperty, name, child, identifier);
-        } else if (keyword === 'returns') {
-            const scalar = scalarResponsePattern.exec(child.content);
-            if (scalar !== null && !scalar[1].startsWith('@') && asProperty !== undefined) {
-                if (responseNames === undefined) {
-                    properties.push(asProperty);
-                    responses.push({ line: child, candidate: asProperty, response: null });
-                } else if (responseNames.has(asProperty.type.name)) {
-                    responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
-                } else {
-                    identifier = addProperty(context, properties, asProperty, name, child, identifier);
-                }
-            } else if (asProperty !== undefined) {
-                identifier = addProperty(context, properties, asProperty, name, child, identifier);
-            } else if (reportInvalidModifierOrder(context, child)) {
-                context.skipBlock(child.indent);
-            } else {
-                responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
-            }
-        } else if (keyword === 'stream' && routeHeader.test(child.content) && asProperty !== undefined && context.streamCandidates?.hasSource(asProperty.type.name.split('.')[0]) === true) {
-            const [source, streamName] = asProperty.type.name.split('.');
-            const ambiguous = context.streamCandidates.hasPropertyType(asProperty.type.name) && context.streamCandidates.hasUniqueStream(source, streamName);
-            const route = parseCommandStream(context, child, asProperty, ambiguous);
-            if (stream !== null || streamCandidates.length > 0) context.error(DiagnosticCodes.InvalidCommandStream, 'A command declares at most one stream route.', locationOf(child));
-            if (ambiguous || stream !== null) streamCandidates.push(route);
-            else stream = route;
-        } else if (keyword === 'runs' && isReactionIdentityLine(child)) {
-            misplacedReactionIdentity(context, child);
-        } else if (keyword === 'description') {
-            description = parseDescription(context, child, description, `Command '${name}'`);
-        } else if (keyword === 'documentation') {
-            documentation = parseDocumentation(context, child, documentation, `Command '${name}'`);
-        } else if (keyword === 'authorize') {
-            const next = parseAuthorize(context, child);
-            if (!authorizationDepthExceeded) {
-                const previous = authorize;
-                authorize = combineAuthorize(authorize, next, context);
-                authorizationDepthExceeded = previous !== null && authorize === null;
-            }
-        } else if (keyword === 'validate') {
-            const validate = parseValidate(context, child, 'command', name);
-            if (validate !== undefined) {
-                validations.push(validate);
-            }
-        } else if (keyword === 'produces') {
-            const production = parseProduces(context, child, true);
-            if (production !== undefined) produces.push(production);
-        } else if (keyword === 'handler') {
-            handler = parseHandler(context, child);
-            handlers.push({ handler, location: locationOf(child) });
-        } else if (opaqueDirectives.has(keyword)) {
-            const reference = keyword === 'reads' ? parseReads(context, child) : undefined;
-            if (reference !== undefined) referenceReads.push(reference);
-            if (keyword === 'concurrency' && concurrency === undefined) concurrency = captureConcurrency(context, child);
-            const read = /^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$/.exec(child.content);
-            if (read !== null) reads.push({ readModel: read[1], alias: read[2] ?? null });
-            if (optionalReads.test(child.content)) {
-                context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
-            }
-            context.skipOpaqueBlock(child.indent);
-        } else if (asProperty !== undefined) {
-            identifier = addProperty(context, properties, asProperty, name, child, identifier);
-        } else {
-            reportInvalidModifierOrder(context, child);
-            context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body${misplacedRuleHintForCommand(child.content)}`, locationOf(child));
-            context.skipBlock(child.indent);
-        }
+        dispatchCommandDirective(context, child, state);
     }
+    return buildCommand(context, line, state, discoveredNames);
+}
+
+// What the command body loop gathers while it reads the directives of one command.
+interface CommandBodyState {
+    readonly name: string;
+    readonly responseNames: ReadonlySet<string> | undefined;
+    readonly properties: PropertySyntax[];
+    readonly responses: { line: SourceLine; candidate: PropertySyntax | null; response: CommandResponseSyntax | null }[];
+    identifier: PropertySyntax | undefined;
+    readonly validations: ValidateSyntax[];
+    readonly produces: ProducesSyntax[];
+    readonly reads: { readModel: string; alias: string | null }[];
+    readonly referenceReads: ReadsSyntax[];
+    concurrency: ConcurrencySyntax | undefined;
+    description: string | null;
+    documentation: string | null;
+    authorize: AuthorizeSyntax | null;
+    authorizationDepthExceeded: boolean;
+    handler: HandlerSyntax | null;
+    readonly handlers: { handler: HandlerSyntax | null; location: SourceLocation }[];
+    stream: CommandStreamSyntax | null;
+    readonly streamCandidates: CommandStreamSyntax[];
+    calendar: CommandCalendarSyntax | null;
+}
+
+// A command body rule: whether it takes a line - by keyword and, where the keyword alone cannot decide, by the line - and what to do with it.
+interface CommandDirectiveRule {
+    readonly matches: (keyword: string, line: SourceLine, property: PropertySyntax | undefined, context: ParserContext) => boolean;
+    readonly parse: (context: ParserContext, line: SourceLine, state: CommandBodyState, property: PropertySyntax | undefined) => void;
+}
+
+function createCommandBodyState(name: string, responseNames: ReadonlySet<string> | undefined): CommandBodyState {
+    return {
+        name, responseNames, properties: [], responses: [], identifier: undefined, validations: [], produces: [], reads: [], referenceReads: [],
+        concurrency: undefined, description: null, documentation: null, authorize: null, authorizationDepthExceeded: false, handler: null,
+        handlers: [], stream: null, streamCandidates: [], calendar: null
+    };
+}
+
+const isDirective = (name: string) => (keyword: string): boolean => keyword === name;
+
+// The command body rules in the order they are tried: the first one that takes the line handles it, so a keyword with a property shaped rule keeps it
+// ahead of its directive rule. A line no rule takes is a property, or an unexpected directive.
+const commandDirectiveRules: readonly CommandDirectiveRule[] = [
+    { matches: (keyword, line) => keyword === 'calendar' && calendarPrefix.test(line.content), parse: parseCalendarDirective },
+    { matches: (keyword, line, property) => property !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && line.content !== 'validate csharp')), parse: addPropertyDirective },
+    { matches: isDirective('returns'), parse: parseReturnsDirective },
+    { matches: (keyword, line, property, context) => keyword === 'stream' && routeHeader.test(line.content) && property !== undefined && context.streamCandidates?.hasSource(property.type.name.split('.')[0]) === true, parse: parseStreamDirective },
+    { matches: (keyword, line) => keyword === 'runs' && isReactionIdentityLine(line), parse: (context, line) => { misplacedReactionIdentity(context, line); } },
+    { matches: isDirective('description'), parse: (context, line, state) => { state.description = parseDescription(context, line, state.description, `Command '${state.name}'`); } },
+    { matches: isDirective('documentation'), parse: (context, line, state) => { state.documentation = parseDocumentation(context, line, state.documentation, `Command '${state.name}'`); } },
+    { matches: isDirective('authorize'), parse: parseAuthorizeDirective },
+    { matches: isDirective('validate'), parse: parseValidateDirective },
+    { matches: isDirective('produces'), parse: parseProducesDirective },
+    { matches: isDirective('handler'), parse: (context, line, state) => { state.handler = parseHandler(context, line); state.handlers.push({ handler: state.handler, location: locationOf(line) }); } },
+    { matches: keyword => opaqueDirectives.has(keyword), parse: parseOpaqueDirective }
+];
+
+function dispatchCommandDirective(context: ParserContext, child: SourceLine, state: CommandBodyState): void {
+    const keyword = firstWord(child.content);
+    const asProperty = tryParseProperty(child);
+    const rule = commandDirectiveRules.find(candidate => candidate.matches(keyword, child, asProperty, context));
+    if (rule !== undefined) {
+        rule.parse(context, child, state, asProperty);
+    } else if (asProperty !== undefined) {
+        state.identifier = addProperty(context, state.properties, asProperty, state.name, child, state.identifier);
+    } else {
+        reportInvalidModifierOrder(context, child);
+        context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body${misplacedRuleHintForCommand(child.content)}`, locationOf(child));
+        context.skipBlock(child.indent);
+    }
+}
+
+function addPropertyDirective(context: ParserContext, child: SourceLine, state: CommandBodyState, property: PropertySyntax | undefined): void {
+    state.identifier = addProperty(context, state.properties, property!, state.name, child, state.identifier);
+}
+
+function parseCalendarDirective(context: ParserContext, child: SourceLine, state: CommandBodyState): void {
+    const match = calendarPattern.exec(child.content);
+    if (state.calendar !== null || match === null) {
+        context.error(DiagnosticCodes.InvalidCommandCalendar, 'A command declares at most one \'calendar "<id>"\' or \'calendar from $context.<member>\'.', locationOf(child));
+    } else {
+        state.calendar = { kind: 'CommandCalendarSyntax', id: match[1] === undefined ? null : unescapeString(match[1]), contextMember: match[2] ?? null, location: locationOf(child) };
+    }
+}
+
+function parseReturnsDirective(context: ParserContext, child: SourceLine, state: CommandBodyState, property: PropertySyntax | undefined): void {
+    const scalar = scalarResponsePattern.exec(child.content);
+    if (scalar !== null && !scalar[1].startsWith('@') && property !== undefined) {
+        parseScalarReturns(context, child, state, property);
+    } else if (property !== undefined) {
+        state.identifier = addProperty(context, state.properties, property, state.name, child, state.identifier);
+    } else if (reportInvalidModifierOrder(context, child)) {
+        context.skipBlock(child.indent);
+    } else {
+        state.responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+    }
+}
+
+function parseScalarReturns(context: ParserContext, child: SourceLine, state: CommandBodyState, property: PropertySyntax): void {
+    if (state.responseNames === undefined) {
+        state.properties.push(property);
+        state.responses.push({ line: child, candidate: property, response: null });
+    } else if (state.responseNames.has(property.type.name)) {
+        state.responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+    } else {
+        state.identifier = addProperty(context, state.properties, property, state.name, child, state.identifier);
+    }
+}
+
+function parseStreamDirective(context: ParserContext, child: SourceLine, state: CommandBodyState, property: PropertySyntax | undefined): void {
+    const [source, streamName] = property!.type.name.split('.');
+    const ambiguous = context.streamCandidates!.hasPropertyType(property!.type.name) && context.streamCandidates!.hasUniqueStream(source, streamName);
+    const route = parseCommandStream(context, child, property!, ambiguous);
+    if (state.stream !== null || state.streamCandidates.length > 0) context.error(DiagnosticCodes.InvalidCommandStream, 'A command declares at most one stream route.', locationOf(child));
+    if (ambiguous || state.stream !== null) state.streamCandidates.push(route);
+    else state.stream = route;
+}
+
+function parseAuthorizeDirective(context: ParserContext, child: SourceLine, state: CommandBodyState): void {
+    const next = parseAuthorize(context, child);
+    if (state.authorizationDepthExceeded) return;
+    const previous = state.authorize;
+    state.authorize = combineAuthorize(state.authorize, next, context);
+    state.authorizationDepthExceeded = previous !== null && state.authorize === null;
+}
+
+function parseValidateDirective(context: ParserContext, child: SourceLine, state: CommandBodyState): void {
+    const validate = parseValidate(context, child, 'command', state.name);
+    if (validate !== undefined) state.validations.push(validate);
+}
+
+function parseProducesDirective(context: ParserContext, child: SourceLine, state: CommandBodyState): void {
+    const production = parseProduces(context, child, true);
+    if (production !== undefined) state.produces.push(production);
+}
+
+function parseOpaqueDirective(context: ParserContext, child: SourceLine, state: CommandBodyState): void {
+    const keyword = firstWord(child.content);
+    const reference = keyword === 'reads' ? parseReads(context, child) : undefined;
+    if (reference !== undefined) state.referenceReads.push(reference);
+    if (keyword === 'concurrency' && state.concurrency === undefined) state.concurrency = captureConcurrency(context, child);
+    const read = /^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$/.exec(child.content);
+    if (read !== null) state.reads.push({ readModel: read[1], alias: read[2] ?? null });
+    if (optionalReads.test(child.content)) {
+        context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
+    }
+    context.skipOpaqueBlock(child.indent);
+}
+
+// Settles which 'returns' lines are the response and which are properties named like one, and the one response a command may declare.
+function resolveResponse(context: ParserContext, state: CommandBodyState, discoveredNames: Set<string> | undefined): { response: CommandResponseSyntax | null; removed: Set<PropertySyntax> } {
+    const { properties, responses } = state;
     const candidates = new Set(responses.flatMap(entry => entry.candidate === null ? [] : [entry.candidate]));
     const names = new Set(properties.filter(property => !candidates.has(property)).map(property => property.name));
     if (responses.some(entry => entry.candidate !== null && !names.has(entry.candidate.type.name) && entry.candidate.type.name !== 'returns')) names.add('returns');
@@ -214,6 +276,12 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             response = parsed;
         }
     }
+    return { response, removed };
+}
+
+function buildCommand(context: ParserContext, line: SourceLine, state: CommandBodyState, discoveredNames: Set<string> | undefined): CommandSyntax {
+    const { name, properties, validations, produces, reads, referenceReads, concurrency, description, documentation, authorize, handler, handlers, stream, streamCandidates, calendar } = state;
+    const { response, removed } = resolveResponse(context, state, discoveredNames);
     validateHandlerContracts(handlers, handler, produces.length > 0, context);
     const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, ...(calendar === null ? {} : { calendar }), location: locationOf(line) };
     commandReadSources.set(syntax, reads);
