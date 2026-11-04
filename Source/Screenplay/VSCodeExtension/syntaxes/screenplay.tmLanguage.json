@@ -65,7 +65,7 @@
                 { "match": "^(\\s*)(calendar)(\\s+)(?=\"|from\\s+\\$context\\.)", "captures": { "2": { "name": "keyword.other.screenplay" } } },
                 { "match": "^(\\s*)(given)(\\s+)(time)(\\s+)(zone)(?=\\s+\")", "captures": { "2": { "name": "keyword.control.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "6": { "name": "keyword.other.screenplay" } } },
                 { "match": "^(\\s*)(given)(\\s+)(clock)(?=\\s+\")", "captures": { "2": { "name": "keyword.control.screenplay" }, "4": { "name": "keyword.other.screenplay" } } },
-                { "match": "(?<![\\w.$])(?:date\\s+of\\s+)?(?:today|now)(?:\\s*[+-]\\s*\\d+\\s+(?:days?|hours?|minutes?))?(?=\\s*(?:message\\b|//|$))", "name": "keyword.other.screenplay" }
+                { "match": "(?<![\\w.$])(?:date\\s+of\\s+)?(?:today|now)(?:\\s*[+-]\\s*\\d+\\s+(?:days?|hours?|minutes?))?(?=\\s*(?:message\\b|and\\b|or\\b|//|$))", "name": "keyword.other.screenplay" }
             ]
         },
         "command-reads-preamble": {

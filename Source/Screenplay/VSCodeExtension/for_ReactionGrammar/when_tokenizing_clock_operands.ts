@@ -35,6 +35,12 @@ describe('when TextMate tokenizes clock operands', () => {
             ['require instant > now + 30 minutes', ['now', 'minutes']],
         ] as const) for (const word of words) scopesAt(line, word).should.contain('keyword.other.screenplay');
     });
+    it('should highlight mid-line clock operands before boolean conjunctions', () => {
+        for (const conjunction of ['and', 'or']) {
+            scopesAt(`require dueDate > today ${conjunction} dueDate > date of now`, 'today').should.contain('keyword.other.screenplay');
+            scopesAt(`require occurred > now ${conjunction} dueDate > today`, 'now').should.contain('keyword.other.screenplay');
+        }
+    });
     it('should not reserve property names or dotted members', () => {
         for (const [line, word] of [['  now String', 'now'], ['  today Date', 'today'], ['require value > book.now', 'now'], ['require value > book.today', 'today']]) {
             scopesAt(line, word).should.not.contain('keyword.other.screenplay');
