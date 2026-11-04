@@ -229,56 +229,98 @@ function parseOperationStep(context: ParserContext, line: SourceLine, body: Spec
     return true;
 }
 
-function parseGiven(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
-    if (givenClockPrefix.test(line.content)) {
-        if (body.givenClock !== null) {
-            context.error(DiagnosticCodes.InvalidSpecificationClock, 'A specification states its clock at most once.', locationOf(line));
-            skipBody(context, line.indent);
-        } else {
-            body.givenClock = parseClock(context, line, 'given');
+// The Given state the rules read and write: a narrow view of the specification body, so null versus undefined and lazy initialization stay the body's own.
+type GivenState = Pick<SpecificationBody, 'given' | 'givenReadModels' | 'givenClock' | 'givenTimeZone' | 'givenCaptures' | 'givenGenerated' | 'givenCaller' | 'givenCallerPersona'>;
+
+interface GivenRule {
+    readonly matches: (line: SourceLine) => boolean;
+    readonly parse: (context: ParserContext, line: SourceLine, state: GivenState) => void;
+}
+
+// Tried in order; the first match handles the line. The event rule matches everything, so a malformed Given keeps the event parser's diagnostics and recovery.
+const givenRules: readonly GivenRule[] = [
+    { matches: line => givenClockPrefix.test(line.content), parse: parseGivenClock },
+    { matches: line => givenTimeZonePrefix.test(line.content), parse: parseGivenTimeZone },
+    { matches: line => givenGeneratedPrefix.test(line.content), parse: parseGivenGeneratedValue },
+    { matches: line => givenCapturePrefix.test(line.content), parse: parseGivenCapture },
+    { matches: line => line.content.startsWith('given caller'), parse: parseGivenCaller },
+    { matches: line => readModelPrefix.test(line.content), parse: parseGivenReadModel },
+    { matches: () => true, parse: parseGivenEvent },
+];
+
+function parseGiven(context: ParserContext, line: SourceLine, state: GivenState): void {
+    for (const rule of givenRules) {
+        if (rule.matches(line)) {
+            rule.parse(context, line, state);
+            return;
         }
-    } else if (givenTimeZonePrefix.test(line.content)) {
-        const match = givenTimeZonePattern.exec(line.content);
+    }
+}
+
+function parseGivenClock(context: ParserContext, line: SourceLine, state: GivenState): void {
+    if (state.givenClock !== null) {
+        context.error(DiagnosticCodes.InvalidSpecificationClock, 'A specification states its clock at most once.', locationOf(line));
         skipBody(context, line.indent);
-        if (body.givenTimeZone !== null || match === null) {
-            context.error(DiagnosticCodes.InvalidSpecificationTimeZone, "A specification states its time zone at most once, as 'given time zone \"<id>\"'.", locationOf(line));
-        } else {
-            body.givenTimeZone = { kind: 'SpecificationTimeZoneSyntax', id: unescapeString(match[1]), location: locationOf(line) };
-        }
-    } else if (givenGeneratedPrefix.test(line.content)) {
-        const pinned = parseGivenGenerated(context, line);
-        if (pinned !== null) {
-            (body.givenGenerated ??= []).push(pinned);
-        }
-    } else if (givenCapturePrefix.test(line.content)) {
-        const capture = parseCapture(context, line, 'given');
-        if (capture !== null) {
-            body.givenCaptures.push(capture);
-        }
-    } else if (line.content.startsWith('given caller')) {
-        if (body.givenCaller !== null || body.givenCallerPersona !== undefined) {
-            context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", locationOf(line));
-            context.skipBlock(line.indent);
-        } else if (line.content.startsWith('given caller as')) {
-            const match = callerPersonaPattern.exec(line.content);
-            if (match === null) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "Expected 'given caller as <Persona>'.", locationOf(line));
-            const child = context.peekChild(line.indent);
-            if (child !== undefined) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "'given caller as <Persona>' has no body; use an explicit 'given caller' for refinements.", locationOf(child));
-            skipBody(context, line.indent);
-            if (match !== null) body.givenCallerPersona = { kind: 'SpecificationCallerPersonaSyntax', name: match[1], location: locationOf(line) };
-        } else {
-            body.givenCaller = parseCaller(context, line);
-        }
-    } else if (readModelPrefix.test(line.content)) {
-        const readModel = parseReadModelStep(context, line, givenReadModelPattern, 'given');
-        if (readModel !== undefined) {
-            body.givenReadModels.push(readModel);
-        }
     } else {
-        const event = parseEventStep(context, line, givenPattern, 'given');
-        if (event !== undefined) {
-            body.given.push(event);
-        }
+        state.givenClock = parseClock(context, line, 'given');
+    }
+}
+
+function parseGivenTimeZone(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const match = givenTimeZonePattern.exec(line.content);
+    skipBody(context, line.indent);
+    if (state.givenTimeZone !== null || match === null) {
+        context.error(DiagnosticCodes.InvalidSpecificationTimeZone, "A specification states its time zone at most once, as 'given time zone \"<id>\"'.", locationOf(line));
+    } else {
+        state.givenTimeZone = { kind: 'SpecificationTimeZoneSyntax', id: unescapeString(match[1]), location: locationOf(line) };
+    }
+}
+
+function parseGivenGeneratedValue(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const pinned = parseGivenGenerated(context, line);
+    if (pinned !== null) {
+        (state.givenGenerated ??= []).push(pinned);
+    }
+}
+
+function parseGivenCapture(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const capture = parseCapture(context, line, 'given');
+    if (capture !== null) {
+        state.givenCaptures.push(capture);
+    }
+}
+
+function parseGivenCaller(context: ParserContext, line: SourceLine, state: GivenState): void {
+    if (state.givenCaller !== null || state.givenCallerPersona !== undefined) {
+        context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", locationOf(line));
+        context.skipBlock(line.indent);
+    } else if (line.content.startsWith('given caller as')) {
+        parseGivenCallerPersona(context, line, state);
+    } else {
+        state.givenCaller = parseCaller(context, line);
+    }
+}
+
+function parseGivenCallerPersona(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const match = callerPersonaPattern.exec(line.content);
+    if (match === null) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "Expected 'given caller as <Persona>'.", locationOf(line));
+    const child = context.peekChild(line.indent);
+    if (child !== undefined) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "'given caller as <Persona>' has no body; use an explicit 'given caller' for refinements.", locationOf(child));
+    skipBody(context, line.indent);
+    if (match !== null) state.givenCallerPersona = { kind: 'SpecificationCallerPersonaSyntax', name: match[1], location: locationOf(line) };
+}
+
+function parseGivenReadModel(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const readModel = parseReadModelStep(context, line, givenReadModelPattern, 'given');
+    if (readModel !== undefined) {
+        state.givenReadModels.push(readModel);
+    }
+}
+
+function parseGivenEvent(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const event = parseEventStep(context, line, givenPattern, 'given');
+    if (event !== undefined) {
+        state.given.push(event);
     }
 }
 
