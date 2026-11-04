@@ -198,7 +198,7 @@ internal static partial class CommandParser
                     else
                     {
                         PropertyLineParser.ReportInvalidModifierOrder(context, line);
-                        context.Error(DiagnosticCodes.UnknownCommandDirective, $"Unexpected '{line.Content}' in command body", line.Location);
+                        context.Error(DiagnosticCodes.UnknownCommandDirective, $"Unexpected '{line.Content}' in command body{MisplacedRuleHint.ForCommand(line.Content)}", line.Location);
                         context.SkipBlock(line.Indent);
                     }
 

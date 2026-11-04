@@ -5,6 +5,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { validateHandlerContracts } from './CommandHandlerValidator';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { RequirementSyntax } from '../Syntax/Conditions';
+import { misplacedRuleHintForCommand } from './MisplacedRuleHint';
 import { parseCondition } from './ConditionParser';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
@@ -188,7 +189,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             identifier = addProperty(context, properties, asProperty, name, child, identifier);
         } else {
             reportInvalidModifierOrder(context, child);
-            context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body${misplacedRuleHintForCommand(child.content)}`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
