@@ -1,0 +1,34 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+time zone configurable default "Europe/Oslo"
+
+module Lending
+  feature Loans
+    slice StateChange ScheduleLoan
+      command ScheduleLoan
+        id String identifier
+        dueDate Date
+        calendar "Europe/Oslo"
+        validate
+          require dueDate >= today - 7 days
+            message "A loan cannot be more than a week overdue"
+          dueDate > date of now message "A loan must be due in the future"
+        produces LoanScheduled
+          for id
+      event LoanScheduled
+      specification AcceptingAFutureDate
+        given clock "2026-10-29T23:30:00Z"
+        given time zone "Europe/Oslo"
+        when ScheduleLoan
+          id = "loan"
+          dueDate = "2026-10-31"
+        then LoanScheduled
+          for "loan"
+      specification RefusingADateAtMidnightInOslo
+        given clock "2026-10-29T23:30:00Z"
+        given time zone "Europe/Oslo"
+        when ScheduleLoan
+          id = "loan"
+          dueDate = "2026-10-30"
+        then error "A loan must be due in the future"

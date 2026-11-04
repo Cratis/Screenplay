@@ -27,6 +27,10 @@ Library/
   happens after the command runs, not before input is collected.
 - **A command that decides against state.** `BorrowBook` `reads` the catalog entry and refuses a book that is
   already on loan with a `require` rule.
+- **A rule against the calendar.** `BorrowBook` compares `dueDate` with `today`; its specifications pin
+  `given clock` and `given time zone`, because each library configures its own zone.
+  These specifications are not executable yet because the catalog projection has no removal lifecycle,
+  which protected reads require (`NoRemoval`).
 - **A view built from events, and one that is not.** `BookCatalog` and `MyLoans` are projections; `OpeningHours`
   comes from the municipality's calendar through a query `performer`, so no event builds it.
 - **Something that happens on its own.** `WelcomeNewMembers` reacts to `MemberRegistered`.

@@ -12,6 +12,8 @@
 
 reaction batches atomic
 
+time zone configurable default "Europe/Oslo"
+
 concept BookId     : Uuid
 concept MemberId   : Uuid
 concept Isbn       : String
@@ -352,6 +354,8 @@ module Lending
               navigate to MyLoans
 
       specification BorrowingAnAvailableBook
+        given time zone "Europe/Oslo"
+        given clock "2026-10-02T09:00:00Z"
         given caller
           authenticated
           role "Member"
@@ -370,6 +374,8 @@ module Lending
           dueDate  = "2026-10-30"
 
       specification RefusingABookThatIsOnLoan
+        given time zone "Europe/Oslo"
+        given clock "2026-10-02T09:00:00Z"
         given caller
           authenticated
           role "Member"
@@ -383,6 +389,24 @@ module Lending
           memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
           dueDate  = "2026-10-30"
         then error "That book is already on loan"
+
+      specification RefusingALoanDueAtMidnightInOslo
+        given time zone "Europe/Oslo"
+        // In UTC the same instant is still 29 October; in Oslo it is already 30 October.
+        given clock "2026-10-29T23:30:00Z"
+        given caller
+          authenticated
+          role "Member"
+        given readmodel CatalogEntry
+          bookId    = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          title     = "Introduction to Algorithms"
+          author    = "Cormen"
+          available = true
+        when BorrowBook
+          bookId   = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+        then error "A loan must be due in the future"
 
     slice StateChange ReturnBook
 
