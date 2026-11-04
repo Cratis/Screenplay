@@ -70,7 +70,7 @@ internal static class SemanticScenario
             switch (expected)
             {
                 case { When: { } when }:
-                    var executed = evaluator.Execute(plan, world, CommandRequest(when) with { Caller = expected.GivenCaller, Occurrence = occurrence, ContextTimeZone = expected.GivenTimeZone, ScenarioTimeZone = expected.GivenTimeZone });
+                    var executed = evaluator.Execute(plan, world, CommandRequest(when) with { Caller = expected.GivenCaller, Occurrence = occurrence, ContextTimeZone = expected.GivenTimeZone, ContextTimeZones = SemanticCalendar.Given(plan.Commands.Values, expected.GivenTimeZone), ScenarioTimeZone = expected.GivenTimeZone });
                     if (executed is not SemanticAccepted accepted)
                     {
                         return executed;

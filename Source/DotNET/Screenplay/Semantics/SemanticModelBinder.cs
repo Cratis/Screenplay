@@ -405,7 +405,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             ValidateComplianceAdmission();
             ValidateClockOperandAdmission();
             var timeZone = BindApplicationTimeZone();
-            RefuseApplicationContext();
+            BindApplicationContext();
 
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();

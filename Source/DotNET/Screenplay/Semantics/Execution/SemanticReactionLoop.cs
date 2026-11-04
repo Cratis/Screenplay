@@ -336,6 +336,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         {
             Occurrence = occurrence,
             ContextTimeZone = GivenTimeZone,
+            ContextTimeZones = SemanticCalendar.Given(plan.Commands.Values, GivenTimeZone),
             ScenarioTimeZone = GivenTimeZone,
             CollectRefusalDetails = !invocation.OnRefused.IsDefaultOrEmpty
         };

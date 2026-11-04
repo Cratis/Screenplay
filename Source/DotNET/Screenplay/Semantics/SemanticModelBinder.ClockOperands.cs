@@ -51,13 +51,13 @@ public sealed partial class SemanticModelBinder
             if (!AllowClockOperands || command.Calendar is not { } calendar) return null;
             if (calendar.ContextMember is { } member)
             {
-                if (member == SemanticTypedContextCatalog.CalendarContextMember)
+                if (IsCalendarContextMember(member))
                 {
                     UsesClock = true;
                     return new SemanticCommandCalendar(null, member);
                 }
 
-                Error(DiagnosticCodes.InvalidCalendarContextMember, $"Command '{command.Name}' reads its calendar from '$context.{member}'; the only trusted member is '$context.{SemanticTypedContextCatalog.CalendarContextMember}'.", calendar.Location);
+                Error(DiagnosticCodes.InvalidCalendarContextMember, $"Command '{command.Name}' reads its calendar from '$context.{member}'; {TrustedCalendarMembers()}.", calendar.Location);
                 return null;
             }
 
