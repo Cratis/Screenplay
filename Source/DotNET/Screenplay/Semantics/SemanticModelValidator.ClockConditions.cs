@@ -7,6 +7,12 @@ internal static partial class SemanticModelValidator
 {
     private sealed partial class ValidationContext
     {
+        static void ValidateClockOperand(SemanticClockOperand clock)
+        {
+            if (!Enum.IsDefined(clock.Kind) || !Enum.IsDefined(clock.Unit)) throw new InvalidSemanticContract("Unknown clock kind or offset unit.");
+            if (clock.Kind == SemanticClockKind.Today && clock.Unit != SemanticClockUnit.Day) throw new InvalidSemanticContract("A today offset must be in days.");
+        }
+
         // A clock comparison (decisions 0106 and 0107) compares required scalar command instants with a clock; both sides share one primitive.
         void ValidateClockCondition(SemanticComparison comparison, Dictionary<SemanticId, SemanticProperty> properties, bool allowed)
         {
@@ -44,12 +50,6 @@ internal static partial class SemanticModelValidator
             ValidateClockOperand(clock);
             var clockPrimitive = clock.Kind == SemanticClockKind.Today || clock.DateOf ? SemanticPrimitiveType.Date : SemanticPrimitiveType.DateTime;
             if (UnderlyingPrimitive(propertyType) != clockPrimitive) throw new InvalidSemanticContract("A clock validation rule must compare operands of the same Date or DateTime primitive.");
-        }
-
-        static void ValidateClockOperand(SemanticClockOperand clock)
-        {
-            if (!Enum.IsDefined(clock.Kind) || !Enum.IsDefined(clock.Unit)) throw new InvalidSemanticContract("Unknown clock kind or offset unit.");
-            if (clock.Kind == SemanticClockKind.Today && clock.Unit != SemanticClockUnit.Day) throw new InvalidSemanticContract("A today offset must be in days.");
         }
     }
 }
