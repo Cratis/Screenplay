@@ -59852,6 +59852,10 @@
         {
           "languageVersion": "36.0",
           "semanticVersion": "36.0"
+        },
+        {
+          "languageVersion": "36.1",
+          "semanticVersion": "36.1"
         }
       ]
     }
