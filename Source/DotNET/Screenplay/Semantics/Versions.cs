@@ -188,6 +188,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V36 = new(36, 0);
 
     /// <summary>
+    /// Gets ESM version 36.1 with optional read-model declaration-order metadata.
+    /// </summary>
+    public static readonly LanguageVersion V36_1 = new(36, 1);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -396,6 +401,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting state machines and workflows (decision 0124).
     /// </summary>
     public static readonly SemanticVersion V36 = new(36, 0);
+
+    /// <summary>
+    /// Gets ESM version 36.1 with optional read-model declaration-order metadata.
+    /// </summary>
+    public static readonly SemanticVersion V36_1 = new(36, 1);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.

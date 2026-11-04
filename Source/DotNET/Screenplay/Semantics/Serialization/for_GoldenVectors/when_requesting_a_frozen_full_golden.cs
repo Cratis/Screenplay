@@ -12,7 +12,7 @@ public class when_requesting_a_frozen_full_golden : Specification
     [Fact]
     void should_refuse_every_older_version_before_writing_anything()
     {
-        var versions = Enumerable.Range(2, frozen_esm_goldens.CurrentVersion - 2).ToArray();
+        var versions = frozen_esm_goldens.Sha256.Keys.Where(version => version != 1).Order().ToArray();
         versions.ShouldNotBeEmpty();
 
         // 1 remains the regenerate-current-and-sidecars alias, so use 01 to request v1 explicitly.

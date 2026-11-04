@@ -145,6 +145,7 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("Reaction production mode must be atomic and requires ESM v22 or later.");
         }
 
+        SemanticReadModelPropertyOrder.ValidateVersion(application, semanticVersion, assessmentYear);
         ValidateCompositeReadModelKeyVersion(application, semanticVersion);
         ValidateDecisionReadVersion(application, semanticVersion);
         ValidateDateComparisonVersion(application, semanticVersion);

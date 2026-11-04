@@ -14,8 +14,8 @@ public class when_round_tripping_the_v36_golden : Specification
     void Because()
     {
         golden_vector_regeneration.RegenerateWhenRequested();
-        _model = canonical_serialization_golden_vectors.CreateSemanticModelV36();
-        _bytes = SemanticModelSerializer.Serialize(_model);
+        _bytes = canonical_serialization_golden_vectors.EsmV36Bytes;
+        _model = SemanticModelSerializer.Deserialize(_bytes);
     }
 
     [Fact] void should_pin_the_new_golden() => _bytes.ShouldEqual(canonical_serialization_golden_vectors.EsmV36Bytes);

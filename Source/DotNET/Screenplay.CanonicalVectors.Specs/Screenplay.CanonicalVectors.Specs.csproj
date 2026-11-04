@@ -8,12 +8,14 @@
         <TargetFrameworks></TargetFrameworks>
         <EnablePackageValidation>false</EnablePackageValidation>
         <!-- PublishedCorpus is a standalone tool that consumes the published corpus package; it is not part of these specs. -->
-        <DefaultItemExcludes>$(DefaultItemExcludes);BrowserHarness/PublishedCorpus/**</DefaultItemExcludes>
+        <DefaultItemExcludes>$(DefaultItemExcludes);BrowserHarness/PublishedCorpus/**;LegacyReader/**</DefaultItemExcludes>
+        <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
         <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
+        <ProjectReference Include="LegacyReader/LegacyReader.csproj" ReferenceOutputAssembly="false" />
         <ProjectReference Include="../Screenplay.Conformance/Screenplay.Conformance.csproj" />
     </ItemGroup>
 
@@ -174,6 +176,10 @@
                           Link="Golden/full-esm-v36.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v36.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v36.1.json"
+                          Link="Golden/full-esm-v36.1.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v36.1.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/policy-negation-v7.json"
                           Link="Golden/policy-negation-v7.json"
                           WithCulture="false"

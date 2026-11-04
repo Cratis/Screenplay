@@ -176,6 +176,20 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 35.0 | Command handlers that declare their possible events (`handler` → `may produce`, `for one of`): handler result contract v2 (released in Screenplay 5.4.0) | 35 | [0119](https://github.com/Cratis/Screenplay/blob/main/decisions/0119-admit-command-handlers-that-declare-possible-events.md) | `full-esm-v35.json` | `PossibleEventsCorpus.V35` |
 | 36.0 | State machines and workflows (`stateMachines`, `workflows`) (released in Screenplay 5.1.0) | 36 | [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) | `full-esm-v36.json` | `EsmGoldenVectors.Get(36)` |
 
+#### Claimed, unreleased version
+
+| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
+| --- | --- | --- | --- | --- | --- |
+| 36.1 | Opt-in read-model declaration-order metadata (`propertyOrder`) over a valid 36.0 lifecycle base | 36 | [0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md) | `full-esm-v36.1.json` | `EsmGoldenVectors.GetMinor(SemanticVersion.V36_1)` |
+
+Read-model declaration order is optional, ignorable metadata. The historical `Bind` overload and default `SemanticBindingOptions` preserve existing versions, bytes and revisions. `PreserveReadModelPropertyOrder: true` selects language/semantic `36.1` only when metadata is emitted and removing it leaves a valid 36.0 model containing a state machine or workflow. Otherwise the binder returns `PropertyOrderMetadataRefusal` with no executable value. A model with no read models emits no metadata and retains its version.
+
+A read model writes optional `propertyOrder` after `properties`: a permutation of all its property semantic identities, in declaration order, including the key. Omitted metadata leaves historical bytes unchanged; malformed permutations and metadata outside 36.1 are refused. `schemaVersion` remains 36. Canonical wire bytes and revision remain identical when an old unknown-preserving reader treats the member as opaque and the new reader promotes it to typed metadata. The published Screenplay 5.3.1 reader is exercised against this golden as a 36.0 reader; it retains the full bytes and revision while projecting the complete older contract, including composite keys and lifecycles.
+
+`EsmGoldenVectors.Versions` and `Get(int)` continue to describe only .0 vectors; `Get(36)` remains the frozen 36.0 golden. Discover nonzero minors through `MinorVersions` and `GetMinor(SemanticVersion.V36_1)`. Regeneration accepts `SCREENPLAY_REGENERATE_GOLDEN=36.1` for the current minor; all earlier goldens, including 36.0, remain frozen.
+
+This is a C# executable-model/binder API, not new `.play` syntax. The TypeScript compiler exposes syntax compilation, not executable semantic-model binding or ESM serialization; Monaco and VS Code therefore have no ESM metadata surface to update. Authoring syntax, diagnostics, samples and editor behavior remain unchanged.
+
 Conformance-only footnote: under [decision 0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md#exception-to-0066-conformance-only-reserved-pairs), minor `4294967295` is reserved, never allocated or registered, and is not an ESM version or a table row. Strict readers refuse these pairs. Packaged conformance-vector bytes freeze on first publication; 0066 still freezes their bytes, not a version contract.
 
 > **2026-10-06 — v7 extension accepted.** [Decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md) admits unary policy-condition `not` as a byte-preserving extension under 0004. Models using negation select v7; models without it keep their existing canonical bytes and revisions. Pre-extension v7 strict readers reject the new condition variant, so consumers must admit negation explicitly.

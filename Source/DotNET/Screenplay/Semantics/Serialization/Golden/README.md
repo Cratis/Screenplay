@@ -3,23 +3,24 @@
 The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes, including each model's semantic revision.
 
 Consume the released bytes through `Cratis.Screenplay.CanonicalCorpus`, rather than copying these files.
-`EsmGoldenVectors.Versions` discovers the full vectors in ascending version order;
+`EsmGoldenVectors.Versions` discovers the .0 vectors in ascending major order;
 `EsmGoldenVectors.Get(version)` returns an `EsmGoldenVector` with `Version`, immutable `Bytes`, and
 `SemanticRevision` verified by the strict ESM reader. Unknown versions throw `EsmGoldenVectorNotFound`.
 `EsmGoldenVectors.PolicyNegationV7` exposes the separate policy-negation extension described below.
 The package links these ESM files as embedded resources in every build configuration, without copies.
 Adding a new `full-esm-v<N>.json` automatically includes it and exposes its version in the next package build.
+Nonzero minors are discovered separately through `EsmGoldenVectors.MinorVersions` and `GetMinor(SemanticVersion)`. `Get(36)` continues to return the frozen .0 bytes.
 Expression, identity-catalog and typed-context sidecars are separate contracts and are not part of this API.
 
-Full goldens below the current ESM version are frozen: v1–v27 are checked-in contracts, not rebuilt
+Full goldens below the current ESM pair are frozen: v1–v36 are checked-in contracts, not rebuilt
 from shared fixtures. Their version specs deserialize the frozen bytes, check the selected version and
-feature-specific assertions, and serialize back to identical bytes. Only v28 is compared with its builder.
+feature-specific assertions, and serialize back to identical bytes. Only v36.1 is compared with its builder.
 The historical fixture descriptions below explain what each vector covers; retained builders serve
 other specs, not regeneration of older full goldens.
 
 `given/frozen_esm_goldens.cs` records the SHA-256 of each frozen file's exact bytes.
-`when_checking_frozen_full_goldens` requires exactly v1 through v(current−1), checks that every file exists,
-and hashes the source files without JSON normalization. It reports 27 checked files at v28; even a
+`when_checking_frozen_full_goldens` requires every .0 pair below the current pair, checks that every file exists,
+and hashes the source files without JSON normalization. It checks v1–v36 at v36.1; even a
 one-byte edit fails. Restore changed frozen bytes rather than updating their hashes.
 
 These source models originally produced the full vectors:
@@ -94,7 +95,9 @@ round trips and the presence of both descriptor sidecars. Do not edit the files 
 
 `full-esm-v26.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV26()` under decision 0087. It pins command Date/DateTime conditions and validation rules, with text literals typed from the property and canonicalized to calendar dates or UTC tick-precision instants. `DateComparisonsCorpus.V26` separately pins equivalent file/folder forms, UTC ordering across offsets, instant equality, distinct ticks and calendar production guards. Other equality and all earlier golden bytes stay unchanged. The full v26 golden is frozen. Regenerate the separate source corpus with `SCREENPLAY_REGENERATE_DATE_COMPARISONS_CORPUS_V26=1`; it fails deliberately, so review, rebuild and rerun strictly without it.
 
-`full-esm-v35.json` pins handler result contract v2 under decision 0119: ordered `possibleEvents`, scalar and `oneOf` destinations, an entry route and an audit tag. `canonical_serialization_golden_vectors.CreateSemanticModelV35()` binds the dedicated batch-processing source; `PossibleEventsCorpus.V35` separately pins equivalent source forms. Inline bodies are not reference-executed, so these vectors have no specifications. The full v35 golden is frozen, as is every earlier golden. Regenerate only the current full golden (v36) with `SCREENPLAY_REGENERATE_GOLDEN=36`.
+`full-esm-v35.json` pins handler result contract v2 under decision 0119: ordered `possibleEvents`, scalar and `oneOf` destinations, an entry route and an audit tag. `canonical_serialization_golden_vectors.CreateSemanticModelV35()` binds the dedicated batch-processing source; `PossibleEventsCorpus.V35` separately pins equivalent source forms. Inline bodies are not reference-executed, so these vectors have no specifications. The full v35 golden is frozen, as is every earlier golden. Regenerate only the current full golden (v36.1) with `SCREENPLAY_REGENERATE_GOLDEN=36.1`.
+
+`full-esm-v36.1.json` pins optional read-model `propertyOrder` metadata over a valid v36 lifecycle base under decision 0118. `canonical_serialization_golden_vectors.CreateSemanticModelV36_1()` opts in explicitly; the default binder retains its .0 bytes. The extension's ordinal canonical placement preserves opaque-versus-typed bytes and revision, including when read by published Screenplay 5.3.1 as a 36.0 projection.
 
 ## Regenerating
 
@@ -104,8 +107,8 @@ From a source checkout, update the current version's source model only for an in
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-`1` rewrites only the current full ESM golden (`full-esm-v36.json`) plus the four non-ESM sidecars:
-expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=36`
+`1` rewrites only the current full ESM golden (`full-esm-v36.1.json`) plus the four non-ESM sidecars:
+expressions, identity catalog, typed contexts and unbound handler context. Use `SCREENPLAY_REGENERATE_GOLDEN=36.1`
 to rewrite only the current full ESM golden. Older version selectors fail with a frozen-golden message
 before writing anything. The legacy `SCREENPLAY_REGENERATE_EVENT_ROUTES=1` switch also fails because v8 is frozen.
 Regeneration deliberately throws `GoldenVectorsRegenerated`; review the diff, rebuild embedded resources,
@@ -118,7 +121,7 @@ When a new ESM version is added:
 2. Add the new full golden and current builder, and point regeneration at that builder. The helper derives
    the current version from the declared `SemanticVersion` fields and refuses a builder selecting an older version.
 3. Switch the previous current spec to frozen-byte round trips, keep its feature assertions, and remove only
-   builders with no remaining consumers. The manifest check must cover exactly v1..v(new current−1).
+   builders with no remaining consumers. The manifest check covers every earlier .0 pair, including the current major's .0 when admitting a minor.
 4. Run the compiler and canonical-vector specs. Keep all full goldens and published corpus bytes available.
 
 Regenerate the policy-negation extension independently of the original goldens and corpora:
