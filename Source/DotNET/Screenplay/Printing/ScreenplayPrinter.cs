@@ -441,15 +441,31 @@ public sealed partial class ScreenplayPrinter :
                 {
                     foreach (var row in set.Rows)
                     {
-                        writer.Line("row", row);
-                        using (writer.Indent())
-                        {
-                            foreach (var field in row.Fields)
-                            {
-                                writer.Line($"{field.Name} = {SampleDataValue(field)}", field);
-                            }
-                        }
+                        WriteSampleDataRow(writer, row);
                     }
+                }
+            }
+        }
+    }
+
+    void WriteSampleDataRow(ScreenplayWriter writer, SampleDataRowSyntax row)
+    {
+        writer.Line("row", row);
+        using (writer.Indent())
+        {
+            foreach (var field in row.Fields)
+            {
+                if (field.Kind == SampleDataValueKind.Rows)
+                {
+                    writer.Line(field.Name, field);
+                    using (writer.Indent())
+                    {
+                        foreach (var child in field.Rows) WriteSampleDataRow(writer, child);
+                    }
+                }
+                else
+                {
+                    writer.Line($"{field.Name} = {SampleDataValue(field)}", field);
                 }
             }
         }

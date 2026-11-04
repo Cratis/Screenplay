@@ -48,4 +48,11 @@ public record SampleDataRowSyntax(IEnumerable<SampleDataFieldSyntax> Fields, Sou
 /// <param name="Kind">The kind of literal the value is.</param>
 /// <param name="Value">The value: the unescaped text of a string, the authored token of a number, <c>true</c> or <c>false</c>, or <c>null</c> for the null literal.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SampleDataFieldSyntax(string Name, SampleDataValueKind Kind, string? Value, SourceLocation Location) : SyntaxNode(Location);
+public record SampleDataFieldSyntax(string Name, SampleDataValueKind Kind, string? Value, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the authored child rows when <see cref="Kind"/> is <see cref="SampleDataValueKind.Rows"/>.
+    /// Empty rows are omitted from syntax JSON; a Rows field still represents an explicit empty collection.
+    /// </summary>
+    public IEnumerable<SampleDataRowSyntax> Rows { get; init; } = [];
+}

@@ -79,59 +79,13 @@ internal static class SampleDataValidator
             return;
         }
 
+        var validator = new SampleDataFieldValidator(application, pack, set, context);
         foreach (var target in targets)
         {
             foreach (var field in set.Rows.SelectMany(row => row.Fields))
             {
-                ValidateField(application, pack, set, target, field, context);
+                validator.Validate($"read model '{target.Name}'", target.Properties, field);
             }
-        }
-    }
-
-    static void ValidateField(ApplicationSyntax application, SampleDataPackSyntax pack, SampleDataSetSyntax set, ReadModelSyntax target, SampleDataFieldSyntax field, ParserContext context)
-    {
-        var property = target.Properties.FirstOrDefault(candidate => string.Equals(candidate.Name, field.Name, StringComparison.Ordinal));
-        if (property is null)
-        {
-            context.Error(
-                DiagnosticCodes.UnknownSampleDataField,
-                $"Field '{field.Name}' of shape '{set.Shape}' in sample data pack '{pack.Name}' is not a property of read model '{target.Name}'",
-                field.Location);
-            return;
-        }
-
-        var expected = ExpectedKind(application, property.Type, out var members);
-        if (expected is null)
-        {
-            return;
-        }
-
-        string? problem = null;
-        if (field.Kind == SampleDataValueKind.Null)
-        {
-            problem = property.Type.IsOptional ? null : "null is only allowed for an optional property";
-        }
-        else if (property.Type.IsCollection)
-        {
-            problem = "a row holds a single value, not a collection";
-        }
-        else if (expected == SampleDataLiteralType.Unsupported)
-        {
-            problem = "a row holds a literal, not a structured value";
-        }
-        else if (!Fits(expected.Value, field.Kind, field.Value, members))
-        {
-            problem = members is { Count: > 0 }
-                ? $"expected one of {string.Join(", ", members.Select(member => $"\"{member}\""))}"
-                : $"expected {Describe(expected.Value)}";
-        }
-
-        if (problem is not null)
-        {
-            context.Error(
-                DiagnosticCodes.SampleDataTypeMismatch,
-                $"Field '{field.Name}' of shape '{set.Shape}' in sample data pack '{pack.Name}' does not fit '{property.Type.Name}' on read model '{target.Name}' - {problem}",
-                field.Location);
         }
     }
 
@@ -163,46 +117,4 @@ internal static class SampleDataValidator
             }
         }
     }
-
-    static SampleDataLiteralType? ExpectedKind(ApplicationSyntax application, TypeRefSyntax type, out IReadOnlyList<string>? members)
-    {
-        members = null;
-        var concept = application.Concepts.FirstOrDefault(candidate => candidate.Name == type.Name);
-        if (concept is not null)
-        {
-            var values = concept.Values.ToList();
-            if (values.Count > 0)
-            {
-                members = values;
-                return SampleDataLiteralType.Text;
-            }
-
-            return SampleDataLiteralTypes.Of(concept.Type);
-        }
-
-        if ((application.Types ?? []).Any(candidate => candidate.Name == type.Name))
-        {
-            return SampleDataLiteralType.Unsupported;
-        }
-
-        return SampleDataLiteralTypes.Of(type.Name);
-    }
-
-    static bool Fits(SampleDataLiteralType expected, SampleDataValueKind kind, string? value, IReadOnlyList<string>? members) => expected switch
-    {
-        SampleDataLiteralType.Text => kind == SampleDataValueKind.Text && (members?.Contains(value ?? string.Empty, StringComparer.Ordinal) ?? true),
-        SampleDataLiteralType.WholeNumber => kind == SampleDataValueKind.Number && value?.All(character => char.IsAsciiDigit(character) || character == '-') == true,
-        SampleDataLiteralType.Number => kind == SampleDataValueKind.Number,
-        SampleDataLiteralType.Flag => kind == SampleDataValueKind.Flag,
-        _ => false
-    };
-
-    static string Describe(SampleDataLiteralType expected) => expected switch
-    {
-        SampleDataLiteralType.Text => "a string",
-        SampleDataLiteralType.WholeNumber => "a whole number",
-        SampleDataLiteralType.Number => "a number",
-        SampleDataLiteralType.Flag => "true or false",
-        _ => "a literal"
-    };
 }

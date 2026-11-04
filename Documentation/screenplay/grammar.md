@@ -555,7 +555,12 @@ SampleShapeDecl = "shape", Ident, NL,
 SampleRowDecl  = "row", NL,
                  [ INDENT, { SampleFieldDecl }, DEDENT ] ;
 
-SampleFieldDecl = Ident, "=", SampleLiteral, NL ;
+SampleFieldDecl = Ident, "=", SampleLiteral, NL
+                | Ident, NL, [ INDENT, { SampleRowDecl }, DEDENT ] ;
+
+(* A bare field is an explicit collection of rows of a declared top-level type,
+   including an empty collection when it has no child rows. Collections may nest
+   recursively. Read-model shapes are not member types (PLAY0273). *)
 
 SampleLiteral  = StringLiteral | Number | "true" | "false" | "null" ;
 
