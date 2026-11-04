@@ -176,12 +176,7 @@ The table below is the authoritative version allocation under [decision 0025](ht
 | 35.0 | Command handlers that declare their possible events (`handler` → `may produce`, `for one of`): handler result contract v2 (released in Screenplay 5.4.0) | 35 | [0119](https://github.com/Cratis/Screenplay/blob/main/decisions/0119-admit-command-handlers-that-declare-possible-events.md) | `full-esm-v35.json` | `PossibleEventsCorpus.V35` |
 | 36.0 | State machines and workflows (`stateMachines`, `workflows`) (released in Screenplay 5.1.0) | 36 | [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) | `full-esm-v36.json` | `EsmGoldenVectors.Get(36)` |
 | 37.0 | Clock operands in command rules (`today`, `now`, offsets, `date of`), command calendars, the application time zone, declared context time zones and `given time zone` (released in Screenplay 5.5.0) | 37 | [0106](https://github.com/Cratis/Screenplay/blob/main/decisions/0106-the-application-calendar-and-clock-operands.md), [0107](https://github.com/Cratis/Screenplay/blob/main/decisions/0107-admit-today-and-now-in-command-conditions.md), [0132](https://github.com/Cratis/Screenplay/blob/main/decisions/0132-application-declared-typed-context-members.md) | `full-esm-v37.json` | `ClockOperandsCorpus.V37` |
-
-#### Claimed, unreleased version
-
-| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
-| --- | --- | --- | --- | --- | --- |
-| 37.1 | Opt-in read-model declaration-order metadata (`propertyOrder`) over a valid 37.0 calendar/clock base | 37 | [0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md) | `full-esm-v37.1.json` | `EsmGoldenVectors.GetMinor(SemanticVersion.V37_1)` |
+| 37.1 | Opt-in read-model declaration-order metadata (`propertyOrder`) over a valid 37.0 calendar/clock base (released in Screenplay 5.6.0) | 37 | [0118](https://github.com/Cratis/Screenplay/blob/main/decisions/0118-unknown-preserving-esm-admission.md) | `full-esm-v37.1.json` | `EsmGoldenVectors.GetMinor(SemanticVersion.V37_1)` |
 
 Read-model declaration order is optional, ignorable metadata. The historical `Bind` overload and default `SemanticBindingOptions` preserve existing versions, bytes and revisions. `PreserveReadModelPropertyOrder: true` selects language/semantic `37.1` only when metadata is emitted and removing it leaves a valid 37.0 model reading the application calendar or a clock. Otherwise the binder returns `PropertyOrderMetadataRefusal` with no executable value. A model with no read models emits no metadata and retains its version.
 
