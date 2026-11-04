@@ -183,7 +183,7 @@ public sealed record SemanticSpecification(
     public string? GivenClock { get; init; }
 
     /// <summary>
-    /// Gets the IANA time zone the scenario evaluates its calendar in, and the value of the <c>$context.timeZone</c> member; candidate-only.
+    /// Gets the IANA time zone the scenario evaluates its calendar in, and the value of the <c>$context.timeZone</c> member (ESM v37).
     /// </summary>
     public string? GivenTimeZone { get; init; }
 

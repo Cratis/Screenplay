@@ -251,12 +251,18 @@ public sealed record SemanticExecutionRequest(
     public SemanticCommandOccurrence? Occurrence { get; init; }
 
     /// <summary>
-    /// Gets the IANA time zone the host supplies as <c>$context.timeZone</c> (the <c>TimeZone</c> runtime token), or null; candidate-only.
+    /// Gets the IANA time zone the host supplies as <c>$context.timeZone</c> (the <c>TimeZone</c> runtime token), or null.
     /// </summary>
     public string? ContextTimeZone { get; init; }
 
     /// <summary>
-    /// Gets the time zone the deployment configures, applied only when the application time zone is declared configurable, or null; candidate-only.
+    /// Gets the IANA time zones the host supplies for the declared application context members, keyed by member name (decision 0132).
+    /// A command whose calendar reads a declared member fails when its entry is missing, empty or not an IANA id; there is no fallback.
+    /// </summary>
+    public ImmutableDictionary<string, string> ContextTimeZones { get; init; } = ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets the time zone the deployment configures, applied only when the application time zone is declared configurable, or null.
     /// </summary>
     public string? ConfiguredTimeZone { get; init; }
 

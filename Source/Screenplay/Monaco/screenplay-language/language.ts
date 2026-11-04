@@ -125,7 +125,7 @@ export const clauseKeywords = [
     'max',
     'min',
     'length',
-    'today',
+    // Clock operands are contextual token rules, not reserved property names.
     'true',
     'false',
     'and',

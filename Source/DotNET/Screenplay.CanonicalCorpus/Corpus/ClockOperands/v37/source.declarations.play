@@ -1,0 +1,3 @@
+time zone configurable default "Europe/Oslo"
+context
+  billingZone time zone

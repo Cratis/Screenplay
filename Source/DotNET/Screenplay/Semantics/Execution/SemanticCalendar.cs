@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics.Execution;
 
 // Resolves the calendar zone a command evaluates its clock operands in (decision 0106). A zone that is required and
@@ -27,6 +29,19 @@ internal static class SemanticCalendar
         return new SemanticClockContext(request.Occurrence.Occurred, zone);
     }
 
+    // 'given time zone' supplies $context.timeZone and every declared member a command calendar reads (decision 0132 D2).
+    internal static ImmutableDictionary<string, string> Given(IEnumerable<SemanticCommand> commands, string? zone)
+    {
+        var members = ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.Ordinal);
+        if (zone is null) return members;
+        foreach (var member in commands.Select(command => command.Calendar?.ContextMember).OfType<string>())
+        {
+            if (member != SemanticTypedContextCatalog.CalendarContextMember) members = members.SetItem(member, zone);
+        }
+
+        return members;
+    }
+
     static string? ZoneId(SemanticApplication application, SemanticCommand command, SemanticExecutionRequest request, out string? failure)
     {
         failure = null;
@@ -40,8 +55,10 @@ internal static class SemanticCalendar
     {
         failure = null;
         if (calendar.TimeZone is { } literal) return literal;
-        if (!string.IsNullOrWhiteSpace(request.ContextTimeZone)) return request.ContextTimeZone;
-        failure = $"Command '{command.Name}' reads its calendar from $context.timeZone, and the execution request supplies none.";
+        var member = calendar.ContextMember ?? SemanticTypedContextCatalog.CalendarContextMember;
+        var supplied = member == SemanticTypedContextCatalog.CalendarContextMember ? request.ContextTimeZone : request.ContextTimeZones.GetValueOrDefault(member);
+        if (!string.IsNullOrWhiteSpace(supplied)) return supplied;
+        failure = $"Command '{command.Name}' reads its calendar from $context.{member}, and the execution request supplies none.";
         return null;
     }
 

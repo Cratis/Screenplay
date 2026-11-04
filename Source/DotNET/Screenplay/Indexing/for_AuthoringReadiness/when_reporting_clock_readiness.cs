@@ -25,9 +25,9 @@ public class when_reporting_clock_readiness
         var readiness = new AuthoringReadiness(_syntax);
         var slice = _syntax.Modules.Single().Features.Single().Slices.Single();
         readiness.ModelSyntaxOnly.ShouldBeTrue();
-        readiness.ModelExecutionReadiness.ShouldContain("(#824)");
+        readiness.ModelExecutionReadiness.ShouldContain("decisions 0106 and 0107");
         readiness.SyntaxOnly(slice.Screens.Single()).ShouldBeTrue();
-        readiness.ExecutionReadiness(slice.Screens.Single()).ShouldContain("(#824)");
+        readiness.ExecutionReadiness(slice.Screens.Single()).ShouldContain("decisions 0106 and 0107");
         readiness.SyntaxOnly(slice.Commands.Single()).ShouldBeFalse();
         readiness.ExecutionReadiness(slice.Commands.Single()).ShouldBeNull();
     }

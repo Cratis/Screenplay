@@ -119,5 +119,10 @@ internal enum EsmBaselineShape
     CaptureRecord,
     CaptureField,
     PinnedValue,
-    WhenTrigger
+    WhenTrigger,
+    ApplicationTimeZone,
+    CommandCalendar,
+    ClockOperand,
+    ClockOffset,
+    ContextMember
 }

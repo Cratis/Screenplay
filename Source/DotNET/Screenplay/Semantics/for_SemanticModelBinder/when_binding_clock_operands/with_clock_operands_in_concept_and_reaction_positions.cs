@@ -44,10 +44,10 @@ public class with_clock_operands_in_concept_and_reaction_positions : given.a_clo
                   for id
         """;
 
-    const string ClockRefusal = "Clock operands (today, now and date of) are not yet admitted";
+    const string ClockRefusal = "Clock operands (today, now and date of) are not admitted in this position (decisions 0106 and 0107).";
 
     [Fact]
-    public void should_refuse_the_clock_operand_in_a_reaction_condition_when_writing_the_candidate()
+    public void should_refuse_the_clock_operand_in_a_reaction_condition()
     {
         var result = BindClock(ReactionSource);
         result.Success.ShouldBeFalse();

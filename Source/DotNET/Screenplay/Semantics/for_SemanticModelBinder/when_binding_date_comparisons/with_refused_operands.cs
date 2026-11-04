@@ -15,7 +15,9 @@ public class with_refused_operands : given.a_date_comparison
         foreach (var (primitive, op) in new[] { "Date", "DateTime" }.SelectMany(primitive => Operators.Select(op => (primitive, op))))
         {
             _results.Add(Bind(Model(primitive, $"require to {op} from").Replace($"from {primitive}", $"from {(primitive == "Date" ? "DateTime" : "Date")}", StringComparison.Ordinal)));
-            _results.Add(Bind(Model(primitive, $"require to {op} today")));
+
+            // today is a Date, so it is admitted against a Date property (decision 0106) and refused against a DateTime one.
+            if (primitive == "DateTime") _results.Add(Bind(Model(primitive, $"require to {op} today")));
             _results.Add(Bind(Model(primitive, $"require to {op} $context.occurred")));
             _results.Add(Bind(Model(primitive, $"to {op} from")));
             _results.Add(Bind("command reads protected\n" + Model(primitive, $"require $context.occurred {op} to")));
@@ -43,7 +45,7 @@ public class with_refused_operands : given.a_date_comparison
             """));
     }
 
-    [Fact] void should_examine_every_refused_position() => _results.Count.ShouldEqual(111);
+    [Fact] void should_examine_every_refused_position() => _results.Count.ShouldEqual(105);
     [Fact] void should_refuse_them_all() => _results.TrueForAll(result => !result.Success).ShouldBeTrue();
     [Fact] void should_report_only_the_admission_diagnostic_even_for_invalid_literals() => Assert.True(
         _results.TrueForAll(result => result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax) && result.Diagnostics.All(diagnostic => diagnostic.Code != DiagnosticCodes.InvalidSemanticBinding)),

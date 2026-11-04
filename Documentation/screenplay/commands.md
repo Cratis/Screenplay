@@ -7,34 +7,30 @@ description: "Declare a Screenplay command: its properties, authorization, valid
 
 Commands are input definitions — imperative intents. A command declares its properties, its authorization, its validation rules, and what events it produces.
 
-## Calendar and clock operands — syntax only
+## Calendar and clock operands
 
-Decisions 0106/0107 introduce application-root `time zone "Europe/Oslo"` (or
+Decisions 0106, 0107 and 0132 admit application-root `time zone "Europe/Oslo"` (or
 `time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
-(or `calendar from $context.timeZone`), and specification `given time zone "Europe/Oslo"`.
+(or `calendar from $context.timeZone`, or `calendar from $context.<member>` for a
+[declared context member](context.md)), and specification `given time zone "Europe/Oslo"`.
 Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
 `now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
-Bare `today` and `now` remain ordinary paths, preserving properties with those names.
+Bare `today` and `now` remain ordinary paths when a property has that name.
 
-The internal clock candidate supports offsets and `date of` only in conditions
-(`validate` / `require` and `produces when`), including bare `date of now` and
-`date of today`. Properties named `now` or `today` still shadow those clocks inside
-`date of`. Offsets on `today` must be whole days; hours and minutes are refused
-with `PLAY0268` — use `now` for sub-day offsets. A `validate` property rule can compare
-against bare `today`, but `dueDate >= today - 7 days` and `dueDate >= date of now`
-are refused with `PLAY0268`. Use a `require` condition for those operands in the candidate;
-this does not change the syntax-only public boundary described below.
-In the internal candidate, ids resolve through the host's time-zone database, so alias
-support and case sensitivity follow the host. Models should use the canonical, exact-case IANA id.
+Clock operands are admitted in command conditions (`validate` / `require` and `produces when`)
+and as the right operand of a `validate` comparison rule on a `Date` or `DateTime` property.
+A clock is compared with a required scalar command property of the same primitive: `today` and
+`date of …` are dates, `now` is an instant. Offsets on `today` must be whole days; use `now`
+for hours or minutes. Clock operands in other positions, such as concepts, reactions and screens,
+report `PLAY0268`.
 
-These forms are **syntax-only**: both parsers preserve them, but executable binding
-reports `PLAY0268`, “not yet admitted (decision 0106/0107) (#824).” They do not select an ESM
-version or introduce runtime behavior. Zone ids are retained, not validated against the
-host's time-zone database. No machine-local calendar is inferred. The
-[clock preview fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play)
-is the warning-free authoring example for #824; executable Invoicing intentionally does not use these forms.
-Authoring tools preserve these forms while model and affected-member readiness report syntax-only;
-unrelated members and properties named `today` or `now` remain unaffected.
+A model that uses any of these forms selects ESM v37 (see [interoperability](interoperability.md)).
+A command evaluates its clock in its calendar; without one, the application time zone applies, and
+an application without a declared zone uses UTC, never the machine's zone. Zone ids must be
+canonical, exact-case IANA ids. A specification fixes the clock with `given clock` and the zone
+with `given time zone`. The
+[clock fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play)
+is a complete, executable example.
 
 ## Syntax
 

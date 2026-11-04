@@ -29,6 +29,9 @@ public static class SemanticContextSourceKinds
     public const string AuthorizedOperation = "authorized-operation";
     public const string CommandIdentifier = "command-identifier";
     public const string QueryKey = "query-key";
+
+    /// <summary>A time-zone member the application declares in its <c>context</c> block (decision 0132); its path names the member.</summary>
+    public const string ApplicationContext = "application-context";
     public const string Unavailable = "unavailable";
 }
 
@@ -84,6 +87,9 @@ public sealed record SemanticTypedContextDescriptor(
 
     /// <summary>The sidecar contract revision written when any descriptor carries the <c>TimeZone</c> runtime token; otherwise <see cref="ContractRevision"/> and its bytes are unchanged.</summary>
     public const uint TimeZoneContractRevision = 2;
+
+    /// <summary>The sidecar contract revision written when any descriptor reads a declared application context member (decision 0132); it adds the <c>application-context</c> source kind and the top-level <c>contextMembers</c> registry.</summary>
+    public const uint ContextMembersContractRevision = 3;
 
     /// <summary>Gets the result-v2 handler contract; null for legacy contexts.</summary>
     public SemanticHandlerResultDescriptor? Result { get; init; }

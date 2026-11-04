@@ -102,7 +102,7 @@ context
   customerTimeZone time zone
 ```
 
-This declaration is **syntax-only**. It is parsed, printed, serialized and indexed, but binding any document that declares it reports `PLAY0268` until #824 admits time-zone execution. It does not extend today's executable `$context` roots or change an existing command calendar operand.
+A command reads a member as its calendar with `calendar from $context.<member>`, and the model then selects ESM v37. The host supplies the member's IANA zone at run time; a specification supplies it with `given time zone`. A member is a calendar source only: it does not add a `$context` value to mappings or conditions.
 
 Declare at most one block per application folder, across all its files, as with `identity`. The block may be empty and may have one description. Members have a lower-case-leading name and the type `time zone`; no other type or member body is supported. Names are unique after removing an `@` escape. `timeZone` and every existing `$context` root (`command`, `arguments`, `tenant`, `causedBy`, `causation`, `occurred` and `identity`) are reserved. Escape a member named `description` as `@description`; the printer retains that escape.
 

@@ -233,8 +233,14 @@ internal static class SemanticTypedContextCatalog
         return definitions.ToImmutable();
     }
 
-    static SemanticTypedContextMember[] CalendarMembers(SemanticCommand command) =>
-        command.Calendar?.ContextMember == CalendarContextMember ? [Fixed("TimeZone", SemanticContextRuntimeTokens.TimeZone)] : [];
+    static SemanticTypedContextMember[] CalendarMembers(SemanticCommand command) => command.Calendar?.ContextMember switch
+    {
+        null => [],
+        CalendarContextMember => [Fixed("TimeZone", SemanticContextRuntimeTokens.TimeZone)],
+        var declared => [new(Pascal(declared), Runtime(SemanticContextRuntimeTokens.TimeZone), false, false, new(SemanticContextSourceKinds.ApplicationContext, null, declared))]
+    };
+
+    static string Pascal(string name) => string.Concat(char.ToUpperInvariant(name[0]).ToString(), name[1..]);
 
     static SemanticTypedContextDescriptor HandlerDescriptor(SemanticImplementationRequirement requirement, SemanticCommand command, IEnumerable<SemanticEventContract> events) => Descriptor(
         requirement,

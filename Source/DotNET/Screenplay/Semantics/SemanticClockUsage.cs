@@ -8,6 +8,7 @@ internal static class SemanticClockUsage
 {
     internal static bool Uses(SemanticApplication application) =>
         application.TimeZone is not null ||
+        !application.ContextMembers.IsDefaultOrEmpty ||
         application.Concepts.Any(concept => concept.Validations.Any(UsesRule)) ||
         application.Modules.SelectMany(module => module.Features).SelectMany(Slices).Any(UsesSlice);
 
@@ -24,7 +25,7 @@ internal static class SemanticClockUsage
         _ => false
     };
 
-    // Every graph position is scanned: a clock marker outside the candidate command positions must be refused on write, never dropped.
+    // Every graph position is scanned: a clock marker outside the admitted command positions must be refused on write, never dropped.
     static bool UsesRule(SemanticValidationRule rule) => rule.ClockOperand is not null;
 
     static bool UsesReaction(SemanticReaction reaction) =>

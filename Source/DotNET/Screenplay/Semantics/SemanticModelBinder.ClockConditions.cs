@@ -10,48 +10,8 @@ namespace Cratis.Screenplay.Semantics;
 
 public sealed partial class SemanticModelBinder
 {
-    // The unregistered working major of the application calendar and clock operands, distinct from published ESM 36.
-    // It is a candidate only; the final number is decided at admission (decisions 0025 and 0066).
-    internal static readonly LanguageVersion ClockCandidateLanguageVersion = new(37, 0);
-    internal static readonly SemanticVersion ClockCandidateSemanticVersion = new(37, 0);
-
-    // Deliberately does not run the published validators or the canonical serializer on a clock-candidate graph.
-    internal CompilationResult<ClockOperandsBinding> BindForClockOperands(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
-    {
-        var admission = CommandProductionAdmission(syntax, out _);
-        if (admission.Count > 0) return CompilationResult<ClockOperandsBinding>.Failed(admission);
-        var expansion = SpecificationExamples.Expand(syntax);
-        if (expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) return CompilationResult<ClockOperandsBinding>.Failed(expansion.Diagnostics);
-        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
-        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
-        var context = new BindingContext(applicationName, expansion.Application, documents, steps, expansion, _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year) { AllowClockOperands = true };
-        try
-        {
-            var application = context.BindApplication();
-            var requirements = context.ImplementationRequirements;
-            var descriptors = SemanticTypedContextCatalog.Create(application, requirements, strict: !context.HasErrors);
-            var versions = context.UsesClock
-                ? (Language: ClockCandidateLanguageVersion, Semantic: ClockCandidateSemanticVersion)
-                : SelectBoundVersions(application, SemanticVersion.V1, context.UsesStoredEventNames) ?? (LanguageVersion.V1, SemanticVersion.V1);
-            return new(context.HasErrors ? null : new(application, versions.Language, versions.Semantic), context.Diagnostics)
-            {
-                ImplementationRequirements = requirements,
-                TypedContextDescriptors = descriptors
-            };
-        }
-        catch (InvalidSemanticContract exception)
-        {
-            return CompilationResult<ClockOperandsBinding>.Failed(context.Diagnostics.Append(Diagnostic.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location))) with
-            {
-                ImplementationRequirements = context.ImplementationRequirements
-            };
-        }
-    }
-
     private sealed partial class BindingContext
     {
-        internal bool UsesClock { get; private set; }
-
         // Clock operands are admitted in a command 'require' and 'produces when' condition, and as the right operand of a validation rule.
         static bool ClockPosition(string position) => string.Equals(position, "require", StringComparison.Ordinal) || string.Equals(position, "produces when", StringComparison.Ordinal);
 
@@ -67,9 +27,12 @@ public sealed partial class SemanticModelBinder
             comparison.LeftExpression is not null || IsClockExpression(comparison.Right, properties) ||
             (IsClockName(comparison.Left) && !properties.ContainsKey(comparison.Left));
 
+        // A validation rule takes a clock operand, or the date of one: an offset, or a bare 'today' or 'now' no command property shadows.
         static bool IsClockRuleOperand(ExpressionSyntax? value, Dictionary<string, SemanticProperty> properties) =>
-            value is ClockOffsetExpressionSyntax || IsBareClock(value, properties) ||
-            value is DateOfExpressionSyntax { Operand: ClockOffsetExpressionSyntax };
+            IsClockInstant(value is DateOfExpressionSyntax dateOf ? dateOf.Operand : value, properties);
+
+        static bool IsClockInstant(ExpressionSyntax? value, Dictionary<string, SemanticProperty> properties) =>
+            value is ClockOffsetExpressionSyntax || IsBareClock(value, properties);
 
         static bool IsRequiredInstant(ValidationSubject subject, SemanticPrimitiveType? required) =>
             !subject.IsCollection && subject.IsDate && (required is null || subject.Primitive == required);
@@ -121,14 +84,14 @@ public sealed partial class SemanticModelBinder
         bool IsClockComparison(ConditionSyntax syntax, string position, Dictionary<string, SemanticProperty> properties, [NotNullWhen(true)] out ComparisonConditionSyntax? comparison)
         {
             comparison = syntax as ComparisonConditionSyntax;
-            return AllowClockOperands && ClockPosition(position) && comparison is not null && UsesClockOperand(comparison, properties);
+            return ClockPosition(position) && comparison is not null && UsesClockOperand(comparison, properties);
         }
 
         // Binds a command validation rule: a rule whose right operand is a clock operand is bound as a clock rule, any other the ordinary way.
         SemanticValidationRule? BindRule(ValidationRuleSyntax rule, ValidationSubject subject, Dictionary<string, SemanticProperty> properties, string? requirementId)
         {
             var property = properties[rule.Property].Id;
-            return AllowClockOperands && IsClockRuleOperand(rule.Value, properties)
+            return IsClockRuleOperand(rule.Value, properties)
                 ? BindClockRule(rule, property, subject, properties)
                 : BindValidationRule(rule, property, subject, requirementId);
         }
@@ -139,7 +102,6 @@ public sealed partial class SemanticModelBinder
             var right = BindClockSide(comparison.Right, properties, comparison.Location);
             if (left is null || right is null) return null;
             if (!AreComparable(left, right, comparison.Location)) return null;
-            UsesClock = true;
             return new SemanticComparison(left.Operand, ComparisonOperatorFor(comparison.Operator), right.Operand);
         }
 
@@ -220,7 +182,6 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            UsesClock = true;
             return new(property, kind, null, rule.Message) { ClockOperand = operand.Operand.Clock, Severity = Severity(rule.Severity) };
         }
 

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
+import { DeclarativeValidateSyntax } from '../Syntax/Commands';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
 
 const prefix = 'module M\n  feature F\n    slice StateChange S\n      command Submit\n        value String\n';
@@ -61,6 +62,22 @@ describe('when parsing clock operands', () => {
         [prefix + '        produces when dueDate < today - 7 weeks\n          Recorded', 'PLAY0158'],
     ])('should diagnose invalid clock syntax %s', (text, code) => {
         expect(parse(text).diagnostics.map(diagnostic => diagnostic.code)).toContain(code);
+    });
+
+    it.each([
+        ['date of now', 'DateOfExpressionSyntax'],
+        ['date of today - 1 days', 'DateOfExpressionSyntax'],
+        ['now - 30 minutes', 'ClockOffsetExpressionSyntax'],
+        ['now', 'PathExpressionSyntax'],
+    ])('should parse the command property rule operand %s', (operand, kind) => {
+        const result = parse(`${prefix}        dueDate Date\n        validate\n          dueDate >= ${operand}\n`);
+        expect(result.diagnostics).toEqual([]);
+        const validate = result.value.modules[0].features[0].slices[0].commands[0].validations[0] as DeclarativeValidateSyntax;
+        expect(validate.rules[0].value).toMatchObject({ kind });
+    });
+
+    it('should refuse trailing tokens after a property rule clock operand', () => {
+        expect(parse(`${prefix}        dueDate Date\n        validate\n          dueDate >= date of now later\n`).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0141');
     });
 
     it('should preserve contextual properties and legacy JSON', () => {
