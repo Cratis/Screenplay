@@ -41,9 +41,8 @@ it contains canonical text and `LeftExpression` holds the structured expression.
 `ClockOffsetExpressionSyntax` and `DateOfExpressionSyntax` may appear on either side.
 A bare `today` or `now` is still a path, not a globally reserved keyword.
 
-These additions are syntax-only. Binding them reports `PLAY0268` naming decisions
-0106/0107; ESM versions and executable payloads are unchanged. See
-[commands](commands.md#calendar-and-clock-operands--syntax-only).
+A model that uses these additions binds to ESM v37 (decisions 0106 and 0107). See
+[commands](commands.md#calendar-and-clock-operands).
 
 ## What the tree is
 

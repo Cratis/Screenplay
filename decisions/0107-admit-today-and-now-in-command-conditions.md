@@ -100,6 +100,10 @@ record are to these revisions.
    calendar record.
 3. Whether a redelivered reaction should keep the zone of its first evaluation instead of resolving it again.
 
+## Status notes
+
+**2026-11-04 — admitted as ESM v37.** The application time zone, command calendars, declared context time-zone members, `given time zone` and clock operands in command conditions and `validate` comparison rules bind to language/semantic `37.0` (`schemaVersion: 37`). Strict readers and the canonical writer refuse every clock member below v37, and a model without them keeps its version and bytes. The typed-context sidecar writes revision 3 only when a model reads a declared member. See the [interoperability table](../Documentation/screenplay/interoperability.md).
+
 ## Related
 
 Decisions 0025, 0066 and 0087; the application calendar and clock operands record; Screenplay #824.
