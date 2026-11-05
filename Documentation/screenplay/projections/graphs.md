@@ -112,4 +112,8 @@ A node is identified by its label and key; an edge by its type, its source and t
 
 The reference executor keeps an in-memory graph and applies these operations, which is what `given graph` and `then graph` specifications run against.
 
+## What the tools do not follow yet
+
+The event model board, dependency and lineage queries, find-references and rename follow read-model projections only. A graph projection is compiled, printed, bound and executed like any other construct, but those tools do not draw it or rewrite its event references; renaming an event leaves a graph projection that the compiler then reports as unknown.
+
 See also [graph declarations](../graphs.md).

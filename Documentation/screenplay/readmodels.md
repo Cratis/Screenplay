@@ -37,6 +37,10 @@ readmodel AccountBalance
   movements Int
 ```
 
+## Graphs
+
+When the state is a network of things and the relationships between them rather than a document, declare a [graph](graphs.md) instead of a read model and build it with a [graph projection](projections/graphs.md).
+
 ## Member value types
 
 A read-model member can use a primitive, a declared concept, a top-level [composite type](types.md), or an imported value-type name. Scalar, collection (`InvoiceLine[]`) and optional forms use the same value-type namespace. A read model has its own keyed/query identity; naming another `readmodel` does not make that view a reusable member type, even within the same slice.

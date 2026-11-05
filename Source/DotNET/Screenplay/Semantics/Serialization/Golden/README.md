@@ -14,13 +14,13 @@ Expression, identity-catalog and typed-context sidecars are separate contracts a
 
 Full goldens below the current ESM pair are frozen: v1–v37 are checked-in contracts, not rebuilt
 from shared fixtures. Their version specs deserialize the frozen bytes, check the selected version and
-feature-specific assertions, and serialize back to identical bytes. Only v37.1 is compared with its builder.
+feature-specific assertions, and serialize back to identical bytes. Only v38 (and the v37.1 minor) is compared with its builder.
 The historical fixture descriptions below explain what each vector covers; retained builders serve
 other specs, not regeneration of older full goldens.
 
 `given/frozen_esm_goldens.cs` records the SHA-256 of each frozen file's exact bytes.
 `when_checking_frozen_full_goldens` requires every .0 pair below the current pair, checks that every file exists,
-and hashes the source files without JSON normalization. It checks v1–v37 at v37.1; even a
+and hashes the source files without JSON normalization. It checks v1–v37 at v38; even a
 one-byte edit fails. Restore changed frozen bytes rather than updating their hashes.
 
 These source models originally produced the full vectors:
@@ -173,3 +173,5 @@ and typed-context descriptor vectors are separate contracts, not ESM documents w
 An ESM serialization change can also change the expected ESM bytes and semantic revision of the corpus in
 `Screenplay.CanonicalCorpus`, which this mechanism does not rewrite. Stage compares its output against that
 corpus, so `Cratis.Screenplay` and `Cratis.Screenplay.CanonicalCorpus` must be released together for Stage.
+
+`full-esm-v38.json` is built by `canonical_serialization_golden_vectors.CreateSemanticModelV38()` from `GraphSource`: a property graph with a node, an edge and an identified edge, the projection that builds it, and a graph specification that seeds, appends and asserts. It is the first golden to carry `graphs`, `graphProjections` and `graphSpecifications` ([decision 0138](../../../../../../decisions/0138-graphs-and-graph-projections-esm-v38.md)).

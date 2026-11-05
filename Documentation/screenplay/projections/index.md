@@ -141,6 +141,7 @@ The target is an event when `=>` names a declared event and no `readmodel` of th
 - [Nested Objects](grammar.md#nested-block) - Single nullable child objects
 - [Removal](removal.md) - Remove projection instances based on events
 - [Variants](variants.md) - Mutually exclusive named read models sharing one projection identity
+- [Graph projections](graphs.md) - Project events onto a property graph of nodes and edges
 - [Expressions](grammar.md#expressions) - Understanding expression syntax
 - [Semantic Model](semantic-model.md) - How projections bind to the executable semantic model, with Chronicle as the semantic reference
 - [Grammar (EBNF)](grammar.md) - Complete formal grammar specification
