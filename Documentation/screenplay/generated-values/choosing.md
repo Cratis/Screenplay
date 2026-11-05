@@ -66,3 +66,5 @@ Then specify a second creation against prior facts on the same source to check G
 For an API key, plan a separate `ApiKeyId` identity and a secret `ApiKey` value with 32 random bytes. Do not put the key into plaintext event-source metadata. Generated secret admission is not available yet; `[NotAudited]` protects only command causation values, while encryption protects the stored value, not arbitrary logs.
 
 For an invoice reference or numeric ticket, continue with [Patterns and checksums](patterns.md) to define the format and pin its date. For a command's generated event-source identity, use [Generated values](../generated-values.md#freshness-is-about-the-whole-source) to check freshness and provider obligations.
+
+Before finishing, check that the strategy fits the value's role and has enough entropy, that the pinned fixture is valid, and that the command's freshness policy is explicit.
