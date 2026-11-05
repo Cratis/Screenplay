@@ -187,7 +187,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             count++;
         }
 
-        count.ShouldEqual(16);
+        count.ShouldEqual(17);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
 

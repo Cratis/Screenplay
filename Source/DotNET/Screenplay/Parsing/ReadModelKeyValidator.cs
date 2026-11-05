@@ -218,6 +218,10 @@ internal static class ReadModelKeyValidator
         {
         }
 
+        public override void VisitGraphEdge(GraphEdgeSyntax syntax)
+        {
+        }
+
         public override void VisitQuery(QuerySyntax syntax)
         {
             RequiresLookups |= syntax.ByParts.Any();
