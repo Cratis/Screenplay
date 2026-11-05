@@ -3,7 +3,7 @@ title: Generated values
 description: Understand concept generation strategies, pinned fixtures, and generated event-source freshness.
 ---
 
-Your shop needs a customer identity before it can record a registration, an order identity when checkout starts, and an opaque invitation code. Asking callers to invent these values turns server decisions into request inputs. Screenplay separates them: a concept declares **how** values are generated, and a command property declares **that** the server generates it. For the full cross-product journey, follow the [shop tutorial work](https://github.com/Cratis/Documentation/issues/187); this page explains the model contract.
+A customer registration needs a new identity, and an invitation needs an opaque code. Callers should not have to invent these server-owned values. In Screenplay, a concept declares **how** values are generated, and a command property declares **that** the server generates it. This page explains that model contract; follow the [shop tutorial work](https://github.com/Cratis/Documentation/issues/187) for the full cross-product journey.
 
 ## The concept owns the strategy
 
@@ -26,6 +26,8 @@ module Shop
           inviteCode InviteCode = inviteCode
         returns customerId
 ```
+
+Use [choosing a strategy](generated-values/choosing.md) to decide whether the server owns a value and select its shape. The [strategy reference](generated-values/strategies.md) gives exact encodings and limits. The pinned specification below shows how to assert the generated result.
 
 Generation follows authorization and validation. Generated values are not request inputs, cannot authorize the caller, and cannot appear in pre-generation rules. A strategy does not automatically add validation to input or stored values; changing it does not retroactively invalidate old identities.
 
@@ -59,17 +61,27 @@ module Shop
         then returns "order_0000000000e008000000000000"
 ```
 
-A model declaring a serialized strategy checks each generated fixture's exact encoding, size, letter case, UUID version and variant. A generated concept with rules selects ESM V20 and checks its fixtures against both shape and rules, including implicit UUIDv4 generation. A failing rule returns `Rejected(Contract)` with `Generated fixture '<property>' fails concept '<Concept>' rules`; it is a server contract defect, not a client validation error, and nothing is redrawn. Opaque validation rules route to Unsupported because the reference evaluator never runs attached code. A generation implementation alone does not block execution: the runner accepts its String fixture without invoking the body. Older rule-free, implicit-UUID models keep canonical UUID type validation. Seeds are not portable: a provider or algorithm upgrade could change their output.
+A model declaring a serialized strategy checks each generated fixture's exact encoding, size, letter case, UUID version and variant. A generated concept with rules selects ESM V20 and checks its fixtures against both shape and rules, including implicit UUIDv4 generation. A failing rule returns `Rejected(Contract)` with `Generated fixture '<property>' fails concept '<Concept>' rules`; it is a server contract defect, not a client validation error, and nothing is redrawn.
 
-ESM v21 admits finite `pattern`, exact inclusive Int64 `random`, `generate rule` attachments and String-concept checksum validation. The shop's `InvoiceRef` is a date/checksum value; `TicketNumber` is a numeric value, not an Int identifier. Pin date-segment fixtures with `given clock`: all segments compare against that same UTC instant. Without a clock the runner checks digit widths only, never the wall clock. Checksum suffixes need only digit shape unless `validate checksum` is authored; that separate rule enforces arithmetic on supplied and stored values too. See [patterns and checksums](generated-values/patterns.md).
+Opaque validation rules route to Unsupported because the reference evaluator never runs attached code. A generation implementation alone does not block execution: the runner accepts its String fixture without invoking the body. Older rule-free, implicit-UUID models keep canonical UUID type validation.
+
+Seeds are not portable: a provider or algorithm upgrade could change their output.
+
+ESM v21 admits finite `pattern`, exact inclusive Int64 `random`, `generate rule` attachments and String-concept checksum validation. The shop's `InvoiceRef` is a date/checksum value; `TicketNumber` is a numeric value, not an Int identifier. Pin date-segment fixtures with `given clock`: all segments compare against that same UTC instant. Without a clock the runner checks digit widths only, never the wall clock.
+
+Checksum suffixes need only digit shape unless `validate checksum` is authored; that separate rule enforces arithmetic on supplied and stored values too. See [patterns and checksums](generated-values/patterns.md).
 
 TypeID carries time, not a tenant slot. Keep tenant isolation in the namespace; a tenant-bearing value needs a separate concept such as `TenantOrderId`, not a modifier on `OrderId`.
 
 ## Make the strategy and rules agree
 
-The customer and invitation rules above are Proven: every value those exact shapes produce satisfies them. A Refuted rule stops binding with `PLAY0688`, naming the strategy and a quoted violating value. An Unproven rule produces `PLAY0689` with the reason: a regex outside fragment R, a pattern `outside the portable match dialect: <construct>` in older ESM, a construction budget, or opaque validation. That warning is not a proof. Providers still validate every generated value and treat a failure as a server defect; they never silently draw another one.
+The customer and invitation rules above are Proven: every value those exact shapes produce satisfies them. A Refuted rule stops binding with `PLAY0688`, naming the strategy and a quoted violating value. An Unproven rule produces `PLAY0689` with the reason: a regex outside fragment R, a pattern `outside the portable match dialect: <construct>` in older ESM, a construction budget, or opaque validation. That warning is not a proof.
 
-Rules select V20 even when an implicit-UUID concept serializes no strategy. No proof status is serialized: consumers derive it with `RuleConsistency.Check(concept)` on concepts used by generated properties, including implicit UUID. This avoids stale status after a package or UTC-year change. Renderers that support unpinned generation can use it when every rule is Proven; Unproven rules require pinned fixtures. Changing generation never adds or changes validation automatically, so stored values keep their authored rules. The [strategy reference](generated-values/strategies.md#rule-consistency) describes fragment R and proof limits.
+Providers still validate every generated value and treat a failure as a server defect; they never silently draw another one.
+
+Rules select V20 even when an implicit-UUID concept serializes no strategy. No proof status is serialized: consumers derive it with `RuleConsistency.Check(concept)` on concepts used by generated properties, including implicit UUID. This avoids stale status after a package or UTC-year change.
+
+Renderers that support unpinned generation can use it when every rule is Proven; Unproven rules require pinned fixtures. Changing generation never adds or changes validation automatically, so stored values keep their authored rules. The [strategy reference](generated-values/strategies.md#rule-consistency) describes fragment R and proof limits.
 
 ## Check a concept through the .NET library
 
@@ -77,17 +89,27 @@ An editor can discover strategies and their options through `GenerationStrategyC
 
 ## Work with strategies through MCP
 
-You can inspect and change the concept's strategy without editing generated values on each command. `declaration-details` with `kind: "Concept"` and `view: "summary"` shows the authored strategy, modifiers and `arguments`, random bits, the count at 1% collision probability, and compiler refusal codes. Pattern and random strategies include an exact JSON integer `supportCount` and its base-two logarithm as `entropyBits`; checksums add no entropy, and date tokens use the minimum conditioned support across the compiler's 100-year UTC assessment horizon. Preserve large counts without floating-point rounding. A `rule` argument names the generation rule; find its ValueGeneration requirement with `read-workspace` and `view: "implementation-requirements"`. Its entropy is unknown because the implementation is opaque. An implicit UUID default has no authored `generation` block.
+You can inspect and change the concept's strategy without editing generated values on each command. `declaration-details` with `kind: "Concept"` and `view: "summary"` shows the authored strategy, modifiers and `arguments`, random bits, the count at 1% collision probability, and compiler refusal codes. Pattern and random strategies include an exact JSON integer `supportCount` and its base-two logarithm as `entropyBits`; checksums add no entropy, and date tokens use the minimum conditioned support across the compiler's 100-year UTC assessment horizon. Preserve large counts without floating-point rounding.
 
-The `generation.executable` object reports `status: "admitted"` only after the whole model produces an executable model, `"refused"` for compiler errors at this concept, its generation or its rules, or `"notAssessed"` with a `reason` when unrelated failures prevent an executable model. Its `diagnosticCodes` lists errors at this declaration, so an empty list is not proof of admission. Invalid alphabets, non-positive sizes/counts, malformed patterns/ranges, support-budget exhaustion (`PLAY0691`) or empty conditioned support (`PLAY0692`) report null entropy and collision estimates with `entropyUnknownReason`; inspection preserves the compiler diagnostics rather than failing. Pattern and range assessment failures carry the compiler's message.
+A `rule` argument names the generation rule; find its ValueGeneration requirement with `read-workspace` and `view: "implementation-requirements"`. Its entropy is unknown because the implementation is opaque. An implicit UUID default has no authored `generation` block.
 
-The existing `propose-ast` tool replaces a `ConceptSyntax` with its typed `GenerationSyntax`; `propose-source` accepts the equivalent whole source document. Set, change or remove `generation`, review the proposal, then explicitly apply it. Canonical printing retains `generate`. Authoring acceptance does not imply executable readiness: generation budgets, empty conditioned support and other compiler refusals still matter; generated-concept rules report their proof diagnostics.
+The `generation.executable` object reports `status: "admitted"` only after the whole model produces an executable model, `"refused"` for compiler errors at this concept, its generation or its rules, or `"notAssessed"` with a `reason` when unrelated failures prevent an executable model. Its `diagnosticCodes` lists errors at this declaration, so an empty list is not proof of admission.
+
+Invalid alphabets, non-positive sizes/counts, malformed patterns/ranges, support-budget exhaustion (`PLAY0691`) or empty conditioned support (`PLAY0692`) report null entropy and collision estimates with `entropyUnknownReason`; inspection preserves the compiler diagnostics rather than failing. Pattern and range assessment failures carry the compiler's message.
+
+The existing `propose-ast` tool replaces a `ConceptSyntax` with its typed `GenerationSyntax`; `propose-source` accepts the equivalent whole source document. Set, change or remove `generation`, review the proposal, then explicitly apply it. Canonical printing retains `generate`.
+
+Authoring acceptance does not imply executable readiness: generation budgets, empty conditioned support and other compiler refusals still matter; generated-concept rules report their proof diagnostics.
 
 For `PLAY0683` or `PLAY0684`, the repair inventory can offer a larger NanoID or byte count reaching 64 random bits. A non-identifier mapped into one event property can instead gain an explicit unique constraint (`PLAY0683`). These are alternative model changes, not silent fixes: use the selected subject with `propose-repair`, review the changed documents, then apply. A length change affects every property using the concept; a unique constraint changes append-time behavior.
 
-For `PLAY0688`, `propose-repair` can replace the refuted rule with `matches "<derived pattern>"`. Review it carefully: the rule also validates input and stored values of that concept, not just new fixtures. For patterns, the derived expression must be deterministic and bounded; otherwise no repair is available, with a reason. If generation declares a checksum, the same proposal explicitly adds checksum validation unless already present. Date/checksum shape approximation is not a containment proof. See the [MCP generation reference](mcp/reference.md#generated-values-and-responses) for the fields and repair contract.
+For `PLAY0688`, `propose-repair` can replace the refuted rule with `matches "<derived pattern>"`. Review it carefully: the rule also validates input and stored values of that concept, not just new fixtures. For patterns, the derived expression must be deterministic and bounded; otherwise no repair is available, with a reason.
 
-Built-ins remain executable: `uuid`, `uuidv7`, `ulid`, `typeid`, `nanoid`, and `bytes`. `pattern`, `random`, `rule` and checksum validation select ESM v21; built-in-only models retain their prior versions and bytes. `sequence` is reserved. Compliance markers on explicitly generated concepts remain refused. In the shop, `ApiKey` is a secret value (32 random bytes), never an event-source identity: use a separate `ApiKeyId`. Its `secret`/encryption contract protects storage; `[NotAudited]` only withholds command values from the causation chain, not event payloads or logs. Generated secrets await separate admission. See [strategy reference](generated-values/strategies.md) and [choosing a strategy](generated-values/choosing.md).
+If generation declares a checksum, the same proposal explicitly adds checksum validation unless already present. Date/checksum shape approximation is not a containment proof. See the [MCP generation reference](mcp/reference.md#generated-values-and-responses) for the fields and repair contract.
+
+Built-ins remain executable: `uuid`, `uuidv7`, `ulid`, `typeid`, `nanoid`, and `bytes`. `pattern`, `random`, `rule` and checksum validation select ESM v21; built-in-only models retain their prior versions and bytes. `sequence` is reserved. Compliance markers on explicitly generated concepts remain refused.
+
+In the shop, `ApiKey` is a secret value (32 random bytes), never an event-source identity: use a separate `ApiKeyId`. Its `secret`/encryption contract protects storage; `[NotAudited]` only withholds command values from the causation chain, not event payloads or logs. Generated secrets await separate admission. See [strategy reference](generated-values/strategies.md) and [choosing a strategy](generated-values/choosing.md).
 
 ## Support by phase and consumer
 
