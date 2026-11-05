@@ -181,6 +181,8 @@ export const sliceItems: CompletionEntry[] = [
     { label: 'query', insertText: 'query ${1:Name} => ${2:ReadModel}', documentation: 'Declares a read-side entry point mapping to a return type.' },
     { label: 'query observable', insertText: 'query ${1:Name} => observable ${2:ReadModel}', documentation: 'Declares a live read — the query keeps pushing as the read model changes, instead of answering once.' },
     { label: 'readmodel', insertText: 'readmodel ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares the shape of a read model — its properties — that a projection, reducer or query fills and returns.' },
+    { label: 'graph', insertText: 'graph ${1:Name}\n    node ${2:Label}\n        ${3:id} ${4:Uuid} key\n    edge ${5:TYPE} source ${2:Label} target ${2:Label}', documentation: 'Declares the shape of a property graph — node labels with typed properties and the edge types between them — that a graph projection builds from events.' },
+    { label: 'projection graph', insertText: 'projection ${1:Name} => graph ${2:Graph}\n    node ${3:Label}\n        from ${4:EventType} key ${5:\$eventSourceId}', documentation: 'Declares how events project onto a property graph.' },
     { label: 'reducer', insertText: 'reducer ${1:Name} => ${2:ReadModel}\n    on ${3:EventType}\n        ```csharp\n        ${4}\n        ```', documentation: 'Declares a reducer building a read model from events with imperative code, for what a projection cannot express.' },
     { label: 'specification', insertText: 'specification ${1:Name}\n    given ${2:EventType}\n    when ${3:Command}\n    then ${4:EventType}', documentation: 'Given/when/then acceptance criteria for the slice.' },
     { label: 'projection', insertText: 'projection ${1:Name} => ${2:ReadModel}\n    from ${3:EventType}', documentation: 'Declares how events project into a read model (PDL).' },
@@ -322,6 +324,8 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'given readmodel', insertText: 'given readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior read model state directly.' },
     { label: 'when', insertText: 'when ${1:CommandType}\n    ${2:property} = ${3:value}', documentation: 'The command being exercised.' },
     { label: 'then', insertText: 'then ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event expected to be produced by the command.' },
+    { label: 'given graph', insertText: 'given graph ${1:Graph}\n    has node ${2:Label} ${3:"key"}', documentation: 'Seeds nodes and edges in a graph before the action.' },
+    { label: 'then graph', insertText: 'then graph ${1:Graph}\n    has node ${2:Label} ${3:"key"}', documentation: 'Asserts the nodes and edges a graph holds after the action; `no node` and `no edge` assert absence.' },
     { label: 'then readmodel', insertText: 'then readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected after the command.' },
     { label: 'then no readmodel', insertText: 'then no readmodel ${1:ReadModelType} for ${2:key}', documentation: 'Asserts that precisely one keyed read-model instance does not exist; another key may still be present.' },
     { label: 'then query', insertText: 'then query ${1:QueryName}\n    arguments\n        ${2:argument} = ${3:value}\n    result\n        ${4:property} = ${5:value}', documentation: 'The ordered query results expected for explicit arguments. Remove the result block to assert an empty result.' },
@@ -520,7 +524,7 @@ export { moduleScopeItems as moduleItems, featureScopeItems as featureItems } fr
 // What a slice of each type can hold. A slice of an unknown type keeps everything.
 const sliceMembers: Record<string, readonly string[]> = {
     StateChange: ['operation', 'file', 'description', 'event', 'event generation', 'command', 'constraint', 'screen', 'specification'],
-    StateView: ['file', 'description', 'readmodel', 'query', 'query observable', 'projection', 'reducer', 'screen', 'specification', 'event', 'event generation'],
+    StateView: ['file', 'description', 'readmodel', 'graph', 'projection graph', 'query', 'query observable', 'projection', 'reducer', 'screen', 'specification', 'event', 'event generation'],
     Automation: ['operation', 'file', 'description', 'reaction', 'reducer', 'command', 'event', 'event generation', 'readmodel', 'specification'],
     Translate: ['file', 'description', 'capture', 'event', 'event generation', 'specification'],
 };
