@@ -3,8 +3,8 @@
 
 #if DEBUG
 using Cratis.Screenplay.Semantics;
-using Cratis.Screenplay.Semantics.Serialization.given;
 using Cratis.Screenplay.Semantics.for_SemanticModelBinder.given;
+using Cratis.Screenplay.Semantics.Serialization.given;
 
 namespace Cratis.Screenplay.Printing.for_ScreenplayPrinter;
 
