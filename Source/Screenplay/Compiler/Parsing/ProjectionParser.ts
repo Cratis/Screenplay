@@ -13,6 +13,7 @@ import { parseProjectionExpression } from './ProjectionExpressionParser';
 import { validateProjectionEventScopes } from './ProjectionEventScopeValidator';
 import { isFileDirective } from './FileReferences';
 import { parseDescription } from './DescriptionParser';
+import { isGraphProjectionHeader } from './GraphProjectionParser';
 import { firstWord, splitTopLevel, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -44,6 +45,11 @@ const keywordMappings: Record<string, MappingKind> = {
 // properties each mapping sets and where automap is turned on or off. Keys, and where a mapping takes its
 // value from, are recognized and skipped.
 export function parseProjection(context: ParserContext, line: SourceLine): ProjectionSyntax {
+    if (isGraphProjectionHeader(line.content)) {
+        context.error(DiagnosticCodes.GraphProjectionOutsideSlice, `A graph projection '${line.content}' is declared in a slice, next to its graph`, locationOf(line));
+        context.skipBlock(line.indent);
+        return { kind: 'ProjectionSyntax', sourceOptions: context.sourceOptions, name: firstWord(line.content), readModel: null, sequence: null, autoMap: 'Inherit', blocks: [], location: locationOf(line) };
+    }
     const match = header.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidProjectionDeclaration, `Invalid projection declaration '${line.content}' - expected 'projection <Name> [=> <ReadModel>]'`, locationOf(line));
@@ -367,7 +373,7 @@ function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (chi
 
 // The property one mapping line sets, and how - the port of the C# ParseMappingLine. Exact reports
 // malformed mappings; Legacy keeps the existing skip behavior.
-function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
+export function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
     const location = locationOf(line);
     const keyword = keywordMappingPattern.exec(line.content);
     if (keyword !== null) {

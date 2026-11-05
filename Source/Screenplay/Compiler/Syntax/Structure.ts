@@ -10,6 +10,7 @@ import { AuthorizeSyntax, PersonaSyntax, StickyNoteSyntax } from './Authorizatio
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
+import { GraphProjectionSyntax, GraphSyntax } from './Graphs';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TypeSyntax } from './Declarations';
 import { ProjectionSyntax } from './Projections';
 import { PolicySyntax } from './Policies';
@@ -50,6 +51,8 @@ export interface SliceSyntax extends SyntaxNode {
     readonly constraints: readonly ConstraintSyntax[];
     readonly specifications: readonly SpecificationSyntax[];
     readonly readModels: readonly ReadModelSyntax[];
+    readonly graphs?: readonly GraphSyntax[];
+    readonly graphProjections?: readonly GraphProjectionSyntax[];
     readonly screens: readonly ScreenSyntax[];
 }
 
