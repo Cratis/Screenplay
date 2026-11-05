@@ -5,7 +5,7 @@ description: This Cratis Screenplay tutorial models borrowing a library book in 
 
 Write a Cratis Screenplay model for borrowing a library book, from the command that requests it to the event and the screen showing books on loan. You will use editor completions and diagnostics as you connect the declarations, including finding and fixing a missing authorization policy.
 
-This tutorial ends with a readable `.play` model. It does not run or deploy an application.
+This tutorial ends with a readable, language-neutral `.play` model. It does not run or deploy an application, and you do not need to choose a C#, Java, or other rendering target to follow it. The editor setup below uses Node.js and Yarn; the separate [command-line tool](tool.md) offers local .NET and container installation paths.
 
 ## Before you start
 
