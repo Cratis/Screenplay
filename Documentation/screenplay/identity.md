@@ -1,6 +1,6 @@
 ---
 title: Identity details
-description: Declare typed caller details from claims, queries or opaque implementations with the identity block, as authoring metadata that leaves token built-ins unchanged.
+description: Declare typed caller details in Screenplay identity blocks using claims, queries or opaque sources, and understand their authoring-only boundaries.
 ---
 
 A caller's token may identify the person without carrying their department or organization. Use the

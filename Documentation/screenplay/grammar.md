@@ -5,17 +5,15 @@ description: "Reference for Screenplay syntax details: declarative file use, key
 
 # Grammar
 
-> Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+This grammar describes how to write Screenplay documents: which declarations and directives can appear,
+what they contain, and how they fit together. It uses EBNF to spell out the syntax rather than describe
+runtime behavior.
 
-> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths remain refused with `PLAY0268`, and attached file/inline handler routes require a constrained implementation attachment (`PLAY0800`). Pending command handler intents with unconditional `produces` select ESM v23: the body owns payload values and `produces` doubles as result contract v1 (`PLAY0695`). No productions and conditional productions refuse binding with `PLAY0696` and `PLAY0697`. Production route overrides and reaction/reducer observer filters select ESM v10. Flat composite read-model keys, complete caller-supplied optional single-instance queries by parts, and root projection/removal parts keys select ESM v27. Collection by-block queries, context-sourced parts and non-optional single-instance returns remain `PLAY0268`. New concurrency flags, occurrence time and constraint scopes remain unadmitted.
-
-> Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, and explicit query scopes remain unadmitted (`PLAY0268`). A query a performer answers is opaque realization metadata (`PLAY0270`, informational): it is left out of executable queries and specifications rather than refused. Collection specification rows compare without regard to order. See [Queries](queries.md).
-
-Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern (String), random (Int) and constrained `generate rule` are admitted at ESM v21; a named rule needs an unmarked String concept and exactly one file or tagged inline body, and binds as an implementation requirement. Sequence is reserved. Generation breadth is tracked in [#614](https://github.com/Cratis/Screenplay/issues/614). Rules on generated concepts select ESM V20 and report Proven, Refuted (`PLAY0688`) or Unproven (`PLAY0689`) consistency. Explicit generation with compliance markers remains refused. See [Generated values](generated-values.md).
-
-Event `id` pins that differ from the display name select ESM v16 and carry the effective stored type name as `storedName`; equal-name pins keep the earlier version and bytes. Invalid identifier pins, generation disagreements and duplicate stored names are binding errors. See [Events](events.md).
-
-The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
+`INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends.
+PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language;
+the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
+Not every syntax form can execute; see [Executable-model support and diagnostics](#executable-model-support-and-diagnostics)
+for the version requirements and refusals.
 
 For the symbols that look like programming-language syntax (`Type[]`, the three `=>` arrows, `==`, backtick templates, `$` value sources, the `@` escape) and why they are kept, see [Notation conventions](notation.md).
 
@@ -1912,6 +1910,21 @@ AnyLine        = ? any text until newline ? ;
 ```
 
 Descriptions on concepts, policies, constraints, projection headers, screens and forms are report-only body metadata. The canonical forms above put them first, before `file`; source may place them later. They never satisfy a policy implementation, constraint rule or projection directive requirement, and do not add markdown `documentation` to these kinds. In an enum, bare `description` without an indented fence remains a value and prints as `@description`.
+
+## Executable-model support and diagnostics
+
+The grammar includes authoring forms that are not executable. These notes describe which forms are
+admitted by the executable semantic model (ESM) and which diagnostics apply.
+
+> Systems, operations, operation phases and their specification forms in this grammar are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+
+> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths remain refused with `PLAY0268`, and attached file/inline handler routes require a constrained implementation attachment (`PLAY0800`). Pending command handler intents with unconditional `produces` select ESM v23: the body owns payload values and `produces` doubles as result contract v1 (`PLAY0695`). No productions and conditional productions refuse binding with `PLAY0696` and `PLAY0697`. Production route overrides and reaction/reducer observer filters select ESM v10. Flat composite read-model keys, complete caller-supplied optional single-instance queries by parts, and root projection/removal parts keys select ESM v27. Collection by-block queries, context-sourced parts and non-optional single-instance returns remain `PLAY0268`. New concurrency flags, occurrence time and constraint scopes remain unadmitted.
+
+> Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, and explicit query scopes remain unadmitted (`PLAY0268`). A query a performer answers is opaque realization metadata (`PLAY0270`, informational): it is left out of executable queries and specifications rather than refused. Collection specification rows compare without regard to order. See [Queries](queries.md).
+
+Concept `generate` strategies uuid, uuidv7, ulid, typeid, nanoid and bytes are admitted by ESM v15. Unmodified Uuid `generate uuid` is the implicit default and selects no new version. Pattern (String), random (Int) and constrained `generate rule` are admitted at ESM v21; a named rule needs an unmarked String concept and exactly one file or tagged inline body, and binds as an implementation requirement. Sequence is reserved. Generation breadth is tracked in [#614](https://github.com/Cratis/Screenplay/issues/614). Rules on generated concepts select ESM V20 and report Proven, Refuted (`PLAY0688`) or Unproven (`PLAY0689`) consistency. Explicit generation with compliance markers remains refused. See [Generated values](generated-values.md).
+
+Event `id` pins that differ from the display name select ESM v16 and carry the effective stored type name as `storedName`; equal-name pins keep the earlier version and bytes. Invalid identifier pins, generation disagreements and duplicate stored names are binding errors. See [Events](events.md).
 
 ## Declarative first — `file` is never required
 
