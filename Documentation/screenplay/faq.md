@@ -15,7 +15,7 @@ A Screenplay is a script for a production, so its file is a `.play`. The name is
 
 ## Do I still write C#, TypeScript, or React?
 
-Yes, where the behavior needs an implementation rather than a declarative rule. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference. Keep the contract and its specifications in Screenplay; attach the code needed to realize it. Built-in inline tags are `csharp`, `java`, `typescript`, `react`, `html`, and `sql`. A recognized tag does not mean every target can execute it: Java is for targets that render Java, such as Axon, and the Cratis target refuses Java bodies. See [Sub-languages and inline code](sub-languages.md) for the attachment boundary.
+Yes, where the behavior needs an implementation rather than a declarative rule. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference. Keep the contract and its specifications in Screenplay; attach the code needed to realize it. Built-in inline tags are `csharp`, `java`, `typescript`, `react`, `html`, and `sql`. A recognized tag does not mean every target can execute it: Java is for targets that render Java, such as [Axon](https://github.com/Cratis/Stage.Axon), and the [Cratis target](/stage/reference/stage-rendering/) refuses Java bodies. Likewise, a template that emits text in a language is not evidence that a Stage renderer can execute it. See [Sub-languages and inline code](sub-languages.md) for the attachment boundary.
 
 ## What are Stage and Studio?
 

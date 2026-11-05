@@ -7,6 +7,8 @@ Cratis Screenplay describes business behavior in a portable `.play` model that p
 
 Use this page to understand how the declarations fit together and find their language reference. To write a small model first, follow [Getting started](getting-started.md). If you are deciding what to model, read [Why Screenplay](why-screenplay.mdx).
 
+Screenplay modeling is language-neutral. A model does not select C# as its implementation language; rendering targets decide how to realize it, and code attachments must match the target that consumes them. See [Sub-languages and inline code](sub-languages.md) for the supported tags and target boundary.
+
 The compiler binds declarations to an executable semantic model (ESM), a versioned description of their meaning. Where Cratis Chronicle supplies runtime behavior, the ESM follows it using portable names. Tools that consume the ESM must preserve that meaning and explicitly admit the versions and capabilities they support. A valid declaration does not establish that every target can execute it.
 
 To check scenarios without a target runtime, use the [reference execution path](specifications.md#reference-execution). It runs admitted capabilities in memory without starting Arc, Chronicle, a database, or a network service. Its projection behavior still follows Chronicle.
