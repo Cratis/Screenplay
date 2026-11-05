@@ -88,6 +88,11 @@ public partial class ScreenplayPrinter
                 WriteSpecificationReadModel(writer, "given", given);
             }
 
+            foreach (var given in specification.GivenGraphs)
+            {
+                WriteSpecificationGraph(writer, "given", given);
+            }
+
             foreach (var capture in specification.GivenCaptures)
             {
                 WriteSpecificationBlock(writer, $"given capture {capture.Capture}", capture, capture.Record);
@@ -221,6 +226,11 @@ public partial class ScreenplayPrinter
                 {
                     WriteSpecificationError(writer, error);
                 }
+            }
+
+            foreach (var then in specification.ThenGraphs)
+            {
+                WriteSpecificationGraph(writer, "then", then);
             }
 
             foreach (var invocation in specification.ThenInvocations)

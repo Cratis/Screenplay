@@ -49,6 +49,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationReadModel(readModel);
         }
 
+        foreach (var graph in syntax.GivenGraphs)
+        {
+            VisitSpecificationGraph(graph);
+        }
+
         if (syntax.When is not null)
         {
             VisitSpecificationCommand(syntax.When);
@@ -88,6 +93,11 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var absent in syntax.ThenAbsentReadModels)
         {
             VisitSpecificationAbsentReadModel(absent);
+        }
+
+        foreach (var graph in syntax.ThenGraphs)
+        {
+            VisitSpecificationGraph(graph);
         }
 
         foreach (var query in syntax.ThenQueries)

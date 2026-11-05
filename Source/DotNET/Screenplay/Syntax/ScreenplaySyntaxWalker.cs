@@ -708,6 +708,16 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitReadModel(readModel);
         }
 
+        foreach (var graph in syntax.Graphs)
+        {
+            VisitGraph(graph);
+        }
+
+        foreach (var graphProjection in syntax.GraphProjections)
+        {
+            VisitGraphProjection(graphProjection);
+        }
+
         foreach (var reducer in syntax.Reducers ?? [])
         {
             VisitReducer(reducer);

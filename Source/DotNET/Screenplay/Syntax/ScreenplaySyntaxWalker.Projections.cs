@@ -80,6 +80,18 @@ public abstract partial class ScreenplaySyntaxWalker
             case ProjectionVariantSyntax variant:
                 VisitProjectionVariant(variant);
                 break;
+            case GraphNodeBlockSyntax graphNode:
+                VisitGraphNodeBlock(graphNode);
+                break;
+            case GraphEdgeBlockSyntax graphEdge:
+                VisitGraphEdgeBlock(graphEdge);
+                break;
+            case GraphFromSyntax graphFrom:
+                VisitGraphFrom(graphFrom);
+                break;
+            case GraphRemoveSyntax graphRemove:
+                VisitGraphRemove(graphRemove);
+                break;
             default:
                 VisitNode(syntax);
                 break;

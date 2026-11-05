@@ -181,6 +181,16 @@ public record SpecificationSyntax(
     /// Gets the commands the slice's reactions are expected to invoke, stated with <c>then invokes &lt;Command&gt;</c>, in authored order (ESM v34).
     /// </summary>
     public IEnumerable<SpecificationInvocationSyntax> ThenInvocations { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>given graph</c> steps seeding graphs before the action.
+    /// </summary>
+    public IEnumerable<SpecificationGraphSyntax> GivenGraphs { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>then graph</c> steps asserting graph contents after the action.
+    /// </summary>
+    public IEnumerable<SpecificationGraphSyntax> ThenGraphs { get; init; } = [];
 }
 
 /// <summary>
@@ -391,4 +401,64 @@ public record SpecificationErrorSyntax(string? Name, SourceLocation Location) : 
     /// Gets the String parameter supplying the expected rejection message.
     /// </summary>
     public CaseValueExpressionSyntax? CaseValue { get; init; }
+}
+
+/// <summary>
+/// A <c>given graph</c> or <c>then graph</c> step - the nodes and edges a specification seeds or asserts in a graph.
+/// </summary>
+/// <param name="Graph">The name of the graph.</param>
+/// <param name="Elements">The <see cref="SpecificationGraphElementSyntax">node and edge steps</see>.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the step.</param>
+public record SpecificationGraphSyntax(
+    string Graph,
+    IEnumerable<SpecificationGraphElementSyntax> Elements,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// A node or edge line of a <see cref="SpecificationGraphSyntax"/>.
+/// </summary>
+/// <param name="Absent">Whether the line asserts the element is absent (<c>no node</c> / <c>no edge</c>) rather than present (<c>has</c>).</param>
+/// <param name="Properties">The property values the element holds.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the line.</param>
+public abstract record SpecificationGraphElementSyntax(
+    bool Absent,
+    IEnumerable<PropertyMappingSyntax> Properties,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// A <c>has node &lt;Label&gt; &lt;key&gt;</c> or <c>no node &lt;Label&gt; &lt;key&gt;</c> line.
+/// </summary>
+/// <param name="Label">The node label.</param>
+/// <param name="Key">The node key.</param>
+/// <param name="Absent">Whether the node is asserted absent.</param>
+/// <param name="Properties">The property values the node holds.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the line.</param>
+public record SpecificationGraphNodeSyntax(
+    string Label,
+    ExpressionSyntax Key,
+    bool Absent,
+    IEnumerable<PropertyMappingSyntax> Properties,
+    SourceLocation Location) : SpecificationGraphElementSyntax(Absent, Properties, Location);
+
+/// <summary>
+/// A <c>has edge &lt;TYPE&gt; from &lt;source&gt; to &lt;target&gt;</c> or <c>no edge ...</c> line.
+/// </summary>
+/// <param name="Type">The edge type.</param>
+/// <param name="Source">The key of the source node.</param>
+/// <param name="Target">The key of the target node.</param>
+/// <param name="Absent">Whether the edge is asserted absent.</param>
+/// <param name="Properties">The property values the edge holds.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the line.</param>
+public record SpecificationGraphEdgeSyntax(
+    string Type,
+    ExpressionSyntax Source,
+    ExpressionSyntax Target,
+    bool Absent,
+    IEnumerable<PropertyMappingSyntax> Properties,
+    SourceLocation Location) : SpecificationGraphElementSyntax(Absent, Properties, Location)
+{
+    /// <summary>
+    /// Gets the value of the identifying edge property, when the edge declares <c>identified by</c>.
+    /// </summary>
+    public ExpressionSyntax? Identity { get; init; }
 }

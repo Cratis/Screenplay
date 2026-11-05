@@ -1017,7 +1017,9 @@ public sealed partial class ScreenplayPrinter :
 
             // A read model comes before whatever builds it - the shape first, then where it comes from.
             AddSeparatedMembers(members, writer, slice.ReadModels ?? [], 5, WriteReadModel);
+            AddSeparatedMembers(members, writer, slice.Graphs, 5, WriteGraph);
             AddSeparatedMembers(members, writer, slice.Projections, 6, WriteProjection);
+            AddSeparatedMembers(members, writer, slice.GraphProjections, 6, WriteGraphProjection);
             AddSeparatedMembers(members, writer, slice.Reducers ?? [], 7, WriteReducer);
             AddSeparatedMembers(members, writer, slice.Captures, 8, WriteCapture);
             AddSeparatedMembers(members, writer, slice.Reactions, 9, WriteReaction);
