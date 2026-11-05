@@ -34,3 +34,5 @@
   href: semantic-model.md
 - name: Grammar (EBNF)
   href: grammar.md
+- name: Graph Projections
+  href: graphs.md

@@ -65,6 +65,8 @@
   href: queries.md
 - name: Read models
   href: readmodels.md
+- name: Graphs
+  href: graphs.md
 - name: Contexts
   href: context.md
 - name: Projections
