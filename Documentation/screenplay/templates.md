@@ -277,7 +277,7 @@ instance InvoiceList
 
 The instance must be a screen, screen template or dialog template (`PLAY0626`). Storing a value no exposure exposes is `PLAY0627`; using `set` on a collection or `items` on a single value is `PLAY0628`. These map to Scene's `ExposureDeclaration` and `InstanceContribution`.
 
-Once the slots and template choices are in place, [arrange them](layout-arrangement.md) to control how they share space, or [fill them from a screen](screens.md#level-2-structure).
+Once the slots and template choices are in place, [arrange them](layout-arrangement.md) to control how they share space, or [fill them from a screen](screens.md#level-2--structure).
 
 ## See also
 

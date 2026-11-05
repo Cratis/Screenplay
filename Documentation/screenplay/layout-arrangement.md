@@ -98,7 +98,7 @@ An arrangement uses one mode for the whole structure, not a different mode per s
 
 Declaring a `variant` under `arrangement flow`, or a `row`/`column`/`grid` under `arrangement freeform`, is a compile-time error - the body must match the mode on the line that opened it.
 
-After choosing placement, [fill the template from a screen](screens.md#level-2-structure). The screen's bindings stay the same across the size variants you declared.
+After choosing placement, [fill the template from a screen](screens.md#level-2--structure). The screen's bindings stay the same across the size variants you declared.
 
 ## See also
 
