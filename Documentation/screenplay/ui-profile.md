@@ -1,11 +1,13 @@
 ---
-title: "UI profile"
-description: "Declare a Screenplay ui profile that names the platforms an application targets, its shell and the component packages it draws from."
+title: "Cratis Screenplay UI profile configuration"
+description: "A Cratis Screenplay UI profile selects target platforms, an application shell, component packages and appearance without tying screens to one renderer."
 ---
 
 # UI profile
 
-Screenplay's screen and template constructs are platform-agnostic on purpose - the same `screen` should work on the web, on a phone, and on desktop. Something still has to say which platforms an application targets, which shell it renders inside, and which component packages (PrimeReact, an internal widget library, ...) a build resolves widget names against. That is `ui profile`.
+A Cratis Screenplay `ui profile` declares where an application's screens are intended to appear and which shell, component packages and visual settings a consumer should use. Keep these choices in the profile so a screen can describe its task without naming a target platform.
+
+A tool such as Stage reads these settings from the model; the profile itself does not supply a renderer or make a component library available on every platform. Before choosing packages, check that the consuming host supports the target and can load those packages. The platform names in this page's examples are declarations, not a list of implemented targets.
 
 ## Syntax
 
@@ -47,21 +49,61 @@ ui profile <Name>
     bind <ReadModel> to <Pack>
 ```
 
-- `ui profile <Name>` - top level, alongside authentication, modules and everything else. A document can declare more than one; each name must be unique.
-- `target platform` - the platform(s) this profile targets, e.g. `web`, `ios`, `android`. At most one per profile.
-- `target size` - the size class assumed by default: `compact`, `regular` or `expanded` (Apple/Material-style named classes, not raw pixel breakpoints - a narrow browser window and a compact phone are "the same" class, and a raw breakpoint means nothing on native). At most one per profile. The two-axis width x height matrix a `layout` resolves against is a separate, more specific concern.
-- `packages` - the component packages this profile draws from, one per line, in **override-priority order**: a later package's `Button` shadows an earlier one's on a name collision. A package that is a blueprint can also be named by a `template blueprint <Blueprint> <Name>` reference (see [Layouts and templates](templates.md#own-and-blueprint-templates)); a reference to a blueprint no profile lists is `PLAY0722`. `core`, the built-in vocabulary (`button`, `table`, `form`, `title`, ...), is always the final fallback regardless of what a profile lists here.
-- `icons` - the icon sets or packages this profile makes available to `icon <name>` references on components, toolbar items and actions. The compiler preserves the list; Stage checks whether the selected packages can resolve each icon.
-- `theme` - the visual theme this profile applies. Optional, at most one per profile. A theme is only meaningful relative to a specific set of packages - see [Theme](theme.md) for how that compatibility is declared and checked. The name is an identifier, or a quoted string for a theme a package provides whose display name is not one (`theme "Scene Default Light"`). A quoted name refers to a package-provided theme and is not checked against the theme declarations in the document.
-- `sample data` - which sample data the whole application previews with: the active pack, chosen **once here** and inherited by every screen, slice and component, plus the rare shape-to-read-model mappings and per-read-model bindings. Optional, at most one per profile. It is design and preview time only and never part of a production build. See [Sample data](sample-data.md).
-- `root template` - the template the whole application is drawn in: every screen's template chain is placed in its primary outlet. The reference is the one a `template` assignment uses - an own layout or application-scope screen template by name, or a template a blueprint ships, `blueprint <Blueprint> <Name>`, with an optional `version "<range>"` pin (a version range only applies to a blueprint template; `PLAY0788` otherwise). Optional, at most one per profile (`PLAY0798`). The template has to exist (`PLAY0790`), be usable as the shell - a layout, or a screen template that declares `scopes application` and fits no slot (`PLAY0794`) - and have a `content` slot (`PLAY0795`); a blueprint it comes from has to be in the profile's `packages` (`PLAY0792`). See [Layouts and templates](templates.md#own-and-blueprint-templates).
-  - `option <name> <value>` - one of the shell's own configurable items, for example `option navigationMode slim`. The value is a bare word, a quoted string, a number, `true` or `false`, kept as written. Each name is set once. The grammar only reads the line. The validator then checks the name: an own shell exposes the properties of its `exposure for <Shell>` (and a shell that exposes nothing has no options), and an option it does not expose is `PLAY0796`. A blueprint shell's options are checked against the installed catalog (see below).
-- `identity` - what the application calls itself and the mark it wears: `name "<text>"` (the application's own name when left out), `logo initials "<AB>"` (one or two characters), `logo icon <icon>` (one of `box`, `layers`, `home`, `users`, `receipt`, `package`, `database`, `palette`) or `logo image "<data URI>"` (a PNG, JPG, SVG or WebP as a base64 data URI of at most 400 KB), and `show name true|false` (whether the name is drawn beside the logo; shown when left out). These are Scene's identity rules; a value outside them is `PLAY0797`. Optional, at most one block per profile, each line at most once (`PLAY0789`).
-- `appearance` - how the application looks regardless of the shell: `color scheme` (`light`, `dark` or `system`), `accent "<#hex>"` (`#RGB`, `#RRGGBB` or `#RRGGBBAA`), `corners` (`sharp`, `default` or `round`) and `font <font id>` (an id from Scene's font catalog such as `inter`, `ibm-plex-sans`, `source-serif-4` or `system-ui`; a font the host does not have falls back to the system font); anything else is `PLAY0797`. Optional, at most one block per profile, each line at most once (`PLAY0789`).
-- `new screens use template` - the template a new screen starts from when it is created in a designer. It is an authoring default; it changes no existing screen. Optional, at most one per profile (`PLAY0788`). It has to name a template that can start a screen in a feature - not a layout or an application-scope root, and one whose `scopes` leave out `feature` is refused too (`PLAY0799`).
-- `layout` - the application's base navigational shell this profile renders inside. This is the older way to name the shell and stays accepted; it is reported as `PLAY0791` (a warning) with a quick fix that rewrites it to `root template <Name>`. When a `root template` is present as well, the `layout` line is ignored. Optional, at most one per profile. Naming a layout the document does not declare is reported as a warning, the same way an unknown theme is. See [Layouts and templates](templates.md).
+Declare `ui profile <Name>` at the top level. A document can contain several profiles, each with a unique name.
+
+### Targets and packages
+
+| Setting | Meaning and limits |
+| --- | --- |
+| `target platform` | The intended platforms, such as `web`, `ios` or `android`, on one comma-separated line. At most one line per profile. |
+| `target size` | The default size class: `compact`, `regular` or `expanded`. These are named classes, not pixel breakpoints. At most one per profile. A layout's width-by-height arrangement matrix is a separate, more specific choice. |
+| `packages` | Component packages, one per line, in override-priority order. Later component libraries can shadow earlier ones; see [Component name resolution](#component-name-resolution). `core` supplies the built-in vocabulary as a fallback. |
+| `icons` | Icon sets or packages for `icon <name>` references on components, toolbar items and actions. The compiler preserves the list; Stage checks icon resolution against the selected packages. |
+| `theme` | An optional theme name, once per profile. Use an identifier or a quoted display name such as `theme "Scene Default Light"`. See [Theme](theme.md) for declaration checks and package-provided names. |
+| `sample data` | An optional application-wide pack selection, shape mappings and per-read-model bindings. These apply only during design and UI previews, never in production builds. See [Sample data](sample-data.md). |
+
+A package that supplies reusable templates is a blueprint. Reference one with `template blueprint <Blueprint> <Name>`; a blueprint that no profile lists produces `PLAY0722`. See [Layouts and templates](templates.md#own-and-blueprint-templates).
+
+### Application shell and new screens
+
+`root template` selects the shell surrounding every screen's template chain. It can name a layout or an application-scope screen template from the document, or a blueprint template using `blueprint <Blueprint> <Name>`. An optional `version "<range>"` pin applies only to blueprint templates; using it on an own template produces `PLAY0788`.
+
+A profile can have one root template (`PLAY0798` for a duplicate). The template must exist (`PLAY0790`), be a layout or an application-scope screen template that fits no slot (`PLAY0794`), and provide a `content` slot (`PLAY0795`). A blueprint supplying the root must appear in the profile's `packages` (`PLAY0792`).
+
+Under the root, `option <name> <value>` configures an item the shell exposes. Values can be bare words, quoted strings, numbers, `true` or `false`, and each option name is set once. For an own shell, the validator checks options against the properties in `exposure for <Shell>`; a shell without an exposure has no options. An unknown option produces `PLAY0796`. Blueprint options require the installed catalog described below.
+
+`new screens use template` sets a designer's starting template without changing existing screens. It is optional and can appear once (`PLAY0788` for a duplicate). The template must be able to start a screen in a feature. Layouts, application-scope roots and templates whose `scopes` exclude `feature` are refused with `PLAY0799`.
+
+The older `layout <Name>` selection remains accepted, once per profile. It produces warning `PLAY0791` and a quick fix to `root template <Name>`. If both are present, `root template` takes precedence. An undeclared layout produces a warning. See [Layouts and templates](templates.md).
+
+### Identity and appearance
+
+Use `identity` for the application's displayed name and logo. The block is optional; each setting can appear once. Duplicate blocks or settings produce `PLAY0789`.
+
+| Identity setting | Accepted values and defaults |
+| --- | --- |
+| `name "<text>"` | Display name; defaults to the application's name. |
+| `logo initials "<AB>"` | One or two characters. |
+| `logo icon <icon>` | `box`, `layers`, `home`, `users`, `receipt`, `package`, `database` or `palette`. |
+| `logo image "<data URI>"` | PNG, JPG, SVG or WebP, as a base64 data URI of at most 400 KB. |
+| `show name true\|false` | Whether to show the name beside the logo; shown by default. |
+
+Use `appearance` for shell-independent visual choices. It is also optional, with one block and one line per setting (`PLAY0789` for duplicates).
+
+| Appearance setting | Accepted values |
+| --- | --- |
+| `color scheme` | `light`, `dark` or `system`. |
+| `accent "<#hex>"` | `#RGB`, `#RRGGBB` or `#RRGGBBAA`. |
+| `corners` | `sharp`, `default` or `round`. |
+| `font <font id>` | A Scene font catalog ID, such as `inter`, `ibm-plex-sans`, `source-serif-4` or `system-ui`. An unavailable font falls back to the system font. |
+
+Identity and appearance values outside Scene's rules produce `PLAY0797`.
 
 ## Example
+
+The desktop profile below selects an application shell, dark appearance and a package chain. The mobile profile declares a different target and size without changing any screen.
+
+This is a configuration fragment: the shell option assumes an `exposure for AppShell` declaring `navigationMode`, which is not shown. Without that exposure, the option produces `PLAY0796`.
 
 ```screenplay
 layout AppShell
@@ -108,27 +150,39 @@ ui profile Mobile
 
 ## A screen never declares its profile
 
-Profile selection is a build/Stage concern, not something a `screen` states about itself. The same screen resolves against different package chains per build - that is what keeps a Level 1/2 screen genuinely portable across web, mobile and desktop rather than tied to one target.
+The consuming build or host selects the profile; a `screen` does not select one for itself. This keeps screen declarations reusable across package chains. Whether a screen can render on a particular target still depends on the host's renderer and the components that target supports.
 
 ## Component name resolution
 
-A profile's `packages` list is resolved the same way as any other bare name in Screenplay (see [Visitors and traversal](visitors.md) for the general inside-out walk this reuses): a bare widget name checks the active packages in declaration order, and a name matching two packages equally well is reported the same way an ambiguous query reference is - named candidates, not a silent pick. A widget already in `core` (a button, say) always resolves without qualification; one that only exists in a package further down the list, like an internal chart widget, has to be qualified by that package's name to be found at all.
+Scene's package resolver searches a bare component name from highest to lowest package priority. The last matching package wins, and the result records the packages it shadows. A name available in only one active package needs no qualification, even if that package appears late in the list.
 
-Screenplay's own compiler has no visibility into what widgets a package like PrimeReact or an internal library actually defines - that catalog is external to the document. Resolving a bare widget name against it, and reporting the resulting ambiguity, is therefore a build-time concern owned by Stage and the package resolution engine, not something the Screenplay compiler itself checks. What the compiler does validate at compile time is the profile declaration itself: a profile name, or a package within one profile's list, is never allowed to be declared twice.
+Use a qualified name such as `Internal.Widgets.TrendChart` when you want that package's component explicitly. Qualification bypasses the priority search. In the host package chain, `core` is the fallback, component libraries follow in their declared order, and blueprints have priority over those libraries.
+
+These rules use the consumer's component catalog. Screenplay's compiler cannot inspect the widgets that PrimeReact or an internal library implements. It checks the declaration, including duplicate profile names and duplicate packages within a profile; package resolution belongs to the consuming host and Scene engine.
 
 ## Checking a shell against the installed blueprints
 
-The compiler decides everything the document alone decides. What a blueprint ships - its templates, their kind, slots and options, and the
-version installed - is only known where the blueprint is installed. A host that knows (Stage, the CLI, the MCP server) passes its catalog to
-`UiProfileShellBinder.Bind(application, blueprints)`, which reports the rest with the same codes and messages: `PLAY0790` for a template the
-blueprint does not ship, `PLAY0792` for a blueprint that is not installed, `PLAY0793` for a `version` pin the installed version does not
-satisfy, `PLAY0794` and `PLAY0795` for a template that cannot be the shell or has no `content` outlet, `PLAY0796` for an option the
-shell does not expose, and `PLAY0799` for a `new screens use template` that cannot start a screen in a feature. The rules are the same
-ones the compiler runs - there is no second rule set - and they restate Scene's `ShellResolver` and `TemplateApplicability`.
+For an own shell, the compiler can inspect the document's template and exposure declarations. A blueprint shell needs an additional check against what is installed: its template kinds, slots, options and version.
+
+A host with that catalog passes it to `UiProfileShellBinder.Bind(application, blueprints)`. The binder applies the shell rules used by the compiler, corresponding to Scene's `ShellResolver` and `TemplateApplicability`:
+
+| Diagnostic | Reported when |
+| --- | --- |
+| `PLAY0790` | The blueprint does not ship the named template. |
+| `PLAY0792` | The blueprint is not installed. |
+| `PLAY0793` | The installed version does not satisfy the profile's `version` pin. |
+| `PLAY0794` | The template cannot serve as the application shell. |
+| `PLAY0795` | The shell has no `content` outlet. |
+| `PLAY0796` | The shell does not expose the named option. |
+| `PLAY0799` | The new-screen default cannot start a screen in a feature. |
+
+A profile that parses successfully has not necessarily passed these installed-package checks.
 
 ## Conversion and conformance corpus
 
-A `ui profile` is a `UiProfileSyntax` in the syntax tree and in syntax JSON (`root`, `options`, `identity`, `appearance` and `newScreenTemplate` are all modelled, so a profile round trips through print, parse and JSON without loss). It is deferred from the backend semantic model (`PLAY0269`): hosts that turn a document into a running application read the profile from the syntax tree. The mapping to Scene's `UiProfile` lives in Stage's `UiProfileConverter`, not here: `root template` becomes `root` (a template reference with its options and version pin), `appearance` becomes `appearance`, `new screens use template` becomes `defaults.newScreenTemplate`, and a legacy `layout` line converts to `root` when the layout resolves.
+The C# compiler represents a profile as `UiProfileSyntax`, preserving `root`, `options`, `identity`, `appearance` and `newScreenTemplate` through printing, parsing and syntax JSON. The backend executable semantic model defers UI profiles (`PLAY0269`); a consumer that needs UI configuration reads the syntax tree. See [Visitors and traversal](visitors.md) for working with that tree.
+
+Stage's `UiProfileConverter` maps the syntax to Scene's `UiProfile`: `root template` becomes `root`, including options and the version pin; `appearance` becomes `appearance`; and `new screens use template` becomes `defaults.newScreenTemplate`. A legacy `layout` line becomes the root when the layout resolves. This conversion carries the configuration; it does not establish renderer support for every declared platform.
 
 The canonical `screen-composition/v1` corpus pins the contract in `Cratis.Screenplay.CanonicalCorpus`:
 
@@ -140,4 +194,6 @@ The canonical `screen-composition/v1` corpus pins the contract in `Cratis.Screen
 | `ui-profile-root-not-a-shell` | `PLAY0794`, `PLAY0795` and `PLAY0799`. |
 | `ui-profile-root-invalid` | `PLAY0796` and `PLAY0797`. |
 
-The same shell rules are held to Scene's shared `effective-shell-fixtures.json` and `template-applicability-fixtures.json` vectors; the TypeScript compiler reports the legacy `layout` line (`PLAY0791`) with the same code and line as the C# compiler (`Conformance/diagnostics.json`) and offers the quick fix.
+The shell rules also have vectors in Scene's shared `effective-shell-fixtures.json` and `template-applicability-fixtures.json`. The TypeScript compiler otherwise skips UI profiles, but it reports legacy `layout` selection with `PLAY0791` and offers the quick fix. `Conformance/diagnostics.json` covers that diagnostic's code and line; it does not establish full profile-validation parity.
+
+After selecting packages and a shell, declare [theme compatibility](theme.md) and add [sample data](sample-data.md) to inspect the design with representative rows.

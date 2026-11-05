@@ -5,9 +5,9 @@ description: "Declare Screenplay forms: the input surface for a command, with fi
 
 # Forms
 
-A form accepts one quoted or fenced-text `description` body line. It prints first before `populate` and fields, as report-only authoring metadata rather than a localizable UI label. Individual fields do not gain descriptions. Markdown `documentation` is not supported here.
+A form defines how a user supplies inputs for a command. A screen's `action` exposes the command; the form supplies its fields. Declare the form once at module level with `for <Command>` so you can reuse the same input surface wherever that command is invoked.
 
-A screen's `action` directive exposes a command, but says nothing about how a user enters the data that command needs. Naming every field on the screen that invokes it would tie one input surface to one place it can be invoked from - a `form` is that input surface, declared once and reused wherever its command is.
+Use `description` to explain the form to someone reading the model. A form accepts one quoted or fenced-text description body line, which prints before `populate` and fields. It is report-only authoring metadata, not a localizable UI label. Individual fields do not accept descriptions, and forms do not support Markdown `documentation`.
 
 `populate via query ... by value` and `on submit navigate ... by value` remain scalar lookups. They cannot supply a composite read-model key. A single-instance composite lookup reports `PLAY0661`; no automatic form repair is offered. See [Read-model keys](readmodels.md#keys).
 
@@ -75,14 +75,15 @@ form RegisterInvoiceForm for RegisterInvoice
   on submit navigate to InvoiceList by invoiceId
 ```
 
+`populate via query GetInvoiceDraft by invoiceId` supplies the initial values in this example. The fields bind those values to the command's inputs; `totalAmount` takes its value from `calculatedTotal`, while `lineItems` uses the `BuildLineItems` callback. Navigation happens only after the command succeeds.
+
 ## A form is discovered, not referenced
 
-A form never appears in a screen's directive tree the way a `table` or `summary` does. It is discovered by its `for <Command>` binding wherever that command is invoked - an `action RegisterInvoice` on any screen renders `RegisterInvoiceForm` as its input surface automatically, the same way a `ui profile` is discovered by a build rather than named on a screen. This keeps one command's input surface in one place, however many screens invoke it.
+The `for RegisterInvoice` binding connects this form to its command. An `action RegisterInvoice` on any screen discovers `RegisterInvoiceForm` automatically, so you do not put the form inside a screen's directive tree as you would a `table` or `summary`. Like a `ui profile` discovered by a build, the form is selected through its binding rather than named on each screen. You maintain the command's input surface in one place.
 
 ## Populating a form
 
-- `populate via query <Query> [by <param>]` - seeds the form's initial values from a query result, the same shape a screen's `data` directive uses.
-- `populate from item` - reuses an item already bound in scope, such as the row a table's `on row-click` navigated from. No new binding mechanism - it resolves the same way every other bare name in the document does (see [How a name resolves](screens.md#how-a-name-resolves)).
+Use `populate via query <Query> [by <param>]` to seed initial values from a query result, using the same shape as a screen's `data` directive. If the item is already bound in scope, use `populate from item` instead. That can reuse the row a table's `on row-click` navigated from without introducing a new binding mechanism; the name follows the ordinary [resolution rules](screens.md#how-a-name-resolves).
 
 ## Fields
 
@@ -135,7 +136,7 @@ form RegisterInvoiceForm for RegisterInvoice
     place totalAmount row 2 column 1 columnSpan 2
 ```
 
-`compose using` remains a value-composition hook only. Do not use it to smuggle width, row or placement metadata; renderers consume `layout` for geometry.
+Keep width, row and placement information in `layout`, where renderers read the form's geometry. `compose using` computes a field value only; it does not position the field.
 
 ## Submitting
 
@@ -147,4 +148,4 @@ This form scope is not added to a screen's `action … navigate … by …` suga
 
 ## How references resolve
 
-`for <Command>`, `populate via query <Query>`, and `on submit navigate to <Screen>` all resolve the same inside-out way every other bare name in the document does (see [How a name resolves](screens.md#how-a-name-resolves)) - unresolved and ambiguous references are warnings, not errors, because a name may still resolve to something outside the document. A form sits at module level rather than inside a slice, so it disambiguates by module but not by feature or slice, since it does not sit inside either.
+`for <Command>`, `populate via query <Query>`, and `on submit navigate to <Screen>` follow the ordinary inside-out [name resolution rules](screens.md#how-a-name-resolves). A form sits at module level, so its location disambiguates by module, not by feature or slice. Unresolved and ambiguous references are warnings rather than errors because a name may still resolve to something outside the document.

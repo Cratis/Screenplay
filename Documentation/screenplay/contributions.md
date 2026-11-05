@@ -1,15 +1,17 @@
 ---
-title: "Contributions"
-description: "Let many Screenplay features each add one entry to a shared collection such as a NavBar, with contribute to and named slots."
+title: "Screenplay contributions: add feature-owned navigation"
+description: "Use contribute to in Screenplay when features need to add entries to a shared slot. Each feature declares its own link, label and order near its screens."
 ---
 
 # Contributions
 
-A NavBar needs its entries from wherever they are declared - a dozen features scattered across a dozen modules, each adding the one link it owns. A slot on its own is the wrong tool for this: a slot is one parent placing one block of content into one region, not many children contributing into a shared collection. `contribute to` is the many-to-one counterpart.
+Use Screenplay contributions when several features need to add entries to a shared navigation area without maintaining one central list. The layout or template declares a named contribution point, and each feature declares the link it owns with `contribute to`.
+
+A normal slot takes one block of content from its parent. A contribution point lets that slot collect entries from several modules or features, keeping each entry near the screens it links to.
 
 ## Syntax
 
-Slots live on the application's [`layout`](templates.md) and on every `screen template` and `dialog template`, and any of them can declare it accepts contributions under a name:
+First mark the receiving slot with `contributes <ContributionPoint>`. Slots on an application [`layout`](templates.md), `screen template` or `dialog template` can accept contributions:
 
 ```screenplay
 layout <Name>
@@ -24,7 +26,7 @@ module <Name>
     <slot-name>
 ```
 
-Anything anywhere in the module/feature tree contributes to it, without knowing or caring who is listening:
+Then add an entry on a module or feature. The entry names the contribution point, not the layout or template that receives it:
 
 ```screenplay
 contribute to <ContributionPoint>
@@ -37,6 +39,8 @@ contribute to <ContributionPoint>
 - `contribute to <ContributionPoint>` - one contributed item. Declared directly on a `module` (alongside `screen template`, `dialog template`, `form` and `feature`) or on a `feature` at any nesting depth. `navigate`, `label` and `order` are all optional. `label` accepts an unquoted `$strings.<key>` token in place of a literal - see [Internationalization](internationalization.md).
 
 ## Example
+
+The InvoiceManagement feature owns the Invoices link. Its module's `AppShell` template receives that entry in `navbar`, so adding another feature's link does not require editing the template:
 
 ```screenplay
 module Invoicing
@@ -79,11 +83,13 @@ contribute to Navigation
 
 ## How a contribution resolves
 
-A contribution attaches to the **nearest enclosing structure that declares a matching contribution point**, walking outward the same way a bare name already resolves elsewhere in the document - just through the module/feature containment tree rather than by declaration scope. Concretely: a contribution first looks for a `contributes <ContributionPoint>` slot among its **own module's** templates. A module with its own matching slot stops contributions inside it from bubbling any further - that module owns the point. Only when the module has no matching slot does the search continue outward, across every other module in the document, and finally to the application's own `layout`s, which belong to no module and are the outermost shell of all.
+The compiler first checks the contribution's own module for a template slot with the matching `contributes` name. A local match keeps the contribution within that module, including contributions declared in nested features. Multiple matching slots in the module produce an ambiguity warning.
 
-This gives three real tiers of nesting: **application-wide** (the `layout` declares the point, so every module in the document contributes into the one shell - the natural home of `Navigation`), **cross-module** (a contribution resolves to some other module's template because its own module has none that matches) and **module-level** (a module's own template claims every contribution inside it, however deeply nested in that module's features). A fourth tier - a feature declaring its own sub-shell that only its own slices contribute to - would need a template scoped to a feature rather than a module. That is a deliberate omission, not an oversight: templates are declared at module level, and a feature that wants its own sub-shell declares that template on its module and has its slices fit into it. See [Layouts and templates](templates.md).
+If there is no local match, the compiler checks matching points outside the module, including application layouts. Other modules and layouts are checked together, not as separate precedence levels. Competing matches across modules, or between a module and a layout, produce an ambiguity warning.
 
-Unresolved and ambiguous contribution points are warnings, the same as every other reference in the document: a name may still resolve to something outside the document, and the point is that the gap stays visible.
+Put an application-wide point such as `Navigation` on the layout when all modules should contribute to the shared shell. Put it on a module's template when that module should collect its own entries. Features do not declare templates; a feature that needs a separate structure uses a template declared on its module. See [Layouts and templates](templates.md).
+
+An unresolved point also produces a warning because it may resolve outside the document. Review unresolved and ambiguous points before relying on the resulting navigation.
 
 ```screenplay
 module Payments
@@ -91,12 +97,14 @@ module Payments
     navigate to InvoiceList
 ```
 
-If `Payments` has no template of its own, and two *other* modules each declare a `contributes Navigation` slot, the contribution is ambiguous - both are equally near, and nothing in the document says which one it means.
+If `Payments` has no matching point of its own and two other modules each declare a `contributes Navigation` slot, the compiler reports ambiguity. The contribution does not select one of those modules.
 
 ## Route arguments
 
-`navigate to <Screen> by <param>` is not string interpolation. It reuses the exact typed `navigate` binding a screen's `action` and `on row-click` already use, checked by the compiler the same way any other bare name is. Turning that into a URL, a query string, or a native deep link is a rendering concern the widget consuming the contribution point owns - not something the language decides.
+Use `navigate to <Screen> by <param>` to pass a typed value to the destination, not to interpolate a route string. It uses the same navigation binding as a screen's `action` and `on row-click`, with compiler name checks. The widget consuming the contribution point decides how that binding becomes a URL, query string or native deep link.
 
 ## Scope
 
-`Navigation` is the mechanism's first user, not the whole of it - a widget declares whatever contribution point name and shape it needs, and `contribute to <Name>` opens a property bag shaped by that name. This version of the mechanism ships with `navigate`, `label` and `order`; ordering by a `group` beyond a flat list, and an explicit override for the rare case where nearest-enclosing is not the contribution point a contributor means, are intentionally left for a later iteration.
+`Navigation` is a contribution point name, not a reserved destination. You can name another point, but entries still use the supported directives described above; the name does not define a new property schema. Grouped ordering beyond a flat list and an explicit override for contribution-point resolution are not supported.
+
+For a topbar or sidebar with nested destinations and module inheritance, continue with [navigation regions](navigation.md). For a screen that fills one slot directly, use [layouts and templates](templates.md).

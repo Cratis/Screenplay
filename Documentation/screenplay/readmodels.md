@@ -1,38 +1,17 @@
 ---
-title: "Read models"
-description: "Declare a Screenplay read model by name and shape, with keys and reducers, even when no projection builds it."
+title: "Cratis Screenplay read models: shape queryable state"
+description: "A Screenplay read model names a view and its properties. Declare instance keys, choose a projection or reducer, and expose the state through a query."
 ---
 
 # Read models
 
-A [projection](projections/index.md) says how state is built from events, and until now that was the only way a read model appeared in a document — as the name on the right of an arrow. A view nothing declarative could build had nowhere to go at all: no way to name it, no way to say what it holds, no way to say what folds into it.
+A Cratis Screenplay read model names a view and the properties it holds. Use it to describe the state a caller needs to read, or the state a command needs to make a decision. A [projection](projections/index.md) explains how events build that view; the `readmodel` declaration lets you define its shape independently.
 
-`readmodel` gives it somewhere.
+Start with the properties and [instance key](#keys). Use a projection for declarative event mappings, or a [reducer](#reducers) when folding an event needs code. Then [declare a query](queries.md) to expose the view, or a command's [`reads`](commands.md#what-the-command-reads) dependency to use it in a decision.
+
+Execution tools consume a normalized executable semantic model (ESM). A declaration records the intended shape; the limits below explain which types and state-building behavior that model can carry.
 
 A read model can also carry one nonempty fenced `markdown` `documentation` block to explain why this view has its chosen shape or excludes certain facts. It is authoring-only (`PLAY0270`), with no executable effect. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
-
-## Passive decision state
-
-A bare `passive` line opts a read model into replay on demand for command decisions instead of materializing it in a sink. The default is active: passivity is never inferred from how a model happens to be used. Properties named `passive` still work (`passive Bool`); `readmodel Name passive` and `passive true` are not directives.
-
-```screenplay
-module Billing
-  feature Invoices
-    slice StateChange Register
-      readmodel RegistrationState
-        passive
-        invoiceId Uuid
-        registered Bool
-      command RegisterInvoice
-        invoiceId Uuid identifier
-        reads RegistrationState by invoiceId
-```
-
-Only commands may read a passive model. A query returning it, including collections, optional and observable results, or a screen binding it as data is Error `PLAY0859`. A passive model no command reads is Warning `PLAY0860`; repeating the directive is an idempotent Warning `PLAY0858`. These usage checks run in C#; the TypeScript parser retains the directive and reports repeats but does not run the usage checks.
-
-This is realization metadata, not portable execution semantics. Syntax JSON carries `isPassive: true` and omits false; absent means active. The native binder reports Information `PLAY0270` and exposes canonical read-model identities through `SemanticCompilation.PassiveReadModels`, not `SemanticReadModel`. Toggling the directive changes neither ESM bytes, canonical JSON nor revision. Consumers must carry the sidecar in hashed render input (the `AuthoringMetadataInput` pattern) and runtime `ApplicationRealization`. A portable ESM alone does not preserve it. Stage maps it to Chronicle sink `None`, `IsActive=false` and `[Passive]`; Screenplay performs no Chronicle realization.
-
-**Downgrading.** Older tools reject syntax JSON that uses `passive`, because their syntax JSON reader refuses unknown members. Before downgrading, remove the `passive` directive or re-export the model with a version that omits it. ESM bytes are unchanged either way.
 
 ## Syntax
 
@@ -110,6 +89,29 @@ An explicit single key binds byte-identically to the equivalent inferred identif
 An optional single-instance query uses a `by` block naming every part, with caller-supplied values. A collection query uses equality filters, or one ordinary `by <part> Type` line; a collection `by` block remains refused with `PLAY0268`. Context-sourced parts and non-optional single-instance returns also remain refused. Concept rules run on each supplied query part at execution; fixture state is checked for type, shape and enum membership, not concept rules.
 
 `given readmodel` and `then readmodel` state every key part. Missing parts produce `PLAY0351`. Single-instance query results may omit parts supplied by the query arguments; collection rows must state every part. A stated part that differs from an argument makes the expected row fail to match at execution, rather than failing binding. See [Specifications](specifications.md#read-model-state).
+
+## Passive decision state
+
+Use `passive` when a view exists only to help commands decide and should be replayed on demand rather than materialized for queries. The default is active; passivity is never inferred from usage. Write a bare `passive` line inside the declaration. Properties named `passive` still work (`passive Bool`); `readmodel Name passive` and `passive true` are not directives.
+
+```screenplay
+module Billing
+  feature Invoices
+    slice StateChange Register
+      readmodel RegistrationState
+        passive
+        invoiceId Uuid
+        registered Bool
+      command RegisterInvoice
+        invoiceId Uuid identifier
+        reads RegistrationState by invoiceId
+```
+
+Only commands may read a passive model. A query returning it, including collections, optional and observable results, or a screen binding it as data is Error `PLAY0859`. A passive model no command reads is Warning `PLAY0860`; repeating the directive is an idempotent Warning `PLAY0858`. These usage checks run in C#; the TypeScript parser retains the directive and reports repeats but does not run the usage checks.
+
+This is realization metadata, not portable execution semantics. Syntax JSON carries `isPassive: true` and omits false; absent means active. The native binder reports Information `PLAY0270` and exposes canonical read-model identities through `SemanticCompilation.PassiveReadModels`, not `SemanticReadModel`. Toggling the directive changes neither ESM bytes, canonical JSON nor revision. Consumers must carry the sidecar in hashed render input (the `AuthoringMetadataInput` pattern) and runtime `ApplicationRealization`. A portable ESM alone does not preserve it. Stage maps it to Chronicle sink `None`, `IsActive=false` and `[Passive]`; Screenplay performs no Chronicle realization.
+
+Older tools reject syntax JSON that uses `passive`, because their syntax JSON reader refuses unknown members. Before downgrading, remove the `passive` directive or re-export the model with a version that omits it. ESM bytes are unchanged either way.
 
 ## The arrow always points the same way
 

@@ -1,6 +1,11 @@
+---
+title: Semantic conformance test support
+description: Cratis Screenplay conformance test support compares semantic models across renderers and source adapters, then reconciles declared round-trip losses.
+---
+
 # Semantic conformance test support
 
-`Cratis.Screenplay.Conformance` is a prerelease, source-only NuGet package for
+`Cratis.Screenplay.Conformance` is a source-only NuGet package for
 renderer and source-adapter specification projects. It compiles internal types
 into the consuming project; it has no runtime assembly or public binary API.
 It is test support, not a Screenplay identity or wire-format replacement.
@@ -9,9 +14,10 @@ It is test support, not a Screenplay identity or wire-format replacement.
 <PackageReference Include="Cratis.Screenplay.Conformance" Version="VERSION-preview" PrivateAssets="all" />
 ```
 
-Use the same Screenplay version as the renderer under test. The sources require
-C# 12 or later, nullable annotations, and .NET 8 or later. No test framework is
-required by the packaged sources.
+For a Screenplay version without a suffix, replace `VERSION` with the version
+used by the renderer under test; the package adds the `-preview` suffix.
+The sources require C# 12 or later, nullable annotations, and .NET 8 or later.
+No test framework is required by the packaged sources.
 
 ## Compare meaning rather than assigned identities
 

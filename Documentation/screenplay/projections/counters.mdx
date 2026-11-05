@@ -1,21 +1,23 @@
 ---
-title: "Counters"
-description: "Count event occurrences or increment and decrement numeric read model properties with count, increment and decrement in a projection."
+title: "Screenplay counters: count events and unit changes"
+description: "Screenplay projection counters change numeric properties by one: count and increment add one, decrement subtracts one. Use arithmetic for amounts."
 ---
 
-# Counters
+<a id="counters"></a>
 
-Counters track how many times events occur or increment/decrement numeric values. The language provides three counter operations: `count`, `increment`, and `decrement`.
+Counters in a Cratis Screenplay projection change a numeric read model property by one per handled event. Use `count` to express event occurrences, `increment` for a unit increase, and `decrement` for a unit decrease. When one event carries an amount such as a stock quantity or payment value, use [arithmetic](arithmetic.md) instead.
 
 ## Count
 
-The `count` operation increments a property by 1 each time an event occurs:
+A page-view counter answers how often a page was viewed, regardless of the other data on each event. Place `count` in that event's mapping block:
 
 ```pdl
 count {Property}
 ```
 
-### Example
+<a id="example"></a>
+
+This mapping excerpt also records when the latest view occurred:
 
 ```pdl
 from PageViewed
@@ -27,13 +29,15 @@ Each `PageViewed` event increases `ViewCount` by 1.
 
 ## Increment
 
-The `increment` operation increases a property by 1:
+Use `increment` when a one-unit increase best describes the change:
 
 ```pdl
 increment {Property}
 ```
 
-### Example
+<a id="example-1"></a>
+
+For a login count, it produces the same numeric change as `count`:
 
 ```pdl
 from UserLoggedIn
@@ -43,13 +47,15 @@ from UserLoggedIn
 
 ## Decrement
 
-The `decrement` operation decreases a property by 1:
+Use `decrement` when each event represents exactly one unit leaving the total:
 
 ```pdl
 decrement {Property}
 ```
 
-### Example
+<a id="example-2"></a>
+
+This excerpt treats each `ItemConsumed` event as one item consumed:
 
 ```pdl
 from ItemConsumed
@@ -59,43 +65,18 @@ from ItemConsumed
 
 ## Difference Between Count and Increment
 
-While `count` and `increment` both add 1, they have semantic differences:
+`count` and `increment` execute the same operation: both add one. Choose the word that makes the model's intent clearer. Neither sums an event property or counts distinct values; two handled occurrences each add one.
 
-- **`count`**: Counts occurrences of a specific event (conceptually counting events)
-- **`increment`**: Increases a value (conceptually modifying state)
+<a id="multiple-counters"></a>
+<a id="examples"></a>
+<a id="user-activity-tracking"></a>
+<a id="blog-post-engagement"></a>
+<a id="forum-user-reputation"></a>
+<a id="inventory-management"></a>
 
-In practice, they behave identically but express different intent.
+## Track one item per stock event
 
-## Multiple Counters
-
-You can use multiple counter operations in the same event:
-
-```pdl
-from OrderPlaced
-  increment TotalOrders
-  count OrderCount
-  add TotalRevenue by total
-```
-
-## Examples
-
-### User Activity Tracking
-
-```pdl
-projection User => UserReadModel
-  from UserRegistered
-    Name = name
-    Email = email
-
-  from UserLoggedIn
-    count LoginCount
-    LastLogin = $eventContext.occurred
-
-  from UserProfileViewed
-    increment ProfileViewCount
-```
-
-### Inventory Management
+This inventory excerpt starts from an explicit stock level. Each later event represents a single item:
 
 ```pdl
 projection Product => ProductReadModel
@@ -115,28 +96,13 @@ projection Product => ProductReadModel
     decrement SalesCount
 ```
 
-### Blog Post Engagement
+An `ItemSold` event reduces stock by one and increases `SalesCount` by one. `ItemReturned` reverses both changes, so `SalesCount` here means sales less returns. If a sale can contain several items, subtract its quantity with [arithmetic](arithmetic.md) instead of decrementing stock once.
 
-```pdl
-projection BlogPost => BlogPostReadModel
-  from PostPublished
-    Title = title
-    Content = content
+<a id="account-balance-alternative-to-arithmetic"></a>
 
-  from PostViewed
-    count ViewCount
+## Count transactions while summing amounts
 
-  from PostLiked
-    increment LikeCount
-
-  from PostUnliked
-    decrement LikeCount
-
-  from CommentAdded
-    count CommentCount
-```
-
-### Account Balance (Alternative to Arithmetic)
+Counters and arithmetic answer different questions about the same event. This account excerpt counts each deposit or withdrawal once while changing the balance by its amount:
 
 ```pdl
 projection Account => AccountReadModel
@@ -153,27 +119,13 @@ projection Account => AccountReadModel
     subtract Balance by amount
 ```
 
-### Forum User Reputation
+A deposit of 100 increases `TransactionCount` by 1 and `Balance` by 100. A second deposit of 25 increases the count by another 1 and the balance by 25. Choosing `increment Balance` would lose the amounts.
 
-```pdl
-projection ForumUser => ForumUserReadModel
-  from UserJoined
-    Username = username
+<a id="task-completion-tracking"></a>
 
-  from QuestionPosted
-    count QuestionsPosted
+## Move a task between totals
 
-  from AnswerPosted
-    count AnswersPosted
-
-  from UpvoteReceived
-    increment Reputation
-
-  from DownvoteReceived
-    decrement Reputation
-```
-
-### Task Completion Tracking
+Several counters can change for one event when they describe different totals. Completing a task moves it from remaining work into completed work:
 
 ```pdl
 projection Project => ProjectReadModel
@@ -189,31 +141,20 @@ projection Project => ProjectReadModel
     decrement RemainingTasks
 ```
 
+`TotalTasks` stays unchanged when a task completes. Only `CompletedTasks` and `RemainingTasks` move, preserving the meaning of the overall total.
+
 ## Property Requirements
 
-The target property must be a numeric type:
-- `int`
-- `long`
-- `decimal`
-- `double`
-- `float`
-
-Attempting to use counters on non-numeric properties will result in a validation error.
+Declare counter targets as numeric properties on the read model, such as `Int` or a concept based on `Int`. A counter targeting a non-numeric property fails semantic validation.
 
 ## Initial Values
 
-Counter properties should have an initial value. Declare counter targets such as `LoginCount` or `ProfileViews` as numeric properties on the read model, starting at `0`, so the first counter operation produces `1`.
+The reference evaluator starts a missing numeric target at zero, so the first `count` or `increment` produces 1. Assign an initial value when the starting state comes from an event, as `StockLevel = initialStock` does above.
 
-## Best Practices
+<a id="best-practices"></a>
 
-1. **Initialize to Zero**: Ensure counter properties start at 0 in the read model
-2. **Use Count for Events**: Use `count` when tracking event occurrences
-3. **Use Increment/Decrement for State**: Use `increment`/`decrement` for state changes
-4. **Combine with Timestamps**: Pair counters with timestamps for richer tracking
-5. **Validate Decrements**: Ensure decrements won't result in negative values if that's not valid for your domain
-6. **Consider Arithmetic**: For more complex numeric operations, use [Arithmetic](arithmetic.md) operations
+A `decrement` can take a value below zero; it does not enforce a lower bound. Put a rule such as “stock must not become negative” in the behavior that decides whether the event can occur, rather than relying on a counter to reject it.
 
 ## See Also
 
-- [Arithmetic](arithmetic.md) - Add and subtract operations with variable amounts
-- [Property Mapping](property-mapping.md) - Setting properties to specific values
+For events carrying quantities, continue with [Arithmetic](arithmetic.md). To replace a value instead of accumulating it, use [Property Mapping](property-mapping.md).

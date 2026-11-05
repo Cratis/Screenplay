@@ -1,13 +1,28 @@
 ---
-title: MCP identity state and recovery
-description: Durable identity assignments, interrupted apply detection, and explicit rollback without overwriting competing edits.
+title: Recover Cratis Screenplay MCP identity state
+description: Inspect an interrupted Cratis Screenplay MCP apply and explicitly roll it back, preserving identity state without overwriting competing edits.
 ---
+
+After an interrupted Cratis Screenplay MCP apply, inspect `workspace-state` before
+trying to reopen or edit the model. This read-only call reports the pending
+operation and whether rollback can be proven safe. `recover-workspace` is a
+separate, mutating call that restores the prior files; it does not merge edits.
+Follow [Explicit rollback](#explicit-rollback) when you are ready to recover.
+
+Identity state keeps a declaration's identity stable when its name or file changes.
+The server stores it alongside the model, so a new session can retain those
+identities without a workspace export.
 
 ## Files owned by the server
 
 The model's `.play` files remain canonical source. The MCP server owns a reserved
 `.screenplay/` directory inside the configured model root.
-Read-only opens and baseline checks accept a `.screenplay` directory others can read, such as the `0755` directory a git checkout creates, but refuse one other users can write. On Windows, write access inherited by SYSTEM and Administrators is accepted for reads. Writes and recovery still require owner-only access and create private metadata.
+
+Read-only opens and baseline checks accept a directory others can read, such as a
+`0755` directory from a git checkout, but refuse one other users can write. On
+Windows, write access inherited by SYSTEM and Administrators is accepted for
+reads. Writes and recovery require owner-only access and create private metadata;
+a successful read does not establish that recovery has the access it needs.
 
 | File | Purpose | Retention |
 | --- | --- | --- |
@@ -21,18 +36,19 @@ Read-only opens and baseline checks accept a `.screenplay` directory others can 
 source snapshots needed for recovery and is created privately. Model document
 operations cannot write into `.screenplay/`; it is not an arbitrary file API.
 
-A malformed, conflicting or unsafe identity state file is an error. The server never
-silently discards it and derives replacement identities from source names.
+A malformed, conflicting or unsafe identity state file is an error. The server
+will not silently discard it or derive replacement identities from source names.
 
-Model notes are nonsemantic state: an unreadable `notes.json` never blocks opening
-or source proposals. `open-workspace` and `workspace-state` report `notesRevision`
+Model notes do not determine the model's meaning: an unreadable `notes.json` never
+blocks opening or source proposals. `open-workspace` and `workspace-state` report `notesRevision`
 and `notes: { status: "ok" | "absent" | "unreadable", reason, count }` (unreadable
 revisions and counts are null). Note tools refuse with `UnreadableNotes`; the server
 never auto-repairs the file. Resolve merge conflicts or restore known-good notes
 explicitly. See [model notes](../model-notes.md).
 
-A malformed or conflicted release baseline also permits opening, reading and
-reviewing. `open-workspace` and `workspace-state` report
+A release baseline records admitted event contracts. A malformed or conflicted
+baseline still permits opening, reading and reviewing. `open-workspace` and
+`workspace-state` report
 `releaseBaseline: {status, revision, reason, entries, violations}`. Unreadable
 revision and entry count are null; a model that cannot bind reports an unknown
 violation count rather than a successful check. Event-contract proposals refuse
@@ -107,9 +123,10 @@ normal MCP apply.
 
 ## Interrupted application
 
-Before source mutation, apply writes a durable journal. Installation stages
-private bytes, retains original files, installs source and identity state, and
-verifies both. Only then can it discard the journal and backups.
+Before changing source, apply writes a durable journal: the recovery record in
+`pending.json`. It stages private copies, retains the original files, installs
+source and identity state, and verifies both. Only after verification can it
+discard the journal and backups.
 
 Journals carrying notes use envelope version `2`; source/identity-only journals
 continue to use version `1`. This server reads both, refuses a version-1 journal
@@ -131,10 +148,15 @@ be proven safe, and any conflict. The status call itself changes nothing.
 
 ## Explicit rollback
 
+Recovery needs exclusive writer access to a trusted model root and owner-only
+access to its metadata. Do not treat a successful status read as permission to
+write.
+
 To roll back an interrupted operation:
 
 1. Stop other writers and call `workspace-state`.
-2. Inspect the reported conflict and `operationId`.
+2. Inspect the reported conflict, rollback safety and `operationId`. Resolve any
+   competing edits deliberately before proceeding.
 3. Call `recover-workspace` with that exact `operationId`.
 4. Require `success: true` and `status: "RolledBack"` before reopening the model.
 
@@ -150,6 +172,10 @@ On conflict or uncertainty, the result remains `RecoveryRequired` and adds
 Preserve them. Move or restore competing external edits deliberately before
 requesting recovery again. Do not delete the
 marker merely to unblock the server.
+
+After a verified rollback, reopen the model and [create a fresh proposal](edit.md)
+if you still want the change. Do not retry an old plan against partially installed
+files.
 
 ## Boundaries
 

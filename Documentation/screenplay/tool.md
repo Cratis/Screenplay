@@ -1,19 +1,26 @@
 ---
-title: "Compiler and CLI"
-description: "Install the Screenplay compiler CLI to verify every .play file in a folder, check released events and report model questions."
+title: "Cratis Screenplay CLI: install and validate a model"
+description: "Install the Cratis Screenplay CLI, validate a saved .play application, read diagnostics and exit codes, and run model specifications separately."
 ---
 
 # Compiler and CLI
 
-You have a folder of `.play` files and want to know they are valid before anything consumes them. The Screenplay compiler ships in two forms: a .NET library you can embed, and a command line tool that verifies every `.play` file in a directory tree and prints any problems in a readable, compiler style format.
+The Cratis Screenplay CLI checks saved `.play` files before you pass a model to
+another tool. It compiles a folder as one application and reports problems with
+file locations and diagnostic codes. Use this check after editing in
+[VS Code](vscode.md): a board can draw a model that the compiler rejects.
+Source validation does not run the model's specifications; the
+[specification runner](#run-the-models-specifications) is a separate command.
 
-Application-root `command reads protected` selects protected command-read admission (ESM v25), including read paths in requirements and produced-event mappings, required-absence rejection and decide/commit conflicts. Without it, legacy command reads remain refused. No CLI flag upgrades the model automatically; formatting/export preserve the preamble, and targets must separately admit the version. Invoicing demonstrates the authoring form with explicitly pinned binding refusals; the executable demonstration is `ProtectedCommandReadsCorpus.V25`.
-
-Application-root `reaction batches atomic` selects ESM v22 for the composed application. No CLI flag or dependency update opts existing files in. Formatting and export preserve the declaration; omission retains legacy per-fact reaction semantics. Execution and rendering consumers must explicitly admit v22.
+If you are building your own tooling, the compiler is also available as a
+[.NET library](#use-the-compiler-as-a-library).
 
 ## Install the CLI
 
-The CLI is a [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools) published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:
+For a local installation, you need the .NET 10 SDK and the global .NET tool
+directory on `PATH`. The CLI is a
+[.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools)
+published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:
 
 ```bash
 dotnet tool install -g Cratis.Screenplay.Tool
@@ -33,6 +40,94 @@ The image also runs the [MCP server](mcp/index.md): `docker run -i --rm -v "$PWD
 Use its [`propose-move`](mcp/edit.md#move-a-slice-or-feature-to-another-parent) tool
 for identity-preserving slice, feature and single-declaration moves across logical parents. This is an
 MCP proposal, reviewed and applied through `apply`, not a CLI move command.
+
+## Verify your files
+
+Save your editor changes first: the CLI reads files from disk. Run it at the
+model root to check every discovered `.play` file below that directory:
+
+```bash
+screenplay
+```
+
+Or pass the model folder explicitly:
+
+```bash
+screenplay path/to/screenplays
+```
+
+A directory is checked as **one application**. The compiler merges the files
+before resolving references, so an event declared in one file can be produced
+in another. Keep the whole model as the input when checking a change that uses
+shared declarations. [Folders](folders.md) explains how the files fit together.
+
+For a single-file model, pass the file:
+
+```bash
+screenplay path/to/invoicing.play
+```
+
+A file target includes that file and everything its [imports](imports.md) bring
+in, but not unimported siblings. A declaration in a neighboring file will not
+resolve unless it is part of those imports.
+
+Each problem identifies the file, line, column, severity and diagnostic code,
+then shows the source line and a caret at the location:
+
+```text
+nested/broken.play(3,5): error PLAY0028: Unknown slice type 'Wat' - expected StateChange, StateView, Automation or Translate
+    3 |     slice Wat DoIt
+      |     ^
+
+2 file(s) compiled - 1 error(s), 0 warning(s)
+```
+
+Open that location in your editor, fix the declaration and rerun the same check.
+The final summary counts compiled files, errors and warnings. Match diagnostics
+by their stable code, not the message text; [Diagnostics](diagnostics.md) lists
+every code. A run with no discovered files is not evidence that your model was
+checked, even if it exits successfully.
+
+The exit code is `0` when the check is clean, `1` for model defects, and `2` when
+the check could not run, for example because a path, argument or scope is invalid.
+Warnings do not fail the run by default. To make a warning fail validation, use:
+
+```bash
+screenplay path/to/invoicing.play --warnaserror
+```
+
+Ordinary native checks include [`PLAY0690`](diagnostics.md#reducer-instance-identity),
+the conservative reducer identity warning. It needs neither executable binding
+nor a completeness `--check` selection. As with other warnings, `--warnaserror`
+makes it fail the check.
+
+| Option | Effect |
+|---|---|
+| `--scope <Module>[.<Feature>[.<Slice>]]` | Report the named scope and declarations that directly reference it |
+| `--check <name>[,<name>]\|all` | Select [completeness checks](completeness.md); repeat to combine selections. Unknown names exit `2` |
+| `--open-questions report\|fail` | Report committed open model questions; `fail` exits `1` when any selected question remains. Unreadable notes exit `2` |
+| `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
+| `--no-color` | Never colorize output |
+| `--format text\|json` | Text by default; JSON writes exactly one report to stdout |
+| `--print-gate` | Print the effective gate and setting sources in text, then exit `0` without compiling |
+| `--no-gate-file` | Ignore the authored gate for this run, including invalid or unreadable files |
+
+Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
+
+For repeatable validation, [declare the gate once](#declare-the-validation-gate-once)
+instead of repeating options in each script. To check modeled behavior after
+source validation, [run the specifications](#run-the-models-specifications).
+The runner reports unsupported capabilities separately from passing scenarios.
+
+## Choose executable model semantics
+
+An executable semantic model (ESM) is the bound model that execution and rendering
+consumers use. Source validation and support for an ESM version are separate:
+a consumer must explicitly accept the version your model requires.
+
+Application-root `command reads protected` selects protected command-read admission (ESM v25), including read paths in requirements and produced-event mappings, required-absence rejection and decide/commit conflicts. Without it, legacy command reads remain refused. No CLI flag upgrades the model automatically; formatting/export preserve the preamble, and targets must separately admit the version. Invoicing demonstrates the authoring form with explicitly pinned binding refusals; the executable demonstration is `ProtectedCommandReadsCorpus.V25`.
+
+Application-root `reaction batches atomic` selects ESM v22 for the composed application. No CLI flag or dependency update opts existing files in. Formatting and export preserve the declaration; omission retains legacy per-fact reaction semantics. Execution and rendering consumers must explicitly admit v22.
 
 ## Check generated references
 
@@ -87,63 +182,6 @@ Checking is read-only and retains persisted identities even when source removes 
 admitted event or generation. Such removals report `BaselinedRevisionMissing` with
 exit `1`, without reconciling or writing the identity catalog.
 See [released event contracts](events.md#released-event-contracts) for what is frozen.
-
-## Verify your files
-
-Run `screenplay` from the root of your project - it searches for every file matching the `**/*.play` glob pattern beneath the current directory and reports what it finds:
-
-```bash
-screenplay
-```
-
-You can also point it at a specific directory:
-
-```bash
-screenplay path/to/screenplays
-```
-
-A directory is verified as **one application**: the files are merged before anything is resolved, so an event declared in one file and produced in another resolves rather than looking missing. See [Folders](folders.md) for what that means and how the files fit together.
-
-Or point it at a single file. A file is the root of an application: it is verified together with every file its [imports](imports.md) bring in, and a file without imports is verified on its own, so a name it uses but does not declare is reported:
-
-```bash
-screenplay path/to/invoicing.play
-```
-
-Each problem is reported with its file, line and column, its severity and stable code, the offending source line and a caret pointing at the exact location:
-
-```text
-nested/broken.play(3,5): error PLAY0028: Unknown slice type 'Wat' - expected StateChange, StateView, Automation or Translate
-    3 |     slice Wat DoIt
-      |     ^
-
-2 file(s) compiled - 1 error(s), 0 warning(s)
-```
-
-The code is the part that never changes - match on it rather than on the message, which gets reworded. Every code is listed in [Diagnostics](diagnostics.md).
-
-Ordinary native checks include [`PLAY0690`](diagnostics.md#reducer-instance-identity), the conservative reducer identity warning. It needs neither executable binding nor a completeness `--check` selection. As with other warnings, `--warnaserror` makes it fail the check.
-
-The exit code is `0` when the check is clean, `1` for model defects, and `2` when the check could not run (for example, an invalid path, argument or unknown scope).
-
-Warnings do not fail the run by default. When a pipeline demands a spotless document - a generated one, say - add `--warnaserror` and a single warning is enough to exit `1`:
-
-```bash
-screenplay path/to/invoicing.play --warnaserror
-```
-
-| Option | Effect |
-|---|---|
-| `--scope <Module>[.<Feature>[.<Slice>]]` | Report the named scope and declarations that directly reference it |
-| `--check <name>[,<name>]\|all` | Select [completeness checks](completeness.md); repeat to combine selections. Unknown names exit `2` |
-| `--open-questions report\|fail` | Report committed open model questions; `fail` exits `1` when any selected question remains. Unreadable notes exit `2` |
-| `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
-| `--no-color` | Never colorize output |
-| `--format text\|json` | Text by default; JSON writes exactly one report to stdout |
-| `--print-gate` | Print the effective gate and setting sources in text, then exit `0` without compiling |
-| `--no-gate-file` | Ignore the authored gate for this run, including invalid or unreadable files |
-
-Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
 
 ## Declare the validation gate once
 

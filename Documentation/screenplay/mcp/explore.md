@@ -1,10 +1,14 @@
 ---
-title: Explore a model
-description: Prompts that ask an assistant what a Screenplay model contains, what depends on what, and where it is incomplete, without changing any file.
+title: Explore a Cratis Screenplay model with MCP
+description: Inspect a Cratis Screenplay model through MCP to find declarations, trace dependencies and check specification gaps without changing files.
 ---
 
-Everything on this page is read-only. The server answers in compact, paged results,
-so the assistant can explore a model of hundreds of files without reading them all.
+Use the Cratis Screenplay MCP server to find what a model contains, trace what a
+change would affect, and locate missing specifications without changing files.
+Everything on this page is read-only. The server returns compact pages of results,
+so you can start with the application outline and ask for detail where you need it.
+
+[Connect the server](install.md) to your model folder before using these prompts.
 The examples use the lending library from [Create a model](create.md).
 
 ## Get oriented
@@ -15,8 +19,9 @@ modules and features, how many slices, events and read models it has, and whethe
 it compiles cleanly.
 ```
 
-The assistant starts from counts and a `sourceRevision`, then walks down through
-modules, features and slices on request. It does not load the whole model.
+The overview gives you counts and a `sourceRevision`, which identifies the source
+snapshot behind the answer. Ask about a module next to see its features and slices
+without loading the whole model:
 
 ```text
 Walk me through the Lending module: each feature, and for each slice what the
@@ -35,8 +40,9 @@ Search for anything with "Loan" in its name and tell me what kind of declaration
 each match is.
 ```
 
-Names are case-sensitive, and a module or feature split across files is reported as
-one logical declaration with every location listed.
+Use the declared spelling: names are case-sensitive. A module or feature split
+across files appears as one logical declaration with every location listed, so you
+can find all of its source before planning an edit.
 
 ## Follow the connections
 
@@ -50,9 +56,10 @@ What does the BorrowBook command depend on, directly? And what would be affected
 I changed it?
 ```
 
-The server reports resolved references and the places it cannot see into, such as
-code blocks and expressions, so an assistant can say what a rename or removal might
-miss rather than assuming nothing else uses a name.
+Read the coverage limits alongside the references. The server reports resolved
+references and places it cannot see into, such as code blocks and expressions.
+Those gaps tell you what a rename or removal might miss; an empty list alone is
+not proof that nothing else uses a name.
 
 ## See how modules and features depend on each other
 
@@ -96,7 +103,8 @@ with the values they use.
 ```
 
 A specification counts as asserting something when it declares a `then`, including
-`then denied`. This finds gaps in the model. It does not run the specifications.
+`then denied`. Use this list to find missing expectations. It does not run the
+specifications or tell you whether they pass.
 
 ## Read what is on disk
 
@@ -134,4 +142,6 @@ Large answers are refused with a smaller alternative rather than truncated. If a
 assistant reports that a page was rejected, ask it to narrow the scope or page
 through the results.
 
-When you are ready to change something, continue with [Edit a model](edit.md).
+To inspect these relationships visually, [view the event model board](view.md) in
+a client that supports it. When you have identified a change, [propose and review
+an edit](edit.md) before applying it.

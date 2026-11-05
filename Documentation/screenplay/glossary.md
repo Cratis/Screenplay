@@ -1,5 +1,5 @@
 ---
-title: Glossary
+title: Cratis Screenplay glossary of language terms
 description: One precise line per Screenplay term — the structure of a .play file, its constructs, its sub-languages, and the tools that run and visualize it.
 ---
 
@@ -79,7 +79,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 ## Tools and runtime
 
 - **Stage** — the runtime that interprets a `.play` file and runs it as a live application.
-- **Studio** — the tool that reads the same `.play` file to visualize and generate.
+- **Studio** — the optional commercial workspace for collaborative event modeling in Cratis Platform, with screen design, supported modeled behavior through Play powered by Stage, and implementation code generation for review.
 - **`@cratis/screenplay-language`** — the Monaco language service: highlighting, completions, hover, and diagnostics for `.play` files.
 - **Screenplay editor** — the standalone browser editor host that embeds the language service.
 - **Screenplay VS Code extension** — the extension bringing the same language support to VS Code.

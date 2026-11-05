@@ -1,7 +1,9 @@
 ---
-title: Frequently asked questions
-description: Common questions about Screenplay — its syntax, portable semantics, bounded code attachments, and downstream runtimes.
+title: "Cratis Screenplay FAQ: modeling and execution"
+description: "Cratis Screenplay describes application behavior in .play files. Learn where code fits, how execution is checked and how Stage and Studio use the model."
 ---
+
+Cratis Screenplay describes application contracts and behavior in `.play` files, so you can review what callers send, which facts follow and what state they can read. These answers help you choose what to model, where implementation code belongs and what to verify before relying on an execution tool.
 
 ## Why indentation instead of braces?
 
@@ -13,15 +15,15 @@ A Screenplay is a script for a production, so its file is a `.play`. The name is
 
 ## Do I still write C#, TypeScript, or React?
 
-Only at the implementation points that admit code. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference where the declarative language cannot state the realization. Concepts, commands, events, queries, and specifications still carry the business meaning; code is an attachment rather than a second application model. Built-in inline tags are `csharp`, `java`, `typescript`, `react`, `html`, and `sql`. Java is for targets that render Java, such as Axon; the Cratis target refuses Java bodies.
+Yes, where the behavior needs an implementation rather than a declarative rule. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference. Keep the contract and its specifications in Screenplay; attach the code needed to realize it. Built-in inline tags are `csharp`, `java`, `typescript`, `react`, `html`, and `sql`. A recognized tag does not mean every target can execute it: Java is for targets that render Java, such as Axon, and the Cratis target refuses Java bodies. See [Sub-languages and inline code](sub-languages.md) for the attachment boundary.
 
 ## What are Stage and Studio?
 
-They are downstream consumers of a `.play` model. **Stage** is the runtime and rendering surface; **Studio** visualizes and edits the model. Screenplay remains the authority for portable meaning. A consumer must either preserve a declared capability or report it as unsupported — sharing a source file alone does not prove behavioral parity.
+Cratis Studio is an optional commercial workspace for collaboratively designing and editing Screenplay event models. Cratis Stage verifies modeled specifications, renders application code and can perform supported behavior in a disposable sandbox, letting you try the application you described. Screenplay remains the source of the model's meaning; sharing a `.play` file does not prove that every consumer supports the same behavior.
 
 ## How does Screenplay relate to Arc and Chronicle?
 
-Screenplay describes portable command, fact, view, query, policy, and specification semantics. [Arc](/arc/) and [Chronicle](/chronicle/) are the first realization target for those semantics, but Screenplay does not depend on either product and does not copy their implementation vocabulary into the semantic authority. Realization profiles and renderers map the portable model to a framework.
+Screenplay describes commands, facts, views, queries, policies and specifications without depending on a runtime framework. A renderer maps that model to an application; the Cratis target uses [Arc](/arc/) and [Chronicle](/chronicle/). You can also use Arc and Chronicle directly without adopting Screenplay.
 
 ## What are PDL and CDL?
 
@@ -33,8 +35,8 @@ Not as a new Screenplay construct today. Host-language construct keywords are cl
 
 ## Where do highlighting and IntelliSense come from?
 
-From the [`@cratis/screenplay-language`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-language) package — a Monaco language service that provides highlighting (including the embedded code blocks and the PDL/CDL sub-languages), context-aware completions, hover documentation, and diagnostics. The standalone editor and the VS Code extension are both thin hosts over that one package, so they behave identically.
+The [`@cratis/screenplay-language`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-language) package provides the Monaco language service: highlighting, context-aware completions, hover documentation and diagnostics, including embedded code and the PDL/CDL sub-languages. The standalone editor and VS Code extension host that service; their surrounding editor features need not be identical.
 
 ## Is Screenplay production-ready?
 
-Screenplay is young and still evolving. The compiler and authoring tools are usable, while portable execution and rendering are being delivered capability by capability. Treat the reference as the description of accepted syntax, and require a runtime or renderer to declare support before relying on it to perform that syntax.
+Check the capabilities your application needs rather than treating accepted syntax as an execution guarantee. Compilation checks the source; semantic binding checks whether its behavior fits a supported executable semantic model (ESM). [Specifications](specifications.md) then run scenarios and compare outcomes. Unsupported behavior cannot count as a passing scenario. Verify your chosen runtime or renderer's support separately, including any code attachments it must execute.

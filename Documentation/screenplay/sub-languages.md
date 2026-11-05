@@ -1,23 +1,23 @@
 ---
-title: "Sub-languages and inline code"
-description: "How Screenplay carries languages it does not read itself, such as PDL, CDL and inline code, and how to plug in another one."
+title: "Screenplay sub-languages and inline code"
+description: "Extend Screenplay inline language recognition or Monaco editor support, and understand what registration changes in parsing, binding and execution."
 ---
 
 # Sub-languages and inline code
 
-Screenplay carries languages it does not itself read. The [Projection Declaration Language](projections/index.md) (PDL) and the [Change Data Capture Language](captures.md) (CDL) are the two built-in ones, and an inline block carries a general purpose language for the parts a declaration cannot express.
+Screenplay supports embedded declaration languages and inline code, but extending code recognition is different from adding editor support. Register an inline language to retain a tagged body in the syntax tree; register a Monaco sub-language to add highlighting and completion for a construct's body. Neither registration adds executable semantics.
 
-Two of those sets are open, and they are open in different places. Read this section before assuming which.
+The [Projection Declaration Language](projections/index.md) (PDL) describes how events build read models. The [Change Data Capture Language](captures.md) (CDL) describes how changes in source data become events. Both are built into the compiler. Inline code carries an implementation where a declaration alone is not enough.
 
 ## What the compiler can be extended with
 
-**Inline languages are open.** The six an inline block ships with — `csharp`, `java`, `typescript`, `react`, `html`, `sql` — are recognized by both compilers and the editors. Recognition preserves an opaque body; it does not promise execution or rendering. Hand the compiler a registry and it recognizes more:
+Both compilers and the editors recognize six built-in inline tags: `csharp`, `java`, `typescript`, `react`, `html` and `sql`. The body is opaque to Screenplay: the parser keeps its text rather than interpreting the language inside it. To recognize another tag in the C# compiler, supply a registry:
 
 ```csharp
 var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(["python", "kotlin"]));
 ```
 
-A registered block parses, carries its language tag, and holds its text in the syntax tree. The compiler does not read it — whoever registered the language is what makes sense of it, and that boundary is exactly what lets the set be open. Nothing else changes: `new ScreenplayCompiler()` still recognizes the built-in six and nothing more.
+This compiler instance retains `python` and `kotlin` bodies alongside the built-in tags. Your integration must interpret or render those bodies separately; adding the tag does not supply an implementation. `new ScreenplayCompiler()` still recognizes only the six built-in inline languages.
 
 Use a tagged fence for Java, just like the other built-in inline languages:
 
@@ -28,13 +28,19 @@ policy InvoiceAccess
   ```
 ````
 
-The printer preserves `java` and the body text. Semantic implementation requirements retain the language tag, but reference execution reports Unsupported when it needs that predicate. Java is accepted for targets that render Java, such as Axon; the Cratis target refuses Java bodies. Registering or recognizing Java does not make it executable C#.
+The printer preserves `java` and the body text. Semantic implementation requirements retain the language tag, but reference execution reports Unsupported when it needs that predicate. A target must separately admit the attachment's language and role before rendering it; recognizing Java does not make it executable C#.
 
-**Construct keywords are not open.** The words that introduce a construct inside a slice — `projection`, `capture`, `command`, and the rest — are fixed in the compiler. PDL and CDL are built in rather than registered, and a third construct keyword means changing the compiler. The editor is a different story, and the rest of this page is about that.
+Construct keywords such as `projection`, `capture` and `command` are fixed in the compiler. Adding another construct to the grammar requires a compiler change. The [Monaco registration API](#the-monaco-registration-api) below extends editor tooling, not that grammar.
 
 ## Code the model needs
 
-The executable semantic compiler does not run inline code or file-backed implementations. Reducer transitions with bodies, named rule predicates, command and concept code validations, and inline or file-backed policy predicates bind as opaque ESM v3 attachments. The reference executor cannot run them: execution that depends on their outcomes returns Unsupported. Resolved nonempty file/inline command handlers with unconditional `produces` bind in ESM v23 as language-tagged, hashed CommandHandler attachments; other attached forms retain `PLAY0800`. `PLAY0035` is retired. Binding does not admit a target language or execute a body. A pending command handler intent with unconditional `produces` binds in ESM v23 as a Pending CommandHandler requirement (information `PLAY0695`); `produces` doubles as result contract v1 and the eventual body owns payload values. Reaching that body returns Unsupported (`ImplementationBody`), never an executed attachment. Production-less or conditional pending commands are refused with `PLAY0696`/`PLAY0697`; realization is deferred. `ImplementationRequirements` lists each attachment's RequirementId, owning semantic address and role (with a member discriminator where needed), context and result contract versions, RequiredCapability, AttachmentResolution, inline language or authored file path, and source-map location. The SHA-256 content hash is present only for inline code or file contents supplied by the host. File attachments without host-supplied contents are reported unresolved, never hashed from the path; the binder does not open files. Hosts with a trusted model root can use `AttachmentFiles.Load(root, documents)` and supply the result to `SemanticDocumentSet.Create` or an in-memory workspace's `WithAttachmentContents`. Only implementation attachments are read, with confined access and warning diagnostics for refusals ([#244](https://github.com/Cratis/Screenplay/issues/244)). `PlayFileCompiler` and the standalone Tool compile syntax only and do not read attachments.
+The executable semantic compiler records implementation requirements; it does not run inline code or file-backed implementations. The executable semantic model (ESM) represents bodied reducer transitions, named rule predicates, command and concept code validations, and inline or file-backed policy predicates as opaque v3 attachments. Reference execution that needs their outcomes returns Unsupported rather than guessing a result.
+
+Resolved nonempty file/inline command handlers with unconditional `produces` bind in ESM v23 as language-tagged, hashed CommandHandler attachments; other attached forms retain `PLAY0800`. `PLAY0035` is retired. A pending command handler intent with unconditional `produces` binds in ESM v23 as a Pending CommandHandler requirement (information `PLAY0695`). Its `produces` declaration supplies result contract v1; the eventual body owns payload values. Reaching that body returns Unsupported (`ImplementationBody`). Production-less or conditional pending commands are refused with `PLAY0696`/`PLAY0697`; realization is deferred.
+
+Inspect `ImplementationRequirements` to find an attachment's RequirementId, owning semantic address and role (with a member discriminator where needed), context and result contract versions, RequiredCapability, AttachmentResolution, inline language or authored file path, and source-map location. A SHA-256 content hash is present only for inline code or file contents supplied by the host. An authored path is not a content hash: the binder does not open files, so attachments without host-supplied contents remain unresolved.
+
+Hosts with a trusted model root can use `AttachmentFiles.Load(root, documents)` and supply the result to `SemanticDocumentSet.Create` or an in-memory workspace's `WithAttachmentContents`. The loader reads only implementation attachments, confines access and reports warning diagnostics for refusals ([#244](https://github.com/Cratis/Screenplay/issues/244)). `PlayFileCompiler` and the standalone Tool compile syntax only and do not read attachments.
 
 Use the MCP `read-workspace` view `implementation-requirements` to page these gaps at a pinned revision. This is an inventory for tooling, not an implementation contract or an indication that the reference executor can run the code. See [MCP](mcp/reference.md) for the read arguments.
 
@@ -53,7 +59,7 @@ this mapping data; the host owns the virtual document and language service.
 
 ## Plugging a new sub-language into the editor
 
-An editor extension registers a construct keyword together with its token rules, completions and hover documentation, so highlighting and IntelliSense compose cleanly.
+Register a construct keyword with its token rules, completions and hover documentation when your editor needs to help readers work inside that construct.
 
 The editor can highlight the registered construct's indented body as a sub-language. This does not add a production to the [Screenplay grammar](grammar.md).
 
@@ -91,4 +97,6 @@ registerSubLanguage('workflow', {
 
 Registration is dynamic: `registerSubLanguage` can be called before or after `register(monaco)` — the tokenizer is recomposed on the fly, and every Monaco instance the language service was registered on picks up the new sub-language immediately.
 
-PDL and CDL are registered through exactly this API when `register(monaco)` runs — see `sub-languages/pdl.ts` and `sub-languages/cdl.ts` in the package for the reference implementations.
+PDL and CDL use this API when `register(monaco)` runs. See `sub-languages/pdl.ts` and `sub-languages/cdl.ts` in the package for the reference implementations.
+
+If your next step is analysis rather than editor support, [walk the parsed syntax tree](visitors.md). To turn an executable model into target artifacts, use the [rendering contract](interoperability.md#level-3-screenplay-to-artifact-rendering) instead of treating a registered tag as target support.

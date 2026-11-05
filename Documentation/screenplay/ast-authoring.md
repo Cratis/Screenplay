@@ -1,6 +1,6 @@
 ---
 title: AST authoring API
-description: Typed syntax serialization, original-document node handles, atomic source transactions, and identity continuity.
+description: The Cratis Screenplay AST authoring API supports typed syntax edits, revision-bound node handles and atomic proposals that preserve model identities.
 ---
 
 ## Authoring metadata

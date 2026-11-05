@@ -1,22 +1,20 @@
 ---
-title: "All Block"
-description: "The all block in a Screenplay projection runs its mappings for every event type in the system, unlike every."
+title: "Screenplay all: project across event types"
+description: "Use all in a Screenplay projection to subscribe to every event type, with default per-source keys; every only shares mappings for subscribed events."
 ---
 
-# All Block
+<a id="all-block"></a>
 
-The `all` keyword makes the projection subscribe to **every event type in the system**, regardless of the explicit `from` blocks listed in the projection. Mappings defined inside `all` run for every event that arrives, across all event types.
+A projection-level `all` block in Cratis Screenplay subscribes to every event type, including types not named in a `from` block. Use it to record activity across event types for each event source, the identifier to which an event belongs.
 
-This is distinct from `every`, which only runs for event types the projection **explicitly subscribes to** through `from` blocks.
+[`every`](from-every.md) shares mappings across events the projection already subscribes to. It does not broaden those subscriptions. That difference matters when an event unrelated to your declared `from` blocks arrives: `all` handles it, while `every` alone does not.
 
-## Basic Syntax
+<a id="basic-syntax"></a>
+<a id="simple-example"></a>
 
-```pdl
-all
-  {mappings}
-```
+## Count activity for each event source
 
-## Simple Example
+This projection excerpt counts events and records the latest occurrence time without naming individual event types:
 
 ```pdl
 projection EventCounter => EventCounterReadModel
@@ -25,11 +23,13 @@ projection EventCounter => EventCounterReadModel
     lastOccurred = $eventContext.occurred
 ```
 
-The projection above receives **all events in the system** — even event types not listed in any `from` block — and increments `totalEvents` on the read-model instance keyed by each event's source. It does not maintain one global total across event sources.
+If source A has two events and source B has one, their read model instances have `totalEvents` values of 2 and 1. `all` widens the event-type subscription; it does not merge event sources into one global total. See [projection keys](keys.md) before choosing how to group an aggregate.
 
-## Combining `all` with `from` Blocks
+<a id="combining-all-with-from-blocks"></a>
 
-You can combine `all` with explicit `from` blocks:
+## Add detail for a named event
+
+Combine `all` with `from` when you need a shared activity measure and extra information from one event type:
 
 ```pdl
 projection ActivityFeed => ActivityFeedModel
@@ -41,17 +41,21 @@ projection ActivityFeed => ActivityFeedModel
     recentUsers = name
 ```
 
-Here, `totalSystemEvents` increments for every event on the instance selected by its source. `recentUsers` is only set when a `UserRegistered` event arrives.
+`UserRegistered` sets `recentUsers` as well as running the shared mappings. An event type without its own handler still updates the count and timestamp on the instance keyed by its source. Despite the name `totalSystemEvents`, this example keeps per-source counts. `recentUsers` holds the latest mapped `name`, not a collection of users.
+
+When a named handler declares a key, its key selects the affected instance. The event-source default applies to event types without a handler. A join event that matches no instance does not fall back to creating one under its own source. Do not assume that adding `all` overrides your existing routing.
 
 ## Difference Between `all` and `every`
 
-| Feature | `all` | `every` |
-|---------|--------|---------|
-| Event scope | **All event types in the system** | Only types listed in `from` blocks |
-| Subscription mechanism | Implicit, system-wide | Explicit per-type subscription |
-| Typical use | Per-event-source activity across all event types | Common fields across explicitly subscribed events |
+| Choice | `all` | `every` |
+|--------|-------|---------|
+| Event types | Subscribes to every event type | Uses the projection's existing subscriptions |
+| Shared mappings | Run across event types, including those without a `from` block | Run for subscribed events, including child events by default |
+| Typical question | When did this source last have any activity? | When did this profile last change? |
 
-### Example contrast
+<a id="example-contrast"></a>
+
+In the following profile excerpt, the declared events are registration and email changes. An unrelated event type does not update `LastUpdated`:
 
 ```pdl
 # Uses 'every' — only runs for UserRegistered and UserEmailChanged
@@ -66,6 +70,8 @@ projection UserProfile => UserProfileModel
     Email = email
 ```
 
+The audit projection instead accepts event types it does not name. Each event source gets its own count and timestamp:
+
 ```pdl
 # Uses 'all' — runs for every event type in the entire system
 projection SystemAuditLog => AuditLogModel
@@ -74,15 +80,12 @@ projection SystemAuditLog => AuditLogModel
     lastEventAt = $eventContext.occurred
 ```
 
-## When to Use
+<a id="when-to-use"></a>
 
-**Use `all` when:**
+## Keep the subscription at projection level
 
-- Tracking per-event-source activity across all event types
-- Counting events per event source (not across all event sources)
-- Updating each source's timestamp based on its activity
+Use one `all` or `every` block at a given level. Inside a child or nested block, `all` behaves as `every` and produces a diagnostic; it does not create a system-wide subscription.
 
-**Use `every` instead when:**
+The reference evaluator supports `all` alongside projection-level `from` and join mappings, but not alongside removals, child collections, or nested objects. Keep those combinations out of a model you intend to evaluate as a specification.
 
-- Only events the projection explicitly subscribes to should trigger the mapping
-- You want common fields across your own `from` blocks, not unrelated system events
+If you only need common fields for the projection's existing events, continue with [`every`](from-every.md). To count those events, use [counters](counters.mdx); to sum amounts carried by them, use [arithmetic](arithmetic.md).

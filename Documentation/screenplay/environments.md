@@ -1,11 +1,13 @@
 ---
-title: "Environments"
-description: "How a model's declarations are bound to the configuration of the environment an application runs in, by name, and which values must be secrets."
+title: "Screenplay environment bindings"
+description: "Find the configuration keys derived from Screenplay authentication and onboarding declarations, and supply their values through your application host."
 ---
 
 # Environments
 
-A model says what an application *is*. An environment says where one instance of it *runs*: which identity provider's client id it uses, which mail server it sends through. The two stay apart on purpose, and they meet by **name**.
+Screenplay environment bindings name the configuration values an application host must supply for declared sign-in providers and onboarding. They let you keep the same model in test and production while using different client registrations, mail servers and credentials.
+
+Declare [authentication providers](authentication.md) first and [onboarding](onboarding.md) if needed, then list the derived keys below. The host owns value lookup and integration with those services. Screenplay lists requirements; it does not supply credentials or verify a connection to the provider or mail server.
 
 ## What belongs where
 
@@ -13,13 +15,13 @@ A model says what an application *is*. An environment says where one instance of
 |---|---|
 | Which identity providers the application signs people in with (`authentication`) | Each provider's client id, client secret and authority |
 | That onboarding sends emails, and which templates it uses | The sender address, the mail server and its credentials |
-| Personas, policies, events, screens | Nothing |
+| Personas, policies, events, screens | These declarations add no environment keys |
 
-A model is the same document in test and in production. A value that differs per environment, and a secret in particular, therefore never appears in the model: configuration lines under a provider are a compile error rather than something quietly ignored. A secret is **referenced by key only**, and the environment decides where its value lives.
+Keep environment-specific values out of the model. Configuration lines under an authentication provider are a compile error. Environment requirements carry only a secret's key, never its value; the host chooses where to store and retrieve the value.
 
 ## The binding convention
 
-Every key is derived from a declaration, so nothing needs to be repeated or configured twice. Keys are dotted, case-sensitive paths.
+Screenplay derives each key from a declaration. Use these dotted, case-sensitive paths when connecting the requirements to host configuration. A provider alias is part of its keys, so renaming it also changes the keys the host must supply.
 
 ### Authentication providers
 
@@ -39,11 +41,11 @@ authentication
   provider OpenId name Supplier
 ```
 
-needs `authentication.providers.EntraId.clientId`, `authentication.providers.EntraId.clientSecret`, `authentication.providers.EntraId.tenantId`, and the same `clientId`, `clientSecret` and `authority` under `authentication.providers.Partner` and `authentication.providers.Supplier`. Two `OpenId` providers are told apart by their `name`; without one they would both resolve to `OpenId`, which is already a compile error (`PLAY0169`).
+This declaration needs `authentication.providers.EntraId.clientId`, `authentication.providers.EntraId.clientSecret` and `authentication.providers.EntraId.tenantId`. Each of `authentication.providers.Partner` and `authentication.providers.Supplier` needs `clientId`, `clientSecret` and `authority`. The aliases keep the two `OpenId` registrations distinct; without them, both would resolve to `OpenId` and cause a compile error (`PLAY0169`).
 
 ### Onboarding
 
-When the model declares [`onboarding`](onboarding.md), it needs the mail settings, because the sender and the mail server are never in the model:
+Any [`onboarding`](onboarding.md) block adds these mail settings to the requirements, even if it does not declare email templates:
 
 | Key | Secret |
 |---|---|
@@ -55,7 +57,7 @@ When the model declares [`onboarding`](onboarding.md), it needs the mail setting
 
 ## Listing the keys a model needs
 
-A runtime reads the keys from a successful compilation, so it can report *"environment `production` is missing `authentication.providers.EntraId.clientSecret`"* before it starts, instead of failing at the first sign-in.
+A host can read the requirements from a successful compilation and check for missing values before sign-in or email delivery. That check must be implemented by the host; a successful compilation does not mean the environment is configured.
 
 From a syntax compilation:
 
@@ -90,7 +92,7 @@ screenplay environment                        # every .play file beneath the cur
 screenplay environment ./model --format json
 ```
 
-The default output lists one key per line and marks secrets:
+The default output lists one key per line and marks secrets. This is a requirements inventory, not a check of the values installed in an environment:
 
 ```text
 authentication.providers.EntraId.clientId

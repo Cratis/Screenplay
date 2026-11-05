@@ -1,36 +1,15 @@
 ---
-title: "Commands"
-description: "Declare a Screenplay command: its properties, authorization, validation rules and the events it produces."
+title: "Cratis Screenplay commands: request a state change"
+description: "A Screenplay command requests a state change. Define caller inputs, authorization, validation, decision-state reads and the events an accepted request produces."
 ---
 
 # Commands
 
-Commands are input definitions — imperative intents. A command declares its properties, its authorization, its validation rules, and what events it produces.
+A Cratis Screenplay command requests a state change. Define what the caller supplies, who may act and which rules must hold before declaring the events an accepted request produces. A command expresses intent; its events record the facts that follow acceptance.
 
-## Calendar and clock operands
+Start with properties typed by [concepts](concepts.md). Add [`reads`](#what-the-command-reads) when the decision depends on existing state, then use [`produces`](#the-produces-block) for declarative event mappings or a [`handler`](#the-handler-block) when the decision needs code. Check both acceptance and refusal with [specifications](specifications.md).
 
-Decisions 0106, 0107 and 0132 admit application-root `time zone "Europe/Oslo"` (or
-`time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
-(or `calendar from $context.timeZone`, or `calendar from $context.<member>` for a
-[declared context member](context.md)), and specification `given time zone "Europe/Oslo"`.
-Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
-`now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
-Bare `today` and `now` remain ordinary paths when a property has that name.
-
-Clock operands are admitted in command conditions (`validate` / `require` and `produces when`)
-and as the right operand of a `validate` comparison rule on a `Date` or `DateTime` property.
-A clock is compared with a required scalar command property of the same primitive: `today` and
-`date of …` are dates, `now` is an instant. Offsets on `today` must be whole days; use `now`
-for hours or minutes. Clock operands in other positions, such as concepts, reactions and screens,
-report `PLAY0268`.
-
-A model that uses any of these forms selects ESM v37 (see [interoperability](interoperability.md)).
-A command evaluates its clock in its calendar; without one, the application time zone applies, and
-an application without a declared zone uses UTC, never the machine's zone. Zone ids must be
-canonical, exact-case IANA ids. A specification fixes the clock with `given clock` and the zone
-with `given time zone`. The
-[clock fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play)
-is a complete, executable example.
+Execution tools consume a normalized executable semantic model (ESM). The syntax below includes forms that it cannot execute; each section states the relevant limit. In particular, a code attachment needs a host that can execute it, and [calendar and clock operands](#calendar-and-clock-operands) need a host that supplies the time zone (ESM v37).
 
 ## Syntax
 
@@ -144,7 +123,7 @@ module Sales
 
 `OrderPlaced` is appended to the order's event source and `StockReserved` to the product's. A command specification states each destination with `for` on each `then` event. Optional and collection properties still cannot name a destination. A command that uses a destination other than its identifier selects language/semantic `30.0`; models using none keep their existing version and bytes. Chronicle appends each event to its own event source; this is what the reference evaluator proves, and a consumer must not assume cross-source atomicity beyond what its event store provides.
 
-If any production targets a source other than the command identifier, **every production must state `for` explicitly** (`PLAY0470`). The same rule applies when an inline production and a plain production both omit `for`: their defaults differ. The diagnostic names the production that needs a destination; adding an inline event never silently retargets a plain sibling. The compiler compares authored paths, not runtime values. Commands without a generated identifier still cannot bind a destination other than their identifier. In ESM v7 a command with a generated identifier may explicitly route a production to another required scalar command property; its response may still return the generated identifier. This does not admit named sources or streams. An inline omission without a required scalar identifier cannot bind. The [explicit-intent workspace/MCP repair](mcp/authoring-tools.md#establish-production-destinations) requires a destination selection for every occurrence and confirmation of unchanged named routes. It fills missing `for` expressions only, binds the whole candidate and retains a routing report for individual review before explicit apply. These invalid mixed-destination models have no executable before-baseline, so the repair establishes the author's routing rather than proving preservation. There is no automatic editor action or fix-all; never assume an omitted plain production meant the identifier.
+If any production targets a source other than the command identifier, **every production must state `for` explicitly** (`PLAY0470`). The same rule applies when an inline production and a plain production both omit `for`: their defaults differ. The diagnostic names the production that needs a destination; adding an inline event never silently retargets a plain sibling. The compiler compares authored paths, not runtime values. From ESM v30, `for` may name any required scalar command property, allowing one command to append to several event sources. ESM v7 already permits a command with a generated identifier to route a production to another required scalar property while returning its generated identifier. Named sources and streams have a separate routing contract. An inline omission without a required scalar identifier cannot bind. The [explicit-intent workspace/MCP repair](mcp/authoring-tools.md#establish-production-destinations) requires a destination selection for every occurrence and confirmation of unchanged named routes. It fills missing `for` expressions only, binds the whole candidate and retains a routing report for individual review before explicit apply. These invalid mixed-destination models have no executable before-baseline, so the repair establishes the author's routing rather than proving preservation. There is no automatic editor action or fix-all; never assume an omitted plain production meant the identifier.
 
 Plain `produces <Name>` retains its legacy omission behavior; it does not acquire the inline default. Copying an identifier into a same-source payload reports `PLAY0469`: warning for inline declarations, information for plain productions with explicit `for`. Review the persisted contract before removing a payload field. The inline-only typed repair removes the property and mapping together, retires the property's semantic address, and is labeled “changes the event contract”. It is excluded from fix-all. The narrow repair refuses other consumers of that event, opaque implementation impact, routing changes and comment loss; standalone/plain contracts receive guidance only, not an automatic shape change. To keep the stored contract instead, remove the copy with `propose-property` (`action: "remove"`, `newGeneration: true`, `CanonicalizeTouchedDocuments`), which drafts generation N+1 without the copy and extracts an inline event in the same proposal. See [event generations](events.md).
 
@@ -306,7 +285,7 @@ static SemanticExecutionResult DecideAndCommit(
 
 The [host loop](reactions.md#append-a-settled-command-in-a-live-host) covers settlement, the guarded write and when a lost guard may be retried.
 
-A target must explicitly admit and realize the version or refuse it; successful reference execution is not proof of Stage or Arc realization. Plain read-model injection is still not a protected decision. Use a `unique` [constraint](constraints.md) for uniqueness and see [keeping decisions correct in Arc](/arc/backend/csharp/chronicle/consistency/) for hand-written code.
+A target must explicitly admit and realize the version or refuse it; successful reference execution is not proof of Stage or Arc realization. Plain read-model injection is still not a protected decision. Use a `unique` [constraint](constraints.md) for uniqueness and see [stream decisions in Arc](/arc/backend/csharp/chronicle/commands/stream-decisions/) for hand-written code.
 
 Eligible legacy models receive informational `PLAY0786` at the first command read. The typed workspace/MCP repair previews the preamble insertion, checks workspace/catalog revisions, preserves comments and requires individual review before explicit apply. Refused reads list their compiler reasons; the repair never silently upgrades a model.
 
@@ -774,7 +753,7 @@ Every `$context.` path names a member of the `CommandContext` an inline handler 
 A plain `produces <Event>` without `for` does not say where the event lands, and it does not mean the command's [identifier](#the-identifier). What happens next depends on which runtime handles the command:
 
 - **Executable model** (reference execution and Stage's semantic host). A plain `produces` is appended to an identity the execution request allocates for the command. When none is supplied, the command is reported as unsupported with `IdentityAllocation`, so name the destination with `for` or supply an allocated identity.
-- **Rendered Arc commands** (code generated by Stage's default renderer). The renderer does not read `for`: the command's identifier is used as the event source for every append, whatever `for` says, and a command with no identifier leaves Arc to allocate the id. This is tracked in [Cratis/Stage#187](https://github.com/Cratis/Stage/issues/187); until it is fixed, treat `for` as binding only in the executable model.
+- **Rendered Arc commands** (code generated by Stage's default renderer). The supported state-change path implements `ICanProvideEventSourceId` from the resolved `for` property, not from property naming or discovery order. Unsupported reachable behavior blocks rendering; executable-model support for several destinations does not by itself establish renderer support. [Cratis/Stage#187](https://github.com/Cratis/Stage/issues/187) records the earlier routing gap.
 
 A plain omission with an available identifier reports information diagnostic
 [`PLAY0478`](diagnostics.md#production-destination-advice-and-repairs). Its typed
@@ -797,7 +776,7 @@ command Activate
     contractId = contractId
 ```
 
-Both facts address the command's `requestId` event source; the contract ID remains an event payload property. The executable model cannot bind `for contractId` here: explicit destinations must resolve to the command's required scalar identifier. Use an imperative handler for fan-out to other event sources.
+Both facts address the command's `requestId` event source; the contract ID remains an event payload property. From ESM v30, changing the second production to `for contractId` sends that fact to the contract's event source instead. State `for` explicitly on every production when destinations differ.
 
 `for` is an indented line rather than an argument on the header, so the target sits beside the mappings that fill the event instead of out past the end of the line. Only one `for` per `produces`: an event is appended to one event source.
 
@@ -997,6 +976,31 @@ The RequirementId and ESM payload do not change when a pending intent becomes at
 | Provisioning | Deferred |
 
 `implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Unconstrained or unresolved file/inline handlers retain `PLAY0800`; both pending and attached command-handler admission require consumers to explicitly admit v23. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
+
+## Calendar and clock operands
+
+Decisions 0106, 0107 and 0132 admit application-root `time zone "Europe/Oslo"` (or
+`time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
+(or `calendar from $context.timeZone`, or `calendar from $context.<member>` for a
+[declared context member](context.md)), and specification `given time zone "Europe/Oslo"`.
+Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
+`now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
+Bare `today` and `now` remain ordinary paths when a property has that name.
+
+Clock operands are admitted in command conditions (`validate` / `require` and `produces when`)
+and as the right operand of a `validate` comparison rule on a `Date` or `DateTime` property.
+A clock is compared with a required scalar command property of the same primitive: `today` and
+`date of …` are dates, `now` is an instant. Offsets on `today` must be whole days; use `now`
+for hours or minutes. Clock operands in other positions, such as concepts, reactions and screens,
+report `PLAY0268`.
+
+A model that uses any of these forms selects ESM v37 (see [interoperability](interoperability.md)).
+A command evaluates its clock in its calendar; without one, the application time zone applies, and
+an application without a declared zone uses UTC, never the machine's zone. Zone ids must be
+canonical, exact-case IANA ids. A specification fixes the clock with `given clock` and the zone
+with `given time zone`. The
+[clock fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play)
+is a complete, executable example.
 
 ## Concurrency
 

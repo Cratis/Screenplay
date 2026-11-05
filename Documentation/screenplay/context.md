@@ -1,13 +1,15 @@
 ---
-title: "Contexts"
-description: "How the typed context in scope for inline and file-referenced Screenplay code differs for handlers, queries, rules and policies."
+title: "Screenplay context contracts"
+description: "Choose the context contract for a Screenplay handler, query, rule or policy, and distinguish runtime values from application-declared context names."
 ---
 
 # Contexts
 
-Inline and file-referenced code is a **sandbox**. You do not write a namespace, a class, or usually even a signature — just the body — because Screenplay puts a predictable `context` in scope for you.
+A Screenplay context supplies the values an inline or file-referenced implementation can read for its particular job. Choose the contract for a command handler, query performer, validation rule or policy before writing the body: each receives different inputs. The application host supplies those values; naming a member does not fetch it from an identity provider or enforce access.
 
-That only works if `context` means something exact. A command handler, a query performer, a validation rule and a policy are four different jobs, so they are given four different contexts, each shaped for what its decision actually needs. A rule cannot read the caller's roles because deciding on roles is authorization, not validation; a policy cannot read the whole event context because it decides who may act, not what happened. The shape *is* the contract.
+For body-only code, the target provider supplies the wrapper with `context` in scope, so you usually write no namespace, class or method signature. A rule receives the caller's audit identity but no roles or claims. A policy receives the caller's authorization identity but no event history. Those contracts separate validation from authorization; the host owns compilation and isolation.
+
+The records below describe decision inputs. A top-level [application-declared context block](#application-declared-context-members) serves a different purpose: it declares business time-zone names, with the binding limit explained there.
 
 ## Decision contexts
 
@@ -60,21 +62,19 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
-A concept's `generate rule Name` receives a closed `GenerationContext` (ESM v21). The normative version-1 contract is the language-neutral descriptor: `Now` (an instant), `Tenant` (the portable `TenantId`) and a `String` result. Each language provider binds that descriptor to its target's native type; Screenplay does not choose one runtime type for all targets.
+A concept's `generate rule Name` receives a closed `GenerationContext` in executable semantic model (ESM) v21. The normative version-1 contract is the language-neutral descriptor: `Now` (an instant), `Tenant` (the portable `TenantId`) and a `String` result. Each language provider binds that descriptor to its target's native type; Screenplay does not choose one runtime type for all targets.
 
 | Target | Binding of the descriptor |
 | --- | --- |
 | Cratis C# (Stage, Arc) | `Cratis.Concepts.GenerationContext` from Fundamentals, a struct of `DateTimeOffset Now` and `string Tenant` |
-| BCL-only C# hosts | `Cratis.Screenplay.Contexts.GenerationContext`, `record GenerationContext(DateTimeOffset Now, TenantId Tenant)` |
+| C# hosts using only the base class library (BCL) | `Cratis.Screenplay.Contexts.GenerationContext`, `record GenerationContext(DateTimeOffset Now, TenantId Tenant)` |
 | Other languages | The provider's own type for the same descriptor |
 
 The provider, not the fence's language tag, decides the binding: a `csharp` tag does not distinguish the Cratis C# target from a host that uses the Screenplay record, and file attachments carry no tag. Each provider compiles or admits a body against its own binding and rejects a body that does not fit it.
 
 `Cratis.Screenplay.Contexts.GenerationContext` stays BCL-only with its current shape. It is name-compatible with the Fundamentals type (`Now`, `Tenant`), not type-identical.
 
-A body is portable across targets only when it stays in the portable subset:
-
-- It uses `context.Now`, the tenant in string interpolation or string assignment, and BCL types. `TenantId` formats as its value, so `$"{context.Tenant}"` gives the same string on both bindings.
+To keep a body portable across these C# bindings, use `context.Now`, the tenant in string interpolation or string assignment, and BCL types. `TenantId` formats as its value, so `$"{context.Tenant}"` gives the same string on both bindings.
 
 These uses are target-bound, because they mean something only for one binding:
 
@@ -85,15 +85,23 @@ These uses are target-bound, because they mean something only for one binding:
 
 Passing `context` to Fundamentals APIs is valid only on the Cratis C# target. See the [generate rule example](generated-values/strategies.md#pattern-random-and-rule-esm-v21) and [decision 0083](../../decisions/0083-bind-the-generation-context-per-language-target.md).
 
-It returns the String primitive in context/result contract version 1. There are no command inputs, caller, injected entropy source or random-state members. `TenantOrderId` can use this context when the shop needs a tenant-bearing value; built-in TypeID has no tenant slot. A provider adapts Now/Tenant explicitly rather than reading ambient time/tenant APIs or comparing raw `"Default"` strings. The reference runner consumes a fixture and never invokes the body; opaque validation still remains Unsupported. Input-derived generation belongs to #308.
+A generation rule returns the String primitive in context/result contract version 1. It receives no command inputs, caller, injected entropy source or random-state members. `TenantOrderId` can use this context when the shop needs a tenant-bearing value; built-in TypeID has no tenant slot. A provider adapts Now/Tenant explicitly instead of reading ambient time/tenant APIs or comparing raw `"Default"` strings.
 
-These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()`, `EventAs<T>()` and `KeyAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
+The reference runner consumes a fixture and never invokes the generation body. Validation implemented in opaque code, whose contents the portable evaluator does not interpret, remains Unsupported. Input-derived generation is tracked in #308.
 
-A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. ESM v23 admits described command handlers: a pending intent with unconditional `produces` gets a Pending CommandHandler requirement and a typed `CommandContext` descriptor (context/result v1). The descriptor retains generated properties available before the body. Reference execution stops at the body with Unsupported (`ImplementationBody`); the descriptor is not proof that a body exists or ran. Resolved, nonempty file/inline handlers with unconditional `produces` use the same v23 context/result v1 descriptor; their sidecars carry a language, content hash and span or file reference, not pending hints. Reference execution remains Unsupported at the body, and target-language admission is separate.
+The portable records live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference it without the compiler; existing compiler consumers resolve these types through type forwarding. The host supplies the instance, and the provider determines the binding, including the Stage query and generation differences above.
+
+Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they also have `StateAs<T>()`, `EventAs<T>()` and `KeyAs<T>()`. In C# bodies, use the provider's generated PascalCase member names: for example, `context.Event.Amount` for an authored `amount` property. Screenplay keeps authored names in the language and never rewrites opaque bodies. The provider maps compilation errors to body source locations.
+
+A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. ESM v23 admits described command handlers: a pending intent with unconditional `produces` gets a Pending CommandHandler requirement and a typed `CommandContext` descriptor (context/result v1). The descriptor retains generated properties available before the body.
+
+Reference execution stops at the body with Unsupported (`ImplementationBody`); the descriptor is not proof that a body exists or ran.
+
+Resolved, nonempty file/inline handlers with unconditional `produces` use the same v23 context/result v1 descriptor; their sidecars carry a language, content hash and span or file reference, not pending hints. Reference execution remains Unsupported at the body, and target-language admission is separate.
 
 ## Application-declared context members
 
-Decision 0132 adds an application-root `context` block for named business time zones:
+Use an application-root `context` block to declare named business time zones, as specified in decision 0132. This declaration is separate from the runtime records above:
 
 ```play
 context
@@ -122,15 +130,31 @@ Command named-rule hints add no `RuleContext` members. Direct-to-wrapped source 
 
 ## Typed context sidecars
 
-Semantic compilation publishes `TypedContextDescriptors` beside `ImplementationRequirements` (pair by `ContextsFor(requirementId)`). The descriptor contract is revision 1, independently of ESM and the role's result contract. Each ordered member names a portable model type or runtime token, its nullability and source identity/path. Shaped payloads include ordered properties with their resolved portable types and stable IDs; an optional payload property does not make its containing payload nullable. `IsFirst` and `IsWholeArtifact` are marked derived. `*As<T>()` accessors are methods, not stored data members. A wrapper provider must reject unknown descriptor contract/context versions, unresolved shapes and unsupported roles rather than generating `dynamic`. Successful descriptors carry the exact `ModelRevision` of the same compilation and `IsWrapperReady = true`; failed compilations publish only resolvable command-handler descriptors, with `IsWrapperReady = false` and no model revision. Each descriptor includes a transitive `Types` table for referenced concepts (including their primitive) and composite types (including their property references). A failed handler with missing type definitions is not renderable. Never attach a failed descriptor to an ESM from elsewhere.
+Semantic compilation publishes `TypedContextDescriptors` beside `ImplementationRequirements`; pair them with `ContextsFor(requirementId)`. These sidecars describe implementation inputs alongside the executable semantic model (ESM), rather than inside its canonical bytes.
 
-Reducer descriptors are per `on Event`: `State` is nullable read-model shape, `Event` is the non-null *current* event generation, and `Key` is the event source identity. Rule descriptors distinguish the whole command or concept value (`Artifact`) from the validated property (`Value`); concept value rules use the concept type for both. For a rule on an optional command property, `Value` is nullable: an absent property value is null (the reference evaluator represents it as `SemanticValue.Null`), even though the `RuleContext` dynamic parameter has no nullable annotation. A provider must permit null in its generated value type and preserve the rule's documented absence semantics. Policy descriptors are per authorized command or query use site; an unused policy has no wrapper-ready context. `Property` uses `validated-property` with the property ID and a `ConstantValue` containing its path, or `validated-artifact` with an empty constant for a whole artifact; `Subject` uses `unavailable` where a command has no identifier or its identifier is generated. An event source includes its current contract revision. Policy use sites are necessarily joined by name because ESM policy references carry names rather than IDs. A command with a resolvable shape exposes a `CommandContext` v1 descriptor even if its handler fails ESM binding. No handler result or envelope is implied. Query performers, reactions and constraints have no descriptors yet.
+The descriptor contract is revision 1, independently of ESM and the role's result contract. Each ordered member names a portable model type or runtime token, its nullability and source identity/path. Shaped payloads include ordered properties with their resolved portable types and stable IDs; an optional payload property does not make its containing payload nullable. `IsFirst` and `IsWholeArtifact` are marked derived. `*As<T>()` accessors are methods, not stored data members.
+
+A wrapper provider must reject unknown descriptor contract/context versions, unresolved shapes and unsupported roles rather than generating `dynamic`. Successful descriptors carry the exact `ModelRevision` of the same compilation and `IsWrapperReady = true`; failed compilations publish only resolvable command-handler descriptors, with `IsWrapperReady = false` and no model revision.
+
+Each descriptor includes a transitive `Types` table for referenced concepts (including their primitive) and composite types (including their property references). A failed handler with missing type definitions is not renderable. Never attach a failed descriptor to an ESM from elsewhere.
+
+Reducer descriptors are per `on Event`: `State` is nullable read-model shape, `Event` is the non-null *current* event generation, and `Key` is the event source identity. Rule descriptors distinguish the whole command or concept value (`Artifact`) from the validated property (`Value`); concept value rules use the concept type for both.
+
+For a rule on an optional command property, `Value` is nullable: an absent property value is null (the reference evaluator represents it as `SemanticValue.Null`), even though the `RuleContext` dynamic parameter has no nullable annotation. A provider must permit null in its generated value type and preserve the rule's documented absence semantics.
+
+Policy descriptors are per authorized command or query use site; an unused policy has no wrapper-ready context. `Property` uses `validated-property` with the property ID and a `ConstantValue` containing its path, or `validated-artifact` with an empty constant for a whole artifact; `Subject` uses `unavailable` where a command has no identifier or its identifier is generated. An event source includes its current contract revision. Policy use sites are necessarily joined by name because ESM policy references carry names rather than IDs. A command with a resolvable shape exposes a `CommandContext` v1 descriptor even if its handler fails ESM binding. No handler result or envelope is implied.
+
+Query performers, reactions and constraints have no descriptors.
 
 In ESM v7, the typed contexts used before generation (`CommandValidation`, `ConceptValidation`, `RulePredicate` and `PolicyPredicate`, which serve validation rules, declarative requirements and policies) contain input properties only. Generated properties do not appear in those shapes because they exist only after validation. A generated identifier's subject is `unavailable` there, so a policy cannot use it as the thing being acted on. The command handler's `CommandContext` keeps the full shape, including generated properties.
 
 The public `SemanticContextTypeKinds` vocabulary is `runtime`, `shape`, `model`; `SemanticContextRuntimeTokens` are `Text`, `WholeNumber`, `Boolean`, `DateTime`, `TenantId`, `Identity`, `CausedBy`, `Causation`. The first four match portable model primitives (with `DateTime` representing the runtime occurrence time); the latter four are named host contracts. `SemanticContextSourceKinds` are `context-contract`, `derived`, `command`, `read-model`, `current-event`, `event-source-id`, `model-property`, `concept-value`, `validated-property`, `validated-artifact`, `authorized-operation`, `command-identifier`, `query-key`, `unavailable`. The public `SemanticTypedContextSerializer` produces the checked-in JSON vectors `typed-contexts-v1.json` and `unbound-handler-context-v1.json`, independently of `ModelRevision`.
 
-These are sidecars of the **same compilation** as the ESM: canonical v1–v4 bytes and revisions do not include them. An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations. ValueGeneration descriptors have only non-null Now (`DateTime`) and Tenant (`TenantId`) runtime members. Compilation checks owner/rule identity, role, context/result versions, capability and sole body-source linkage; an ESM-only loader can check the requirement id format but cannot fabricate this sidecar.
+These are sidecars of the **same compilation** as the ESM: canonical v1–v4 bytes and revisions do not include them.
+
+An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations.
+
+ValueGeneration descriptors have only non-null Now (`DateTime`) and Tenant (`TenantId`) runtime members. Compilation checks owner/rule identity, role, context/result versions, capability and sole body-source linkage; an ESM-only loader can check the requirement id format but cannot fabricate this sidecar.
 
 A command handler descriptor also carries a `result` object when its body declares `may produce` (result contract v2). Its members are:
 
@@ -162,7 +186,7 @@ context.Identity.ClaimValue("department")     // require claim "department" matc
 context.Identity.ClaimValues("scope")         // every value, when the caller carries the claim more than once
 ```
 
-Roles and claim names match exactly — ordinal and case sensitive. The values come from a token and mean what they say.
+Role names and claim values use ordinal, case-sensitive comparison. Claim names use ordinal, case-insensitive comparison. `ClaimValue` returns the first matching claim value; use `ClaimValues` when repeated claims matter. The host supplies the caller data, so these accessors do not validate an authentication token.
 
 ## What each context deliberately leaves out
 
@@ -172,11 +196,15 @@ The differences are the point, not an oversight:
 | --- | --- | --- | --- |
 | `RuleContext` | `CausedBy` | `Identity` | Rejecting an input because of *who sent it* — "you may not approve your own request" — is validation and needs the caller's identifier. Inspecting *roles or claims* is authorization and belongs in a `policy`. Leaving roles and claims out is what keeps the two apart. |
 | `PolicyContext` | `Identity` | `CausedBy`, `Causation` | A policy decides what a caller may do, and needs what they can prove. It does not record anything, so the audit triple would be dead weight — and leaving it out means the one `Subject` in scope is unambiguously the thing being acted on, not the caller. |
-| `CommandContext` / `QueryContext` | both | — | A handler both decides and records. |
+| `CommandContext` / `QueryContext` | both | — | Implementation code can use decision and audit inputs; receiving them does not itself authorize the operation. |
 
 ## Reaching the context declaratively
 
-The same values are reachable from a `produces` mapping, a `capture` mapping, a `tag`, or a query parameter — without any code. Use `$identity.<path>` to read the caller directly: it is the same value as `$context.identity.<path>`, not a separate identity. Both spellings remain supported and print as written. The built-in properties are `id`, `name`, `userName`, `isAuthenticated`, `roles` and `claims`; everything after `claims.` is an opaque claim name. A bare `$identity` without a path is invalid. A top-level [identity block](identity.md) can also declare typed caller details reachable as `$identity.<detail>` (not `$context.identity.<detail>`). These details are authoring metadata only: executable use reports `PLAY0268` until admitted (#600); the runtime `Identity` contract and built-ins are unchanged.
+Use context values in a `produces` mapping, a `capture` mapping, a `tag`, or a query parameter without writing code.
+
+Use `$identity.<path>` to read the caller directly: it is the same value as `$context.identity.<path>`, not a separate identity. Both spellings remain supported and print as written. The built-in properties are `id`, `name`, `userName`, `isAuthenticated`, `roles` and `claims`; everything after `claims.` is an opaque claim name. A bare `$identity` without a path is invalid.
+
+A top-level [identity block](identity.md) can also declare typed caller details reachable as `$identity.<detail>` (not `$context.identity.<detail>`). These details are authoring metadata only: executable use reports `PLAY0268` until admitted (#600); the runtime `Identity` contract and built-ins are unchanged.
 
 | Path | Value |
 | --- | --- |
@@ -188,7 +216,7 @@ The same values are reachable from a `produces` mapping, a `capture` mapping, a 
 | `$context.causedBy.name` | The display name of the calling identity. |
 | `$context.causedBy.userName` | The user name of the calling identity. |
 | `$context.causation.type` | What caused this — a command, a reactor, a schedule. |
-| `$identity.id` or `$context.identity.id` | The caller's identifier from the auth token. |
+| `$identity.id` or `$context.identity.id` | The caller's identifier supplied by the host. |
 | `$identity.name` or `$context.identity.name` | The caller's display name. |
 | `$identity.userName` or `$context.identity.userName` | The caller's user name. |
 | `$identity.isAuthenticated` or `$context.identity.isAuthenticated` | Whether the caller is authenticated. |
@@ -204,15 +232,19 @@ produces InvoiceRegistered
   department    = $identity.claims.department
 ```
 
-In ESM v2 `produces` mappings, the portable subset is `$context.occurred`, `$identity.id` / `.name` / `.userName` (or `$context.identity.id` / `.name` / `.userName`), and the equivalent `$context.causedBy.subject` / `.name` / `.userName`. The two identity spellings bind to identical executable model bytes; roles, authentication state and claims have no portable scalar mapping. The execution request supplies the occurrence time and audit identity; `occurred` is the event occurrence time, not a guaranteed append timestamp. `identity.id` maps to the event context's `causedBy.subject`. This is separate from `$eventSourceId`, which is supplied by the fact's typed event-source context. The target property must have the matching scalar type (`DateTime` for `occurred`, `String` or `Uuid` for audit identity). Without request occurrence data, reference execution rejects a command that reads these paths.
+In ESM v2 `produces` mappings, the portable subset is `$context.occurred`, `$identity.id` / `.name` / `.userName` (or `$context.identity.id` / `.name` / `.userName`), and the equivalent `$context.causedBy.subject` / `.name` / `.userName`. The two identity spellings bind to identical executable model bytes; roles, authentication state and claims have no portable scalar mapping.
 
-Other paths may still be available to code and to other language surfaces, but cannot bind as a portable `produces` mapping. `identity.roles` and `identity.claims.<name>` are collections or unbounded; `causation.<anything>` is not addressable on Chronicle's collection-valued causation. `$context.tenant` is a tenant ID, not Chronicle's event namespace, and the language does not name a `$context.correlation` value. These cases report `PLAY0268` rather than guessing a mapping. A path outside the documented language catalog remains a syntax-level **warning**; admission to ESM is a separate decision.
+The execution request supplies the occurrence time and audit identity; `occurred` is the event occurrence time, not a guaranteed append timestamp. `identity.id` maps to the event context's `causedBy.subject`. This is separate from `$eventSourceId`, which is supplied by the fact's typed event-source context. The target property must have the matching scalar type (`DateTime` for `occurred`, `String` or `Uuid` for audit identity). Without request occurrence data, reference execution rejects a command that reads these paths.
+
+Other paths may still be available to code and to other language surfaces, but cannot bind as a portable `produces` mapping. `identity.roles` and `identity.claims.<name>` are collections or unbounded; `causation.<anything>` is not addressable on Chronicle's collection-valued causation. `$context.tenant` is a tenant ID, not Chronicle's event namespace, and the language does not name a `$context.correlation` value. These cases report `PLAY0268` rather than guessing a mapping.
+
+A path outside the documented language catalog remains a syntax-level **warning**; admission to ESM is a separate decision.
 
 `$context.` reaches the command and query contexts only. It is a separate namespace from [`$eventContext.`](projections/event-context.md), which reads the metadata of the event a projection is processing: neither falls back to the other, and each is checked against its own catalog. A rule and a policy have no declarative half — a `rule` names a predicate and a `policy` states conditions, and those *are* the declarative form.
 
 ## Filling a query parameter from the context
 
-A query parameter declared with `from` is filled from the context instead of the caller, so a value the UI must never choose — the tenant, the caller's own subject — is stated once in the document rather than trusted from the request:
+Declare a query parameter with `from` when its value must come from context rather than caller-supplied arguments. For example, the model can state that a tenant filter uses `$context.tenant`. The host must supply the correct context and honor that binding; a filter declaration does not replace an authorization policy:
 
 ```screenplay
 query ListInvoices => InvoiceListReadModel[]

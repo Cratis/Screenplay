@@ -1,13 +1,15 @@
 ---
-title: "Constraints"
-description: "Declare unique constraints in Screenplay that Chronicle checks before an append commits, and see what happens on violation."
+title: "Screenplay constraints: enforce uniqueness before append"
+description: "Declare Screenplay uniqueness constraints for event properties or event types. Chronicle checks them before append; a violation rejects the command."
 ---
 
 # Constraints
 
-One quoted or fenced-text `description` body line records authoring intent (`PLAY0270`). It prints first, before rules or `file`; it neither supplies a rule nor counts as a file constraint's declarative option. It is distinct from `message` and is not localizable. Markdown `documentation` is not supported here.
+A constraint in Cratis Screenplay declares a uniqueness rule that Cratis Chronicle checks before an event append commits. Use one to stop two invoices claiming the same number, or to prevent a payment attempt from being recorded twice. A violation rejects the command without committing any of its events.
 
-Chronicle checks unique constraints before an append commits. The two declarative `unique` forms describe the constraints Chronicle can enforce. A `file` form names a hand-written Chronicle `IConstraint` class, but it cannot add an arbitrary append-time rule.
+This protects uniqueness, not the sequence of an order's lifecycle. A [state machine](statemachines.md) observes recorded facts; it does not stop an invalid command. Put state-dependent decisions in command validation or a protected `require` condition, as described [below](#what-cannot-be-said-yet).
+
+The two declarative `unique` forms describe enforceable rules. A `file` form names a hand-written Chronicle `IConstraint` class, but cannot add an arbitrary append-time rule.
 
 ## Syntax
 
@@ -29,6 +31,8 @@ constraint <Name>
   file <Path>                              ← hand-written Chronicle IConstraint
 ```
 
+A constraint can also have one quoted or fenced-text `description` body line (`PLAY0270`). It records intent and prints before rules or `file`; it supplies no rule and does not count as a file constraint's declarative option. Unlike `message`, it is not a violation response and is not localizable. Markdown `documentation` is not supported here.
+
 | Form | Meaning |
 | --- | --- |
 | `unique <property>[, <property>...] on <EventType>` | No two event sources may hold the same value (or composite value) for those properties. Repeat the line for other event types that share the claim. |
@@ -40,6 +44,8 @@ constraint <Name>
 
 ## Examples
 
+These two invoice rules guard different outcomes. `UniqueInvoiceNumber` prevents another event source from claiming an invoice number already held elsewhere. `OneRegistrationPerInvoice` prevents the same invoice source from recording a second registration, even if the number changes.
+
 ```screenplay
 constraint UniqueInvoiceNumber
   unique invoiceNumber on InvoiceRegistered
@@ -50,7 +56,7 @@ constraint OneRegistrationPerInvoice
 
 ## What a constraint means
 
-The two `unique` forms have a portable meaning: they are part of the semantic model, and any runtime that executes the model enforces them the same way Chronicle does.
+Both `unique` forms are part of the executable semantic model. A runtime that admits them must enforce their uniqueness semantics. Keep the index and composite-value differences described [below](#when-a-constraint-is-violated) in mind when moving between the reference executor and Chronicle.
 
 ### The name is the constraint's identity
 
@@ -61,7 +67,7 @@ A constraint's name is what the event store knows it by. The name keys the index
 
 ### Where it applies
 
-A constraint applies to the whole event sequence, across every event source. Nothing narrows it today; see [what cannot be said yet](#what-cannot-be-said-yet).
+The constraint applies across the event sequence within a namespace, not just the slice that declares it. A unique property claim can therefore conflict with another event source anywhere in that sequence; a unique event rule still checks each source separately. Screenplay cannot declare a narrower scope; see [what cannot be said yet](#what-cannot-be-said-yet).
 
 ### Unique property values
 
@@ -81,7 +87,7 @@ The property must be one the event declares directly (`PLAY0391`), and the event
 
 ## When a constraint is violated
 
-A violation is an outcome, not an error in the system. The command that would have appended the violating event is **rejected**, and nothing it would have appended is committed — one violating event rejects the whole command. The rejection names the constraint, and its message says which kind of rule was broken:
+Handle a constraint violation as a business rejection. One violating event rejects the whole command, so none of that command's events are committed. The rejection identifies the constraint and the kind of rule that failed:
 
 | Form | Message |
 | --- | --- |
@@ -164,6 +170,8 @@ A state-transition rule is not uniqueness. Express it with command validation or
 
 ## Guidance
 
-- Constraints belong in the `StateChange` slice whose events they guard.
-- Use `unique` for supported uniqueness rules. Chronicle checks uniqueness before the append commits, but updates the index used by later checks **after** the commit; index update failures are logged, not rolled back ([Cratis/Chronicle#4123](https://github.com/Cratis/Chronicle/issues/4123)). Do not describe this as an atomic index-and-append guarantee.
-- Choose the name as carefully as an event name. It is the constraint's identity, and renaming it starts a new, empty index.
+Place the constraint in the `StateChange` slice whose events it guards, and choose its name as carefully as an event name. Renaming starts a new, empty index rather than migrating the existing claims.
+
+Chronicle checks uniqueness before the append commits, but updates the index used by later checks after the commit. Index update failures are logged, not rolled back ([Cratis/Chronicle#4123](https://github.com/Cratis/Chronicle/issues/4123)); this is not an atomic index-and-append guarantee.
+
+Once the rule is declared, add a [specification](specifications.md) for both an accepted claim and a collision. If a reaction invokes the command, [refusal branches](reactions.md#refusal-branches) let it describe how to handle the rejection.

@@ -1,6 +1,6 @@
 ---
-title: "Grammar (EBNF)"
-description: "The complete EBNF grammar of the Projection Declaration Language used inside Screenplay projection blocks."
+title: "Screenplay projection grammar (EBNF)"
+description: "Cratis Screenplay projection grammar uses EBNF to define blocks, mappings, keys and expressions in the Projection Declaration Language."
 ---
 
 # Grammar (EBNF)
@@ -484,7 +484,7 @@ Literal = BoolLiteral
 
 `literal` in front of a literal states explicitly that the value is a constant - most often a fixed key, `key literal "global"` (see [Keys](keys.md)).
 
-`$causedBy` on its own, or followed by a path the catalog lists below `causedBy` - `subject`, `name`, `userName`, or `onBehalfOf` and its own members - is the short form of `$eventContext.causedBy`. It parses, but Chronicle cannot yet evaluate it when the projection runs ([Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119)) - write `$eventContext.causedBy.<property>` instead.
+`$causedBy` on its own, or followed by a path the catalog lists below `causedBy` - `subject`, `name`, `userName`, or `onBehalfOf` and its own members - parses as the short form of `$eventContext.causedBy`. Chronicle compiles and evaluates the scalar forms `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName`. The Screenplay semantic-model binder still rejects the shorthand and reports [Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119); write `$eventContext.causedBy.subject`, `.name` or `.userName` for semantic-model binding. Whole-object `$causedBy` and `$eventContext.causedBy`, and paths through the optional `onBehalfOf` member, are not admitted as portable scalar mappings.
 
 `$eventSourceId` and `$eventContext.eventSourceId` are distinct expressions that resolve to the same value; see [Event Context](event-context.md#eventsourceid-and-eventcontexteventsourceid).
 
@@ -590,5 +590,5 @@ This projection uses:
 ## See Also
 
 - [Variants](variants.md) - Mutually exclusive named read models sharing one projection identity
-- [Expressions](expressions) - Understanding expression syntax
+- [Expressions](expressions.mdx) - Understanding expression syntax
 - All other topic pages for specific features described in the grammar

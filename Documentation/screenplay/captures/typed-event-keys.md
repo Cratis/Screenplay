@@ -1,17 +1,15 @@
 ---
-title: "Typed event capture keys"
-description: "ESM v32 preserves the type of an incoming event key on captured identities."
+title: "Screenplay captures: preserve typed event identities"
+description: "A Screenplay event capture can preserve a payload key's type on local event identities, so specifications and read models use the same domain concept."
 ---
 
 # Typed event capture keys
 
-A key can also be marked `is event source`, which selects ESM v33 instead; see [Keying by the event source](../captures.md#keying-by-the-event-source).
+A Screenplay capture over `source events` can preserve the payload key's type as the identity of the local events it appends. Use this when an incoming order id is an `OrderId` concept and the local event, specification and read model should use that same concept rather than a plain text identity.
 
-A capture over `source events` can obtain its event-source identity type from its `key`.
-When every consumed event declares exactly one required, scalar property of that name,
-and all captures appending the same event agree on its type, and no reaction producer
-supplies a different identity type for that event, the appended event uses that
-type instead of Text. For example:
+The payload key determines which local instance receives the event. Its type can be inferred when every consumed event declares exactly one required scalar property with that name, every capture appending the same event agrees on the type, and no reaction producer supplies a different identity type. Commands keep their existing identity inference.
+
+In this example, `OrderPlaced` carries an `orderId` of type `OrderId`. `key orderId` uses that value to identify the order, and the append copies it into the local `OrderReceived` event:
 
 ```screenplay
 concept OrderId : Uuid
@@ -31,23 +29,17 @@ module Sales
           orderId = $.orderId
 ```
 
-Here `OrderReceived` has an `OrderId` event-source identity. A specification's
-`given OrderReceived` or `then OrderReceived` with `for "<uuid>"` is bound as `OrderId`,
-so a projection keyed by `$eventSourceId` can populate an `OrderId`-keyed read model.
-The incoming foreign event's optional `for` remains opaque text: the capture's identity
-comes from `orderId` in its payload, not that foreign routing value.
+For an incoming `orderId` of `"3fa85f64-5717-4562-b3fc-2c963f66afa6"`, the capture appends `OrderReceived` to that order's event source with an `OrderId` identity. The event's `orderId` field also receives the payload value through `orderId = $.orderId`. These are separate roles: `key` chooses the event-source identity, while the mapping supplies an event property.
 
-Commands retain their existing identity inference. When no command supplies a type,
-untyped sources (including webhook and poll records), non-scalar keys, disagreeing
-capture key types, and reaction producers that supply a different identity type retain
-the Text fallback. A plain String key therefore keeps the same
-model and version as before. An invalid or missing event key still fails the existing
-source-events key validation; inference does not weaken that check.
+A specification's `given OrderReceived` or `then OrderReceived` with `for "<uuid>"` is bound as `OrderId`. A projection keyed by `$eventSourceId` can therefore populate an `OrderId`-keyed read model without reducing that identity to Text.
+
+The incoming foreign event's optional `for` remains opaque text. It might identify an external route that differs from `orderId`; the capture still uses the payload's `orderId` for the local identity. If those values must be equal, mark the key `is event source` as described in [Keying by the event source](../captures.md#keying-by-the-event-source).
+
+When no command supplies a type, inference falls back to Text for untyped sources such as webhook and poll records, non-scalar keys, disagreeing capture key types, or a reaction producer with a different identity type. A plain String key keeps the same model and version as before. A missing or invalid event key still fails source-events key validation; type inference does not relax that check.
 
 ## ESM v32 contract
 
-Only models whose captured identity changes select language version `32.0` and semantic
-version `32.0` (schema v32). The existing `eventSourceType` member of capture appends and
+The Executable Semantic Model (ESM) carries the inferred identity type for consumers of the compiled model. Only models whose captured identity changes select language version `32.0` and semantic version `32.0` (schema v32). Marking a key `is event source` selects v33 instead. The existing `eventSourceType` member of capture appends and
 the typed identities in specification fixtures carry the inferred type; no JSON member
 is added. These changed canonical bytes have new semantic revisions. All other models
 retain their existing canonical bytes and selected versions. Older full ESM goldens
@@ -55,7 +47,8 @@ remain frozen.
 
 The compiler and strict reader admit v32. Earlier version readers reject it, and marking
 a typed capture-only identity as an earlier version is rejected before revision checks.
-Consumers, including Stage, must explicitly admit v32 before running these models;
-compiler admission does not extend any downstream consumer's supported-version list.
-The TypeScript compiler owns syntax only and preserves the typed source property and key
-in the shared conformance fixture; it does not emit ESM.
+Each consumer must explicitly admit the selected version; compiler admission does not extend a downstream consumer's supported-version list.
+
+Stage's Cratis backend admits the exact `32.0/32.0` and `33.0/33.0` pairs and assesses newer `32.x` pairs within its declared `>=32.0 <33` range. Its typed capture identities must be Text, Uuid, WholeNumber or non-enumerated concepts over those types. It requires one consistent, required scalar key type across the source events and the same identity type on every append. It refuses an incompatible typed key as `STAGE-ESM-052` rather than coercing it to text. Version admission alone does not make every capture shape executable.
+
+The TypeScript compiler owns syntax only and preserves the typed source property and key in the shared conformance fixture; it does not emit ESM. To check the local events and read-model state produced by your capture, continue to [capture specifications](../specifications.md#clocks-triggers-and-captures).

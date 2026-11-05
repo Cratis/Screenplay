@@ -1,13 +1,13 @@
 ---
-title: "Types"
-description: "Declare Screenplay types, named structured shapes such as invoice lines, that events and commands carry as properties."
+title: "Cratis Screenplay types for structured domain data"
+description: "Declare reusable record shapes in Cratis Screenplay with types, use concepts for individual domain values, and check nested specification data."
 ---
 
 # Types
 
-A [concept](concepts.md) names a single primitive value. A **type** names a *shape* — the structured child records real events routinely carry: the lines of an invoice, the answers of a questionnaire, the contact behind a billing address.
+A Cratis Screenplay `type` declares a record with named properties, such as an invoice line or a billing contact. Use a [concept](concepts.md) for one domain value, such as a quantity or an email address; use a type when those values belong together in a record.
 
-Without it, a document can reference `lines InvoiceLine[]` but never say what an `InvoiceLine` is. The reader is left guessing, and the concepts that only ever live inside such a record — a `PersonName`, an `EmailAddress` — have no reason to be declared at all, so the document understates the application's own compliance surface. A `type` closes both gaps.
+Declaring `InvoiceLine` tells readers what `lines InvoiceLine[]` contains. It also gives the compiler a shape to check when a specification supplies line values, including any nested records.
 
 ## Syntax
 
@@ -19,7 +19,7 @@ type <Name>
   ...
 ```
 
-The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
+The optional `file` line points to the repository-relative implementation file. It lets readers navigate from the model to its code, but does not replace the property declarations. See [File references](file-references.md).
 
 A type declares at least one property. Events, commands and read models use the same property order: name, type, then `optional` when the value may be absent. Write a collection as `InvoiceLine[] optional` when the collection itself may be absent; this does not make its items optional.
 
@@ -46,7 +46,7 @@ type InvoiceLine
   discount    DiscountPercentage optional
 ```
 
-The type is then referenced by name from anywhere a type reference is allowed — an event property, a command property, or another type:
+Here, `Quantity` describes one integer value; `InvoiceLine` combines that quantity with a product name, price and optional discount. Reference the type by name from an event, command or another type. This event fragment assumes an `InvoiceId` concept is also declared or imported:
 
 ```screenplay
 event InvoiceRegistered
@@ -56,7 +56,7 @@ event InvoiceRegistered
 
 ## Structured values in specifications
 
-A property declared as `InvoiceLine[]` accepts an inline list of objects. Quote each key and keep the entire value on one line:
+A type declaration describes the fields; a specification supplies their values. For a smaller order-line example, use this shape:
 
 ```screenplay
 type InvoiceLine
@@ -64,7 +64,7 @@ type InvoiceLine
   quantity Int
 ```
 
-A specification value for a `lines InvoiceLine[]` field is then written as a [structured value](structured-values.md) - `lines` with one `item` block per line, or `lines none` for no lines:
+If `PlaceOrder` declares `lines InvoiceLine[]`, write its specification value as a [structured value](structured-values.md): a `lines` header with one `item` block per invoice line. Use `lines none` for an empty list.
 
 ```screenplay
 when PlaceOrder
@@ -73,13 +73,14 @@ when PlaceOrder
       sku      = "A-1"
       quantity = 2
 ```
- The compiler checks each key against `InvoiceLine`, including nested declared types and enum members. A missing declaration or an imported type is not guessed; a key absent from a known shape is an error.
+
+The compiler checks `sku` and `quantity` against `InvoiceLine`, following nested declared types and checking enum members. An unknown member of a known shape is an error. If a shape is undeclared or only named by an external import, the compiler does not guess its members.
 
 An enum is a concept, not a composite type. Its member names remain the values in specifications and conditions even when every member has an explicit number. The opt-in `enum-pinning` completeness check also reports its stored-identity hint for an unnumbered enum reached through a composite event property. See [Enum concepts](concepts.md#enum-concepts) for numbering rules and executable admission.
 
 ## Types compose
 
-A type may reference another type, which is how a nested shape is expressed — by reference rather than by nesting the declaration:
+Keep each type declaration at the top level and refer to it by name to build a nested shape. In this example, `Invoice` contains one `BillingContact` and a list of `InvoiceLine` records:
 
 ```screenplay
 concept PersonName   : String @pii
@@ -112,24 +113,24 @@ module Billing
         selectedLine InvoiceLine optional
 ```
 
-Both scalar and collection members resolve `InvoiceLine` as a composite value type. A `readmodel InvoiceLine` would instead declare a view identity and cannot supply this member type. A slice-local `type` is skipped with Warning `PLAY0029`; referencing it from a member produces Error `PLAY0273` at that member. Keep the type at the top level, including when it is declared in another imported file. A [children projection](projections/grammar.md#children-block) can populate `lines`; it does not change type resolution.
+Both `lines` and `selectedLine` use `InvoiceLine` as a composite value type. Declaring `readmodel InvoiceLine` instead would define a view, not a reusable member type. Keep the `type` at the top level, including in an imported file; the diagnostics for slice-local declarations are explained below. A [children projection](projections/grammar.md#children-block) can populate `lines` without changing how its member type resolves.
 
 ## Where types earn their keep — compliance
 
-This is the reason to reach for a type rather than leaving a shape undeclared. A `[PII]` value buried inside a child record is still personal data, and Chronicle still encrypts and erases it. But if the shape is never declared, nothing in the document says so — and a reader auditing the model sees a smaller PII surface than the application actually has.
+A nested record can contain personally identifiable information (PII) just as an event's direct properties can. In `BillingContact`, the `PersonName` and `EmailAddress` concepts carry `@pii`, so a reader can follow the record to the personal values it contains.
 
-Declaring `BillingContact` gives `PersonName` and `EmailAddress` a home in the document, so `@pii` and its [reason](concepts.md#why-a-value-is-personal-data) travel with them where a reader can see them.
+Declare those concepts and their [reasons for being personal data](concepts.md#why-a-value-is-personal-data) rather than leaving the child shape outside the model. The declaration makes that data visible for review; it does not by itself configure an application's encryption or erasure.
 
 ## Unresolved references are reported
 
-The compiler resolves every property type reference against the primitives, the declared concepts, the declared types and the imports. A reference to something the document never declares is a **warning**, not an error — a runtime may well resolve the name, but a document that silently depends on a shape living outside it is exactly what the warning is there to surface:
+The compiler checks property type names against primitives, declared concepts, declared types and imports. An undeclared name produces a warning, so a document can compile while still depending on a shape it does not describe:
 
 ```text
 Unknown type 'InvoiceLine' on 'lines' of event 'InvoiceRegistered' -
 declare it with 'concept InvoiceLine : <Primitive>' or 'type InvoiceLine'
 ```
 
-For read-model members, a known read-model shape used outside the value-type namespace is a compile error (`PLAY0273`). Undeclared names are not rejected at compile time. A slice-local `type` is skipped with Warning `PLAY0029`; referencing it fails semantic binding (`screenplay test`) with `PLAY0273` at the member, as does any name outside the value-type namespace. See [Member value types](readmodels.md#member-value-types).
+Read-model members have a further restriction: their types must be value types, not other read models. A type name that resolves only to a read model produces compile error `PLAY0273`. An undeclared name is not rejected at compile time, but fails binding for execution (`screenplay test`) with `PLAY0273`. A slice-local `type` is skipped with warning `PLAY0029`, so a member referencing it also fails binding. See [Member value types](readmodels.md#member-value-types).
 
 Concept and type names share one namespace — declaring both a `concept InvoiceLine` and a `type InvoiceLine` is an error.
 
@@ -140,4 +141,4 @@ Concept and type names share one namespace — declaring both a `concept Invoice
 | `concept` | The value *is* a primitive with a domain meaning — an id, a name, an amount, a code. |
 | `type` | The value is a shape made of several such values. |
 
-Reach for a concept first. A type exists for the shapes a single primitive cannot express — and its properties should themselves be concepts, so the strong typing goes all the way down.
+Use concepts where individual properties have domain meaning, and types to group them into records. Once the shape is declared, follow [Structured values](structured-values.md) to supply objects and lists in specifications, mappings and seeds.

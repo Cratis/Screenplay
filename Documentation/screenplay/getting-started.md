@@ -1,13 +1,15 @@
 ---
-title: Getting started
-description: Write your first Screenplay .play file and watch the editor highlight it, complete it, and flag mistakes live — in a few minutes.
+title: Write your first Cratis Screenplay model
+description: This Cratis Screenplay tutorial models borrowing a library book in a .play file and uses editor diagnostics to find and fix a missing policy.
 ---
 
-By the end of this page you'll have a `.play` file that models a small feature — a command, the event it produces, and a screen that reads it — open in an editor that **highlights** the language, **completes** it as you type, and **flags mistakes live**. That editor is what this repository ships; running a `.play` as an application is [Stage](./faq.md#what-are-stage-and-studio)'s job, and this tutorial gets you to the point where a Screenplay is ready for it.
+Write a Cratis Screenplay model for borrowing a library book, from the command that requests it to the event and the screen showing books on loan. You will use editor completions and diagnostics as you connect the declarations, including finding and fixing a missing authorization policy.
+
+This tutorial ends with a readable `.play` model. It does not run or deploy an application.
 
 ## Before you start
 
-You need [Node.js](https://nodejs.org) 20 or newer. Clone the repository and open a terminal in its root:
+You need [Node.js](https://nodejs.org) 20 or newer and Yarn available in your terminal. Clone the repository, then work from its root for the commands below:
 
 ```bash
 git clone https://github.com/Cratis/Screenplay.git
@@ -24,24 +26,25 @@ yarn build
 yarn dev
 ```
 
-`yarn dev` serves the editor at [http://localhost:9200](http://localhost:9200). It opens on a complete sample — the invoicing `.play` — so the very first thing you see is the language rendered with full syntax highlighting, including the embedded C#, TypeScript, and React blocks.
+Open [http://localhost:9200](http://localhost:9200) after `yarn dev` starts the editor. It loads an invoicing sample. You can inspect its highlighting, including embedded C#, TypeScript, and React blocks, before replacing it with your own model.
 
 > [!TIP]
-> Prefer your own editor? The same language support ships as a VS Code extension. Press **F5** in VS Code with this repository open and an Extension Development Host launches with `.play` highlighting, IntelliSense, hover, and diagnostics.
+> To work in VS Code instead, open this repository and press **F5**. The Extension Development Host opens with `.play` highlighting, completions, hover documentation, and diagnostics. Use a new `.play` file there for the model below.
 
 ## Model a slice
 
-Clear the editor and start a bounded context. Begin your new model's root file
-with `command reads protected` for [protected command reads](commands.md#what-reads-guarantees)
-and `reaction batches atomic` for [atomic production batches](reactions.md#atomic-production-batches).
-Together these select ESM v25 or later, so the targets you render to must admit
-that version. Existing models retain their mode unless you explicitly opt in.
+Clear the standalone editor's sample, or start a new file in VS Code. The `Library` module will contain a `Lending` feature, with a slice for borrowing a book. A slice groups declarations for one behavior.
 
-A `.play` file is indentation-based — structure follows the offside rule, and a construct owns everything indented beneath it. Type the outline of a module with one feature and one slice:
+Begin the root file with two execution choices: `command reads protected` selects [protected command reads](commands.md#what-reads-guarantees), and `reaction batches atomic` selects [atomic production batches](reactions.md#atomic-production-batches). These determine how reads and reaction effects are handled. They require executable semantic model (ESM) v25 or later; any target you later choose must admit that version. Existing models keep their mode unless you opt in.
+
+Indentation defines the structure: each declaration owns what is indented beneath it. Type this outline:
 
 ```screenplay
 reaction batches atomic
 command reads protected
+
+concept BookId : Uuid
+concept MemberId : Uuid
 
 module Library
 
@@ -50,11 +53,11 @@ module Library
     slice StateChange BorrowBook
 ```
 
-As you type `slice`, the completions offer the four slice types — `StateChange`, `StateView`, `Automation`, `Translate`. `StateChange` is the one that accepts a command and records what happened.
+After `slice`, completions offer `StateChange`, `StateView`, `Automation`, and `Translate`. Choose `StateChange` here because borrowing a book accepts a command and records what happened. The `BookId` and `MemberId` concepts give those identifiers distinct types based on `Uuid`.
 
 ## Add the command and the event
 
-Inside the slice, declare the command, the rule that guards it, and the fact it produces:
+Replace the empty `BorrowBook` slice with the declarations below, keeping the module and feature above it. The command takes a book and member identifier; the event records the borrowing and when it happened.
 
 ```screenplay
     slice StateChange BorrowBook
@@ -75,28 +78,32 @@ Inside the slice, declare the command, the rule that guards it, and the fact it 
         borrowedAt DateTime
 ```
 
-Notice what the file is saying in one read: who may call it (`authorize`), what has to be true (`validate`), and the past-tense fact it appends (`produces` → `event`). The event never carries an identity of its own — `$context.occurred` and the event source come from the surrounding context, not the payload.
+Read the command from top to bottom: `authorize` names who may call it, `validate` states the input rule, and `produces` maps values into the event. `$context.occurred` supplies the occurrence time. The event-source identity belongs to the surrounding context rather than being an identity declared by the event payload.
 
 ## Watch a mistake get caught
 
-That slice references a policy, `IsMember`, that you haven't declared. The language service knows it: `IsMember` is underlined with a diagnostic — *reference to an undeclared policy*. This is the live feedback the editor gives you for the whole language — unknown slice types, unknown primitive types, references to undeclared policies or events, and tab indentation are all flagged as you type.
+The editor underlines `IsMember` because the model refers to a policy that does not exist yet. Diagnostics also flag unknown slice or primitive types, undeclared event references, and tab indentation.
 
-Declare the policy at the top of the file, above the `module`, and the diagnostic clears:
+Add the policy above `module Library` to clear the undeclared-policy diagnostic:
 
 ```screenplay
 policy IsMember
   require authenticated
 ```
 
-> [!NOTE]
-> Concepts like `BookId` and `MemberId` are strongly-typed value types. Declare them once — `concept BookId : Uuid` — and every construct that uses them is typed end to end. See [Concepts](concepts.md).
+Despite its name, this policy requires authentication, not a library-membership check. [Policies](policies.md) explains how to express authorization rules. Reuse `BookId` and `MemberId` elsewhere in the model when you need those value types; see [Concepts](concepts.md).
 
 ## Read it back on a screen
 
-A command that records facts is only half a feature. Add a second slice — a `StateView` — that projects the event into a read model and puts it on screen:
+To describe what a reader sees after borrowing a book, add a `StateView` slice under `feature Lending`, alongside `BorrowBook`. It builds a read model, a queryable view of the recorded events, and connects it to a screen:
 
 ```screenplay
     slice StateView OnLoan
+      readmodel OnLoanReadModel
+        bookId     BookId key
+        borrowedBy MemberId
+        borrowedAt DateTime
+
       query BooksOnLoan => OnLoanReadModel[]
 
       projection OnLoan => OnLoanReadModel
@@ -108,15 +115,12 @@ A command that records facts is only half a feature. Add a second slice — a `S
         data OnLoanReadModel[] via query BooksOnLoan
 ```
 
-The `projection` uses the embedded [Projection Declaration Language](projections/index.md) to fold events into a read model; the `query` exposes it; the `screen` renders it. No update code, no proxy to regenerate by hand — the whole read path is declared in six lines.
+The `readmodel` declares the view's fields, with `bookId` identifying each instance. The `projection` describes how `BookBorrowed` events fill those fields. It uses the embedded [Projection Declaration Language](projections/index.md); the same-named `bookId` is mapped automatically. The query exposes the collection, and the screen binds to that query. Keep the `readmodel` declaration: without it, the projection has no declared target.
 
 ## What you've built
 
-You have a `.play` file that models a complete slice of behavior — command, event, projection, query, and screen — with authorization and validation, all in one file the editor understands. That file is a Screenplay ready to hand to Stage.
+You can now follow the borrowing behavior through two connected slices: a command records an event, and a projection describes the view a screen reads. Authorization and validation sit beside the command. The model is readable by people and AI agents, but editor feedback alone does not establish executable binding or target support.
 
-Where to go next:
+Use [Modules, features, and slices](slices.md) to decide where the next behavior belongs, then [Specifications](specifications.md) to describe its expected outcomes. The [language overview](overview.md) is the reference map. For the modeling trade-offs, read [Why Screenplay](./why-screenplay.mdx); use the [Glossary](./glossary.md) for unfamiliar terms.
 
-- **[Language overview](overview.md)** — the design principles and the full map of constructs.
-- **[Modules, features, and slices](slices.md)** — the four slice types and what goes in each.
-- **[Why Screenplay](./why-screenplay.md)** — the reasoning behind modeling a bounded context in one file, and when not to.
-- **[Glossary](./glossary.md)** — the vocabulary, defined once.
+To see a supported model run, follow the separate [Cratis Stage sandbox walkthrough](/stage/docker/), which supplies its own model and prerequisites. Stage is not a production host: state is held in memory and lost on container restart. Check admission diagnostics and bind published ports to `127.0.0.1`.

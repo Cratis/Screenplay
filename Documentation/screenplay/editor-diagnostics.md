@@ -1,6 +1,6 @@
 ---
 title: Editor diagnostic support
-description: Find which Screenplay diagnostics the editors share and which require the C# compiler.
+description: Cratis Screenplay editors use TypeScript for local checks; the C# compiler validates the whole application and executable readiness.
 ---
 
 A clean editor buffer is not a compiler verdict. Monaco and the VS Code extension use the [TypeScript compiler](typescript-compiler.md) for local syntax and selected authoring checks. The [C# compiler and CLI](tool.md) remain the authority for whole-application validation and executable readiness.

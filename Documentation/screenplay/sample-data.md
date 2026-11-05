@@ -1,13 +1,13 @@
 ---
-title: "Sample data"
-description: "Declare sample data packs in Screenplay so designs and previews show realistic rows before a backend exists; never used in production."
+title: "Cratis Screenplay sample data for UI design"
+description: "Declare representative rows in Cratis Screenplay sample data packs and select one in a UI profile for design and previews, separate from production data."
 ---
 
 # Sample data
 
-A design surface or a preview needs rows to show in a table, a list or a chart before a real backend feeds it. `sample data` declares those rows as a **pack**: demo records per shape, in one locale, written with the same literals as everything else in Screenplay.
+Cratis Screenplay `sample data` supplies representative rows for a UI design before a backend supplies real records. Group the rows into a named pack, then select that pack in a UI profile so screens share the same design data. Each pack contains shapes, the named record structures that provide rows for read models.
 
-Sample data is **design and preview time only**. It is not part of the [executable semantic model](interoperability.md): binding reports each pack as deferred (`PLAY0269`), and a production build, a backend or Chronicle never sees it.
+Sample data is for design and UI previews only, not production records or backend initialization. The [executable semantic model](interoperability.md) defers each pack with `PLAY0269` and contains none of its rows. A UI consumer reads the syntax and supplies the design-time data; accepting the declaration does not mean every consumer displays it.
 
 ## Syntax
 
@@ -23,14 +23,28 @@ sample data <Name>
   ...
 ```
 
-- `sample data <Name>` - top level, alongside `seed` and `ui profile`. A document can declare several packs; each name must be unique.
-- `title` - the display title a selector shows (`CRM · Nordic SMB`). Without one the pack is shown by its name. At most one.
-- `locale` - the locale of the data, a BCP 47 tag such as `nb-NO` or `en-GB`. It also decides which names, cities and formats generated rows use for a shape the pack does not cover. At most one.
-- `shape <ReadModel>` - the rows for one shape. A shape supplies rows for the read model of the same name, or for the read model a `ui profile` maps it to (see below). A shape appears at most once per pack.
-- `row` - one record, with a `<field> = <literal>` line per scalar field, or a bare field name containing child `row` blocks for a composite collection. Fields and rows keep authored order. Fields may be omitted; a missing field is generated.
-- A literal is a quoted string, a number, `true`, `false` or `null`. Numbers keep their authored token.
+Declare packs at the top level, alongside `seed` and `ui profile`. Each pack name must be unique.
 
-The compiler checks every field against the read model: the field must be one of its properties (`PLAY0710`), and the literal must fit the type (`PLAY0711`) - a string for text, `Uuid`, `Date` and `DateTime`, one of the values for an enum concept, a whole number for `Int`, a number for `Decimal`, `true` or `false` for `Bool`, and `null` only for an `optional` property. A shape that names no read model is a warning (`PLAY0709`), because a blueprint may supply the read model.
+| Entry | Meaning and limits |
+| --- | --- |
+| `title` | An optional display title, such as `CRM · Nordic SMB`, once per pack. Without one, the pack is displayed by its name. |
+| `locale` | An optional BCP 47 locale tag, such as `nb-NO` or `en-GB`, once per pack. It identifies the data's locale and can guide Scene's generated rows when no pack supplies a requested shape. It does not translate authored text. |
+| `shape <ReadModel>` | Rows for a read model with the same name, or one mapped by the profile. Each shape can appear once per pack. |
+| `row` | One record, with fields in authored order. Omitted fields remain absent in the syntax and Stage conversion; do not rely on them being generated individually. |
+| `<field> = <literal>` | A quoted string, number, `true`, `false` or `null`. Numbers retain their authored token. |
+
+The C# compiler checks authored fields against the matching read model. Unknown properties produce `PLAY0710`; values that do not fit the property type produce `PLAY0711`.
+
+| Property type | Accepted literal |
+| --- | --- |
+| Text, `Uuid`, `Date`, `DateTime` | A quoted string. |
+| Enum concept | A quoted value from the concept's declared values. |
+| `Int` | A whole number. |
+| `Decimal` | A number. |
+| `Bool` | `true` or `false`. |
+| An `optional` property | Its usual literal or `null`. |
+
+Scalar fields hold literals; a collection uses nested rows (see [Composite collections](#composite-collections)). A shape that names no read model produces warning `PLAY0709`: the model may come from a blueprint, or the shape may need a profile mapping.
 
 ## Composite collections
 
@@ -68,7 +82,7 @@ In syntax JSON, a collection field has `syntaxKind: "Rows"`, a null `value`, and
 
 ## Choosing the active pack: once, in the ui profile
 
-The active pack is chosen **once for the whole application**, in the `ui profile`. It is never chosen per screen, slice or component: demo data spans several domains, so one choice, inherited everywhere, keeps the preview consistent.
+Choose the active pack in the `ui profile`, once for the whole application. Screens, slices and components inherit that choice, so switching packs changes the design data together rather than leaving each screen on a different selection.
 
 ```screenplay
 ui profile <Name>
@@ -80,15 +94,24 @@ ui profile <Name>
     bind <ReadModel> to <Pack>
 ```
 
-- `active <Pack>` - the pack the whole application previews with: a `sample data` pack declared in the document, or `active blueprint <id>` for a pack a blueprint ships (`crm-nordic-smb`). At most one. Without it the preview falls through to the blueprint's default pack and then to generated data.
-- `shape <Shape> maps to <ReadModel>` - for where a pack's shape is not named like the read model it supplies rows for. A read model is mapped from at most one shape.
-- `bind <ReadModel> to <Pack>` - a rare override: that read model previews with that pack whatever the active pack is. At most once per read model.
+Use either `active <Pack>` for a document pack or `active blueprint <id>` for a pack supplied by a blueprint, such as `crm-nordic-smb`. These are alternatives: a selection can have at most one active pack.
 
-A reference to a pack the document does not declare is an error (`PLAY0714`), and so is a mapping or binding naming a read model the document does not declare (`PLAY0715`). A `blueprint <id>` pack is resolved by the build against its packages and is not checked by the compiler.
+When a pack's shape name differs from the read model, add `shape <Shape> maps to <ReadModel>`. Each read model can be mapped from one shape. Use `bind <ReadModel> to <Pack>` only when that read model needs a different pack from the application-wide choice; each read model can have one binding.
 
-The order the preview resolves rows in is: the pack bound to the read model, then the profile's active pack, then the default pack of the blueprint the template came from, then generated deterministic data. See Scene's [sample data packs](https://github.com/Cratis/Scene/blob/main/Documentation/blueprints/sample-data.md). Studio's preview strip can override the active pack for the session only; that is never stored, and the profile stays the single source of truth.
+An undeclared document pack produces error `PLAY0714`. A mapping or binding to an undeclared read model produces `PLAY0715`. Blueprint pack IDs are resolved by the consuming build against its packages, not by the Screenplay compiler.
+
+Scene looks for rows in this order, continuing when a pack cannot supply the requested shape:
+
+1. The pack bound to the read model.
+2. The profile's active pack, or a consumer's session-only override.
+3. The default pack of the blueprint that supplied the template.
+4. Deterministic generated data, when the consumer supplies a shape to generate from.
+
+For generated rows, Scene takes the locale from the first available bound, active or blueprint-default pack, then from the consumer's context. Without an active selection, row resolution still starts with any binding before trying the blueprint default and generation. A session override does not change the authored profile. See Scene's [sample data packs](https://github.com/Cratis/Scene/blob/main/Documentation/blueprints/sample-data.md) for the resolver contract.
 
 ## Example
+
+`NordicDemo` supplies two customer rows, and the desktop profile selects them for the application's design. The first row gives `notes` an explicit `null`; the second leaves it absent. Neither row creates a backend customer.
 
 ```screenplay
 module Crm
@@ -128,10 +151,10 @@ ui profile Desktop
 
 ## Tools
 
-- **Printer.** Packs and the profile's selection are printed in canonical form with comments kept.
-- **TypeScript compiler, Monaco, VS Code.** The TypeScript compiler skips `sample data` whole, as it does `ui profile` and `theme`, so the C# compiler alone reports its diagnostics ([TypeScript compiler](typescript-compiler.md)). Monaco and the VS Code grammar highlight, document and complete the blocks.
-- **MCP.** `read-ast` and `propose-ast` read and edit `SampleDataPackSyntax`, `SampleDataSelectionSyntax` and their children as typed nodes: replace a row value, change the profile's active pack, remove a pack or the selection. An active pack nothing declares is refused with `PLAY0714`.
-- **Binding.** Each pack is reported as deferred (`PLAY0269`); it adds nothing to the executable model.
-- **Scene and Stage.** Scalar packs convert to Scene's `SampleDataPack` and the UI profile's `sampleData`. Nested `Rows` require matching Stage conversion and Studio export support; this syntax change alone does not enable downstream preview conversion. Production builds never include sample data.
+The C# compiler validates packs and profile selections. The [TypeScript compiler](typescript-compiler.md) skips sample data blocks rather than validating them; editor highlighting and completion do not establish that a pack passes the C# checks. The printer preserves packs and selections in canonical form, with comments.
 
-The ruling behind the single choice point is [decision 0081](https://github.com/Cratis/Screenplay/blob/main/decisions/0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md).
+For structured editing through the Model Context Protocol (MCP), `read-ast` and `propose-ast` expose typed abstract syntax tree (AST) nodes: `SampleDataPackSyntax`, `SampleDataSelectionSyntax` and their children. They let a tool replace a row value or change the selected pack without treating the file as unstructured text. An undeclared active document pack is refused with `PLAY0714`.
+
+Stage's converter maps the blocks to Scene's `SampleDataPack` and the UI profile's `sampleData`. Nested `Rows` need matching Stage conversion and Studio export support before they preview downstream. Running application contracts and production builds exclude sample data; packs are not a way to seed the executable backend.
+
+The single application-wide choice is explained in [decision 0081](https://github.com/Cratis/Screenplay/blob/main/decisions/0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md). To localize labels and validation messages as well as choosing representative rows, use [internationalization](internationalization.md); a pack's locale does not select the UI's string table.

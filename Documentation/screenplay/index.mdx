@@ -1,74 +1,71 @@
 ---
-title: Screenplay
-description: "Cratis Screenplay is a business-oriented declarative language for specifying the desired functionality of an information system."
+title: Cratis Screenplay modeling language
+description: Cratis Screenplay keeps a feature's commands, events, views, screens, and specifications in one portable .play model for people and AI agents.
 ---
 
-import { CardGrid } from '@astrojs/starlight/components';
-import SimpleCard from '@components/SimpleCard.astro';
-import TopicHero from '@components/TopicHero.astro';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-<TopicHero icon="open-book" eyebrow="Screenplay" title="Specify the behavior once">
-Cratis Screenplay is a business-oriented declarative language for specifying the desired functionality of an information system in one portable `.play` model. You already model a feature end to end on the whiteboard — the events, the command that produces them, and the read model they build. Then implementation details scatter that meaning across several layers. The `.play` model keeps it in one place. Its versioned semantic model is the contract runtimes and renderers are being migrated to consume; none of them gets to redefine or silently weaken what it says. [Get started →](/screenplay/getting-started/) · [Why Screenplay →](/screenplay/why-screenplay/)
-</TopicHero>
+Cratis Screenplay is a declarative modeling language for describing events, commands, read models (queryable views of recorded facts), screens, and specifications in one portable `.play` model. People and AI agents read the same model, so a discussion about what a feature should do can refer to the declarations and examples that describe it.
+
+Start with the behavior: what someone asks the system to do, which facts that produces, and what someone needs to see afterward. Screenplay keeps those connections visible without requiring you to follow them through controllers, storage code, and UI wiring.
 
 ## Start here
 
-<CardGrid>
-  <SimpleCard title="Why Screenplay" icon="approve-check" link="/screenplay/why-screenplay/">
-    The friction it removes — one model instead of four hand-synced layers — and the cases where a hand-written slice is still the better fit.
-  </SimpleCard>
-  <SimpleCard title="See your event model" icon="laptop" link="/screenplay/see-your-event-model/">
-    Open the same board in VS Code, an AI chat, your Arc app, the CLI, or Studio. Start with a model or generate one from code.
-  </SimpleCard>
-  <SimpleCard title="Get started" icon="rocket" link="/screenplay/getting-started/">
-    Write your first `.play` file and watch the editor light up with highlighting, completions, and live diagnostics — in minutes.
-  </SimpleCard>
-  <SimpleCard title="Language overview" icon="open-book" link="/screenplay/overview/">
-    The design principles, the top-level structure of a `.play` file, and a map of every construct.
-  </SimpleCard>
-  <SimpleCard title="Acme Commerce: a walkthrough" icon="seti:folder" link="/screenplay/acme-commerce-walkthrough/">
-    A five-domain shop in one application, built step by step: public events, anti-corruption, the shell, screens and Studio.
-  </SimpleCard>
-  <SimpleCard title="Glossary" icon="list-format" link="/screenplay/glossary/">
-    Module, feature, slice, construct, sub-language, Stage, Studio — the vocabulary, defined once.
-  </SimpleCard>
-</CardGrid>
-
-## The whole production in one file
+[Write your first `.play` model](/screenplay/getting-started/) to describe borrowing a library book and try editor highlighting, completions, and live diagnostics. You finish with a model to review, not a running application. If you are deciding whether Screenplay fits your work, read the rationale first; the other guides help you explore an existing model or go deeper into the language.
 
 <CardGrid>
-  <SimpleCard title="Modules, features, and slices" icon="puzzle" link="/screenplay/slices/">
-    A `.play` file is a set of typed slices aligned with Event Modeling — the atomic units of behavior.
-  </SimpleCard>
-  <SimpleCard title="Concepts" icon="seti:folder" link="/screenplay/concepts/">
-    Strongly-typed value types that declare their compliance attributes once, so every usage inherits them.
-  </SimpleCard>
-  <SimpleCard title="Commands and events" icon="right-arrow" link="/screenplay/commands/">
-    Declare the intent, the validation, the authorization, and the facts it produces — all together.
-  </SimpleCard>
-  <SimpleCard title="Projections and queries" icon="seti:db" link="/screenplay/projections/">
-    Turn events into read models with the embedded Projection Declaration Language, then expose them as queries.
-  </SimpleCard>
-  <SimpleCard title="Screens" icon="laptop" link="/screenplay/screens/">
-    Declare the UI at three levels — from pure intent that Studio generates to a filled template with inline React.
-  </SimpleCard>
-  <SimpleCard title="Reactions and captures" icon="rocket" link="/screenplay/reactions/">
-    React to events with automations, and turn external data into events with change data capture.
-  </SimpleCard>
+  <LinkCard title="Write your first model" href="/screenplay/getting-started/" description="Author a small feature and explore editor diagnostics." />
+  <LinkCard title="Why Screenplay" href="/screenplay/why-screenplay/" description="Understand the synchronization work it addresses and when to keep a slice hand-written." />
+  <LinkCard title="See your event model" href="/screenplay/see-your-event-model/" description="Explore the board surfaces and supported ways to generate a model from code." />
+  <LinkCard title="Language overview" href="/screenplay/overview/" description="Read the design principles, file structure, and language reference map." />
+  <LinkCard title="Acme Commerce: a walkthrough" href="/screenplay/acme-commerce-walkthrough/" description="Follow a five-domain shop through public events, anti-corruption, screens, and Studio." />
 </CardGrid>
+
+<a id="the-whole-production-in-one-file"></a>
+
+## What belongs in the model?
+
+A slice groups the declarations for one behavior. For employee registration, that could mean the registration command, the event recording that an employee registered, a read model for looking the employee up, and specifications of accepted and rejected requests. A screen describes how someone uses that behavior. You can keep the model in one file or split it across files as it grows.
+
+Selected implementation points can carry inline code or file references when declarations are not enough. Those attachments do not define the portable meaning of the language. [Why Screenplay](/screenplay/why-screenplay/) explains when to model a slice and when to keep it hand-written.
+
+Use the reference for the part you are working on:
+
+- [Modules, features, and slices](/screenplay/slices/) organize behavior into typed slices aligned with Event Modeling.
+- [Concepts](/screenplay/concepts/) declare value types and their compliance attributes once, so usages inherit the classification. This does not make an application automatically compliant.
+- [Commands and events](/screenplay/commands/) describe intent, validation, authorization, and the facts produced.
+- [Projections and queries](/screenplay/projections/) turn events into read models using the embedded Projection Declaration Language.
+- [Screens](/screenplay/screens/) describe UI at three abstraction levels, from intent to templates with inline React.
+- [Reactions and captures](/screenplay/reactions/) describe event-driven automations; captures turn external data into events.
+
+## From model to consumers
+
+The compiler turns the `.play` declarations into an executable semantic model (ESM): a versioned description of what the model means. Cratis Studio and target renderers consume that description rather than define separate meanings for it. Where Cratis Chronicle supplies execution semantics, the ESM preserves that behavior using portable names. The [semantic authority decision](https://github.com/Cratis/Screenplay/blob/main/decisions/0001-chronicle-runtime-semantic-authority.md) explains the boundary.
+
+Before choosing a consumer, check which versions and capabilities it admits. A construct can be valid Screenplay without being executable by every target. A consumer must refuse behavior it cannot preserve, not silently skip it.
+
+```mermaid
+flowchart LR
+    Play[".play model"] --> Bind["Compiler binds to versioned ESM"]
+    Bind --> Reference["Reference execution: admitted capabilities"]
+    Bind --> Studio["Studio: design and visualization"]
+    Bind --> Render["Renderers: supported realization targets"]
+    Render --> App["Target-specific application code"]
+```
+
+To check scenarios without a target application, use Screenplay's [reference execution](/screenplay/specifications/#reference-execution). It runs admitted capabilities in memory without starting Arc, Chronicle, a database, or a network service. Passing those checks does not prove that a target application can execute every construct.
+
+For how [Cratis Arc](/arc/) and [Cratis Chronicle](/chronicle/) fit into the wider platform, read [Why developers choose Cratis](/why-cratis/).
+
+## See a model run
+
+Give a supported model to [Cratis Stage](/stage/), issue a command, then query the state it changes through its API or Scene screens. Stage is a disposable sandbox, not a production host: its in-memory state does not survive a container restart. Check admission diagnostics and bind published ports to `127.0.0.1`.
+
+<LinkCard title="Run a Screenplay with Stage" href="/stage/docker/" description="Follow the sandbox walkthrough, including setup and a model to explore." />
 
 ## Go deeper
 
-<CardGrid>
-  <SimpleCard title="Sub-languages and inline code" icon="puzzle" link="/screenplay/sub-languages/">
-    PDL and CDL are built-in first-class grammars; inline tags include csharp, java, typescript, react, html, and sql, carried as bounded realization attachments.
-  </SimpleCard>
-  <SimpleCard title="The grammar" icon="open-book" link="/screenplay/grammar/">
-    The full EBNF grammar — the precise, exhaustive definition of the language.
-  </SimpleCard>
-  <SimpleCard title="Frequently asked questions" icon="approve-check" link="/screenplay/faq/">
-    Indentation vs. braces, the escape hatch to C#/React, how Screenplay relates to Arc and Chronicle.
-  </SimpleCard>
-</CardGrid>
-
-Screenplay owns the script, not the cast. A `.play` file expresses portable desired functionality; Stage and generated applications are replaceable performances of that meaning. Cratis [Arc](/arc/) and [Chronicle](/chronicle/) are the first realization target, not dependencies of the language or its semantic authority. See [Why developers choose Cratis](/why-cratis/) for how that realization fits into the wider platform.
+- [Sub-languages and inline code](/screenplay/sub-languages/): PDL and CDL are built-in grammars; `csharp`, `java`, `typescript`, `react`, `html`, and `sql` inline language tags are bounded realization attachments, not a promise of execution support.
+- [The grammar](/screenplay/grammar/): the full EBNF definition of the language.
+- [Glossary](/screenplay/glossary/): module, feature, slice, construct, sub-language, Stage, and Studio.
+- [Frequently asked questions](/screenplay/faq/): indentation, bounded C#/React escape hatches, and the relationship to Arc and Chronicle.

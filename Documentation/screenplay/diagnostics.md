@@ -1,6 +1,6 @@
 ---
-title: "Diagnostics"
-description: "The catalogue of Screenplay compiler diagnostic codes, with how to read, match and suppress them; codes never change."
+title: "Compiler diagnostics in Cratis Screenplay"
+description: "Cratis Screenplay compiler diagnostics report severity, stable codes and source locations so tools can match and group problems without parsing messages."
 ---
 
 # Diagnostics

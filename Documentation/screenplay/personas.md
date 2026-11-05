@@ -5,7 +5,7 @@ description: "Declare Screenplay personas, the named roles that interact with an
 
 # Personas
 
-Personas name the roles that interact with the application — the vocabulary of Event Modeling's actors. A persona has a name, an optional description, and the [policies](policies.md) that define what the persona is allowed to do.
+Use a persona to name a role that interacts with your application, such as `Accountant` or `InvoiceManager`. These are the actors in Event Modeling. Give each persona a name, an optional description, and the [policies](policies.md) that define what it is allowed to do.
 
 ## Syntax
 
@@ -37,14 +37,13 @@ persona InvoiceManager
   policy CanManageInvoice
 ```
 
+Both personas above use `CanManageInvoice`. `Accountant` also requires `IsAccountant`, so the shared policy does not make their requirements identical. The persona groups those requirements; each policy defines the rule.
+
 ## The personas canvas
 
-A persona can say what it is trying to achieve with `goal` lines and, for tools that draw the personas as cards on a canvas, where
-it sits (`position <x> <y>`) and how big it is (`size <width> <height>`). Both are whole numbers in canvas units; `position` may be
-negative, `size` may not. Placement is authoring metadata: a persona without a `position` is laid out by the canvas.
+Add `goal` lines to record what a persona is trying to achieve. Tools that draw persona cards can also use `position <x> <y>` and `size <width> <height>` to preserve your arrangement. Position coordinates and size dimensions are whole numbers in canvas units; positions may be negative, sizes may not. Without a position, the canvas lays out the persona.
 
-Notes that talk about the personas without being one - a pain point, the context somebody works in, a question - are
-**sticky notes** on the same canvas. They are top-level declarations of their own (the same note exists for the event source, given context and seed data canvases: `sticky note on eventsources`, `sticky note on givencontexts`, `sticky note on seeddata`, see [event sources](event-sources.md)):
+Use a sticky note for context about a persona, such as a pain point or an open question. Notes are top-level declarations, separate from the personas themselves. The same kind of note is available on the event source, given context and seed data canvases as `sticky note on eventsources`, `sticky note on givencontexts` and `sticky note on seeddata`; see [event sources](event-sources.md).
 
 ```screenplay
 persona Shopper
@@ -74,9 +73,9 @@ Personas remain authoring metadata, outside the executable semantic model (ESM).
 
 ## Persona callers in specifications
 
-The deterministic witness collects required authenticated, role and literal-string-claim atoms first, across all policies. It then visits policies in declared order, depth first, left to right. An `or` already satisfied by those atoms adds nothing; otherwise it chooses the leftmost buildable alternative. **Operand order matters**: the `InvoiceManager` above gets only the `InvoiceManager` role, while `Accountant` already has the required `Accountant` role and needs no extra role.
+For `given caller as Accountant`, Screenplay builds one concrete caller that satisfies the persona's policies. This deterministic witness first collects the required authentication, roles and literal-string claims across all policies. It then visits policies in declared order, depth first, left to right. An `or` already satisfied by those requirements adds nothing; otherwise it chooses the leftmost buildable alternative.
 
-Roles are de-duplicated and sorted ordinally. Claims are de-duplicated by type (ordinal ignoring case) and value (ordinal), then sorted in that order. This specification proves the outcome for one deterministic minimal witness, not for every caller fitting the persona.
+Operand order therefore matters. The `InvoiceManager` above gets only the `InvoiceManager` role, while `Accountant` already has the required `Accountant` role and needs no extra role. Roles are de-duplicated and sorted ordinally. Claims are de-duplicated by type (ordinal ignoring case) and value (ordinal), then sorted in that order. The specification proves the outcome for this one deterministic minimal witness, not for every caller fitting the persona.
 
 Synthesis refuses a persona without policies, any policy containing `not`, and inline or file implementation policies. A subject, path or `$` claim target refuses synthesis only when needed. Claims whose type equals `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`, ordinal ignoring case, are never synthesized; a bare `"role"` claim type is not this URI. An `or` skips an alternative needing an unsupported claim and reports the first unbuildable alternative's refusal if none is buildable. Use an explicit `given caller` for these cases; refusal is a binding error, never a guessed runtime allow or deny.
 
@@ -84,5 +83,4 @@ Hover and MCP `declaration-details` with `kind: "Persona"`, `view: "caller"` sho
 
 ## Guidance
 
-- **Name personas after roles, not people** — `Accountant`, not `Alice`.
-- **Personas group policies; policies define rules.** A persona says *who*; its policies say *what they must satisfy*.
+Name personas after roles, not people: `Accountant`, not `Alice`. Put the rules in policies so the model keeps the role and its requirements distinct.

@@ -1,15 +1,17 @@
 ---
-title: "File references"
-description: "How the Screenplay file keyword points a construct at hand-written code, and how its two meanings differ by construct."
+title: "Screenplay file references: link a model to code"
+description: "Use Screenplay file references to locate hand-written implementations or record where declarations are realized, without importing source code."
 ---
 
 # File references
 
-`file <path>` is the one keyword Screenplay points at code with. It appears in two places that look the same and mean slightly different things, and the construct it sits on is what tells them apart.
+Cratis Screenplay's `file <path>` links a model element to hand-written code. On an implementation, such as a command handler, it replaces the inline code body. On a declaration, such as an event, it records where that declaration is realized without replacing its properties.
+
+Use `file` when the implementation lives outside the `.play` document. To compose the model from other `.play` documents instead, use [file imports](imports.md). A file reference does not import code or make it executable.
 
 ## Two relationships, one word
 
-**On a construct that has an implementation**, `file` stands in for the inline body — *the implementation lives there, do not expect it here*. It is an alternative to a code block, and it has always worked this way:
+For an implementation, write `file` where you would otherwise put the inline body. This command handler delegates its implementation to a C# file:
 
 ```screenplay
 command RegisterInvoice
@@ -20,7 +22,7 @@ command RegisterInvoice
 
 The constructs that carry it in this sense are a command's [`handler`](commands.md) and its [validation rule predicates](commands.md), a query's [`performer`](queries.md), a [reducer](readmodels.md) rule, a [reaction](reactions.md) trigger, a [`constraint`](constraints.md), a [`screen`](screens.md) and a [`policy`](policies.md). A policy's file implements the same `bool` decision against `PolicyContext` as its inline `csharp` block; the two cannot appear together.
 
-**On a pure declaration** there is no body to delegate — a concept *is* its primitive, an event *is* its properties — so the same word can only say one other thing: *this is the file that realizes the declaration*.
+A declaration still needs its model shape: a concept's primitive type, for example, or an event's properties. Its `file` reference records where the corresponding code lives:
 
 ```screenplay
 concept InvoiceId : Uuid
@@ -29,7 +31,7 @@ concept InvoiceId : Uuid
 
 The declarations that carry it are `concept`, `type`, `event`, `readmodel`, `projection`, `slice`, `specification` and the top-level `trigger`.
 
-One keyword covers both because the construct already decides which is meant. A second keyword would carry no information a reader or a tool does not already have from the node it is reading, and would be one more word to learn.
+The owning construct determines the relationship. A tool reading the model can distinguish an implementation attachment from a declaration reference without opening the named file.
 
 A file-backed implementation uses the same typed context descriptor as its inline counterpart. The descriptor is derived from the declared command, concept, policy use site or reducer transition, not from the file path or its code. Unresolved file content can still have a descriptor when its model shape resolves; this does not mean the attachment can execute. Command handlers remain unbound even when their context is described. See [Contexts](context.md#typed-context-sidecars).
 
@@ -73,19 +75,23 @@ module Invoicing
         then InvoiceRegistered
 ```
 
-Several declarations naming the same file is normal and correct — a Cratis slice keeps its backend artifacts in one file by convention.
+Several declarations can name the same file. In this example, the slice and its event both point to `RegisterInvoice.cs`, following the Cratis convention of keeping a slice's backend artifacts together.
 
 The `file` line is written directly under the header, after a `description` when there is one. That is where the printer puts it too, so a generated document and a hand-written one read the same.
 
 ## The rules a path follows
 
-**It is repository relative, never absolute.** The same path then means the same thing wherever the document is read. An absolute path is reported as [`PLAY0264`](diagnostics.md) — a warning, so a document carrying one still compiles.
+Write repository-relative paths, not absolute ones, so the reference is portable between machines. An absolute path reports [`PLAY0264`](diagnostics.md), a warning that does not prevent syntax compilation.
 
-**Syntax compilation never resolves it.** A `.play` document is read in a designer, in a build, and on a machine where the source tree is not present; a stale path must not invalidate otherwise valid source. A host with a trusted physical model root can call `AttachmentFiles.Load(root, documents)` to supply implementation attachment text to semantic compilation for content hashing only. It resolves paths from the model root, **not from the `.play` file's directory**. Declaration-only `file` references are not read. The in-memory workspace never reads the file system: pass the loader's `Contents` and `Diagnostics` to `WithAttachmentContents`. The standalone Tool and `PlayFileCompiler` compile syntax only and do not load attachments (#244).
+Syntax compilation does not open the referenced file. You can therefore read and check a `.play` document without the implementation's source tree. The standalone Tool and `PlayFileCompiler` compile syntax only and do not load attachments (#244).
+
+A host with a trusted physical model root can call `AttachmentFiles.Load(root, documents)` to supply implementation attachment text to semantic compilation for content hashing only. Paths resolve from that model root, not from the `.play` file's directory. This differs from [file imports](imports.md#patterns), which resolve relative to the importing document. Moving a `.play` file within the same model root therefore does not change the attachment path's base.
+
+Declaration-only `file` references are not read. The in-memory workspace does not read the file system either: pass the loader's `Contents` and `Diagnostics` to `WithAttachmentContents` when your host needs attachment hashes.
 
 The loader normalizes `./` and separators, rejects absolute, drive-qualified and escaping paths, and refuses symbolic links, reparse points and files with more than one hard link, checking every directory between the root and the attachment for symbolic links or reparse points. Files exceeding 2 MiB each or 8 MiB combined, missing files, and unreadable/non-UTF-8 files are omitted with `PLAY0430`–`PLAY0434` warnings. A refused implementation remains `UnresolvedFile` with no content hash. Hosts can display the warnings alongside the semantic compilation. Requirement identities do not depend on paths or contents. On Linux and macOS (x64 and arm64), the loader opens the model root once and walks the normalized relative path using directory handles. Each open does not follow links; the final handle must identify a regular file, and its reported size is checked before reading. Other Unix ABIs are refused. On Windows, the loader opens the model root with directory list, traverse and read-attributes access (`FILE_LIST_DIRECTORY | FILE_TRAVERSE | FILE_READ_ATTRIBUTES`), backup semantics and open-reparse-point flags, sharing read and write but not delete. This prevents renaming or deleting the held root during loading; a reparse-point root is refused. Each opened attachment must be a regular disk file, not a directory or reparse point, and its normalized final path must match the held root plus the authored relative path. A final-path mismatch without a reparse point on the attachment handle is reported as `PLAY0430`; short (8.3) names and trailing dots or spaces are not supported. Opens are verified by handle on all supported platforms. Only a SHA-256 hash of loaded content is exposed, never the content itself.
 
-**It never replaces the declaration.** On a declaration `file` is additive: a `projection` still declares its blocks, an `event` still declares its properties, a `type` still declares at least one property. The language's guarantee that [a document is expressible with zero `file` references](grammar.md#declarative-first--file-is-never-required) is unchanged — this adds a place to record where code ended up, not a way to leave the document unsaid.
+Keep the declaration's shape in the model even when it names a file. A `projection` still declares its blocks, an `event` its properties, and a `type` at least one property. A document remains [expressible with zero `file` references](grammar.md#declarative-first--file-is-never-required); adding a reference records where the code lives rather than leaving the model incomplete.
 
 ## Telling it from a property named `file`
 
@@ -113,7 +119,9 @@ trigger LedgerFileArrived
 
 Every one of these is a `FileReferenceSyntax` on the node that declares it, reached through [`ScreenplaySyntaxWalker.VisitFileReference`](visitors.md). Override that one method and you see every file a document names, whichever construct named it.
 
-On most constructs that have an implementation the reference is a constructor parameter; a policy uses an additive `init` property named `File` to preserve its positional record contract. On a declaration it is also an `init` property named `File`, so a tool constructing one of those nodes sets it in an object initializer or a `with` expression rather than positionally - which is how every syntax node grows from here, for the reason [syntax tree compatibility](ast-compatibility.md) gives.
+On most constructs that have an implementation, the reference is a constructor parameter. A policy uses an additive `init` property named `File` to preserve its positional record contract. Declarations also use an `init` property named `File`, so set it in an object initializer or a `with` expression rather than positionally. See [Syntax tree compatibility](ast-compatibility.md) for the compatibility contract.
+
+If your tool also edits the model, use a [revision-bound workspace](folders.md#propose-revision-safe-workspace-changes) to propose and review the source change. Reprinting a merged tree is not a substitute for preserving the original documents.
 
 ## See also
 

@@ -1,11 +1,17 @@
 ---
-title: "Event seeding"
-description: "Declare the known starting state of a Screenplay application as seed events: reference data, demo customers and test fixtures."
+title: "Cratis Screenplay event seeding for initial data"
+description: "Declare initial application data as Cratis Screenplay seed events, grouped by event source ID, with the event declarations and values a runtime needs."
 ---
 
 # Event seeding
 
-A running application often needs a known starting state — reference data, demo customers, the fixtures a test environment expects. Seeding declares that state the same way everything else in Screenplay is declared: as events. A top-level `seed` block lists the events to append per event source id, mirroring Chronicle's `IEventSeedingBuilder.For(eventSourceId, events)`.
+Cratis Screenplay seeding describes initial application data as events grouped by event source ID, the identity of the entity whose history they belong to. Use a top-level `seed` block for reference data, demo customers or test-environment fixtures so the model states which facts establish its starting state.
+
+## Before you seed
+
+Declare the [events](events.md) you will seed, or make their names available through an [import](imports.md). Declare any [types](types.md) used for nested records too, so their members can be checked. Choose an event source ID for each entity and supply values that match the event's properties. Compiling the document records these declarations; it does not append events to a running application.
+
+The example below assumes `CustomerRegistered` and `CustomerUpgraded` already exist. The `for` ID selects the event history; it does not fill a `customerId` property automatically. Supply that property separately wherever the event requires it. To execute the seeds, the consuming runtime must also resolve the events and accept their values; an imported name alone does not establish that.
 
 ## Syntax
 
@@ -20,12 +26,13 @@ seed ["<name>"]
   [position <x> <y>]
 ```
 
-- `seed` — top level, alongside concepts, policies and modules. Multiple `seed` blocks are allowed; they accumulate. A block can carry a name, `seed "Starter catalogue"`: tools that keep seed data as named collections (Studio does, one card each on its seed data canvas) keep the name through a round trip. Blocks of the same name are one collection; an unnamed block is one collection of the tool's choosing.
-- `for "<event source id>"` — one group per event source id, holding the events to seed for it. The id is a quoted string.
-- `<EventType>` — an event declared in the document or made available through an `import`. Referencing an unknown event is reported as a warning.
-- `<property> = <value>` — property values using the same expression grammar as `produces` mappings and specification events.
+Place `seed` at the top level, alongside concepts, policies and modules. Multiple blocks accumulate. An optional quoted name, such as `seed "Starter catalogue"`, lets authoring tools identify a seed collection.
 
-`position <x> <y>` — two whole numbers (negative allowed), at most once: where Studio draws this seed data on the seed data canvas. Authoring metadata only, never part of the executable model; a seed block without one is laid out by the canvas.
+Within the block, each `for "<event source id>"` group holds the events for that quoted ID. Name an event on its own line, then indent its property assignments underneath. An unknown event name produces a warning.
+
+Scalar assignments use `<property> = <value>`, with the same expression grammar as `produces` mappings and specification events. For an object or list, use an indented [structured value](structured-values.md) under the property name.
+
+The optional `position <x> <y>` line accepts two whole numbers, including negatives, at most once per block. It is canvas authoring metadata, not part of the executable model.
 
 An empty `seed` block — one without any `for` group — is a compile error.
 
@@ -46,4 +53,10 @@ seed
       name = "Globex"
 ```
 
-Each group appends its events, in declaration order, to the event stream of its event source id. The runtime performs the seeding through Chronicle's event seeding API, so seeded events flow through projections and reactions exactly like events produced by commands.
+The first group describes a customer registration followed by an upgrade in the same history. The second describes another customer's registration. Event order within each group is declaration order.
+
+## Executing seed events
+
+Seeding behavior belongs to the runtime consuming the model. [Cratis Stage](/stage/) accepts literal seed values, including objects and lists of literals, and resolves each event against its execution plan. It checks that the seed history can be replayed before appending it to Chronicle; a group that fails that replay check is left out with a diagnostic.
+
+Stage skips a source that already has events, so changing a seed block does not update that source's existing history. If starting data is missing, check the seed diagnostics and whether the chosen source already contains events before changing the model. Use [specifications](specifications.md) when you need isolated Given/When/Then examples rather than application-wide starting data.

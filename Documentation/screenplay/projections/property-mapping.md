@@ -1,11 +1,11 @@
 ---
-title: "Property Mapping"
-description: "Assign event values to read model properties in a Screenplay projection with Property = expression mappings."
+title: "Screenplay projections: map event values to properties"
+description: "Map event data, constants and metadata to read model properties in Screenplay projections. Use explicit assignments for values AutoMap cannot supply."
 ---
 
-# Property Mapping
+<a id="property-mapping"></a>
 
-Property mapping assigns values from events to read model properties. Mappings use the simple assignment syntax: `Property = expression`.
+Property mapping in a Screenplay projection assigns an event value, a constant or event metadata to a read model property. Use `Property = expression` when a value needs a different name, an initial value or a source that AutoMap cannot choose.
 
 ## Basic Mapping
 
@@ -17,11 +17,11 @@ from UserRegistered
   Email = email
 ```
 
-This maps the `name` and `email` properties from the `UserRegistered` event to the corresponding properties on the read model.
+The left side names a read model property; the right side reads from the event. With AutoMap enabled, these two case-insensitive name matches need no explicit assignments. Keep assignments where they explain a choice, or use them with `no automap` at the projection level when every mapped value should be stated. See [Auto-Map](auto-map).
 
 ## Nested Properties
 
-Access nested properties using dot notation:
+Use a dotted source path to read inside an event object. These assignments flatten contact and address data into the read model:
 
 ```pdl
 from UserRegistered
@@ -32,7 +32,7 @@ from UserRegistered
 
 ## Literal Values
 
-Assign literal values:
+Use literals for values known at the point this event is handled. Here registration activates the user and sets an initial status and priority:
 
 ```pdl
 from UserRegistered
@@ -43,12 +43,7 @@ from UserRegistered
   CreatedAt = null
 ```
 
-Supported literal types:
-
-- **Boolean**: `true`, `false`
-- **String**: `"text"` (double quotes)
-- **Number**: `42`, `3.14`
-- **Null**: `null`
+Literals include booleans (`true`, `false`), double-quoted strings (`"text"`), numbers (`42`, `3.14`) and `null`. The target property's type must accept the value. `CreatedAt = null` clears the value rather than assigning an occurrence time.
 
 ## Clearing a Value
 
@@ -73,7 +68,7 @@ from OwnerNoteCleared
   clear Owner.Note
 ```
 
-`Property = null` means the same thing and keeps working, so nothing written against the older spelling breaks. Prefer `clear` in new projections — it names the act instead of assigning nothing.
+`Property = null` has the same meaning as `clear Property`. Prefer `clear` when writing a new mapping so the intent to remove a value is visible.
 
 `clear <property>` is a mapping line inside a `from`, `every`, `all` or `with` block. It is not the same directive as `clear with <EventType>`, which nulls a whole child object — see [Nested Objects](nested).
 
@@ -89,15 +84,11 @@ from PersonRegistered
   DisplayInfo = `${name} (${email})`
 ```
 
-Template syntax:
-
-- Wrap in backticks: `` `template` ``
-- Use `${expression}` for substitutions
-- Can combine multiple expressions
+Backticks mark the template, and each `${expression}` inserts a value. This lets `FullName` combine two event properties without requiring a separate field on the event. Templates are projection-language expressions supported by Chronicle; the Screenplay executable semantic model does not bind them.
 
 ## Event Source ID
 
-The special identifier `$eventSourceId` provides the event source ID:
+`$eventSourceId` reads the identity of the source the event was appended to. `$eventContext.eventSourceId` reads the same value:
 
 ```pdl
 from UserAssignedToGroup
@@ -105,9 +96,11 @@ from UserAssignedToGroup
   UserId = $eventSourceId
 ```
 
+Both assignments receive the same ID; neither reads a user ID from the payload. Mapping an ID into a property also does not change which instance the event updates. Select that instance with the `from` [key](keys.md).
+
 ## Event Context
 
-Access event metadata:
+Use `$eventContext` for metadata stored alongside the event rather than in its payload:
 
 ```pdl
 from UserRegistered
@@ -117,7 +110,7 @@ from UserRegistered
   CorrelationId = $eventContext.correlationId
 ```
 
-See [Event Context](event-context.md) for all available properties.
+Chronicle can read these metadata paths. The Screenplay reference evaluator supports `occurred` assignments in supported scopes, but not the `sequenceNumber` and `correlationId` assignments shown here. [Event Context](event-context.md) explains the available paths and how to supply occurrence times in specifications.
 
 ## Multiple Mappings
 
@@ -161,6 +154,8 @@ from UserProfileUpdated
 
 ### Order with Calculated Fields
 
+`Subtotal`, `Tax` and `Total` below are copied from the event, not calculated by this mapping. The template formats `Reference` for display:
+
 ```pdl
 from OrderPlaced
   OrderId = orderId
@@ -198,10 +193,10 @@ from AccountCreated
   OpenedBy = $eventContext.eventSourceId
 ```
 
+In the account example, `OpenedBy` holds the event source ID, not the identity of the person who opened it. To record that person in Chronicle, use the appropriate `$eventContext.causedBy` member described in [Event Context](event-context.md#causedby).
+
 ## Best Practices
 
-1. **Be Explicit**: Name properties clearly to show intent
-2. **Use Defaults**: Set initial values with literals when appropriate
-3. **Leverage Context**: Use event context for audit fields
-4. **Templates for Display**: Use templates to create formatted display values
-5. **Nested Access**: Directly access nested properties rather than mapping intermediate objects
+Choose the source by what the property means: event data for business values, a literal for a known initial state, and event context for metadata. For a running calculation rather than a copied value, continue with [Arithmetic](arithmetic.md).
+
+Before adding assignments for every field, check [Auto-Map](auto-map). Explicit mappings take precedence, so you can keep direct name matches automatic while spelling out the values that need a decision.

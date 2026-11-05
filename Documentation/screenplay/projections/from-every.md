@@ -1,20 +1,20 @@
 ---
-title: "From Every"
-description: "Use the every directive to apply common mappings, such as a last-updated timestamp, to every event that affects a projection."
+title: "Screenplay every: share projection mappings"
+description: "Use every in a Screenplay projection to share timestamp and audit mappings across subscribed events, including child events unless excluded."
 ---
 
-# From Every
+<a id="from-every"></a>
 
-The `every` directive applies mappings to every event that affects the projection, regardless of event type. This is useful for setting common properties like last update timestamps.
+The `every` directive shares mappings across events that already affect a Cratis Screenplay projection. Use it when a field such as `LastUpdated` should change with each relevant event, without repeating the mapping in each `from` block.
 
-## Basic Syntax
+Unlike [`all`](from-all.md), `every` does not subscribe the projection to unrelated event types. It covers the projection's subscribed events, including child events by default. Neither block has a single event contract, so explicit assignments from event properties belong in the relevant `from` handler.
 
-```pdl
-every
-  {mappings}
-```
+<a id="basic-syntax"></a>
+<a id="simple-example"></a>
 
-## Simple Example
+## Keep a profile's audit fields together
+
+In this projection excerpt, registration sets the profile fields and an email change replaces only the email. Both events also update the shared metadata:
 
 ```pdl
 projection User => UserReadModel
@@ -30,11 +30,14 @@ projection User => UserReadModel
     Email = email
 ```
 
-Both `UserRegistered` and `UserEmailChanged` events will set `LastUpdated` and `UpdatedBy`.
+A `UserEmailChanged` event updates `Email`, `LastUpdated`, and `UpdatedBy` without assigning `Name` again. Despite its name, `UpdatedBy` here stores the event source identifier, not the identity of the person who made the change. Use the [event context reference](event-context.md) to choose the metadata your read model needs.
 
-## With AutoMap
+<a id="with-automap"></a>
+<a id="product-with-global-automap"></a>
 
-Apply AutoMap to all events:
+## Share automatic property mapping
+
+An `automap` directive copies compatible, same-named event properties to read model properties. You can place it alongside an explicit timestamp mapping:
 
 ```pdl
 projection Product => ProductReadModel
@@ -43,9 +46,16 @@ projection Product => ProductReadModel
     LastModified = $eventContext.occurred
 ```
 
-## Exclude Children
+This is a mapping choice, not a subscription to all event types. Add the relevant `from` blocks to the projection; use [AutoMap](auto-map.mdx) to control which properties they copy.
 
-By default, `every` applies to events in child collections. To exclude them:
+<a id="exclude-children"></a>
+<a id="scope-and-application"></a>
+<a id="parent-level-only-with-exclude-children"></a>
+<a id="including-children-default"></a>
+
+## Decide what counts as a parent update
+
+An order can change because it ships or because an item is added to its child collection. By default, either event can update the parent's shared timestamp. If `LastUpdated` should describe only the order's own events, add `exclude children` inside `every`:
 
 ```pdl
 every
@@ -53,44 +63,19 @@ every
   exclude children
 ```
 
-This ensures child events don't update the parent's `LastUpdated` field.
+Omit `exclude children` when child activity should count as parent activity. The option changes which events run the parent's shared mappings; child-specific mappings still belong in their own blocks.
 
-## Common Patterns
+<a id="common-patterns"></a>
+<a id="audit-fields"></a>
+<a id="event-source-tracking"></a>
+<a id="version-tracking"></a>
+<a id="examples"></a>
+<a id="user-profile-with-audit"></a>
+<a id="document-versioning"></a>
 
-### Audit Fields
+## Record the latest event's metadata
 
-Track when the projection was last modified:
-
-```pdl
-every
-  LastModified = $eventContext.occurred
-  LastSequenceNumber = $eventContext.sequenceNumber
-  LastCorrelationId = $eventContext.correlationId
-```
-
-### Event Source Tracking
-
-Store the event source that last modified the projection:
-
-```pdl
-every
-  LastModifiedBy = $eventContext.eventSourceId
-  LastModifiedAt = $eventContext.occurred
-```
-
-### Version Tracking
-
-Track the latest event sequence:
-
-```pdl
-every
-  Version = $eventContext.sequenceNumber
-  UpdatedAt = $eventContext.occurred
-```
-
-## Examples
-
-### User Profile with Audit
+A sequence number records which event last updated the profile. It is not a count of profile changes: other events can occupy positions in the sequence. This excerpt keeps that metadata in `every` while leaving profile changes in their specific handlers:
 
 ```pdl
 projection User => UserReadModel
@@ -111,92 +96,14 @@ projection User => UserReadModel
     Name = name
 ```
 
-### Product with Global AutoMap
+For a number that increases once per relevant event, use [`count`](counters.mdx) in `every` instead of assigning `$eventContext.sequenceNumber`. The reference evaluator cannot execute `sequenceNumber` mappings. See the [event context reference](event-context.md) for metadata availability and supported evaluation paths.
 
-```pdl
-projection Product => ProductReadModel
-  every
-    automap
-    LastModified = $eventContext.occurred
+<a id="order-with-tracking"></a>
+<a id="with-multiple-children"></a>
 
-  from ProductCreated
-    IsActive = true
+## Keep child activity independent
 
-  from ProductDeactivated
-    IsActive = false
-```
-
-### Document Versioning
-
-```pdl
-projection Document => DocumentReadModel
-  every
-    CurrentVersion = $eventContext.sequenceNumber
-    LastUpdated = $eventContext.occurred
-    LastCorrelation = $eventContext.correlationId
-    exclude children
-
-  from DocumentCreated
-    Title = title
-    Content = content
-
-  from DocumentUpdated
-    Content = content
-
-  from DocumentRenamed
-    Title = title
-```
-
-### Order with Tracking
-
-```pdl
-projection Order => OrderReadModel
-  every
-    LastEventTime = $eventContext.occurred
-    EventCount = $eventContext.sequenceNumber
-    exclude children
-
-  from OrderPlaced
-    CustomerId = customerId
-    Total = total
-    Status = "Placed"
-
-  from OrderShipped
-    ShippedAt = $eventContext.occurred
-    Status = "Shipped"
-
-  from OrderDelivered
-    DeliveredAt = $eventContext.occurred
-    Status = "Delivered"
-
-  children items identified by itemId
-    from ItemAdded
-      ProductId = productId
-      Quantity = quantity
-```
-
-## Scope and Application
-
-### Parent Level Only (with exclude children)
-
-```pdl
-every
-  LastUpdated = $eventContext.occurred
-  exclude children
-```
-
-Parent events update `LastUpdated`, child events do not.
-
-### Including Children (default)
-
-```pdl
-every
-  LastUpdated = $eventContext.occurred
-```
-
-Both parent and child events update `LastUpdated`.
-
-### With Multiple Children
+The same choice applies when a parent has several collections. In this excerpt, adding a member or creating a post leaves `LastActivity` unchanged because both are child events:
 
 ```pdl
 projection Group => GroupReadModel
@@ -216,29 +123,9 @@ projection Group => GroupReadModel
       Title = title
 ```
 
-Group-level events update `LastActivity`, but member and post events do not.
+`GroupCreated` still sets `LastActivity` along with `Name`. Remove `exclude children` if the timestamp should instead answer “when was there any activity in this group?” See [child collections](children.mdx) for their identity and parent-key rules.
 
-## Best Practices
+<a id="best-practices"></a>
+<a id="when-to-use"></a>
 
-1. **Use for Common Fields**: Apply `every` for timestamps and audit fields that should update with any event
-2. **Exclude Children**: Use `exclude children` when parent and child lifecycles are independent
-3. **Keep It Simple**: Limit `every` to truly universal properties
-4. **Combine with Specific Rules**: Use `from` events for specific updates, `every` for universal ones
-5. **AutoMap Carefully**: Global AutoMap can have unintended effects; use selectively
-6. **Version Tracking**: Sequence numbers are ideal for optimistic concurrency control
-
-## When to Use
-
-**Use `every` when:**
-
-- Setting last modified timestamps
-- Tracking latest sequence numbers
-- Maintaining version counters
-- Storing correlation IDs for all events
-- Applying AutoMap universally
-
-**Avoid `every` when:**
-
-- Only specific events should update a property
-- Different events require different logic
-- Children should be treated independently
+Keep a mapping in its [`from` block](from-event.md) when it applies to only one event type. Choose [`all`](from-all.md) when events outside the projection's declared subscriptions must also run the shared mappings. Use only one `every` or `all` block at a given level.

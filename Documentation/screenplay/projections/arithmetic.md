@@ -1,21 +1,23 @@
 ---
-title: "Arithmetic Operations"
-description: "Add or subtract event values on read model properties in a Screenplay projection, unlike counters that always change by one."
+title: "Screenplay arithmetic: sum event amounts"
+description: "Use add and subtract in a Screenplay projection to accumulate event amounts in numeric read model properties; counters change them by one."
 ---
 
-# Arithmetic Operations
+<a id="arithmetic-operations"></a>
 
-Arithmetic operations allow you to add or subtract values from numeric properties using values from events. Unlike counters that always change by 1, arithmetic operations use variable amounts.
+Arithmetic in a Cratis Screenplay projection adds or subtracts an amount from a numeric read model property. Use it when an event carries a payment amount, stock quantity, or other value to accumulate. [Counters](counters) change a value by one per event, regardless of any amount it carries.
 
 ## Add
 
-The `add` operation increases a property by a specified amount:
+Use `add` to accumulate an amount into the property's current value:
 
 ```pdl
 add {Property} by {expression}
 ```
 
-### Example
+<a id="example"></a>
+
+In this mapping excerpt, each payment contributes its `amount` to `Balance`:
 
 ```pdl
 from PaymentReceived
@@ -25,13 +27,15 @@ from PaymentReceived
 
 ## Subtract
 
-The `subtract` operation decreases a property by a specified amount:
+Use `subtract` when the event's amount should be taken from the current value:
 
 ```pdl
 subtract {Property} by {expression}
 ```
 
-### Example
+<a id="example-1"></a>
+
+A withdrawal changes the balance by its amount, not by the number of withdrawals:
 
 ```pdl
 from WithdrawalMade
@@ -41,15 +45,11 @@ from WithdrawalMade
 
 ## Expression Values
 
-The expression after `by` can be:
-
-- Event property: `amount`, `value`, `cost.total`
-- Literal: `100`, `10.50`
-- Template: `` `${baseAmount}` ``
+Use a numeric event property such as `amount` or `cost.total`, or a numeric literal such as `100` or `10.50`, after `by`. The target and operand must both be numeric. A fixed amount is useful when every occurrence has the same value; an event property preserves the amount recorded by each occurrence.
 
 ## Multiplying two values
 
-`add` and `subtract` can take the product of two values, so a line total needs no precomputed property on the event:
+A basket line records a unit price and a quantity. Multiply them after `by` to accumulate the line's value without adding a precomputed total to the event:
 
 ```screenplay
 projection BasketProjection => Basket
@@ -57,22 +57,21 @@ projection BasketProjection => Basket
     add total by unitPrice * quantity
 ```
 
-The operand is `<value> * <value>`. Each side is an event property, a literal or a template, as above. The product is computed exactly, in decimal arithmetic, and then added to (or subtracted from) the property like any other operand. Only one `*` is read, and only after `by` in `add` and `subtract`; a bare mapping such as `total = unitPrice * quantity` is not arithmetic and stays refused. A projection that multiplies selects language/semantic `29.0`; models using none keep their existing version and bytes.
+With `unitPrice` of 19.99 and `quantity` of 3, this line contributes 59.97 to `total`. The product is calculated in decimal arithmetic, then converted to the target property's type before accumulation.
 
-## Multiple Operations
+The operand form is `<value> * <value>`, with numeric values on both sides. Only one `*` is accepted, and only after `by` in `add` or `subtract`. A bare mapping such as `total = unitPrice * quantity` is not supported arithmetic. Multiplication selects language/semantic version `29.0`; models without it keep their existing version and bytes.
 
-Combine multiple operations in one event:
+<a id="multiple-operations"></a>
+<a id="examples"></a>
+<a id="account-balance"></a>
+<a id="loyalty-points"></a>
+<a id="budget-tracking"></a>
+<a id="order-totals"></a>
+<a id="gaming-score"></a>
 
-```pdl
-from OrderPlaced
-  add TotalRevenue by total
-  add OrderCount by 1
-  increment TotalOrders
-```
+## Maintain a balance across deposits and withdrawals
 
-## Examples
-
-### Account Balance
+This account excerpt starts from the opening balance. Later events add or subtract their own amounts:
 
 ```pdl
 projection Account => AccountReadModel
@@ -92,23 +91,13 @@ projection Account => AccountReadModel
     add Balance by interestAmount
 ```
 
-### Loyalty Points
+Starting at 100, a deposit of 25 followed by a withdrawal of 10 leaves `Balance` at 115. Assigning `Balance = amount` would replace the balance with each transaction amount instead of accumulating it. See [Property Mapping](property-mapping.md) when replacement is the intended behavior.
 
-```pdl
-projection Customer => CustomerReadModel
-  from CustomerRegistered
-    Name = name
-    Points = 0
+<a id="inventory-with-variable-quantities"></a>
 
-  from PurchaseMade
-    add Points by pointsEarned
+## Track stock quantities, not just stock events
 
-  from PointsRedeemed
-    subtract Points by pointsUsed
-    LastRedemption = $eventContext.occurred
-```
-
-### Inventory with Variable Quantities
+One restock event can represent many items. The `quantity` operand makes that distinction explicit:
 
 ```pdl
 projection Product => ProductReadModel
@@ -127,70 +116,11 @@ projection Product => ProductReadModel
     add StockLevel by adjustmentAmount
 ```
 
-### Budget Tracking
-
-```pdl
-projection Budget => BudgetReadModel
-  from BudgetCreated
-    Category = category
-    AllocatedAmount = amount
-    RemainingAmount = amount
-
-  from ExpenseRecorded
-    subtract RemainingAmount by cost
-    add TotalSpent by cost
-
-  from BudgetIncreased
-    add AllocatedAmount by additionalAmount
-    add RemainingAmount by additionalAmount
-```
-
-### Order Totals
-
-```pdl
-projection Order => OrderReadModel
-  from OrderPlaced
-    OrderNumber = orderNumber
-    Subtotal = 0
-    Tax = 0
-    Total = 0
-
-  from LineItemAdded
-    add Subtotal by itemTotal
-    add Total by itemTotal
-
-  from TaxCalculated
-    add Tax by taxAmount
-    add Total by taxAmount
-
-  from DiscountApplied
-    subtract Subtotal by discountAmount
-    subtract Total by discountAmount
-```
-
-### Gaming Score
-
-```pdl
-projection PlayerScore => PlayerScoreReadModel
-  from PlayerJoined
-    PlayerName = name
-    Score = 0
-
-  from PointsEarned
-    add Score by points
-    LastScored = $eventContext.occurred
-
-  from PointsLost
-    subtract Score by points
-
-  from BonusAwarded
-    add Score by bonusPoints
-    add BonusTotal by bonusPoints
-```
+`StockAdded` with `quantity = 12` adds 12, while a counter would add only 1. The adjustment handler accepts a signed amount: a positive `adjustmentAmount` raises stock and a negative one lowers it. Give each event an amount whose sign matches its meaning.
 
 ## Nested Properties
 
-You can use nested properties from events:
+A dotted path reads an amount from a nested event property. It does not change how the amount is accumulated:
 
 ```pdl
 from TransactionProcessed
@@ -200,7 +130,7 @@ from TransactionProcessed
 
 ## With Counters
 
-Combine arithmetic with counters for comprehensive tracking:
+To answer both “how much?” and “how often?”, update separate properties in the same handler:
 
 ```pdl
 from SaleCompleted
@@ -210,44 +140,30 @@ from SaleCompleted
   count CompletedTransactions
 ```
 
+`TotalRevenue` and `TaxCollected` sum amounts. `SalesCount` and `CompletedTransactions` both increase by one for each `SaleCompleted` event; `count` and `increment` differ in wording, not execution.
+
 ## Property Requirements
 
-The target property must be a numeric type:
+Declare numeric targets, such as `Int`, `Decimal`, or concepts based on those types. The referenced event property must exist and have a numeric type too.
 
-- `int`
-- `long`
-- `decimal`
-- `double`
-- `float`
-
-The expression value must be compatible with the target type.
+The reference evaluator seeds a missing numeric target with zero. When the initial state is supplied by an event, assign it explicitly, as `Balance = initialBalance` does above. For fractional amounts, choose `Decimal` or a decimal-based concept: a whole-number target rounds each operand to the nearest whole number, with midpoint ties rounded to even, before applying the operation.
 
 ## Error Handling
 
-Arithmetic operations are validated when the projection is compiled:
+Semantic validation rejects non-numeric targets and operands. An operand that evaluates to null or a non-numeric value also fails during evaluation; it is not treated as zero.
 
-- Type mismatches result in compilation errors
-- Ensure the event property used exists and is numeric
-- Consider domain rules (e.g., balance can't go negative) in your application logic
+<a id="best-practices"></a>
 
-## Best Practices
-
-1. **Initialize Values**: Ensure numeric properties have initial values
-2. **Use Appropriate Types**: Use `decimal` for money, `int` for counts
-3. **Track Both Directions**: Pair `add` with corresponding `subtract` for bidirectional operations
-4. **Audit Trail**: Combine with timestamps and counters for complete tracking
-5. **Validation**: Consider adding validation in your domain to prevent invalid states
-6. **Precision**: Be aware of floating-point precision issues with `double` and `float`
+Arithmetic does not enforce domain rules such as a minimum balance. A subtraction can produce a negative result. Enforce such a rule in the behavior that decides whether the withdrawal or stock event can occur.
 
 ## Difference from Counters
 
-| Operation | Amount | Use Case |
-|-----------|--------|----------|
-| `count` / `increment` / `decrement` | Always ±1 | Event counting, simple state changes |
-| `add` / `subtract` | Variable from event | Balances, quantities, scores |
+| Operation | Amount per handled event | Use case |
+|-----------|--------------------------|----------|
+| `count` / `increment` | +1 | Number of occurrences or unit increases |
+| `decrement` | −1 | Unit decreases |
+| `add` / `subtract` | Supplied numeric amount | Balances, quantities, scores |
 
 ## See Also
 
-- [Counters](counters) - Fixed increment/decrement operations
-- [Property Mapping](property-mapping.md) - Setting properties to specific values
-- [Expressions](expressions) - Understanding expression syntax
+Continue with [Counters](counters) for unit changes, [Property Mapping](property-mapping.md) for replacement values, or [Expressions](expressions) for the available value forms.

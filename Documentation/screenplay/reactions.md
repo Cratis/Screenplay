@@ -1,13 +1,15 @@
 ---
-title: "Reactions"
-description: "Declare Screenplay reactions, the if-this-then-that behavior that runs when an event or trigger occurs in an Automation slice."
+title: "Screenplay reactions: automate event-driven follow-up"
+description: "Use Screenplay reactions to respond to events, append follow-up facts and invoke commands with explicit authorization and refusal handling."
 ---
 
 # Reactions
 
-A reaction is behavior that runs when something happens — the "if this then that" of a Screenplay. It states
-what sets it off and what that sets off in turn: notifications, calls to external systems, follow-up events,
-or commands. Reactions live inside `Automation` slices.
+A reaction in Cratis Screenplay describes follow-up behavior when an event or trigger occurs. Use it to append a fact or ask a command to run in response, rather than requiring the caller to coordinate that next step. Reactions live in `Automation` slices.
+
+In order fulfilment, a reaction can respond to a captured payment by asking a command to acknowledge the order. That command still owns its authorization, validation and state-dependent decision. If the process must wait for stock, a carrier or a person's approval, describe those steps in a [workflow](workflows.md); use a [state machine](statemachines.md) to observe the order's lifecycle.
+
+Start with [trigger values](#the-values-a-reaction-takes) and [effects](#what-the-reaction-sets-off) to model the handoff. Then declare [system identity](#returned-command-identity) if the invoked command requires authorization, and [refusal handling](#refusal-branches) for business rejections.
 
 A reaction can carry one nonempty fenced `markdown` `documentation` block directly in its body to explain its assumptions and recovery ownership. It is authoring-only (`PLAY0270`), with no executable effect; it does not belong under a trigger. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
 
@@ -30,7 +32,9 @@ reaction <Name>
   [where <condition>]
 ```
 
-A reaction declares at least one trigger. Everything under a trigger is optional.
+A reaction declares at least one trigger. Everything under a trigger is optional, so you can describe what should happen before attaching code. Syntax acceptance alone does not establish execution support; the executable semantic model (ESM) and its consumer must admit the behavior.
+
+### Executing an attached body
 
 Stage's inline-body support is narrower: a body-backed reaction needs exactly one event trigger and a verified C# attachment. Its implementation envelope must identify the owning slice, use role `ReactionEffect`, context/result version 1, and capability `provider-defined`. The body must satisfy the generated synchronous `IEnumerable<object>?` return contract; effect-only fallthrough, incompatible returns, and compiler warnings refuse generation.
 
@@ -88,7 +92,7 @@ Both compilers warn on a gated invocation without identity (`PLAY0648`), or on a
 
 ## Trigger → reaction → effects
 
-The model has three parts, and the language gives each its own word:
+Keep the occurrence, its data and the response separate when writing a reaction:
 
 | Part | What it is |
 | --- | --- |
@@ -96,9 +100,7 @@ The model has three parts, and the language gives each its own word:
 | **Trigger data** | the values that particular occurrence hands the reaction |
 | **Reaction** | the behavior that runs, and what it sets off |
 
-A reaction never needs to know where its trigger came from. `when OrderPlaced` reads the same whether
-`OrderPlaced` is a domain event from the event store, a signal an integration raises, or something the host
-does — that is the trigger's business. See [Triggers](triggers.md) for declaring one and for the built-in set.
+`when OrderPlaced` names the occurrence to observe. The declaration may resolve to a domain event, an application signal or a host-provided trigger; the producer is responsible for making it occur. Execution support still depends on that trigger kind. See [Triggers](triggers.md) for declarations, built-ins and name-resolution order.
 
 ## What sets a reaction off
 
@@ -150,7 +152,7 @@ written `@reads` under a reaction trigger; the escape keeps it distinct from a v
 
 ## Views a reaction decides from
 
-A trigger can declare the views it consults before acting:
+A trigger can describe the views it consults, but a declared read is not automatically a protected decision. The following excerpt states the dependency; it does not yet declare an effect:
 
 ```screenplay
 event OrderPlaced
@@ -165,15 +167,11 @@ reaction HandleOrder
     reads OrderStatus as current by orderId
 ```
 
-`reads <View> [as <alias>] [by <trigger value>]` names a view the trigger reads. It takes no indented children; a child line is an error and is not taken as a trigger value. If a trigger reads
-the same view more than once, every read needs a distinct alias; aliases must be unique within the
-trigger and must not match a trigger value. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
-so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
-command leaves the command's decision to that command and its own reads. ESM v6 does not add protected
-reaction reads: a trigger with `reads` that produces directly, or has an opaque effect body, fails binding
-because its decision dependency cannot be protected. A reaction body has no read access, even with a body provider (decision 0121). It is not admitted as an unguarded decision. An
-invocation-only reaction leaves read protection to the invoked command; it cannot use those views as
-portable mapping values.
+`reads <View> [as <alias>] [by <trigger value>]` names the view. The scalar form takes no indented children; a child line is an error, not a trigger value. If the same view is read more than once, each read needs a distinct alias. Aliases must be unique within the trigger and must not match trigger values. `by` must name a value selected by that trigger. Clock triggers carry no values, so they can use `reads <View>` but not scalar `by`. An unknown view is reported. Composite keys use the named child mappings described under [Observer filters](#observer-filters).
+
+ESM v6 does not provide protected reaction reads. A trigger that declares `reads` and produces directly, or has an opaque effect body, fails binding because its decision dependency cannot be protected. A reaction body has no read access, even with a body provider (decision 0121).
+
+An invocation-only reaction leaves the decision and its protected reads to the invoked command. It cannot use reaction read aliases as portable mapping values.
 
 The supported alternative is to invoke a command from the reaction and put the decision in that command's declarative `require` or mappings. A C# handler body cannot read views either, so moving the decision into a body does not help:
 
@@ -225,9 +223,7 @@ for, whatever set them off.
 
 ## A trigger states intent on its own
 
-Screenplay's workflow is *author the document first, then Stage performs it*, so a reaction must be
-describable before any code exists. A trigger with nothing under it is already a complete statement — this
-reaction runs when that happens:
+You can describe the reaction before implementing its effects. A trigger with nothing under it states when the reaction should run:
 
 ```screenplay
 reaction PaymentReconciler
@@ -237,18 +233,14 @@ reaction PaymentReconciler
     description "Re-checks whether a late payment has since arrived"
 ```
 
-That document parses, and it tells a reader exactly what the reaction is for — with no file to point at and
-no code to invent. The `file` reference and the inline block are
-[realization metadata](grammar.md#declarative-first--file-is-never-required), attached once the slice is
-implemented.
+This document parses and records the reconciliation intent without claiming an implemented effect. Attach a `file` reference or inline block when implementing the slice; these are [realization metadata](grammar.md#declarative-first--file-is-never-required), not prerequisites for describing the reaction.
 
 Give the reaction a `description` for what it does overall, and a trigger its own `description` when *that*
 reaction needs explaining beyond the trigger's name.
 
 ## What the reaction sets off
 
-An automation is the "if this, then that" of the system, and a document that could only draw the *if* left
-the arrows out of an automation invisible.
+Use `produces` to request a follow-up event append and `invokes` to request a command. This excerpt shows both: accepting an invitation records provisioning and asks a command to send the welcome mail.
 
 ```screenplay
 event InvitationAccepted
@@ -273,10 +265,7 @@ reaction Provisioner
 `produces` is the same declaration a [command](commands.md#the-produces-block) carries — appending an event
 is the same act wherever it happens, including `for` to say which event source it lands on.
 
-**`invokes` is a different word on purpose.** A command is not produced; it is asked for. An event is a fact
-the reaction asks to append, subject to append-time constraints, while a command is an intent handed to
-something else that may authorize, validate and reject it. Using `produces` for both would say those are the same kind of
-consequence, and they are not.
+These effects have different failure boundaries. A `produces` append is subject to append-time constraints. An `invokes` request passes through the command's authorization and validation as well, so that command may reject it. Declare a [refusal branch](#refusal-branches) when the reaction should handle that business outcome.
 
 For an event-triggered reaction, map an invoked command's identifier with `orderId = $eventSourceId`
 (or `$eventContext.eventSourceId`) to address the triggering event's source without copying its identity into
@@ -360,10 +349,7 @@ so a specification can assert what a reaction does. In the reference evaluator:
 - A `produces` without `for` appends to the event source of the event that set the reaction off. A clock,
   application or built-in trigger has no such event, so what it produces needs `for` - a value it carries, or
   literal text.
-- An `invokes` runs the command through its full pipeline - authorization, validation, requirements and
-  constraints - with no caller. A command that requires one rejects the reaction, and the rejection ends
-  the scenario. Previously accepted facts remain in the world; a failing invoked command appends none of
-  its own facts. There is no transaction around the entire cascade.
+- An `invokes` runs the command through authorization, validation, requirements and constraints. It uses the reaction's declared `runs as` identity, or no caller when that line is omitted. An unhandled rejection ends the scenario. Previously accepted facts remain in the world; the failing command appends none of its own. There is no transaction around the entire cascade.
 - In ESM v7, an invoked command that only returns a response runs; the evaluator computes its response
   and discards it. The response does not become the initiating command's response.
 - Invocation of a command with generated properties binds in ESM v7, but an invocation that reaches
@@ -383,8 +369,7 @@ so a specification can assert what a reaction does. In the reference evaluator:
 - The scenario budget counts new accepted facts, not established history. A command batch that would exceed
   1,000 facts is unsupported before any of its facts or projection changes enter the world. Prior accepted
   facts remain; legacy direct reaction and capture appends retain their individual append disposition. Explicit atomic reaction batches reserve their complete expanded result before adoption.
-- A body in code - a `file` or an inline block - is a target's to run. Reaching one returns `SemanticUnsupported`,
-  never a guessed result. Reached opaque reducers also fail closed in v6.
+- A `file` or inline body needs an admitted body provider as described [above](#executing-an-attached-body). Without one, reaching the body returns `SemanticUnsupported`, never a guessed result. Reached opaque reducers also fail closed in v6.
 
 Durable collection fan-out, acknowledgement and delivery guarantees remain outside v6
 ([#286](https://github.com/Cratis/Screenplay/issues/286)); the reference does not approximate them as success.
@@ -432,7 +417,7 @@ identity. Wrap that evaluator to preserve your host's pre-checks on invoked comm
 unsupported or conflict result as failure, not as an empty successful append.
 
 This API does not fire clock, startup, shutdown or application triggers, and it does not execute captures.
-A reached opaque reaction body returns `SemanticUnsupported`; it is still the target provider's to run.
+A reached reaction body without an admitted provider returns `SemanticUnsupported`; the host owns body execution.
 
 ### Append a settled command in a live host
 

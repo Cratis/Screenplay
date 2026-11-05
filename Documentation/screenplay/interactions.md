@@ -1,9 +1,11 @@
 ---
-title: Interactions
-description: "Declare what happens when a user acts in Screenplay: behaviors, the on clauses that start them, the closed set of actions and their continuations."
+title: "Screenplay interactions: respond to user actions"
+description: "Screenplay interactions connect gestures and signals to action sequences, such as opening a dialog, submitting a command and refreshing a query."
 ---
 
-A document can say what a screen looks like. This page is about the other half: what happens when someone clicks something.
+Screenplay interactions describe what happens when a user acts or a signal arrives. Use an `on` block to open a dialog, execute a command or refresh displayed data. Keep it beside the element it affects, or name a reusable behavior when several elements need the same response.
+
+This screen refreshes its invoices on entry and opens the activated invoice's details on a double click:
 
 ```screenplay
 screen InvoiceList
@@ -17,7 +19,7 @@ screen InvoiceList
         with invoiceId from item.invoiceId
 ```
 
-Three words carry the whole idea:
+An interaction connects a trigger to one or more actions. A behavior groups those connections:
 
 | Word | What it is |
 | --- | --- |
@@ -29,7 +31,7 @@ For one labeled button that selects a command from the current item's state, use
 
 ## Write it inline, or name it
 
-Most interaction is one trigger and one action, written where it belongs:
+For a response used in one place, write the trigger and action directly on the element:
 
 ```screenplay
 button
@@ -37,7 +39,7 @@ button
     execute RegisterInvoice
 ```
 
-That inline `on` block **is** a behavior — an anonymous one, attached to the button. When the same wiring is wanted in several places, give it a name, declare parameters, and attach it with `uses`:
+The inline `on` block is an anonymous behavior attached to the button. When several controls need confirmation before executing a command, declare that behavior once and pass each control's command and message through `uses`:
 
 ```screenplay
 behavior ConfirmThenExecute
@@ -58,7 +60,7 @@ module Invoicing
           message $strings.confirmCancel
 ```
 
-There is one construct behind both forms, so a named behavior and an inline block resolve, print and diagnose identically. The only difference is the name.
+In `ConfirmThenExecute`, confirmation must succeed before `execute command` runs. The `uses` site supplies the command and localized message, so the behavior can be reused without hard-coding either one. Named and inline behaviors use the same resolution, printing and diagnostic rules.
 
 ## Interaction triggers
 
@@ -77,9 +79,9 @@ An interaction trigger is never declared. It exists only as the `on` clause of a
 | `on interval <n> <unit>` | a timer elapses | — |
 | `on <ApplicationTrigger>` | a declared application trigger fires | that trigger's declared payload |
 
-The last two rows are the bridge to the backend vocabulary, and the reason this page distinguishes two kinds of trigger.
+Use `on event` to respond to a modeled domain event, or `on <ApplicationTrigger>` for a signal declared with `trigger <Name>`. That application trigger has a payload shape and can also be consumed by a `reaction ... when`; see [Triggers](triggers.md). You do not declare the interaction's `on` clause separately.
 
-> **`trigger` still means one thing.** A declared `trigger <Name>` is an *application trigger* - a signal with a payload shape that a `reaction ... when` consumes. See [Triggers](triggers.md). What starts an interaction is the anonymous `on` clause above. The built-in kinds (`click`, `submit`, `enter`, and their siblings) are reserved **inside an `on` clause only**; an identifier of the same name anywhere else in a document is just an identifier. Declaring an application trigger named after one of them is an error, because `on <Name>` would then mean the interaction and never the trigger.
+Built-in names such as `click`, `submit` and `enter` are reserved only inside an `on` clause. They remain ordinary identifiers elsewhere, but an application trigger cannot use one of those names: `on <Name>` would resolve to the built-in interaction instead of the declared trigger.
 
 ## Choose an action list by item state
 
@@ -100,7 +102,7 @@ Use exactly the [guarded action condition grammar](screens.md#one-action-several
 
 The first matching branch runs once against the rendered item when the gesture occurs: no refetch first, no re-evaluation while the list runs. No match runs the fallback if present, otherwise nothing. No subject runs nothing, **including fallback**. Failure, denial or unavailable commands never fall through; commands still enforce their own rules. This differs from a labeled action's click-time refresh check because the interaction displays no choice beforehand.
 
-A table's click or double click uses the activated row; `select` uses the newly selected item; `change` uses the item that changed (see [Bind an item change to a command](#bind-an-item-change-to-a-command)). Clearing selection runs nothing. Other elements use the nearest enclosing container's single item or selected row, with the same sibling precedence as guarded actions. Named behaviors are checked at each `uses` site. A component's context binding or `selectedItem` does not supply a subject in this version; unresolved or equally near data subjects produce PLAY0346.
+A table's click or double click uses the activated row; `select` uses the newly selected item; `change` uses the item that changed (see [Bind an item change to a command](#bind-an-item-change-to-a-command)). Clearing selection runs nothing. Other elements use the nearest enclosing container's single item or selected row, with the same sibling precedence as guarded actions. Named behaviors are checked at each `uses` site. A component's context binding or `selectedItem` does not supply a subject; unresolved or equally near data subjects produce PLAY0346.
 
 `on submit` has no alternatives: `item` means populated data, not submitted form values. Event, interval and application triggers also have no alternatives. The one-line `on row-click navigate to … by …` stays unchanged.
 
@@ -108,7 +110,7 @@ Opaque `where` is deprecated **only** on click, double click and select (PLAY056
 
 ## Bind an item change to a command
 
-A component that presents items can tell the document that the user changed one: a kanban board moves a card to another column, a list changes the status of a row. That is an `on change` on the component, and it carries **the item that changed**, the way `on select` carries the selected item. Bind the command's inputs to the item, and to the value it changed to, exactly as you would bind a view's property to a view model in XAML:
+Use `on change` on an editable items component when a user action should issue a command. It carries the changed item, just as `on select` carries the selected item. In this board, moving a card updates the item's `status` for branch selection, and `item.talkId` supplies the command's identity:
 
 ```screenplay
 screen ReviewBoard
@@ -156,11 +158,11 @@ on change
     with status from value
 ```
 
-Two rules keep this honest. The command still enforces its own rules, so a move it refuses (a constraint, an authorization) is not applied: the component shows the data again once the command has been answered, and `on failure` runs as it does for any `execute`. And a component reports an item change only when it lets the user change items; a read-only component raises none.
+The command still enforces its constraints and authorization. A component implementing this contract must not apply a refused move: after the command answers, it shows the data again and runs `on failure` as for any `execute`. Only a component that lets the user change items reports an item change; a read-only component raises none.
 
 ## Actions
 
-Every action names something the document declares. That is what makes an action that points at nothing a diagnostic rather than a control that quietly does nothing.
+Actions use a fixed vocabulary. Where an action names a command, screen, query or trigger, the compiler checks that reference against the document and reports an unresolved name.
 
 | Action | Effect | Resolves against |
 | --- | --- | --- |
@@ -207,7 +209,7 @@ Actions run in the order they are written. `confirm` short-circuits everything a
 | `on success`, `on failure` | `execute`, `refresh`, `confirm`, `open dialog`, `raise` — the actions that can fail |
 | `on result` | `open dialog` only |
 
-Attaching `on success` to a `navigate`, a `notify`, a `set` or a `close dialog` is an error. Those have no outcome to branch on, so the continuation could never run — and an author who wrote one expected it to.
+Do not attach `on success` to `navigate`, `notify`, `set` or `close dialog`. Those actions have no outcome to branch on, so the compiler reports the continuation as an error.
 
 Writing actions *after* an unconditional `navigate` is reported too: the screen they were written for is already gone.
 
@@ -248,7 +250,7 @@ module Invoicing
 
 In a form body, `on submit navigate to <Screen>` keeps its existing one-line meaning. Any other `on` is a behavior attached to the form.
 
-Attachments are **additive**. A behavior on a template and a behavior on an element both run — the more specific one does not replace the less specific one. They run outermost first, unless a behavior declares its own `order`:
+Attachments accumulate. If both a template and an element attach a behavior, both run; the element's attachment does not replace the template's. They run outermost first unless a behavior declares its own `order`:
 
 ```screenplay
 behavior ConfirmDestructive
@@ -256,7 +258,7 @@ behavior ConfirmDestructive
   ...
 ```
 
-This is the same outward-resolving rule [contributions](contributions.md) already use.
+Use [contributions](contributions.md) to collect content in shared slots; use behavior attachments to describe responses to gestures and signals.
 
 In a [folder of files](folders.md), a module's or a feature's attachments may be written in any file that names it, and they accumulate the same way. An attachment identical to one another file already makes is ignored with a warning rather than run twice; expansion writes them back into the owner's own file.
 
@@ -271,11 +273,11 @@ The full list, with codes, is in [Diagnostics](diagnostics.md).
 
 ## What this is not
 
-Interaction is a closed vocabulary, deliberately. It is not a scripting language: conditions use the existing expression grammar, and actions are a fixed, resolvable set. Validation stays modeled on the command — the UI surfaces it rather than restating it. Animation, visual states, drag-and-drop and keyboard maps are not part of it.
+Use interactions to connect modeled actions, not to embed general-purpose scripts. Conditions use the existing expression grammar, and actions come from a fixed, resolvable set. Keep validation on the command so the UI can surface its rules without restating them. Animation, visual states, drag-and-drop and keyboard maps are not part of this vocabulary.
 
 The event model board draws the containing table or screen as a static prototype; it does not execute gesture action lists or invent a button for each branch. Runtime support belongs to renderers, which must reject alternatives they cannot realize.
 
-Interaction constructs are deferred from the backend ESM v1 profile, the same way `screen`, `layout` and `ui profile` are, and report `PLAY0269`. Deferred does not mean dropped: the syntax tree, the printer and the semantic model carry every construct in full, and a target that cannot realize one reports it.
+The backend executable semantic model (ESM) v1 profile does not execute interaction constructs, just as it does not execute `screen`, `layout` or `ui profile`; it reports `PLAY0269`. The syntax tree and printer preserve the constructs for downstream consumers. A rendering target must report a construct it cannot realize.
 
 ## See also
 

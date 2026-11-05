@@ -5,7 +5,7 @@ description: "Declare Screenplay events: immutable, past-tense facts with typed 
 
 # Events
 
-Events are immutable, past-tense facts — the record of something that happened. An event declaration defines the event type's name and properties. Properties use [concepts](concepts.md), composite [types](types.md), or primitives.
+An event records a fact that has already happened, such as `InvoiceRegistered`. Events are immutable, and their names describe the past. Declare the event type's name and the properties that make up its payload, using [concepts](concepts.md), composite [types](types.md), or primitives.
 
 ## Syntax
 
@@ -20,7 +20,17 @@ Events are immutable, past-tense facts — the record of something that happened
   ...
 ```
 
-Without `generation`, an event is generation 1 and prints exactly as before. To show an evolved event, declare **each full shape** with its own number, beginning at 1 and continuing without gaps or duplicates. Declarations with the same name in the same owning slice (module, feature path and slice) identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current ESM binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1. References to an event name resolve to its current (highest) generation in that slice; property checks use that shape, not the historical ones. The executable model stores one contract with current revision N and complete prior revisions 1..N−1, each with its predecessor (generation 1 has none). Each revision owns separate property identities, even for same-named properties. A lone `generation 1` marker behaves like an unmarked event and retains its previous ESM version. A multi-generation contract selects ESM v4. Bare references use the current revision only; a `produces` mapping, `then` assertion, projection mapping, or constraint naming a removed property fails binding with `PLAY0273`, and `given` historical-shape consumption reports `PLAY0449` with the event and revision. No historical fact is silently converted or replayed. A target without explicit migration support must reject an evolved contract; Chronicle registration needs migrations, which Screenplay does not yet express. Complete historical declarations alone do not prove schema immutability across edits to referenced concepts or types; use the release baseline check below. Transformations between generations remain tracked in #71.
+## Event generations
+
+An event without `generation` is generation 1 and keeps its existing printed form. To evolve an event, declare each full shape with its own number, beginning at 1 and continuing without gaps or duplicates. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1.
+
+Keep those declarations in the same owning slice (module, feature path and slice). Together they identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current executable semantic model (ESM) binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage.
+
+References to an event name resolve to its current (highest) generation in that slice. Property checks use that shape, not the historical ones. A `produces` mapping, `then` assertion, projection mapping, or constraint naming a removed property fails binding with `PLAY0273`; `given` historical-shape consumption reports `PLAY0449` with the event and revision. No historical fact is silently converted or replayed.
+
+The executable model stores one contract with current revision N and complete prior revisions 1..N−1, each with its predecessor (generation 1 has none). Each revision owns separate property identities, even for same-named properties. A lone `generation 1` marker behaves like an unmarked event and retains its previous ESM version. A multi-generation contract selects ESM v4.
+
+A target without explicit migration support must reject an evolved contract. Chronicle registration needs migrations, which Screenplay does not yet express; transformations between generations remain tracked in #71. Complete historical declarations also do not protect against edits to referenced concepts or types. Use the [release baseline check](#released-event-contracts) to preserve the resolved stored shapes.
 
 ```screenplay
 event ProjectRegistered generation 1
@@ -71,13 +81,14 @@ For projections that opt in to Chronicle's generation support, bare PDL event na
 
 Use `propose-property` to add, rename or remove a current event property. Without
 a release baseline, choose explicitly between `eventNeverPersisted` and `newGeneration`.
+Choose `eventNeverPersisted` only when the current generation has never been stored:
+it edits that generation in place and preserves renamed property IDs. `newGeneration`
+keeps every historical shape and identity, appends the changed shape as generation N+1,
+and assigns new property identities there while retaining the event contract ID.
+
 With a baseline, an unadmitted current revision defaults to `inPlace`; an admitted
-revision requires explicit `newGeneration` and refuses `eventNeverPersisted`. The first
-asserts that the current generation has never been stored: it edits that generation
-in place and preserves renamed property IDs. The second keeps every historical
-shape and identity, appends the changed shape as generation N+1, and assigns new
-property identities there while retaining the event contract ID. Historical
-properties refuse either choice. Extract an inline event before changing its contract.
+revision requires explicit `newGeneration` and refuses `eventNeverPersisted`.
+Historical properties refuse either choice. Extract an inline event before changing its contract.
 
 Without a baseline, adding even an optional property requires this choice: an in-place schema addition
 is not safe for a stored generation. Add selects an owner and explicit declaration
@@ -248,8 +259,8 @@ Tags inside `produces event` are event-type tags, just like the standalone form.
 
 ## Guidance
 
-- **Name events in the past tense** and make them self-describing: `InvoiceRegistered`, never `Created`.
-- **One purpose per event.** If an event needs a nullable property to cover two situations, model the second situation as its own event.
-- **Compliance is inherited.** A property typed with a `@pii` concept is PII — nothing extra to declare on the event.
-- The event-source identity is not an event property; it travels in typed event context in ESM v2. A command's `produces … for <identifier>` binds the destination from a required scalar command identifier. A projection can use `$eventSourceId` without copying that identity into every event payload, and a specification can name it with `for <value>` on its `given` and `then` events. Marking an event property `identifier` is an error.
-- **Declare the shapes you reference.** A property typed `InvoiceLine[]` needs a [`type InvoiceLine`](types.md); the compiler warns when it resolves against nothing the document declares.
+Name events in the past tense and make them self-describing: `InvoiceRegistered`, never `Created`. Keep each event focused on one purpose. If a nullable property exists only to cover a second situation, model that situation as its own event.
+
+Declare the shapes you reference. A property typed `InvoiceLine[]` needs a [`type InvoiceLine`](types.md); the compiler warns when it resolves against nothing the document declares. Compliance follows the property's type: a property typed with a `@pii` concept is PII, with nothing extra to declare on the event.
+
+The event-source identity travels in typed event context in ESM v2, not as an event property. A command's `produces … for <identifier>` binds the destination from a required scalar command identifier. A projection can use `$eventSourceId` without copying that identity into every event payload, and a specification can name it with `for <value>` on its `given` and `then` events. Marking an event property `identifier` is an error.

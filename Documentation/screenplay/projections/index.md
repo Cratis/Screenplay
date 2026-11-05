@@ -1,17 +1,15 @@
 ---
-title: "Projections"
-description: "Screenplay projections declare in the Projection Declaration Language how events become a queryable read model."
+title: "Screenplay projections: build read models from events"
+description: "Build a keyed read model from events with Screenplay projections. Choose which instance each event updates, map its data, and include event metadata."
 ---
 
-# Projections
+<a id="projections"></a>
 
-Projections declare how events are projected into a queryable read model. The body of a `projection` block is written in the **Projection Declaration Language (PDL)** — an embedded sub-grammar. The Screenplay parser delegates the indented body to the PDL parser (see [Sub-language Pluggability](../sub-languages.md)).
+A Screenplay projection turns events into a read model: the stored view that a query can return to a screen or a command can consult. Use one when you need to describe how recorded facts create or change that view, including which instance each event updates.
 
-For documentation examples, use `pdl` fences for projection-only snippets in `projections/*` (compiled with `CompileProjection`); use `screenplay` fences for whole-document examples, including ones on this page. A projection-level `key` is parsed but does not route events; declare keys on each `from` (or its events).
+Start with the target read model, then add a `from` block for each event that changes it. Each block selects an instance by key and maps values onto it. Without an explicit key, an event selects the instance identified by its event source ID. A `key` on the projection itself does not supply a default; put it on each relevant `from` or its individual events.
 
-The pages in this section document the full projection sub-language — every directive, operation, and expression the PDL supports. The same language is also used standalone by Cratis Chronicle to define projections without writing code; see [Chronicle projections](/chronicle/projections/projection-declaration-language/) for how Chronicle hosts and executes it. Chronicle is also the semantic reference for what a projection means: the executable semantic model mirrors how Chronicle lowers and runs it — see [Semantic Model](semantic-model.md).
-
-One quoted or fenced-text `description` on the projection header records report-only authoring intent (`PLAY0270`), printed before `file` and every builder directive. Variants and nested blocks do not accept it. The description does not satisfy a projection's directive requirement and adds no executable bytes. Markdown `documentation` is not supported here.
+The indented body uses the Projection Declaration Language (PDL), a grammar embedded in Screenplay (see [Sub-language Pluggability](../sub-languages.md)). Cratis Chronicle also accepts this language on its own; [Chronicle projections](/chronicle/projections/projection-declaration-language/) explains how it hosts and runs it. Screenplay's [Semantic Model](semantic-model.md) explains which forms bind to executable behavior and which the reference evaluator can run.
 
 ## Syntax
 
@@ -21,6 +19,8 @@ projection <Name> => <ReadModel>
 ```
 
 ## Example
+
+This invoice view uses `invoiceId` from each root event to select the invoice to update. Registration supplies its initial details; later events change its status. The join brings in a customer name, and the child collection gives each line item its own identity within the invoice.
 
 ```screenplay
 projection InvoiceDetails => InvoiceDetailsReadModel
@@ -48,6 +48,10 @@ projection InvoiceDetails => InvoiceDetailsReadModel
       parent invoiceId
 ```
 
+Explicit assignments handle renamed values, constants and metadata such as `$eventContext.occurred`. AutoMap also copies compatible, same-named event properties unless disabled; explicit mappings take precedence.
+
+To build your first view, follow [From Event](from-event.md), choose its [Keys](keys.md), then fill in [Property Mapping](property-mapping.md). For timestamped examples in executable specifications, [Event Context](event-context.md#in-the-semantic-model) explains the required clock and the reference evaluator's limits.
+
 ## The PDL vocabulary at a glance
 
 | Construct | Meaning |
@@ -63,7 +67,7 @@ projection InvoiceDetails => InvoiceDetailsReadModel
 | `$eventContext.occurred` | The timestamp of the event being projected. |
 | `variant <Name>` / `enters on <EventType>` | One of several mutually exclusive named read models sharing the projection's identity. |
 
-An aggregating projection using counters:
+Counter operations update the instance selected by that event's key:
 
 ```screenplay
 projection InvoiceSummary => InvoiceSummaryReadModel
@@ -77,6 +81,8 @@ projection InvoiceSummary => InvoiceSummaryReadModel
   from InvoiceCancelled
     decrement totalCount
 ```
+
+Here only `InvoiceRegistered` selects `"global"`; the other handlers use their event source IDs. To accumulate all three event types into one summary, give each `from` the same `key "global"`. A constant key is not inherited by later handlers.
 
 ## Several projections in one slice
 
@@ -96,7 +102,9 @@ slice StateView CustomerPortalReport
       revokedAt = $eventContext.occurred
 ```
 
-Declare as many as the behavior needs. Each names its own read model, and [printing](../printing.md) writes them back out in the order they were declared. Splitting them across two slices would say the system has two behaviors where it has one.
+Declare as many as the behavior needs. Each names its own read model, and [printing](../printing.md) writes them back out in declaration order. Keep views of the same behavior together rather than splitting them solely because their data shapes differ.
+
+A projection header can also carry one quoted or fenced-text `description` to record authoring intent. It is report-only (`PLAY0270`), not executable behavior, and printing places it before `file` and builder directives. It does not count as a projection directive. Variants and nested blocks do not accept it, and Markdown `documentation` is not supported here.
 
 ## Projecting to an event
 

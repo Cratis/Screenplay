@@ -1,11 +1,13 @@
 ---
-title: "Event Context"
-description: "Read event metadata such as occurrence time, sequence number and correlation in a Screenplay projection with $eventContext."
+title: "Screenplay event context: map recorded event metadata"
+description: "Use $eventContext in Screenplay projections to read recorded event metadata. Check which paths Chronicle resolves and which specifications can evaluate."
 ---
 
-# Event Context
+<a id="event-context"></a>
 
-Event context provides access to metadata about the event itself, such as when it occurred, its sequence number, who caused it and how it was correlated.
+Event context is the metadata recorded alongside an event, separate from its business payload. In a Screenplay projection, use `$eventContext` to carry values such as occurrence time or correlation ID into a read model so a reader can place a change in context.
+
+Choose a path by the question the view needs to answer: when the event happened, where it sits in its sequence or which identity caused it. Chronicle resolves the paths below, but Screenplay's reference evaluator supports only event source identity and certain occurrence-time assignments. If you are writing an executable specification, read [In the Semantic Model](#in-the-semantic-model) before selecting a path.
 
 ## Syntax
 
@@ -17,7 +19,7 @@ $eventContext.{path}
 
 A path is written camelCase, as in the table below. Chronicle, which runs the projection, also resolves a segment whose first letter is uppercased (`$eventContext.EventType.Id`); no other spelling resolves.
 
-Every path is checked against the event context catalog when the projection compiles. An unlisted member or sub-path is a warning (`PLAY0295`, `PLAY0296`); a runtime reflects over the event context and may resolve more than the catalog lists, but such a path is not portable. A path below a collection or an empty path is an error (`PLAY0297`, `PLAY0298`) because it can never resolve. See [Diagnostics](../diagnostics.md#event-context-paths).
+Compilation checks each path against an event-context catalog shared with the editor. An unlisted member or sub-path produces a warning (`PLAY0295`, `PLAY0296`). Chronicle may resolve additional paths through reflection, but those paths are not portable. Reading below a collection or using an empty path is an error (`PLAY0297`, `PLAY0298`). [Diagnostics](../diagnostics.md#event-context-paths) explains these checks; they are separate from binding and executing a specification.
 
 ## Available Properties
 
@@ -69,7 +71,7 @@ from UserRegistered
   CreatedAt = $eventContext.occurred
 ```
 
-The ISO 8601 week the event occurred in:
+Chronicle can also derive the ISO 8601 week from that timestamp. This function is not admitted by Screenplay's executable semantic model:
 
 ```pdl
 from TimeRecorded
@@ -87,7 +89,7 @@ from EventProcessed
 
 ### correlationId
 
-The correlation ID associated with the event:
+The correlation ID recorded with the event can connect this view to other work in the same operation:
 
 ```pdl
 from OrderPlaced
@@ -114,7 +116,7 @@ from OrderPlaced
   PlacedByName = $eventContext.causedBy.name
 ```
 
-The short form `$causedBy.subject` also parses, and Chronicle compiles it, but Chronicle cannot yet evaluate it when the projection runs ([Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119)). Write `$eventContext.causedBy.<property>` until that is fixed.
+The short form `$causedBy.subject` also parses and Chronicle has a runtime resolver for it. Screenplay's executable semantic model still rejects that short form, so use `$eventContext.causedBy.<property>` when binding a projection. The earlier runtime limitation is recorded in [Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119).
 
 ### eventSourceId
 
@@ -127,7 +129,7 @@ from UserAssignedToGroup
 
 ## `$eventSourceId` and `$eventContext.eventSourceId`
 
-`$eventSourceId` is not shorthand for `$eventContext.eventSourceId`. They are two different expressions - each its own node in the syntax tree, and each its own expression in Chronicle - that resolve to the same value: the identifier of the event source the event was appended to. Prefer `$eventSourceId`, and use it in keys:
+`$eventSourceId` and `$eventContext.eventSourceId` resolve to the same value: the identity of the source the event was appended to. They are distinct expressions in the syntax tree and in Chronicle, but you do not need that distinction to map the value. Prefer the shorter `$eventSourceId` in keys:
 
 ```pdl
 from UserCreated key $eventSourceId
@@ -153,7 +155,9 @@ The path is checked against the same catalog. Only `$eventContext` is resolved i
 
 ## In the Semantic Model
 
-The executable semantic model binds a projection value only when it is one portable scalar. Of the paths above, it admits every member that holds a single value with a portable type, written in its canonical camelCase spelling - `.value` on a concept and an uppercased first letter both bind as the plain member, and `eventSourceId` binds as the event source identity. It does not admit:
+Binding and execution are separate checks. The executable semantic model can bind metadata that represents one scalar value with a portable type, such as `occurred`, `sequenceNumber` or `causedBy.subject`. It normalizes supported paths to camelCase: a concept's trailing `.value` and an uppercased first letter bind as the plain member. `eventSourceId` binds as event source identity.
+
+It does not admit:
 
 - the collections `causation` and `tags`,
 - `eventType` and `causedBy` without a member below them,
@@ -161,13 +165,17 @@ The executable semantic model binds a projection value only when it is one porta
 - paths through `causedBy.onBehalfOf`, which is optional,
 - `observationState`, which has no portable type and differs between live processing and replay.
 
-The reference executor evaluates `eventSourceId` and `$eventContext.occurred` property assignments in `from`, `every` (including `all`) and `children` scopes. An occurrence is the fact's explicit timestamp, represented as invariant UTC round-trip text, for example `2026-10-02T09:00:00.1234567Z`. A deferred child keeps its own occurrence, not its parent's. An `every include children` assignment also uses the triggering child's occurrence.
+The reference evaluator executes fewer paths than the binder accepts. It supports event source identity and `$eventContext.occurred` property assignments in `from`, `every` (including `all`) and `children` scopes. Other event-context reads, including `sequenceNumber` and `correlationId`, are unsupported by the evaluator even when binding succeeds.
 
-Use `given clock` for command-produced or `when append` facts in a specification that maps `occurred`. A fact without an explicit occurrence fails projection, even for an optional target; no partial read-model or pending-child state is published. The executor never substitutes the wall clock, a sequence number, or a default timestamp.
+For an occurrence-time assignment, supply an explicit timestamp on the fact. Use `given clock` for command-produced or `when append` facts; [Specifications](../specifications.md) explains the clock syntax. The evaluator represents the timestamp as invariant UTC round-trip text, for example `2026-10-02T09:00:00.1234567Z`. It never substitutes the wall clock, a sequence number or a default timestamp. A missing occurrence fails projection even for an optional target, without publishing partial read-model or pending-child state.
 
-`occurred` remains unsupported in keys (including parent, removal, composite, parts and join keys), arithmetic, JOIN property mappings, `every` mappings on a scope with joins, and nested-object scopes. Other event-context paths remain unsupported by the reference executor. The language and semantic serialization format are unchanged.
+A deferred child keeps its own occurrence, not its parent's. An `every include children` assignment also uses the triggering child's occurrence.
+
+The evaluator does not support `occurred` in keys, including parent, removal, composite, flat-part and join keys. It is also unsupported in arithmetic, join property mappings, `every` mappings on a scope with joins and nested-object scopes.
 
 ## Common Patterns
+
+These patterns show Chronicle metadata mappings. For executable Screenplay specifications, apply the narrower path and scope limits above.
 
 ### Audit Fields
 
@@ -196,7 +204,7 @@ from OrderPlaced
 
 ### Sequence Tracking
 
-Track event order:
+Record an event's position within its event sequence. This is not a per-document revision counter:
 
 ```pdl
 from StateChanged
@@ -232,7 +240,7 @@ from EventProcessed
 
 ## In Templates
 
-Event context works in string templates:
+Chronicle can interpolate event context into display strings. Templates do not bind to Screenplay's executable semantic model:
 
 ```pdl
 from OrderShipped
@@ -258,6 +266,8 @@ projection UserActivity => UserActivityReadModel
 ```
 
 ### Versioned Document
+
+Here `Version` stores an event-sequence position. Numbers can skip for an individual document because the sequence contains other events; the mapping does not calculate a document-specific revision.
 
 ```pdl
 projection Document => DocumentReadModel
@@ -291,6 +301,8 @@ projection Group => GroupReadModel
       AddedSequence = $eventContext.sequenceNumber
 ```
 
+In this group example, `CreatedBy` receives the event source ID, not the identity of the person who created the group. Use a `causedBy` member when the property is meant to record that person.
+
 ### Order Processing
 
 ```pdl
@@ -310,9 +322,8 @@ projection Order => OrderReadModel
 
 ## Best Practices
 
-1. **Audit Timestamps**: Use `occurred` for created/updated timestamps
-2. **Correlation**: Use `correlationId` to link related operations
-3. **Versioning**: Use `sequenceNumber` for version tracking
-4. **Relationships**: Use `$eventSourceId` for parent-child relationships
-5. **Debugging**: Include correlation IDs and timestamps for troubleshooting
-6. **Stability**: Event context values are fixed when the event is appended - except `observationState`, which depends on whether the event is being replayed
+Choose metadata by its recorded meaning. `occurred` is the event's timestamp, `sequenceNumber` is its position in an event sequence, and `correlationId` connects related work. None substitutes for the others or for an identity in the event payload.
+
+Most context describes the recorded event. `observationState` instead describes how an observer sees it, so it can differ on replay and should not be treated as stable read model data.
+
+Continue with [Property Mapping](property-mapping.md) to assign the values to your view, or [Keys](keys.md) if metadata is intended to select an instance rather than fill a property.

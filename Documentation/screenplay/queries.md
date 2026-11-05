@@ -1,11 +1,15 @@
 ---
-title: "Queries"
-description: "Declare Screenplay queries, the read-side entry points: return type, one-shot or observable, parameter sources and performance."
+title: "Cratis Screenplay queries: read application state"
+description: "A Screenplay query reads a model without changing state. Declare its return shape, lookup keys, filters, authorization and snapshot or live delivery."
 ---
 
 # Queries
 
-Queries are read-side entry points. A query maps to a return type — a read model, or a collection of read models with `[]` — and says what it is for, whether it answers once or keeps answering, where each of its parameters comes from, and, when it needs to, how it is performed.
+A Cratis Screenplay query reads application state without changing it. Use one when a screen or caller needs a [read model](readmodels.md), either as a single instance or a collection written with `[]`.
+
+Choose the result shape first. Add `by` to identify an instance or `filter` to narrow a collection, and declare the policies that authorize the read. A query answers once unless its return type is `observable`, which requests updates as the view changes. That declaration is a contract for the realizing host, not proof that every execution tool can deliver live updates.
+
+For a query over projected state, start without a `performer`. Attach one when the result needs code or an external read; the reference evaluator does not execute that attachment. Execution tools consume a normalized executable semantic model (ESM), whose limits are described below. Once the read is declared, [specify its result](specifications.md#query-results) to check values and missing-instance behavior.
 
 ## Syntax
 
@@ -68,7 +72,7 @@ query GetInvoice => InvoiceDetailsReadModel
   by invoiceId InvoiceId
 ```
 
-The marker qualifies only *how* the result arrives: `observable` composes with `[]` and `optional` (`observable InvoiceDetailsReadModel optional`), with `by` and `filter` parameters, and with `authorize`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>`. The language also accepts `observable` with a `performer`, but Stage does not render live performer execution yet; use a snapshot performer for custom query logic.
+The marker qualifies only *how* the result arrives: `observable` composes with `[]` and `optional` (`observable InvoiceDetailsReadModel optional`), with `by` and `filter` parameters, and with `authorize`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>`. For `observable` with a `performer`, Stage admits the live collection shape over a projected read model through the [observable performer contract](#observable-performers). Live performers returning a single or optional read model remain unsupported.
 
 The result `=> observable optional` means an observable result whose type is named `optional`, not an optional result of a type named `observable`. The leading `observable` is read first. To make that result optional, write `=> observable optional optional`.
 
@@ -118,11 +122,15 @@ From ESM v18, use one actionless query and `then error` to [specify a Validation
 
 ## Composite lookups
 
+When a read model's identity has several parts, supply those parts together rather than joining them into an untyped string.
+
 A bare `by` header declares at least two `name Type [from source]` children. It cannot combine with the single `by name Type` form. Names are read-model key property names. From ESM v27, an optional single-instance query supplies every flat key part with its required compatible nominal type and caller-supplied value. Collection queries use equality filters or one scalar `by name Type` line, not a `by` block. See the complete example in [Read-model keys](readmodels.md#keys).
 
 Collection `by` blocks, context-sourced parts and non-optional single-instance returns remain refused with `PLAY0268`. Missing parts use `PLAY0661`; invalid shapes and parts use `PLAY0662`. Queries have no key-completion repair.
 
 ## Parameters
+
+Parameter sources describe where values should come from. The ESM supports a narrower set than the syntax; check the equality-filter limits below before relying on a contextual source.
 
 `by` names the identifying parameter; `filter` narrows the result set. Both are supplied by the caller — a screen, an API client — unless they declare a source with `from`:
 
@@ -135,7 +143,7 @@ query ListInvoices => InvoiceListReadModel[]
   authorize IsAuthenticated
 ```
 
-`status` and `customerId` come from the UI. `tenantId` comes from the [query context](context.md) — the caller never chooses it, and the document says so once instead of every implementation remembering to. Any [mapping source](commands.md#mapping-sources) works as a `from` source, so `$env.` and constants are available too.
+`status` and `customerId` come from the UI. The declaration assigns `tenantId` to the [query context](context.md), not the caller. The syntax accepts [mapping sources](commands.md#mapping-sources), including `$env.` and constants, but the executable equality-filter contract below refuses filters with `from`; this example records intent rather than an executable reference query.
 
 ### Executable equality filters
 

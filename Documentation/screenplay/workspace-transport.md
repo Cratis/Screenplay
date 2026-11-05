@@ -1,6 +1,6 @@
 ---
 title: Workspace transport
-description: Canonical transport of exact source bytes and workspace identities.
+description: Serialize Cratis Screenplay workspaces as canonical JSON, preserving exact source bytes, model identities and revisions across host boundaries.
 ---
 
 ## API boundary

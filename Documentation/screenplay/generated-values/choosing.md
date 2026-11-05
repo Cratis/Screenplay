@@ -1,9 +1,9 @@
 ---
-title: Choose a generation strategy
-description: Select a generated identity or reference and test it with portable pinned fixtures.
+title: Screenplay generation strategy selection
+description: Choose a Screenplay generation strategy for identities, readable references, or short codes, with collision limits and deterministic fixtures.
 ---
 
-Choose a strategy for a server-owned identity or reference, then pin a valid value in a specification. The customer registration below shows what that pinned result looks like. Follow the [cross-product shop tutorial work](https://github.com/Cratis/Documentation/issues/187) for the wider application journey.
+Choose a Screenplay generation strategy by what the value must do: identify an event source, give someone a readable reference, or provide an opaque code. In the shop, a customer identity and an invoice reference serve different purposes. Decide whether people need to read the value, whether time ordering matters, and how collisions will be handled before choosing its format. The [cross-product shop tutorial work](https://github.com/Cratis/Documentation/issues/187) tracks the wider application journey.
 
 ## When not to generate
 
@@ -23,11 +23,13 @@ Choose a strategy for a server-owned identity or reference, then pin a valid val
 | Typed String identity | typeid | Lowercase prefix plus UUIDv7 base32; empty prefix has no separator. |
 | Compact opaque String | nanoid | Default 21 characters, 126 bits; custom alphabets reduce bits per character. |
 | Exact random-byte budget | bytes | Count × 8 random bits; choose an encoding, not a padding convention. |
-| Readable date/checksum reference | pattern | ESM v21; dates and checksums add no entropy. Pin the UTC clock and declare checksum validation separately. |
+| Readable date/checksum reference | pattern | Executable Semantic Model (ESM) v21; dates and checksums add no random bits. Pin the UTC clock and declare checksum validation separately. |
 | Numeric queue ticket | random | ESM v21 inclusive signed Int64 range; value, never an identifier. |
 | Tenant-bearing custom identity | rule | ESM v21 ValueGeneration attachment with Now/Tenant context; entropy is unknown, not zero. |
 
-Prefixes help a person recognize a value but add no random bits. Generated identifiers require at least 64 bits. For short non-identifier codes, add a unique constraint on the event property they populate rather than ignoring the collision warning. See the [strategy reference](strategies.md) for exact encodings and collision bounds.
+Prefixes help a person recognize a value but add no random bits. UUIDv7, ULID and TypeID expose creation time, so choose them only when that is acceptable. For NanoID, a smaller alphabet needs a longer code to retain the same randomness.
+
+Entropy measures the randomness in a value, in bits. Generated identifiers require at least 64 random bits; a unique constraint cannot waive that floor. For a shorter non-identifier code, add a single-property unique constraint on the event property it populates. That prevents a duplicate append, but does not make collisions less likely or cause generation to retry. Dates and checksums do not enlarge the random portion of an invoice reference. Use the [strategy reference](strategies.md) to compare exact encodings and collision bounds.
 
 ## Declare and verify
 
@@ -53,22 +55,16 @@ module Shop
           for "cus_01arz3ndektsv4rrffq69g5fav"
 ```
 
-The specification expects the same customer identity on the command and the resulting event. The order and invitation concepts show other declarations; this specification does not exercise them.
+The `cus_` prefix makes the customer identity recognizable, while ULID supplies 80 random bits. Every value from this exact strategy satisfies the customer rule, so the compiler reports Proven and selects ESM v20. `OrderId` carries time but no tenant slot; keep tenant isolation separate, or introduce a separate `TenantOrderId` contract. `InviteCode` has 126 random bits with its default alphabet. Compile, bind, then run the specifications: parsing alone does not establish that the model is executable or that a target provider supports it.
 
-The customer prefix helps you recognize the value; it adds no entropy. ULID supplies 80 random bits and the customer rule is Proven, selecting ESM V20. `OrderId` carries time but no tenant slot; keep tenant isolation separate, or introduce a separate `TenantOrderId` contract. `InviteCode` has 126 random bits with its default alphabet.
+If a rule is Refuted (`PLAY0688`), the strategy can produce a value that violates it. Change the strategy or the rule deliberately; retrying cannot resolve that mismatch. Review a derived-`matches` repair only if the strategy is the intended contract, because the repair changes validation for all values of the concept. Unproven (`PLAY0689`) means the compiler could not establish compatibility. Providers must still validate generated values, and opaque rules remain Unsupported in the reference evaluator. Keep intended business rules even when they cannot be proven.
 
-Compile, bind, then run the specifications: parsing alone does not prove executable admission or target-provider support.
+Pin the complete generated identifier with `for` and other generated values by name. The fixture is the value the scenario expects; a seed is not portable across providers or algorithm versions. Use `given clock` for pattern date segments and scenarios asserting `$context.occurred`. The clock does not generate a time-ordered identifier, so that identifier still needs a complete pin.
 
-Inspect rule diagnostics before proceeding. A Refuted rule (`PLAY0688`) needs a model change, not a retry. Review the derived-`matches` repair if the strategy is the intended contract; it changes validation for all values of that concept.
-
-An Unproven rule (`PLAY0689`) needs provider validation, and opaque rules remain Unsupported in the reference evaluator. Never remove an intended business rule merely to silence a warning.
-
-Pin the generated identifier with `for` and other generated values by name. Use `given clock` for pattern date segments and scenarios asserting `$context.occurred`; the evaluator does not draw a time-ordered identifier from that clock, so pin the whole identifier. A seed is not a portable fixture.
-
-Test a second creation against prior facts on the same source to witness v15 Guarded freshness. Models without a serialized strategy remain Unguarded, even if a rule selects V20; adding a serialized generation declaration guards implicit UUID generated destinations too.
-
-Chronicle rechecks `BeforeFirst` on renumbered retries from 19.40.1; batch scopes are checked once and the batch is all-or-nothing. See [Chronicle concurrency](/chronicle/events/concurrency/).
+Then specify a second creation against prior facts on the same source to check Guarded freshness: the reused destination must be rejected without appending events. Models without a serialized strategy remain Unguarded, even if a rule selects v20; adding a serialized generation declaration guards implicit UUID generated destinations too. Chronicle rechecks `BeforeFirst` on renumbered retries from 19.40.1; batch scopes are checked once and the batch is all-or-nothing. See [Chronicle concurrency](/chronicle/events/concurrency/).
 
 For an API key, plan a separate `ApiKeyId` identity and a secret `ApiKey` value with 32 random bytes. Do not put the key into plaintext event-source metadata. Generated secret admission is not available yet; `[NotAudited]` protects only command causation values, while encryption protects the stored value, not arbitrary logs.
 
-Before finishing, check that the strategy fits the value's role and has enough entropy, that the pinned fixture is valid, and that the command's [freshness](../generated-values.md#freshness-is-about-the-whole-source) policy is explicit.
+For an invoice reference or numeric ticket, continue with [Patterns and checksums](patterns.md) to define the format and pin its date. For a command's generated event-source identity, use [Generated values](../generated-values.md#freshness-is-about-the-whole-source) to check freshness and provider obligations.
+
+Before finishing, check that the strategy fits the value's role and has enough entropy, that the pinned fixture is valid, and that the command's freshness policy is explicit.
