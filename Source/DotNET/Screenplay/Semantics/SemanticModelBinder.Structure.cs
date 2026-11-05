@@ -134,6 +134,7 @@ public sealed partial class SemanticModelBinder
             var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value)).OfType<SemanticKeyedQuery>().ToImmutableArray();
             var commandsByName = commands.ToDictionary(_ => _.Name, StringComparer.Ordinal);
             var specifications = slice.Specifications
+                .Where(value => !HasGraphStep(value))
                 .Select(value => BindSpecification(address, value, commandsByName))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)

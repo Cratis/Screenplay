@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace Cratis.Screenplay.Semantics.Serialization;
 
 /// <summary>
-/// Frozen C(M.0) structural vocabulary for the shipped majors 1–37. The strict per-major
+/// Frozen C(M.0) structural vocabulary for the shipped majors 1–38. The strict per-major
 /// reader/writer supplies baseline field ordering, optionality, variants and array ordering.
 /// These tables identify extension boundaries independently of future semantic knowledge.
 /// The @major and @first-last annotations freeze the strict reader's sinceVersion gates
@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -31,7 +31,7 @@ internal static class EsmBaselineShapes
     static readonly ImmutableDictionary<EsmBaselineShape, string> _definitions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema schemaVersion languageVersion semanticVersion revision application:Application",
-        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember",
+        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember",
         ["Concept"] = "id name primitive values validations:Validation numbers@12 compliance@13:Compliance generation@15:Generation",
         ["Generation"] = "kind pattern checksum min max requirement size count encoding alphabet prefix case",
         ["Compliance"] = "personal:Personal secret:Secret",
@@ -116,6 +116,18 @@ internal static class EsmBaselineShapes
         ["FixturePart"] = "part value:Value",
         ["ObserverFilter"] = "source stream",
         ["Trigger"] = "id name properties:Property",
+        ["Graph"] = "name nodes:GraphNode edges:GraphEdge",
+        ["GraphNode"] = "label properties:GraphProperty",
+        ["GraphEdge"] = "type sourceLabel targetLabel identityProperty properties:GraphProperty",
+        ["GraphProperty"] = "name type:TypeReference key",
+        ["GraphProjection"] = "name graph nodes:GraphElementHandlers edges:GraphElementHandlers",
+        ["GraphElementHandlers"] = "name handlers:GraphHandler",
+        ["GraphHandler"] = "event key:ProjectionValue source:ProjectionValue target:ProjectionValue identity:ProjectionValue removes detach mappings:GraphMapping",
+        ["GraphMapping"] = "name operation source:ProjectionValue factor:ProjectionValue",
+        ["GraphSpecification"] = "owner name given:SpecificationEvent givenGraphs:GraphStep whenAppended:SpecificationEvent thenGraphs:GraphStep",
+        ["GraphStep"] = "graph elements:GraphElementStep",
+        ["GraphElementStep"] = "node absent name key:Value target:Value identity:Value values:GraphPropertyValue",
+        ["GraphPropertyValue"] = "name value:Value",
         ["StateMachine"] = "name readModel states:State transitions:StateTransition specifications:LifecycleSpecification",
         ["State"] = "name initial final entering:StateEntry",
         ["StateEntry"] = "kind command workflow",

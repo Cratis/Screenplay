@@ -198,6 +198,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V37_1 = new(37, 1);
 
     /// <summary>
+    /// Gets the language version admitting graphs and graph projections.
+    /// </summary>
+    public static readonly LanguageVersion V38 = new(38, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -416,6 +421,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets ESM version 37.1 with optional read-model declaration-order metadata.
     /// </summary>
     public static readonly SemanticVersion V37_1 = new(37, 1);
+
+    /// <summary>
+    /// Gets the semantic version admitting property graphs, the projections that build them and the specifications that assert them.
+    /// </summary>
+    public static readonly SemanticVersion V38 = new(38, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1236,7 +1246,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV37Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV38Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1249,7 +1259,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV37Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV38Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

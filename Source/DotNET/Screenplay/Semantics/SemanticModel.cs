@@ -121,6 +121,21 @@ public sealed record SemanticApplication(
     public ImmutableArray<SemanticWorkflow> Workflows { get; init; } = [];
 
     /// <summary>
+    /// Gets the property graphs of the application (ESM v38).
+    /// </summary>
+    public ImmutableArray<SemanticGraph> Graphs { get; init; } = [];
+
+    /// <summary>
+    /// Gets the projections that build the graphs (ESM v38).
+    /// </summary>
+    public ImmutableArray<SemanticGraphProjection> GraphProjections { get; init; } = [];
+
+    /// <summary>
+    /// Gets the specifications that assert the graphs (ESM v38).
+    /// </summary>
+    public ImmutableArray<SemanticGraphSpecification> GraphSpecifications { get; init; } = [];
+
+    /// <summary>
     /// Gets the declared event sources, or an empty collection for models without event routes.
     /// </summary>
     public ImmutableArray<SemanticEventSource> EventSources { get; init; } = [];

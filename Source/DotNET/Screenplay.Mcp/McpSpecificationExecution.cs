@@ -38,7 +38,7 @@ internal static partial class McpSpecificationExecution
         var selected = declarations.Where(assignment =>
             (specification is null || assignment.Address == specification || assignment.Id.ToString() == specification || TableAddress(compilation, assignment.Id, assignment.Address) == specification) &&
             (scope is null || assignment.Address == scope || assignment.Address.StartsWith($"{scope}.", StringComparison.Ordinal) || TableAddress(compilation, assignment.Id, assignment.Address) == scope)).ToArray();
-        var allLifecycle = SemanticLifecycleRunner.RunAll(compilation.Model);
+        var allLifecycle = SemanticLifecycleRunner.RunAll(compilation.Model).Concat(SemanticGraphRunner.RunAll(compilation.Model).Select(result => new SemanticLifecycleSpecificationResult(result.Owner, result.Name, result.Failures))).ToArray();
         var lifecycle = allLifecycle
             .Where(result => documents is null && (specification is null || $"{result.Owner}.{result.Name}" == specification) && (scope is null || result.Owner == scope || $"{result.Owner}.{result.Name}".StartsWith($"{scope}.", StringComparison.Ordinal)))
             .ToArray();

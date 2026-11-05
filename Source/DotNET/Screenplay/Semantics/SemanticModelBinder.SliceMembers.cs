@@ -102,21 +102,6 @@ public sealed partial class SemanticModelBinder
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Screen '{screen.Name}' is explicitly deferred from the backend ESM v1 profile.", screen.Location);
             }
-
-            foreach (var graph in slice.Graphs)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Graph '{graph.Name}' is not admitted by the executable semantic model yet.", graph.Location);
-            }
-
-            foreach (var projection in slice.GraphProjections)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Graph projection '{projection.Name}' is not admitted by the executable semantic model yet.", projection.Location);
-            }
-
-            foreach (var step in slice.Specifications.SelectMany(specification => specification.GivenGraphs.Concat(specification.ThenGraphs)))
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The graph specification step on '{step.Graph}' is not admitted by the executable semantic model yet.", step.Location);
-            }
         }
 
         string UnsupportedReducerMessage(ReducerSyntax reducer) =>

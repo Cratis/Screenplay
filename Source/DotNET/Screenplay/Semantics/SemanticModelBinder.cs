@@ -46,6 +46,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesGraphs(application)) return (LanguageVersion.V38, SemanticVersion.V38);
         if (SemanticClockUsage.Uses(application)) return (LanguageVersion.V37, SemanticVersion.V37);
         if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
         if (SemanticModelValidator.UsesHandlerResultV2(application)) return (LanguageVersion.V35, SemanticVersion.V35);
@@ -254,7 +255,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV37Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV38Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -422,6 +423,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var (stateMachines, workflows) = BindLifecycles(modules);
+            var (graphs, graphProjections, graphSpecifications) = BindGraphs(modules);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
             ValidateReactionIdentities(modules, policies);
@@ -436,6 +438,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Triggers = triggers,
                 StateMachines = stateMachines,
                 Workflows = workflows,
+                Graphs = graphs,
+                GraphProjections = graphProjections,
+                GraphSpecifications = graphSpecifications,
                 EventSources = eventSources,
                 ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
                 TimeZone = timeZone,

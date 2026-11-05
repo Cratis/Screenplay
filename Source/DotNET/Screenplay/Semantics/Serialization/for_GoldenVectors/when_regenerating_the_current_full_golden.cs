@@ -21,14 +21,15 @@ public class when_regenerating_the_current_full_golden : Specification
     [InlineData(true)]
     void should_write_only_the_current_full_golden_and_fail_deliberately(bool includeSidecars)
     {
-        var current = frozen_esm_goldens.CurrentVersion.ToString();
+        var version = frozen_esm_goldens.CurrentVersion;
+        var current = version.ToString();
         var request = includeSidecars ? "1" : current;
         var error = Catch.Exception(() => golden_vector_regeneration.Regenerate(request, _directory));
         error.ShouldBeOfExactType<GoldenVectorsRegenerated>();
         error.Message.ShouldContain("regenerated");
-        var fullName = $"full-esm-v{current}.json";
+        var fullName = version.Minor == 0 ? $"full-esm-v{version.Major}.json" : $"full-esm-v{current}.json";
         Directory.GetFiles(_directory, "full-esm-*.json").Select(Path.GetFileName).ShouldContainOnly([fullName]);
-        File.ReadAllBytes(Path.Combine(_directory, fullName)).ShouldEqual(canonical_serialization_golden_vectors.EsmV37_1Bytes);
+        File.ReadAllBytes(Path.Combine(_directory, fullName)).ShouldEqual(canonical_serialization_golden_vectors.EsmV38Bytes);
         Directory.GetFiles(_directory).Length.ShouldEqual(includeSidecars ? 6 : 1);
     }
 
