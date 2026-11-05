@@ -1,6 +1,6 @@
 ---
 title: "Cratis Screenplay graph projections: project events onto a property graph"
-description: "A graph projection builds a Screenplay graph from events. Node and edge blocks create, change and remove nodes and edges with the same mappings and counters a read-model projection uses."
+description: "A Screenplay graph projection builds nodes and edges from events, with the same mappings and counters a read-model projection uses."
 ---
 
 # Graph projections
