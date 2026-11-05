@@ -1,6 +1,6 @@
 ---
 title: "Modules, Features and Slices"
-description: "Organize a Screenplay application into modules, features and slices, with dependencies, descriptions and documentation."
+description: "Organize a Screenplay application into bounded modules, related features and behavioral slices, with declared dependencies and business documentation."
 ---
 
 # Modules, Features and Slices
