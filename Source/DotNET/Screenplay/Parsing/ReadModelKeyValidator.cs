@@ -213,6 +213,15 @@ internal static class ReadModelKeyValidator
             base.VisitProperty(syntax);
         }
 
+        // A graph node's key is checked by the graph validator, not the read-model rules.
+        public override void VisitGraphNode(GraphNodeSyntax syntax)
+        {
+        }
+
+        public override void VisitGraphEdge(GraphEdgeSyntax syntax)
+        {
+        }
+
         public override void VisitQuery(QuerySyntax syntax)
         {
             RequiresLookups |= syntax.ByParts.Any();

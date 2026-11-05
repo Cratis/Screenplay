@@ -517,4 +517,20 @@ export const DiagnosticCodes = {
     PassiveReadModelObserved: 'PLAY0859', // C# only
     PassiveReadModelNotRead: 'PLAY0860', // C# only
     ConditionDepthExceeded: 'PLAY0861',
+    InvalidGraphDeclaration: 'PLAY0862',
+    InvalidGraphPropertyType: 'PLAY0863',
+    InvalidGraphNodeKey: 'PLAY0864',
+    UnknownGraphEdgeEndpoint: 'PLAY0865',
+    UnknownGraphProjectionTarget: 'PLAY0866',
+    UnknownGraphProjectionElement: 'PLAY0867',
+    UnknownGraphProperty: 'PLAY0868',
+    InvalidGraphEdgeRemoval: 'PLAY0869',
+    MissingGraphDetach: 'PLAY0870',
+    UnknownGraphEdgeIdentity: 'PLAY0871',
+    UnsupportedGraphProjectionConstruct: 'PLAY0872',
+    InvalidGraphProjection: 'PLAY0873',
+    DuplicateGraphElement: 'PLAY0874',
+    InvalidGraphSpecification: 'PLAY0875',
+    UnknownGraphSpecificationReference: 'PLAY0876',
+    GraphProjectionOutsideSlice: 'PLAY0877',
 } as const;

@@ -54,6 +54,7 @@ export const constructKeywords = [
     'runs',
     'reducer',
     'readmodel',
+    'graph',
     'trigger',
     'screen',
     'dialog',
@@ -248,6 +249,13 @@ export const clauseKeywords = [
     'for',
     'readmodel',
     'no',
+    'has',
+    'node',
+    'edge',
+    'source',
+    'target',
+    'identified',
+    'detach',
     'at',
     'where',
     'invokes',
@@ -326,7 +334,7 @@ export const conceptAttributes = ['pii', 'personal', 'secret'];
 
 // The lines that open a block with a body of their own. A line that is complete as written - a `domain`, a
 // `concept` or `query` with nothing under it, a `produces` of an existing event - is not one.
-export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command(?!\s+reads\s+protected\b)|event|readmodel|reducer|projection|capture|reaction(?!\s+batches\b)|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|onboarding|invite\s+member|legal\s+terms|emails|identity|context(?=\s*(?:\/\/.*)?$)|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|generate\s+rule|validate|handler|on)\b[^=]*$/;
+export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command(?!\s+reads\s+protected\b)|event|readmodel|graph|node(?=\s+\w+\s*$)|edge(?=\s+\w+)|reducer|projection|capture|reaction(?!\s+batches\b)|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|onboarding|invite\s+member|legal\s+terms|emails|identity|context(?=\s*(?:\/\/.*)?$)|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|generate\s+rule|validate|handler|on)\b[^=]*$/;
 
 export const languageConfiguration: languages.LanguageConfiguration = {
     comments: {

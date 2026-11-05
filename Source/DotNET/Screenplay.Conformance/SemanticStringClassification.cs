@@ -30,7 +30,7 @@ internal static class SemanticStringClassification
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
-        "then/target", "nodes/trigger", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "then/target", "nodes/trigger", "edges/type", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
     };
 
     // All remaining string emissions from the nine canonical writer partials. Unknown strings fail closed;
@@ -42,7 +42,7 @@ internal static class SemanticStringClassification
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",
-        "targetKind", "text", "timeZone", "to", "unit", "value", "values", "visibility", "whenClock",
+        "targetKind", "text", "timeZone", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
     };
 
     /// <summary>

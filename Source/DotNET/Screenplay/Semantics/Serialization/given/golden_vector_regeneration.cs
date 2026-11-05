@@ -63,12 +63,12 @@ public static class golden_vector_regeneration
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
         }
 
-        var model = canonical_serialization_golden_vectors.CreateSemanticModelV37_1();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV38();
         if (model.SemanticVersion != current)
         {
             throw new GoldenVectorsRegenerated($"The current golden builder must select ESM v{current}; nothing was regenerated.");
         }
-        var written = new List<string> { Write(directory, $"full-esm-v{current}.json", SemanticModelSerializer.Serialize(model)) };
+        var written = new List<string> { Write(directory, current.Minor == 0 ? $"full-esm-v{current.Major}.json" : $"full-esm-v{current}.json", SemanticModelSerializer.Serialize(model)) };
         if (request == "1")
         {
             written.Add(Write(directory, "full-expressions-v1.json", SemanticModelCanonicalJson.SerializeExpressionVector(canonical_serialization_golden_vectors.CreateExpressions())));

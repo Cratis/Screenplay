@@ -141,4 +141,14 @@ public record SliceSyntax(
     /// Gets the processing purposes directly covering this slice.
     /// </summary>
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>graph</c> declarations of the slice.
+    /// </summary>
+    public IEnumerable<GraphSyntax> Graphs { get; init; } = [];
+
+    /// <summary>
+    /// Gets the projections that build a graph, declared <c>projection &lt;Name&gt; =&gt; graph &lt;Graph&gt;</c>.
+    /// </summary>
+    public IEnumerable<GraphProjectionSyntax> GraphProjections { get; init; } = [];
 }

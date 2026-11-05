@@ -865,7 +865,9 @@ SliceBody      = TranslationDirectionDecl
                | CommandDecl
                | QueryDecl
                | ReadModelDecl
+               | GraphDecl
                | ProjectionDecl
+               | GraphProjectionDecl
                | ReducerDecl
                | CaptureDecl
                | SpecificationDecl
@@ -876,6 +878,20 @@ SliceBody      = TranslationDirectionDecl
 
 ReadModelDecl  = "readmodel", Ident, NL,
                  INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PassiveDirective | PropertyLine }, DEDENT ;
+
+GraphDecl      = "graph", Ident, NL,
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | GraphNodeDecl | GraphEdgeDecl }, DEDENT ;
+
+(* A graph declares the shape of a property graph: node labels with typed properties,
+   exactly one of them "key" (PLAY0864), and edge types between declared labels
+   (PLAY0865). A property is a primitive, a concept over one, or an array of those
+   (PLAY0863). An edge is identified by (type, source key, target key), or also by
+   the "identified by" property (PLAY0871). *)
+GraphNodeDecl  = "node", Ident, NL,
+                 INDENT, { PropertyLine }, DEDENT ;
+
+GraphEdgeDecl  = "edge", Ident, "source", Ident, "target", Ident, [ "identified", "by", Ident ], NL,
+                 [ INDENT, { PropertyLine }, DEDENT ] ;
 
 PassiveDirective = "passive", NL ;
 (* A bare readmodel body directive, never a header modifier. Defaults to active,
@@ -1336,6 +1352,30 @@ ProjectionDecl = "projection", QualifiedName, [ "=>", QualifiedName ], NL,
    A non-variant projection in a Screenplay application needs a target to bind
    its read model. Standalone PDL also accepts a targetless header. *)
 
+GraphProjectionDecl = "projection", Ident, "=>", "graph", Ident, NL,
+                 INDENT, [ DescriptionDecl ], { GraphNodeBlock | GraphEdgeBlock }, DEDENT ;
+
+(* Declared in a slice only (PLAY0877). Read-model constructs are refused (PLAY0872).
+   Mappings are those of a read-model projection. See projections/graphs.md. *)
+GraphNodeBlock = "node", Ident, NL,
+                 INDENT, { GraphNodeFrom | GraphEvery | GraphNodeRemove }, DEDENT ;
+
+GraphNodeFrom  = "from", Ident, "key", Expression, NL,
+                 [ INDENT, { Mapping }, DEDENT ] ;
+
+GraphNodeRemove = "remove", "with", Ident, "key", Expression, [ "detach" ], NL ;
+
+GraphEdgeBlock = "edge", Ident, NL,
+                 INDENT, { GraphEdgeFrom | GraphEvery | GraphEdgeRemove }, DEDENT ;
+
+GraphEdgeFrom  = "from", Ident, "source", Expression, "target", Expression, [ "identified", "by", Expression ], NL,
+                 [ INDENT, { Mapping }, DEDENT ] ;
+
+GraphEdgeRemove = "remove", "with", Ident, "source", Expression, "target", Expression, [ "identified", "by", Expression ], NL ;
+
+GraphEvery     = "every", NL,
+                 INDENT, { Mapping }, DEDENT ;
+
 PDLBody        = (* Projection Declaration Language grammar - covers the projection
                     directives (automap, sequence, file, key), the from/every/join/
                     children/nested blocks, property mapping, expressions and removal
@@ -1382,12 +1422,21 @@ CaseValue = "case.", PropertyName ;
    Every case assigns every typed parameter once. Callers, clocks, redelivery
    locators, example bodies and structured-literal members exclude CaseValue. *)
 
+GraphStep      = ( "has", "node", Ident, Expression
+                 | "has", "edge", Ident, "from", Expression, "to", Expression, [ "identified", "by", Expression ] ), NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+GraphAbsence   = ( "no", "node", Ident, Expression
+                 | "no", "edge", Ident, "from", Expression, "to", Expression, [ "identified", "by", Expression ] ), NL ;
+
 SpecificationGiven = OperationFailureFixture
                | "given", "caller", "as", Ident, NL
                | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
+               | "given", "graph", Ident, NL,
+                 INDENT, { GraphStep }, DEDENT
                | "given", "time", "zone", StringLiteral, NL
                | "given", "clock", StringLiteral, NL
                | "given", "capture", Ident, NL,
@@ -1448,6 +1497,8 @@ SpecificationThen = ReturnExpectation
                | CompensationExpectation
                | "then", "readmodel", QualifiedName, [ "exactly" ], [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
+               | "then", "graph", Ident, NL,
+                 INDENT, { GraphStep | GraphAbsence }, DEDENT
                | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "no", "readmodel", Ident, "for", StructuredBlock
                | "then", "query", QualifiedName, [ "exactly" ], NL,

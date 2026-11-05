@@ -100,6 +100,7 @@ internal static partial class SpecificationParser
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenAbsentReadModels = new List<SpecificationAbsentReadModelSyntax>();
+        var thenGraphs = new List<SpecificationGraphSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
         SpecificationDeniedSyntax? denied = null;
@@ -252,6 +253,13 @@ internal static partial class SpecificationParser
 
                         SkipBody(context, line.Indent);
                     }
+                    else if (IsGraphStep(line.Content, "then"))
+                    {
+                        if (ParseGraph(context, line, "then") is { } graph)
+                        {
+                            thenGraphs.Add(graph);
+                        }
+                    }
                     else if (ThenInvokesPrefixRegex().IsMatch(line.Content))
                     {
                         if (ParseThenInvokes(context, line) is { } invocation)
@@ -312,6 +320,8 @@ internal static partial class SpecificationParser
             ThenOperations = thenOperations,
             ThenCompensated = thenCompensated,
             ThenInvocations = thenInvocations,
+            GivenGraphs = givenState.Graphs,
+            ThenGraphs = thenGraphs,
             WhenAppended = whenAppended,
             WhenRedelivered = whenRedelivered,
             ThenEventsInAnyOrder = eventsInAnyOrder,

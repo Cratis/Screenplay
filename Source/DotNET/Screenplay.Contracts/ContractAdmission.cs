@@ -15,6 +15,8 @@ static class ContractAdmission
     internal const string Event = "      event Recorded\n        value String\n";
     internal const string Command = "      command Record\n        value String\n        produces Recorded\n          value = value\n";
     internal const string ReadModel = "      readmodel View\n        value String\n";
+    internal const string Graph = "      graph G\n        node N\n          value String key\n";
+    internal const string GraphProjection = "      projection P => graph G\n        node N\n          from Recorded key value\n";
     internal const string KeyedQuery = "      query ByValue => View optional\n        by value String\n";
     internal const string Projection = "      projection View => View\n        from Recorded\n          value = value\n";
     internal const string PersonaCallerContext = "policy Member\n  require authenticated and role \"member\"\npersona Accountant\n  policy Member\n" + Slice + Event + "      command Record\n        value String\n        authorize Member\n        produces Recorded\n          value = value\n";
@@ -335,6 +337,7 @@ static class ContractAdmission
         new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n", ["reaction batches atomic\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          produces Recorded\n            value = \"test\"\n", "eventsource Account\n  identifier String\n  stream Archive\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        from Account.Archive\n        when Recorded\n",
                 Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      event Refused\n        reason String\n      reaction FollowUp\n        when Recorded\n          invokes C\n            on refused\n              produces Refused\n                reason = $refusal.reason\n"]),
         new("runs", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      reaction FollowUp\n        runs as system\n        when Recorded\n          invokes C\n"),
+        new("graph", Slice + Event + Graph, [Slice + Event + Graph + GraphProjection]),
         new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel, CompositeReadModelKeys]),
         new("reducer", Slice + Event + ReadModel + KeyedQuery + "      reducer View => View\n        on Recorded\n          ```csharp\n          return context.State;\n          ```\n", [Slice + Event + ReadModel + "      reducer View => View\n        on Recorded\n"]),
         new("screen", Slice + "      screen Screen\n", [Slice + "      screen Screen\n        description \"Screen intent\"\n"]),

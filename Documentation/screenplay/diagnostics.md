@@ -60,6 +60,22 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0859` | Error | A query or screen consumes a passive read model. Remove `passive` if the model is a read surface, or keep it private to command reads. C# only. |
 | `PLAY0860` | Warning | No command reads a passive read model. Add the intended command read or remove `passive`; passivity is never inferred. C# only. |
 | `PLAY0861` | Error | A condition exceeds the supported nesting or constructed expression depth of 128. Simplify the condition or split the requirement into named policies. |
+| `PLAY0862` | Error | A `graph`, its `node` or `edge` declaration, or one of their body lines is malformed. Expected `graph <Name>`, `node <Label>` and `edge <TYPE> source <Label> target <Label> [identified by <property>]`, with typed properties underneath. |
+| `PLAY0863` | Error | A graph node or edge property has a type that is not a primitive, a concept over a primitive, or an array of those. Nested objects, types and read models are not property values of a graph element. |
+| `PLAY0864` | Error | A graph node declares no `key` property or more than one. Mark exactly one property `key`; it identifies the node. |
+| `PLAY0865` | Error | A graph edge names a `source` or `target` label that the graph does not declare as a node. |
+| `PLAY0866` | Error | A `projection <Name> => graph <Graph>` names a graph that is not declared. |
+| `PLAY0867` | Error | A graph projection has a `node` or `edge` block for a label or type its graph does not declare. |
+| `PLAY0868` | Error | A graph projection maps a property, or an `identified by` expression names one, that the declared node or edge does not have; or a specification asserts one. |
+| `PLAY0869` | Error | `remove with ... detach` appears on an edge. `detach` removes the edges attached to a node and only applies to a node block. |
+| `PLAY0870` | Warning | A node removal has no `detach` although the graph declares edges that attach to that label. Without `detach` the removal leaves dangling edges; add `detach` or remove the edges first. |
+| `PLAY0871` | Error | An edge's `identified by` names a property the edge does not declare. |
+| `PLAY0872` | Error | A graph projection uses a read-model-only construct: `children`, `nested`, `join`, `all`, `clear with`, `remove via join`, `variant`, a projection-level `key`, `sequence` or `automap` block. A graph projection holds `node` and `edge` blocks only. |
+| `PLAY0873` | Error | A graph projection block is malformed: a `node` or `edge` header, a `from` or `remove with` handler, or a missing `key` (node) or `source` and `target` (edge) expression. |
+| `PLAY0874` | Error | A graph, node label, edge type or element property is declared twice, or a graph projection builds the same node or edge twice. |
+| `PLAY0875` | Error | A `given graph` or `then graph` step is malformed. Expected `has node <Label> <key>`, `has edge <TYPE> from <source> to <target> [identified by <identity>]`, and in `then graph` also `no node` and `no edge`, with property assertions underneath. |
+| `PLAY0876` | Error | A `given graph` or `then graph` step names a graph, node label or edge type that is not declared. |
+| `PLAY0877` | Error | A graph projection is declared outside a slice, for example in a standalone projection document. Declare it in a slice next to its graph. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

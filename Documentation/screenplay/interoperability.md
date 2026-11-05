@@ -268,6 +268,14 @@ A generated command property, command response, generated fixture or `then retur
 
 A policy condition using unary `not` also selects v7 under 0027. Its canonical variant is `{"kind":"not","operand":<condition>}`; it is refused in earlier versions and cannot contain an opaque predicate. `not` binds tighter than `and`, then `or`; parentheses override precedence. The reference runner uses three-valued Kleene logic: a claim comparison against a missing or null target, an absent subject, or a non-text target is unknown; `not unknown` remains unknown. For `and`, false decides the result and true passes through the other operand; for `or`, true decides the result and false passes through the other operand, in either operand order. Other combinations involving unknown remain unknown. Only a final true result allows access; false and unknown deny. Existing absent-caller refusal and comparison rules remain unchanged, and authored-order short-circuiting applies when the left operand decides the result. See [Policies: portable evaluation](policies.md#portable-evaluation). `policy-negation-v7.json` and `PolicyNegationCorpus.V7` pin role/claim exclusions and allowed/denied outcomes across single, split, reordered and relocated sources without altering the original v1–v7 fixtures.
 
+#### Claimed, unreleased version
+
+| Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
+| --- | --- | --- | --- | --- | --- |
+| 38.0 | Property graphs, the projections that build them and graph specifications (`graphs`, `graphProjections`, `graphSpecifications`) | 38 | [0138](https://github.com/Cratis/Screenplay/blob/main/decisions/0138-graphs-and-graph-projections-esm-v38.md) | `full-esm-v38.json` | `EsmGoldenVectors.Get(38)` |
+
+A model that declares a `graph`, a `projection ... => graph` or a `given graph` or `then graph` step selects language/semantic `38.0` and `schemaVersion: 38`. A model without one keeps its version and bytes. The version number is provisional until it is admitted by consumers; see [decision 0138](https://github.com/Cratis/Screenplay/blob/main/decisions/0138-graphs-and-graph-projections-esm-v38.md).
+
 ### Clock schedule boundary vectors
 
 Clock schedule fixture version **1** is published at

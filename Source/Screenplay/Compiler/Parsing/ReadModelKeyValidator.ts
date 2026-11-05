@@ -13,6 +13,10 @@ export function validateReadModelKeys(application: ApplicationSyntax, context: P
     const models = new AuthoringProductionResolver(application).slices.flatMap(({ slice }) => slice.readModels);
     const allowed = new Set(models.flatMap(model => model.properties));
     class KeyOwners extends ScreenplaySyntaxWalker {
+        // A graph node's key is checked by the graph validator, not by the read-model rules.
+        visitGraph(): void {
+        }
+
         visitProperty(syntax: PropertySyntax): void {
             if (syntax.isKey && !allowed.has(syntax)) {
                 context.error(DiagnosticCodes.InvalidReadModelKey, 'The key modifier is only valid on top-level read-model properties.', syntax.location);

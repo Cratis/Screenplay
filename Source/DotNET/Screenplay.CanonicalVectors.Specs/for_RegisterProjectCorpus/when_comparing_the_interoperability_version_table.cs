@@ -26,8 +26,8 @@ public class when_comparing_the_interoperability_version_table : Specification
         semanticVersions.Distinct().Count().ShouldEqual(rows.Length);
         languageVersions.ShouldEqual(Declared<LanguageVersion>());
         semanticVersions.ShouldEqual(Declared<SemanticVersion>());
-        languageVersions.ShouldEqual([.. EsmSchemaV37Support.LanguageVersions]);
-        semanticVersions.ShouldEqual([.. EsmSchemaV37Support.SemanticVersions]);
+        languageVersions.ShouldEqual([.. EsmSchemaV38Support.LanguageVersions]);
+        semanticVersions.ShouldEqual([.. EsmSchemaV38Support.SemanticVersions]);
         foreach (var row in rows)
         {
             row.Length.ShouldEqual(6);

@@ -20,6 +20,7 @@ internal static partial class SpecificationParser
         new(line => GivenGeneratedPrefixRegex().IsMatch(line.Content), ParseGivenGeneratedValue),
         new(line => KeywordRegex("given", "capture").IsMatch(line.Content), ParseGivenCapture),
         new(line => line.Content.StartsWith("given caller", StringComparison.Ordinal), ParseGivenCaller),
+        new(line => IsGraphStep(line.Content, "given"), ParseGivenGraph),
         new(line => ReadModelPrefixRegex().IsMatch(line.Content), ParseGivenReadModel),
         new(_ => true, ParseGivenEvent)
     ];
@@ -124,6 +125,8 @@ internal static partial class SpecificationParser
         public List<SpecificationEventSyntax> Events { get; } = [];
 
         public List<SpecificationReadModelSyntax> ReadModels { get; } = [];
+
+        public List<SpecificationGraphSyntax> Graphs { get; } = [];
 
         public List<SpecificationCaptureSyntax> Captures { get; } = [];
 

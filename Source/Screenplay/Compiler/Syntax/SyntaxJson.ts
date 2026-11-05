@@ -132,7 +132,8 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     ScreenActionSyntax: ['inputs'],
     ModuleSyntax: ['dependsOn'],
     FeatureSyntax: ['dependsOn'],
-    SpecificationSyntax: ['parameters', 'cases'],
+    SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs'],
+    SliceSyntax: ['graphs', 'graphProjections'],
     InvokesSyntax: ['onRefused']
 };
 

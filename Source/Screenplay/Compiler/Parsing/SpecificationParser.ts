@@ -25,6 +25,8 @@ import { generatedFixturePattern, generatedFixturePrefix, parseConcrete, parseCo
 import { locationOf, SourceLine } from './SourceLine';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
 import { LifecycleExpectationKind, LifecycleExpectationSyntax, LifecycleOutcomeSyntax, LifecycleSpecificationSyntax } from '../Syntax/Lifecycles';
+import { givenGraphPrefix, GraphStepHelpers, parseGraphStep, thenGraphPrefix } from './SpecificationGraphParser';
+import { SpecificationGraphSyntax } from '../Syntax/Graphs';
 import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationInvocationSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 import { parseStructuredValue, StructuredMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
@@ -81,6 +83,8 @@ const thenQueryPattern = nativePattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\
 interface SpecificationBody {
     given: SpecificationEventSyntax[];
     givenReadModels: SpecificationReadModelSyntax[];
+    givenGraphs: SpecificationGraphSyntax[];
+    thenGraphs: SpecificationGraphSyntax[];
     when: SpecificationCommandSyntax | null;
     whenAppended: SpecificationEventSyntax | null;
     whenRedelivered: SpecificationRedeliverySyntax | null;
@@ -123,7 +127,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     const cases: NonNullable<SpecificationSyntax['cases']>[number][] = [];
     const body: SpecificationBody = {
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
-        given: [], givenReadModels: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
+        given: [], givenReadModels: [], givenGraphs: [], thenGraphs: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenNoEvents: false, thenReadModels: [], thenErrors: [],
         givenClock: null, givenTimeZone: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
     };
@@ -230,7 +234,7 @@ function parseOperationStep(context: ParserContext, line: SourceLine, body: Spec
 }
 
 // The Given state the rules read and write: a narrow view of the specification body, so null versus undefined and lazy initialization stay the body's own.
-type GivenState = Pick<SpecificationBody, 'given' | 'givenReadModels' | 'givenClock' | 'givenTimeZone' | 'givenCaptures' | 'givenGenerated' | 'givenCaller' | 'givenCallerPersona'>;
+type GivenState = Pick<SpecificationBody, 'given' | 'givenReadModels' | 'givenGraphs' | 'givenClock' | 'givenTimeZone' | 'givenCaptures' | 'givenGenerated' | 'givenCaller' | 'givenCallerPersona'>;
 
 interface GivenRule {
     readonly matches: (line: SourceLine) => boolean;
@@ -244,6 +248,7 @@ const givenRules: readonly GivenRule[] = [
     { matches: line => givenGeneratedPrefix.test(line.content), parse: parseGivenGeneratedValue },
     { matches: line => givenCapturePrefix.test(line.content), parse: parseGivenCapture },
     { matches: line => line.content.startsWith('given caller'), parse: parseGivenCaller },
+    { matches: line => givenGraphPrefix.test(line.content), parse: parseGivenGraph },
     { matches: line => readModelPrefix.test(line.content), parse: parseGivenReadModel },
     { matches: () => true, parse: parseGivenEvent },
 ];
@@ -309,6 +314,13 @@ function parseGivenCallerPersona(context: ParserContext, line: SourceLine, state
     skipBody(context, line.indent);
     if (match !== null) state.givenCallerPersona = { kind: 'SpecificationCallerPersonaSyntax', name: match[1], location: locationOf(line) };
 }
+
+function parseGivenGraph(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const graph = parseGraphStep(context, line, 'given', graphHelpers);
+    if (graph !== undefined) state.givenGraphs.push(graph);
+}
+
+const graphHelpers: GraphStepHelpers = { parseValues: (context, parent) => parseValues(context, parent), skipBody };
 
 function parseGivenReadModel(context: ParserContext, line: SourceLine, state: GivenState): void {
     const readModel = parseReadModelStep(context, line, givenReadModelPattern, 'given');
@@ -504,6 +516,11 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
             if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax' || key.kind === 'CaseValueExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
         }
         context.skipOpaqueBlock(line.indent);
+        return;
+    }
+    if (thenGraphPrefix.test(line.content)) {
+        const graph = parseGraphStep(context, line, 'then', graphHelpers);
+        if (graph !== undefined) body.thenGraphs.push(graph);
         return;
     }
     if (thenQueryPrefix.test(line.content)) {

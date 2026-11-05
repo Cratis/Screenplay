@@ -1966,6 +1966,71 @@ module Invoicing
           reason = "Duplicate"
         then no readmodel InvoiceListReadModel for "9c858901-8a57-4791-81fe-4c455b099bc9"
 
+    // Invoices and the customers they are billed to, as a property graph. Nobody writes to it: events leave it behind.
+    slice StateView InvoiceBilling
+      description "Which customer each invoice is billed to"
+
+      graph Billing
+        description "Invoices, customers and the billing relationship between them"
+        node Invoice
+          invoiceId     InvoiceId key
+          invoiceNumber InvoiceNumber
+        node Customer
+          customerId CustomerId key
+          invoices   Int optional
+        edge BILLED_TO source Invoice target Customer
+          issuedAt DateTime
+
+      projection BillingGraph => graph Billing
+        description "Project registrations and cancellations onto invoices, customers and their edges"
+        node Invoice
+          from InvoiceRegistered key $eventSourceId
+            invoiceId     = $eventSourceId
+            invoiceNumber = invoiceNumber
+          remove with InvoiceCancelled key $eventSourceId detach
+        node Customer
+          from InvoiceRegistered key customerId
+            customerId = customerId
+            increment invoices
+        edge BILLED_TO
+          from InvoiceRegistered source $eventSourceId target customerId
+            issuedAt = $eventContext.occurred
+
+      specification RegisteringAnInvoiceBillsACustomer
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when append InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          currency      = "NOK"
+          dueDate       = "2026-12-31"
+        then graph Billing
+          has node Invoice "9c858901-8a57-4791-81fe-4c455b099bc9"
+            invoiceNumber = "INV-000123"
+          has node Customer "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            invoices = 1
+          has edge BILLED_TO from "9c858901-8a57-4791-81fe-4c455b099bc9" to "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+      specification CancellingAnInvoiceDetachesItsEdge
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          currency      = "NOK"
+          dueDate       = "2026-12-31"
+        when append InvoiceCancelled
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "Duplicate"
+        then graph Billing
+          no node Invoice "9c858901-8a57-4791-81fe-4c455b099bc9"
+          no edge BILLED_TO from "9c858901-8a57-4791-81fe-4c455b099bc9" to "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          has node Customer "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
     slice StateView InvoiceDetails
 
       readmodel InvoiceDetailsReadModel

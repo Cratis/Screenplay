@@ -52,6 +52,13 @@ internal static partial class ProjectionParser
     /// <returns>The parsed <see cref="ProjectionSyntax"/>.</returns>
     public static ProjectionSyntax Parse(ParserContext context, SourceLine header)
     {
+        if (GraphProjectionParser.IsGraphHeader(header.Content))
+        {
+            context.Error(DiagnosticCodes.GraphProjectionOutsideSlice, $"A graph projection '{header.Content}' is declared in a slice, next to its graph", header.Location);
+            context.SkipBlock(header.Indent);
+            return new(FirstWord(header.Content), null, null, AutoMapMode.Inherit, null, [], header.Location) { SourceOptions = context.SourceOptions };
+        }
+
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {

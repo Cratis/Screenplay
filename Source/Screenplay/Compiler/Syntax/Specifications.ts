@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { CaseValueExpressionSyntax, ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { SpecificationGraphSyntax } from './Graphs';
 import { SpecificationParameterSyntax } from './SpecificationParameterSyntax';
 import { SpecificationCaseSyntax } from './SpecificationCaseSyntax';
 export type { SpecificationParameterSyntax } from './SpecificationParameterSyntax';
@@ -173,6 +174,8 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly sourceOptions?: SourceOptions;
     readonly name: string;
     readonly thenAbsentReadModels?: readonly SpecificationAbsentReadModelSyntax[];
+    readonly givenGraphs?: readonly SpecificationGraphSyntax[];
+    readonly thenGraphs?: readonly SpecificationGraphSyntax[];
     readonly thenQueries?: readonly SpecificationQuerySyntax[];
     readonly given: readonly SpecificationEventSyntax[];
     readonly givenCaller?: SpecificationCallerSyntax | null;

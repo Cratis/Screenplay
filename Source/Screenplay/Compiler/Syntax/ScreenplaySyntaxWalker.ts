@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import { IdentitySyntax } from './IdentitySyntax';
@@ -235,6 +236,8 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.queries.forEach(node => this.visitQuery(node));
         syntax.projections.forEach(node => this.visitProjection(node));
         syntax.readModels.forEach(node => this.visitReadModel(node));
+        syntax.graphs?.forEach(node => this.visitGraph(node));
+        syntax.graphProjections?.forEach(node => this.visitGraphProjection(node));
         syntax.captures.forEach(node => this.visitCapture(node));
         syntax.reactions.forEach(node => this.visitReaction(node));
         syntax.screens.forEach(node => this.visitScreen(node));
@@ -500,6 +503,52 @@ export abstract class ScreenplaySyntaxWalker {
     visitReadModel(syntax: ReadModelSyntax): void {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
+    }
+
+    visitGraph(syntax: GraphSyntax): void {
+        this.visitNode(syntax);
+        syntax.nodes.forEach(node => { this.visitNode(node); node.properties.forEach(property => this.visitProperty(property)); });
+        syntax.edges.forEach(edge => { this.visitNode(edge); edge.properties.forEach(property => this.visitProperty(property)); });
+    }
+
+    visitGraphProjection(syntax: GraphProjectionSyntax): void {
+        this.visitNode(syntax);
+        syntax.blocks.forEach(block => this.visitGraphBlock(block));
+    }
+
+    visitGraphBlock(syntax: GraphNodeBlockSyntax | GraphEdgeBlockSyntax | GraphHandlerSyntax): void {
+        this.visitNode(syntax);
+        switch (syntax.kind) {
+            case 'GraphNodeBlockSyntax':
+            case 'GraphEdgeBlockSyntax':
+                syntax.blocks.forEach(handler => this.visitGraphBlock(handler));
+                break;
+            case 'GraphFromSyntax':
+                [syntax.key, syntax.source, syntax.target, syntax.identity].forEach(expression => { if (expression != null) this.visitExpression(expression); });
+                syntax.mappings.forEach(node => this.visitMapping(node));
+                break;
+            case 'GraphRemoveSyntax':
+                [syntax.key, syntax.source, syntax.target, syntax.identity].forEach(expression => { if (expression != null) this.visitExpression(expression); });
+                break;
+            case 'EverySyntax':
+                syntax.mappings.forEach(node => this.visitMapping(node));
+                break;
+        }
+    }
+
+    visitSpecificationGraph(syntax: SpecificationGraphSyntax): void {
+        this.visitNode(syntax);
+        for (const element of syntax.elements) {
+            this.visitNode(element);
+            if (element.kind === 'SpecificationGraphNodeSyntax') {
+                this.visitExpression(element.key);
+            } else {
+                this.visitExpression(element.source);
+                this.visitExpression(element.target);
+                if (element.identity != null) this.visitExpression(element.identity);
+            }
+            element.properties.forEach(node => this.visitPropertyMapping(node));
+        }
     }
 
     visitConstraint(syntax: ConstraintSyntax): void {
@@ -795,6 +844,7 @@ export abstract class ScreenplaySyntaxWalker {
         }
         syntax.given.forEach(node => this.visitSpecificationEvent(node));
         syntax.givenReadModels.forEach(node => this.visitSpecificationReadModel(node));
+        syntax.givenGraphs?.forEach(node => this.visitSpecificationGraph(node));
         if (syntax.when !== null) this.visitSpecificationCommand(syntax.when);
         syntax.givenCaptures.forEach(node => this.visitSpecificationCapture(node));
         syntax.givenGenerated?.forEach(node => this.visitSpecificationGeneratedValue(node));
@@ -807,6 +857,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.thenEvents.forEach(node => this.visitSpecificationEvent(node));
         syntax.thenReadModels.forEach(node => this.visitSpecificationReadModel(node));
         syntax.thenAbsentReadModels?.forEach(node => { this.visitNode(node); this.visitExpression(node.key); });
+        syntax.thenGraphs?.forEach(node => this.visitSpecificationGraph(node));
         syntax.thenQueries?.forEach(node => {
             this.visitNode(node);
             node.arguments.forEach(value => this.visitPropertyMapping(value));

@@ -51,6 +51,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["query"] = ("QueryDecl", "queries.md"),
             ["reaction"] = ("ReactionDecl", "reactions.md"),
             ["runs"] = ("ReactionIdentityDecl", "reactions.md"),
+            ["graph"] = ("GraphDecl", "graphs.md"),
             ["readmodel"] = ("ReadModelDecl", "readmodels.md"),
             ["reducer"] = ("ReducerDecl", "readmodels.md"),
             ["sample"] = ("SampleDataDecl", "sample-data.md"),

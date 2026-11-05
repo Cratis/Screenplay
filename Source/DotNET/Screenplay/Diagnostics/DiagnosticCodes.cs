@@ -3807,4 +3807,52 @@ public static class DiagnosticCodes
 
     /// <summary>A condition exceeds the supported nesting or constructed expression depth of 128.</summary>
     public const string ConditionDepthExceeded = "PLAY0861";
+
+    /// <summary>A <c>graph</c>, its <c>node</c> or <c>edge</c> declaration, or one of their body lines is malformed.</summary>
+    public const string InvalidGraphDeclaration = "PLAY0862";
+
+    /// <summary>A graph property is not a primitive, a concept over a primitive, or an array of those.</summary>
+    public const string InvalidGraphPropertyType = "PLAY0863";
+
+    /// <summary>A graph node declares no <c>key</c> property or more than one.</summary>
+    public const string InvalidGraphNodeKey = "PLAY0864";
+
+    /// <summary>A graph edge names a source or target label the graph does not declare.</summary>
+    public const string UnknownGraphEdgeEndpoint = "PLAY0865";
+
+    /// <summary>A graph projection names a graph that is not declared.</summary>
+    public const string UnknownGraphProjectionTarget = "PLAY0866";
+
+    /// <summary>A graph projection builds a node or edge its graph does not declare.</summary>
+    public const string UnknownGraphProjectionElement = "PLAY0867";
+
+    /// <summary>A graph projection or specification names a property the declared node or edge does not have.</summary>
+    public const string UnknownGraphProperty = "PLAY0868";
+
+    /// <summary><c>detach</c> is written on an edge removal.</summary>
+    public const string InvalidGraphEdgeRemoval = "PLAY0869";
+
+    /// <summary>A node removal omits <c>detach</c> although edges attach to the label.</summary>
+    public const string MissingGraphDetach = "PLAY0870";
+
+    /// <summary>An edge's <c>identified by</c> names an undeclared property.</summary>
+    public const string UnknownGraphEdgeIdentity = "PLAY0871";
+
+    /// <summary>A graph projection uses a read-model-only construct.</summary>
+    public const string UnsupportedGraphProjectionConstruct = "PLAY0872";
+
+    /// <summary>A graph projection block or handler is malformed.</summary>
+    public const string InvalidGraphProjection = "PLAY0873";
+
+    /// <summary>A graph, node label, edge type or element property is declared twice.</summary>
+    public const string DuplicateGraphElement = "PLAY0874";
+
+    /// <summary>A <c>given graph</c> or <c>then graph</c> step is malformed.</summary>
+    public const string InvalidGraphSpecification = "PLAY0875";
+
+    /// <summary>A graph specification step names an undeclared graph, node label or edge type.</summary>
+    public const string UnknownGraphSpecificationReference = "PLAY0876";
+
+    /// <summary>A graph projection is declared outside a slice.</summary>
+    public const string GraphProjectionOutsideSlice = "PLAY0877";
 }
