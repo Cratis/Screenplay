@@ -123,6 +123,10 @@ The C# binder and reference runner admit routing in executable semantic model (E
 
 Both Monaco and VS Code highlight [state machines](statemachines.md) and [workflows](workflows.md), complete their top-level keywords, and report the structure diagnostics `PLAY0834` and `PLAY0843` while you type. The words inside the two blocks (`follows`, `state`, `entering`, `on`, `action`, `decide`, `wait`, `approval`, `foreach`, `join`, the outlet names) are contextual and never end a highlighting block. The CLI reports the rest (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`), and the event model board lists the declarations. Rename follows events, commands, read models, state machines, workflows, personas and policies into them; renaming a node or a state is not supported and the state or node names are plain text.
 
+## Graphs
+
+Both Monaco and VS Code highlight [graphs](graphs.md), [graph projections](projections/graphs.md) and the `given graph` and `then graph` steps, complete the `graph` and `projection graph` snippets, and indent after a `graph`, `node` or `edge` header. The compiler reports the graph diagnostics `PLAY0862` to `PLAY0877` while you type.
+
 ## Operation and system intent (syntax-only)
 
 Both Monaco and VS Code recognize [systems and operations](operations.md), inline/standalone declarations and operation specification steps. Assistance resolves explicit declaration kinds over the assembled application and uses the current typed source for command inputs, including unsaved and import-placed files. Input/source suggestions retain concept, composite, optional and collection shapes; ambiguous references are not linked to an arbitrary declaration. Phase hover distinguishes pending, file and inline sources and ordered hints. Existing attachment navigation applies to phase files.

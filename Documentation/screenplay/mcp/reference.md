@@ -541,7 +541,7 @@ is canonicalized.
 
 ## Execute specifications
 
-`run-specifications` also runs the `specification` blocks written inside [state machines](../statemachines.md) and [workflows](../workflows.md) (ESM v36). Their results are addressed `<StateMachineOrWorkflow>.<Specification>` and carry no semantic id; a document-scoped run does not include them.
+`run-specifications` also runs the `specification` blocks written inside [state machines](../statemachines.md) and [workflows](../workflows.md) (ESM v36) and the graph specifications written in a slice with `given graph` or `then graph` ([graphs](../graphs.md), ESM v38). Their results are addressed `<StateMachineOrWorkflow>.<Specification>` or `<Slice>.<Specification>` and carry no semantic id; a document-scoped run does not include them.
 
 `run-specifications` is read-only. It executes scenarios through the in-memory reference evaluator without applying or mutating proposals, writing files, executing attached code or contacting external services. With no `proposalId`, it runs the current model: an opened workspace keeps its identities; reopen it after source edits. Without an opened workspace, the tool reads the current root and its persisted identity state.
 

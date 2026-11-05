@@ -8162,6 +8162,474 @@
               "captures": [],
               "commands": [],
               "constraints": [],
+              "description": "Which customer each invoice is billed to",
+              "events": [],
+              "graphProjections": [
+                {
+                  "kind": "GraphProjectionSyntax",
+                  "blocks": [
+                    {
+                      "kind": "GraphNodeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "InvoiceRegistered",
+                          "key": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "invoiceId"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "invoiceNumber"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "GraphRemoveSyntax",
+                          "detach": true,
+                          "event": "InvoiceCancelled",
+                          "key": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          }
+                        }
+                      ],
+                      "label": "Invoice"
+                    },
+                    {
+                      "kind": "GraphNodeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "InvoiceRegistered",
+                          "key": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "customerId"
+                          },
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "customerId"
+                            },
+                            {
+                              "kind": "IncrementMappingSyntax",
+                              "property": "invoices"
+                            }
+                          ]
+                        }
+                      ],
+                      "label": "Customer"
+                    },
+                    {
+                      "kind": "GraphEdgeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "InvoiceRegistered",
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "issuedAt"
+                            }
+                          ],
+                          "source": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "target": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "customerId"
+                          }
+                        }
+                      ],
+                      "type": "BILLED_TO"
+                    }
+                  ],
+                  "description": "Project registrations and cancellations onto invoices, customers and their edges",
+                  "graph": "Billing",
+                  "name": "BillingGraph"
+                }
+              ],
+              "graphs": [
+                {
+                  "kind": "GraphSyntax",
+                  "description": "Invoices, customers and the billing relationship between them",
+                  "edges": [
+                    {
+                      "kind": "GraphEdgeSyntax",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "issuedAt",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "DateTime"
+                          }
+                        }
+                      ],
+                      "source": "Invoice",
+                      "target": "Customer",
+                      "type": "BILLED_TO"
+                    }
+                  ],
+                  "name": "Billing",
+                  "nodes": [
+                    {
+                      "kind": "GraphNodeSyntax",
+                      "label": "Invoice",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "isKey": true,
+                          "name": "invoiceId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "InvoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "invoiceNumber",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "InvoiceNumber"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "GraphNodeSyntax",
+                      "label": "Customer",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "isKey": true,
+                          "name": "customerId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "CustomerId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "invoices",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": true,
+                            "name": "Int"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "name": "InvoiceBilling",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAnInvoiceBillsACustomer",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenGraphs": [
+                    {
+                      "kind": "SpecificationGraphSyntax",
+                      "elements": [
+                        {
+                          "kind": "SpecificationGraphNodeSyntax",
+                          "absent": false,
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          },
+                          "label": "Invoice",
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceNumber",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "INV-000123"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "SpecificationGraphNodeSyntax",
+                          "absent": false,
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          },
+                          "label": "Customer",
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoices",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 1
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "SpecificationGraphEdgeSyntax",
+                          "absent": false,
+                          "properties": [],
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          },
+                          "target": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          },
+                          "type": "BILLED_TO"
+                        }
+                      ],
+                      "graph": "Billing"
+                    }
+                  ],
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "InvoiceRegistered",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "customerId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceNumber",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-000123"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "currency",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "NOK"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dueDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-12-31"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customerId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-000123"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "currency",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "NOK"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-12-31"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "CancellingAnInvoiceDetachesItsEdge",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenGraphs": [
+                    {
+                      "kind": "SpecificationGraphSyntax",
+                      "elements": [
+                        {
+                          "kind": "SpecificationGraphNodeSyntax",
+                          "absent": true,
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          },
+                          "label": "Invoice",
+                          "properties": []
+                        },
+                        {
+                          "kind": "SpecificationGraphEdgeSyntax",
+                          "absent": true,
+                          "properties": [],
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          },
+                          "target": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          },
+                          "type": "BILLED_TO"
+                        },
+                        {
+                          "kind": "SpecificationGraphNodeSyntax",
+                          "absent": false,
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          },
+                          "label": "Customer",
+                          "properties": []
+                        }
+                      ],
+                      "graph": "Billing"
+                    }
+                  ],
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "InvoiceCancelled",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "reason",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Duplicate"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
               "description": null,
               "events": [],
               "name": "InvoiceDetails",

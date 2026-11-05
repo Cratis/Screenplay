@@ -128,6 +128,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleGraphs(legacy);
 
             // Template categories (PLAY0720) have their own conformance vector; the frozen bytes predate them.
             legacy = WithoutTemplateCategories(legacy);
@@ -305,6 +306,18 @@ public partial class when_freezing_legacy_source_syntax_bytes
                     : feature.Slices
             })
         })
+    };
+
+    // Graphs have their own conformance vector. Drop the slices that declare them from the frozen pre-graph bytes.
+    static ApplicationSyntax WithoutSampleGraphs(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutGraphSlices) })
+    };
+
+    static FeatureSyntax WithoutGraphSlices(FeatureSyntax feature) => feature with
+    {
+        Slices = feature.Slices.Where(slice => !slice.Graphs.Any() && !slice.GraphProjections.Any()),
+        Features = feature.Features.Select(WithoutGraphSlices)
     };
 
     // Only the living Invoicing samples reach this projection. Dedicated text-rule specs protect
