@@ -3,7 +3,7 @@ title: Choose a generation strategy
 description: Select a generated identity or reference and test it with portable pinned fixtures.
 ---
 
-Your shop needs recognizable customer and order identities without turning them into caller inputs. Decide whether the server owns each new value, choose its shape, then pin a valid fixture. Use the [cross-product shop tutorial work](https://github.com/Cratis/Documentation/issues/187) for the wider application journey.
+Choose a strategy for a server-owned identity or reference, then pin a valid value in a specification. The customer registration below shows what that pinned result looks like. Follow the [cross-product shop tutorial work](https://github.com/Cratis/Documentation/issues/187) for the wider application journey.
 
 ## When not to generate
 
@@ -53,12 +53,22 @@ module Shop
           for "cus_01arz3ndektsv4rrffq69g5fav"
 ```
 
-The customer prefix helps you recognize the value; it adds no entropy. ULID supplies 80 random bits and the customer rule is Proven, selecting ESM V20. `OrderId` carries time but no tenant slot; keep tenant isolation separate, or introduce a separate `TenantOrderId` contract. `InviteCode` has 126 random bits with its default alphabet. Compile, bind, then run the specifications: parsing alone does not prove executable admission or target-provider support.
+The specification expects the same customer identity on the command and the resulting event. The order and invitation concepts show other declarations; this specification does not exercise them.
 
-Inspect rule diagnostics before proceeding. A Refuted rule (`PLAY0688`) needs a model change, not a retry. Review the derived-`matches` repair if the strategy is the intended contract; it changes validation for all values of that concept. An Unproven rule (`PLAY0689`) needs provider validation, and opaque rules remain Unsupported in the reference evaluator. Never remove an intended business rule merely to silence a warning.
+The customer prefix helps you recognize the value; it adds no entropy. ULID supplies 80 random bits and the customer rule is Proven, selecting ESM V20. `OrderId` carries time but no tenant slot; keep tenant isolation separate, or introduce a separate `TenantOrderId` contract. `InviteCode` has 126 random bits with its default alphabet.
 
-Pin the generated identifier with `for` and other generated values by name. Use `given clock` for pattern date segments and scenarios asserting `$context.occurred`; the evaluator does not draw a time-ordered identifier from that clock, so pin the whole identifier. A seed is not a portable fixture. Test a second creation against prior facts on the same source to witness v15 Guarded freshness. Models without a serialized strategy remain Unguarded, even if a rule selects V20; adding a serialized generation declaration guards implicit UUID generated destinations too. Chronicle rechecks `BeforeFirst` on renumbered retries from 19.40.1; batch scopes are checked once and the batch is all-or-nothing. See [Chronicle concurrency](/chronicle/events/concurrency/).
+Compile, bind, then run the specifications: parsing alone does not prove executable admission or target-provider support.
+
+Inspect rule diagnostics before proceeding. A Refuted rule (`PLAY0688`) needs a model change, not a retry. Review the derived-`matches` repair if the strategy is the intended contract; it changes validation for all values of that concept.
+
+An Unproven rule (`PLAY0689`) needs provider validation, and opaque rules remain Unsupported in the reference evaluator. Never remove an intended business rule merely to silence a warning.
+
+Pin the generated identifier with `for` and other generated values by name. Use `given clock` for pattern date segments and scenarios asserting `$context.occurred`; the evaluator does not draw a time-ordered identifier from that clock, so pin the whole identifier. A seed is not a portable fixture.
+
+Test a second creation against prior facts on the same source to witness v15 Guarded freshness. Models without a serialized strategy remain Unguarded, even if a rule selects V20; adding a serialized generation declaration guards implicit UUID generated destinations too.
+
+Chronicle rechecks `BeforeFirst` on renumbered retries from 19.40.1; batch scopes are checked once and the batch is all-or-nothing. See [Chronicle concurrency](/chronicle/events/concurrency/).
 
 For an API key, plan a separate `ApiKeyId` identity and a secret `ApiKey` value with 32 random bytes. Do not put the key into plaintext event-source metadata. Generated secret admission is not available yet; `[NotAudited]` protects only command causation values, while encryption protects the stored value, not arbitrary logs.
 
-Your result is a concept with an exact strategy, enough entropy for its role, a valid pinned fixture, and an explicit understanding of [freshness](../generated-values.md#freshness-is-about-the-whole-source).
+Before finishing, check that the strategy fits the value's role and has enough entropy, that the pinned fixture is valid, and that the command's [freshness](../generated-values.md#freshness-is-about-the-whole-source) policy is explicit.
