@@ -1,11 +1,13 @@
 ---
-title: "Nested Objects"
-description: "Declare a single nullable child object in a Screenplay projection, set by one event and cleared by another."
+title: "Screenplay nested objects: manage optional read-model data"
+description: "Use Screenplay nested blocks for one optional object in a read model. Map events into it, merge later changes, and clear it without deleting the parent."
 ---
 
 # Nested Objects
 
-Nested objects define a single nullable child object within a projection. Unlike [children](children), which manage collections of items, `nested` targets a scalar property that holds one optional object — set when a specific event occurs and cleared (set to null) when another event occurs.
+A Screenplay `nested` block maintains one optional object inside a read model. Use it when the parent can exist without that object, such as a slice with no configured command. A `from` event creates or updates the object; `clear with` sets it back to `null` without deleting the parent.
+
+Unlike [children](children), a nested object has no separate collection identity. It occupies one property on its containing read model. The examples below follow a slice's optional command through configuration, updates, and clearing.
 
 ## Basic Syntax
 
@@ -29,11 +31,13 @@ projection Slice => SliceReadModel
     clear with CommandClearedForSlice
 ```
 
-This creates a `command` property on `SliceReadModel` that is populated from `CommandSetForSlice` and set back to null when `CommandClearedForSlice` is appended.
+Declare `command` as a nullable object property on `SliceReadModel`. `SliceCreated` supplies the parent name; `CommandSetForSlice` fills the command's `Name` and `Schema`. After `CommandClearedForSlice`, the slice still exists, but its `command` is `null`.
+
+These events must resolve to the same slice instance. The fragments use the default event source identity; see [Keys](keys.md) when the slice ID comes from an event field instead.
 
 ## From Event
 
-The `from` block inside `nested` works exactly like a top-level `from` block — you can map properties explicitly or rely on AutoMap:
+Mappings inside `nested` target the nested object's fields. Here `Name` means the command's name, not the slice's name. You can map those fields explicitly or use auto-map for matching names:
 
 ```pdl
 nested command
@@ -45,7 +49,7 @@ nested command
 
 ## Clear With
 
-Use `clear with` to specify which event nulls the nested object:
+Choose a clearing event when the object has a meaningful absent state. Removing a command configuration leaves the slice available without it:
 
 ```pdl
 nested command
@@ -53,13 +57,13 @@ nested command
   clear with CommandClearedForSlice
 ```
 
-When a `CommandClearedForSlice` event is appended, the `command` property on the parent is set to `null`.
+`CommandClearedForSlice` clears the whole `command` object, including its schema and any other fields. A later nested `from` event can create it again.
 
-`clear with` takes an event and drops the whole nested object. To clear a single property instead, use the `clear <property>` mapping line inside a `from` block — see [Property Mapping](property-mapping.md#clearing-a-value).
+To keep the object but clear one field, use a `clear <property>` mapping line inside `from`. See [Property Mapping](property-mapping.md#clearing-a-value) for that separate operation.
 
 ## Multiple From Events
 
-The nested object can be updated by more than one event:
+Give each event the mappings for what it changes. A rename can leave the command schema intact, and a schema update can leave the name intact:
 
 ```pdl
 nested command
@@ -76,11 +80,11 @@ nested command
   clear with CommandClearedForSlice
 ```
 
-Each `from` can map a different subset of properties. Subsequent events update only the properties they map — they do not replace the entire nested object.
+Later events merge their mapped fields into the existing object rather than replacing it. Any nested `from` event can also create the object if it is absent. If a rename must only occur after configuration, express that requirement in the command's rules; declaring it as a nested `from` does not make it update-only.
 
 ## With AutoMap
 
-Apply AutoMap to avoid explicit property mappings when names match:
+Use nested-level `automap` when event fields already have the names expected by the command object:
 
 ```pdl
 nested command
@@ -93,7 +97,7 @@ nested command
 
 ## Every Block in Nested
 
-Use an `every` block inside `nested` to apply mappings across all events that affect the nested object:
+Put `every` inside `nested` when a shared mapping belongs on that object. The command's modification time can be set alongside each of its `from` mappings:
 
 ```pdl
 nested command
@@ -110,11 +114,13 @@ nested command
   clear with CommandClearedForSlice
 ```
 
-`LastModified` is updated on every event that touches the `command` property.
+In Chronicle, `LastModified` is stored on the command when its `from` events are applied. Screenplay's reference evaluator does not support `$eventContext.occurred` mappings inside nested objects, so it cannot execute this timestamp example.
+
+Clearing the command also removes its timestamp. Keep an audit timestamp on the parent if it must remain visible while the command is absent.
 
 ## Nested Within Nested
 
-A nested object can itself contain another nested object:
+The command can itself have an optional validation object. Clearing validation leaves the command in place; clearing the command removes the entire command value, including validation:
 
 ```pdl
 nested command
@@ -131,7 +137,9 @@ nested command
 
 ## Nested Within Children
 
-A `nested` block can appear inside a `children` block:
+A collection element can hold an optional object too. Here each task can have one assignee value without making assignees another collection.
+
+The assignment and clearing events below omit both child and parent keys, so both default to event source identity. This shorthand only reaches the intended task when those identities coincide. With separate task and project IDs, declare the assignment as `from TaskAssigned key taskId` with `parent projectId`. Clearing can use a keyed `remove with` inside the nested block when it also needs explicit child and parent keys:
 
 ```pdl
 children tasks identified by taskId
@@ -148,11 +156,15 @@ children tasks identified by taskId
 
 ## Read Model Structure
 
-The nested property maps to a nullable property on the parent read model. For the `command` example above, the read model declares a nullable `Command` property of a complex type carrying `Name` and `Schema` — it is `null` until the `from` event fires, and set back to `null` by the `clear with` event.
+The read model declares the nested property as a nullable complex type: one object with its own fields. In the command example, those fields include `Name` and `Schema`. Its initial value is `null`; nested `from` mappings populate it, and `clear with` restores that absent state.
+
+Root-level nested objects can also contain joins, including within further nested objects. Chronicle 19.99.1 supports those joins, as does Screenplay's reference evaluator with the [backfill difference described on the joins page](joins.md#joins-in-children). Joins in nested objects under `children`, collections inside nested objects, and `remove via join` inside nested objects are not supported. Required fields populated only by a nested join still trigger the compiler's `PLAY0284` population check.
 
 ## Examples
 
 ### Slice with Optional Command
+
+This version uses matching fields for initial configuration and keeps the rename mapping explicit because `newName` differs from `Name`:
 
 ```pdl
 projection Slice => SliceReadModel
@@ -170,6 +182,8 @@ projection Slice => SliceReadModel
 ```
 
 ### Employee with Optional Active Contract
+
+The same shape suits a current contract. An extension changes only the end date; ending the contract clears the optional value while retaining the employee:
 
 ```pdl
 projection Employee => EmployeeReadModel
@@ -192,6 +206,8 @@ projection Employee => EmployeeReadModel
 
 ### Product with Optional Promotion
 
+A product's base price belongs on the parent because it remains when the promotion is removed. Promotion fields belong in the optional object:
+
 ```pdl
 projection Product => ProductReadModel
   from ProductListed
@@ -209,14 +225,13 @@ projection Product => ProductReadModel
 
 ## Best Practices
 
-1. **Nullable property**: Always define the nested read model property as nullable (`T?`) — it starts null and is only populated when the `from` event fires
-2. **Single responsibility**: Model the nested type around one coherent concept; if it needs its own lifecycle or collection behavior, use [children](children) instead
-3. **Clear semantics**: Provide a `clear with` event only when the nested object has a meaningful absent state — do not use it to model soft-deletion of the parent
-4. **AutoMap selectively**: Use AutoMap when event property names align with the read model; use explicit mappings when the event contains extra fields you do not want on the nested object
+Choose `nested` when one property can be present or absent as a whole. Choose [children](children) when the parent holds several independently identified items. Clearing a nested value is not deletion of the parent, and it does not preserve a populated object with an inactive flag.
+
+In executable specifications, check initial absence, a partial update that preserves other fields, clearing, and recreation. Pay particular attention to events such as renames: every nested `from` is allowed to create the object, so its mappings must make sense when no earlier value exists.
 
 ## See Also
 
-- [Children](children) — collections of items managed independently within a parent
-- [From Event](from-event.md) — how event mapping works
-- [Auto-Map](auto-map) — automatic property mapping
-- [Removal](removal.md) — removing root read models
+- [Children](children) - Use a collection when each item needs its own identity.
+- [From Event](from-event.md) - Choose mappings for the events that populate the object.
+- [Auto-Map](auto-map) - Use matching names instead of explicit field mappings.
+- [Removal](removal.md) - Remove a root instance rather than clearing one of its properties.

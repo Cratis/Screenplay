@@ -1,13 +1,15 @@
 ---
-title: "Operations and external systems"
-description: "Describe in Screenplay the work a command asks an external system to do, with inputs, system and compensation intent; syntax-only."
+title: "Screenplay operations: describe external-system work"
+description: "Describe external-system work with Screenplay operations, including inputs and compensation intent. Declarations are syntax-only and cannot execute."
 ---
 
 # Operations and external systems
 
-Describe the work a command asks another system to do without hiding it in a handler. An operation states its inputs, the external system it uses, and optional execution and compensation intent.
+An operation in Cratis Screenplay describes work a command asks an external system to do, with its inputs and optional execution and compensation intent. Use it to make that dependency visible in the model, not to run an integration.
 
-> **Experimental, syntax-only authoring.** Systems, operations and their specification steps cannot execute today. Binding reports `PLAY0268` and returns no executable model. These constructs are not admitted by any supported executable model (ESM) version yet; provider support is future work, and the current reference runner cannot run these specifications, even when code is attached.
+Systems, operations and their specification steps are syntax-only. Binding reports `PLAY0268` and returns no executable model: no supported executable semantic model (ESM) version admits them. Attaching code does not change that boundary, and the reference runner cannot execute their specifications.
+
+For example, order fulfilment may need work from a carrier system. An operation can describe that work, but it does not provide a running carrier adapter or a durable wait. Use a [workflow](workflows.md) to describe the longer process and a [reaction](reactions.md) for event-driven follow-up. Neither makes an operation executable.
 
 ## Declare intent
 
@@ -38,7 +40,9 @@ module Projects
           projectId = projectId
 ````
 
-The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside `Samples/`: operations refuse the whole model before binding because they are not admitted by any supported executable model (ESM) version yet. Invoicing is a syntax showcase with individual binding dispositions, not a runnable model. Operations are one of the [preview constructs](https://github.com/Cratis/Screenplay/blob/main/.cratis/ai/rules/project/samples.md#preview-constructs) excepted by the samples policy, not an executable integration example.
+Here, `RegisterProject` describes a request to open a provisional cost center in `Accounting`. The `execute` phase points to the intended adapter; `compensate` describes closing the cost center if registration does not commit. These are declarations of intent, not evidence that either action runs.
+
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) covers inline and standalone operations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is outside `Samples/` because these constructs prevent an executable model from being produced. Invoicing is also a syntax showcase with individual binding dispositions, not a runnable model. The samples policy lists operations among its [syntax-only constructs](https://github.com/Cratis/Screenplay/blob/main/.cratis/ai/rules/project/samples.md#preview-constructs); neither example demonstrates an executable integration.
 
 ## Declare inline or reference a declaration
 
@@ -46,7 +50,7 @@ The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Doc
 
 Event and operation names share the slice namespace, including inline declarations. Resolution considers both kinds together. A collision or ambiguous reference is an error, not an event-first guess. Operation productions belong to commands, not reactions, and do not accept event `for` destinations, tags or routing metadata. Required inputs must be mapped; optional inputs may be omitted. Known mapping types must be compatible. Unknown imported shapes are not fabricated.
 
-Keep mixed event and operation productions in one authored sequence. **Future transaction contract:** events are enrolled first, operations execute in authored order before commit, and declared compensation follows commit disposition. This does not specify reverse compensation order or a rollback mechanism. Operations are not post-commit reactions.
+Keep mixed event and operation productions in one authored sequence. The intended transaction contract enrolls events first, executes operations in authored order before commit, and makes declared compensation follow the commit disposition. That is not implemented execution support, and it specifies neither reverse compensation order nor a rollback mechanism. Operations describe pre-commit work, not post-commit reactions.
 
 ### Reuse across slices and files
 
@@ -60,7 +64,9 @@ No automatic operation extraction is available. Event extraction's executable-by
 
 ## Attach phase intent or source
 
-Each phase accepts a description and either a direct `file`/tagged fence or an `implementation` wrapper with ordered nonblank `hint` lines and an optional source. A phase owns its sole `File` or `Code`; the wrapper owns hints only. Mixed direct/wrapped sources, duplicate payloads and duplicate phases are rejected. A description-only or hints-only phase is valid **pending** intent, not a missing-source error or an execution guarantee.
+Use a phase description when you know what the external work should do but have not attached its implementation. A description-only or hints-only phase is valid intent; it is neither a missing-source error nor an execution guarantee.
+
+Each phase accepts a description and either a direct `file`/tagged fence or an `implementation` wrapper with ordered nonblank `hint` lines and an optional source. The phase owns its sole `File` or `Code`; the wrapper owns hints only. Mixed direct/wrapped sources, duplicate payloads and duplicate phases are rejected.
 
 Existing fields named `system`, `operation`, `command`, `execute` or `compensate` keep their property meaning. Bare `execute`/`compensate` open phases; typed forms remain inputs. Use `@uses Type` for an input named `uses`, and escape event metadata names in standalone operation inputs. Inline typed mappings are recognized before directives, for example `sequence Int = count`.
 
@@ -70,4 +76,4 @@ Monaco and VS Code provide declaration-aware suggestions, typed input/source ass
 
 [MCP authoring tools](mcp/authoring-tools.md#operation-and-system-intent) expose revision-pinned inventories and typed source handles without executable identities. Use existing typed AST proposals with Authoring validation. Executable validation refuses these constructs with `PLAY0268`; accepted source does not realize or confirm code.
 
-See [operation specifications](specifications.md#operation-specifications-syntax-only), [grammar](grammar.md) and [diagnostics](diagnostics.md#operations-and-external-systems).
+Continue with [operation specifications](specifications.md#operation-specifications-syntax-only) to describe intended success, failure and compensation outcomes. They remain syntax-only. Use the [grammar](grammar.md) for accepted forms and [diagnostics](diagnostics.md#operations-and-external-systems) to interpret authoring errors.

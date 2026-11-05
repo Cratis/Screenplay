@@ -1,17 +1,21 @@
 ---
-title: "Workflows"
-description: "Declare in Screenplay a durable process: a graph of triggers, actions, decisions, waits, approvals, fan-outs and joins that runs one at a time per subject."
+title: "Screenplay workflows: model a durable business process"
+description: "Model order fulfilment with a Screenplay workflow: send commands, wait for events or approvals, and specify where the process completes or fails."
 ---
 
 # Workflows
 
-An Automation slice expresses one reaction: when X happens, do Y. Real processes are longer. They send several commands, choose a path, wait for a fact or a person, give up after a deadline, fan out over items and join again. A `workflow` says that as a graph, with the meaning of the Cratis.Orleans durable workflow engine, so Studio can edit it, Stage can execute and draw it, and specifications can pin a run.
+A workflow in Cratis Screenplay describes a durable business process that continues through several steps, including waits for events or a person's approval. Use it when an order being Paid is only the start of the work: stock must be reserved, a parcel dispatched and delays handled.
 
-A workflow runs **one at a time per subject**: the key of the read model named by `for`, for example one run per order. It is a top-level declaration, admitted from [ESM v36](interoperability.md).
+A [state machine](statemachines.md) observes where the order is in its lifecycle. A [reaction](reactions.md) responds to an occurrence with effects or command requests. The workflow makes the longer process explicit, including where it suspends and which path it takes after a failure.
+
+A workflow runs one at a time per subject. The subject is the read model named by `for`, and its key identifies the order or other item the run is about. The declaration is top-level and uses the semantics of Cratis Choreography's durable workflow engine. It is admitted from executable semantic model ([ESM v36](interoperability.md)).
 
 ## Syntax
 
-A workflow is a list of named **nodes**, each with named **outlets**; an **edge** connects an outlet to a node. Edges are written under their node as `<outlet> -> <Node>`.
+Each named step is a node. Its outlets are the possible outcomes, and an edge connects an outlet to the next node: `<outlet> -> <Node>`.
+
+This excerpt continues the [order lifecycle](statemachines.md#syntax). It assumes the `OrderProgress` read model and the referenced commands, events and approver are declared elsewhere in the application.
 
 ```screenplay
 workflow FulfilOrder
@@ -41,7 +45,9 @@ workflow FulfilOrder
   action Escalate sends EscalateOrder
 ```
 
-The node words are contextual. They are read only on the lines directly inside a `workflow`, so `trigger` (also a top-level construct) and `join` (also a projection word) keep their meaning everywhere else.
+When the order enters Paid, the run sends `HoldStock`. A successful reservation leads to a decision over `itemsInStock` on the subject read model. Stock on hand leads to parcel creation; otherwise a warehouse clerk must approve the backorder. The run then waits for the carrier event, or escalates if the deadline passes.
+
+Node words are recognized only directly inside a `workflow`. This leaves `trigger` available as a top-level declaration and `join` as a projection word elsewhere.
 
 | Node | Line | Outlets |
 | --- | --- | --- |
@@ -55,11 +61,15 @@ The node words are contextual. They are read only on the lines directly inside a
 
 An unnamed trigger is called `Trigger`, then `Trigger2` and so on. A workflow may have several triggers. Units are `second`, `minute`, `hour` and `day`, singular or plural.
 
-An unconnected negative outlet (`failed`, `rejected`, `expired`) **fails the run**. An unconnected positive outlet **ends that branch**. The outlet names are exactly those of Cratis.Orleans `WellKnownOutlets`. An action's command receives the subject key and the subject properties of the same name; how the executor fills the rest is its contract.
+Connect each negative outcome you want to recover from. An unconnected `failed`, `rejected` or `expired` outlet fails the run; an unconnected positive outlet ends that branch. In the example, reservation failure reaches `Escalate`, whose successful action ends its branch. Outlet names match Cratis Choreography's `WellKnownOutlets`.
+
+An action's command receives the subject key and subject properties with matching names. The executor defines how to fill any remaining inputs. The reference evaluator records that the command was sent; it does not execute that command's business effects.
 
 ## Specifications
 
-A run is pinned by specifications written inside the workflow. They state the facts that happened, one event or a start, what the waits, approvals and actions turn out to be, and what follows. The reference evaluator steps the graph deterministically: decisions are computed from the subject read model, an action sends its command, and a wait or approval takes the outcome the specification states or, with none stated, suspends the run.
+Write specifications inside the workflow to check its paths before relying on an executor. Establish the history, append the triggering event or start the run, then state the outcomes needed for that path.
+
+The reference evaluator computes decisions from the subject read model and records commands sent by actions. A wait or approval takes the outcome supplied by the specification; without one, it suspends the run. This checks the process graph, not a live carrier integration or a person's response.
 
 | Line | Meaning |
 | --- | --- |
@@ -84,7 +94,9 @@ specification TheRunWaitsForTheCarrier
   then waits at ParcelLeaves
 ```
 
-A `foreach` runs its `each` branch once per item in item order (`parallel` bounds the executor, not the reference run) and then takes `completed`. A `join` counts arrivals: `all` waits for every branch (the incoming edges, times the items of a `foreach` that feeds it), `any` for the first and `at least n` for n. A wait for a duration resumes at once in a reference run.
+The example expects the stock to be available in `OrderProgress` after its given history. With no outcome supplied for `ParcelLeaves`, the run stops there after sending `HoldStock` and `CreateParcel`. Add specifications with `outcome ParcelLeaves resumed` or `outcome ParcelLeaves expired` to cover dispatch and escalation.
+
+For collection work, a `foreach` runs its `each` branch once per item in item order, then takes `completed`. Its `parallel` setting bounds the executor, not the reference run. A `join` counts arrivals: `all` waits for every branch (the incoming edges, times the items of a `foreach` that feeds it), `any` for the first and `at least n` for n. A duration wait resumes immediately in a reference run, so it does not test elapsed wall-clock time.
 
 ## Checks
 

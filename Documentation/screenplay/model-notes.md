@@ -1,34 +1,42 @@
 ---
-title: Model notes
-description: Keep questions, tasks and review notes anchored to a model without changing its executable behavior.
+title: "Screenplay model notes: track workshop questions"
+description: "Keep workshop questions, tasks and review context anchored to a Screenplay model, then record the evidence that resolves each question."
 ---
 
-A workshop asks, “Can a member cancel after check-in?” The answer is not settled yet,
-and burying the question in a chat thread makes it easy to lose. Model notes keep
-that question beside the model element, with an explicit resolution when the team
-answers it. A rename or move does not detach the question.
+Cratis Screenplay model notes keep unresolved questions, tasks and review context
+beside the model elements they concern, without changing executable behavior. Use
+them to carry workshop questions into the next modeling session and record what
+settled each one.
+
+For example, “Can a member cancel after check-in?” is a question to resolve, not
+behavior to guess. Anchor it to the relevant slice so reviewers can find it while
+working on cancellation. The stable identity keeps the note attached when that
+element is renamed or moved through the authoring tools.
 
 ## Choose the right home
 
-Use a **question** for an unresolved modeling choice, a **task** for work to do,
-and a **note** for review context you want to retain. All three kinds can be open
-or resolved. They live in the committed `.screenplay/notes.json` sidecar, not in
-`.play` syntax.
+Use a question for an unresolved modeling choice, a task for work to do,
+and a note for review context you want to retain. All three kinds can be open
+or resolved. They live in `.screenplay/notes.json`, a sidecar file kept alongside
+the model rather than inside `.play` syntax.
 
 A `description` states what an element means. A `documentation` block explains
 reasoning without tracking open work. A decision record preserves a consequential
 choice and its owner/date. Model notes link to those artifacts; they do not replace
 them. A source comment is not a durable work item: authoring proposals can drop it.
 
-Notes do not change source, compiler verdicts, executable semantic model bytes,
-semantic revision, workspace revision or catalog revision. Nothing in either
-compiler reads the sidecar. There is no PLAY diagnostic for an open question.
+Editing notes does not itself change source, compiler verdicts, executable semantic
+model bytes or their revisions. Notes have their own revision, separate from the
+workspace and identity catalog. Neither compiler reads the sidecar, and an open
+question produces no PLAY diagnostic. To require answers before proceeding, use
+the [unresolved-question gate](#gate-on-unresolved-questions).
 
 ## Anchors and orphans
 
-A note anchors to a stable `semanticId`, or to `{ "application": true }`.
-The server resolves that identity against the current catalog, so renamed and moved
-elements retain their notes without rewriting the file. `lastAddress` is only a
+An anchor identifies what a note concerns: a stable `semanticId` for a model
+element, or `{ "application": true }` for the application as a whole.
+The server looks up that identity in the current identity catalog, so renamed and
+moved elements retain their notes without rewriting the file. `lastAddress` is only a
 last-known display hint; the server refreshes it when writing notes and never uses
 it to resolve an anchor.
 
@@ -36,7 +44,7 @@ Modules, nested features and slices have stable identities even while the model
 does not bind, provided every document parses and has resolved import placement.
 Select them by dotted address and kind, typed address or current source handle:
 the note anchors to that container, without substitution. Fixing binding through
-an MCP proposal preserves its ID and origin. Renaming or moving it before first
+a Model Context Protocol (MCP) proposal preserves its ID and origin. Renaming or moving it before first
 binding carries the ID with it, just as for a bound model. Opening computes new
 container assignments in memory; only apply persists them in `identities.json`,
 including when applying a notes-only proposal.
@@ -57,7 +65,8 @@ ambiguous container. Existing assignments and notes are retained: resolved notes
 on an ambiguous container or its descendants carry `ambiguous: true`, not an orphan
 state. Read them without a target filter, or by their existing semantic ID.
 
-Removing an identified element leaves its note **orphaned**. The state is computed
+Removing an identified element leaves its note orphaned: the question is retained,
+but its target is no longer in the catalog. The state is computed
 on read, never stored. Its current address is null and `orphanReason` is `unknown`
 when the catalog no longer contains the identity. Source proposals report the IDs
 of newly orphaned notes in `orphanedNotes` before apply. Notes are never silently
@@ -97,10 +106,16 @@ if the answer stops being adequate.
 
 ## Review and commit notes
 
-Use [the MCP notes tools](mcp/reference.md#model-notes) to list notes, propose an
-atomic batch, inspect `read-proposal view=notes`, then apply. The server supplies
-random `note_` IDs and UTC instants. `author` is free text, not authentication or an
-authorization claim. A batch can add, edit, resolve, reopen, reanchor or remove notes.
+Use [the MCP notes tools](mcp/reference.md#model-notes) to
+read the current notes and propose an atomic batch. Inspect the candidate with
+`read-proposal view=notes` before applying it. A batch can add, edit, resolve,
+reopen, reanchor or remove notes.
+
+Proposals check the workspace, catalog and notes revisions you read. If the notes
+change before apply, read them again and make a new proposal rather than
+reusing the stale one. This keeps one reviewer's update from overwriting another's.
+The server supplies random `note_` IDs and UTC instants. `author` is free text,
+not authentication or an authorization claim.
 
 The sidecar is committed content. **Do not put secrets or personal data in note
 text, author names, references or resolutions.** Prefer team handles or roles
@@ -128,7 +143,9 @@ State governing model meaning must specify its own blocking rules. See
 
 ## Gate on unresolved questions
 
-After [installing the CLI](tool.md#install-the-cli), report the model's questions:
+Use `report` to review what is still unanswered before the next workshop. Use
+`fail` when your workflow requires the selected scope's questions to be resolved.
+After [installing the CLI](tool.md#install-the-cli), run:
 
 ```bash
 screenplay path/to/model --open-questions report
@@ -146,3 +163,8 @@ unscoped as orphaned with reason `identity-state-absent`, rather than hiding the
 set contains an open question. Unreadable notes exit `2` only when the flag is given.
 With no flag, notes are ignored and ordinary compilation and `--warnaserror` keep
 their existing behavior. Tasks and ordinary notes do not fail the question gate.
+
+When the report identifies a question, return to its model element, make the agreed
+change and resolve the note with its evidence. For source changes that also move
+or rename elements, follow the [revision-bound workspace contract](folders.md#propose-revision-safe-workspace-changes)
+to preserve their identities.

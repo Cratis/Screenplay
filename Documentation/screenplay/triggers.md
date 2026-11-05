@@ -1,20 +1,15 @@
 ---
-title: "Triggers"
-description: "Declare what can cause a Screenplay reaction to run, from built-in domain events and the clock to your own registered triggers."
+title: "Screenplay triggers: name signals that start reactions"
+description: "Declare the name and payload of an application signal in Screenplay so reactions can consume it. The host or integration still produces the signal."
 ---
 
 # Triggers
 
-A trigger is something that can cause a [reaction](reactions.md) to run. Domain events and the clock are
-built in; everything else is declared, so the set of things an application can react to is open without the
-language having to grow a keyword per source.
+An application trigger in Cratis Screenplay names a signal and the values it carries so a [reaction](reactions.md) can respond to it. Declare one when an integration or host raises something that is not already a domain event. Domain events and clock schedules can trigger reactions without an application-trigger declaration.
 
-> **Two kinds of trigger, one of them declared.** This page is about *application triggers* - the declared
-> signal, with a payload shape, that a `reaction ... when` consumes. What starts something in the UI is an
-> *interaction trigger*: the anonymous `on click` / `on enter` clause of a behavior, which is never declared.
-> See [Interactions](interactions.md). The two meet in two places: `on <ApplicationTrigger>` lets an
-> interaction observe a declared trigger, and `raise <ApplicationTrigger>` lets one fire it. A trigger declared
-> with the name of a built-in interaction kind is an error, since `on <Name>` would then mean the interaction.
+For an order-fulfilment process, a carrier integration might raise a signal when it receives a delivery update. The trigger describes that signal's shape; the integration remains responsible for producing it. If delivery is already recorded as a declared event, a reaction can use that event directly.
+
+Application triggers differ from UI interaction triggers. A UI behavior's `on click` or `on enter` clause needs no declaration. An interaction can also observe an application trigger with `on <ApplicationTrigger>` or fire one with `raise <ApplicationTrigger>`; see [Interactions](interactions.md). Do not give a declared trigger the name of a built-in interaction kind: that is an error because `on <Name>` would mean the UI interaction.
 
 ## Syntax
 
@@ -25,12 +20,11 @@ trigger <Name>
   [<name> [<Type>]]*
 ```
 
-The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
+Use the optional `file` line to point to the repository-relative implementation file. It supports navigation back to code, but does not replace any part of the declaration or arrange delivery of the signal. See [File references](file-references.md).
 
 A trigger body reserves `file`, so a trigger value by that name is written `@file`.
 
-A trigger is declared at the top level of a document, beside `concept`, `type` and `policy`, because what
-can happen to an application is not the property of one slice.
+Declare the trigger at the top level, beside `concept`, `type` and `policy`, so it can be used across slices.
 
 ## What a trigger declares
 
@@ -43,10 +37,7 @@ trigger GitHubIssueCreated
   issue Issue
 ```
 
-It deliberately declares nothing about *what makes one occur*. That belongs to whatever produces it — an
-integration, a runtime signal, a person — and keeping it out of the document is what lets the set be open at
-all. The compiler's whole job here is to know the name and the shape, so a reaction naming it resolves and a
-reaction taking a value it does not carry is reported.
+Here, each occurrence supplies `repository` and `issue`. The declaration does not connect to GitHub or subscribe to issue updates. The producer owns that work; the compiler uses the name and payload shape to resolve a reaction's `when` and report selections of values the trigger does not carry.
 
 The type on a value is optional:
 
@@ -56,8 +47,7 @@ trigger DirectoryChanged
   changedAt DateTime
 ```
 
-A trigger is often declared before the shape of what it carries has settled, and a bare name is already a
-useful statement — the reaction is handed something by that name. Add the type when there is one to state.
+A bare value name is valid while its type is undecided. In this example, the occurrence supplies `entry` with an unspecified type and `changedAt` as a `DateTime`. Add a type when the model can state one.
 
 ## Using one
 
@@ -78,9 +68,7 @@ module Delivery
         where outcome == "failed"
 ```
 
-That sameness is the point. A reaction should not have to know whether what set it off came from the event
-store, a clock, an integration or a custom runtime provider — see
-[Trigger → reaction → effects](reactions.md#trigger--reaction--effects).
+This reaction selects `repository` and `outcome`, then filters for failed builds. It declares no effects yet. Continue with [Trigger → reaction → effects](reactions.md#trigger--reaction--effects) to add an event production or command invocation. Declaring the trigger does not give the reference runner a provider for that signal.
 
 ## How a name resolves
 
@@ -114,7 +102,7 @@ reference in the language.
 
 These need no declaration because every application has them and there is no event to declare for them.
 The clock is built in too, but with its own syntax rather than a name — see
-[what sets a reaction off](reactions.md#what-sets-a-reaction-off). Clock triggers (`every` and `at`) take no values, so value lines beneath them are errors. A `reads` line under any reaction trigger takes no indented children either; such lines are rejected, not treated as values.
+[what sets a reaction off](reactions.md#what-sets-a-reaction-off). Clock triggers (`every` and `at`) take no values, so value lines beneath them are errors. A scalar `reads` line takes no indented children either; composite read keys use a named `by` block. See [reaction reads](reactions.md#views-a-reaction-decides-from).
 
 ## Registering a trigger
 
@@ -140,13 +128,6 @@ var compiler = new ScreenplayCompiler(
     ]));
 ```
 
-**Stating no values and stating none are different claims.** A `TriggerDefinition` with no `Values` says the
-registration does not describe the shape, so what a reaction takes is left alone. One with an empty list says
-an occurrence carries nothing, so taking something from it is reported. The built-in `Startup` and `Shutdown`
-are registered the second way.
+Omitting `Values` and supplying an empty list mean different things. A `TriggerDefinition` with no `Values` leaves the shape unspecified, so the compiler leaves a reaction's value selections unchecked. An empty list says an occurrence carries nothing, so selecting any value is reported. The built-in `Startup` and `Shutdown` use an empty list.
 
-What a registration never says is what makes an occurrence happen. That boundary is the same one the inline
-languages draw, and it is what keeps the set open.
-
-A trigger the document itself needs to describe — its values, or what it means — is better written as a
-`trigger` declaration, where a reader can see it.
+Registration gives the compiler a name and optional shape, not a runtime producer. Use a `trigger` declaration instead when the application document needs to explain the signal's meaning or payload to its readers.

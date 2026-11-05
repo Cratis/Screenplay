@@ -3,14 +3,16 @@ title: Identity details
 description: Declare typed caller details from claims, queries or opaque implementations without changing token built-ins.
 ---
 
-A token identifies the caller, but it may not carry everything your application knows about that person.
-The top-level `identity` block describes those additional **identity details**, with a type and exactly one
-source per detail. It is separate from [authentication providers](authentication.md).
+A caller's token may identify the person without carrying their department or organization. Use the
+top-level `identity` block to describe these additional identity details, giving each a type and exactly
+one source. [Authentication providers](authentication.md) configure how callers authenticate; this block
+describes the extra information your application associates with them.
 
-**The block is authoring metadata only.** It parses, validates, prints and survives AST editing, but adds
-nothing to the executable semantic model (ESM). Reading a declared detail in an executable clause reports
-`PLAY0268` until [executable admission (#600)](https://github.com/Cratis/Screenplay/issues/600). A valid
-declaration is not evidence that a runtime resolves its sources.
+The block is authoring metadata only. Screenplay parses, validates and prints it, and preserves it when
+you edit the abstract syntax tree (AST), the structured representation of the source. It adds nothing to
+the executable semantic model (ESM). Reading a declared detail in an executable clause reports
+`PLAY0268` until [executable admission (#600)](https://github.com/Cratis/Screenplay/issues/600).
+Declaring a source does not make a runtime resolve it.
 
 ## Declare the details
 
@@ -46,15 +48,17 @@ collections (`[]`) and optional values (`optional`, or the accepted `?` spelling
 | Inline code | A typed detail followed by an indented tagged code fence | The source is opaque; Screenplay does not compile or execute it. The legacy language-line/fence form is accepted with its existing warning. |
 | File | A typed detail followed by an indented `file` directive | The same repository-relative [file reference](file-references.md) convention as handlers and rules. |
 
-A detail without a source is an error. A detail cannot combine sources. Claim and query sources have no
-body; refresh and cache directives are errors because those decisions belong to the runtime.
+Choose exactly one source for each detail. Omitting the source or combining sources is an error. Claim
+and query sources have no body. Refresh and cache directives are also errors: the runtime, not this
+declaration, decides when to refresh or cache a value.
 
 ## Query resolution rules
 
-A query source requires `by <expression>`. The key may read token built-ins through `$identity` or
-`$context.identity`, including opaque claim names, or use a literal. It cannot read another detail, command
-input, a read-model path or an environment value. The query's authorization policies, including inherited
-module and feature gates, cannot depend on additional identity details either.
+A query source requires `by <expression>` to identify the result. In the example, `MyOrganization`
+receives the caller's token identity through `$identity.id`. The key may use a literal or read token
+built-ins through `$identity` or `$context.identity`, including opaque claim names. It cannot read another
+detail, command input, a read-model path or an environment value. The query's authorization policies,
+including inherited module and feature gates, cannot depend on additional identity details either.
 
 The query result type must match the detail's declared type. An optional result needs an optional detail;
 a required result may populate an optional detail. Unknown detail types report the ordinary unknown-type
@@ -63,11 +67,11 @@ warning. Unknown or ambiguous queries, unkeyed/list queries and incompatible typ
 ## Caller paths and names
 
 `$identity.<detail>` recognizes names from the assembled block, including declarations later in the
-source or in another file. `$context.identity` remains **built-ins only**. The built-ins are `id`, `name`,
-`userName`, `isAuthenticated`, `roles` and `claims`; a detail cannot redeclare them. Detail names must be
-unique. Undeclared `$identity` properties keep the `PLAY0155` warning.
+source or in another file. `$context.identity` exposes only the built-ins: `id`, `name`, `userName`,
+`isAuthenticated`, `roles` and `claims`. A detail cannot redeclare a built-in, and detail names must be
+unique. Undeclared `$identity` properties produce the `PLAY0155` warning.
 
-a `scoped to` scope is an opaque name, not a reference to an identity detail
+A `scoped to` scope is an opaque name, not a reference to an identity detail.
 
 ## Tooling and compatibility
 

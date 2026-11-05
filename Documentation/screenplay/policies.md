@@ -1,13 +1,13 @@
 ---
-title: "Policies"
-description: "Declare Screenplay policies, named authorization rules based on roles, claims or custom logic, and reference them with authorize."
+title: "Screenplay authorization policies"
+description: "Define who may run Screenplay commands and queries with named policies, combine scope gates, and distinguish portable conditions from custom logic."
 ---
 
 # Policies
 
-A policy accepts one quoted or fenced-text `description` body line, printed first before its implementation. It is report-only authoring metadata (`PLAY0270`), not a requirement: a description-only policy still needs `require`, a file or code. Markdown `documentation` is not supported here.
+Screenplay policies define who may run a command or query by checking the caller's authentication, roles, claims or custom logic. Define a policy once and attach it with `authorize` where access must be checked. Signing in identifies the caller; it does not by itself satisfy a role or claim requirement.
 
-Policies are named authorization rules. Modules, features, commands, and queries reference them by name with `authorize`. Policies support role-based, claim-based, and fully custom logic. Authorization gates on enclosing scopes narrow access; they never replace a gate closer to a command or query.
+Start with the operation's access rule, then put shared gates on its module or feature. Every enclosing gate must also pass, so a local policy cannot widen access granted by an ancestor. The reference evaluator runs portable conditions; an application host must enforce authorization in the running application and supply the caller's identity.
 
 ## Syntax
 
@@ -27,7 +27,11 @@ policy <Name>
     ```
 ````
 
-Instead of the inline `csharp` block, a policy can name its implementation with `file <path>`. A policy may have a `require` condition or one implementation (`file` or inline code), never both. Mixing `require` with an implementation reports `PLAY0440`.
+Instead of the inline `csharp` block, a policy can name its implementation with `file <path>`.
+
+A policy may have a `require` condition or one implementation (`file` or inline code), never both. Mixing `require` with an implementation reports `PLAY0440`.
+
+A policy also accepts one quoted or fenced-text `description` body line, printed before its implementation. This is report-only authoring metadata (`PLAY0270`): a description-only policy still needs `require`, a file or code. Markdown `documentation` is not supported here.
 
 ## Condition limits
 
@@ -70,7 +74,7 @@ module Portal
 
 `RequestReturn` requires `HasPortalAccess` **and** (`CanManageOrders` **or** `IsRegionalManager`) **and** `CanManageOrders`. A feature without its own gate still inherits its ancestors' gates. When a folder declares the same module or feature gate in different files, distinct gates accumulate with AND; identical repeated gates are reported and kept once. Repeated `authorize` lines on a command or query combine with AND in authored order; printing writes them as one `authorize A and B` line. The printer keeps a gate where it was declared rather than copying inherited gates onto each command or query.
 
-The source compiler resolves policy names at all four positions and warns about unknown names. Portable conditions bind to the ESM and run in the reference evaluator. A custom implementation binds as an opaque ESM v3 policy predicate; it requires a target provider to evaluate it.
+The source compiler resolves policy names at all four positions and warns about unknown names. Portable conditions bind to the executable semantic model (ESM) and run in the reference evaluator. A custom implementation binds as an opaque ESM v3 policy predicate: the model references the body, but the reference evaluator does not interpret its code. A target provider must execute it.
 
 ## Conditions
 
@@ -80,11 +84,11 @@ The source compiler resolves policy names at all four positions and warns about 
 | `anonymous` | Every caller passes, with or without an identity. Stands alone; see [Public commands and queries](#public-commands-and-queries). |
 | `not <condition>` | The operand must be false; parentheses can group its operand. |
 | `role "<role>"` | The caller must have the role. |
-| `claim "<claim>" matches subject` | The claim must match the subject of the current event source. |
+| `claim "<claim>" matches subject` | The claim must match the command's identifier or a keyed query's argument. |
 | `claim "<claim>" matches "<value>"` | The claim must equal that literal value. |
 | `claim "<claim>" matches <expression>` | The claim must equal the value the expression resolves to. |
 
-A quoted target is the value itself; anything unquoted - a path such as `invoice.department`, or a `$` rooted expression such as `$context.tenant` - names where the value is read from. Quote a literal, leave an expression unquoted; the two are distinct in the syntax tree, so a tool consuming a policy always knows which one it is looking at.
+Quote a literal target such as `"Finance"`. Leave a path such as `invoice.department`, or a `$`-rooted expression such as `$context.tenant`, unquoted so it names where to read the comparison value. These forms remain distinct in the syntax tree. `$`-rooted expressions are authoring syntax but do not bind to the portable ESM v1 profile described below.
 
 Conditions combine with `or` and `and`, and parentheses group them. A condition may continue on the next line at deeper indentation.
 
@@ -133,7 +137,9 @@ module Catalog
           email = "ada@example.com"
 ```
 
-`anonymous` always holds. A caller without an identity passes, and so does a signed-in caller, a system identity and a reaction that runs as an identity; it does not mean *only* callers without an identity. Leaving `authorize` off says nothing about who may call, while `authorize Anyone` says the command is public on purpose, and an application renderer that refuses unauthenticated callers by default keeps it open (Stage renders it as `[AllowAnonymous]`).
+`anonymous` always holds. A caller without an identity passes, as do signed-in callers, system identities and reactions that run as an identity. It does not mean *only* callers without an identity. Leaving `authorize` off makes no access requirement in the model; `authorize Anyone` explicitly declares public access.
+
+Stage renders this declaration as `[AllowAnonymous]`, but a host-wide sign-in requirement can still restrict access before the operation is reached. In Stage's generated host, configuring Microsoft Entra ID sign-in enables such a perimeter. Check the host's authentication settings as well as the policy when an intended public operation requires sign-in.
 
 Because it lets everyone in, an anonymous policy is the whole authorization of what it gates:
 
@@ -171,17 +177,33 @@ policy CanManageInvoice
 
 ## Portable evaluation
 
-Positive declarative policies execute in the portable ESM v1 reference evaluator. Policy-condition negation selects ESM v7 as a byte-preserving extension ([decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md)); models without it keep their existing versions, bytes and revisions. Pre-extension v7 strict readers reject the new `not` variant. A consumer must explicitly support negation before reading, executing or rendering a model that uses it. Inline `csharp` and `file` policy predicates bind to ESM v3 with a stable requirement id, context/result contract version 1, and the required capability `pure`. The compilation result's implementation requirement carries the inline body's exact source span and dedented line map, or a resolved file's whole-file span; canonical ESM JSON still carries only the requirement id. Without a host-supplied provider, an authorization that depends on one returns `SemanticUnsupported` with the Authorization capability and the policy name; it never guesses allow or deny. An opt-in `ISemanticBodyExecutionProvider.AuthorizeAsync` receives verified source and a `SemanticPolicyContext`: an artifact with semantic property ids, the explicit command identifier or single query key as invariant scalar subject text, caller authentication, ordered roles and repeated claims through `SemanticBodyIdentity`, and supplied tenant and occurrence time. Unavailable subjects, tenants and times remain null; generated identities and audit names are not invented. Role claims are normalized into roles, preserving order and duplicates. Claim names compare ordinal-ignore-case, role names and claim values ordinal. The provider returns an explicit allow, deny or unsupported answer. Invalid answers, source/hash failures, exceptions and cancellation remain unsupported, never denial. A specification asserting `then denied` does not pass on this unsupported outcome. The host owns language admission, compilation, isolation and time limits; the reference evaluator does not compile or interpret bodies.
+Positive declarative policies execute in the portable ESM v1 reference evaluator. Policy-condition negation selects ESM v7 as a byte-preserving extension ([decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md)); models without it keep their existing versions, bytes and revisions. Pre-extension v7 strict readers reject the new `not` variant. A consumer must explicitly support negation before reading, executing or rendering a model that uses it.
 
-For a mixed gate, evaluation follows authored order: a portable denial on the left of `and` denies without evaluating the right, and a portable allowance on the left of `or` allows without evaluating the right. If an opaque operand is reached first without an executing provider, the reference evaluator returns unsupported; a later portable operand cannot decide the result. With a provider, its allow or deny participates at that same position; an unsupported answer still cannot be bypassed. Enclosing gates combine in module → feature → construct order. This matches Stage's generated C# `&&`/`||` expression (`SemanticPolicyArtifactRenderer.Authorization`) and Arc's ordered, short-circuiting policy loops (`ArcAuthorizationPolicyRuntime.IsAuthorized` and `AspNetAuthorizationPolicyRuntime.IsAuthorized`), following the runtime-authority boundary in [decision 0001](https://github.com/Cratis/Screenplay/blob/main/decisions/0001-chronicle-runtime-semantic-authority.md). An absent caller still denies authorization. The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. A missing caller claim makes a comparison against a known text target false, so its negation is true. A comparison target that is missing, null, an absent subject, or not text instead makes the condition **unknown**. `not unknown` remains unknown, including under double negation; a policy whose final condition is unknown denies. Conditions use three-valued Kleene logic: `true or unknown` is true, `false or unknown` is unknown, `false and unknown` is false, and `true and unknown` is unknown (in either operand order). Thus a satisfied role alternative can still allow access when another target is undecidable. Positive policies keep their existing allow/deny outcomes. Opaque predicates cannot be nested under negation: unsupported execution is never converted to false or permission. `and` and `or` retain authored-order short-circuiting when the left operand decides the result.
+Inline `csharp` and `file` policy predicates bind to ESM v3 with a stable requirement id, context/result contract version 1, and the required capability `pure`. The compilation result's implementation requirement carries the inline body's exact source span and dedented line map, or a resolved file's whole-file span; canonical ESM JSON still carries only the requirement id. Without a host-supplied provider, an authorization that depends on one returns `SemanticUnsupported` with the Authorization capability and the policy name; it never guesses allow or deny.
 
-In the portable ESM v1 profile, an artifact path must resolve from a command property (including declared composite members) or the keyed query argument. An absent or null nested value makes its claim comparison unknown. `$`-rooted expressions remain valid authoring syntax but do not bind to this portable profile. A `subject` comes from a command's identifier property or a keyed query's argument; if no identifier is available, it cannot match. When binding an authorized command or query, the compiler warns with `PLAY0546` if a claim under `not` (including inside a group) targets an optional path, a command's `subject` without an identifier, or a non-string type. The warning does not prevent binding; check that the target is available and text when the policy runs. The TypeScript syntax compiler does not perform this semantic binding check.
+An opt-in `ISemanticBodyExecutionProvider.AuthorizeAsync` receives verified source and a `SemanticPolicyContext`: an artifact with semantic property ids, the explicit command identifier or single query key as invariant scalar subject text, caller authentication, ordered roles and repeated claims through `SemanticBodyIdentity`, and supplied tenant and occurrence time. Unavailable subjects, tenants and times remain null; generated identities and audit names are not invented. Role claims are normalized into roles, preserving order and duplicates. Claim names compare ordinal-ignore-case, role names and claim values ordinal. The provider returns an explicit allow, deny or unsupported answer.
+
+Invalid answers, source/hash failures, exceptions and cancellation remain unsupported, never denial. A specification asserting `then denied` does not pass on this unsupported outcome. The host owns language admission, compilation, isolation and time limits. The reference evaluator does not compile or interpret bodies.
+
+For a mixed gate, evaluation follows authored order: a portable denial on the left of `and` denies without evaluating the right, and a portable allowance on the left of `or` allows without evaluating the right. If an opaque operand is reached first without an executing provider, the reference evaluator returns unsupported; a later portable operand cannot decide the result.
+
+With a provider, its allow or deny participates at that same position; an unsupported answer still cannot be bypassed. Enclosing gates combine in module → feature → construct order. This matches Stage's generated C# `&&`/`||` expression (`SemanticPolicyArtifactRenderer.Authorization`) and Arc's ordered, short-circuiting policy loops (`ArcAuthorizationPolicyRuntime.IsAuthorized` and `AspNetAuthorizationPolicyRuntime.IsAuthorized`), following the runtime-authority boundary in [decision 0001](https://github.com/Cratis/Screenplay/blob/main/decisions/0001-chronicle-runtime-semantic-authority.md).
+
+For a command or query with an authorization gate, the execution request must supply a caller explicitly unless the gate is an [anonymous policy](#public-commands-and-queries). An absent caller otherwise denies.
+
+An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. A missing caller claim makes a comparison against a known text target false, so its negation is true.
+
+A comparison target that is missing, null, an absent subject, or not text instead makes the condition **unknown**. `not unknown` remains unknown, including under double negation; a policy whose final condition is unknown denies. Conditions use three-valued Kleene logic: `true or unknown` is true, `false or unknown` is unknown, `false and unknown` is false, and `true and unknown` is unknown (in either operand order). Thus a satisfied role alternative can still allow access when another target is undecidable. Positive policies keep their existing allow/deny outcomes. Opaque predicates cannot be nested under negation: unsupported execution is never converted to false or permission. `and` and `or` retain authored-order short-circuiting when the left operand decides the result.
+
+In the portable ESM v1 profile, an artifact path must resolve from a command property (including declared composite members) or the keyed query argument. An absent or null nested value makes its claim comparison unknown. `$`-rooted expressions remain valid authoring syntax but do not bind to this portable profile. A `subject` comes from a command's identifier property or a keyed query's argument; if no identifier is available, it cannot match.
+
+When binding an authorized command or query, the compiler warns with `PLAY0546` if a claim under `not` (including inside a group) targets an optional path, a command's `subject` without an identifier, or a non-string type. The warning does not prevent binding; check that the target is available and text when the policy runs. The TypeScript syntax compiler does not perform this semantic binding check.
 
 A failed effective authorization yields `Unauthorized` before command validation or query lookup and never changes the world. For the caller fixture and denial assertion, see [Specifications](specifications.md#rejections).
 
 ## Custom logic
 
-When the declarative conditions cannot express the rule, drop into C#. The block answers with a `bool` — the same answer `require authenticated` gives, so a policy written in code and a policy written in conditions mean the same kind of thing and compose the same way:
+Use a custom predicate when declarative conditions cannot express the access rule. The C# body below returns a `bool`, so its allow or deny answer composes with other policies just like a `require` condition. Running the body needs a host or target provider that admits and executes it:
 
 ````screenplay
 policy IsDuringServiceHours
@@ -202,7 +224,7 @@ policy IsDuringServiceHours
 
 `file` is the *implemented by* alternative: the file provides the same `PolicyContext` and `bool` answer as the inline block, not a location for generating a declaration. The compiler does not resolve the path; an absolute path warns with `PLAY0264`.
 
-There is deliberately no result type carrying a denial reason. The declarative half has no way to say *why* a `require` failed either, and adding one only to the code half would split the language into two kinds of policy — one that can explain itself and one that cannot. A policy answers whether the caller may act; the message a user sees is a runtime's concern, and `validate` is where the language attaches messages to rejections.
+A policy returns whether the caller may act, not a denial message. This is the same contract for declarative conditions and custom code. The host chooses the message a user sees; use `validate` for input-validation rejections that carry messages.
 
 ## What the code can see
 

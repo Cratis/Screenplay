@@ -1,13 +1,13 @@
 ---
-title: "Folders"
-description: "Split a large Screenplay application across a folder of .play files, one folder per level, and compile it back as one application."
+title: "Screenplay folders: organize a larger application"
+description: "Compile a folder of Screenplay .play files as one application, resolve declarations across files, and review revision-safe edits before saving."
 ---
 
 # Folders
 
-A `.play` file describes an application. That works beautifully right up until the application gets big - the invoicing sample in this repository is a single file of nine hundred lines, and it only has one module. Put five modules in it and nobody can find anything, two people cannot touch it at once, and a diff stops telling you what changed.
+Cratis Screenplay compiles a folder of `.play` files as one application, so you can split a large model without duplicating its shared declarations. Use folders when finding a slice or reviewing a change becomes difficult in one file.
 
-The structure you want is already in the language. Modules contain features, features contain slices - so let the file system hold that shape, one folder per level, and let the compiler put it back together. That is what this page is about: a folder of `.play` files is **one application**, in both directions.
+Modules contain features, and features contain slices. Mirroring that structure in folders gives each slice its own source file while concepts, events and policies still resolve across the assembled application. The file writer can also expand an existing application into this layout:
 
 ```mermaid
 flowchart LR
@@ -15,7 +15,7 @@ flowchart LR
     B -- "IPlayFileCompiler.CompileFolder" --> A
 ```
 
-A folder says nothing about *what* the application is made of, and every slice file in it restates the module and feature it belongs to. [Imports](imports.md) let a root file name the files of the application, and let a module or feature file place the files it imports - so a focused file holds only its own part of the story.
+Folder compilation includes every `.play` file beneath the root. In the layout above, each slice file restates its module and feature. If you want a root document to choose the application's files, or want slice files without those repeated headers, use [imports](imports.md). Imports specify both file membership and placement within a module or feature.
 
 ## Order on the board
 
@@ -42,7 +42,7 @@ if (compilation.Result.Success)
 }
 ```
 
-The merge happens *before* anything is resolved, and that is the entire point. An event declared in one file and produced in another resolves. A concept declared once at the root is available to every slice. A policy an `authorize` names is found wherever it lives.
+The compiler merges the files before resolving references. An event declared in one file can be produced in another, and a concept declared once at the root is available to every slice. An `authorize` reference can likewise find a policy in another file of the application.
 
 Compare that with [`CompileIn`](tool.md#use-the-compiler-as-a-library), which compiles every file as a document in its own right. Given a folder where `Register.play` declares `InvoiceRegistered` and `Submit.play` produces it, `CompileIn` reports:
 
@@ -52,7 +52,7 @@ Submit.play(6,9): warning PLAY0167: Unknown policy 'CanManageInvoice' - declare 
 Submit.play(7,9): warning PLAY0166: Unknown event 'InvoiceRegistered' - declare it with 'event InvoiceRegistered'
 ```
 
-None of those are real. `CompileFolder` reports nothing, because none of them are missing - they are just in another file. Both calls remain available: reach for `CompileIn` only when the files genuinely are separate documents that happen to share a folder.
+Those declarations are missing from `Submit.play` in isolation, not from the assembled application. `CompileFolder` resolves them across the files. Use `CompileIn` only when the files are independent documents that happen to share a folder.
 
 ### Compiling documents in memory
 
@@ -98,7 +98,7 @@ Module and feature `documentation` follows first-wins merge order, just like des
 
 ### Diagnostics know which file they came from
 
-A single document needs no file identity - there is one source text, and you handed it over. A folder does, so every `SourceLocation` in a folder compilation carries the relative path of the file it came from:
+A diagnostic in a multi-file model needs to identify its source document. Every `SourceLocation` in a folder compilation therefore carries the relative path of the file it came from:
 
 ```csharp
 foreach (var diagnostic in compilation.Result.Diagnostics)
@@ -122,7 +122,7 @@ foreach (var diagnostic in compilation.Result.Diagnostics)
 
 ### Drive a visitor over the folder
 
-Consumers do not usually want the syntax tree - they want their own representation of it, which is what [the visitors and the walker](visitors.md) are for. Both the folder and the single file have a visitor overload, so a consumer takes one path regardless of how the application arrived:
+To turn the compiled syntax tree into your own representation, pass a [visitor](visitors.md). The folder and file entry points both accept one:
 
 ```csharp
 var compiler = new PlayFileCompiler();
@@ -135,18 +135,21 @@ Both return an `ApplicationCompilation<T>` carrying the visitor's result and the
 
 ### The CLI does this too
 
-`screenplay <folder>` verifies the folder as one application. `screenplay <file>` still verifies that one file on its own, which is what you want when a generator just produced it:
+`screenplay <folder>` verifies every `.play` file in the folder as one application. `screenplay <file>` verifies the file and any documents its file imports reach:
 
 ```bash
 screenplay path/to/screenplays          # the folder, as one application
 screenplay path/to/invoicing.play       # that file, on its own
 ```
 
+The second command checks only `invoicing.play` when it has no file imports. For an importing root, see [Compile an application](imports.md#compile-an-application).
+
 ## Propose revision-safe workspace changes
 
-A host that edits existing source should keep the exact documents—not only the merged syntax tree—as its
-authority. `ScreenplayWorkspace` admits strict UTF-8 documents, portable paths, stable document identities, and an
-identity catalog, then derives the current semantic compilation without rewriting the source bytes:
+When an editor changes an existing model, the source bytes matter as well as the model's meaning. Keep the exact
+documents in a `ScreenplayWorkspace` rather than reconstructing them from the merged syntax tree. The workspace
+accepts strict UTF-8 documents, portable paths, stable document identities and an identity catalog, which records
+the durable identities assigned to model elements. It derives semantic compilation without rewriting the source:
 
 ```csharp
 using Cratis.Screenplay.Semantics;
@@ -166,9 +169,9 @@ byte and exposes the failed `Compilation`; opening imperfect source never destro
 
 ### Use identities owned by another system
 
-An authoring system such as Studio can keep its durable keys authoritative without constructing semantic addresses
-for hashing or formatting canonical identity strings. Create semantic identities from the artifact kind and stable
-key, and scope event-contract identities to the stable application identity:
+If your authoring system already assigns durable keys, use those keys to create Screenplay identities rather than
+constructing semantic addresses for hashing or formatting canonical identity strings. Create semantic identities
+from the artifact kind and stable key, and scope event-contract identities to the stable application identity:
 
 ```csharp
 using System.Text;
@@ -229,7 +232,8 @@ them only through the transaction's explicit `SemanticIdentityRename` and `Event
 Screenplay never guesses continuity from similar names or locations. The original three-argument overload and the
 address/name-derived identity factories remain the compatibility path for existing source.
 
-Changes are pure proposals tied to both the workspace revision and identity-catalog revision:
+Propose changes against the workspace and identity-catalog revisions you read. These checks prevent a proposal
+based on an older source or catalog state from being accepted:
 
 ```csharp
 var result = workspace.Propose(new WorkspaceTransactionRequest
@@ -258,12 +262,12 @@ if (result.Success)
 
 A stale revision, portable path collision, duplicate owner, malformed operation, invalid identity migration, or
 failed compile rejects the complete proposal. The original workspace is untouched. The write plan contains exact
-before/after documents but performs no file-system operation; CLI and Studio decide whether and where to publish it.
+before/after documents but performs no file-system operation; the consuming host decides whether and where to save it.
 Document key renames preserve `DocumentId` explicitly. Removing declarations requires explicit semantic and event
 retirements, so deleting source cannot silently erase durable identity continuity.
 
-This transaction layer deliberately operates on whole documents. Single-file↔folder restructuring builds on
-top of it rather than introducing a second mutation contract - and so does the first semantic patch below.
+Whole-document changes, single-file-to-folder restructuring and the field-level patches below use this same
+transaction contract. Review the returned write plan before your host saves the candidate.
 
 ### Patch a slice description by its stable semantic identity
 
@@ -382,7 +386,7 @@ foreach (var file in writer.Expand(application))
 writer.WriteTo(application, root);
 ```
 
-`Expand` hands the files back rather than writing them, so the same structure can go to disk, into an archive, or straight down a wire without the expansion knowing which. `WriteTo` creates every folder it needs and overwrites the files it names - it leaves anything else beneath the root alone, so a removed slice leaves its file behind. Clear the folder first when the structure must be exactly what the application says.
+Use `Expand` when you need to inspect or package the files before writing them. `WriteTo` creates the folders it needs and overwrites the files it names, but leaves other files beneath the root alone. A previously removed slice can therefore leave a stale `.play` file that the next folder compilation will include. Write generated layouts to a fresh destination, or use a workspace write plan to review changes to an existing model.
 
 ### What lands where
 
@@ -426,7 +430,7 @@ Nothing is written twice. The restated `module Invoicing` in a slice file carrie
 
 ## How the files become one application
 
-Merging follows a single rule: **the documents of a folder are one document**. From that everything else follows.
+The merge combines declarations into one application. Repeated module and feature headers identify the same container; they do not create separate copies. Other declarations follow these rules:
 
 | Declaration | What the merge does |
 |---|---|
@@ -438,7 +442,7 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | `uses` on a module or feature | Accumulated under that owner, in file-path order. Attaching the same behavior with the same arguments from a second file is ignored with a `PLAY0340` warning, so it runs once; the same behavior with different arguments is two distinct attachments, and both are kept. Expansion writes them only in the owner's own file. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
 | `domain`, `authentication`, `onboarding`, `identity` | At most one for the whole folder. A second file declaring one is an error. |
-| `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
+| Unquoted contract `import` | Merged and de-duplicated. A contract import declared anywhere applies to the whole application, exactly as it does within a single document. Quoted file imports select and place documents before the merge. |
 | `seed` | Accumulated, the same way multiple `seed` blocks accumulate within one document. |
 | `description` on a module or feature | The first one given wins. A second, different one is a warning - only the file that owns the folder is expected to describe it. |
 
@@ -454,7 +458,7 @@ Duplicates *within* one file are left to the single document compiler, which alr
 
 ### Why `import` still means what it meant
 
-`import` names something that comes from outside the application - another bounded context, another team's contract. It does not resolve against another file of the same folder, and it does not need to: the files of a folder are one document, so a name declared in one of them is simply in scope in all of them. Adding an import for a name your own application declares would say the opposite of what is true, so the compiler reports it as a `PLAY0290` warning. Such an import has no effect: every reference and every consistency check resolves the name to your own declaration, exactly as it would without the import.
+An unquoted contract import names something from outside the application, such as another bounded context's event contract. It does not load another `.play` file. Declarations in files compiled together are already in scope, so importing one of your own declarations reports `PLAY0290` and has no effect. References and consistency checks still resolve to the local declaration. Use a [quoted file import](imports.md#import-files) when you need to include another document.
 
 ```text
 application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemView', which this application declares - the import has no effect
@@ -464,16 +468,15 @@ application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemVi
 
 `PlayFileWriter.Expand` uses the same folder-layout projection as workspace layout changes. `WriteTo` still creates directories and overwrites files directly for existing callers; unlike a workspace write plan it has no prior revision, hashes or managed-file inventory to check. `PlayFileCompiler.CompileFolder` shares the folder merge used by workspace semantic compilation, but retains its syntax result, source strings, caller-supplied compiler/file discovery, and diagnostics even on invalid input. It cannot open an exact-byte workspace without changing legacy path/encoding admission and failure behavior. Use workspace proposals and the destination's drift checks when a save must reject stale files.
 
-Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms, behavior attachments on modules and features, and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
+Writing a folder and compiling it back preserves the application's declarations, subject to the ordering rules below. The Invoicing round-trip specification checks structural equivalence after accounting for path order, then checks that expanding the result produces the same file paths and contents. A separate fixture covers module forms, behavior attachments on modules and features, and contributions on modules, features and nested features, including when the owner's file sorts after its descendants.
 
 **Declaration order depends on the layout.** With the import-less `PlayFileWriter.Expand` layout, modules, features and slices come back sorted by name rather than in the order they were authored. MCP `expand-layout` writes imports that preserve sibling order and a child's position among its parent's other members, so collapsing that layout retains interleaved contributions and templates too. Everything within a slice - including the order of its events, commands, constraints and specifications - comes back in authored order, because it never left its file. Without import-position evidence, members of a module or feature that span different files have no shared source order; canonical printing uses kind order for those members. Leading and trailing comments follow the declarations they annotate when the layout changes. Blank lines are canonical rather than copied from the original source.
 
 ## When a folder is the wrong fit
 
-- **A small model.** One file you can read top to bottom beats eleven folders. Reach for a folder when the single file stops being navigable, not before.
-- **Something generated end to end.** If a tool produces the document and nothing hand-edits it, the structure buys you nothing - print it with [the printer](printing.md) and write one file.
-- **Several unrelated applications in one folder.** `CompileFolder` will merge them, because it has no way to know they are not one application. Give each its own folder.
-- **Names a file system cannot tell apart.** Two declarations at the same level whose names differ only in casing have nowhere separate to live, and expansion throws `AmbiguousPlayFilePath` rather than silently losing one.
+Keep a small model in one file while it remains easy to navigate. A document generated end to end may also be simpler to write with [the printer](printing.md) than to split into folders.
+
+Give unrelated applications separate roots: `CompileFolder` merges everything beneath its root and cannot infer that the files describe different applications. Also avoid sibling declaration names that differ only in casing. Expansion rejects paths a file system cannot distinguish with `AmbiguousPlayFilePath` rather than silently losing a declaration.
 
 ## See also
 

@@ -1,37 +1,15 @@
 ---
-title: Imports
-description: "Compose a Screenplay application from focused .play files with imports and globs, placed in a module or feature."
+title: "Screenplay imports: compose an application"
+description: "Use quoted Screenplay imports to compose .play files and place their contents, or unquoted imports to reference external event contracts."
 ---
 
-A [folder of `.play` files](folders.md) is already one application. That solves the large file, but each file still has to say where it belongs. A slice file restates `module Ordering` and `feature Orders` above the one slice it is about. And nothing in the folder says *what* the application is made of - that is whatever happens to be on disk.
+Cratis Screenplay uses quoted file imports to compose `.play` documents into one application and unquoted contract imports to reference events owned by another bounded context. Use file imports when you want a root document to choose the model's files and place their contents within modules or features.
 
-`import "<path or glob>"` fixes both. A file names the files that belong to it. Where the import is written decides where they belong, so a file that tells one part of the story can hold just that part.
-
-## Source and stream declarations across files
-
-[Event sources](event-sources.md) stay application-owned, including in module/feature-placed files. Streams belong to their physical source, not to the importing module or the file path. Files compiled together share declarations independently of file order; a quoted import includes files, while an unquoted contract import does not supply an unknown source or stream shape. Only exact `Source.Stream` references resolve. Duplicate physical parents make every child ambiguous, and conflicting/cyclic placement must be repaired before selecting a navigable owner.
-
-## Operation declarations across files
-
-[Systems](operations.md) stay application-scoped even in placed files; operations belong to their declared slice. Files compiled together share explicit operation declarations. `produces Register.NotifyAccounting` can select that operation from another slice in the same assembled model. Use enough owning scope to make the reference unique; ambiguous event/operation candidates are not guessed. Newly qualified productions must resolve to an explicit operation, not an event. An unquoted contract import does not invent an operation shape or kind. These constructs remain syntax-only, not admitted by any supported executable model (ESM) version yet (`PLAY0268`).
-
-## Import a public event contract (source only)
-
-`import Fulfillment.Dispatched from "Fulfillment"` names a public event contract
-with an opaque origin. The qualified contract name remains separate from the origin.
-The origin must be a nonblank quoted string; it is neither a file import nor a reference
-that declaration rename resolves. Ordinary `import Fulfillment.Dispatched` keeps its
-legacy behavior. A quoted first operand still imports files; adding `from` to a file
-import is invalid.
-
-The C# and TypeScript ASTs carry `Visibility` and `Origin` as additive properties. Origin-bearing
-imports have public visibility. Both compilers' printers and typed JSON preserve both, and Monaco and
-VS Code recognize them, but semantic compilation refuses them with `PLAY0268` naming #481. Stage and
-renderer support does not exist, so source acceptance alone does not authorize execution.
+[Folder compilation](folders.md) includes every `.play` file beneath its root, and each standalone slice document must restate its module and feature. A quoted `import "<path or glob>"` gives you another way to organize the model: name the files to include, then put the import inside the module or feature they belong to. A glob is a path pattern that matches several files.
 
 ## Import files
 
-At the top level of a document, `import` with a quoted path brings in whole documents:
+Start with a root document that imports the application's files. At the top level, a quoted import brings in whole documents:
 
 **application.play**
 
@@ -43,13 +21,13 @@ import "**/*.play"
 concept OrderId : Uuid
 ```
 
-That root file is the whole application: it compiles everything beneath it. Compile it with `screenplay application.play`, and only what it imports is compiled - a scratch file next to it is not part of the application unless something imports it.
+Compile this root with `screenplay application.play` to load the files its imports reach. Here, `**/*.play` includes every `.play` file beneath the root, including scratch files. To keep work-in-progress files out of the application, put them outside the matched paths or replace the broad glob with narrower imports.
 
 The quote is what tells the two kinds of `import` apart. `import Customers.CustomerRegistered` still names a contract from another bounded context, and `import "Ordering/*.play"` names files.
 
 ## Where an import sits decides where files belong
 
-Written inside a `module` or a `feature`, an import *places* the files it brings in: their top level is that module's or feature's body. A module file can describe the module and take in its features:
+Put an import inside a `module` or `feature` to assign its imported files to that container. Their top-level declarations become part of the container's body rather than the application's top level. For example, a module file can describe the module and import its features:
 
 **Ordering/Ordering.play**
 
@@ -69,7 +47,7 @@ feature Orders
   import "*.play"
 ```
 
-And a slice file holds the slice - nothing above it, because the import already said where it goes:
+The slice file needs no enclosing headers because the feature's import supplies them:
 
 **Ordering/Orders/PlaceOrder.play**
 
@@ -91,6 +69,62 @@ Placement composes. `Orders.play` is placed in `module Ordering` by the module f
 A root file can import `**/*.play` while each module file imports its own folder, and each feature file its own. Every file is still compiled once, however many imports match it. When several imports place the same file, **the deepest placement wins**. `PlaceOrder.play` above is matched by the root (the application), by the module file (`module Ordering`) and by the feature file (`feature Ordering.Orders`), and it belongs to the feature.
 
 Two placements where neither lies inside the other - one import puts a file in `module Ordering`, another in `module Billing` - are a conflict, reported where the second import is written. A file belongs in one place.
+
+## Patterns
+
+Import patterns match paths relative to the folder containing the importing file.
+A whole-segment `**` matches zero or more folders; `*` and `?` stay within one path
+segment. Matching is case-sensitive (only the `.play` extension check is case-insensitive).
+
+| Pattern | Matches |
+| --- | --- |
+| `Orders.play` | That one file. It must exist. |
+| `*.play` | Every `.play` file in the same folder. |
+| `*/*.play` | Every `.play` file one folder down. |
+| `**/*.play` | Every `.play` file at any depth, including this folder. |
+| `Orders/Place?rder.play` | `?` stands for one character. |
+| `../Shared/*.play` | `..` climbs out of the folder. |
+
+Only `.play` files ever match, and a file never imports itself, so `import "*.play"` in a module file imports its siblings and not the module file. A pattern with a wildcard that matches nothing is a warning; a plain path to a file that does not exist is an error.
+
+## What a placed file may hold
+
+A placed file can still declare application-wide elements such as concepts, types and policies. A slice file can therefore declare a concept used only by that slice. Its other top-level declarations must fit the container where it is placed:
+
+| Placed in | Its top level may also hold |
+| --- | --- |
+| the application | `module` |
+| a module | `description`, `authorize`, `import`, `screen template`, `dialog template`, `form`, `contribute`, `feature`, `on`, `uses` |
+| a feature | `description`, `authorize`, `import`, `feature`, `slice`, `contribute`, `on`, `uses` |
+
+A file placed in a module may restate `module Ordering` - the module it is placed in - and its body joins the placement. Declaring any other module is an error. A `description` or `authorize` in a placed file belongs to the module or feature it is placed in, and merges with the others exactly as it does across a folder.
+
+A file that is never imported is compiled as a whole document when you compile its folder, so a slice file nobody imports reports that `slice` belongs in a module or feature.
+
+## Compile an application
+
+Choose `CompileApplication` when the root's imports should decide membership. Choose `CompileFolder` when every `.play` file beneath the root belongs to the model. The CLI supports both:
+
+```shell
+screenplay application.play     # the root and everything it imports
+screenplay .                    # every file in the folder - imports still place what they import
+```
+
+From code, `IPlayFileCompiler.CompileApplication(path)` follows the imports from a root file, and `CompileFolder(root)` treats every file in the folder as a root. Workspaces and the executable semantic model resolve imports against their own documents. `PlayImports.Resolve` exposes which documents make up the application and where each is placed, for tools that need that information directly.
+
+A single-root compilation traverses imports depth-first in authored order. Folder
+compilation retains alphabetical file-path order for merging; import order supplies
+presentation ranks separately, as described below. Wildcard matches remain ordered
+by path. `expand-layout` uses those presentation ranks when writing child imports,
+so repeated expansion preserves the authored module, feature and slice order without
+changing merge precedence or event ownership. When collapsing imports, it also keeps
+children at their parent-relative import positions among contributions, templates and
+other members. Header comments stay with their physical declarations. Expansion uses the timeline's
+ordering-root selection, including a lone importing root document beside an import-less
+`application.play`. With no ordering root, it uses path order. Folder layouts
+written without imports by `IPlayFileWriter.Expand` still compile in path order.
+
+For layout changes that must preserve source and reject stale edits, continue with [Propose revision-safe workspace changes](folders.md#propose-revision-safe-workspace-changes). The sections below explain how imports affect board order and declarations shared across files.
 
 ## Order on the event model board
 
@@ -151,7 +185,7 @@ Verification preserves comments, document placements, existing catalog assignmen
 and executable readiness. In a fresh workspace, a proposal can establish missing
 document assignments using the existing document IDs and stable keys; it refuses
 any other catalog change. Assignments are persisted only on apply.
-Executable models require identical ESM bytes. When neither
+Executable models require identical executable semantic model (ESM) bytes. When neither
 side binds, a separate proof compares merged syntax modulo only timeline sibling
 order and verified import pins, and preserves admission diagnostic counts and
 severities. A one-sided change in model availability is refused. Repairs also
@@ -183,61 +217,27 @@ review the proposal and explicitly apply it. That session uses the C# proof abov
 without requesting unsupported pinned repair evidence. Buffer-local actions never
 silently apply a saved-file proposal.
 
-## Patterns
+## Source and stream declarations across files
 
-Import patterns use bounded, non-recursive matching. A whole-segment `**` matches
-zero or more folders; `*` and `?` stay within one path segment. Matching remains
-case-sensitive (only the `.play` extension check is case-insensitive).
+[Event sources](event-sources.md) stay application-owned, including in module/feature-placed files. Streams belong to their physical source, not to the importing module or the file path. Files compiled together share declarations independently of file order; a quoted import includes files, while an unquoted contract import does not supply an unknown source or stream shape. Only exact `Source.Stream` references resolve. Duplicate physical parents make every child ambiguous, and conflicting/cyclic placement must be repaired before selecting a navigable owner.
 
-A path is relative to the folder of the file that writes the import.
+## Operation declarations across files
 
-| Pattern | Matches |
-| --- | --- |
-| `Orders.play` | That one file. It must exist. |
-| `*.play` | Every `.play` file in the same folder. |
-| `*/*.play` | Every `.play` file one folder down. |
-| `**/*.play` | Every `.play` file at any depth, including this folder. |
-| `Orders/Place?rder.play` | `?` stands for one character. |
-| `../Shared/*.play` | `..` climbs out of the folder. |
+[Systems](operations.md) stay application-scoped even in placed files; operations belong to their declared slice. Files compiled together share explicit operation declarations. `produces Register.NotifyAccounting` can select that operation from another slice in the same assembled model. Use enough owning scope to make the reference unique; ambiguous event/operation candidates are not guessed. Newly qualified productions must resolve to an explicit operation, not an event. An unquoted contract import does not invent an operation shape or kind. These constructs remain syntax-only, not admitted by any supported ESM version (`PLAY0268`).
 
-Only `.play` files ever match, and a file never imports itself, so `import "*.play"` in a module file imports its siblings and not the module file. A pattern with a wildcard that matches nothing is a warning; a plain path to a file that does not exist is an error.
+## Import a public event contract (source only)
 
-## What a placed file may hold
+`import Fulfillment.Dispatched from "Fulfillment"` names a public event contract
+with an opaque origin. The qualified contract name remains separate from the origin.
+The origin must be a nonblank quoted string; it is neither a file import nor a reference
+that declaration rename resolves. Ordinary `import Fulfillment.Dispatched` keeps its
+legacy behavior. A quoted first operand still imports files; adding `from` to a file
+import is invalid.
 
-Whatever its placement, a file may declare what belongs to the application as a whole - concepts, types, policies, triggers, layouts and the rest - so a slice file can declare the concept only it uses. On top of that, its top level holds the body of where it is placed:
-
-| Placed in | Its top level may also hold |
-| --- | --- |
-| the application | `module` |
-| a module | `description`, `authorize`, `import`, `screen template`, `dialog template`, `form`, `contribute`, `feature`, `on`, `uses` |
-| a feature | `description`, `authorize`, `import`, `feature`, `slice`, `contribute`, `on`, `uses` |
-
-A file placed in a module may restate `module Ordering` - the module it is placed in - and its body joins the placement. Declaring any other module is an error. A `description` or `authorize` in a placed file belongs to the module or feature it is placed in, and merges with the others exactly as it does across a folder.
-
-A file that is never imported is compiled as a whole document when you compile its folder, so a slice file nobody imports reports that `slice` belongs in a module or feature.
-
-## Compile an application
-
-The CLI compiles the application a file is the root of, or every file in a folder:
-
-```shell
-screenplay application.play     # the root and everything it imports
-screenplay .                    # every file in the folder - imports still place what they import
-```
-
-From code, `IPlayFileCompiler.CompileApplication(path)` follows the imports from a root file, and `CompileFolder(root)` treats every file in the folder as a root. Workspaces and the executable semantic model resolve imports against their own documents, so a document set behaves the same way in a build, in an editor and over MCP. `PlayImports.Resolve` exposes the resolution itself - which documents make up the application and where each one is placed - for tools that want it.
-
-A single-root compilation traverses imports depth-first in authored order. Folder
-compilation retains alphabetical file-path order for merging; import order supplies
-presentation ranks separately, as described above. Wildcard matches remain ordered
-by path. `expand-layout` uses those presentation ranks when writing child imports,
-so repeated expansion preserves the authored module, feature and slice order without
-changing merge precedence or event ownership. When collapsing imports, it also keeps
-children at their parent-relative import positions among contributions, templates and
-other members. Header comments stay with their physical declarations. Expansion uses the timeline's
-ordering-root selection, including a lone importing barrel beside an import-less
-`application.play`. With no ordering root, it uses path order. Folder layouts
-written without imports by `IPlayFileWriter.Expand` still compile in path order.
+The C# and TypeScript ASTs carry `Visibility` and `Origin` as additive properties. Origin-bearing
+imports have public visibility. Both compilers' printers and typed JSON preserve both, and Monaco and
+VS Code recognize them, but semantic compilation refuses them with `PLAY0268` naming #481. Stage and
+renderer support does not exist, so source acceptance alone does not authorize execution.
 
 ## See also
 

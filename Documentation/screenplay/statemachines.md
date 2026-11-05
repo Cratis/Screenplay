@@ -1,13 +1,15 @@
 ---
-title: "State machines"
-description: "Declare in Screenplay where a thing is in its lifecycle: the read model a state machine follows, its states, the events that move it on and what entering a state does."
+title: "Screenplay state machines: follow a business lifecycle"
+description: "Use a Screenplay state machine to follow an order's lifecycle from recorded events, define transitions and specify commands or workflows on entry."
 ---
 
 # State machines
 
-A state machine says where something is in its lifecycle - an order is Placed, Paid, Packed, Shipped, Delivered - and what moves it on. It **follows** one read model whose key is the identity of one instance, and it never decides on commands: it follows facts that already happened. Its meaning is the meaning of the Cratis.Orleans `EventSourcedStateMachine`, so the model can be edited in Studio, executed and drawn by Stage, and pinned by specifications.
+In Cratis Screenplay, a state machine follows recorded events to show where one business item is in its lifecycle. Use it to describe an order moving from Placed to Paid and eventually Delivered, rather than to decide whether a command is allowed.
 
-A `statemachine` is a top-level declaration, a sibling of `system`, `trigger`, `policy` and `persona`. It names events, commands, workflows and a read model declared in slices of any module. It is admitted from [ESM v36](interoperability.md); a model that declares one selects it.
+The machine follows a read model: a view built from events, whose key identifies one instance. After `PaymentCaptured`, the order can enter Paid and start fulfilment. The state machine describes the lifecycle consequence of that fact; the [workflow](workflows.md) describes the work that follows, including waits and recovery paths. Command validation and [requirements](commands.md) still decide whether a requested change may happen.
+
+Its semantics match Cratis Choreography's `EventSourcedStateMachine`. A `statemachine` is a top-level declaration, beside `system`, `trigger`, `policy` and `persona`, and can reference declarations in slices of any module. It is admitted from executable semantic model ([ESM v36](interoperability.md)); declaring one selects that version.
 
 ## Syntax
 
@@ -25,6 +27,8 @@ statemachine <Name>
 - Exactly one state is `initial`. Any number are `final`, and a final state has no transitions.
 - `on <Event> [when <condition>] -> <State>` is a transition. The condition is the [condition grammar](commands.md) of `produces when`, over the properties of the followed read model, as the read model is after the event. A condition over an optional property is refused when the model is bound: optional properties have no portable comparison.
 - `entering send <Command>` and `entering start <Workflow>` say what entering the state does. Entering may run again on redelivery, so the command or workflow must be safe to repeat.
+
+The following lifecycle is an excerpt: `OrderProgress`, its events, `NotifyCustomer` and `FulfilOrder` must be declared elsewhere in the application. Read it alongside the [fulfilment workflow](workflows.md#syntax), which uses the same order subject.
 
 ```screenplay
 statemachine OrderLifecycle
@@ -51,13 +55,15 @@ statemachine OrderLifecycle
 
 ## What it means
 
-- A state **allows** exactly the targets of the transitions written under it.
-- When an event arrives, the machine takes the **first transition on that event, in declaration order across the whole machine**, whose condition holds and whose target the current state allows. Anything else is ignored; that is not an error. A transition is not tied to the state it is written under - the writing state only contributes its target to what is allowed - so a transition is normally written under every state that should take it.
-- The current state is derived from the followed read model after a restart. It is never stored separately.
+In the example, `PaymentCaptured` allows an order in Placed to move to Paid. Entering Paid starts `FulfilOrder`; entering Shipped sends `NotifyCustomer`. These entry effects may run again on redelivery, so their receivers must be safe to repeat.
+
+Transition lookup has a detail worth checking when you add states. A state allows exactly the targets written under it, but the machine searches transitions for an event across the whole declaration, in declaration order. It takes the first transition whose condition holds and whose target the current state allows. The condition sees the followed read model after the event.
+
+A transition is therefore not restricted to the state it is written under. Write it under each state that should allow its target, and check the order of any competing transitions. If none qualifies, the event is ignored rather than rejected. After a restart, the current state is derived from the followed read model; it is never stored separately.
 
 ## Specifications
 
-A state machine is pinned by specifications written inside it, with the slice steps `given <Event>` (with `for` and values) and `when append <Event>`, and these expectations:
+Write a specification inside the state machine to check a lifecycle outcome. Use `given <Event>` (with `for` and values) for history, then `when append <Event>` for the new fact. The expectations describe both the resulting state and any entry effects:
 
 | Line | Meaning |
 | --- | --- |
@@ -77,7 +83,7 @@ specification AReturnWithoutAReasonIsIgnored
   then is Paid
 ```
 
-The reference evaluator replays the facts, folds the followed read model after each one and applies the transition rule above; `screenplay test` runs these specifications with the others.
+Here, `ParcelReturned` has an empty reason, so it does not move the paid order to Refunded. The reference evaluator replays the facts, updates the followed read model after each one and applies the transition rule above. `screenplay test` runs these specifications with the others.
 
 ## Checks
 

@@ -1,19 +1,19 @@
 ---
-title: "Visitors and traversal"
-description: "Walk a Screenplay syntax tree with root visitors or the walker to turn a .play model into your own artifacts such as C# or diagrams."
+title: "Screenplay visitors: traverse a syntax tree"
+description: "Use ScreenplaySyntaxWalker to inspect selected nodes, or a root visitor to transform a parsed Screenplay document into your own representation."
 ---
 
 # Visitors and traversal
 
-Screenplay's job is to make a `.play` document compilable to anything - C#, TypeScript, a diagram, a database schema, a checklist for an auditor. The compiler gets you a syntax tree. Turning that tree into your own representation is what this page is about.
+Use `ScreenplaySyntaxWalker` to inspect selected nodes in a parsed Screenplay document without writing the traversal yourself. A root visitor serves a different task: it receives the whole tree and returns your representation, such as a diagram or a documentation index.
 
-In TypeScript, the [TypeScript compiler](typescript-compiler.md) offers the same visitors and walker.
+Start with the walker when you need particular declarations. Use a root visitor when you already own the whole transformation. The [TypeScript compiler](typescript-compiler.md) provides corresponding APIs for the syntax it models.
 
-There are two surfaces, and they answer different questions. The **root visitors** answer "hand me the tree". The **walker** answers "call me for the parts I care about". Reach for the walker first - it is the one that keeps working when the language grows.
+Both APIs work with written structure, not resolved executable meaning. If you need to generate target code from semantic identities and admitted capabilities, use the [rendering contract](interoperability.md#level-3-screenplay-to-artifact-rendering). To write a changed syntax tree back to `.play`, use the [printer](printing.md).
 
 ## The problem the walker solves
 
-Without a traversal layer, consuming the tree means writing the walk yourself: loop the modules, loop the features, loop the slices, loop the commands, remember that a feature can nest inside a feature, remember that a `children` block in a projection contains more blocks. Every consumer writes that code, every consumer writes it slightly differently, and every consumer has to revisit it when the language grows a construct.
+A loop over modules, features and slices can miss a nested feature. Projection `children` blocks introduce another nesting level, and inline events need visiting too. Maintaining those loops in every consumer makes each consumer responsible for new language constructs.
 
 `ScreenplaySyntaxWalker` writes it once. It has one `Visit<Kind>` method per node kind, and the default implementation of each one visits that node's children. You derive from it and override only the kinds you care about:
 
@@ -39,13 +39,13 @@ var collector = new EventCollector();
 collector.VisitApplication(result.Value!);
 ```
 
-That is the whole consumer. It never mentions modules, features or slices, yet it finds every event in the document - including events inside a feature nested three levels deep, because the base class already knows how to get there.
+The collector records each event as the walker reaches it, including events in nested features and command-inline declarations. Calling `base.VisitEvent` keeps traversal going through the event's children; the collector does not need to know which containers led to that event.
 
 ## Overriding one kind leaves the rest alone
 
-The default implementations are the point. A method you do not override still visits its children, so a walker that overrides `VisitEvent` is unaffected by commands, screens, projections, captures and specifications - and stays unaffected when the language grows a construct it has never heard of. A new node kind arrives as a new `Visit` method plus a call to it from the walk of its parent; your subclass compiles unchanged and keeps walking.
+A method you do not override still visits its children. When the library adds a node kind, it adds a `Visit` method and a call from the parent traversal. Your subclass can keep using the inherited traversal without adding an override for that kind.
 
-That is the compatibility guarantee this API exists to give. See [Syntax tree compatibility](ast-compatibility.md) for what else the tree promises.
+This protects consumers from having to enumerate every node kind themselves. See [Syntax tree compatibility](ast-compatibility.md) for the API's versioning contract.
 
 ## Calling `base` continues; not calling it prunes
 
@@ -119,7 +119,7 @@ A form the walker does not recognize - one from a newer version of the language,
 
 ## The root visitor interfaces
 
-The `IApplicationSyntaxVisitor<T>`, `IProjectionSyntaxVisitor<T>`, `ISpecificationSyntaxVisitor<T>` and `ICaptureSyntaxVisitor<T>` interfaces are still there, and the compiler still drives them:
+Use `IApplicationSyntaxVisitor<T>`, `IProjectionSyntaxVisitor<T>`, `ISpecificationSyntaxVisitor<T>` or `ICaptureSyntaxVisitor<T>` when the result comes from a transformation of an entire root. The compiler can invoke the visitor for you:
 
 ```csharp
 var result = compiler.Compile(source, myApplicationVisitor);
@@ -127,9 +127,9 @@ var result = compiler.Compile(source, myApplicationVisitor);
 
 They are a one-call handoff: the compiler gives your visitor the root and your visitor produces a value. That is the right shape when your consumer really is a single transformation of the whole document - [the printer](printing.md) implements all four, and `Compile(source, visitor)` gives you the result and the diagnostics in one `CompilationResult`.
 
-It is the wrong shape when your consumer cares about parts of the tree, because nothing dispatches for you. `IModuleSyntaxVisitor<T>`, `IFeatureSyntaxVisitor<T>`, `ISliceSyntaxVisitor<T>` and `IConstraintSyntaxVisitor<T>` are composition helpers for that style - a slice visitor a feature visitor calls - not a traversal engine. Use them to structure a transformation you are writing by hand; use the walker when you want the walk given to you.
+A root visitor does not dispatch to child visitors automatically. `IModuleSyntaxVisitor<T>`, `IFeatureSyntaxVisitor<T>`, `ISliceSyntaxVisitor<T>` and `IConstraintSyntaxVisitor<T>` help you compose a manual transformation: a feature visitor can call a slice visitor, for example. Use the walker instead when you want inherited child traversal.
 
-The two compose. Compile once, then walk:
+In C#, the compiler's visitor overload runs only when compilation succeeds. For the same boundary with a walker, compile first and check the result before walking:
 
 ```csharp
 var result = compiler.Compile(source);

@@ -1,6 +1,6 @@
 ---
 title: "Screens capability matrix"
-description: "Trace each language-level Screenplay screens release criterion to its syntax, compiler treatment, diagnostics and known gaps."
+description: "Trace Cratis Screenplay screen capabilities to syntax, compiler checks and diagnostics, distinguishing shared parsing from C# reference validation."
 ---
 
 # Screens capability matrix
@@ -20,7 +20,7 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Screen identity (536.2) | `screen <Name>` in a slice; `description` | Authoring; `PLAY0269` in the ESM | `PLAY0103` malformed directive | None |
 | Package components and exact stable ids (536.2) | `component <Package.Component> <name>`, `id "<stable-id>"` | Authoring; the stable id is never normalized | `PLAY0103`, `PLAY0632` package not in a ui profile | None |
 | Typed bindings (536.2) | `from data`, `from query`, `from component`, `from literal`, `mode`, `null`, `expected` | Typed `UiBindingSyntax`; invalid text kept as `rawText` | `PLAY0103` | None |
-| Typed literals (536.2) | `property <path> = <string, number, bool, null, array or object>` | Typed `ExpressionSyntax` | `PLAY0103` | None |
+| Typed literals (536.2) | `property <path> = <string, number, bool or null>`; indented [structured values](structured-values.md) for objects and lists | Typed `ExpressionSyntax` | `PLAY0103`, `PLAY0833` inline JSON | None |
 | Exposed values (536.2) | `exposes <name> from <binding>` on components; `exposes <name> <Type>` on templates | Authoring | `PLAY0103`, `PLAY0026` | None |
 | Toolbars and presentation (536.2) | `toolbar`, `item`, `presentation`, `icon` | Authoring | `PLAY0103` | None |
 
@@ -52,7 +52,7 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Navigation targets and URL overrides (536.3) | `navigate to <Screen> [by <param>]`, `route`, `outlet`, `parameter` | Scene `DestinationReference` | `PLAY0107`, `PLAY0197` unknown screen, `PLAY0630` | None |
 | Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination outlet\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0224`, `PLAY0654` unknown destination | None |
 | Application navigation regions (spec NAV1-NAV12) | `navigation topbar\|sidebar [inherits\|extends\|overrides]` with `logo`, `item <id> title target slot`, nested sidebar items, in a `layout` and a `module` | Scene `NavigationModel`: `ApplicationNavigation`, `ModuleNavigation`, `NavigationRegion` and `NavItem`; the module mode is Scene's `NavigationRegionMode` | `PLAY0740`-`PLAY0752` | None. The TypeScript compiler skips the blocks; the checks are C#-only |
-| Toolbar buttons invoking State Change slices (spec TB1-TB6) | `button <id> title "…" [slice <Slice>] [emphasis primary\|secondary\|quiet] [icon <name>]` in a screen `toolbar` | Scene `ToolbarButton` (`Slice`, `Emphasis`, `Icon`) | `PLAY0760`-`PLAY0765` | None. The TypeScript compiler skips the lines; the checks are C#-only |
+| Toolbar buttons invoking State Change slices (spec TB1-TB6) | `button <id> title "…" [slice <Slice>] [emphasis primary\|secondary\|quiet] [icon <name>]` in a screen `toolbar` | Scene `ToolbarButton` (`Slice`, `Emphasis`, `Icon`) | `PLAY0760` syntax checks in C# and TypeScript; `PLAY0761`-`PLAY0765` slice-reference and duplicate-id checks in C# | None |
 | Dialog placement (536.3) | `open dialog <DialogTemplate>`, `destination dialog <DialogTemplate>` | Authoring | `PLAY0654` | None |
 
 ## Packages and design-time output
@@ -80,6 +80,8 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Typed edit of a member that is empty and omitted from the node JSON (765) | `when_adding_to_a_member_that_is_omitted_while_empty`: the first region, button or sub-item can be added |
 | Canonical shell vector (765) | `screen-shell-navigation-positive`, seven rejection vectors and a `Desktop` Stage plan in `ScreenCompositionCorpus.V1`, held by `when_compiling_the_screen_shell_vectors` and `when_compiling_the_v1_screen_composition_vectors`; the TypeScript compiler accepts the same document in `Conformance/diagnostics.json` |
 
-The TypeScript compiler parses and preserves every construct above. The reference checks (owners, instances, cycles,
-outlets, destinations, scopes, contribution points, packages) run in the C# compiler; the language service shows them
-when a Monaco host supplies the native compiler's diagnostics.
+TypeScript parsing and preservation do not cover every construct above: application navigation blocks are skipped,
+not preserved. Toolbar buttons are parsed and preserved, with syntax checks (`PLAY0760`); slice-reference and
+duplicate-id checks (`PLAY0761`–`PLAY0765`) run in C#. The other reference checks (owners, instances, cycles,
+outlets, destinations, scopes, contribution points, packages) also run in the C# compiler; the language service shows
+the native checks when a Monaco host supplies the native compiler's diagnostics.

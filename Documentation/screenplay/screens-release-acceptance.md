@@ -1,10 +1,10 @@
 ---
 title: Screens release acceptance matrix
-description: Every acceptance criterion of the screens-release issues, mapped to merged source, released versions and executed proof.
+description: Cratis Screenplay screens acceptance records link criteria to released versions and execution evidence, with remaining work scoped to each version.
 ---
 
-This page tracks the screens release against the original issue bodies. Each row is one acceptance criterion from a
-scoped issue, marked with the strongest evidence that exists for it today:
+This page records screens release acceptance against the original issue bodies. Each row is one acceptance criterion
+from a scoped issue, with evidence and remaining work tied to the version and vector named in that section or row:
 
 | Status | Meaning |
 | --- | --- |
@@ -17,7 +17,9 @@ released artifact was executed. A run on a local build is listed as progress, no
 
 ## Release vector
 
-The matrix was reconciled on 9 and 10 October 2026, last against this vector:
+The initial matrix was reconciled on 9 and 10 October 2026 against the historical vector below. The original criteria
+refer to this vector unless a section or row names a later one; they do not describe the latest releases. Later
+production Studio execution is recorded under criterion 766.4.
 
 | Component | Version | Notes |
 | --- | --- | --- |
@@ -25,7 +27,7 @@ The matrix was reconciled on 9 and 10 October 2026, last against this vector:
 | Screenplay | 4.124.0 | Conformance harness and corpus, and screen composition syntax for exposures, instances and template content ([Screenplay#602](https://github.com/Cratis/Screenplay/pull/602)). The CLI and Stage bundle the 4.114.0 screen ABI. |
 | Stage | 4.51.3 / 4.52.0 | 4.51.3 is the CLI 3.41.0 default. 4.52.0 renders generated React applications on the Stage frontend runtime ([Stage#289](https://github.com/Cratis/Stage/pull/289)); no public CLI bundles it yet. |
 | CLI | 3.41.0 | Defaults to Stage 4.51.3. Refuses a UI profile it cannot honor with nothing published, and lets `cratis screenplay generate` recover a rendered application ([cli#301](https://github.com/Cratis/cli/pull/301)). |
-| Studio | 0.141.0 | Deployed. Adds generation previews with digests, Play and static parity, guarded slice planning and migration checks ([Studio#1638](https://github.com/Cratis/Studio/pull/1638)), and composite template selection ([Studio#1639](https://github.com/Cratis/Studio/pull/1639)). Production requires a signed-in user, so no Studio behavior has run against it. |
+| Studio | 0.141.0 | Deployed. Adds generation previews with digests, Play and static parity, guarded slice planning and migration checks ([Studio#1638](https://github.com/Cratis/Studio/pull/1638)), and composite template selection ([Studio#1639](https://github.com/Cratis/Studio/pull/1639)). Production required a signed-in user; no Studio behavior was executed against this historical vector. |
 | AI | 7.20.0 | Screen guidance names the passing public vector ([AI#573](https://github.com/Cratis/AI/pull/573)); real MCP stdio transcript ([AI#563](https://github.com/Cratis/AI/pull/563)). |
 
 ## Executed proof
@@ -120,7 +122,7 @@ change from expecting an input to verifying the generated identifier in the proj
 | # | Criterion | Status | Evidence or remaining work |
 | --- | --- | --- | --- |
 | 7.1 | A master/detail application binds a query to a table, selection to details, and an auto/manual multi-column form. | PASS | Query table, selection driving details, and native command forms with validation and submission all pass in the browser. Proven on public CLI 3.41.0 with Stage 4.51.3 (`browser-native-controls-runtime-3.41.0-4.51.3`). |
-| 7.2 | Recursive shell/module/feature/slice composition; templates, exposed settings, toolbar dialogs/outlets and URLs survive save/export/import. | PARTIAL | Survives Screenplay parse, print and MCP edits. Studio save/export/import has not run, because production Studio is not deployed. |
+| 7.2 | Recursive shell/module/feature/slice composition; templates, exposed settings, toolbar dialogs/outlets and URLs survive save/export/import. | PARTIAL | Survives Screenplay parse, print and MCP edits. Studio save/export/import was not executed for this vector. |
 | 7.3 | One package contract across Studio, embedded Event Models/VS Code, Stage runtime and generated React. | PARTIAL | Scene hosts cover standalone, embedded and webview rendering ([Scene#79](https://github.com/Cratis/Scene/pull/79)); the Stage runtime loads the package profile. The embedded host and generated React are not exercised. |
 | 7.4 | An AI agent creates and modifies the multi-file application through Screenplay MCP; examples compile and run. | PARTIAL | MCP authoring and the stdio transcript pass on CLI 3.41.0, and the authored application runs in the browser. An AI-edited application has not been run end to end. |
 | 7.5 | Studio Play uses the full surface with only the upper-right toolbar and restores authoring chrome on Stop. | PARTIAL | Implemented ([Studio#1608](https://github.com/Cratis/Studio/pull/1608), [Studio#1619](https://github.com/Cratis/Studio/pull/1619)) and automated ([Studio#1628](https://github.com/Cratis/Studio/pull/1628)). Not executed against production Studio. |

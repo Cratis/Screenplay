@@ -1,6 +1,6 @@
 ---
 title: Completeness checks
-description: Select structural warnings for missing connections in a valid Screenplay model.
+description: Cratis Screenplay completeness checks find missing connections in valid models through opt-in structural warnings selected with --check.
 ---
 
 Use opt-in structural checks to find missing connections in an otherwise valid model:

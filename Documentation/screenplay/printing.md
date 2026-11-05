@@ -1,13 +1,13 @@
 ---
-title: "Printing and generating"
-description: "Turn a Screenplay syntax tree back into .play text with the printer, to round-trip edits or generate a model from scratch."
+title: "Screenplay printing: generate .play text from syntax"
+description: "Print a Screenplay syntax tree as .play text after an edit or model import, with normalized layout and comments retained where source metadata allows."
 ---
 
 # Printing and generating
 
-The compiler turns `.play` text into a syntax tree. The printer does the reverse: it turns a syntax tree back into `.play` text. Together they let a tool read Screenplay, change it, and write it back out - or build a tree from scratch and generate a `.play` file from a model that was never text to begin with.
+The Screenplay printer turns a syntax tree into `.play` text. Use it after changing a parsed model or building syntax from another representation, so your tool can produce a document that readers can review and compile again.
 
-This is what a designer or exporter uses: assemble the syntax nodes that describe an application, hand them to the printer, and get valid Screenplay you can save, diff and feed to anything that consumes `.play` files.
+Printing normalizes layout rather than preserving every source byte. Parsed comments stay with their declarations where the source metadata allows; [authoring workspace](ast-authoring.md) `PreserveTrivia` is the option when unchanged bytes must survive. If your output is target application code rather than `.play` source, use the [rendering contract](interoperability.md#level-3-screenplay-to-artifact-rendering) instead.
 
 ## The printer
 
@@ -29,11 +29,11 @@ var source = printer.Print(application);
 | `Print(SpecificationSyntax)` | a standalone specification |
 | `Print(CaptureSyntax)` | a standalone capture |
 
-The result is indentation-based Screenplay using two spaces per level - the same offside-rule layout the compiler expects.
+The result uses two spaces per indentation level. Indentation defines block boundaries in Screenplay, so the printer supplies the layout the parser needs rather than leaving it to your exporter.
 
 ## Round-tripping
 
-Compiling and printing are inverses. Printing a tree and compiling the result gives back an equivalent tree, and printing that again gives back identical text:
+For a valid syntax tree, printing and compiling produces an equivalent syntax tree. Printing that result again gives identical text, which lets you check that generated source has reached a stable form:
 
 ```csharp
 using Cratis.Screenplay;
@@ -49,13 +49,13 @@ var printed = printer.Print(tree);
 var reprinted = printer.Print(compiler.Compile(printed).Value!);
 ```
 
-Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out with the rest of the document meaning exactly what it did. Comments from parsed source stay with their declarations; layout is normalized - see [what printing does not keep](#what-printing-does-not-keep).
+This is a syntax round trip, not a semantic validation result. An edit can still introduce an unresolved reference or change behavior. Check the resulting model with the semantic compiler when your tool needs that verdict, and review [what printing does not keep](#what-printing-does-not-keep) before replacing authored files.
 
-These details make the guarantee hold for values you did not type yourself:
+Values supplied by your tool need the same care as parsed values. The printer escapes a `"` or a `\` in a description, message, label or tag using [the grammar's string escapes](grammar.md#string-escapes). Compiling the text restores the value; you do not need to strip quotes before printing it.
 
-- **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
-- **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere. Legacy `double` literals print as decimal text, not exponent notation, even for large integers and small fractions. Recompiling preserves their represented double value; exact-mode literals keep their exact canonical text.
-- **Grouping is written out.** Every condition - a [policy](policies.md) `require`, a `produces when` - binds `and` tighter than `or`, so the printer adds the parentheses a condition needs to compile back to the tree it came from, and adds them again wherever `or` and `and` mix so the text does not rely on the reader knowing which binds tighter. You build the tree you mean and the text follows - there is no flag to remember to set.
+Numeric output is culture-invariant. Every numeric literal, whether `decimal`, `float`, `int`, `long` or `double`, uses a `.` separator regardless of `CurrentCulture`. A machine set to `nb-NO` therefore produces the same numeric spelling. Legacy `double` literals print as decimal text rather than exponent notation, preserving their represented double value on recompilation; exact-mode literals keep their exact canonical text.
+
+The printer also writes the parentheses needed to preserve condition grouping. A [policy](policies.md) `require` or a `produces when` condition binds `and` tighter than `or`. Where they mix, explicit grouping lets the reader follow the tree without relying on remembered precedence.
 
 ## Key and route ordering
 
@@ -153,7 +153,7 @@ comments with no enclosing physical declaration stay on the application.
 
 ## Generating from a model
 
-You do not have to start from text. Build the syntax nodes directly and print them to generate Screenplay from your own representation:
+An importer or model designer can start without source text. Build the syntax nodes directly, then print the application:
 
 ```csharp
 using Cratis.Screenplay.Diagnostics;
@@ -186,7 +186,7 @@ without source text, which print in canonical kind order.
 
 ## When one document is too much
 
-The printer renders the whole application as one document, which is what you want until the application outgrows a file anyone can navigate. At that point the same tree can be written as a folder instead - a folder per module, per feature and per slice - and compiled back as one application. Same printer underneath, same round-trip guarantee. See [Folders](folders.md).
+When a single generated document becomes hard to navigate, write the same application as a [folder of `.play` files](folders.md), with files organized by module, feature and slice. Folder compilation assembles them into one application; use that workflow rather than splitting printed text at arbitrary lines.
 
 ## See also
 

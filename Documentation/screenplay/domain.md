@@ -5,7 +5,7 @@ description: "Declare the business domain a Screenplay .play file belongs to, as
 
 # Domain
 
-A `.play` file can declare the domain it belongs to. The domain is a qualified name that groups related files — typically the name of the business domain a bounded context sits in.
+Use `domain` to group related `.play` files under a business domain. Its qualified name identifies the domain a file belongs to, typically the business area containing its bounded context. The [module](slices.md#module) names that bounded context within the model.
 
 ## Syntax
 
@@ -15,9 +15,7 @@ domain <Qualified.Name>
 
 ## Rules
 
-- **Optional** — a file without a `domain` line belongs to no domain.
-- **At most one per file** — a second `domain` line is a compile error.
-- **First in the file** — the declaration must appear before everything else, including imports.
+Put `domain` first in the file, before imports or any other declaration. It is optional: a file without a `domain` line belongs to no domain. Declare it at most once per file; a second `domain` line is a compile error.
 
 ## Example
 
@@ -30,4 +28,4 @@ module Invoicing
   ...
 ```
 
-An `import` with an unquoted, qualified name names a contract from another bounded context. To bring in other `.play` files of the same application, quote a path or glob instead - see [Imports](imports.md).
+Here, `domain Sales` groups the file under Sales, while `module Invoicing` names its bounded context. The unquoted `import Customers.CustomerRegistered` refers to a contract from another bounded context. To bring in other `.play` files of the same application, quote a path or glob instead; [Imports](imports.md) explains the two forms.

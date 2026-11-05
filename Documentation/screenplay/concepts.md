@@ -1,17 +1,13 @@
 ---
-title: "Concepts"
-description: "Declare Screenplay concepts, strongly typed names for primitive values, including where personal data and secrets are marked."
+title: "Cratis Screenplay concepts: name and validate domain values"
+description: "A Screenplay concept gives a primitive value a domain name and shared rules. Declare reusable value types and mark personal data or operational secrets."
 ---
 
 # Concepts
 
-Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Bare markers declare the protection a concept needs: `pii` marks personal data (GDPR Art. 4(1)); `secret` marks an operational secret, encrypted at rest without erasure and withheld from the causation chain. C# providers map these to Chronicle and Arc attributes as described below.
+A Cratis Screenplay concept gives a primitive value a domain name and shared validation rules. Declare `InvoiceId` instead of repeating `Uuid`, or `InvoiceNumber` instead of `String`, when the value has a meaning you want to preserve wherever it is used.
 
-Concepts declare `generate <strategy>` for server-created values; command properties declare `generated`. High-entropy strategies select ESM v15, except explicit unmodified `generate uuid` on Uuid, which is identical to the implicit default. See [Generated values](generated-values.md). Rules on generated concepts select ESM V20: Proven rules bind silently, Refuted rules fail with `PLAY0688` and a witness, and Unproven rules warn with `PLAY0689` and a reason. Runtime fixtures must satisfy both shape and rules. Explicit generation with compliance markers remains refused. Finite `pattern`, inclusive Int64 `random`, attached `rule` generation and String-concept `validate checksum luhn|mod11|mod97` select ESM v21. Checksum validation may be inline or nested under `validate`; it checks exact trailing digits on supplied and stored values independently of generation. Pattern dates use a pinned UTC fixture clock when present; see [patterns and checksums](generated-values/patterns.md).
-
-Editors can [check a concept declaration](concept-checks.md) and discover generation options through the public .NET catalog without compiling a whole application. To check an actual value instead, use [value-rule checks](value-rule-checks.md).
-
-A concept names one primitive value. For a shape made of several — the child records events carry — see [Types](types.md).
+Start with a name and primitive type, then use the concept on [command](commands.md), event or [read-model](readmodels.md) properties. A concept names one value; use a [type](types.md) for a record made of several values. Concepts also carry personal-data and secret markers, so the model records the protection a value needs without repeating it on each property.
 
 ## Syntax
 
@@ -68,6 +64,12 @@ concept ApiKey           : String   secret
 concept NationalIdNumber : String   pii secret
 concept DateOfBirth      : Date     pii
 ```
+
+## Generated concept values
+
+Use `generate <strategy>` when the server should create a value, and mark the command property `generated`. High-entropy strategies select ESM v15, except explicit unmodified `generate uuid` on Uuid, which is identical to the implicit default. See [Generated values](generated-values.md). Rules on generated concepts select ESM V20: Proven rules bind silently, Refuted rules fail with `PLAY0688` and a witness, and Unproven rules warn with `PLAY0689` and a reason. Runtime fixtures must satisfy both shape and rules. Explicit generation with compliance markers remains refused. Finite `pattern`, inclusive Int64 `random`, attached `rule` generation and String-concept `validate checksum luhn|mod11|mod97` select ESM v21. Checksum validation may be inline or nested under `validate`; it checks exact trailing digits on supplied and stored values independently of generation. Pattern dates use a pinned UTC fixture clock when present; see [patterns and checksums](generated-values/patterns.md).
+
+Editors can [check a concept declaration](concept-checks.md) and discover generation options through the public .NET catalog without compiling a whole application. To check an actual value instead, use [value-rule checks](value-rule-checks.md).
 
 ## Describe the value
 
@@ -192,6 +194,8 @@ Never renumber a published member or reuse its number for another meaning. [Mode
 
 ## Validation
 
+Declare validation on a concept when the rule belongs to the value wherever it is accepted, rather than to one command. The executable semantic model (ESM) is the normalized behavior contract used by execution tools; it admits only the rules described below.
+
 Date and DateTime concept rules remain authoring-only (`PLAY0268`): they also reach query arguments and clients, whose date-comparison contract is not admitted. ESM v26 instead admits date comparisons on command properties, including properties typed by a date concept. Date compares calendar dates; DateTime compares UTC instants at seven-digit tick precision. Only these command comparisons use instant equality; keys, constraints and specification expectations remain ordinal. See [chronological command date comparisons](commands.md#chronological-command-date-comparisons).
 
 Uuid concept rules remain authoring-only (`PLAY0268`) for the same reason. ESM v28 instead admits `==` and `!=` between Uuid command properties in `require` and `produces when`, including properties typed by a Uuid concept or identity; two concepts must then be the same concept. See [Uuid equality in command conditions](commands.md#uuid-equality-in-command-conditions).
@@ -284,10 +288,12 @@ concept PatientId : Uuid
 concept NationalId : String pii
 ```
 
-The mapping follows [decision 0034](https://github.com/Cratis/Screenplay/blob/main/decisions/0034-sensitive-means-operational-secret.md); names, scope and qualifiers follow [decision 0041](https://github.com/Cratis/Screenplay/blob/main/decisions/0041-personal-data-secrets-and-processing-purposes.md). Processing-purpose declarations, purpose coverage checks and a processing record are later phases, not available language features.
+The mapping follows [decision 0034](https://github.com/Cratis/Screenplay/blob/main/decisions/0034-sensitive-means-operational-secret.md); names, scope and qualifiers follow [decision 0041](https://github.com/Cratis/Screenplay/blob/main/decisions/0041-personal-data-secrets-and-processing-purposes.md). Use [processing purposes](purposes.md) to declare why protected values are used and review purpose coverage; those declarations do not prove lawful processing or provider enforcement.
 
 ## Attribute inheritance
 
 When a concept is used as a property type on a command or event, its attributes are inherited — you never annotate at the property level. Declaring `EmailAddress` as `pii` once means every event property, command property, and read model field typed as `EmailAddress` is treated as PII automatically.
 
 This holds through composite [types](types.md) too: a `pii` concept inside a `type` is personal data wherever that type is used.
+
+Next, use your concepts to [declare a command](commands.md). Put rules shared by every use of a value on the concept, and rules about a particular request on the command.

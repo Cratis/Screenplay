@@ -1,6 +1,6 @@
 ---
 title: Observation comparison API
-description: Compare declared event relationships with bounded host-supplied evidence.
+description: Compare a Cratis Screenplay model with host-supplied event registrations, appends and consumers to identify drift within explicit evidence coverage.
 ---
 
 <!-- Copyright (c) Cratis. All rights reserved. -->

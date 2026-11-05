@@ -1,20 +1,20 @@
 ---
-title: "Layouts and templates"
-description: "Declare Screenplay layouts, screen templates and dialog templates, and fill a template from a screen."
+title: "Screenplay layouts and templates: compose shared UI"
+description: "Use a Screenplay layout for the application shell, screen templates for reusable content regions, and dialog templates for content above the application."
 ---
 
 # Layouts and templates
 
-Four words, each meaning exactly one thing:
+A Screenplay layout defines the application shell; templates give screens reusable regions to fill. Use a screen template for content inside the shell and a dialog template for content that opens over it. This keeps shared navigation and framing separate from each screen's data and actions.
 
-| Word | What it is | How many |
+| Word | What it is | Where it belongs |
 | --- | --- | --- |
-| **Layout** | The application's base navigational look — the shell holding a top bar, a navigation region, a content region, a footer. | An application has **one**, and selects it. |
-| **Screen template** | A reusable shape that goes *inside* that shell, declared at module level. | An application has **many**. |
-| **Dialog template** | The same, for content that opens *over* the application. | An application has **many**. |
-| **Screen** | An instance — it names the structure it fills and provides the content. | One per thing a user looks at. |
+| **Layout** | The application shell, with regions such as a top bar, navigation, content and footer. | Selected by a UI profile. |
+| **Screen template** | A reusable structure inside the shell. | Declared on a module. |
+| **Dialog template** | A reusable structure for content that opens over the application. | Declared on a module. |
+| **Screen** | The content that fills a template's named regions. | Declared inside a slice. |
 
-A layout and a template are both made of the same two things: the **slots** they declare, and the **[arrangement](layout-arrangement.md)** positioning those slots. What separates them is where they sit and what they say about their parent.
+Layouts and templates declare slots: named regions where content belongs. An optional [arrangement](layout-arrangement.md) positions those slots. Start by naming the regions you need; add placement rules when the structure needs them.
 
 ## `layout` — the application's shell
 
@@ -83,15 +83,15 @@ module Invoicing
           sidebar
 ```
 
-`fits slot <name>` is the single rule that makes nesting work at every level, and it works by **slot name** rather than by where the template was declared: a template fits whichever structure in scope declares a slot of that name — the application layout, or another template that is itself inside it. Nesting therefore goes as deep as you build it, and the same word means the same thing however deep you go.
+`fits slot content` places `MasterDetail` in a parent's slot named `content`. Matching uses the slot name, not the template's declaration location. The parent can be the application layout or another template, so nested structures use the same placement rule.
 
-Templates are declared on a `module`. A feature or slice does not declare its own templates; it uses the ones its module declares. If two templates claim the same slot name, that is reported as ambiguous rather than guessed at — placing a template in the wrong region is far harder to diagnose than being told the name is not unique.
+Declare templates on a `module`; features and slices use them rather than declaring their own.
 
-It is optional. A template that does not say which slot it fills is still a valid declaration — where it lands is then decided by whatever renders it.
+You can omit `fits slot`. The template remains valid, and the renderer decides where to place it.
 
 ## `dialog template` — a shape over the application
 
-A dialog template is a screen template in everything but one respect: it declares no `fits slot`, because a dialog occupies no slot of the structure it opens over.
+A dialog template declares slots for content that opens over the application. It does not declare `fits slot`, because it does not occupy a region of the structure beneath it:
 
 ```screenplay
 module Invoicing
@@ -126,7 +126,7 @@ module Invoicing
                 column lineNumber
 ```
 
-The same directive fills a dialog template — a dialog is filled exactly like a screen, because from the screen's side there is no difference:
+To fill a dialog, name its dialog template with the same `template` directive. Here the screen supplies a title in `body` and a command action in `actions`:
 
 ```screenplay
 module Invoicing
@@ -147,11 +147,11 @@ module Invoicing
             action RegisterInvoice
 ```
 
-A screen never names the application's `layout`. The shell is selected once, per build, by a `ui profile` — which is what keeps a screen portable across web, mobile and desktop instead of tied to one shell.
+A screen names its content template, not the application's `layout`. A `ui profile` selects the shell once per build, so individual screens do not choose the application-wide frame.
 
 ## Own and blueprint templates
 
-A template comes from one of two places: the application's **own** templates, declared in its modules, or a **blueprint** - a package a `ui profile` lists under `packages` that ships ready-made layouts, screen templates and dialog templates. A reference says which:
+Use an own template when you declare the structure in the application. To reuse a packaged structure, reference a blueprint: a package listed under `packages` in a `ui profile` that supplies layouts, screen templates or dialog templates. The reference identifies which source to use:
 
 ```screenplay
 template MasterDetail
@@ -160,7 +160,7 @@ template blueprint Crm CustomerDetail version "^1.4"
 ```
 
 - `template <Name>` names an own template.
-- `template blueprint <Blueprint> <Name> [version "<range>"]` names the template `<Name>` of the blueprint package `<Blueprint>`. The optional `version` is the semver range of the blueprint the author accepts - Scene's subset: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. A range Scene cannot read is `PLAY0721`. Studio writes `^<installed version>` when it picks a template from the picker; leaving it out accepts any version.
+- `template blueprint <Blueprint> <Name> [version "<range>"]` names the template `<Name>` of the blueprint package `<Blueprint>`. The optional `version` limits the accepted package versions using Scene's supported semantic-version ranges: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. A range Scene cannot read is `PLAY0721`. Leaving it out accepts any version.
 - Both forms are valid wherever `template` is: as an assignment at application, module, feature or slice scope, and inside a screen. Scene resolves a reference with `resolveTemplateReference` (C# `TemplateReferenceResolver.Resolve`): `UnknownBlueprint`, `VersionNotSatisfied` (the installed blueprint has drifted outside the range) and `UnknownTemplate` are reported where the blueprint is installed, because the compiler has no visibility into a package's catalog.
 - When at least one `ui profile` lists packages, a blueprint reference whose blueprint no profile lists is `PLAY0722`, the same rule `PLAY0632` applies to components.
 - The same reference names the application's shell inside a `ui profile`: `root template <reference>` (with its `option` lines), and the template a new screen starts from, `new screens use template <reference>`. See [UI profile](ui-profile.md).
@@ -237,11 +237,11 @@ module Invoicing
 - A slice that presents nothing - an automation or translate slice - takes no template: using a restricted template there is `PLAY0631`, as is using one on a slice kind it excludes.
 - A template that declares no `scopes` is not restricted: the structural role decides, and the compiler accepts it wherever it is used.
 
-These are the rules of Scene's `ApplicableTemplates` (`scopes` and `sliceKinds` of the template metadata override the per-level defaults; an Automation slice has no presentation). The conformance vector `when_checking_template_applicability_against_the_scene_vectors` restates the cases of Scene's shared `template-applicability-fixtures.json` as Screenplay source and holds the two to the same decisions; the picker itself - which templates to offer where, from the own and blueprint templates - is Scene's `ApplicableTemplates`, and Studio calls it rather than repeating the rules.
+Scene's `ApplicableTemplates` uses `scopes` and `sliceKinds` metadata in place of its per-level defaults when deciding where a template applies. An Automation slice has no presentation. Use these restrictions to keep a template meant for one kind of task, such as a state-change dialog, out of unrelated template choices.
 
 ## `exposure` — letting a template be configured
 
-A template author decides which of its components a screen inside it may configure. That is an **exposure**, declared at the top level and keyed by the layout or template that owns the component:
+Declare an exposure when screens should be able to configure part of a shared template without changing the template itself. It names the component property that can change and, for collections, which operations are allowed. Put the declaration at the top level and name the layout or template that owns the component:
 
 ```screenplay
 exposure for MasterDetail
@@ -261,7 +261,7 @@ The owner must be a layout, screen template or dialog template (`PLAY0622`).
 
 ## `instance` — configuring what was exposed
 
-A screen, or a template nested in an owner's slot, stores values for what was exposed to it:
+After the owner exposes a property, a screen or nested template can store its configuration in an `instance`. This example sets a page size and adds a navigation item:
 
 ```screenplay
 instance InvoiceList
@@ -276,6 +276,8 @@ instance InvoiceList
 - `items <component>.<path>` adds items to a collection exposure; each `item <id>` holds `<field> = <value>` lines.
 
 The instance must be a screen, screen template or dialog template (`PLAY0626`). Storing a value no exposure exposes is `PLAY0627`; using `set` on a collection or `items` on a single value is `PLAY0628`. These map to Scene's `ExposureDeclaration` and `InstanceContribution`.
+
+Once the slots and template choices are in place, [arrange them](layout-arrangement.md) to control how they share space, or [fill them from a screen](screens.md#level-2-structure).
 
 ## See also
 

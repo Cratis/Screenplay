@@ -1,6 +1,6 @@
 ---
 title: Authoring with the MCP tools
-description: The typed propose, review and apply workflow with complete tool arguments, for client authors and for understanding what an assistant did on your behalf.
+description: Cratis Screenplay MCP tools accept typed proposals for model edits; review source, diagnostics and identity changes before explicitly applying them.
 ---
 
 This page shows the tool calls behind [Create a model](create.md) and

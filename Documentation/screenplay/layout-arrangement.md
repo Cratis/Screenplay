@@ -1,26 +1,26 @@
 ---
-title: "Layout arrangement"
-description: "Say how the slots of a Screenplay layout or template share space and reflow across size classes, using flow or freeform arrangements."
+title: "Screenplay layout arrangement: position template slots"
+description: "Use flow to reflow Screenplay slots as space changes, or freeform to position them at coordinates. Width and height classes select the arrangement."
 ---
 
 # Layout arrangement
 
-A [layout or template](templates.md) says a structure has a `sidebar` and a `main` — but not how those two slots share the available space, or what should happen when the available space changes shape. `arrangement` closes that gap: it says whether the slots reflow responsively (`flow`) or sit at pixel-precise coordinates (`freeform`), and it gives each mode its own way of varying by size.
+A Screenplay `arrangement` positions a layout or template's slots. Choose `flow` when content should reflow as space changes, or `freeform` when a dashboard or canvas needs explicit coordinates. Both let you change placement by available width and height without duplicating the screen's data and actions.
 
-`arrangement` works identically on all three slot-bearing declarations — the application's `layout`, a `screen template` and a `dialog template`.
+Declare it on the application's `layout`, a `screen template` or a `dialog template`. If you have not named the regions to place, start with [layouts and templates](templates.md).
 
 ## Size classes: width x height, not "orientation"
 
-Both arrangement modes vary by the same two-dimensional vocabulary: `width` and `height`, each either `compact` or `regular`. This is deliberately a matrix rather than an `orientation` keyword - phone portrait, phone landscape, tablet, and desktop narrow/wide all fall out of the width/height combination for free, without inventing a separate primitive for orientation.
+Both modes use `width` and `height`, each either `compact` or `regular`. Choose placement based on those available dimensions rather than a device name or orientation. A narrow desktop window can need the same arrangement as another compact-width surface.
 
 | | `height compact` | `height regular` |
 |---|---|---|
-| **`width compact`** | phone landscape | phone portrait |
-| **`width regular`** | tablet/desktop, short | tablet/desktop, tall |
+| **`width compact`** | Narrow, short space | Narrow, tall space |
+| **`width regular`** | Wide, short space | Wide, tall space |
 
 ## Declaring slots comes first
 
-A slot is declared once, by name, in the body — the arrangement then positions it:
+Name the regions in the layout or template body before deciding where to place them:
 
 ```screenplay
 module Invoicing
@@ -29,9 +29,9 @@ module Invoicing
     main
 ```
 
-That is a complete declaration. `arrangement` is optional, and a structure that only names its slots leaves the placement to whatever renders it.
+This declares `sidebar` and `main` without fixing their placement. `arrangement` is optional; omit it when the renderer should decide where the slots go.
 
-Because a slot is declared once, the arrangement never repeats what a slot *is*: `contributes` belongs on the declaration, and sizing belongs in the arrangement. A slot named only by an arrangement is still declared by it, so an arrangement on its own remains complete too.
+Keep contribution metadata on the slot declaration and sizing in the arrangement. An arrangement can also introduce a slot that has no separate declaration, so you do not have to repeat its name just to make it valid.
 
 ## `flow` — one tree, reflow via overrides
 
@@ -58,7 +58,7 @@ module Invoicing
 - A slot leaf can carry sizing: `width <n>` / `height <n>` (a fixed size), `grow` (fills the remaining space), or `span <n>` (grid tracks).
 - `when width <class>[, height <class>]` (or `when height <class>` alone) replaces the whole tree for that size-class condition. `MasterDetail` above renders `sidebar` beside `main` at regular width, and stacks `main` above `sidebar` at compact width.
 
-These primitives are deliberately neutral, not CSS-flavored - they map to CSS flex/grid on web and to native stack/grid equivalents elsewhere, the same platform-agnostic stance the rest of the language takes.
+The declaration expresses rows, columns and grids without embedding CSS or a native UI API. The rendering target is responsible for realizing those placement rules.
 
 ## `freeform` — one variant per size-class combination
 
@@ -83,7 +83,7 @@ module Dashboards
 - `place <Slot> at <x>,<y> size <w>,<h>` positions a slot; either size dimension can be `fill` instead of a pixel count.
 - `place <Slot> hidden` removes a slot from that variant entirely rather than positioning it.
 
-Critically: **one `screen`, one data/action/form contract, N `variant`s purely for placement.** Freeform needing "a layout per size" only touches where things sit - the binding contract a screen declares against its template never changes per variant. Duplicating the contract per size would repeat the exact mistake [forms](forms.md) were designed to avoid for command properties.
+The variants change placement only. In the compact variant above, `main` fills the width and `sidebar` is hidden; the screen still declares its data, actions and forms once. You do not need a separate screen contract for each size.
 
 A `variant` that omits a slot another variant of the same arrangement places (or explicitly hides) gets a compile-time warning - the slot's presence for that size class is otherwise undefined:
 
@@ -94,9 +94,11 @@ that does not mention slot 'x' - place it or declare it 'hidden'
 
 ## `flow` vs. `freeform` — pick one per arrangement
 
-An arrangement is either `flow` or `freeform` - the whole arrangement, not per slot. Mixing responsive flow for most of a structure with one pixel-precise region (a chart embedded in an otherwise-responsive dashboard) is a real, common need that this version does not yet support; it needs slot-level arrangement, which is a larger grammar change tracked separately. Until then, split a mixed structure into two: a `flow` structure for the responsive shell, with one of its slots filled by a screen whose own template is `freeform`.
+An arrangement uses one mode for the whole structure, not a different mode per slot. If a responsive shell needs a coordinate-positioned region, split it into two structures: use `flow` for the shell and fill one slot with a screen whose template uses `freeform`. Mixing the two modes inside one arrangement is not supported.
 
 Declaring a `variant` under `arrangement flow`, or a `row`/`column`/`grid` under `arrangement freeform`, is a compile-time error - the body must match the mode on the line that opened it.
+
+After choosing placement, [fill the template from a screen](screens.md#level-2-structure). The screen's bindings stay the same across the size variants you declared.
 
 ## See also
 

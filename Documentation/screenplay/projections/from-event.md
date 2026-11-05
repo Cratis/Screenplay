@@ -1,11 +1,11 @@
 ---
-title: "From Event"
-description: "Use the from directive to populate and update a Screenplay read model when a specific event occurs."
+title: "Screenplay projections: handle events with from"
+description: "Use a from block in a Screenplay projection to select the read model instance an event updates, assign its values, and maintain counters."
 ---
 
-# From Event
+<a id="from-event"></a>
 
-The `from` directive defines a rule that triggers when a specific event occurs. This is the primary way to populate and update read models from events.
+A `from` block in a Screenplay projection describes how one event creates or updates a read model instance. Use it to connect a recorded fact, such as a user registering, to the values your query should return.
 
 ## Basic Syntax
 
@@ -24,11 +24,11 @@ projection User => UserReadModel
     IsActive = true
 ```
 
-When a `UserRegistered` event occurs, it creates or updates a `UserReadModel` instance with the specified properties.
+Each `UserRegistered` event selects a `UserReadModel` instance by its event source ID because this block has no explicit key. The assignments copy the user's name and email and mark the user active. Other compatible, same-named properties can map automatically.
 
 ## Multiple Events (Compact Syntax)
 
-You can define multiple events on the same line separated by commas when they share the same mappings and configuration:
+When several event types make the same change, list them on one `from` line. They share the mappings below it:
 
 ```pdl
 projection TransportRoute => TransportRouteReadModel
@@ -45,7 +45,7 @@ projection TransportRoute => TransportRouteReadModel
   from WarehouseRouteAdded key id
 ```
 
-Each event can have its own inline key specification:
+Each event can select its instance differently. Here `EventA` uses `idA`, `EventB` uses `idB`, and `EventC` uses its event source ID. Any shared mapping, such as `Property = value`, must be valid for every event listed:
 
 ```pdl
 from EventA key idA, EventB key idB, EventC
@@ -54,7 +54,7 @@ from EventA key idA, EventB key idB, EventC
 
 ## With Keys
 
-Specify which property identifies the projection instance:
+Use an explicit key when the event carries the identity of the instance it should update. This event belongs to a group but updates the user identified by its `userId`:
 
 ```pdl
 from UserAssignedToGroup key userId
@@ -62,7 +62,7 @@ from UserAssignedToGroup key userId
   AssignedAt = $eventContext.occurred
 ```
 
-See [Keys](keys.md) for more details on key handling.
+`GroupId` records the event's source ID; it does not select the user instance. The `key userId` on `from` does that. [Keys](keys.md) covers default, constant and composite identities.
 
 ## With AutoMap
 
@@ -73,13 +73,13 @@ from UserRegistered
   IsActive = true
 ```
 
-AutoMap copies properties with matching names from the event to the read model, then applies any explicit mappings. AutoMap cannot be turned off inside a `from` block (`PLAY0075`); use `no automap` at the projection, children, `every`/`all` or join `with` level.
+AutoMap matches names case-insensitively and leaves explicitly mapped targets alone, so `IsActive = true` wins even if the event has an `isActive` property. A block containing only counter or arithmetic operations does not auto-map other properties.
 
-See [Auto-Map](auto-map) for more details.
+A `from` block cannot contain `automap` or `no automap` (`PLAY0075`). Set the policy at the projection or enclosing scope instead. [Auto-Map](auto-map) explains compatible types, scope settings and join behavior.
 
 ## Multiple From Blocks
 
-A projection can have multiple `from` blocks for different events:
+Give each event its own block when it changes different values. These handlers all use the default event-source key, so events for the same source update the same user:
 
 ```pdl
 projection User => UserReadModel
@@ -125,18 +125,11 @@ children members identified by userId
 
 ## Operations
 
-Within a `from` block, you can use:
-
-- **Property assignments**: `Name = value`
-- **Counters**: `increment`, `decrement`, `count`
-- **Arithmetic**: `add`, `subtract`
-- **AutoMap**: Automatically map matching properties
-- **Keys**: Specify instance identification
-- **Composite Keys**: Multi-property keys
+After selecting an instance, assign values with `Name = value`, change counters with `increment`, `decrement` or `count`, or accumulate amounts with `add` and `subtract`. [Property Mapping](property-mapping.md) explains assignments; [Arithmetic](arithmetic.md) covers running totals. AutoMap supplies matching properties where enabled, without a directive inside `from`.
 
 ## Event Context
 
-Access event metadata using `$eventContext`:
+Use `$eventContext` for values recorded alongside the event payload, such as when a login occurred and its position in the event sequence:
 
 ```pdl
 from UserLoggedIn
@@ -145,7 +138,7 @@ from UserLoggedIn
   count LoginCount
 ```
 
-See [Event Context](event-context.md) for available properties.
+This example uses Chronicle's metadata mappings. The reference evaluator supports the occurrence-time assignment but not `sequenceNumber`; a fact read through `occurred` must carry an explicit timestamp. [Event Context](event-context.md) separates the available paths from what executable specifications can evaluate.
 
 ## Nested Indentation
 
@@ -194,6 +187,8 @@ from PaymentReceived
 ```
 
 ### Complex Example
+
+The key selects an order, the assignments fill its view, and the counter belongs to that order instance, not to a global order total:
 
 ```pdl
 from OrderPlaced key orderId

@@ -1,17 +1,17 @@
 ---
-title: "Auto-Map"
-description: "AutoMap copies same-named event properties to the read model in a Screenplay projection; it is on by default and can be disabled."
+title: "Screenplay AutoMap: control default property mapping"
+description: "Screenplay AutoMap copies compatible, same-named event properties into a read model by default. Override individual values or disable it for a scope."
 ---
 
-# Auto-Map
+<a id="auto-map"></a>
 
-AutoMap automatically copies properties with matching names from the event to the read model, reducing boilerplate when property names align.
+AutoMap copies compatible event properties into same-named read model properties in a Screenplay projection. It is enabled by default, so you can concentrate explicit assignments on renamed values, constants and metadata rather than repeat every direct mapping.
 
-**AutoMap is enabled by default for all projections.** To disable it, use the `no automap` directive.
+Use `no automap` when you want to choose every mapped value yourself. It changes property mapping, not the key that selects the instance to update.
 
 ## Default Behavior
 
-By default, all property mappings automatically copy matching properties:
+A `from` block can rely on matching properties without listing them:
 
 ```pdl
 projection User => UserReadModel
@@ -19,7 +19,7 @@ projection User => UserReadModel
     IsActive = true
 ```
 
-This auto-maps all matching properties from `UserRegistered`, then applies the explicit `IsActive` mapping.
+Compatible properties such as `name` and `email` map to `Name` and `Email` without assignments. `IsActive` is explicitly set to `true`, so an event value with that name cannot overwrite it. Matching is case-insensitive.
 
 ## Disabling AutoMap
 
@@ -38,7 +38,7 @@ projection User => UserReadModel
     Email = email
 ```
 
-All properties must be mapped explicitly.
+At this level, only the explicit `Name` and `Email` assignments map event values. An inner scope that supports an AutoMap setting can opt back in with `automap`.
 
 ### Every- and All-Level Disable
 
@@ -51,7 +51,7 @@ projection User => UserReadModel
     LastUpdated = $eventContext.occurred
 ```
 
-AutoMap cannot be toggled inside an individual `from` block (`no automap` there is `PLAY0075`) — it is controlled at the projection, children, or nested level.
+This disables the automatic contribution of that `every` or `all` block; it does not disable AutoMap for separate `from` handlers. Neither `automap` nor `no automap` is accepted inside a `from` block (`PLAY0075`). Set the policy on the projection or a supported enclosing scope instead.
 
 ### Join-Level Disable
 
@@ -82,7 +82,7 @@ children members identified by userId
 
 ## Combining with Explicit Mappings
 
-AutoMap runs first, then explicit mappings override or add properties:
+An explicit mapping reserves its target property, so AutoMap leaves that target alone:
 
 ```pdl
 from UserRegistered
@@ -90,14 +90,15 @@ from UserRegistered
   CreatedAt = $eventContext.occurred
 ```
 
-If the event has `Name` and `Email` properties, they're auto-mapped. Then `IsActive` and `CreatedAt` are set explicitly.
+If the event has compatible `Name` and `Email` properties, AutoMap supplies them. The explicit mappings decide `IsActive` and `CreatedAt`, regardless of same-named event values.
 
 ## Matching Rules
 
-AutoMap matches properties when:
-- Property names are identical (ordinal, case-insensitive)
-- Both source (event) and target (read model) have the property
-- Types are compatible
+AutoMap matches event and read model property names using an ordinal, case-insensitive comparison. A target must exist, accept the source type and have no explicit mapping.
+
+In scoped executable semantics, types must match in kind, primitive or declared type, and collection shape; an optional source cannot fill a required target. Chronicle's runtime conversion is not a promise that the Screenplay semantic model can bind every conversion.
+
+There are two further exclusions: a `from` block containing only counter or arithmetic operations does not auto-map other properties, and join AutoMap does not reuse an event property already consumed by an explicit join mapping.
 
 Consider a `UserRegistered` event with the properties `Name`, `Email`, and `Age`, projected onto a read model with the properties `Name`, `Email`, `Age`, and `IsActive`:
 
@@ -107,18 +108,13 @@ projection User => UserReadModel
     IsActive = true
 ```
 
-With default AutoMap, `Name`, `Email`, and `Age` are automatically copied. `IsActive` does not exist on the event, so it must be set explicitly.
+With compatible types, `Name`, `Email` and `Age` are copied automatically. The explicit `IsActive` assignment supplies a value the event does not carry.
 
 ## Scope and Precedence
 
-1. **Projection-level** `no automap` disables AutoMap for all events
-2. **Every/All-level** `no automap` applies within that `every` or `all` block
-3. **Explicit mappings** always override AutoMap values when both exist
-4. **Join-level** `no automap` applies within the individual `with` block
-5. **Children-level** `no automap` applies to child events
-6. **Default is Enabled** - AutoMap works unless explicitly disabled
+The projection setting supplies the default for scopes without an explicit policy. `every` and `all` can set their own policy, as can each join `with` block and each `children` or `nested` block. Use `no automap` to disable matching there, or `automap` to enable it despite a disabled default.
 
-AutoMap cannot be toggled inside an individual `from` block (`PLAY0075`).
+Explicit mappings take precedence at every level. A `from` block inherits its scope's policy; putting an AutoMap directive inside it reports `PLAY0075`.
 
 ## Examples
 
@@ -209,31 +205,18 @@ projection Group => GroupReadModel
 
 ## When to Disable AutoMap
 
-**Disable AutoMap when:**
-- Event and read model property names don't align
-- You need explicit control over all mappings
-- Property transformations are required
-- You want to be explicit for code clarity
-- Only a few properties actually match
+Keep AutoMap when shared names represent the same values and compatible types. A few renamed or formatted fields do not require disabling it: map those targets explicitly and let the remaining direct matches stay automatic.
 
-**Keep AutoMap (default) when:**
-- Event and read model property names align
-- You want to reduce boilerplate
-- Properties have compatible types
-- You're following naming conventions
-- Most properties map directly
+Disable it when the projection should state every value it accepts from an event. This can make a deliberate mapping boundary easier to review, especially when similarly named properties do not mean the same thing.
 
 ## Best Practices
 
-1. **Leverage the Default**: AutoMap reduces boilerplate for most cases
-2. **Disable Selectively**: Use `no automap` only when needed
-3. **Document Assumptions**: AutoMap relies on naming conventions being consistent
-4. **Scope Deliberately**: `no automap` is not accepted inside a `from` block (`PLAY0075`). If only some events need explicit control, disable AutoMap at the projection or children level and map explicitly
-5. **Explicit Overrides**: Let AutoMap handle the bulk, use explicit mappings for specifics
+Review name matches as part of the projection's behavior. Adding a same-named event or read model property can add an automatic mapping; write an explicit assignment or disable matching if that would be the wrong result.
+
+If only some `from` handlers need fully explicit mappings, disable AutoMap on their shared projection or child scope and write the assignments there. There is no per-`from` toggle. Continue with [Property Mapping](property-mapping.md) for renamed values, clearing and metadata assignments.
 
 ## Migration from Explicit AutoMap
 
-If you're updating existing projections that used `automap` directive:
-- Remove all `automap` directives - they're now redundant (default behavior)
-- Add `no automap` only where you previously didn't have `automap`
-- Existing explicit mappings continue to work and override auto-mapped values
+An `automap` directive is redundant where it only repeats the enabled default. Keep it where it deliberately overrides `no automap` from the projection. Do not infer a disabled policy from the absence of an old directive: inspect the mappings and choose which values should be copied.
+
+Existing explicit mappings continue to take precedence. If you need to preserve an explicit-only mapping policy, add `no automap` at the appropriate scope and retain those assignments.

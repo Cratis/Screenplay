@@ -1,17 +1,17 @@
 ---
-title: "Screens"
-description: "Declare Screenplay screens, the UI of a StateView slice, from pure intent through structure to a template with inline code."
+title: "Screenplay screens: compose a user interface"
+description: "Screenplay screens connect query data to user actions. Add sections, fill template slots, or reference screen code to describe the UI a slice needs."
 ---
 
 # Screens
 
-A screen accepts one quoted or fenced-text `description` body line, printed first before `file` or other directives. This is report-only authoring metadata, not a localizable `title`, and does not render text in the UI. Sections and nested directives do not gain descriptions. Markdown `documentation` is not supported here.
+A Screenplay screen connects the data a user needs to see with the actions they can take. Declare it inside a slice, then choose how much UI structure to describe: data and actions alone, sections that fill a template, or a template with inline code. You can also reference an external screen file.
 
-Screens are UI declarations. They live inside `StateView` slices and support three levels of abstraction — from pure intent (Studio generates the component) to a filled template with inline code — plus a full external file reference.
+Start with a query and the commands the user needs. Add a template when you need to place that content in named regions; use [forms](forms.md) for command input rather than redeclaring command properties on the screen.
 
 ## The structure a screen fills
 
-A screen is an **instance**: it names the structure it fills and provides the content. That structure is a [screen template or dialog template](templates.md), declared at module level with named slots:
+A template gives screens a shared structure. It declares named slots, such as `sidebar` and `main`, and each screen supplies the content for those slots. Declare the [screen template or dialog template](templates.md) on the module:
 
 ```screenplay
 module Invoicing
@@ -22,7 +22,7 @@ module Invoicing
     main
 ```
 
-A screen never names the application's `layout` - the shell is selected once per build by a [ui profile](ui-profile.md), which is what keeps a screen portable across web, mobile and desktop.
+The screen names a template, not the application's `layout`. A [UI profile](ui-profile.md) selects the application shell once per build, separately from the content each screen supplies.
 
 A slot may also declare `contributes <ContributionPoint>`, opening it up to many contributors declared anywhere in the module/feature tree instead of the one parent that owns the slot - see [Contributions](contributions.md).
 
@@ -30,7 +30,7 @@ A template also says how its slots share space and vary by device size - respons
 
 ## Level 1 — Intent
 
-Declares data and available actions. Studio generates the component.
+Declare the query result the screen displays and the commands available to the user. This describes the screen's intent without choosing widgets or placement; rendering depends on the target.
 
 ```screenplay
 screen <Name>
@@ -58,7 +58,9 @@ Screen `data ... via query ... by value` and `navigate ... by value` remain scal
 
 ## Action subjects
 
-Plain actions, guarded actions and action toolbar items accept `for item` or `for screen` after the command or label, before an inline `label`. Plain actions also accept ordered `with <input> from <binding>` children. Prefer explicit scope in new documents. See [action subjects](action-subjects.md) for inference, nominal identifier/key binding, migration diagnostics and the separate authored/effective compiler boundary.
+Choose whether an action applies to the selected data item (`for item`) or to the screen as a whole (`for screen`). Plain actions, guarded actions and action toolbar items accept that choice after the command or label, before an inline `label`. Plain actions also accept ordered `with <input> from <binding>` children.
+
+Write the subject explicitly in new documents so the reader does not have to infer whether selection matters. [Action subjects](action-subjects.md) explains how the compiler supplies omitted subjects and binds command inputs.
 
 ## One action, several commands
 
@@ -107,7 +109,7 @@ Guarded actions are preserved by the compilers and shown as one labeled prototyp
 
 ## Level 2 — Structure
 
-Adds named sections, tables, and summary widgets, filling a screen template's slots. Command-bound forms are a separate, module-scoped construct - see [Forms](forms.md).
+Fill template slots when the screen needs a particular reading or working order. In `InvoiceDetails` below, the sidebar holds the invoice data and actions, while `main` holds the line-item table. Command-bound forms remain separate, module-scoped declarations; see [Forms](forms.md).
 
 ```screenplay
 screen InvoiceDetails
@@ -203,14 +205,14 @@ module Shop
 - `toolbar <name>` is allowed in a `feature` and a `module` body and takes the same `item` and `button` lines as a screen toolbar.
 - `confirm "<text>"` (or a `$strings.<key>` token) is an optional child line of an `item` and of a `button`: the user confirms before the command runs or the dialog opens. A button's dialog is its own confirmation, so `confirm` on a button asks first and then opens it.
 - The entries are contributed to the `toolbar` slot of every screen of the feature - its sub features' included - whose template declares one, after the screen's own entries. A module toolbar reaches every screen of the module the same way; the nearer toolbar comes later.
-- A `toolbar <name>` with no entry is valid: it is the lane a feature or module was given before any button was put in it (Studio's *Add toolbar*), and it is printed back as it was written. Add one through the typed edits as an `add` of a `ScreenToolbarSyntax` to the `toolbars` member of a `FeatureSyntax` or `ModuleSyntax`, then add buttons to its `buttons`.
+- A `toolbar <name>` with no entry is valid and prints back unchanged, so you can declare the toolbar before choosing its buttons. Through typed edits, add a `ScreenToolbarSyntax` to the `toolbars` member of a `FeatureSyntax` or `ModuleSyntax`, then add buttons to its `buttons`.
 - An `item … action <Command>` must name a command that a slice of the feature (or module) declares; otherwise `PLAY0808` warns. Ids are unique within the toolbar and shared with the buttons (`PLAY0765`); a button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`).
 
 Like every screen construct these are authoring syntax: the executable model does not carry them, and the printer writes them back where they were written.
 
 ## Package components and typed bindings
 
-Use `component` when a package supplies the widget, but the authored screen still needs a lossless Screenplay representation for Studio, Stage and MCP tools.
+Use `component` when a package supplies the widget. Declare its data sources, properties and outputs in Screenplay so the screen's wiring stays visible alongside the rest of the model.
 
 ```screenplay
 screen BrowseInvoices
@@ -263,7 +265,7 @@ Bindings are typed. A legacy bare binding such as `context selectedInvoice` is s
 | Literal property | `property <name> = <value>` | Assigns a typed scalar property value, not a binding. |
 | Structured property | `property <name>` with an indented block, or `property <name> none` | Assigns an object or a list, written as a [structured value](structured-values.md). |
 
-A component may declare `id "<stable-id>"` to preserve the exact stable instance id Studio and Stage use for bindings. If it omits `id`, the authored component name remains the stable id. The compiler does not normalize quoted ids.
+A component may declare `id "<stable-id>"` to give bindings an exact stable instance id to reference. If it omits `id`, the authored component name remains the stable id. The compiler does not normalize quoted ids.
 
 Literal values are typed: strings, numbers, booleans, `null`, lists and objects all round-trip as literal syntax nodes. They are not lossy strings.
 
@@ -293,7 +295,7 @@ Toolbar navigation items use the same parameter binding syntax. Route strings an
 
 ## Level 3 — Template with inline code
 
-Combines screen templates, structural sections, and inline React/HTML/TypeScript blocks. The surrounding Screenplay context provides the typed data contract; the inline block receives it as `Props`.
+Use an inline code block for content that needs custom rendering within a template slot. The example keeps the summary query beside its React component and uses a structural table in another slot. The component expects its renderer to supply `data` through `Props`; the fence itself does not define that type.
 
 ````screenplay
 screen InvoiceDashboard
@@ -322,7 +324,7 @@ screen InvoiceDashboard
 
 A screen binds to things by name — `via query All`, `action RegisterInvoice`, `navigate to InvoiceDetails`. A bare name resolves **from the inside out**: the slice it is written in, then the enclosing feature, then the module, then the document. The innermost match wins.
 
-That rule exists because a document generated from code cannot make every name unique. Query names come from C# method names, which are unique only per read model — one real application declares 76 queries under 37 distinct names, with `All` appearing 21 times. Two slices in one feature can each declare `All`, and each screen gets its own:
+This lets slices reuse useful names such as `All` without making every query name unique across the application. Two slices in one feature can each declare `All`, and each screen resolves the query in its own slice:
 
 ```screenplay
 module Invoicing
@@ -363,16 +365,20 @@ Ambiguous query 'All' - it matches 2 declarations equally well
 (Invoicing.Preparation.Queue, Invoicing.Preparation.Deviations); qualify it to say which
 ```
 
-Unresolved and ambiguous references are warnings rather than errors, because a name may still resolve to something outside the document. The point is that the gap is visible: before this, a screen could navigate to a screen that did not exist and nothing said so.
+Unresolved and ambiguous references are warnings rather than errors because a name may still resolve outside the document. Check those warnings before relying on a query, command or navigation target; qualify the name when the compiler lists competing declarations.
 
 ## File reference
 
-Full external implementation — Stage uses the file, the Screenplay contract remains visible to Studio.
+Use `file` to reference an external screen implementation instead of describing its contents inline. Screenplay records the path; the rendering target determines how to use that file.
 
 ```screenplay
 screen RegisterInvoiceScreen
   file Screens/RegisterInvoiceScreen.tsx
 ```
+
+## Screen metadata
+
+A screen accepts one quoted or fenced-text `description` body line. It describes the screen in reports and does not render UI text; use `title` for a localizable UI heading. The printer places `description` before `file` or other directives. Sections and nested directives do not accept descriptions, and screens do not support Markdown `documentation`.
 
 ## Inline code languages
 

@@ -1,6 +1,6 @@
 ---
 title: Check a concept declaration
-description: Inspect generation options, rule proofs and exact support for one concept without compiling an application.
+description: Check Cratis Screenplay concept declarations in C# for generation options, rule consistency and support counts without compiling an application.
 ---
 
 An editor can check a concept before it has an application or source text. Use `SemanticConceptCheck.Check` from the `Cratis.Screenplay` .NET library instead of copying generation rules or attributing compiler diagnostics by line number. This checks a declaration; use [value-rule checks](value-rule-checks.md) to check an actual value.

@@ -1,23 +1,25 @@
 ---
-title: See your event model
-description: Open the event model board in VS Code, an AI chat, your Arc application, the CLI, or Studio, and generate a model from existing code.
+title: Open and inspect a Cratis Screenplay event model
+description: Open a Cratis Screenplay event model in VS Code, trace commands and events, then validate the source. Choose another viewer when you need it.
 ---
 
-Open a `.play` model and follow a feature from the screen to its command, events,
-and read model. The same event model board is available in VS Code, an MCP App,
-your running Arc application, the CLI's browser explorer, and Cratis Studio.
-You do not need to redraw the diagram for each place.
+The Cratis Screenplay event model board lets you inspect a `.play` model without
+redrawing it as a separate diagram. Start in VS Code to trace a command to its
+events and read models, then validate the source before relying on it. The board
+shows what the model declares; it does not show a running application or passing
+tests.
 
-**Allow about 10 minutes.** Start in VS Code, then choose the other place that
-fits your work. You need VS Code with its `code` command on `PATH` and a `.play`
-model. For a ready-made example, open the
+Use your own model or the
 [Commerce sample](https://github.com/Cratis/Screenplay/tree/main/Samples/Commerce)
-from a Screenplay checkout; keep the whole folder, not just one slice file.
-The AI path needs .NET 10 and an MCP Apps-capable host. The code paths need a
-compatible .NET SDK, restored project dependencies, and the
-[Cratis CLI](/cli/getting-started/).
+from a Screenplay checkout. Keep the whole Commerce folder: a slice file refers
+to declarations in the other files. Later sections show how to open a board in
+an AI chat, an Arc application, the CLI's browser explorer or Cratis Studio.
 
 ## Open the board in VS Code
+
+You need VS Code 1.85 or later and a `.play` model. The board and local language
+assistance do not need .NET. For the terminal command below, make sure VS Code's
+`code` command is on `PATH`.
 
 1. Install the extension:
 
@@ -38,9 +40,22 @@ compatible .NET SDK, restored project dependencies, and the
 *Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
 on the open file's slices; open `application.play` for the whole application.*
 
-You have succeeded when you can find `PlaceOrder`, the `OrderPlaced` event it
-produces, and the specifications below the slice. The text remains the source of
-truth. See [VS Code extension](vscode.md) for editor associations and folder rules.
+Find the `PlaceOrder` command, follow its production to `OrderPlaced`, then read
+the specifications below the slice. Choose **Show Source** to compare those cards
+with the declarations. Open `application.play` when you want to follow the flow
+beyond this slice. The [VS Code extension guide](vscode.md) explains folder scope,
+navigation and editor associations.
+
+### Validate what you see
+
+If the board lists a problem, select it to open the source at that line. The board
+still draws the parts it can read, so a visible slice is not proof that the model
+is valid. After editing, use the [Screenplay CLI](tool.md#verify-your-files) to
+check the saved application. To check its behavior, use the separate
+[specification runner](tool.md#run-the-models-specifications); unsupported scenarios
+are reported as unsupported, not passed.
+
+### Read the board's details
 
 Command details list each production route override on its own line. They also show composite reads as named mappings. Query details include every named key part. Read-model key fields carry a key label in their schema. Reaction descriptions show `Observes Source.Stream`; reducer observation appears in slice details. These are authored declarations, not inferred runtime outcomes.
 
@@ -50,7 +65,10 @@ Explicit specification routes appear in the specification header, labeled by
 including when event cards show the linked event's current name instead of the
 step's name. Headers wrap so long route summaries remain readable. Payload values
 and event links stay unchanged. The board shows authored expectations, not test
-results. The reference runner checks these route assertions in ESM v8; drawing them alone does not prove they pass.
+results. The reference runner checks these route assertions in version 8 of the
+executable semantic model (ESM), the compiler's portable description of the
+model's behavior. Drawing the assertions does not run those checks or prove they
+pass.
 
 Specification headers also show deterministic `generated` fixtures, labeled
 **not request inputs**, scalar or record `then returns` assertions, and every
@@ -78,7 +96,10 @@ Specifications without these header details keep their titles.
 
 ## Ask for the board in an AI chat
 
-Install the standalone tool if you do not already have it:
+This route needs an MCP Apps-capable chat host and a compatible Screenplay MCP
+server. MCP (Model Context Protocol) connects the host to tools; MCP Apps lets it
+show the interactive board. For the .NET tool below, install the .NET 10 SDK first,
+and make sure the global tool directory is on `PATH`:
 
 ```bash
 dotnet tool install --global Cratis.Screenplay.Tool
@@ -140,6 +161,7 @@ Viewing never applies a proposal. Keep approval enabled for `apply` and
 
 ## Open it in your running Arc app
 
+You need a .NET SDK compatible with the project and its restored dependencies.
 For an ASP.NET Core application using Arc, add
 `Cratis.Arc.Screenplay.Embedded` and follow Arc's
 [embedded event-model setup](/arc/backend/csharp/embedded-event-model/).
@@ -161,7 +183,9 @@ Conversion warnings remain visible.*
 
 ## View a project without starting its app
 
-With CLI 3.23.0 or later, point the browser explorer at your project:
+Install the [Cratis CLI](/cli/getting-started/), version 3.23.0 or later, and
+have a .NET SDK compatible with the project and its restored dependencies.
+Point the browser explorer at your project:
 
 ```bash
 cratis view ./MyApp/MyApp.csproj
@@ -175,8 +199,8 @@ embedded output, or `--no-browser` to open the printed URL yourself.
 
 ![The browser explorer launched by cratis view lists the AspNetCore and Shared projects and displays the selected sample board. The generated model's conversion warnings remain visible.](images/cli-view-explorer.png)
 
-*The CLI and runtime routes use the same explorer; neither starts the business
-application to inspect its model.*
+*The CLI uses the same explorer as the runtime route, but does not start the
+business application. The runtime route is served by the app you already started.*
 
 ## Share a public model with Studio
 
@@ -229,17 +253,18 @@ alternative is `screenplay ./MyApp.play --warnaserror`; its flag is different.
 
 ## Know what the picture does not prove
 
-- **A board is a visualization, not execution.** The editor and browser boards
-  parse and draw the model; they do not run commands or specifications.
-- **Drawing is not full validation.** Boards can draw partial models with errors.
-  Use the compiler and CI validation for acceptance, not the presence of cards.
-- **Generation is not full reconstruction.** It recovers recognized source
-  declarations, not arbitrary handler logic, every UI detail, or runtime behavior.
-  Diagnostics and conversion warnings describe gaps; do not hide them.
-- **Versions matter.** A released surface can bundle an older compiler. MCP Apps
-  support, CLI hosting, language support, and viewer support are separate checks.
-- **Sharing exposes structure.** Keep runtime routes local and public viewer URLs
-  public-safe. No viewing step here requires applying an AI proposal.
+The editor and browser boards parse and draw the model. They do not run commands
+or specifications, and they can draw partial models with errors. Use compiler
+validation for source acceptance, including in CI, rather than the presence of
+cards.
+
+Generated models recover recognized source declarations, not arbitrary handler
+logic, every UI detail or runtime behavior. Read the diagnostics and conversion
+warnings for gaps. Check the consuming tool's bundled compiler as well: MCP Apps
+support, CLI hosting, language support and viewer support are separate concerns.
+
+Keep runtime viewer routes local and use only public-safe model URLs when
+sharing. No viewing step here requires applying an AI proposal.
 
 Next, [model your first feature](getting-started.md) or
 [review a change with MCP](mcp/edit.md).

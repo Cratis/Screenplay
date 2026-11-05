@@ -1,6 +1,6 @@
 ---
 title: Model comparison API
-description: Compare authored Screenplay models by persisted identity or exact address.
+description: Compare Cratis Screenplay models in C# by persisted identity or exact address to find structural changes, event contract differences and coverage gaps.
 ---
 
 ## Compare model structure in C#

@@ -1,15 +1,23 @@
 ---
-title: "Event sources and streams"
-description: "Name the business classification of an event source and its streams in Screenplay, then route a command to a stream."
+title: "Screenplay event sources and streams: route command events"
+description: "Declare Screenplay event sources and streams to route command events with scalar or composite keys and filter reactions by stored routing names."
 ---
 
 # Event sources and streams
 
-Name the business classification of an event source and its streams, then reference a stream from a command. Executable semantic model **v8** admits source declarations, scalar and composite command routes, and specification routes. ESM v10 adds production route overrides and observer filters. Models without the new forms keep their existing versions, canonical bytes and outcomes. Renderers and other consumers must explicitly admit the contract; a package update alone is not routing support.
+In Cratis Screenplay, event sources and streams classify where a command's events belong. Declare a source for a business category and streams within it, then reference a stream from the command. The route classifies the events; `for` independently selects the event source instance that receives them.
+
+For order fulfilment, keep that storage question separate from automation: routing a payment fact does not start fulfilment by itself. A [reaction](reactions.md) can observe matching facts, while a [state machine](statemachines.md) follows the order's lifecycle and a [workflow](workflows.md) describes the process that continues from it. The banking example below shows the routing mechanics with account and month keys.
+
+The executable semantic model (ESM) admits source declarations, scalar and composite command routes, and specification routes from v8. ESM v10 adds production route overrides and observer filters. Models without these forms keep their existing versions, canonical bytes and outcomes. A renderer or other consumer must explicitly admit the contract; updating its package alone does not establish routing support.
 
 ## Declare a source and its streams
 
-`eventsource` belongs to the application, including declarations in imported or placed files. A `stream` belongs to its exact physical source declaration. Both support one optional description and one rename-only `id "<old stored name>"` pin. New declarations omit pins. Sources and streams have catalog identities independent of file placement. Their stored names (`sourceKind` and `streamKind`) are the `id` pin when present, otherwise the declaration name. Stored source names must be unique application-wide; stored stream names must be unique within a source, including pin-versus-name collisions. Comparison is ordinal. Exactly `Default` is reserved as a stored source name, and exactly `All` is reserved as a stored stream name, including `id "All"` pins. Authoring validation in both C# and TypeScript reports `PLAY0802` at the declaration; the C# binder retains `PLAY0273` as a backstop. The ESM contract admits `All`/`Default`, but the compiler and the Cratis renderer refuse these reserved stored names. Executable validation and MCP readiness report the refusal. Streams stored as `all`, `ALL` or `Default` remain valid.
+An `eventsource` belongs to the application, even in an imported or placed file. A `stream` belongs to its exact physical source declaration. Both accept one optional description and one rename-only `id "<old stored name>"` pin. Omit pins on new declarations.
+
+Sources and streams have catalog identities independent of file placement. Their stored names (`sourceKind` and `streamKind`) come from the `id` pin when present, otherwise from the declaration name. Stored source names must be unique application-wide, and stored stream names unique within a source. This includes pin-versus-name collisions; comparison is ordinal.
+
+Do not use exactly `Default` as a stored source name or exactly `All` as a stored stream name, including through `id "All"`. Both authoring compilers report `PLAY0802` at the declaration, with `PLAY0273` retained as a C# binder backstop. Although the ESM contract admits those names, the compiler and Cratis renderer refuse them; executable validation and MCP readiness report the refusal. Streams stored as `all`, `ALL` or `Default` remain valid.
 
 | Member | Required | Meaning |
 | --- | --- | --- |
@@ -21,7 +29,7 @@ Name the business classification of an event source and its streams, then refere
 | `description` | No | Quoted text or an existing text/Markdown description fence |
 | `id "OldName"` | No | Retains an old stored name during a deliberate rename |
 
-An event source can also say where it sits on the event source canvas Studio draws: `position <x> <y>`, two whole numbers (negative allowed), at most once, anywhere in the source body. Like a sticky note it is authoring metadata - it never enters the executable model and a source without one is laid out by the canvas.
+Use `position <x> <y>` to place a source on the event source canvas. It takes two whole numbers, including negative numbers, and may appear once anywhere in the source body. This is authoring metadata, not part of the executable model. The canvas lays out sources that have no position.
 
 ```screenplay
 eventsource Product
@@ -56,7 +64,7 @@ Use a `streamId` block when one stream is keyed by several values, rather than i
 
 ## Reference a stream from a command
 
-This complete [authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/source-streams.play) declares scalar and composite keyed streams and maps command properties to them:
+In this complete [authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/source-streams.play), `Transactions` groups account activity by month. `Ledger` uses an account-and-month composite key. Both routes map existing command values rather than generating a new destination:
 
 ```screenplay
 concept AccountId : Uuid
@@ -99,7 +107,9 @@ module Banking
 
 A scalar keyed stream requires `streamId = <value>`; a composite stream requires the named part block. The forms cannot substitute for each other, and an unkeyed stream accepts neither. Known command paths must match the declared nominal type and be nonoptional scalars. Scalar literals and composite literal parts are checked against known types through the shared stream-id formatter. Text must be nonempty, Unicode NFC and free of lone UTF-16 surrogates; whitespace is accepted. Double-mode integer literals must be within ±9007199254740991. Exact-mode integers have no formatter bound. Invalid values are refused, never normalized or rounded.
 
-`stream Account.Transactions` classifies the command's events. It does **not** supply `for`, change plain-production allocation, or override inline-production destination rules. A routed command's identifier and each known production destination type must match the source's nominal identifier type; a mismatch is a `PLAY0504` error. An allocated destination uses the generated identifier's type when declared, otherwise the source identifier must be UUID-backed. A handler command may author a route even when its returned events are unavailable statically. The existing prohibition on combining `handler` and `produces` is unchanged.
+In `Deposit`, `stream Account.Transactions` classifies the events and `streamId = month` selects the monthly stream key. In `BookEntry`, the mappings are written month-first, but the stored composite id still follows the declaration's account-then-month order. `for accountId` independently selects the event source instance.
+
+A route does not supply `for`, change plain-production allocation or override inline-production destination rules. A routed command's identifier and each known production destination type must match the source's nominal identifier type; a mismatch reports `PLAY0504`. An allocated destination uses the generated identifier's type when declared, otherwise the source identifier must be UUID-backed. A handler command may author a route even when its returned events are unavailable statically, but it still cannot combine `handler` with `produces`.
 
 ## Production route overrides
 
@@ -113,7 +123,9 @@ There is no `no stream` override. An unkeyed override under a keyed command is v
 
 ## Observer filters
 
-A reaction or reducer may declare one leaf `from Source` or `from Source.Stream`. It observes only facts with matching stored source and stream names. Stream ids are never filtered. Unrouted facts never match. An observer without a filter is unchanged. A filtered reaction uses only declared-event triggers. Projections and captures do not gain metadata filters.
+Use `from Source` or `from Source.Stream` on a reaction or reducer when it should observe only facts with matching stored routing names. For example, a reaction filtered to `Payment.Transactions` does not also observe facts routed to `Payment.Audit`. The filter is one leaf line and never filters stream ids; unrouted facts do not match. Omitting it leaves observation unchanged.
+
+A filtered reaction uses only declared-event triggers. These metadata filters do not apply to projections or captures.
 
 `PLAY0665` rejects malformed, duplicate, child-bearing or unresolved filters. The C# compiler warns with `PLAY0666` when every statically known producer lands outside the filter. Command productions use their effective routes. Reaction productions, captures and public publication are unrouted. Handler and foreign origins are unknown and suppress the warning.
 
@@ -161,7 +173,7 @@ Colliding names, duplicate physical source declarations, captured route debt and
 
 ## Tooling support
 
-| Surface | Supported in this increment | Not available |
+| Surface | Supports | Not available |
 | --- | --- | --- |
 | C# and TypeScript syntax | Declarations, command and production routes, observer filters, key mappings, strict typed JSON, full-input ambiguity validation | Executable binding is provided by the C# semantic compiler |
 | Monaco and VS Code | Typed symbols, contextual tokens, reference/key completion, hover and exact source navigation where the host has authoritative source | Guessed effective routing, automatic source/stream rename or route selection |
@@ -171,4 +183,6 @@ Colliding names, duplicate physical source declarations, captured route debt and
 
 Source queries expose original source locations, not merged document line numbers. Physical read inventories include retained declarations and route candidates from errorful documents, separately from write eligibility. Parser and whole-assembly diagnostics remain visible; unknown parsed extent reports incomplete ownership rather than a unique survivor. Unresolved or conflicting import placement does not yield confident navigation. [Typed edits](ast-authoring.md#source-and-stream-edits) and [MCP inventories](mcp/authoring-tools.md#event-source-and-stream-authoring) retain revision checks, preview and explicit acceptance.
 
-Reaction direct-production routes, new concurrency flags, occurrence-time routing, constraint scopes, first-append rules and stream closing remain unadmitted. Property-path stream-id mappings remain refused under #574. Existing `concurrency` remains distinct from routing; omission retains its existing meaning. See [Commands](commands.md) and the [grammar](grammar.md).
+Routing does not admit direct-production routes on reactions, new concurrency flags, occurrence-time routing, constraint scopes, first-append rules or stream closing. Property-path stream-id mappings remain refused under #574. Existing `concurrency` is separate from routing, and omission keeps its existing meaning.
+
+Continue with [Commands](commands.md) to define destinations and productions, or [Reactions](reactions.md#observer-filters) to act on routed facts. The [grammar](grammar.md) lists the accepted forms.

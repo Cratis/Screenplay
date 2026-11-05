@@ -1,12 +1,13 @@
 ---
-title: View a model
-description: Draw a Screenplay application as an event model board inside an MCP host, and see what a proposal or a what-if sketch would change before anything is written.
+title: View a Cratis Screenplay event model board with MCP
+description: View a Cratis Screenplay model as an event model board through MCP Apps, compare a proposed edit, or sketch a change without writing files.
 ---
 
-When the MCP host renders [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)
-views, the [Screenplay server](reference.md) can draw the application as the same event
-model board as Cratis Studio and the VS Code extension. Use it to look at what is
-there, and to see what a change would do to the model before it is written.
+The [Cratis Screenplay MCP server](reference.md) draws an event model board inside
+a supporting client so you can inspect the application or compare a proposed
+change before applying it. Viewing the board never writes files. Your client must render
+[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview), the protocol
+extension for interactive views.
 
 Use **Cratis.Screenplay.Tool 4.47.0 or later**, or **CLI versions that bundle
 Screenplay 4.47.0 or later**. CLI hosting alone does not guarantee MCP Apps support.
@@ -21,10 +22,10 @@ unsaved what-if sketch.*
 
 ## Which clients show the board
 
-The board is an MCP App: an HTML view the host draws inside the conversation. The
-server offers it, as the `visualize-model` tool, only to hosts that advertise the MCP
-Apps extension (`io.modelcontextprotocol/ui`) when they connect. Other clients see
-the server's usual tools, without `visualize-model`.
+The server offers `visualize-model` only when the client advertises the MCP Apps
+extension (`io.modelcontextprotocol/ui`) as it connects. Other clients receive the
+usual Screenplay tools without `visualize-model`; they can still
+[inspect the model through text prompts](explore.md).
 
 | Client | Draws the board |
 | --- | --- |
@@ -52,20 +53,22 @@ The assistant calls `visualize-model` without arguments. The board shows every
 receives a short summary, such as how many slices, events, reactions and errors the board
 shows. The documents themselves go only to the board.
 
+<a id="spacing-and-text-size"></a>
+
 The board has the Cratis logo in its upper left and its toolbar in its upper
 right. *View* sets the detail level, whether properties are shown and whether
 connections are drawn as arrows or lines. Where the host allows it, the toolbar
 also draws the board again from disk and switches to fullscreen.
 
-The board follows the model on disk. While it is on screen it checks every couple of
-seconds and draws again when a file changed, whether the assistant applied a change
-or you edited a file by hand. Open it fullscreen and keep prompting: each applied
-change shows up on its own. A proposal you are looking at stays until the files
-change, and then the board shows the application as it is. The refresh button in the
-toolbar draws it again at once, and reports why when it cannot.
+When the host lets a view call the server, the board checks disk every couple of
+seconds and redraws after a file changes. This includes changes applied by the
+assistant and edits you make by hand. You can keep it fullscreen while prompting.
+A proposal stays visible until the files change; then the board shows the current
+application. The refresh button redraws at once, or reports why it cannot.
 
-Hosts that do not let a view call the server cannot follow the files. Ask for the
-board again there; every call draws the model as it is at that moment.
+If the host does not allow server calls from a view, the board cannot follow files
+or offer that refresh action. Ask the assistant to show the board again to see the
+model as it is now.
 
 ## Dependency map
 
@@ -86,7 +89,16 @@ highlight the board, and inferred dependencies do not prove executable readiness
 
 ### Highlight dependencies on the board
 
-Click a slice, feature or module header on the board, or focus it and press Enter or Space, to select that scope. Its slices are marked **selected**; the slices they depend on, directly or through other slices, are marked **dependency**; the slices that depend on them are marked **dependant**; everything else is dimmed. Each mark has its own outline and a marker on the header, and is also announced in words, so it never rests on color alone. Links between the marked slices are drawn as arcs above the board, with dashed, thicker links where a dependency crosses a feature or module boundary. Dependencies use the same default kinds as the map (**uses facts from**, **reacts to**, **decides from**), whichever kinds the map has checked.
+Select a slice, feature or module header to trace its connections. You can click
+it, or focus it and press Enter or Space. The board marks slices in that scope as
+**selected**, the slices they depend on directly or indirectly as **dependency**,
+and the slices that depend on them as **dependant**. Everything else is dimmed.
+Each mark has an outline, a header marker and a text announcement, so color is not
+the only way to read it.
+
+Arcs above the board connect the marked slices. Thicker, dashed arcs cross feature
+or module boundaries. Board highlighting always uses **uses facts from**,
+**reacts to** and **decides from**, regardless of which kinds you check on the map.
 
 Select the same header again to clear the highlight. It also clears when an edit removes the selected scope. The Current and Proposed boards each highlight their own dependencies. With nothing selected the board is drawn as usual. Selecting on the board is separate from the map: map selections do not highlight the board.
 
@@ -112,10 +124,10 @@ with it:
 { "proposalId": "<proposalId>" }
 ```
 
-The board starts on the application as the proposal would leave it. *Current* and
-*Proposed* in the toolbar switch between that and the application as it is. What
-both share keeps its place, so the difference is what moves. The summary lists
-the modules, features, slices, commands, events, read models, screens and reactions
+The board opens on *Proposed*, the application as the proposal would leave it.
+Switch to *Current* in the toolbar to compare it with the model on disk. Shared
+elements keep their positions, making the differences easier to follow. The
+summary lists the modules, features, slices, commands, events, read models, screens and reactions
 the proposal adds and removes. Nothing is written: review and `apply` the proposal
 as described in [Edit a model](edit.md#review-and-apply).
 
@@ -192,5 +204,6 @@ draws a new board, from the model as it is at that moment.
 | Shows a proposal or sketch | Yes | No |
 | Needs the MCP server | Yes | No |
 
-Use the extension while you write, and the MCP board to review what an assistant is
-about to write.
+Use the extension while you write and the MCP board to inspect an assistant's
+proposed change. Before applying it, [review the exact changes and diagnostics](edit.md#review-and-apply)
+as well as the board.

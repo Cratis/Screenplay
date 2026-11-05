@@ -1,6 +1,6 @@
 ---
 title: Notation conventions
-description: "The symbols Screenplay keeps on purpose, such as Type[], the three arrows, the concept colon and the @ escape, and where each is admitted."
+description: "Cratis Screenplay notation covers type suffixes, arrows, comparisons, escaped names and structured value blocks, with examples and usage rules."
 ---
 
 This page is a reference for the notation in Screenplay that looks like programming-language syntax. Each entry says where the notation is accepted, shows one real example and gives the reason it is kept. None of this changes spelling: decision [0105](https://github.com/Cratis/Screenplay/blob/main/decisions/0105-lift-the-screenplay-language-freeze.md) lifted the language freeze, but a new spelling still needs its own decision and ESM version. Readable alternatives are recorded as parked in [decision 0100](https://github.com/Cratis/Screenplay/blob/main/decisions/0100-retain-notation-conventions-and-park-readable-alternatives.md). The audit that produced this page is [#350](https://github.com/Cratis/Screenplay/issues/350), which [decision 0023](https://github.com/Cratis/Screenplay/blob/main/decisions/0023-command-production-model.md) left open as question 2. The [grammar](grammar.md) is the normative source; this page explains it.
@@ -133,18 +133,24 @@ query Q => observable?
 
 Reason: this is a one-shot query that returns an optional scalar type named `observable`. Replacing `?` with `optional` would read as a live query of a type named `optional`. The spelling produces no `PLAY0479`, and repairs and document migrations leave it unchanged. See [Observable queries](queries.md#observable-queries).
 
-## JSON values
+<a id="json-values"></a>
 
-Mapping sources accept single-line JSON-shaped values: arrays and objects with double-quoted keys.
+## Structured values
 
-```text
-["draft", "sent"]
-{ "channel": "email", "retries": 3 }
+Write objects and lists as indented blocks. An object has one `member = value` line per member; a list has one `item` line per element.
+
+```screenplay
+statuses
+  item "draft"
+  item "sent"
+delivery
+  channel = "email"
+  retries = 3
 ```
 
-Grammar: `StructuredValue`. These are examples of the shape, not lines from a sample.
+These illustrative mapping fragments use the `StructuredBlock` grammar. Use `name none` for an empty list and `name empty` for an object without members. See [Structured values](structured-values.md) for nested values and supported assignment sites.
 
-Reason: JSON is the notation readers already have for structured literals, so Screenplay does not invent one. A structured value is typed syntax in mapping sources; projection expressions keep their own expression grammar.
+Reason: indentation keeps structured data in the same form as the rest of a `.play` document. Inline JSON objects and arrays are rejected with `PLAY0833`.
 
 ## Comparison symbols
 

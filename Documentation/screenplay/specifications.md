@@ -1,28 +1,17 @@
 ---
-title: "Specifications"
-description: "Write Screenplay specifications that run a scenario against the in-memory reference evaluator: given events, when a command, then outcome."
+title: "Cratis Screenplay specifications: check modeled behavior"
+description: "A Screenplay specification checks a slice's behavior with Given/When/Then scenarios. Set up history, perform an action and assert facts, state or refusals."
 ---
 
 # Specifications
 
-With application-root `command reads protected` (ESM v25), missing required read-model state rejects with `Validation` and message `<ReadModel> '<key value>' does not exist.` Authorization and property rules precede this check; derive/provide, requirements and mappings follow it. Use `then error` to assert the absence rejection. `ProtectedCommandReadsCorpus.V25` pins empty/non-empty logs, removal/recreation, absence before requirements/generation, read-path mappings and reactions invoking commands whose reads are missing. A rejected invoked command leaves its already accepted triggering fact in the world.
+A Cratis Screenplay specification checks a slice's behavior against a concrete scenario. Use `given` to establish history or state, `when` to perform an action, and `then` to assert the facts, state or refusal you expect. For a read-only check, omit the action and assert the established state.
 
-There is no specification construct for an intervening write. C# evaluator vectors explicitly separate Decide from Commit, append competing facts, and assert `Conflict` / `DecisionStateChanged`, zero command facts and preservation of irrelevant intervening state. A settlement rejection with category `Constraint` takes precedence over a protected-read conflict; the additive [race fixture V1R2](interoperability.md#protected-command-read-race-vectors) pins the combined race and uniqueness refusal. Other settlement outcomes still yield to a matching read conflict. A decision refused at decide time keeps its refusal; an invalid prefix-extension is rejected before settlement. A rejected command never commits; a no-fact command still checks its dependencies. Ordinary Given/When/Then scenarios do not prove race handling.
+Keep the `specification` inside the slice it describes, beside its commands, events and projections. Start with one accepted request, then add a refusal or missing-result case. The [example](#example) shows how the steps fit together; [query results](#query-results) covers reads. Each scenario exercises its own slice, not an end-to-end workflow across every slice in the application.
 
-With application-root `reaction batches atomic` (ESM v22), a failed direct or refusal-branch production batch contributes no facts or projection changes. `then error` asserts rejection, not rollback; evaluator world/read-model assertions and the `AtomicReactionBatchesCorpus` world counts pin rollback separately. `then no events` still means accepted zero outcomes and cannot accompany an error. Use it for acknowledgement or a filtered trigger. Redelivery validates a new batch against the existing world without reappending the given fact; it adds no deduplication guarantee.
+The runner consumes an executable semantic model (ESM), the normalized behavior contract produced from the source. Accepted syntax alone does not prove the runner can execute a construct.
 
 Run scenarios with [`screenplay test`](tool.md#run-the-models-specifications) or the read-only MCP [`run-specifications`](mcp/reference.md#execute-specifications) tool. Both use the in-memory reference evaluator; binding alone does not tell you whether a scenario passes.
-
-## Operation specifications (syntax-only)
-
-> Operation fixtures and assertions are experimental authoring syntax. The current reference runner cannot execute them; binding refuses them with `PLAY0268` because they are not admitted by any supported executable model (ESM) version yet.
-
-For a command producing declared [operations](operations.md), `given operation NotifyAccounting fails` requests a failure fixture, `then operation SendWelcomeEmail` asserts a requested operation with optional **partial** input values, and `then compensated SendWelcomeEmail` asserts declared compensation. Failure and compensation lines are leaves: they cannot have children. Requested-operation fields must be unique and have compatible concrete values, including quoted enum values. All references must resolve to the operation kind, not an event with the same spelling, and require a command action. Static checks do not prove reachability, rollback success or repeated-invocation matching.
-
-The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) shows success and compensation intent with their declarations and command inputs. These assertions express desired future behavior, not passing execution today.
-
-
-Specifications express Given/When/Then scenarios against a slice's behavior, or read-only Given/Then scenarios against established state — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
 
 ## Persona callers
 
@@ -250,7 +239,7 @@ Source-bound reference execution uses `SemanticSpecificationRunner.Run(compilati
 
 Event examples may carry `stream Source.Stream` with a scalar id or composite part block, or `no stream`. A step inherits the route unless it states a replacement: the whole route is replaced, never just an id or part. `for` remains independent. A `then` may replace an inherited route with `no stream`; a `given` may replace inherited `no stream` with a route. There is no spelling to restore a wildcard route once an example states one. Command and read-model examples refuse routes with `PLAY0526`; a command's route belongs to its declaration, and read models have none. Top-level `stream = <value>` and `streamId = <value>` are payload assignments.
 
-Declaration checks run once at the example, even if it is unused or every use overrides its route. Its `for` is typed by the route's source identifier, not by other producers of the event. Role checks use the effective route: inherited `no stream` on `given` or `when append` reports `PLAY0547` at the step, naming the example. Missing routed `for`, newly incompatible overridden `for`/route pairs (`PLAY0550`) and effective `then` contradictions (`PLAY0551`) are also reported at the step. An unchanged inherited pair reuses the declaration result without duplicate errors. Routed examples remain syntax-only (`PLAY0268`), including unused ones.
+Declaration checks run once at the example, even if it is unused or every use overrides its route. Its `for` is typed by the route's source identifier, not by other producers of the event. Role checks use the effective route: inherited `no stream` on `given` or `when append` reports `PLAY0547` at the step, naming the example. Missing routed `for`, newly incompatible overridden `for`/route pairs (`PLAY0550`) and effective `then` contradictions (`PLAY0551`) are also reported at the step. An unchanged inherited pair reuses the declaration result without duplicate errors. Routed event examples are semantically admitted from ESM v8, including unused declarations; reference execution remains subject to capability admission.
 
 TypeScript exports `expandSpecificationExamples(application)` from `@cratis/screenplay-compiler` for syntax consumers such as the event model board. It returns application syntax with resolved examples expanded into effective specification values without changing the authored application. For event-step provenance, `expandEffectiveSpecificationExamples(application)` returns the effective application and specification pairs whose event steps retain authored/example/override values and whole-route origins. Route overrides retain the replaced stream or no-stream node. This TypeScript view does not return resolution diagnostics; neither expansion API executes specifications.
 
@@ -317,7 +306,7 @@ specification RejectingAnInvoiceWithNoLines
   then error "An invoice must have at least one line"
 ```
 
-Neither `then error` form asserts a validation severity. A bare `then error` matches any rejection, and `then error "<message>"` matches the message regardless of whether the failed rule was marked `information`, `warning` or `error`. The specification grammar has no severity assertion; inspect the reference execution rejection's `ValidationFailures` when testing presentation metadata directly.
+Neither `then error` form asserts a validation severity. A bare `then error` matches a rejection other than authorization denial, and `then error "<message>"` also checks its message, regardless of whether the failed rule was marked `information`, `warning` or `error`. Use `then denied` for authorization denial. The specification grammar has no severity assertion; inspect the reference execution rejection's `ValidationFailures` when testing presentation metadata directly.
 
 A bare `then error` says **rejected for a validation or constraint reason this specification does not name**. It never matches the `Unauthorized` category; use `then denied` for that. Most specifications are this kind — the reason lives in the specification's name, not in an assertion, and there is nothing in the behavior under test that names it:
 
@@ -617,6 +606,22 @@ Each `for`, payload and route comparison is true, false or unknown. A definite f
 
 A `given caller` supplies no actor to a reaction invocation. Unhandled validation and constraint refusals remain assertable as `then error`; authorization denial uses `then denied`. Recovery redelivery is ordinary observation, not replay, and does not prove once-only external effects. Clock, application-trigger and capture repetition keep their existing action forms. Refusal branches execute from ESM v19; a handled acknowledgement can pass `then no events`, while branch productions and their cascades are new facts. See [Refusal branches](reactions.md#refusal-branches).
 
+## Protected reads and atomic reaction batches
+
+Use `then error` to check missing required decision state when the application declares `command reads protected` (ESM v25). The refusal is `Validation` with message `<ReadModel> '<key value>' does not exist.` Authorization and property rules run first; derive/provide, requirements and mappings run after the presence check. If an invoked command rejects, its already accepted triggering fact remains in the world.
+
+Ordinary Given/When/Then scenarios do not prove race handling: there is no specification construct for a competing write between Decide and Commit. The evaluator's [race fixture V1R2](interoperability.md#protected-command-read-race-vectors) covers that boundary separately. A rejected command never commits, and even a command producing no facts must check its dependencies. A settlement rejection with category `Constraint` takes precedence over a protected-read conflict; other settlement outcomes yield to a matching read conflict. A decision refused at decide time keeps that refusal, and an invalid prefix-extension is rejected before settlement.
+
+With application-root `reaction batches atomic` (ESM v22), a failed direct or refusal-branch production batch contributes no facts or projection changes. `then error` checks rejection, not rollback; check resulting world or read-model state to establish what remains. `then no events` means accepted zero outcomes and cannot accompany an error. Use it for acknowledgement or a filtered trigger. Redelivery validates a new batch against the existing world without reappending the given fact; it adds no deduplication guarantee.
+
+## Operation specifications (syntax-only)
+
+Operation fixtures and assertions record intent, but the reference runner cannot execute them. Binding refuses them with `PLAY0268` because no supported ESM version admits them.
+
+For a command producing declared [operations](operations.md), `given operation NotifyAccounting fails` requests a failure fixture, `then operation SendWelcomeEmail` asserts a requested operation with optional partial input values, and `then compensated SendWelcomeEmail` asserts declared compensation. Failure and compensation lines are leaves: they cannot have children. Requested-operation fields must be unique and have compatible concrete values, including quoted enum values. All references must resolve to the operation kind, not an event with the same spelling, and require a command action. Static checks do not prove reachability, rollback success or repeated-invocation matching.
+
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) shows success and compensation intent with their declarations and command inputs. These assertions do not represent passing execution.
+
 ## Reference execution
 
 Screenplay supplies a framework-neutral reference path for admitted semantic capabilities. It does not start Arc, Chronicle, a database, the filesystem, or a network service. It executes against an immutable in-memory world so Stage and rendered targets have one normalized behavior to match.
@@ -669,7 +674,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `exactly` on read model or query | Compare every property rather than the default subset. |
 | `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |
 | `then readmodel <ReadModelType>` | The read model state expected after the command. |
-| `then query <Query>` | Ordered query results for explicit arguments; no `result` means empty. |
+| `then query <Query>` | Unordered query rows for explicit arguments; no `result` means empty. |
 | `arguments` | The values supplied to the query. |
 | `result` | One expected query result; repeat for many. |
 | `then error "<message>"` | A rejection, for the named reason. |
@@ -733,7 +738,7 @@ specification RegisteringReturnsIdentifiers
 
 A scalar response uses `then returns <value>`; a record uses `then returns` with a nonempty subset of its named fields. The expectation must match the response shape and types. Values must be concrete literals or structured values, with no raw-expression fallback or trailing tokens. Duplicate, unknown, nongenerated or identifier fixture targets are rejected. A return expectation requires a command action, occurs at most once and cannot accompany `then error` or `then denied`; successful event/state assertions may coexist. The reference runner compares scalar values by semantic equality and records by the asserted subset, reporting differences in response field order. Optional absent sources yield `Null`; composites compare by property identity and arrays in order. `then returns` counts as a success outcome, but it does not relax event comparison: a command specification with no expected events still asserts that no facts were produced.
 
-Missing fixtures are bindable. If execution reaches generation without every generated value supplied, it returns `Unsupported(IdentityAllocation)` and the specification never passes; it does not invent random values. Authorization denial and validation failure happen before generation and keep their own outcomes. A reaction-invoked response-only command runs and discards its response; a reached invocation needing generation has no fixture channel and returns `Unsupported(IdentityAllocation)`.
+Missing fixtures are bindable. If execution reaches generation without every generated value supplied, it returns `Unsupported(IdentityAllocation)` and the specification never passes; it does not invent random values. Authorization denial and validation failure happen before generation and keep their own outcomes. A reaction-invoked response-only command runs and discards its response. Pin any generated values it needs with `given generated <Command>.<property> = <value>` (ESM v30); a reached invocation without the required pinned values returns `Unsupported(IdentityAllocation)`.
 
 For a generated identifier, `for` travels in the generated-value channel, not the legacy event-source allocation channel. It does not assert that explicitly routed productions use that identifier; expected events assert their own destinations. For commands without generated identifiers, `when … for` keeps its existing destination assertion. A generated identifier with a reached plain legacy allocated production needs two separate channels, which source specifications cannot supply together, so that combination is `Unsupported(IdentityAllocation)`. Source fixtures and return expectations on generated UUID-backed values normalize accepted UUID spellings to lowercase hyphenated form; existing non-generated values are unchanged. Relational assertions without concrete fixtures remain deferred.
 

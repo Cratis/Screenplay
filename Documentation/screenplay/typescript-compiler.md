@@ -1,23 +1,15 @@
 ---
-title: "TypeScript compiler"
-description: "Parse, check and compile .play files from TypeScript without .NET, using the Screenplay compiler package for editors and build scripts."
+title: "Screenplay TypeScript compiler: parse and traverse models"
+description: "Parse .play documents in TypeScript for editor views, syntax analysis and exports, while keeping executable binding and validation in the native compiler."
 ---
 
 # TypeScript compiler
 
-Quoted and fenced descriptions on concepts, policies, constraints, projection headers and screens are retained in the parsed tree. Form bodies remain outside the narrow source-to-syntax projection; their descriptions are validated with the same grammar and are available in full typed syntax JSON from the native compiler. The full transport schema preserves descriptions on all six kinds. This does not promise TypeScript executable binding.
+`@cratis/screenplay-compiler` parses `.play` documents in TypeScript so an editor, web page or build script can inspect a model without starting .NET. Use it for syntax analysis and exports, including the event model board in the [VS Code extension](vscode.md).
 
-The C# compiler is the authority on Screenplay, but not everything that reads a `.play` document runs .NET. An editor extension, a web page or a build script written in TypeScript needs the same syntax tree without starting a process. `@cratis/screenplay-compiler` parses `.play` documents in TypeScript into the syntax tree the C# compiler produces, for the constructs that describe an event model. The [VS Code extension](vscode.md) uses it to draw the event model board.
+Start with `parse` for one document or `parseFolder` for a folder, then use a visitor or walker to consume the tree. The package models a subset of the native syntax tree; it does not bind or execute an executable semantic model (ESM), and it has no canonical `.play` printer.
 
-It parses and checks inline-event declaration collisions and destination consistency; it does not bind an executable model. Event `id` pins remain in its syntax tree. ESM v16 stored-name serialization, strict reading, pin validity and application-wide stored-name collision checks belong to the native C# binder, not this syntax-only package. Public/private event boundaries are checked against scoped declarations in the assembled application, including imported contracts and seed appends. General reference resolution and the remaining semantic checks the C# compiler runs after parsing are not part of it. A document the C# compiler rejects for a semantic reason is one this compiler reads without complaint, so keep the C# compiler, or the [CLI](tool.md), as the gate. [Editor diagnostic support](editor-diagnostics.md) describes the validation boundary and which checks each surface runs.
-
-Query rejection specifications retain both `when query … then error` and actionless `then query … arguments` followed by an error. The shared `PLAY0465` shape checks require exactly one query, one error and no action or other outcome, including no result or `then no result`. TypeScript does not run concept rules or select ESM v18; native binding and the reference runner own that verdict. Validated query arguments reject with Validation in every reference ESM version, and only the new query-error specification shape selects v18.
-
-Uuid equality retains the existing comparison syntax nodes. TypeScript parses it without evaluating it or selecting ESM v28; native binding owns the same-concept rule, the `PLAY0268` refusals and the `PLAY0273` canonical-literal check.
-
-Date comparisons retain the existing comparison and validation syntax nodes. TypeScript parses Date/DateTime command rules and conditions without evaluating them, canonicalizing literals or selecting ESM v26. Native binding owns the position/operand restrictions, `PLAY0268` refusals and `PLAY0273` literal checks; the native reference evaluator compares UTC instants at tick precision and rejects offset-less compared inputs before rules. JavaScript `Date` is not a tick-precision evaluator. The Invoicing syntax conformance vector includes an admitted date-literal rule while its `today` rules remain native binder refusals.
-
-The bare `passive` read-model directive is retained as optional `isPassive: true` (false is omitted). Repeats report `PLAY0858` in both parsers. `PLAY0859` (query/screen observation) and `PLAY0860` (no command read) are C#-only usage diagnostics, not editor heuristics. Passivity is realization metadata and does not enter portable ESM. See [Read models](readmodels.md#passive-decision-state).
+Keep the native C# compiler, or the [CLI](tool.md), as your semantic validation gate. A TypeScript parse can succeed for a document that native binding rejects. [Editor diagnostic support](editor-diagnostics.md) explains which authoring checks are shared and which require native validation.
 
 ## Parse a document
 
@@ -56,7 +48,7 @@ For an assembled tree authored programmatically or decoded from AST JSON, `publi
 
 ## Turn the tree into your own artifacts
 
-The [visitors and the walker](visitors.md) have TypeScript counterparts with the same names and the same order of traversal. A visitor is handed the whole tree:
+Use a root visitor for a whole-tree transformation or a walker to collect particular node kinds. The TypeScript [visitors and walker](visitors.md) follow the native traversal order for the nodes this package models. A root visitor receives the whole tree:
 
 ```typescript
 import { ApplicationSyntax, ApplicationSyntaxVisitor, compile } from '@cratis/screenplay-compiler';
@@ -101,6 +93,22 @@ const board = toEventModelDocument(parse(source).value, 'Invoicing');
 
 The ids in that document are derived from where each element sits in the model. Compiling the same model again gives the same ids, so a board keeps what it remembers about each element, such as what is collapsed, across edits.
 
+If your export is `.play` text, use the native [Screenplay printer](printing.md). If it is executable target code, choose the [rendering contract](interoperability.md#level-3-screenplay-to-artifact-rendering), which consumes resolved semantics rather than inferring them from syntax names.
+
+## Syntax checks and native binding
+
+The parser checks inline-event declaration collisions and destination consistency. It retains event `id` pins, but ESM v16 stored-name serialization, strict reading, pin validity and application-wide stored-name collision checks belong to the native binder. Public/private event boundaries are checked against scoped declarations in the assembled application, including imported contracts and seed appends. These authoring checks do not replace general semantic reference resolution.
+
+Quoted and fenced descriptions on concepts, policies, constraints, projection headers and screens are retained in the parsed tree. Form bodies remain outside the narrow source-to-syntax projection; their descriptions are validated with the same grammar and are available in full typed syntax JSON from the native compiler. The full transport schema preserves descriptions on all six kinds.
+
+Query rejection specifications retain both `when query … then error` and actionless `then query … arguments` followed by an error. The shared `PLAY0465` shape checks require exactly one query, one error and no action or other outcome, including no result or `then no result`. TypeScript does not run concept rules or select ESM v18; native binding and the reference runner own that verdict. Validated query arguments reject with Validation in every reference ESM version, and only the query-error specification shape selects v18.
+
+Uuid equality retains the existing comparison syntax nodes. TypeScript parses it without evaluating it or selecting ESM v28; native binding owns the same-concept rule, the `PLAY0268` refusals and the `PLAY0273` canonical-literal check.
+
+Date comparisons retain the existing comparison and validation syntax nodes. TypeScript parses Date/DateTime command rules and conditions without evaluating them, canonicalizing literals or selecting ESM v26. Native binding owns the position/operand restrictions, `PLAY0268` refusals and `PLAY0273` literal checks; the native reference evaluator compares UTC instants at tick precision and rejects offset-less compared inputs before rules. JavaScript `Date` is not a tick-precision evaluator. The Invoicing syntax conformance vector includes an admitted date-literal rule while its `today` rules remain native binder refusals.
+
+The bare `passive` read-model directive is retained as optional `isPassive: true` (false is omitted). Repeats report `PLAY0858` in both parsers. `PLAY0859` (query/screen observation) and `PLAY0860` (no command read) are C#-only usage diagnostics, not editor heuristics. Passivity is realization metadata and does not enter portable ESM. See [Read models](readmodels.md#passive-decision-state).
+
 ## Keys and routed observers
 
 Both source parsers retain trailing read-model `key` marks, query and reads `by` blocks, production `stream` overrides and reaction/reducer `from` filters. Structural JSON uses `isKey`, `byParts`, `stream` and `from`. The narrow parser exposes reducer evidence through `dependencySourcesOf(slice).reducers` and command/trigger reads through `dependencySourcesOf(node).reads`. Full typed AST transport carries `ReducerSyntax` and `ReadsSyntax`.
@@ -113,7 +121,7 @@ The C# binder admits production routes and observer filters as ESM v10. The C# b
 
 ## What it reads
 
-The compiler reads what an event model is made of:
+Use this inventory to check whether the syntax your tool needs is retained:
 
 - the domain, imports, concepts and types
 - application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only)
@@ -141,7 +149,7 @@ Finite pattern support, exact bigint range/checksum math and rule consistency ha
 
 Systems and operations remain syntax-only and unadmitted. Event sources, streams, command and specification routes, and composite stream ids are admitted by ESM v8 in the C# binder and reference runner. Generated values and responses are admitted as ESM v7. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and V20 generated-concept consistency (Refuted `PLAY0688`, Unproven `PLAY0689`, Proven silent) are C# semantic checks, not additional TypeScript syntax rules. TypeScript has no independent proof engine; host-supplied proof diagnostics are forwarded rather than claimed as local proofs.
 
-Everything else is recognized and skipped whole, without a diagnostic. That covers:
+Some constructs are recognized but skipped or represented only by limited evidence, without an unsupported-construct diagnostic:
 
 - reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, module navigation regions, module and feature template assignments (`template <Name>`, `template blueprint <Blueprint> <Name>`), behaviors and screen templates
 - the interaction a screen binds with `on` and `uses`, which it keeps only as a marker in the screen's directives
@@ -151,7 +159,7 @@ Everything else is recognized and skipped whole, without a diagnostic. That cove
 
 For the syntax and authoring checks it supports, it uses the C# diagnostic codes, lines and order. [Editor diagnostic support](editor-diagnostics.md) lists the shared checks, C#-only scoped/semantic/completeness checks and the deliberate legacy absence-assertion exception.
 
-Public-event metadata uses the C# AST members: `EventSyntax.visibility` and `ImportSyntax.visibility` (`Private` by default), nullable `origin`, and nullable `SliceSyntax.direction` (`Inbound` or `Outbound`, only on Translate slices). Origins are nonblank opaque strings, never filesystem imports or declaration references. An origin requires public visibility; a public contract import requires an origin. Default metadata is omitted from structural JSON so legacy bytes stay unchanged. Typed authoring rejects inconsistent metadata before writing it. The board document retains nondefault metadata on declared events and slices; it does not infer delivery behavior. The C# binder explicitly refuses nondefault metadata with `PLAY0268`; TypeScript has no executable binder or canonical `.play` printer.
+Public-event metadata uses the C# AST members: `EventSyntax.visibility` and `ImportSyntax.visibility` (`Private` by default), nullable `origin`, and nullable `SliceSyntax.direction` (`Inbound` or `Outbound`, only on Translate slices). Origins are nonblank opaque strings, never filesystem imports or declaration references. An origin requires public visibility; a public contract import requires an origin. Default metadata is omitted from structural JSON so legacy bytes stay unchanged. Typed authoring rejects inconsistent metadata before writing it. The board document retains nondefault metadata on declared events and slices; it does not infer delivery behavior. Native binding owns public-event admission, including ESM v9 semantics and `PLAY0268` refusals for unsupported forms. TypeScript has no executable binder or canonical `.play` printer.
 
 The top-level [identity block](identity.md) is modeled, including claim, keyed-query, code and file sources. Its cross-reference checks run against the assembled application, and the walker visits its typed source children. `$identity` path warnings are deferred until declared details are known; `$context.identity` stays built-ins only. This is authoring support, not executable admission (#600).
 

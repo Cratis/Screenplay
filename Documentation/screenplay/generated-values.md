@@ -1,9 +1,9 @@
 ---
-title: Generated values
-description: Understand concept generation strategies, pinned fixtures, and generated event-source freshness.
+title: Screenplay generated values and fixtures
+description: Model server-generated Screenplay identities and references, pin deterministic fixtures, and reject reused event-source destinations with freshness guards.
 ---
 
-Your shop needs a customer identity before it can record a registration, an order identity when checkout starts, and an opaque invitation code. Asking callers to invent these values turns server decisions into request inputs. Screenplay separates them: a concept declares **how** values are generated, and a command property declares **that** the server generates it. For the full cross-product journey, follow the [shop tutorial work](https://github.com/Cratis/Documentation/issues/187); this page explains the model contract.
+Screenplay models server-generated identities and references without making them caller inputs. A concept declares how to generate the value; a command property marks where the server supplies it. In the shop, that lets registration create a customer identity and invitation code while callers supply only the business inputs. This page explains that contract; the [shop tutorial work](https://github.com/Cratis/Documentation/issues/187) tracks the wider cross-product journey.
 
 ## The concept owns the strategy
 
@@ -27,19 +27,21 @@ module Shop
         returns customerId
 ```
 
-Generation follows authorization and validation. Generated values are not request inputs, cannot authorize the caller, and cannot appear in pre-generation rules. A strategy does not automatically add validation to input or stored values; changing it does not retroactively invalidate old identities.
+In `Register`, the caller supplies neither `customerId` nor `inviteCode`. The server generates them after authorization and validation, maps the invitation code into the event, and returns the customer identity. Generated values cannot authorize the caller or appear in rules evaluated before generation. A strategy does not automatically add validation to input or stored values, so changing it does not retroactively invalidate old identities.
 
-A Uuid concept has implicit `uuid` generation. `generate uuid` without modifiers on that concept has the same executable bytes and revision as omitting the line. String concepts need an explicit strategy. Required scalar properties only are admitted; optional values and collections are not.
+A Uuid concept has implicit `uuid` generation. `generate uuid` without modifiers on that concept has the same executable bytes and revision as omitting the line. String concepts need an explicit strategy. Only required scalar properties can be generated; optional values and collections cannot. Use [Choose a generation strategy](generated-values/choosing.md) to compare ordinary identities, readable references, and short codes.
 
 ## Freshness is about the whole source
 
-A model with at least one serialized concept `generation` member selects ESM v15 or a later version when another feature needs it. Its generated event-source destinations are **Guarded**: an append to a value generated in the invocation requires that the whole source has no existing facts, regardless of stream or event type. Several initial facts in one command are fine. A skipped production does not make a freshness claim. A violation rejects the whole command with `Concurrency` and appends nothing; generation is not silently retried.
+Freshness prevents a newly generated identity from appending facts to an event source that already exists. A model with at least one serialized concept `generation` member selects Executable Semantic Model (ESM) v15 or a later version when another feature needs it. Its generated event-source destinations are Guarded: an append to a value generated in the invocation requires that the whole source has no existing facts, regardless of stream or event type.
+
+Several initial facts in one command are fine. A skipped production makes no freshness claim. If the guard finds prior facts, the whole command is rejected with `Concurrency` and appends nothing; generation is not silently retried.
 
 Models without a serialized generation strategy remain **Unguarded**, including a model whose only declaration is unmodified Uuid `generate uuid`, even if rules select V20. They retain legacy fixture reuse. A model declaring a serialized strategy guards its implicit UUID generated values too. Providers must carry this policy explicitly when realizing commands; freshness is not idempotency and does not authorize access.
 
 ## Pin a value, not a random seed
 
-The reference evaluator never draws randomness. Specifications pin a generated identifier with `for`, and other generated properties with `generated <name> = <value>`:
+The reference evaluator uses the exact generated value supplied by the specification; it never draws randomness. Pin a generated identifier with `for`, and other generated properties with `generated <name> = <value>`. In this scenario, the command, event, and response all use the same pinned order identity:
 
 ```screenplay
 concept OrderId : String
@@ -59,9 +61,11 @@ module Shop
         then returns "order_0000000000e008000000000000"
 ```
 
-A model declaring a serialized strategy checks each generated fixture's exact encoding, size, letter case, UUID version and variant. A generated concept with rules selects ESM V20 and checks its fixtures against both shape and rules, including implicit UUIDv4 generation. A failing rule returns `Rejected(Contract)` with `Generated fixture '<property>' fails concept '<Concept>' rules`; it is a server contract defect, not a client validation error, and nothing is redrawn. Opaque validation rules route to Unsupported because the reference evaluator never runs attached code. A generation implementation alone does not block execution: the runner accepts its String fixture without invoking the body. Older rule-free, implicit-UUID models keep canonical UUID type validation. Seeds are not portable: a provider or algorithm upgrade could change their output.
+The pin must be valid for the concept. A model declaring a serialized strategy checks the fixture's encoding, size, letter case, UUID version and variant. Rules on a generated concept select ESM v20 and add rule checks to shape checks, including implicit UUIDv4 generation. Older rule-free, implicit-UUID models keep canonical UUID type validation.
 
-ESM v21 admits finite `pattern`, exact inclusive Int64 `random`, `generate rule` attachments and String-concept checksum validation. The shop's `InvoiceRef` is a date/checksum value; `TicketNumber` is a numeric value, not an Int identifier. Pin date-segment fixtures with `given clock`: all segments compare against that same UTC instant. Without a clock the runner checks digit widths only, never the wall clock. Checksum suffixes need only digit shape unless `validate checksum` is authored; that separate rule enforces arithmetic on supplied and stored values too. See [patterns and checksums](generated-values/patterns.md).
+A failing rule returns `Rejected(Contract)` with `Generated fixture '<property>' fails concept '<Concept>' rules`. This is a server contract defect, not a client validation error; nothing is redrawn. Opaque validation rules return Unsupported because the evaluator never runs attached code. A generation implementation alone does not block execution: the runner accepts its String fixture without invoking the body. Pin the value, not a seed, because providers and algorithm versions can produce different output from the same seed.
+
+For a readable invoice reference or numeric queue ticket, ESM v21 admits finite `pattern`, exact inclusive Int64 `random`, `generate rule` attachments and String-concept checksum validation. The shop's `InvoiceRef` is a date/checksum value; `TicketNumber` is a numeric value, not an Int identifier. Use `given clock` to pin date-segment fixtures to one UTC instant. Without it, the runner checks digit widths only and never consults the wall clock. A checksum suffix needs only digit shape unless you author `validate checksum`; that separate rule enforces arithmetic on supplied and stored values too. Continue with [patterns and checksums](generated-values/patterns.md) for these formats.
 
 TypeID carries time, not a tenant slot. Keep tenant isolation in the namespace; a tenant-bearing value needs a separate concept such as `TenantOrderId`, not a modifier on `OrderId`.
 
@@ -91,11 +95,11 @@ Built-ins remain executable: `uuid`, `uuidv7`, `ulid`, `typeid`, `nanoid`, and `
 
 ## Support by phase and consumer
 
-Use this matrix to decide whether a generated-value form works in the tools you use. "Supported" means the repository code or documentation for that consumer covers the form. It does not mean every Cratis product has released it. "Not verified" means the claim could not be confirmed from this repository or from issue state, so do not rely on it.
+Check the consumer as well as the language form before relying on a generated value. This matrix distinguishes compiler support, editor syntax, inspection, and execution. "Supported" means the consumer's source or documentation covers the form; it does not establish support in other products. "Not verified" means per-form coverage is not established here.
 
 | Form | ESM | C# compiler and binder | TypeScript compiler and editors | MCP inspection and repairs | Arc `[GeneratedValue]` | Stage | Studio |
 |---|---|---|---|---|---|---|---|
-| Implicit Uuid `generated` (phase 1) | v7 | Supported | Syntax only; no TypeScript binder | Supported | Supported (phase 1 shipped, Cratis/Arc#3128) | Supported | Closed (StudioIssues#588); per-form coverage not verified |
+| Implicit Uuid `generated` (phase 1) | v7 | Supported | Syntax only; no TypeScript binder | Supported | Supported | Supported | Not verified |
 | `uuid`, `uuidv7`, `ulid`, `typeid`, `nanoid`, `bytes` with `prefix`, `case`, `alphabet` (phase 2b) | v15 with freshness guard | Supported | Syntax, completions and shared diagnostics; no semantic admission | Supported (describe, propose, repair) | Not verified | Supported (Stage reference documents ESM v15 strategies) | Not verified |
 | Rules on a generated concept, with `PLAY0688`/`PLAY0689` | v20 | Supported | Forwards host diagnostics; no local proof engine | Supported (`propose-repair` for `PLAY0688`) | Not verified | Supported (rules checked through `SemanticValidationRules.Check`) | Not verified |
 | `pattern`, `checksum`, `generate rule` (phase 3) | v21 | Supported | Mirrored finite-pattern support and checksum math; clock-pinned fixture execution stays native | Supported | Not verified | Supported (`GenerateValue.Pattern`) | Not verified |
@@ -105,4 +109,4 @@ Use this matrix to decide whether a generated-value form works in the tools you 
 | `derive` after generation (phase 4) | none | Pending in [#308](https://github.com/Cratis/Screenplay/issues/308) | Pending (#308) | Pending (#308) | Pending (#308) | Pending (#308) | Pending (#308) |
 | Command responses rendered to the frontend (`returns`) | v7 | Supported | Syntax only | Not verified | Not applicable | Supported: the response reaches the frontend command result; binding it to form submission and navigation is still open ([Stage#175](https://github.com/Cratis/Stage/issues/175)) | Not verified |
 
-The language, compilers, ESM and runner work for `generate` is tracked in [#616](https://github.com/Cratis/Screenplay/issues/616), which is still open, and MCP generation strategies in #618, which is closed. The TypeScript compiler has no ESM binder or runner, so it never gives an executable-readiness verdict for any row; see [editor diagnostic support](editor-diagnostics.md) and the [TypeScript compiler](typescript-compiler.md). The C# binder picks the lowest ESM version that covers what the model uses; rows above show the version a form needs, not the version a mixed model ends up with. Check the [strategy reference](generated-values/strategies.md) before relying on a form.
+The language, compilers, ESM and runner work for `generate` is tracked in [#616](https://github.com/Cratis/Screenplay/issues/616), and MCP generation strategies in #618. The TypeScript compiler has no ESM binder or runner, so it never gives an executable-readiness verdict for any row; see [editor diagnostic support](editor-diagnostics.md) and the [TypeScript compiler](typescript-compiler.md). The C# binder picks the lowest ESM version that covers what the model uses; rows above show the version a form needs, not the version a mixed model ends up with. Check the [strategy reference](generated-values/strategies.md) before relying on a form.

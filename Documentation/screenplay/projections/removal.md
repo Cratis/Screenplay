@@ -1,15 +1,17 @@
 ---
-title: "Removal"
-description: "Delete Screenplay projection instances when an event occurs, with remove with or remove via join."
+title: "Screenplay projection removal: delete instances or children"
+description: "Use Screenplay remove with to delete a read-model instance or one child. Match the right keys and understand where remove via join is supported."
 ---
 
 # Removal
 
-Removal allows you to delete projection instances when specific events occur. The language supports two types of removal: direct removal (`remove with`) and removal based on joined events (`remove via join`).
+Screenplay's `remove with` deletes a read-model instance, or one collection item when declared inside `children`. Choose the scope first: removing a member from a group should leave the group and its other members intact. To clear one optional object instead, use [`clear with` in a nested block](nested).
+
+The language also parses `remove via join`, but its execution depends on scope. Chronicle supports it for removing children across parents; it does not execute root-level `remove via join`. Screenplay's reference evaluator rejects the root form as well. The root `remove via join` examples below illustrate declarations, not working cascade-deletion paths.
 
 ## Remove With
 
-Remove a projection instance when a specific event occurs:
+At the root, declare the event that removes the entire instance. Without an explicit `key`, removal uses the event source identity:
 
 ```pdl
 remove with {EventType}
@@ -26,11 +28,11 @@ projection User => UserReadModel
   remove with UserDeleted
 ```
 
-When a `UserDeleted` event occurs, the entire `UserReadModel` instance is removed.
+`UserDeleted` removes the `UserReadModel` whose key matches the event source identity. It does not delete every user instance. A later `from` event for that key can create the read-model instance again.
 
 ### With Explicit Key
 
-Specify which property from the event identifies the instance to remove:
+If creation takes the user ID from an event field, use the same key rule for removal. The two events must resolve to the same stored instance:
 
 ```pdl
 projection User => UserReadModel
@@ -42,7 +44,7 @@ projection User => UserReadModel
 
 ### With named key parts
 
-For a read model with several top-level `key` properties, a removal can name the parts in an untyped child block, using the same names as the `from` key:
+For a read model identified by several top-level `key` properties, name every part in a child `key` block. Use the same part names as creation so removal selects the complete identity:
 
 ```pdl
 remove with PaymentRemoved
@@ -51,11 +53,13 @@ remove with PaymentRemoved
     method = method
 ```
 
-The parser preserves this block as `RemoveWithSyntax.PartsKey`. All parts must match to remove an instance; another instance with the same invoice but a different method remains. A later `from` event with the removed key creates it again. Missing parts report `PLAY0661`; unknown, repeated or ill-typed parts report `PLAY0662`. This root form has no scalar or parent key. A target must explicitly admit the composite-key executable contract before realizing it.
+All parts must match: removing one invoice-and-method pair leaves another method on the same invoice intact. A later `from` event with the removed key creates it again. Missing parts report `PLAY0661`; unknown, repeated, or ill-typed parts report `PLAY0662`.
+
+This root form has no scalar or parent key. The parser represents it as `RemoveWithSyntax.PartsKey`; an execution target must explicitly support the composite-key executable contract before running it.
 
 ### In Children
 
-Remove individual children:
+Inside `children`, removal targets one element. Carry the same child key and parent key through addition and removal:
 
 ```pdl
 children members identified by userId
@@ -67,11 +71,13 @@ children members identified by userId
     parent groupId
 ```
 
-The `parent` key ensures the correct child is removed from the correct parent.
+`key userId` selects the member and `parent groupId` selects the group containing it. That user's membership in another group remains unchanged.
 
 ## Remove Via Join
 
-Remove a projection instance when a joined event occurs:
+Inside a child collection, `remove via join` removes elements whose identity matches the removal event's key, across all parents. Its name does not mean it follows an arbitrary reference property.
+
+At the root, the following syntax parses but does not remove an instance in Chronicle:
 
 ```pdl
 remove via join on {EventType}
@@ -91,9 +97,11 @@ projection UserProfile => UserProfileReadModel
   remove via join on UserDeleted
 ```
 
-When a `UserDeleted` event occurs, any `UserProfileReadModel` instances with matching `UserId` are removed.
+This declaration expresses a profile's dependency on a user, but `UserDeleted` does not delete root profiles through `remove via join`. If the deletion event carries the profile's own key, use `remove with` and that key instead. A user ID reference alone is not a working root-deletion rule.
 
 ### With Key
+
+An explicit key selects a value from the removal event. It does not enable root-level join removal:
 
 ```pdl
 remove via join on UserDeleted key userId
@@ -101,7 +109,7 @@ remove via join on UserDeleted key userId
 
 ### In Children
 
-Remove children when a joined event occurs:
+A child collection can use the related entity's identity as its own identity. In this user's groups collection, `groupId` is the child identity, so a group deletion can remove that group from every user's collection:
 
 ```pdl
 children groups identified by groupId
@@ -118,11 +126,13 @@ children groups identified by groupId
   remove via join on GroupDeleted
 ```
 
-When a `GroupDeleted` event occurs, the child group is removed from the user's groups collection.
+`GroupDeleted` removes matching group children across parent instances. It uses the removal event's source identity by default, or its explicit key if supplied. The child-creation shorthand above also needs to resolve its key to `groupId`; `parent userId` only selects the user.
 
 ## Examples
 
 ### User Account Deletion
+
+With the default key, registration, email changes, and deletion all refer to the user identified by the event source:
 
 ```pdl
 projection User => UserReadModel
@@ -139,6 +149,8 @@ projection User => UserReadModel
 ```
 
 ### Group with Member Removal
+
+A role change updates the member. A removal event deletes that member from the selected group without deleting the group itself:
 
 ```pdl
 projection Group => GroupReadModel
@@ -161,6 +173,8 @@ projection Group => GroupReadModel
 
 ### Product with Category Removal
 
+This root-level declaration does not execute category-driven product deletion. The category join can enrich products, but its removal clause does not make that relationship a cascade:
+
 ```pdl
 projection Product => ProductReadModel
   from ProductCreated
@@ -174,9 +188,11 @@ projection Product => ProductReadModel
   remove via join on CategoryDeleted
 ```
 
-When the category is deleted, all products in that category are removed.
+Deleting a category does not remove these product instances through the root `remove via join` clause.
 
 ### Order Line Item Removal
+
+Removing a child does not calculate the parent's totals for you. This order declares separate arithmetic mappings for adding and removing a line. Those root handlers use event source identity, so the line events must identify the order by that source as well as by their child-level `parent orderId`:
 
 ```pdl
 projection Order => OrderReadModel
@@ -207,6 +223,8 @@ projection Order => OrderReadModel
 
 ### User Profile with Account Deletion
 
+Profile updates and user enrichment have distinct mappings. As in the earlier profile example, the root `remove via join` declaration does not execute account-driven profile deletion:
+
 ```pdl
 projection UserProfile => UserProfileReadModel
   from ProfileCreated
@@ -231,6 +249,8 @@ projection UserProfile => UserProfileReadModel
 
 ### Subscription with Plan Removal
 
+Direct cancellation can remove this subscription. Plan discontinuation is a different case: the root join-removal declaration below is not executed by Chronicle:
+
 ```pdl
 projection Subscription => SubscriptionReadModel
   from SubscriptionCreated
@@ -251,9 +271,11 @@ projection Subscription => SubscriptionReadModel
   remove via join on PlanDiscontinued
 ```
 
-Both `SubscriptionCancelled` and `PlanDiscontinued` will remove the subscription.
+`SubscriptionCancelled` removes the subscription using its own instance key. `PlanDiscontinued` does not remove it through this root `remove via join` clause.
 
 ### Task with Project Deletion
+
+A task can display both project and assignee details. Those joins do not make project deletion remove root task instances; the removal clause below is syntax only at this scope:
 
 ```pdl
 projection Task => TaskReadModel
@@ -273,9 +295,11 @@ projection Task => TaskReadModel
   remove via join on ProjectDeleted
 ```
 
-When the project is deleted, all associated tasks are removed.
+`ProjectDeleted` does not remove the root tasks through this declaration.
 
 ### Multi-Level Removal
+
+Employee unassignment and department disbanding act at different scopes. The company join adds display data, but its root join-removal clause does not cascade company dissolution into department deletion:
 
 ```pdl
 projection Department => DepartmentReadModel
@@ -300,11 +324,11 @@ projection Department => DepartmentReadModel
   remove via join on CompanyDissolved
 ```
 
-Employees can be removed individually, the department can be disbanded, or everything is removed if the company is dissolved.
+`EmployeeUnassigned` removes one child, while `DepartmentDisbanded` removes the department read-model instance, including its embedded employee collection. `CompanyDissolved` does not remove that root instance through `remove via join`.
 
 ## Parent Keys in Child Removal
 
-When removing children, the parent key ensures the correct instance:
+Use the same parent expression for child removal as for the events that populate the collection:
 
 ```pdl
 remove with ChildRemoved key childId
@@ -315,15 +339,11 @@ This removes the child with `childId` from the parent identified by `parentId`.
 
 ## Key Matching
 
-Removal finds instances to delete by matching keys:
-
-- **Projection-level**: Uses the projection's key (explicit or event source ID)
-- **Children-level**: Uses the child identifier and parent key
-- **Join-based**: Uses the join key to find matching instances
+Root `remove with` matches the instance key against the event source identity or explicit event key. Within `children`, it also resolves the containing parent. Child `remove via join` instead matches the child identity across parents; it does not need a parent expression or follow a foreign-key field on the child.
 
 ## Multiple Removal Conditions
 
-A projection can have multiple removal conditions:
+You can declare several removal events. In this example, direct document deletion works, but closing the owner's account does not delete the document through the root join-removal clause:
 
 ```pdl
 projection Document => DocumentReadModel
@@ -339,22 +359,19 @@ projection Document => DocumentReadModel
   remove via join on UserAccountClosed
 ```
 
-The document is removed if either it's deleted or the owner's account is closed.
+`DocumentDeleted` removes the document. `UserAccountClosed` does not remove it through this root declaration.
 
 ## Best Practices
 
-1. **Explicit Keys**: Specify keys for precise removal
-2. **Parent Keys in Children**: Always include parent keys when removing children
-3. **Multiple Conditions**: Use both direct and join-based removal when appropriate
-4. **Cascade Carefully**: Consider the impact of join-based removal on related data
-5. **Audit Trail**: Consider keeping soft deletes rather than hard removal for audit purposes
-6. **Event Ordering**: Be aware that removal events may arrive out of order
+Decide whether readers should stop seeing the instance or continue seeing it marked as deleted. Removal changes the projected read model; it is not a declaration to erase the source events. Use a status field when the deleted state itself needs to remain queryable.
+
+For direct child removal, verify both keys against the add event. For join removal, check that deleting the same child identity across every parent is really the intended result. Include a later `from` event in lifecycle specifications when recreation would matter: removal alone does not prevent it.
 
 ## Common Patterns
 
 ### Soft Delete Alternative
 
-Instead of removing, mark as deleted:
+Keep an instance queryable by mapping a deletion flag instead of declaring removal. Queries can then decide whether to include it:
 
 ```pdl
 projection User => UserReadModel
@@ -369,7 +386,9 @@ projection User => UserReadModel
 
 ### Cascade Delete
 
-Remove related items when parent is removed:
+Removing a root instance also removes its embedded collections from that read model. It does not require a separate child removal rule.
+
+The two join-removal clauses below illustrate different limits. `ProductDiscontinued` matches the child `itemId`, not the mapped `ProductId`, so it only removes items with that matching identity. `CustomerAccountClosed` does not remove orders because root join removal is not executed:
 
 ```pdl
 projection Order => OrderReadModel
@@ -392,7 +411,7 @@ projection Order => OrderReadModel
 
 ### Conditional Removal
 
-Use multiple specific events:
+Separate events can each remove the same instance. These are event-triggered removal rules; there is no additional predicate on the removal itself:
 
 ```pdl
 projection Subscription => SubscriptionReadModel
@@ -406,15 +425,14 @@ projection Subscription => SubscriptionReadModel
 
 ## Differences Between Remove With and Remove Via Join
 
-| Feature | Remove With | Remove Via Join |
-|---------|-------------|-----------------|
-| Trigger | Direct event | Event from joined stream |
-| Use Case | Explicit deletion | Related entity deletion |
-| Key | Event key matches projection key | Join key matches |
-| Scope | Direct control | Dependent on relationship |
+| Scope | `remove with` | `remove via join` |
+|-------|---------------|-------------------|
+| Root instance | Removes the instance matching the event key | Parses, but Chronicle does not execute it; the reference evaluator rejects it |
+| Child collection | Removes the child matching the event key within the selected parent | Removes children with the matching identity across parents |
+| Nested object | Use `clear with` to express clearing the value | Not supported |
 
 ## See Also
 
-- [Joins](joins.md) - Understanding join relationships for removal
-- [Children](children) - Removing children collections
-- [Keys](keys.md) - Understanding key matching for removal
+- [Joins](joins.md) - Separate related-data updates from lifecycle decisions.
+- [Children](children) - Keep the same child and parent identities throughout a collection's lifecycle.
+- [Keys](keys.md) - Match removal events to the instances they should delete.

@@ -1,6 +1,6 @@
 ---
 title: "Projections in the semantic model"
-description: "How a Screenplay projection is read twice, by Chronicle to run it and by the semantic binder, with Chronicle as the reference for meaning."
+description: "Cratis Screenplay's semantic binder mirrors Chronicle projection behavior in a portable executable model, with explicit execution limits."
 ---
 
 # Projections in the semantic model
@@ -125,7 +125,7 @@ Each of these is reported with a precise message rather than bound and ignored:
 
 | Construct | Why |
 | --- | --- |
-| `$causedBy` | Chronicle compiles it but cannot run it. Write `$eventContext.causedBy.subject`, `.name` or `.userName` instead. |
+| `$causedBy` | The Screenplay binder still rejects the shorthand, although Chronicle compiles and evaluates `$causedBy.subject`, `.name` and `.userName`. Write `$eventContext.causedBy.subject`, `.name` or `.userName` for semantic-model binding. Whole-object identity mappings and paths through optional `onBehalfOf` are not admitted as portable scalar values. |
 | `$eventContext.<path>` for a path Chronicle's event context does not have | Chronicle would throw when it builds the projection. The binder admits a small set of scalar paths until a shared event-context catalog replaces it. |
 | String templates and raw expressions in mappings and keys | The semantic model has no portable string-template expression. |
 | A number or Boolean literal key | Chronicle reads any key literal other than text as a property path. Write `key literal "…"`. |

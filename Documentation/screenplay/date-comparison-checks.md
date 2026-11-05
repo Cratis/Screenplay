@@ -1,6 +1,6 @@
 ---
 title: Check command date comparisons
-description: Evaluate command Date and DateTime comparisons with the same chronological meaning as the reference evaluator.
+description: Evaluate Cratis Screenplay command Date and DateTime comparisons in C# using calendar dates and UTC instants, with explicit input validation.
 ---
 
 Two timestamps can name the same instant without looking alike. If your host executes Screenplay commands itself, comparing their text can make it disagree with the reference evaluator. Use `SemanticDateComparisons` and `SemanticConditionEvaluator` from the `Cratis.Screenplay` .NET library to share that evaluator's date comparison and input-checking behavior instead of copying it.

@@ -1,63 +1,85 @@
 ---
-title: "Acme Commerce: a walkthrough"
-description: "How the Acme Commerce sample was built: five bounded contexts in one Screenplay application, with public events, shell, screens and Studio views."
+title: "Cratis Screenplay: trace the Acme Commerce sample"
+description: "Trace products, orders and stock across five contexts in the Acme Commerce Screenplay sample, then inspect its rules, specifications and screens."
 ---
 
-# Acme Commerce: a walkthrough
+<a id="acme-commerce-a-walkthrough"></a>
 
-Acme Commerce is the large sample in this repository: a mid-size shop in five bounded contexts - **Catalog, Storefront, Sales,
-Purchasing and Warehouse** - written as ONE Screenplay application in
-[`Samples/AcmeCommerce`](https://github.com/Cratis/Screenplay/tree/main/Samples/AcmeCommerce). The contexts never share a
-database. They talk only through twelve *public events*, and each context translates what it receives into its own words, so a
-change in one context's language never leaks into another's.
+Acme Commerce is a Cratis Screenplay sample for following a business flow across five bounded contexts: Catalog, Storefront,
+Sales, Purchasing and Warehouse. A bounded context owns its language and rules. The sample connects those contexts through
+public events, letting you follow a product from approval to checkout, reservation and dispatch without treating every context
+as one shared model.
 
-This page tells how the sample was built and why each part looks the way it does. Every statement here is checked against the
-sources of the sample; the sample's own [README](https://github.com/Cratis/Screenplay/blob/main/Samples/AcmeCommerce/README.md) is the
-short reference. What the language can say is said in the `.play` files; only the brainstorming material and a few project settings live only in Studio.
+Open [`Samples/AcmeCommerce`](https://github.com/Cratis/Screenplay/tree/main/Samples/AcmeCommerce) in a Screenplay checkout.
+You can follow the source with a text editor; the [event model board](see-your-event-model.md) offers a visual route. The
+sample's [README](https://github.com/Cratis/Screenplay/blob/main/Samples/AcmeCommerce/README.md) describes its layout and helper
+scripts. You do not need a Studio account to read the model or use the Screenplay compiler.
 
-At the time of writing the application is 56 `.play` files:
+Choose the part you want to understand:
 
-| Domain | Module | Slices (change / view / automation / translate) | Screens | Specifications |
-| --- | --- | --- | --- | --- |
-| Catalog | `Merchandising` | 5 / 5 / 0 / 3 | 10 | 18 |
-| Storefront | `Shop` | 9 / 6 / 1 / 6 | 15 | 27 |
-| Sales | `Orders` | 8 / 6 / 2 / 7 | 15 | 30 |
-| Purchasing | `Buying` | 12 / 6 / 1 / 3 | 20 | 34 |
-| Warehouse | `Stock` | 18 / 6 / 5 / 9 | 24 | 58 |
+- [Follow the public events](#the-public-events-p1-to-p12) to trace a product, order or replenishment request across contexts.
+- [Read a domain's rules](#domain-by-domain) to find the command, state and specification behind a decision.
+- [Inspect the screens](#screens) to see how forms and templates give a person access to those commands.
+- [Verify or consume the model](#compile-test-package-render-and-run) to distinguish compiler checks, specification execution, generated code and a sandbox.
+- [Use Studio for shared review](#what-each-studio-feature-shows) if you want to discuss the model with others.
 
-The shell adds the `Application` module (2 slices, 4 screens, 2 specifications). Together that is 169 specifications.
+| Context folder | Module | Start with this task |
+| --- | --- | --- |
+| `Catalog/` | `Merchandising` | Approve a product for sale and publish its contract |
+| `Storefront/` | `Shop` | List a product, fill a basket and check out |
+| `Sales/` | `Orders` | Decide whether an order can be approved and confirmed |
+| `Warehouse/` | `Stock` | Reserve stock, plan a shipment and dispatch it |
+| `Purchasing/` | `Buying` | Replenish stock and receive a purchase order |
 
 ## An order's lifecycle and the process it sets off
 
-Storefront also shows the two top-level lifecycle constructs, both in ESM v36 ([state machines](statemachines.md), [workflows](workflows.md)). `OrderLifecycle` is a `statemachine` that follows the `OrderProgress` read model and moves an order from Placed through Paid, Packed and Shipped to Delivered, or to Cancelled or Refunded; entering Paid starts the `FulfilOrder` workflow and entering Shipped sends `NotifyCustomer`. `FulfilOrder` is a `workflow` for the same read model: it reserves stock with three attempts, decides between creating the parcel and a backorder that a `WarehouseClerk` must approve within a day, waits two days for the carrier, and escalates on a failure or an expiry. Both live in `Storefront/model/lifecycle.play` and carry the specifications that pin them; the commands and events they name are in `Storefront/model/fulfilment.play`. `screenplay test Samples/AcmeCommerce` runs the specifications with the rest.
+To study an order within Storefront, open `Storefront/model/lifecycle.play`. It declares two top-level lifecycle constructs
+in version 36 of the executable semantic model (ESM): a [state machine](statemachines.md) for where the order is, and a
+[workflow](workflows.md) for the work that follows.
+
+`OrderLifecycle` follows the `OrderProgress` read model from Placed through Paid, Packed and Shipped to Delivered, with
+Cancelled and Refunded outcomes. Entering Paid starts `FulfilOrder`; entering Shipped sends `NotifyCustomer`.
+
+`FulfilOrder` attempts to reserve stock up to three times. It then chooses between creating a parcel and seeking backorder
+approval from a `WarehouseClerk` within a day. It waits up to two days for the carrier and escalates a failure or expiry.
+Read its specifications beside the workflow to compare those paths. The commands and events it names live in
+`Storefront/model/fulfilment.play`.
+
+These lifecycle declarations describe Storefront's process. They do not replace the public-event contracts between the five
+contexts below. The [specification runner](#compile-and-run-specifications) checks their modeled expectations; a consumer must
+separately support the constructs before it can execute them.
 
 ## Where to find it
 
-| What | Where |
+All paths in this walkthrough are relative to `Samples/AcmeCommerce` unless a command starts at the repository root.
+Keep the whole sample folder together: a domain's slices refer to declarations in `Shared/` and its other files.
+
+| What you want to inspect | Where to open it |
 | --- | --- |
-| The Screenplay source | `Samples/AcmeCommerce` in this repository |
-| The Studio project | the project **Acme Commerce** with the application **Acme Commerce Shop**, in the **Cratis** tenant of [Cratis Studio](https://app.cratis.studio/) |
-| The loader that fills the Studio project | `scripts/samples/acme-commerce` in the `Cratis/Studio` repository |
+| Application identity and execution declarations | `application.play` |
+| Shared value types and access rules | `Shared/concepts.play`, `Shared/access.play`, `Shared/eventsources.play` |
+| A context's commands, views and specifications | `<Domain>/model/` |
+| Public-event publication and reception | `<Domain>/translation/` |
+| A context's shell and design data | `<Domain>/shell/` |
+| Packaging and rendering adaptations | `tools/domain-package.sh`, `tools/render-variant.sh` |
 
-The Studio project is permanent: it is never deleted, and it is only refreshed through the loader. Sign in to Cratis Studio
-with an account in the Cratis tenant and pick **Acme Commerce** in the project picker. A project's address has the shape
-`https://app.cratis.studio/projects/<projectId>` and an application's
-`https://app.cratis.studio/projects/<projectId>/application/<applicationId>`, so open the project from the picker rather than from
-a copied link. The application is called "Acme Commerce Shop" rather than plain
-"Acme Commerce" because Studio application names are unique per tenant and an early scratch application had already taken the
-shorter one.
+[Cratis Studio](https://app.cratis.studio/) is an optional commercial workspace for collaborative modeling. Its published
+access route offers self-service registration and a 14-day trial. Use a project your account can access; this walkthrough does
+not require membership in the Cratis organization or access to a hosted Acme Commerce project. It supplies no project or
+application IDs for the account-specific routes `https://app.cratis.studio/projects/<projectId>` and
+`https://app.cratis.studio/projects/<projectId>/application/<applicationId>`.
 
-## How it was built
+<a id="how-it-was-built"></a>
 
-The sample was written in this order, and each step compiles on its own:
+## Follow the source in order
 
-1. The **shared kernel** (`Shared/`): concepts, event sources, policies and personas.
-2. The **shell** of each domain (`<Domain>/shell/`): its theme, UI profile, navigation with logo and sample data.
-3. **Catalog** first, because it publishes the first contracts (P1 to P3).
-4. **Storefront**, which only listens to Catalog and then publishes the first order (P4).
-5. **Sales**, **Warehouse** and **Purchasing**, which close the loops: order to cash to dock, and replenishment.
-6. The **custom component package**, the **sample data** and the **tooling** that packages a domain for Studio and builds a
-   renderable variant.
+Read from the shared declarations into the contexts that use them. `Shared/` establishes names and rules that the contexts
+agree on. Catalog publishes the product contracts; Storefront translates them into listings and publishes an order after
+checkout. Sales, Warehouse and Purchasing handle approval, fulfillment and replenishment.
+
+Once you can trace that flow, inspect a domain's `shell/` folder and the screens in `model/` to see how people reach its
+commands. The helper scripts package individual domains or adapt a copy for rendering. They are separate from the canonical
+`.play` source, and their output is not evidence that every consumer supports the original model.
 
 ### One application, five folders
 
@@ -72,22 +94,21 @@ _packages/scene.commerce/       the custom component package @acme/scene.commerc
 tools/                          domain-package.sh, render-variant.sh, render-bridge/, packages/
 ```
 
-Four rules about composing a [folder](folders.md) into one application shaped the layout:
+The root `application.play` contains the only `domain AcmeCommerce` declaration. Compiling the [folder](folders.md) composes
+its `.play` files into one application, so `Shared/` needs no `..` import from each domain.
 
-- **One `domain` line per tree.** Only `application.play` has it; the domain folders carry none.
-- **One name per event in the application.** The same name on a publisher and on a consumer compiles but does not bind
-  (`PLAY0472`). A consumer therefore declares a foreign public event under a *consumer-local* name,
-  `<Event>At<Consumer>` - `ProductPublishedAtStorefront` - and `from "<Origin>"` keeps the lineage.
-- **No `..` imports.** `Shared/` is a sibling folder; compiling a folder walks every `.play` file in it.
-- **A read model's first event creates it.** Every required property is set there with a literal default. Specifications
-  that reach an unadmitted projection or depend on its read model report "unsupported"; unrelated specifications still run.
+Events need distinct names within that application. The consumer therefore declares a local name such as
+`ProductPublishedAtStorefront`; `from "Catalog"` records its origin. Reusing the publisher's event name on the consumer fails
+binding (`PLAY0472`). The per-domain packaging script can restore the published name because each package is a separate tree.
+
+A read model's first event initializes its required properties. If the specification runner reaches a projection it cannot
+execute, it reports that scenario as unsupported, including scenarios that depend on the affected read model. Unrelated
+specifications can still run.
 
 ## The shared kernel
 
-`Shared/` holds what every context means the same way.
-
-**Concepts with their rules.** Validation lives on the [concept](concepts.md), so the rule travels with the value into every
-command, event and read model. `Sku` is the key every context knows a product by:
+Start in `Shared/concepts.play` to see which values the contexts agree on. A [concept](concepts.md) gives a value a business
+name and validation rules. Commands, events and read models that use `Sku` share these rules:
 
 ```text
 concept Sku : String
@@ -105,29 +126,29 @@ words only it uses: Storefront has `Slug`, `ShortDescription`, the enumeration c
 `pickup`) and the composite type `BasketLine`. Concepts that every context uses include the enumerations `OrderStatus`,
 `ProductStatus` and `Carrier` and the composite types `PostalAddress` and `OrderLine`.
 
-**Event sources.** Every [event source](event-sources.md) is declared once in `Shared/eventsources.play`, because a source is a
-name several contexts may refer to: `Product`, `Customer`, `Basket`, `Order`, `Supplier`, and so on, with named streams where
-one identity has more than one history.
+`Shared/eventsources.play` declares the [event sources](event-sources.md): the identities whose histories the model records,
+such as `Product`, `Customer`, `Basket`, `Order` and `Supplier`. Named streams distinguish histories where one identity has
+more than one.
 
-**Policies and personas.** `Shared/access.play` declares the [policies](policies.md) (`IsShopper`, `IsSalesManager`,
-`CanCurateCatalog`, `CanBuy`, `CanWorkWarehouse`, ...) and then the personas that hold them: Shopper, Merchandiser, SalesRep,
-SalesManager, Buyer and WarehouseClerk: six personas, each a real person who works in the shop. A module admits its own persona(s):
+`Shared/access.play` declares the [policies](policies.md) (`IsShopper`, `IsSalesManager`, `CanCurateCatalog`, `CanBuy`,
+`CanWorkWarehouse`, ...) and the personas that hold them: Shopper, Merchandiser, SalesRep, SalesManager, Buyer and
+WarehouseClerk. These represent the people who work in the modeled shop. A module names the policy that admits them:
 
 ```text
 policy CanCurateCatalog
   require role "Merchandiser"
 ```
 
-**Processing purposes.** Storefront (`ShopOrderProcessing`), Sales (`OrderFulfilmentProcessing`) and Purchasing
-(`SupplierRelations`) each declare a [`purpose`](purposes.md) for the personal data they handle, and the module names it with
-`purpose`.
+The modules also name why they handle personal data through a [`purpose`](purposes.md): `ShopOrderProcessing` in Storefront,
+`OrderFulfilmentProcessing` in Sales and `SupplierRelations` in Purchasing.
 
-**The theme.** `Shared/theme.play` declares the `Acme` theme and the packages it is compatible with, including the custom
-package `Acme.Commerce`.
+For the shared visual declarations, open `Shared/theme.play`. It declares the `Acme` theme and the packages it is compatible
+with, including the custom package `Acme.Commerce`.
 
 ## The public events (P1 to P12)
 
-These are the contracts. A public event is the only thing that crosses a context boundary.
+Use this table as the route map between contexts. P1 to P12 are labels used in the walkthrough; the event names are the
+contracts declared in the source. The modeled contexts exchange these public events, then translate them into private facts.
 
 | # | Public event | Published by | Consumed by |
 | --- | --- | --- | --- |
@@ -144,15 +165,20 @@ These are the contracts. A public event is the only thing that crosses a context
 | P11 | `PurchaseOrderReceived` | Purchasing | Warehouse |
 | P12 | `ShipmentDispatched` | Warehouse | Sales |
 
-The flows they carry: the catalogue (F-A: Catalog to Storefront and Warehouse), order to cash to dock (F-B: Storefront, Sales,
-Warehouse and back), replenishment (F-C: Warehouse, Purchasing, Warehouse) and change of price (F-D: Catalog to Storefront and
-Sales).
+For a first pass, trace the catalogue flow (F-A). Open `Catalog/translation/publish.play`, find `ProductPublished`, then open
+`Storefront/translation/listing.play` and find `ProductPublishedAtStorefront`. Follow its capture to `ProductListed` and the
+listing read model. This connects the public contract to what a shopper can see.
+
+Next follow checkout through P4, order confirmation through P5 and the reservation results P7 or P8. That order-to-dispatch
+flow (F-B) returns status through P6 and shipment information through P12. To study replenishment (F-C), follow P10 from
+Warehouse into Purchasing, then P11 back to Warehouse. A price change (F-D) follows P2 from Catalog to both Storefront and
+Sales.
 
 ### Private versus public events
 
-Everything else is private. A domain says what it has done in its own words (`ProductApprovedForSale`, `OrderConfirmationIssued`,
-`ReservationMade`) and only the `Translate` slices turn a private event into a public one. A context never sees another's private
-events.
+Private events record what a context has done in its own language: `ProductApprovedForSale`, `OrderConfirmationIssued` or
+`ReservationMade`. The `Translate` slices publish the contracts other contexts consume. Follow those contracts across a
+boundary, rather than reaching into the publisher's private events.
 
 ### Outbound translation: one public contract per slice
 
@@ -178,13 +204,14 @@ slice Translate PublishProduct
       ...
 ```
 
-Sales' `PublishOrderStatus` is the many-to-one case: six private events (approved, rejected, on hold, shipped, fulfilled and
-cancelled) become ONE public `OrderStatusChanged` with a `status`.
+For a many-to-one example, read `Sales/translation/publish.play`. `PublishOrderStatus` maps the private approved, rejected,
+on-hold, shipped, fulfilled and cancelled events to the same public `OrderStatusChanged` contract, setting `status` for each.
 
 ### Inbound translation: the anti-corruption layer
 
-Storefront declares the foreign event in its own shape and then *captures* it into a private event in the shop's own language.
-The shop addresses a product by its SKU, so every product capture uses `key sku`:
+An inbound translation is an anti-corruption layer: it keeps the publisher's language from becoming the consumer's internal
+model. Storefront declares the foreign event, then captures it into a private event in the shop's language. Its product
+captures use `key sku` because the shop addresses a product by its SKU:
 
 ```text
 slice Translate ListProduct
@@ -240,77 +267,72 @@ A reaction runs *as* a stated role (`runs as system role ...`), so the policies 
 
 ## Domain by domain
 
+Pick the context whose decision you want to understand. Each section points to a starting file and the events that connect
+it to the rest of the model.
+
 ### Catalog (`Merchandising`)
 
-The Merchandiser curates what is sold. Features: Products, Pricing, Publication.
+To understand why a product cannot yet be sold, open `Catalog/model/publication.play`. `ApproveProductForSale` reads
+`ProductReadiness` and refuses with "Describe the product before approving it" or "Price the product before approving it".
+Trace that state back to `DescribeProduct` and `SetProductPrice`, then compare the successful and refused specifications.
 
-- **Commands and events.** `DraftProduct` / `ProductDrafted`, `DescribeProduct` / `ProductDescribed`, `SetProductPrice` /
-  `ProductPriceSet`, `ApproveProductForSale` / `ProductApprovedForSale`, `WithdrawProduct` / `ProductWithdrawn`.
-- **Read models.** `ProductRow`, `ProductDetail`, `PricedProduct`, `ProductReadiness` and `CatalogFigure`.
-- **A decision against state.** `ApproveProductForSale` reads `ProductReadiness` and refuses with "Describe the product before
-  approving it" or "Price the product before approving it".
-- **Constraints.** `UniqueSku` (`unique sku on ProductDrafted`) and `OneApprovalPerProduct` (`unique event
-  ProductApprovedForSale`, `released by ProductWithdrawn` - a withdrawn product may be approved again).
-- **Public events.** P1, P2, P3 through `PublishProduct`, `PublishPriceChange` and `PublishRetirement`.
+`UniqueSku` prevents duplicate SKUs on `ProductDrafted`. `OneApprovalPerProduct` prevents another `ProductApprovedForSale`
+until `ProductWithdrawn` releases the rule. The translation slices `PublishProduct`, `PublishPriceChange` and
+`PublishRetirement` publish P1, P2 and P3 so consumers need not know those internal decisions.
 
 ### Storefront (`Shop`)
 
-The Shopper browses, fills a basket and checks out. Features: Browse, Basket, Checkout, MyOrders.
+Start in `Storefront/translation/listing.play` to follow `ListProduct`, `UpdateDisplayPrice`, `DelistProduct`,
+`UpdateAvailability` and `TrackOrderStatus`. These consume P1, P2, P3, P9 and P6 in Storefront's language.
 
-- **Inbound.** `ListProduct` (P1), `UpdateDisplayPrice` (P2), `DelistProduct` (P3), `UpdateAvailability` (P9) and
-  `TrackOrderStatus` (P6).
-- **Outbound.** `PublishOrder` turns `CheckoutCompleted` into P4.
-- **Rules.** `AddToBasket` reads the listing and refuses a sold-out product; `UniqueCustomerEmail`; `EmailAddress` must
-  contain `@`.
-- **A multi-step flow.** Checkout is a wizard whose three steps (`EnterShippingAddress`, `ChooseDeliveryMethod`, `CheckOut`) are
-  command [forms](forms.md); `CheckOut` reads the basket's line count from a small view keyed `id` (Chronicle's decision reads need that key name) and is refused for an empty basket.
-- **Its own page shapes.** `ProductGrid` and `SideSummary` are screen templates the module declares itself (see below).
-- **Navigation.** The module *overrides* the application's topbar with its own: Browse, Basket, My orders.
+Then open `Storefront/model/basket.play`. `AddToBasket` reads the listing and refuses a sold-out product. In
+`Storefront/model/checkout.play`, the wizard's three steps (`EnterShippingAddress`, `ChooseDeliveryMethod`, `CheckOut`) use
+command [forms](forms.md). `CheckOut` reads `BasketLineCount` and refuses an empty basket. `PublishOrder` translates
+`CheckoutCompleted` into P4 for Sales.
+
+To inspect the shopper's pages, open `Storefront/model/templates.play`. `ProductGrid` and `SideSummary` give the shop its own
+page shapes. `Storefront/model/module.play` overrides the application's topbar with Browse, Basket and My orders.
 
 ### Sales (`Orders`)
 
-Order intake, approval, confirmation and status. Features: Intake, Approval, Fulfilment, Reporting.
+Follow P4 into `Sales/translation/receive.play`, then read `Sales/model/approval.play`. `SmallOrderAutoApproval` invokes
+`ApproveOrder` when `quotedTotal < 500`; larger orders need a separate approval decision. Approval leads to `ConfirmOrder`,
+whose private `OrderConfirmationIssued` becomes public `OrderConfirmed` (P5).
 
-- **Inbound.** `ReceiveOrder` (P4), `UpdatePriceList` (P2), `RecordReservation` (P7), `HoldOrderOnShortage` (P8) and
-  `RecordShipment` (P12).
-- **Outbound.** `PublishOrderConfirmed` (P5) and `PublishOrderStatus` (P6). The private event behind P5 is
-  `OrderConfirmationIssued`; the public contract keeps the name `OrderConfirmed`.
-- **Policy-driven automation.** Small orders approve themselves; larger ones wait in the manager's inbox.
-- **Who may do what.** `ApproveOrder`, `RejectOrder`, `ApplyLargeDiscount` and the inbox are for the SalesManager
-  (`authorize IsSalesManager`); a SalesRep's `ApplyDiscount` stops at 15 percent.
-- **Constraints.** `OneOpenOrderPerBasket` (`unique event OrderReceived`; it lives with the consumer because a constraint that
-  mentions an inbound-captured event cannot sit in the inbound slice, `PLAY0616`) and `OneConfirmationPerOrder`.
-- **Navigation.** The module *extends* the application's sidebar with a Reports item.
+The approval commands still have access rules. `ApproveOrder`, `RejectOrder` and `ApplyLargeDiscount` require
+`authorize IsSalesManager`; a SalesRep's `ApplyDiscount` stops at 15 percent. Compare their specifications to see the difference
+between a rejected business decision and an authorization denial.
+
+`OneOpenOrderPerBasket` constrains `OrderReceived`, and `OneConfirmationPerOrder` prevents a second confirmation. The former
+lives outside the inbound slice because a constraint referring to an inbound-captured event cannot live there (`PLAY0616`).
+For the return path, `Sales/translation/fulfilment.play` receives P7, P8 and P12; `PublishOrderStatus` publishes P6.
 
 ### Warehouse (`Stock`)
 
-Physical stock. Features: Levels, Reservations, Receiving, Dispatch, Overview. The largest domain, with nine translate slices
-and five automations.
+Open `Warehouse/translation/inbound.play` to see how a published product becomes a SKU, an order confirmation requests a
+reservation and a purchasing receipt adds stock. In `Warehouse/model/reservations.play`, `ReserveStockReaction` invokes
+`ReserveStockUnits`, which produces `ReservationMade` on success. If validation refuses the command, the reaction's
+`on refused by validation` branch produces `ReservationFailed`. Follow that branch for P8; the successful reservation becomes P7 for Sales.
 
-- **Inbound.** `RegisterSkuFromCatalog` (P1), the SKU block on retirement (P3), the reservation request from P5 and the stock
-  receipt from P11.
-- **Outbound.** P7, P8, P9, P10 and P12.
-- **Automations.** `ReserveStock` (it either promises the stock with `ReservationMade` or says it could not with
-  `ReservationFailed`), `WatchReorderPoint` (one `ReorderPointCrossed` per crossing; the alarm re-arms when stock comes back),
-  `SnapshotStockOnMovement`, `PlanShipmentWhenReserved` and `TakeStockWhenDispatched`.
-- **Constraints.** `UniqueLocationCode` and `OneDispatchPerShipment`.
+Follow the remaining automations to understand the physical flow. `PlanShipmentWhenReserved` plans a shipment;
+`TakeStockWhenDispatched` removes dispatched stock. `WatchReorderPoint` raises `ReorderPointCrossed` once per crossing and
+re-arms when stock returns. Its publication, P10, is Purchasing's signal to replenish. `UniqueLocationCode` and
+`OneDispatchPerShipment` guard the corresponding commands.
 
 ### Purchasing (`Buying`)
 
-Suppliers, replenishment and purchase orders. Features: Suppliers, Replenishment, PurchaseOrders, Demand, Overview.
+Start with `Purchasing/translation/inbound.play`: `RecordDemand` consumes P5 and `RequestReplenishment` consumes P10.
+In `Purchasing/model/replenishment.play`, `AutoReplenish` requests a one-line purchase order for the SKU's preferred supplier.
+`OneOpenReplenishmentOrderPerSku` prevents another while one is open; goods received or cancellation releases it. Without a
+preferred supplier the model records `ReplenishmentBlocked`, shown as status `blocked` in the replenishment read model.
 
-- **Inbound.** `RecordDemand` (P5) and `RequestReplenishment` (P10). **Outbound.** `PublishGoodsReceived` (P11).
-- **Automation.** `AutoReplenish` drafts a one-line purchase order with the SKU's preferred supplier. It skips when an open order
-  already covers the SKU (the constraint `OneOpenReplenishmentOrderPerSku` is *released by* goods received or a cancellation),
-  and when there is no preferred supplier it records `ReplenishmentBlocked`, which the replenishment read model shows as
-  status `blocked`.
-- **Single-value keys.** A supplier's offers are keyed by a generated `SupplierOfferId` (the offer is an event source of its own) instead of supplier + SKU: Stage refuses composite read-model keys (STAGE-ESM-048) until Chronicle#4265 ships, and the sample has no composite key anywhere. They return when Chronicle#4265 ships.
-- **Constraints.** `UniqueSupplierTaxId`, `UniquePurchaseOrderNumber`, `OneSubmissionPerPurchaseOrder` and
-  `OneOpenReplenishmentOrderPerSku`.
+Supplier offers use a generated `SupplierOfferId`, giving each offer its own event-source identity. Other constraints include
+`UniqueSupplierTaxId`, `UniquePurchaseOrderNumber` and `OneSubmissionPerPurchaseOrder`. Follow `PublishGoodsReceived` in
+`Purchasing/translation/publish.play` to P11, which returns the received goods to Warehouse's stock flow.
 
 ### Constraints
 
-Eleven [constraints](constraints.md) in all. Most are uniqueness rules written where the command appends the event:
+Read a [constraint](constraints.md) beside the command that appends the event it guards. For example, Catalog's SKU rule is:
 
 ```text
 constraint UniqueSku
@@ -323,12 +345,13 @@ again.
 
 ### Specifications
 
-Every behaviour above has a [specification](specifications.md): a command is given a caller (`authenticated`, `role "..."`) and
-prior events and then either produces events or is refused with a message; a view is given events and then shows a read model.
-A specification runs only the slice that declares it (Screenplay decision 0115), so it states only what that slice does: a
-command's specification states its own events, and the public event is stated in the outbound translate slice that publishes it
-(`SettingAPrice` states `ProductPriceSet`; `PublishPriceChange` states `ProductPriceChanged`). An automation states the hand-over
-to the command it invokes with `then invokes`, and that command's own slice proves what it appends:
+Use the [specifications](specifications.md) beside a slice to check the decision you just traced. A command scenario can give
+a caller (`authenticated`, `role "..."`) and prior events, then expect events or a refusal. A view scenario supplies events and
+expects a read model.
+
+A specification checks the slice that declares it. `SettingAPrice` expects `ProductPriceSet`; the outbound translation checks
+`ProductPriceChanged` separately. For an automation, `then invokes` states the handoff to a command. That command's slice
+checks what it appends. Here, the expected result is an invocation of `ApproveOrder`:
 
 ```screenplay
 specification ASmallOrderApprovesItself
@@ -343,21 +366,29 @@ specification ASmallOrderApprovesItself
     orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
 ```
 
-A chain across slices - an order received, approved, confirmed and published - is therefore proved link by link.
+Read the received, approved, confirmed and published scenarios together to follow the chain. Passing these slice-level
+checks does not establish cross-context delivery or a working deployment.
 
 ## The shell
 
 ### One application per domain
 
-Scene keeps the logo and the UI profile at application level only (a module shows the application's logo locked), so a domain that has its own
-logo, theme and shell is its own application: Acme Shop, Acme Catalog, Acme Sales, Acme Purchasing and Acme Warehouse. They share the platform
-(`Cratis.Components` and the Default blueprint's `AppShell`, `^1`) and differ in logo, accent, colour scheme, menu mode and menu theme. Each
-`<Domain>/shell/` folder holds three files, and a domain package (`tools/domain-package.sh`) carries them to Studio.
+The combined source is one application for tracing the whole model. Packaging a domain gives it a separate application root
+and its own shell: Acme Shop, Acme Catalog, Acme Sales, Acme Purchasing or Acme Warehouse. Inspect `<Domain>/shell/` to compare
+the logo, theme, navigation and sample data without changing the business flow.
+
+The domains share `Cratis.Components` and use the foundation blueprint `Cratis.Blueprint.Default`. Their different shell
+settings let the shopper's storefront and the warehouse work area present the tasks differently.
 
 ### The UI profile
 
-`<Domain>/shell/shell.play` declares the domain's theme and its `ui profile`: the web target, the packages, an accent colour, the menu and a
-**root template** taken from a blueprint - the `AppShell` of `Cratis.Blueprint.Default`, pinned at `^1`. Storefront, the customer-facing one:
+`<Domain>/shell/shell.play` declares the theme and `ui profile`: the target, packages, root template and appearance. Catalog,
+Sales, Purchasing and Warehouse reference the blueprint's `AppShell` directly, pinned at `^1`. Storefront names
+`StorefrontShell`, declared in `Storefront/model/shell.play`, as its root template. Its topbar includes a basket indicator
+bound to `AllBasketSizes.0.lineCount`, so you can trace a shell element back to the basket read model.
+
+The following reduced example illustrates a direct blueprint root rather than Storefront's own shell. Use the checked-out
+files when compiling the sample:
 
 ```text
 theme AcmeStorefront
@@ -389,32 +420,34 @@ ui profile Storefront
 
 | Domain | Accent | Menu mode | Menu theme | Scheme |
 | --- | --- | --- | --- | --- |
-| Storefront | `#C2410C` | `horizontal` | light | light |
+| Storefront | `#C2410C` | own shell | own shell | light |
 | Catalog | `#4338CA` | `static` | light | light |
 | Sales | `#1D4ED8` | `static` | dark | light |
 | Purchasing | `#B45309` | `slimPlus` | light | light |
 | Warehouse | `#0F766E` | `compact` | dark | dark |
 
-The name, logo image, corners and font that the designer's App and Look tabs show are not in the `ui profile` grammar yet; Studio's sample loader
-saves them (`identity` stage) from `assets/logos`.
+The profile also carries `identity` and `appearance` declarations. For example, Storefront names the application "Acme Shop"
+and sets round corners and `source-serif-4`. Read those alongside `navigation.play`, where the topbar supplies its logo.
 
 ### Sample data
 
-`<Domain>/shell/sampledata.play` is the domain's [sample data](sample-data.md) pack (`AcmeStorefront`, `AcmeCatalog`, ..., locale `nb-NO`): one
-shape per read model that a screen shows. It is design and preview time only: a production build never sees it.
+`<Domain>/shell/sampledata.play` supplies [sample data](sample-data.md) packs such as `AcmeStorefront` and `AcmeCatalog`, with
+locale `nb-NO`. Use these rows to inspect a screen's design without first producing every business event. They are excluded
+from generated production artifacts. The CLI can separately opt a disposable sandbox into deriving seed events from supported
+sample-data shapes with `--sample-data`; that does not seed production data.
 
 ### Navigation and the logo
 
-With a blueprint root template the layout carries only the [navigation regions](navigation.md). `<Domain>/shell/navigation.play` declares
-the domain's layout (`StorefrontNavigation`, `CatalogNavigation`, ...): the topbar with the logo - `logo image "data:image/svg+xml;base64,..."`,
-the SVG of `assets/logos` inlined by `tools/embed-logos.py`, because a document carries no file beside it and a data URI cannot 404 - and a
-hierarchical sidebar, module then feature. A domain module says how it relates to the shell:
+Open `<Domain>/shell/navigation.play` for the [navigation regions](navigation.md). It declares the topbar and a sidebar grouped
+by module and feature. The logo is an inline SVG data URI, `logo image "data:image/svg+xml;base64,..."`, so the model does not
+need to load a separate logo file. `tools/embed-logos.py` derives those values from `assets/logos`.
+
+A module can inherit or replace the application's navigation:
 
 | Module | Statement | Effect |
 | --- | --- | --- |
 | `Shop` | `navigation topbar overrides` | the storefront has its own light topbar |
-| `Orders` | `navigation sidebar extends` | adds a Reports item to the sidebar |
-| `Merchandising`, `Buying`, `Stock` | none | inherit the application's navigation |
+| `Merchandising`, `Orders`, `Buying`, `Stock` | none | inherit the application's navigation |
 
 ### Toolbars
 
@@ -434,38 +467,40 @@ toolbar
     button new title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
 ```
 
-There are 23 toolbar buttons across the domains, mostly in Purchasing (10) and Warehouse (7).
+Compare the application-level button with the screen's button before adding another action: the first is available across
+pages, while the second belongs to the product list.
 
 ## Screens
 
 Screens fill [templates](templates.md). The sample uses the foundation blueprint templates by reference, for example
 `template blueprint Cratis.Blueprint.Default ListScreen version "^1"`:
 
-| Template | Screens | Used for |
-| --- | --- | --- |
-| `QuickCreateDialog` | 30 | the input surface of a command: new product, add line, adjust stock, ... |
-| `ConfirmDialog` | 13 | a command that needs only a yes or no: approve or withdraw a product, release a hold, fulfil an order, pick or pack a parcel |
-| `ListScreen` | 12 | work lists: the product catalogue, the approval inbox, purchase orders, shipments, stock levels |
-| `RecordPage` | 9 | one thing in full: product page, order page, purchase order page, supplier page, stock item |
-| `DashboardScreen` | 4 | the dashboards of Catalog, Sales, Purchasing and Warehouse |
-| `BoardScreen` | 3 | the pricing board, the orders pipeline and the picking queue |
-| `FormScreen` | 2 | the Catalog set-price and describe-product forms |
-| `WizardScreen` | 2 | Storefront checkout and Purchasing "New purchase order" |
-| `SideSheet` | 1 | Purchasing goods receipt |
-| `MasterDetailScreen` | 1 | Purchasing suppliers |
-| own `ProductGrid`, `SideSummary` | 1 and 3 | Storefront browse; basket, product page and order tracking |
+| Template | Task it presents |
+| --- | --- |
+| `QuickCreateDialog` | Enter command input, such as a new product or stock adjustment |
+| `ConfirmDialog` | Confirm an action, such as approving a product or packing a parcel |
+| `ListScreen` | Work through products, an approval inbox, purchase orders or shipments |
+| `RecordPage` | Inspect one product, order, supplier or stock item |
+| `DashboardScreen` | Read a domain's summary figures |
+| `BoardScreen` | Review pricing, the orders pipeline or the picking queue |
+| `FormScreen` | Describe a product or set its price |
+| `WizardScreen` | Check out or create a purchase order in steps |
+| `SideSheet` | Record goods received |
+| `MasterDetailScreen` | Work with suppliers and their details |
+| Own `ProductGrid`, `SideSummary` | Browse products or inspect a basket, product or order |
 
 Command input is a [form](forms.md) declared once and found by its command (`form DescribeProductForm for DescribeProduct`),
 with a two-column layout where it helps.
 
-### Every command has its own screen
+<a id="every-command-has-its-own-screen"></a>
 
-A command's slice owns the screen the person sees when they run it: a `QuickCreateDialog` for a command that asks for input, a `ConfirmDialog`
-for one that only needs a yes. The board draws it under the persona who may run the command, and the slice previews and plays on its own.
-Only the commands a reaction invokes on its own (confirm an order, clear a basket after checkout, take dispatched stock, snapshot the stock level,
-raise the reorder alarm, reserve stock units, plan a shipment) have no screen: nobody runs them.
+### Connect a person's task to a command
 
-The screen where the persona works reaches the command, in the way that fits it:
+Commands that a person runs have screens in their slices: usually a `QuickCreateDialog` for input or a `ConfirmDialog` for
+confirmation. Commands invoked by automations, such as clearing the basket after checkout or reserving stock units, need no
+person-facing screen.
+
+To find how a person reaches a command, look for these surfaces:
 
 | Surface | Example | Written as |
 | --- | --- | --- |
@@ -477,10 +512,9 @@ The screen where the persona works reaches the command, in the way that fits it:
 
 ### The domain's own templates
 
-Storefront does not borrow a blueprint shape for the pages that define the shop. It declares its own templates, created from
-the current screen and categorised under Shop. A template is a *shape with a designed first draft*: the slots it declares, how
-they share the space, and the stock components (`Cratis.Blueprint.Default`) it seeds each slot with, so the template editor
-draws a real product grid and a real summary layout - not an empty place:
+Storefront declares its own templates for the pages that define the shop. Open `Storefront/model/templates.play` to inspect
+`ProductGrid` and `SideSummary`. Each template declares named slots, an arrangement and initial component content. This gives
+the design a useful starting shape before a screen binds its own data:
 
 ```text
 screen template ProductGrid
@@ -508,23 +542,18 @@ screen template ProductGrid
       ...
 ```
 
-- `ProductGrid` is a responsive grid of product cards (picture, name, price, an add-to-basket button) with a filters rail beside it
-  (its slot is not called `grid`: in an arrangement `grid` is the layout kind). The filter builder's value narrows the cards, and the list pages and
-  searches itself. `Browse` uses it: a heading, the filter rail and the live cards.
-- `SideSummary` is the main region with a narrow summary beside it: line items left, the totals and the one thing to do next right. It
-  rearranges for a compact width. `Basket`, `ProductPage` and `OrderTracking` use it and fill all four slots.
-- The template's content is the *designed first draft* the template editor draws. A screen that uses the template fills every slot it
-  shows: what a screen puts in a slot is what is drawn there, and a screen preview draws only what the screen filled - a slot the screen
-  leaves out is not drawn from the template's draft. `Browse` therefore fills `filters` (the same filter builder as the template's) as well as
-  `header` and `products`, and `Basket`, `ProductPage` and `OrderTracking` fill all four slots of `SideSummary`.
+`ProductGrid` places a filters rail beside the product cards. Its filter builder narrows the list, which also supplies paging
+and search. Compare it with `Browse`, where `header`, `filters` and `products` bind that shape to Storefront's data. The slot is
+named `products`, not `grid`: in an arrangement, `grid` names a layout kind.
 
-See [layout arrangement](layout-arrangement.md).
+`SideSummary` puts the main content beside a narrow summary and rearranges for compact widths. `Basket`, `ProductPage` and
+`OrderTracking` fill its four slots. Follow their query bindings to find the read models each screen needs; then use
+[layout arrangement](layout-arrangement.md) to change the shape without changing those data contracts.
 
 ### Blueprint templates at the feature level
 
-Both flavours show on the boards. Next to the domain's own templates, five features are framed by a **blueprint template**: an assignment of
-a template of `Cratis.Blueprint.Default` (the blueprint every Stage ships, pinned `^1`) at feature scope. The board's template header under the feature
-shows it, and its picker (*Blueprints*, *Browse all...*) switches it to any other template that fits - a domain blueprint's included, for a Preview.
+A feature can reference a blueprint template instead of declaring its own. In `Catalog/model/publication.play`, Publication
+uses `ListScreen` from `Cratis.Blueprint.Default`, pinned at `^1`:
 
 ```text
 feature Publication
@@ -539,15 +568,10 @@ feature Publication
 | Purchasing | PurchaseOrders | `ListScreen` | the purchase orders list |
 | Purchasing | Overview | `DashboardScreen` | the purchasing dashboard |
 
-The levels nest by `fits slot`: `ListScreen`, `BoardScreen` and `DashboardScreen` fit the shell's `content` slot, `MasterDetailScreen` fits
-`WorkspaceScreen.moduleContent`. A module template of `WorkspaceScreen` therefore turns every feature below it that fits `content` into an orange "Not available"
-header, so the sample frames features with templates that fit the shell and leaves the modules without one.
-
-**Why no domain blueprint** (`Cratis.Blueprint.Crm`, `.Approvals`, `.Inventory`, ...): their screens are drawn from blueprint-shaped queries
-(`ProductColumns`, `ProductFilterFields`, `InboxRequests`, quick-create sections, ...) that only the blueprint's own sample-data pack answers, and a live Stage
-serves none of that pack. A domain blueprint's list therefore draws "Nothing here yet" in Play and its quick-create dialog has no fields (verified on a live Stage with the
-package approved). The foundation templates take the screen's own data, so a screen built from them plays with the real read models and commands.
-Choosing a domain blueprint's template from the picker is a Preview of that blueprint.
+Check `fits slot` when nesting templates: the child must fit an outlet the parent exposes. The sample assigns foundation
+templates to these features and supplies screen content bound to its own queries and commands. When choosing a different
+blueprint, check its required slots and data contracts too. A template's appearance alone does not establish that its queries
+can be answered by Acme Commerce's read models.
 
 ## Custom components: `@acme/scene.commerce`
 
@@ -571,71 +595,94 @@ The package declares itself in `index.js`: the export `acmeCommerceRuntimePackag
 `1.0.0`, kind `ComponentLibrary`, components `productCard`, `stockBadge`, `orderTimeline`) and the three components keyed
 `Acme.Commerce:<component>`.
 
-Rendering a profile that names a package the host does not ship needs an *approved package set*: a JSON file that says which
-npm module carries which components (the format is in the Scene documentation, "Approved package sets"). `render-variant.sh`
-reads it from `Samples/AcmeCommerce/tools/packages/acme-commerce.package-set.json` when `PACKAGE_SET=1`; it names the npm module
-`@acme/scene.commerce`, the export `acmeCommerceRuntimePackage` and the package's style sheet. With it, `cratis render` adds
-`@acme/scene.commerce` to the generated application's dependencies and writes its approved packages file. The repository ignores
-every `packages` folder (`**/packages/*` in `.gitignore`), so this one file is added with `git add -f`; a fresh checkout has it.
+A host needs an approved package set before it can load a package it does not ship. This JSON configuration maps the
+component declarations to an npm module, its export and styles. The sample's set is
+`tools/packages/acme-commerce.package-set.json`; it names `@acme/scene.commerce`, `acmeCommerceRuntimePackage` and the style sheet.
+
+`render-variant.sh` uses that set when `PACKAGE_SET=1`. For a sandbox, `cratis run` also accepts `--package-set` and `--packages`;
+the latter must point to installed browser-package folders. Approval alone does not supply the package files. See the
+[CLI's custom-package instructions](/cli/reference/run/#custom-packages) for the required layout.
 
 ## Compile, test, package, render and run
 
+Choose the check that answers your question. Compilation checks the composed source. Specification execution checks modeled
+expectations. Rendering generates implementation artifacts, while `cratis run` starts a disposable sandbox. Success on one
+path does not establish support on another.
+
+### Compile and run specifications
+
+Run these commands from the repository root with the [Screenplay CLI](tool.md) installed:
+
 ```bash
-# the whole application: 56 files, 0 errors, 0 warnings
+# the whole application
 screenplay --warnaserror Samples/AcmeCommerce
 
 # every specification
 screenplay test Samples/AcmeCommerce
 ```
 
-`--warnaserror` turns warnings into failures; the sample is held at zero. The compiler reports 19 informational
-diagnostics (`PLAY0469`: an event copies a command identifier into its payload although that identifier already identifies the
-event source), which are not warnings. `screenplay test` ran 188 specifications: 186 pass and 2 are reported *unsupported* -
-`OfferingAProduct` in Purchasing, because its command needs a deterministic generated `offerId`, and `PuttingStockAway` in
-Warehouse, because the reference evaluator cannot complete a `locations` child. The exit code of `test` is therefore 3, not 0. `cratis screenplay validate Samples/AcmeCommerce` reports the model valid as well.
+`--warnaserror` makes warnings fail compilation. Read its diagnostics before moving on to `screenplay test`, whose output
+separates passed, failed and unsupported scenarios. Unsupported means the runner could not execute the scenario; it is not a
+pass. Use the current report rather than a specification count copied from this page. The [CLI guide](tool.md) explains exit
+codes and the difference between validation and specification execution.
+
+If you edit a domain file in isolation and see missing declarations, check that you are compiling `Samples/AcmeCommerce`,
+not just that file. Its shared concepts, events and read models can live elsewhere in the tree.
 
 ### Packaging a domain for Studio
 
-Studio imports one event model per domain. `tools/domain-package.sh` assembles a single domain as a standalone model - the
-`domain` line, `Shared/` and the domain folder - proves that it compiles with
-`--warnaserror` and passes its specifications, and writes `<Domain>.zip`:
+To prepare one context for an import, use `tools/domain-package.sh`. It assembles a standalone tree from the root declarations,
+`Shared/` and the chosen domain, invokes compilation and specifications, then writes `<Domain>.zip` to the output directory.
+The script replaces an existing package of the same name, so choose an output directory for disposable copies:
 
 ```bash
 SCREENPLAY=screenplay Samples/AcmeCommerce/tools/domain-package.sh Catalog /tmp/acme-commerce-packages
 ```
 
-For Catalog that is 11 files compiled with 0 errors and 0 warnings, 20 specifications passed, and a ZIP of 16 files. `SCREENPLAY`
-names the compiler command (the default is `screenplay` on the path).
+`SCREENPLAY` names the compiler command; it defaults to `screenplay` on `PATH`. The script prints only the last line of each
+check. A ZIP is not proof that compilation and all specifications passed: run the checks on the packaged folder separately
+when you need the full results. For opening the model in Studio, continue with [the event-model viewing guide](see-your-event-model.md).
 
 A standalone domain has no name clash, so the package gives every inbound contract its *published* name back
 (`ProductPublishedAtStorefront` becomes `ProductPublished`); set `KEEP_LOCAL_NAMES=1` to keep the local names.
 
 ### Rendering it
 
-`tools/render-variant.sh` builds a renderable variant and runs `cratis render`:
+`tools/render-variant.sh` copies selected domains into an adapted model, then invokes `cratis render`. It needs the Cratis CLI
+and Python 3 on `PATH`. Review its header before using the result: the variant deliberately differs from the authored model.
+
+The default selection is `DOMAINS="Catalog Storefront"`, but both commands below currently fail before reaching
+`cratis render`. The script removes Sales, then unconditionally opens `Sales/model/approval.play` while processing
+`tools/render-bridge/drop-specifications.txt`. `PACKAGE_SET=1` does not avoid this missing-file failure. The default needs a
+separate script fix before it can be used.
+
+These are the helper's invocation forms from the repository root, not working default rendering commands:
 
 ```bash
-Samples/AcmeCommerce/tools/render-variant.sh                 # custom components replaced by core tables
+Samples/AcmeCommerce/tools/render-variant.sh                 # custom component blocks and package references removed
 PACKAGE_SET=1 Samples/AcmeCommerce/tools/render-variant.sh   # with @acme/scene.commerce, approved by the package set
 ```
 
-It exists because Stage cannot render everything the language says yet. The variant is **Catalog and Storefront** by default
-(`DOMAINS="Catalog Storefront"`); the header of the script lists every difference from the source and why:
+The script also accepts Sales, Purchasing and Warehouse through `DOMAINS`, including all five together; selecting them does
+not establish render support. Its main adaptations are:
 
-- Stage renders state-change, state-view and automation slices, not `Translate` slices or public events. The variant turns
-  each inbound private event into a bridge command, then deletes `translation/`.
-- Stage refuses `reaction batches atomic` and protected `reads`; the variant strips them and drops the specifications that
-  exercised a removed guard.
-- Without `PACKAGE_SET=1` the three custom components are replaced by core tables and the package is removed from the profile.
+- Translation files are removed. Bridge commands stand in for captured private events; no connecting reactions are generated.
+- The Purchasing dashboard's performer query becomes an event projection; the Storefront basket's calculated `addedValue`
+  contribution is omitted.
+- Listed specifications are dropped. Without `PACKAGE_SET=1`, custom component blocks and package references are removed; no replacement tables are generated.
 
-For Catalog and Storefront this was taken all the way (with `cratis` 3.75.0, as recorded in the sample README):
-`cratis render --package-set`, `dotnet build`, `npm run build`, the generated `dotnet test` (90 of 90), and a browser walk of the
-screens with the hierarchical sidebar, the Shop topbar override and the toolbar button. Sales, Purchasing and Warehouse are not in the rendered variant: a reaction that invokes a command which
-gained inputs from a removed `reads` cannot be satisfied from its trigger payload.
+The helper optionally copies `tools/render-bridge/bridge.play.txt`, but that file is absent from the sample. The generated
+bridge commands require explicit wiring to connect contexts; the variant does not supply the cross-context flow traced above.
 
-### Running on Stage
+Protected command reads and `reaction batches atomic` are preserved by default. `STRIP_READS=1` selects an older adaptation
+that removes reads and guards; do not treat that variant as equivalent to the decision rules you inspected above.
 
-The rendered application is built and tested like any other application:
+The script's removal of translations is not a current blanket Stage limit. Stage renders a supported subset of inbound
+captures and outbound public-event projections. Unsupported shapes and specifications receive diagnostics. Review the
+[renderer admission guide](/screenplay/stage/guides/build-renderer-target/) when deciding whether an adaptation is still
+needed. Neither rendering nor isolated generated handler tests establish delivery between deployed contexts.
+
+After rendering, check the generated application separately:
 
 ```bash
 cd <render destination>
@@ -645,56 +692,45 @@ npm run build
 dotnet test AcmeCommerce.Specs
 ```
 
-`cratis run [PATH]` starts a local Stage sandbox for a `.play` file or a folder; its options include `--port`, `--package-set`
-and `--packages` for approved custom packages. The sample README records that a live Stage cannot load a custom package that
-was not built in, and the renderer limits above apply to Stage too: it does not run `Translate` slices or public events. This
-page therefore makes no claim that the whole five-domain application runs on Stage; what is proven is the Catalog and Storefront
-variant above.
+These checks apply to the generated variant, not to the unmodified five-context model. Review the generated code and restore
+or implement any behavior your application needs before considering deployment.
 
-## What each Studio feature shows
+### Running on Stage
 
-The Studio project is filled in two ways. The Screenplay **import** brings in what the `.play` files say, one event model per
-domain. The **loader** adds what only Studio holds: the project skeleton, personas, brainstorming boards and sticky notes. See
-[Share a public model with Studio](see-your-event-model.md) for the import and export of a model.
+To try the model interactively, `cratis run [PATH]` starts a local Stage sandbox for a `.play` file or folder. Send a modeled
+command and inspect the resulting state to compare the behavior with the specification you read. The sandbox runs supported
+behavior and is not a production host.
 
-| Studio feature | What the sample shows |
-| --- | --- |
-| **Event model board** (one per domain) | the slices of the domain as an event model: commands, events, read models and screens, with the specifications and the sample data behind the screens |
-| **Public events** | the twelve contracts, each in its publisher and, under its consumer-local name, in every consumer |
-| **Concepts board** | the shared concepts and the domain's own, with their validation rules; the loader adds sticky notes saying why the rules exist |
-| **Constraints board** | the eleven constraints of the sample, with notes on why the rules exist |
-| **Event sources** | the shared event sources and their streams |
-| **Personas and policies** | the seven personas with their application roles; the policies each persona holds |
-| **UI profile** | the shell: the AppShell root template, the Acme theme, the packages |
-| **Brainstorming boards** | "Acme big picture" (Storefront domain) and "How we got to <Domain>" for each domain: a chaos storm on the left, then a column per lane, the public events, the rules and why they exist, what became the event model, and what was parked on purpose |
-| **Sticky notes** | the open questions, risks, decisions and assumptions on those boards, and the explanations on the concept and constraint boards |
-| **Chats** | one conversation per board, in which the personas debate a rule (for instance the SalesRep and SalesManager on a discount over the rep's limit) |
+The [CLI run reference](/cli/reference/run/) covers Docker setup, `--port`, approved custom packages and admission output. Inspect that
+output for unsupported commands, queries or lifecycle constructs before relying on the session. The render-variant helper
+and a sandbox have different execution paths; generating one variant does not establish that the full Acme Commerce source
+can run unchanged.
 
-Sticky notes in Studio have text only, no colour. The loader therefore prefixes each note with its kind - `[QUESTION]`,
-`[RISK]`, `[DECISION]`, `[ASSUMPTION]` or `[NOTE]` - so every note reads in plain text.
+<a id="what-each-studio-feature-shows"></a>
 
-The Studio project is loaded in stages (skeleton, import, studio-only, verify), and the loader's `verify` stage reads back what
-is present and what is missing. Some of what the table lists depends on importer changes that are still in review (next
-section), so a page in Studio can show less than the table says; the `.play` source is the reference.
+## Review the model in Cratis Studio
 
-### Known gaps
+Use Studio when the next task is a shared review with developers, domain experts or product owners. Its event-model boards
+bring commands, events, read models, specifications and screens into a collaborative workspace. Brainstorming boards and
+notes let you record decisions, assumptions and risks alongside that discussion.
 
-Not every construct comes through the Studio import yet. Each gap is tracked in `Cratis/StudioIssues`; the state below is the
-state of the issue and of its pull request when this page was written.
+For Acme Commerce, choose one decision to review rather than starting with every context. Product approval is a useful first
+case: compare the missing-description and missing-price refusals with the successful approval, then follow the published
+contract into Storefront. Use the [event-model viewing guide](see-your-event-model.md) to open a model and the source paths
+above to check the declarations behind it. This is a review route, not a promise that a hosted sample project contains every
+board or note described by the source.
 
-| Gap | Issue | State |
-| --- | --- | --- |
-| Public events, event origins and Translate slices (direction, captures, outbound projections) | StudioIssues #758 | open; the import pull request is open |
-| Automation reactions, triggers, schedules and what they produce | StudioIssues #760 | open; the import pull request is open |
-| Personas, `authorize` use sites and `given caller` | StudioIssues #762 | open; the persona and the access parts of the import are merged |
-| The UI profile, theme, root template and own templates | StudioIssues #763 | open; the pull request for theme and packages is open |
-| Import hardening: enum and Int concepts, keyed stream routes, placed-file imports, `.strings` | StudioIssues #764 | open; placed files, `.strings` and the latest event generation are merged, whole-number and enum concepts are open |
-| Cross-domain screen navigation and several event models in one Play session | StudioIssues #765 | open |
-| Brainstorming board tools for regions, chats and layout; sticky notes on persona and event-source boards | StudioIssues #766 | open |
+<a id="known-gaps"></a>
 
-The loader works around what it must until these land: it adds the personas and application roles itself, and it lays out the
-concept and constraint boards (an imported card is placed at the origin, StudioIssues #775). Look at a Studio page before you rely
-on it: where the import does not carry a construct yet, the `.play` source is the truth.
+### Check the model before relying on it
+
+A board shows declarations and design; it does not establish that specifications passed or that a deployed integration
+works. Compare the model you opened with the `.play` source, especially at public-event boundaries and authorization rules.
+Keep the compiler report, specification results and consumer admission report separate when deciding what has been checked.
+
+For your next change, select one command and add or revise its successful and refused [specifications](specifications.md).
+Then validate the whole sample folder. If the change crosses a context boundary, review the corresponding public contract and
+both translations before moving on to implementation.
 
 ## Related
 

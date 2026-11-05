@@ -1,23 +1,29 @@
 ---
-title: MCP server
-description: Let an AI assistant read, draw and edit a Screenplay application through the Model Context Protocol, with every change reviewed before it is written.
+title: Screenplay MCP server for AI assistants
+description: The Screenplay MCP server lets an AI assistant explore a local model and propose edits. Review the proposed source before approving apply in your client.
 ---
 
-The Screenplay MCP server connects an AI assistant to a Screenplay application: a
-folder of [`.play` files](../folders.md). The assistant can answer questions about
-the model, draw it as an event model board, propose edits and, once you approve
-one, write it. It is part of the `screenplay` tool, runs locally over standard
-input and output, and makes no network calls of its own.
+The Screenplay MCP server lets an AI assistant explore and edit a local
+Screenplay application, a folder of [`.play` files](../folders.md). MCP, the
+Model Context Protocol, gives the assistant tools to read the model and propose
+changes you can review before writing them to disk.
 
-You talk to the assistant in your own words. The assistant calls the server's
-tools; you never type a tool call. The guides here are written as prompts you can
-paste into Claude Code, Codex, VS Code or Claude Desktop.
+You describe the task in your own words; the assistant calls the tools. Start by
+[connecting your client to one application](install.md), then
+[create a model](create.md) or [explore the one you already have](explore.md).
+The guides use prompts you can paste into clients such as Claude Code, Codex,
+VS Code, Claude Desktop and ChatGPT Desktop.
+
+The server is part of the `screenplay` tool. It runs locally over standard input
+and output and makes no network calls of its own. Your assistant's use of a
+model provider is separate; a local MCP server does not make the conversation
+local.
 
 ## What it can do
 
 | You want to | Start with |
 | --- | --- |
-| Connect Claude Code, Codex, VS Code or Claude Desktop | [Install the MCP server](install.md) |
+| Choose a client and connect one local application | [Install the MCP server](install.md) |
 | Create a Screenplay model from a description | [Create a model](create.md) |
 | Ask what a model contains and how its parts connect | [Explore a model](explore.md) |
 | See the model as an event model board | [View a model](view.md) |
@@ -25,14 +31,21 @@ paste into Claude Code, Codex, VS Code or Claude Desktop.
 
 ## How changes stay safe
 
-Reading is free. Writing is deliberate and happens in three steps:
+A proposal does not write model source. Use this review cycle before accepting
+an edit:
 
-1. **Propose.** The assistant describes an edit. The server checks it against the
-   exact snapshot it was made from and returns a `proposalId`. Nothing is written.
-2. **Review.** You, or the assistant on your behalf, read the exact before and after
-   bytes, the comments a change would drop and whether the result still compiles.
-3. **Apply.** Only `apply` and `recover-workspace` change files. Keep your client's
-   approval prompt on for both.
+1. Ask the assistant to propose the change. The server validates the candidate
+   and returns a `proposalId` for the complete plan.
+2. Ask to see the exact before and after source, any comments the change would
+   drop, and the diagnostics. Check that the result expresses what you intended;
+   language validation is not proof of the business behavior.
+3. Ask the assistant to apply that proposal only when you are satisfied. Keep
+   your client's approval prompt enabled for `apply` and `recover-workspace`.
+
+The server requires an explicit `apply` call to write a proposal, but does not
+ask for human confirmation itself. That approval boundary belongs to your client.
+`recover-workspace` can also restore source and state after an interrupted write;
+review the [recovery status](recovery.md) before authorizing it.
 
 A proposal is bound to one revision of the model. If a file changes on disk, or
 another proposal is applied first, the stale proposal is rejected rather than
@@ -40,10 +53,12 @@ merged. Ask the assistant to reopen the model and propose again.
 
 ## Where the model lives
 
-The server root is the application boundary: one folder is one application, however
-many files and nested features it holds. The `.play` files stay canonical source;
-the server adds a reserved `.screenplay/` folder next to them with stable
-identities. See [identity state and recovery](recovery.md).
+The server root is the application boundary: one folder is one application,
+however many files and nested features it holds. Confirm this folder when the
+assistant opens the workspace so proposals target the model you intended.
+The `.play` files remain the source. Applying changes also persists stable
+identities in the reserved `.screenplay/` folder; keep that state with the model.
+See [identity state and recovery](recovery.md).
 
 ## For tool authors and hosts
 

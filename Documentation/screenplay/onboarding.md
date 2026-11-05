@@ -1,13 +1,13 @@
 ---
-title: "Onboarding"
-description: "Declare how people get into an application: self-signup, invitations, legal terms, an offering and the emails sent along the way."
+title: "Screenplay onboarding setup"
+description: "Declare signup, invitations, terms and email templates in Screenplay, then supply the host configuration that carries out onboarding."
 ---
 
 # Onboarding
 
-An application with [authentication](authentication.md) can sign people in, but the model also has to say how people *get in*: whether they can sign themselves up, who can invite whom, which documents they must accept and what the emails they receive look like. The top level `onboarding` block declares that, in the same model as the personas it refers to.
+Screenplay's `onboarding` block declares how people join an application: through signup or invitations, with any required terms and email templates. Use it after declaring [authentication](authentication.md) and the [personas](personas.md) named by invitations, so the model records who can invite people and which personas newcomers receive.
 
-The block is authoring metadata. It does not enter the executable semantic model, and the reference evaluator does not run it: provisioning is carried out by whatever runs the application. Everything the block needs from the world outside the model — the address mail is sent from, the mail server and its password — is an [environment value](environments.md), never part of the model.
+The application host carries out provisioning, term acceptance and email delivery. The block is authoring metadata, outside the executable semantic model; the reference evaluator does not run it. Supply sender and mail-server settings through [environment bindings](environments.md#onboarding). Use [policies](policies.md) to govern commands and queries separately: an onboarding declaration does not enforce their authorization.
 
 ## Syntax
 
@@ -39,7 +39,7 @@ signup open creates tenant
 signup open joins tenant
 ```
 
-Self-signup is **off** unless the block says otherwise: with no `signup` line, nobody can sign themselves up and every newcomer arrives by invitation.
+With no `signup` line, the model offers no self-signup path; newcomers join by invitation. The host must implement that restriction.
 
 - `signup open creates tenant` — anyone may sign up, and signing up creates a new tenant (organization) for them.
 - `signup open joins tenant` — anyone may sign up, and signing up asks to join a tenant that already exists.
@@ -53,7 +53,7 @@ invite member
   grant Accountant, InvoiceManager
 ```
 
-- `invite tenant as <Persona>` — an invitation that creates a tenant for the invitee, who becomes the persona in it. One line, no body.
+- `invite tenant as <Persona>` — an invitation sent by the application's operator that creates a tenant for the invitee, who becomes the persona in it. One line, no body.
 - `invite member` — an invitation into a tenant that exists. `by` lists the personas allowed to send it and `grant` the personas the invitee is given. Both are required.
 
 At most one invitation of each kind. Every persona named by `as`, `by` or `grant` must be declared with [`persona`](personas.md): there are no free-text roles, so an unknown persona is a compile error (`PLAY0831`).
@@ -66,7 +66,7 @@ legal terms
   file Legal/privacy-policy.md
 ```
 
-The documents a newcomer has to accept. When the block is present, acceptance is required. Each `file` is relative to the repository root, the same convention [handlers and rules](file-references.md) use, and a file that cannot be found is reported the way a missing handler file is: as an attachment warning when files are loaded.
+This block declares the documents a newcomer must accept. The host must collect acceptance; the declaration does not record it or establish legal compliance. Each `file` is relative to the repository root, following the same convention as [handlers and rules](file-references.md). A missing file produces an attachment warning when files are loaded.
 
 ## Offering
 
@@ -74,7 +74,7 @@ The documents a newcomer has to accept. When the block is present, acceptance is
 offering Starter
 ```
 
-Optional. The name of the offering a new tenant starts on. The name is opaque to the model — Screenplay has no catalog to check it against — and is resolved where the application is provisioned. Without an `offering`, no licensing is involved.
+`offering` names the offering a new tenant starts on. Screenplay has no catalog to validate the name against; the provisioning host resolves it. Omitting the line leaves the offering unspecified in the model, without making a claim about the application's licensing.
 
 ## Emails
 
@@ -95,11 +95,11 @@ A template file for each email onboarding sends, and the folder the templates ta
 | `signupDeclined file <path>` | Sent when a sign-up is declined. |
 | `images <folder>` | The folder holding the images the templates use. |
 
-Languages follow the cultures of the model's `.strings` files. An email that is not one of the three above is a compile error (`PLAY0832`). The sender and the mail server are environment values: see [environments](environments.md#onboarding).
+The host is responsible for template rendering and language selection. An email that is not one of the three above is a compile error (`PLAY0832`). The sender and the mail server are environment values: see [environments](environments.md#onboarding).
 
 ## What the block deliberately does not carry
 
-No sender address, no mail server, no credentials, no price. Those differ per environment (or per customer) while the model does not, so the model refers to them by name and the environment supplies them.
+Keep sender addresses, mail-server settings, credentials and prices outside this block. They can differ by environment or customer. Once the declarations are in place, use [environment requirements](environments.md#listing-the-keys-a-model-needs) to list the configuration keys and supply their values through the host.
 
 ## Diagnostics
 

@@ -1,13 +1,13 @@
 ---
-title: "Joins"
-description: "Enrich a Screenplay projection with data from related events that share a common key, using join and the rules for root joins."
+title: "Screenplay projection joins: enrich related data"
+description: "Use Screenplay projection joins to keep related data current on existing read models. Learn key matching, backfill, and child and nested join limits."
 ---
 
 # Joins
 
-Joins allow you to enrich a projection with data from related events that share a common key. This is useful when you need to combine information from different event streams. In `join <Name> on <Property>`, `<Name>` is a label for readers only: Chronicle discards it during lowering, so it has no runtime meaning. `<Property>` is the join key used at runtime.
+A Screenplay projection join keeps related data current on an existing read model. For an order that displays a customer's name, the order event supplies the customer ID; customer events supply the name. A root join updates orders with a matching reference without creating orders from customer events.
 
-A root join updates matching existing instances; it does not create them. It is an alternative to a reducer fold when the event's source identity describes a related entity rather than the instance you query. [`PLAY0690`](../diagnostics.md#reducer-instance-identity) can warn about that nominal mismatch. Use [property keys](keys.md) on `from` when the event must create or update one instance under a different key.
+Use `from` for events that create or update the order itself, and `join` for events about a related entity. If an event must create the order under a key other than its event source identity, use [property keys](keys.md) on `from`. The [`PLAY0690`](../diagnostics.md#reducer-instance-identity) diagnostic can warn when an event's source identity belongs to a different kind of entity than the instance being projected.
 
 ## Basic Syntax
 
@@ -19,7 +19,11 @@ join {Name} on {Property}
     {mappings}
 ```
 
+In `join <Name> on <Property>`, `<Property>` is the read-model property used to match the related event's source identity. `<Name>` is a label for readers only; Chronicle discards it when translating the declaration into a projection definition.
+
 ## Simple Example
+
+`OrderPlaced` records which customer the order belongs to. The join uses that stored `CustomerId` to route customer changes to the order:
 
 ```pdl
 projection Order => OrderReadModel
@@ -36,11 +40,11 @@ projection Order => OrderReadModel
       CustomerEmail = email
 ```
 
-When a `CustomerCreated` or `CustomerUpdated` event occurs with a matching `CustomerId`, the projection updates with customer information.
+When `CustomerCreated` or `CustomerUpdated` arrives from the customer stream identified by `CustomerId`, the join updates every matching existing order. The customer event's source identity supplies the match; a payload field named `customerId` alone does not establish it. When `OrderPlaced` sets `CustomerId`, the engine also reads the latest matching event of each joined type to fill in customer data already recorded. This history lookup is called backfill.
 
 ## With AutoMap
 
-Automatically map matching properties from joined events:
+Use `automap` when the joined event's property names match the read-model fields you want to fill. This group example uses the same matching rule as the order's customer join:
 
 ```pdl
 join Group on GroupId
@@ -52,7 +56,7 @@ join Group on GroupId
 
 ## Multiple Mappings
 
-Apply multiple mappings within a join:
+Explicit mappings make the relationship clear when names differ. Here product fields fill the product-specific fields on the read model. Chronicle also maps the event occurrence time; Screenplay's reference evaluator does not support `$eventContext.occurred` in join mappings, so it cannot execute this timestamp example:
 
 ```pdl
 join Product on ProductId
@@ -70,7 +74,7 @@ join Product on ProductId
 
 ## Multiple Events
 
-Join multiple event types that share the same key:
+List each event type that can change the related data. A customer verification event only changes `IsVerified`; it does not need to repeat the name mapping:
 
 ```pdl
 join Customer on CustomerId
@@ -85,7 +89,7 @@ join Customer on CustomerId
 
 ## Join with From Events
 
-Combine joins with regular from events:
+Keep the order's own lifecycle in `from` blocks. Shipping changes the order's status, while customer events continue to update its displayed customer name:
 
 ```pdl
 projection Order => OrderReadModel
@@ -107,7 +111,7 @@ projection Order => OrderReadModel
 
 ## Multiple Joins
 
-A projection can have multiple joins:
+An order can carry independent references to a customer and a product. Give each reference its own join so changes are matched against the appropriate property:
 
 ```pdl
 projection Order => OrderReadModel
@@ -128,7 +132,9 @@ projection Order => OrderReadModel
 
 ## Joins in Children
 
-Joins can be used within `children` blocks. The join label does not populate a child field; `with` mappings (or compatible fields supplied by the level's auto-map) do. An event field consumed by an explicit join mapping is not auto-mapped to another child field. Name the join for the related concept, not after a field to satisfy a completeness warning:
+Inside a `children` block, distinguish the child's identity from its other references. The group member below is identified by the user ID, so user events can enrich that same member. Child joins match the child's identity; they do not provide arbitrary foreign-key matching against any child property.
+
+The join label does not populate a child field. The `with` mappings, or compatible fields supplied by auto-map at that level, do. An event field consumed by an explicit join mapping is not auto-mapped to another child field:
 
 ```pdl
 projection Group => GroupReadModel
@@ -149,15 +155,17 @@ projection Group => GroupReadModel
         UserEmail = email
 ```
 
-Chronicle 19.99.1 and the reference evaluator support joins inside root-level `nested` objects, including further nested objects. A `from` mapping that sets the nested join reference backfills the latest matching joined event into that object. Later joined events update only existing nested objects whose reference matches; they do not create root instances. Joins inside `children` are also supported, but joins inside nested objects under `children`, children inside nested objects and `remove via join` inside nested objects remain unsupported.
+For a single optional object instead of a collection, use a [nested block](nested). Chronicle 19.99.1 and Screenplay's reference evaluator support joins inside root-level `nested` objects, including further nested objects. A `from` mapping that sets the nested join reference backfills the latest matching joined event into that object. Later joined events update only existing nested objects whose reference matches; they do not create root instances. Joins inside `children` are also supported, but joins inside nested objects under `children`, children inside nested objects and `remove via join` inside nested objects remain unsupported.
 
-**Reference-evaluator limitation:** Chronicle also backfills when a nested join's `on` property is the nested schema's key or likely key (for example, `details.id`), even if that nested `from` block does not map it. The reference evaluator does not resolve the nested schema's key here: it uses the root read-model identifier for the key-property check. A nested `on` property therefore qualifies for backfill through that `from` block's own mapping of it, not merely because it is named `id`. An already populated nested key alone does not trigger this backfill in the reference evaluator; live joined events still match existing nested objects by their `on` value.
+There is a backfill difference to account for when writing executable specifications. Chronicle also backfills when a nested join's `on` property is the nested schema's key or likely key (for example, `details.id`), even if that nested `from` block does not map it. The reference evaluator does not resolve the nested schema's key here: it uses the root read-model identifier for the key-property check. A nested `on` property therefore qualifies for backfill through that `from` block's own mapping of it, not merely because it is named `id`. An already populated nested key alone does not trigger this backfill in the reference evaluator; live joined events still match existing nested objects by their `on` value.
 
 The compiler's population check still reports a required field filled only by a nested join as unpopulated (`PLAY0284`). This check has not yet caught up with Chronicle's nested-join support. Populate a required field from a `from` event that the nested block handles, or move its join out of the nested block.
 
 ## Examples
 
 ### Order with Customer Details
+
+This variation keeps order placement fields explicit and uses matching names for customer data:
 
 ```pdl
 projection Order => OrderReadModel
@@ -176,6 +184,8 @@ projection Order => OrderReadModel
 
 ### Product with Category Information
 
+The same relationship applies to a product's category. Renaming the category updates its displayed details on products that reference it:
+
 ```pdl
 projection Product => ProductReadModel
   from ProductCreated
@@ -193,6 +203,8 @@ projection Product => ProductReadModel
 ```
 
 ### User Profile with Organization
+
+Profile events own the user's bio and avatar. Organization events own the organization name shown alongside them:
 
 ```pdl
 projection UserProfile => UserProfileReadModel
@@ -216,6 +228,8 @@ projection UserProfile => UserProfileReadModel
 
 ### Task with Assignee Details
 
+At the root level, `TaskAssigned` can change the reference used by a join. Setting `AssignedTo` lets the engine fill in details for the new assignee from existing user events:
+
 ```pdl
 projection Task => TaskReadModel
   from TaskCreated
@@ -237,6 +251,8 @@ projection Task => TaskReadModel
 ```
 
 ### Reservation with Room and Guest
+
+A reservation illustrates two references with different lifecycles: room details and guest contact details can change independently of the booking:
 
 ```pdl
 projection Reservation => ReservationReadModel
@@ -270,6 +286,8 @@ projection Reservation => ReservationReadModel
 
 ### Children with Join
 
+The project below has a root join for its manager and a child join declared for task assignees. These have different matching rules. The manager join matches `ManagerId`, but the child join matches the task's `taskId` identity. It does not match an unrelated `AssignedTo` value. Do not use this child shape to look up arbitrary assignees unless the user event's source identity also matches the task identity:
+
 ```pdl
 projection Project => ProjectReadModel
   from ProjectCreated
@@ -294,33 +312,27 @@ projection Project => ProjectReadModel
 
 ## How Joins Work
 
-1. **Event Occurs**: A joined event is appended to the event store
-2. **Key Matching**: The projection engine finds instances where the join key matches
-3. **Update**: The projection is updated with data from the joined event
-4. **Multiple Events**: All specified events trigger updates
+A live joined event updates matching existing instances. When a root `from` event sets a joined reference, the engine can also fill in data from the latest matching event of each joined type. This history lookup is called backfill: the customer can already exist when the order is placed.
 
-How the engine executes joins at runtime is covered in [Chronicle projections](/chronicle/projections/).
+Neither path makes a customer event create an order. See [Chronicle projections](/chronicle/projections/) for the runtime execution model.
 
 ## Join Key Requirements
 
-- The join key property must exist on the read model
-- The join key value from events must match the read model's property value
-- Multiple projections can join on the same event stream
+The `on` property must exist on the read model. For a root join, its stored value must match the joined event's source identity. Several instances can reference the same customer, and several projections can join the same customer stream.
+
+For a child join, check the collection's `identified by` property as well: the child identity determines which element receives the update.
 
 ## Best Practices
 
-1. **Explicit Events**: List all event types that should update the join
-2. **AutoMap for Matching**: Use AutoMap when property names align
-3. **Specific Mappings**: Override AutoMap with explicit mappings as needed
-4. **Multiple Joins**: Use multiple joins to combine data from various sources
-5. **Performance**: Joins can impact performance; consider denormalization needs
-6. **Event Ordering**: Be aware that joined events may arrive in any order
+Start with the reference your reader needs, such as `CustomerId` on an order, then list the events that can change the displayed data. Use explicit mappings when event names and read-model names differ; reserve `automap` for fields that really correspond.
+
+When writing specifications, cover both arrival orders: customer data recorded before order placement, and customer data changed afterward. That checks both backfill and live updates without treating a join as an instance-creation event.
 
 ## Common Patterns
 
 ### Reference Data
 
-Join with reference data like categories, types, or statuses:
+Reference data can use the same key-matching approach. A status ID connects the instance to its current display name and color:
 
 ```pdl
 join Status on StatusId
@@ -334,7 +346,7 @@ join Status on StatusId
 
 ### User Information
 
-Enrich with user details:
+Use a user reference when the read model needs current profile details rather than a copy fixed at creation time:
 
 ```pdl
 join User on UserId
@@ -348,7 +360,7 @@ join User on UserId
 
 ### Nested Relationships
 
-Join within children for nested enrichment:
+For a collection, identity still governs child updates. In this fragment, `ProductId` is mapped onto an item identified by `itemId`. The child join does not turn that product reference into a foreign-key lookup: a live product event must match the item's identity to update it. If product IDs and item IDs differ, this shape does not enrich the item as a root product join would:
 
 ```pdl
 children items identified by itemId
@@ -362,6 +374,6 @@ children items identified by itemId
 
 ## See Also
 
-- [Children](children) - Nested collections with joins
-- [Removal](removal.md) - Removing projections based on joined events
-- [Keys](keys.md) - Understanding join key matching
+- [Children](children) - Choose the identity and parent key for each collection element.
+- [Removal](removal.md) - Decide whether a related deletion removes the read-model instance.
+- [Keys](keys.md) - Choose which event value identifies an instance.

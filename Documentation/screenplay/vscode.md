@@ -1,33 +1,55 @@
 ---
-title: "VS Code extension"
-description: "Use the Screenplay VS Code extension to open a .play file as an event model board and get live editor diagnostics."
+title: "Cratis Screenplay in VS Code: inspect and edit a model"
+description: "Open Cratis Screenplay .play files as an event model board in VS Code, edit the source beside it, and use diagnostics to find model problems."
 ---
 
 # VS Code extension
 
-The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.play` file on the **event model board**, the board Cratis Studio draws. The model reads as a timeline:
+The Cratis Screenplay extension for Visual Studio Code (`cratis.screenplay`) lets
+you inspect a `.play` event model and edit its source beside the board. Use it to
+follow a slice's command, events and read model, with diagnostics pointing back
+to the declarations that need attention. The text stays the source of truth;
+the board redraws as you edit.
 
-- modules and features across
-- each slice as a column holding its command, the events it produces and the read model it builds
-- the specifications of each slice beneath it
-- the screens of each slice, drawn as a prototype in the row of each [persona](personas.md) who may use it, above the slice
+## Install and open a model
 
-The text stays the source of truth. The board redraws as you edit, and the language support (highlighting, completion, hover and diagnostics) is one click away.
-
-[Timeline findings](imports.md#timeline-diagnostics) appear in the consumer slice header's information badge.
+You need VS Code 1.85 or later. The board and local language assistance run in the
+extension without .NET; the optional C# repair bridge has
+[its own setup](#preview-saved-file-c-repairs). To install from a terminal, put
+VS Code's `code` command on `PATH`, then run:
 
 ```bash
 code --install-extension cratis.screenplay
 ```
 
-Open your model folder, then a `.play` file. Choose **Show Source** to edit beside
-its board. For other places to open the same board, see
-[See your event model](see-your-event-model.md).
+Open the folder containing your model, then a `.play` file. It opens as a board
+by default. In a [folder application](#folder-applications), a slice file shows
+its part of the model; open `application.play` at the root to see the whole
+application. Choose **Show Source** in the title bar to edit beside the board.
+If you need a sample to follow, [See your event model](see-your-event-model.md)
+walks through Commerce and the other viewers.
 
 ![The Screenplay extension displays Commerce's Ordering board beside the PlaceOrder source. The board includes order summaries, a checkout command, payment settlement, and given–when–then specifications.](images/vscode-source-and-board.png)
 
 *Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
 on the open file's slices; open `application.play` for the whole application.*
+
+## Inspect the flow and check the source
+
+Read the board across modules and features. Each slice is a column with its
+command, produced events and read model, with specifications beneath it. Screen
+prototypes appear above the slice in the row of each
+[persona](personas.md) who may use them. These are modeled screens, not a running
+application. [Timeline findings](imports.md#timeline-diagnostics) appear in the
+consumer slice header's information badge.
+
+Select a problem above the board to open its source line. The board draws what
+it can read even when there are errors, and it does not run specifications. Use
+the [CLI source check](tool.md#verify-your-files) on the saved application before
+passing it to another tool; use the separate
+[specification runner](tool.md#run-the-models-specifications) to check supported
+behavior. The [error-handling section](#when-the-model-has-errors) explains why
+editor, board and C# results can differ.
 
 ## Restricted Mode
 
@@ -40,7 +62,19 @@ workspace, so review it before granting trust.
 
 ## Concept compliance
 
-Hover describes `pii`/`personal` and `secret` as ESM v13 classifications. Consumers must explicitly admit that version. Identity and enum compliance are refused; events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark are refused by the C# binder until lineage is admitted. Source/editor validation does not perform executable binding. Reasons remain report-only, and reference outcomes are unchanged; see [Concepts](concepts.md).
+Hover identifies `pii`/`personal` and `secret` as classifications in version 13 of
+the executable semantic model (ESM), the compiler's portable description of the
+model's behavior. Tools consuming that model must explicitly accept v13. Concepts
+used as identities, and enum concepts, cannot carry these classifications.
+
+The C# binder also refuses an event that combines personal or explicitly
+subject-scoped secret values with an explicit `subject` mark: tracking a protected
+value's data subject through that mark is not supported. Editor validation checks
+the source, not whether the C# binder can produce an executable model. Free-text
+compliance reasons are reported as authoring metadata but are not stored in the
+ESM. The reference runner executes specifications on marked models, but it has no
+storage or encryption and does not track how one event caused another. Passing
+specifications therefore do not verify those protections. See [Concepts](concepts.md).
 
 ## Read-model keys and event routing
 
@@ -282,7 +316,11 @@ independent recipes together rather than reparsing per marker. Stale edits are r
 
 The board draws everything that could be read, so a typo in one slice does not empty it. The errors are listed above the board. Select one to open the file at its line.
 
-The board is drawn by the extension's own [TypeScript compiler](typescript-compiler.md), which parses but does not run the C# compiler's semantic checks. A model the board draws can still be one the [compiler](tool.md) rejects. The diagnostics in the text editor and the CLI remain the authority on whether a model is valid.
+The board uses the extension's [TypeScript compiler](typescript-compiler.md),
+which parses the model but does not run the C# compiler's semantic checks. A model
+that draws can still be rejected by the [CLI source check](tool.md#verify-your-files).
+Use editor diagnostics while changing the model and the CLI to check saved source.
+Neither a drawn board nor a clean source check proves that specifications pass.
 
 The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
@@ -293,7 +331,7 @@ remains available separately.
 
 ## Preview saved-file C# repairs
 
-This **experimental, opt-in** bridge offers only `PLAY0166` (declare a missing
+This **opt-in** bridge offers only `PLAY0166` (declare a missing
 produced event) and `PLAY0478` (explicitly route to the command identifier).
 `PLAY0478` changes routing; it is not cleanup. C# decides eligibility across the
 physical application. Extraction, `PLAY0469`, rename and a Monaco host bridge are

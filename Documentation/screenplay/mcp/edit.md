@@ -1,12 +1,16 @@
 ---
-title: Edit a model
-description: Prompts for changing, renaming, moving and repairing parts of a Screenplay model through reviewed proposals, then applying or recovering them.
+title: Edit a Cratis Screenplay model through MCP proposals
+description: "Change a Cratis Screenplay model through MCP proposals: inspect the source and identity changes, review diagnostics, then apply the plan you approve."
 ---
 
-Every edit follows the same loop: ask for the change, review the proposal, apply it.
-This page gives you prompts for each kind of change, then for the review and apply
-step they all share. The examples use the lending library from
-[Create a model](create.md).
+The Cratis Screenplay MCP server lets you change a model through proposals that
+you review before applying. Asking for or inspecting a proposal does not write
+files; `apply` installs the approved plan. Use the prompts below to describe the
+change, then [review its source, diagnostics and identity changes](#review-and-apply)
+before you keep it.
+
+[Connect the server](install.md) and open your model first. The examples use the
+lending library from [Create a model](create.md).
 
 ## Change an element
 
@@ -21,8 +25,9 @@ Add a "publishedYear" property to the BookAdded event, and map it from the AddBo
 command. Show me the source that changes.
 ```
 
-The assistant reads the element, edits its typed form and proposes a replacement.
-Edits to a single value keep every comment and blank line in place.
+The assistant reads the element as structured syntax, edits that typed form and
+proposes a replacement. This lets it target a value without replacing matching
+text elsewhere. Edits to a single value keep every comment and blank line in place.
 
 ## Add or remove parts
 
@@ -37,15 +42,15 @@ Remove the unused BookReserved event. First tell me what references it. Only
 propose the removal if nothing does.
 ```
 
-Asking for references first matters: a removal that leaves other declarations
-pointing at something that no longer exists is rejected under the default `Safe`
-reference policy, and the assistant can tell you what depends on it before it
-proposes anything.
+Ask for references before removing a declaration so you can see what depends on
+it. The default `Safe` reference policy rejects a removal that would leave other
+declarations pointing at something that no longer exists.
 
 ## Change the application shell
 
-The sidebar, topbar, toolbar buttons, blueprint template references and sample data are ordinary typed edits. Each is
-reviewed before it is applied, and a proposal made against an older revision is refused.
+You can propose changes to the sidebar, topbar, toolbar buttons, blueprint template
+references and sample data through the same typed editing workflow. Review each
+proposal before applying it. A proposal against an older revision is refused.
 
 ```text
 In the Support module, switch the sidebar from overriding the application's
@@ -78,10 +83,14 @@ Make NordicDemo the active sample data pack and show me where the profile select
 it.
 ```
 
-Copying application items into a module that overrides them needs one change: a module's own items may only target that
-module, so the assistant retargets each copy and says so. Pointing a button at a State View or Automation slice, giving a
-template reference a range Scene cannot read, or naming a sample data pack nothing declares is refused with the
-compiler's own diagnostic. See [Author the application shell](authoring-tools.md#author-the-application-shell).
+A module's own navigation items may only target that module. When copying
+application items into a module that overrides them, the assistant must retarget
+each copy and explain the changes.
+
+The compiler refuses a button targeting a State View or Automation slice, a
+template version range Scene cannot read, or an undeclared sample data pack. Read
+its diagnostic before changing the request. See
+[Author the application shell](authoring-tools.md#author-the-application-shell).
 
 ## Rename without a find and replace
 
@@ -101,7 +110,8 @@ You said the rename is blocked. Show me exactly where, and propose the smallest
 change that removes the conflict. Do not do a global replace.
 ```
 
-Without a release baseline, event renames add `id "<previous name>"` by default to preserve stored identity.
+A release baseline records admitted event contracts. Without one, event renames
+add `id "<previous name>"` by default to preserve stored identity.
 An existing pin stays unchanged; renaming back to that identity removes it. Only
 set `eventNeverPersisted: true` on `propose-rename` when you know no events have
 been stored. That option omits a new pin and removes a redundant pin equal to the current
@@ -306,7 +316,26 @@ repair that would drop a comment is refused.
 
 ## Review and apply
 
-Use `list-release-baseline` to inspect admitted revisions and their `unchanged`,
+Start with the retained proposal, not a new request to make the same change. Ask
+the assistant to show the exact source changes, diagnostics and identity changes.
+The board can help you inspect the result, but it does not replace that review.
+
+Make review part of every prompt that changes something:
+
+```text
+Before applying, tell me: how many files change, whether any comments would be
+dropped, and whether the model compiles after the change.
+```
+
+For each proposal the assistant can check:
+
+- the changes and the before and after bytes of every document
+- the number of dropped comments, and each dropped comment with its file, line and text
+- whether the application compiles and whether it is ready to execute
+- what changes in `.screenplay/identities.json`
+
+For event-contract changes, review the release evidence too. Use
+`list-release-baseline` to inspect admitted revisions and their `unchanged`,
 `changed` or `missing` status. `open-workspace` and `workspace-state` summarize
 baseline status, revision, entry count and violations. Admission is a deliberate
 [CLI release step](../tool.md); MCP never admits or repairs the baseline.
@@ -323,21 +352,7 @@ format is unchanged. Proposals record `releaseBaselineRevision`; `apply` recheck
 contracts and refuses `StaleReleaseBaseline` when that evidence changes. You can
 also supply `expectedReleaseBaselineRevision` on proposals and apply.
 
-Make review part of every prompt that changes something:
-
-```text
-Before applying, tell me: how many files change, whether any comments would be
-dropped, and whether the model compiles after the change.
-```
-
-For each proposal the assistant can check:
-
-- the changes and the before and after bytes of every document
-- the number of dropped comments, and each dropped comment with its file, line and text
-- whether the application compiles and whether it is ready to execute
-- what changes in `.screenplay/identities.json`
-
-Then approve it:
+When you are satisfied with that proposal, approve it:
 
 ```text
 Apply the proposal.
@@ -356,8 +371,9 @@ Discard that proposal.
 
 ## When something goes wrong
 
-If an apply is interrupted, the server keeps a pending marker and refuses to edit
-until the state is understood:
+An interrupted apply leaves a pending marker that blocks normal reads, opening
+and editing. Start with `workspace-state`, which inspects the interrupted operation
+without changing files:
 
 ```text
 The last apply was interrupted. Show me the workspace state and tell me whether

@@ -1,11 +1,13 @@
 ---
-title: "Children"
-description: "Declare child collections in a Screenplay projection, each item identified by a key and managed independently under its parent."
+title: "Screenplay projection children: identify collection items"
+description: "Use Screenplay children blocks to add, update, and remove collection items. Choose each child's identity and parent key so events reach the right item."
 ---
 
 # Children
 
-Children define nested collections within a projection. Each child represents a collection of items that are managed independently but belong to a parent projection.
+A Screenplay `children` block maintains a collection inside a read model, such as a group's members or an order's line items. Each event needs to identify both the item it changes and the parent that contains it. Keeping those identities separate lets you update or remove one item without replacing the collection.
+
+The group examples below use `userId` for the member and `groupId` for the group. For one optional object with no collection identity, use [nested objects](nested) instead.
 
 ## Basic Syntax
 
@@ -28,11 +30,11 @@ projection Group => GroupReadModel
       Role = role
 ```
 
-This creates a `members` collection where each member is identified by `userId`.
+`identified by userId` names the identity property on each collection element. `key userId` takes that identity from the event, and `parent groupId` selects the group read-model instance. Another event with the same two keys updates the same member; it does not append a duplicate.
 
 ## Identifier Expression
 
-The `identified by` specifies how to identify individual children:
+Choose a property of the child element that stays stable as its other fields change. The identifier belongs to the element, not to the parent:
 
 ```pdl
 children orders identified by orderId
@@ -42,7 +44,7 @@ children items identified by itemNumber
 
 ## Parent Key
 
-Use `parent` to specify the relationship to the parent projection:
+Use `parent` when the event carries the parent's identity in a field. The child's `key` and its `parent` serve different lookups:
 
 ```pdl
 children members identified by userId
@@ -51,11 +53,13 @@ children members identified by userId
     Name = userName
 ```
 
-The `parent groupId` links the child to the correct parent instance.
+`parent groupId` selects the group before `key userId` selects the member. Without an explicit parent expression, the event source identity is the default parent key. Do not rely on that default when the event source identifies the user instead of the group.
+
+A child event whose parent does not yet exist is retained for later resolution. It does not create the parent. Once the parent is available, the retained event can be applied to its collection.
 
 ## With AutoMap
 
-Apply AutoMap to children:
+Place `automap` inside `children` to map matching event fields to child fields. It does not choose the child or parent key for you; the following shorthand relies on the default key behavior:
 
 ```pdl
 children members identified by userId
@@ -67,7 +71,7 @@ children members identified by userId
 
 ## Multiple Events
 
-Children can have multiple event types:
+Use the same child and parent keys for all events in a member's lifecycle. A role change then reaches the member added by the earlier event:
 
 ```pdl
 children members identified by userId
@@ -83,7 +87,7 @@ children members identified by userId
 
 ## Every Block in Children
 
-Apply mappings to all events within a children collection using the `every` block:
+Use `every` for fields that should change whenever an event handled at this collection level is applied. Here the member's name and update time are kept beside its role:
 
 ```pdl
 children members identified by userId
@@ -96,13 +100,11 @@ children members identified by userId
     UpdatedAt = $eventContext.occurred
 ```
 
-The `every` block within children works similarly to the top-level every block but applies only to events within that specific children collection. It's useful for mappings that should apply to all events affecting child items.
-
-**Note:** The `exclude children` directive is not applicable within child every blocks as they already operate in a children context.
+These mappings target the member, not the group's root fields. Make sure every event that uses the shared mapping supplies the fields it reads. For example, the `Name = userName` mapping requires `userName` on each event to which it applies.
 
 ## Joins in Children
 
-Children can have joins:
+A member identified by a user ID can receive profile updates from that user's event stream. Child joins match the child's identity, so this works because `userId` identifies the member as well as the related user:
 
 ```pdl
 children members identified by userId
@@ -122,7 +124,7 @@ children members identified by userId
 
 ## Removal in Children
 
-Remove children when specific events occur:
+Keep removal inside the collection block to remove one member rather than the whole group. Use the same identity and parent expressions as the add and update events:
 
 ```pdl
 children members identified by userId
@@ -134,11 +136,11 @@ children members identified by userId
     parent groupId
 ```
 
-See [Removal](removal.md) for more details.
+`UserRemovedFromGroup` removes the matching member from `members`; the group and its other members remain. See [Removal](removal.md) for root deletion and removal triggered by related events.
 
 ## Nested Children
 
-Children can contain their own children:
+A child can contain another collection. At each level, `parent` identifies the immediate containing item: a department belongs to a company, and a team belongs to a department.
 
 ```pdl
 children departments identified by deptId
@@ -155,6 +157,8 @@ children departments identified by deptId
 ## Examples
 
 ### Group Membership
+
+This complete member lifecycle uses the same `userId` and `groupId` pair for addition, role changes, and removal. Auto-map supplies matching fields; explicit mappings handle the occurrence time and role:
 
 ```pdl
 projection Group => GroupReadModel
@@ -178,6 +182,8 @@ projection Group => GroupReadModel
 ```
 
 ### Order with Line Items
+
+An order line has its own identity even when several lines refer to the same product. Using `lineNumber` as the child key keeps a quantity change or removal scoped to one line in the selected order:
 
 ```pdl
 projection Order => OrderReadModel
@@ -204,6 +210,10 @@ projection Order => OrderReadModel
 ```
 
 ### Project with Tasks
+
+Task events use `taskId` to update the child and `projectId` to find its project. In Chronicle, the `every` block records when the task was last changed. Screenplay's reference evaluator does not support `$eventContext.occurred` in `every` mappings at a level with joins, so it cannot execute this example as written.
+
+The assignee join in this example has a separate constraint: child joins match the task's identity, not an arbitrary `AssignedTo` property. A user event will not enrich a task whose `taskId` differs from that user's event source identity. Treat the lifecycle mappings and assignee lookup as separate design decisions:
 
 ```pdl
 projection Project => ProjectReadModel
@@ -238,6 +248,8 @@ projection Project => ProjectReadModel
 
 ### Invoice with Payments
 
+One event can update a root total and record a child payment. The child block uses `paymentId` and `invoiceNumber`; the root `from PaymentReceived` below uses the event source identity. For both changes to reach the same invoice, those parent identities must agree:
+
 ```pdl
 projection Invoice => InvoiceReadModel
   from InvoiceIssued
@@ -258,6 +270,8 @@ projection Invoice => InvoiceReadModel
 ```
 
 ### Blog Post with Comments
+
+Comments use `commentId` and `postId` for edits and deletion. As with task assignees, the author join does not provide arbitrary foreign-key matching inside the collection: it matches the comment's identity. Mapping `AuthorId` alone does not make user events update comments with different identities:
 
 ```pdl
 projection BlogPost => BlogPostReadModel
@@ -293,6 +307,8 @@ projection BlogPost => BlogPostReadModel
 
 ### Multi-Level Nesting
 
+Follow the immediate parent at every level of this company hierarchy. `MemberAdded` points to a team, not directly to the company that holds the whole read model:
+
 ```pdl
 projection Company => CompanyReadModel
   from CompanyCreated
@@ -317,7 +333,7 @@ projection Company => CompanyReadModel
 
 ## Parent Key Expressions
 
-The parent key can use various expressions:
+Select the parent from an event field, the event source identity, or a nested event property. These are alternatives; choose the one that contains the parent instance's key:
 
 ```pdl
 children items identified by itemId
@@ -331,7 +347,7 @@ children items identified by itemId
 
 ## AutoMap with Children
 
-AutoMap at the children level applies to all child events:
+Child-level auto-map applies to matching fields across the child events. Keep explicit keys alongside it so matching property names do not obscure how events reach a particular member:
 
 ```pdl
 children members identified by userId
@@ -348,21 +364,19 @@ children members identified by userId
 
 ## Collection Property
 
-The children block maps to a collection property on the read model. For the `members` example above, the read model declares a `Members` collection where each item carries the child's properties — `UserId`, `Name`, and `Role` — and the `identified by` expression determines which item in the collection an event applies to.
+Declare the collection and its element shape on the read model before projecting into it. In the group example, each member carries an identity along with fields such as name and role. The `identified by` property must belong to that element shape; it is not a label for the collection or a field on the parent.
 
 ## Best Practices
 
-1. **Clear Identifiers**: Use meaningful identifiers that clearly identify children
-2. **Parent Keys**: Always specify parent keys to maintain relationships
-3. **Removal**: Include removal logic for children that can be deleted
-4. **Joins for Enrichment**: Use joins to add related data to children
-5. **Nested Carefully**: Deep nesting can impact performance and complexity
-6. **AutoMap Selectively**: Use AutoMap for children when property names align
-7. **Consistent Patterns**: Use consistent event patterns across children
+Choose the child identity before writing its mappings. A display name or role can change; the key used to find the member should not change with it. Keep the parent expression consistent across add, update, and removal events.
+
+In executable specifications, check that two events for the same child update one element, that removing it leaves its siblings intact, and that an event for another parent cannot change this collection. For joins, also check that the joined event's source identity is the child's identity.
 
 ## Common Patterns
 
 ### Add/Update/Remove
+
+The same key pair carries the item through its lifecycle:
 
 ```pdl
 children items identified by itemId
@@ -379,6 +393,8 @@ children items identified by itemId
 ```
 
 ### Enrichment with Joins
+
+Membership is a useful child-join shape because the member and the user share an identity:
 
 ```pdl
 children members identified by userId
@@ -397,6 +413,8 @@ children members identified by userId
 
 ### Versioning
 
+A version number can identify a child within one document. Each new number creates a distinct entry under that document's key:
+
 ```pdl
 children versions identified by versionNumber
   from VersionCreated key versionNumber
@@ -408,6 +426,6 @@ children versions identified by versionNumber
 
 ## See Also
 
-- [Joins](joins.md) - Enriching children with related data
-- [Removal](removal.md) - Removing children when events occur
-- [Keys](keys.md) - Understanding child and parent keys
+- [Joins](joins.md) - Check identity matching before adding related data to a child.
+- [Removal](removal.md) - Choose whether an event removes one child or the root instance.
+- [Keys](keys.md) - Resolve child and parent identities from events.

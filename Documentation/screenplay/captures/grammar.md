@@ -1,6 +1,6 @@
 ---
 title: "Grammar (EBNF)"
-description: "The complete EBNF grammar of the Change Data Capture Language that a Screenplay capture block delegates to."
+description: "The EBNF grammar for Cratis Screenplay's Change Data Capture Language (CDL) covers sources, mappings, append triggers and nested scopes."
 ---
 
 # Grammar (EBNF)
@@ -393,7 +393,7 @@ nested billingContact
 
 ### Mapping Sources
 
-Values a property mapping can be assigned from:
+The parser recognizes these mapping-source forms; parsing does not mean the capture binder and evaluator support executing them:
 
 ```ebnf
 MappingSource = SourceItemExpr
@@ -408,13 +408,16 @@ ContextExpr    = "$context.", Path ;
 EnvExpr        = "$env.", Ident ;
 ```
 
+Executable `append` mappings support:
+
 | Expression | Meaning |
 | --- | --- |
-| `$.<property>` | A value from the current source item. |
-| `$context.occurred` | The capture timestamp. |
-| `$env.<NAME>` | An environment variable. |
-| `"literal"`, `42`, `true`, `null` | A literal value. |
-| `<property>` | A property on the command/event context being mapped into. |
+| `$.<field>` | A field from the current mapped source item, falling back to the enclosing record when absent. The reference evaluator does not traverse dotted field paths. |
+| `$context.occurred` | The supplied occurrence timestamp; a scenario must supply `given clock`. |
+| `"literal"`, `42`, `true`, `null` | A literal checked against the target property's type. |
+| `<enum member>` | An enumeration member resolved against the target property's type. |
+
+`$env.<NAME>`, other `$context.<path>` values, raw expressions and bare paths that are not enumeration members can parse, but are not supported executable capture `append` mappings. A bare path does not read a property from a command/event context. The preceding `map` block has a separate contract: source fields, templates of source fields, and field splitting.
 
 ## Indentation Rules
 

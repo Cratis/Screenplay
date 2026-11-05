@@ -1,6 +1,6 @@
 ---
 title: Generation strategies
-description: Look up generation syntax, exact encodings, random bits, and collision bounds.
+description: Cratis Screenplay generation strategies define UUIDs, codes and random values, with exact encodings, entropy limits and collision bounds.
 ---
 
 Each concept has at most one `generate` line. Modifiers may occur in any order, once each; canonical printing orders strategy arguments, `alphabet`, `prefix`, `case`, then `checksum`. Every random choice uses a cryptographically secure source. The reference evaluator checks pinned fixtures rather than generating values.

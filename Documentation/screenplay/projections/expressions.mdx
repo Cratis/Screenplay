@@ -1,5 +1,5 @@
 ---
-title: "Expressions"
+title: "Projection expressions in Cratis Screenplay"
 description: "The expressions that define values in the Projection Declaration Language: property paths, event context, literals and templates."
 ---
 
@@ -108,7 +108,7 @@ from DocumentUpdated
   UpdatedById = $eventContext.causedBy.subject
 ```
 
-The short form `$causedBy.subject` also parses, and Chronicle compiles it, but Chronicle cannot yet evaluate it when the projection runs ([Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119)). Write `$eventContext.causedBy.<property>` until that is fixed.
+Chronicle compiles and evaluates the scalar short forms `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName`. The Screenplay semantic-model binder still rejects the shorthand and reports [Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119); use `$eventContext.causedBy.subject`, `.name` or `.userName` for semantic-model binding. Whole-object `$causedBy` and `$eventContext.causedBy` are not portable scalar mappings; neither are paths through the optional `onBehalfOf` member.
 
 ### Literals
 

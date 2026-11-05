@@ -1,20 +1,24 @@
 ---
-title: Create a model
-description: Prompts that take an assistant from a description of a system to a reviewed, applied Screenplay model, then grow it slice by slice.
+title: Create a Screenplay model with an AI assistant
+description: Create a Screenplay model from a description of your system. Open an empty workspace, review the source, then apply it and add behavior one slice at a time.
 ---
 
-This guide takes you from an empty folder to a model on disk. Every prompt below is
-meant to be pasted as written; change the domain details to yours. It assumes you
-have [installed the server](install.md) with its root at an empty `specifications`
-folder.
+Create a Screenplay model by describing the system to your AI assistant,
+reviewing the source it proposes and applying the changes you accept. Start
+with an [installed MCP server](install.md) and an empty `specifications` folder.
+Ask the assistant to open that folder with `open-workspace` and confirm the root
+before proposing anything. With Docker, use the mounted path `/model`.
 
-The examples describe a small lending library, the same domain as the
+The prompts below describe a small lending library, the same domain as the
 [Library sample](https://github.com/Cratis/Screenplay/tree/main/Samples/Library).
+Paste them into your client, or replace the domain details with your own. The
+first proposal establishes the structure; later prompts add behavior.
 
 ## Start with the shape, not the syntax
 
-Describe who uses the system and what they need to do. The assistant reads the
-server's syntax schemas, so you do not have to explain the language.
+Describe who uses the system and what they need to do. Start with the actions
+you want to model rather than trying to specify every declaration at once. The
+assistant can read the server's syntax schemas to discover the language.
 
 ```text
 Use the screenplay MCP server to start a new application called Library.
@@ -24,9 +28,12 @@ state-change slice for each thing a person can do. Propose the change and show m
 what it would write before you apply anything.
 ```
 
-The assistant opens the workspace for the empty root, inspects the schemas it
-needs and sends a proposal. The server answers with a `proposalId`, whether the
-result compiles and how many files it would write. Nothing is on disk yet.
+The assistant opens the empty workspace, inspects the schemas it needs and
+submits a proposal. An accepted proposal returns a `proposalId`, the planned
+file changes and readiness information. No model source has been written.
+Authoring acceptance means the source passes the authoring checks; it does not
+mean every declaration can already run in the reference evaluator or a target
+host.
 
 ## Review the proposal
 
@@ -37,11 +44,20 @@ Show me the files in that proposal as they would be written, and tell me whether
 any comments would be dropped.
 ```
 
-A first proposal drops no comments because there are none yet. The assistant reads
-the proposal's changes and the `after` bytes of each document. For a brand-new
-model it can look like this. A new model's root starts with `command reads protected` for
-[protected command reads](../commands.md#what-reads-guarantees), and `reaction batches atomic`
-so reactions added later use [atomic production batches](../reactions.md#atomic-production-batches):
+The assistant uses `read-proposal` to retrieve the changes and the exact `after`
+bytes of each document. Check the proposed names and actions against your
+request, not just whether the language checks pass. There are no existing
+comments to drop in an empty folder; later proposals may replace source that
+contains comments.
+
+This minimal Sales example shows the structure to look for; your Library
+proposal should use names from the lending domain. For a new model, ask for
+`command reads protected` to opt into
+[protected command reads](../commands.md#what-reads-guarantees), and
+`reaction batches atomic` so reactions added later use
+[atomic production batches](../reactions.md#atomic-production-batches).
+These application-root directives select the semantics; they are not implied
+by creating the folder:
 
 ```screenplay
 reaction batches atomic
@@ -62,17 +78,25 @@ module Sales
 That looks right. Apply the proposal.
 ```
 
-Your client may ask for approval of `apply`; accept it. To skip the back and forth, say
-so up front: "Apply each change when it looks right" lets the assistant propose, check
-the result and apply without asking each time. The server writes the `.play`
-files and `.screenplay/identities.json` together. Commit both. Because `apply` is
-bound to the model's revision, a second `apply` of the same proposal is rejected;
-ask for a fresh proposal instead.
+Keep the client's approval prompt enabled for `apply`, and approve only the
+proposal you reviewed. The server requires an explicit tool call but does not
+ask for human confirmation itself; your client controls that step.
+
+Applying writes the `.play` files and persists stable identities in
+`.screenplay/identities.json`. Keep both in source control so reopening the model
+preserves those identities. Writes are journaled for recovery, not crash-atomic
+across multiple files. If an apply is interrupted, inspect
+[identity state and recovery](recovery.md) before trying again.
+
+A proposal is bound to the revision it was created from. If the source changes
+before apply, reopen the workspace and request a fresh proposal. Reusing an
+already-applied proposal is also rejected.
 
 ## Grow the model one slice at a time
 
-Prefer several small prompts over one large one. Each becomes its own reviewed
-proposal.
+Add one action or view at a time so you can judge each proposal against a
+specific business need. Use the names from your first proposal; if the assistant
+chose a feature name other than `Catalog`, adapt the next prompt to match.
 
 ```text
 In the Catalog feature, make the AddBook slice real. The command takes a book id,
@@ -93,13 +117,20 @@ BookBorrowed and BookReturned, with a query that finds one loan by its book id.
 Add a screen for it that a librarian can see.
 ```
 
-A specification that checks one instance needs its key. Mark the read-model property with trailing `key`, or let one unambiguous keyed query identify it. A composite view declares every key part and states all of them in read-model fixtures. An optional single-instance lookup supplies every part in a `by` block; collection queries use equality filters. Its projection maps every part in an untyped key block. A target must explicitly admit the composite-key executable contract before realizing it. See [Read-model keys](../readmodels.md#keys).
+The loan view is a read model: state built from events for a query to read. A
+specification that checks one loan needs a key to identify that instance. Mark
+the read-model property with trailing `key`, or let one unambiguous keyed query
+identify it. If the view has a composite key, declare every part and supply them
+all in read-model fixtures. Optional single-instance lookups use a `by` block
+with every part; collection queries use equality filters. The projection maps
+every part in an untyped key block. A target host must explicitly support the
+composite-key executable contract before running it. See
+[Read-model keys](../readmodels.md#keys).
 
-Say "apply it when you're done" in the prompt, or at the start of the session, and
-the assistant applies the proposal once it checks out; a board open in fullscreen shows
-each change as it lands. The server validates every proposal against the language's
-syntax schemas, so a construct the language does not have is rejected with the
-diagnostic codes and locations instead of being written to disk.
+For each addition, review the planned source and diagnostics before asking the
+assistant to apply it. The server rejects syntax the language does not support
+with diagnostic codes and locations rather than writing it to disk. Acceptance
+still leaves you to check whether the model says what the business needs.
 
 ## Sketch before you commit to it
 
@@ -112,21 +143,27 @@ leave references to things that do not exist yet unresolved. Tell me what is
 still missing.
 ```
 
-This uses the draft reference policy: unresolved references are allowed and
-reported as debt, while parse errors, identity conflicts and unsafe bindings are
-still rejected. See [Authoring with the MCP tools](authoring-tools.md#create-the-first-typed-document).
+Ask the assistant to use the draft reference policy for this proposal. It
+allows references to declarations you have not written yet and reports those
+gaps as debt to resolve later. Parse errors, identity conflicts and unsafe
+bindings are still rejected. Review the gaps before applying the draft; they
+are not completed behavior. See
+[Authoring with the MCP tools](authoring-tools.md#create-the-first-typed-document).
 
 ## Choose how the files are laid out
 
-By default a model can be one file or many. Say which you want:
+A model can live in one file or many. Once the behavior has a useful shape,
+choose a layout that makes the source easy to navigate:
 
 ```text
 Recommend a file layout for this model, then reorganize it with one file per
 feature. Show me the proposal before applying.
 ```
 
-The assistant asks the server for a recommendation and then expands the layout.
-Reading the model afterward gives the same answers whichever layout you choose.
+The assistant asks the server for a recommendation and proposes the layout
+change. Review the file moves and any formatting changes before applying.
+Splitting the files should preserve the model's meaning; it is not a reason to
+rename its business concepts.
 
 ## Check your work
 
@@ -135,5 +172,7 @@ Are there any diagnostics in the model? List each with its file and line, and
 which slices have no specification that asserts anything.
 ```
 
-Fix what it finds with [Edit a model](edit.md), and look at the result with
-[View a model](view.md).
+Use [Edit a model](edit.md) to address diagnostics and missing assertions. To
+check the structure visually, [view the model as an event model board](view.md).
+A clean diagnostic report is not proof that the scenarios are correct; review
+the specifications against the behavior you intended.

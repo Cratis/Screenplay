@@ -1,14 +1,13 @@
 ---
-title: "Structured values"
-description: "Write objects and lists in Screenplay as indented blocks - one member or item per line, one level of indentation per level - wherever a value is assigned."
+title: "Cratis Screenplay structured values for objects and lists"
+description: "Write objects and lists in Cratis Screenplay with indented member and item blocks, including nested records, empty values, specifications and seeds."
 ---
 
 # Structured values
 
-Screenplay has no JSON. When a value is an object or a list - a component property, a specification value, a seed, a
-production mapping, a pinned fixture - it is written as an indented block under the line that names it, one level of
-indentation for each level of the hierarchy. It reads the way the rest of a `.play` file reads, and a change to one
-member is a change to one line.
+Cratis Screenplay writes objects and lists as indented blocks, not JSON. Use member assignments for an object and `item` lines for a list, with another level of indentation for each nested value. The same form supplies domain records in specifications and seeds, as well as screen component properties.
+
+This screen fragment combines a list of column objects, an `emptyState` object with nested actions, and an empty `rowActions` list:
 
 ```screenplay
 component Cratis.Blueprint.Default.kanbanBoard board
@@ -38,24 +37,20 @@ component Cratis.Blueprint.Default.kanbanBoard board
 | `name none` | An empty list. |
 | `name empty` | An object without members. |
 
-Inside a block:
+An object holds one `member = value` line per member. When a member is itself an object or a list, put its name on a line of its own and indent its contents underneath. In the fragment above, `emptyState` is an object; its `actions` member opens a list.
 
-- **An object** holds one `member = value` line per member. A member that is itself an object or a list opens another
-  indented block: the member name alone on its line, its contents one level deeper.
-- **A list** holds one `item` line per element, in order. `item <value>` is a scalar element. A bare `item` opens a
-  block for an object element - or for a nested list, when its first line is again an `item`. `item none` is an empty
-  nested list and `item empty` an object element without members.
-- Members are aligned however reads best; spacing around `=` does not matter.
+A list holds one `item` line per element, in order. Use `item <value>` for a scalar element, such as `item "create"`. A bare `item` opens a block for an object element, as the columns show, or for a nested list if its first child is another `item`. Use `item none` for an empty nested list and `item empty` for an object element without members.
+
+Align member assignments however reads best; spacing around `=` does not change their meaning.
 
 A block whose first line is an `item` is a list; any other block is an object. A member literally named `item` is
 written `@item`, and a member name that is not an identifier is quoted: `"first name" = "Ada"`.
 
-Every header - a property, a member or an `item` - either opens a block or ends in `none` or `empty`, so a stray word on
-its own is reported (`PLAY0291`) instead of being read as an empty value.
+A header without an inline value must open an indented block or end in `none` or `empty`. A bare header with no children is malformed (`PLAY0291`), not an empty value. An empty list, an object without members and `null` are different values; choose the one the target type accepts.
 
 ## Where structured values are written
 
-The same form is used everywhere a value is assigned:
+Use the block form at these assignment sites. The header changes with the surrounding construct, but the member and `item` lines follow the same rules:
 
 | Where | Header line |
 | --- | --- |
@@ -71,8 +66,9 @@ The same form is used everywhere a value is assigned:
 | Operation inputs | `contact Contact` |
 | Projection literal (exact numeric mode) | `amount` |
 
-On a step header that carries one inline assignment - `given Invoice total = 1000` - the inline value must be a scalar.
-A structured value goes on its own line under the header:
+For an order specification, first declare the `PlaceOrder` command and `OrderPlaced` event with a `lines` collection whose item type has `sku` and `quantity` members. `PlaceOrder` also needs a numeric `total` property. The fragment below supplies one line to the command and expects that line in the event.
+
+An inline assignment on a step header, such as `given Invoice total = 1000`, must be scalar. Put a structured value on its own line under the step:
 
 ```screenplay
 specification Placing
@@ -91,13 +87,12 @@ specification Placing
 
 ## Types are checked
 
-A structured value is typed syntax, not text. Members are checked against the target's declared [type](types.md),
-list items against the element type, and enum members against the concept. An unknown member is `PLAY0292`, the
-wrong shape for the target (an object where a list belongs) is `PLAY0293`, a missing required member is `PLAY0354`,
-and a member stated twice is `PLAY0294`. Imported or undeclared shapes are not guessed.
+The declaration tells the compiler what the value can contain. For `lines InvoiceLine[]`, it checks that `lines` is a list and checks each item's members against the declared [type](types.md). Enum values are checked against their concept. The compiler does not infer members of undeclared shapes or shapes only named by external imports.
+
+An unknown member produces `PLAY0292`; an incompatible shape, such as an object where a list belongs, produces `PLAY0293`. Repeating a member produces `PLAY0294`. When the model is bound for execution, a missing required member produces `PLAY0354`, so writing `empty` does not bypass a record's required fields.
+
+To use these values as an application's initial facts rather than a specification's inputs, group them under event sources in [Event seeding](seeding.md).
 
 ## No JSON
 
-A value written as JSON - `property columns = [{"id":"received"}]`, `lines = []`, `then returns {"id":1}` - is an
-error (`PLAY0833`). The compiler still reads the value, so the canonical printer writes it back in block form; printing a
-document is the quickest way to convert one. A malformed block is `PLAY0291`.
+JSON spellings such as `property columns = [{"id":"received"}]`, `lines = []` and `then returns {"id":1}` produce error `PLAY0833`. The parser retains the value so the canonical printer can rewrite it as blocks. Printing an existing document converts those values; for new values, use the block form directly. A malformed block produces `PLAY0291`.

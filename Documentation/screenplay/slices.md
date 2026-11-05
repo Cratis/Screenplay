@@ -5,9 +5,11 @@ description: "Organize a Screenplay application into modules, features and slice
 
 # Modules, Features and Slices
 
+Organize a Screenplay application around its business boundaries and the work people do within them. A module names a boundary, features group related work, and each slice describes one behavior, such as registering an invoice or listing invoices.
+
 ## Module
 
-The module is the top-level namespace and maps to a bounded context. One module per file is the convention but not enforced.
+A module is the top-level namespace and maps to a bounded context: an area with its own business vocabulary and rules. Use one module per file by convention; the compiler does not enforce that choice.
 
 ```screenplay
 module <Name>
@@ -23,7 +25,7 @@ Screen templates and dialog templates declared at module level are described in 
 
 ## Features
 
-Features are vertical slice groupings. They nest arbitrarily deep for sub-features.
+Group related slices in a feature. Features can contain sub-features at any depth, so you can organize a larger workflow without putting all its behavior in one slice.
 
 ```screenplay
 feature <Name>
@@ -55,17 +57,21 @@ A bare name searches the declaring container's siblings, then each ancestor's si
 
 A sibling feature shadows a same-named root module. That root module has no longer qualifying address, so rename one of the containers to make it addressable. Self, ancestor, descendant and unresolved targets raise warning `PLAY0554`. Repeated declarations of the same resolved target (including different spellings such as `Runs` and `Payroll.Runs`) raise warning `PLAY0555` and keep the first. Unresolved repeats compare by target text.
 
-A container without declarations is not checked. Once you declare a dependency, that container's own list must cover every counted explicit reference leaving it, including references from descendant features. A module target covers all its features; a feature target covers its descendants. Parent and child inventories are independent: neither satisfies the other. References within the checked container, or into an ancestor's own slices, are ignored.
+The dependency check starts only when a module or feature declares a dependency. Its own list must then cover every counted explicit reference leaving that container, including references from descendant features. A module target covers all its features; a feature target covers its descendants.
+
+Keep parent and child lists complete independently: a parent's declaration does not satisfy a child's list, or vice versa. References within the checked container, or into an ancestor's own slices, are ignored.
 
 The check counts `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks` and `shows`, not specification (`verifiedWith`) or outside-context (`outsideTheModel`) edges. It reports one warning `PLAY0552` per checked container and uncovered producer module, at the container header, naming the shared feature path when possible and listing source evidence. An unused valid declaration gets information `PLAY0553` on its line. Two containers declaring each other get information `PLAY0556` on each declaring line; this does not permit cycles or prohibit reverse coupling.
 
 Ambiguous graph ownership never produces an undeclared warning. Any declaration covering a candidate is provisionally satisfied and is not reported as unused. The MCP [declarations view](mcp/reference.md#dependency-graph) shows this uncertainty. The graph covers explicit slice references only, not code, expressions or module-owned forms.
 
-Declarations are optional authoring metadata, not execution or ordering rules: they add no executable model bytes and do not change revisions or identities. The printer places them after `description`, in authored order. [Folder models](folders.md) accumulate them per owner; module and feature rename repairs proven targets and refuses unresolved or ambiguous targets that could name the renamed container, or a rename that would capture another target.
+Declared dependencies document intended coupling. They are optional authoring metadata and do not control execution or ordering, add executable model bytes, or change revisions or identities. The printer places them after `description`, in authored order.
+
+[Folder models](folders.md) accumulate dependencies per owner. Renaming a module or feature repairs proven targets. It refuses unresolved or ambiguous targets that could name the renamed container, or a rename that would capture another target.
 
 ## Slices
 
-The slice is the atomic unit of behavior, aligned with Event Modeling. A slice has a type and a name, and contains the constructs that implement the behavior.
+A slice describes one behavior in Event Modeling. Give it a type and a name, then place the constructs that implement that behavior inside it. The [slice types](#slice-types) distinguish a change to state from a view of state, an automated reaction or a translation across a boundary.
 
 ```screenplay
 slice <SliceType> <Name>
@@ -93,7 +99,7 @@ module Invoicing
     ```
 ````
 
-Both fields are report-only authoring metadata (`PLAY0270`), not executable conditions. They do not add executable-model bytes or require a new ESM version. The printer keeps them on their owning declaration, and MCP `declaration-details` includes both fields in its summary wherever supported. In a folder model, the first module or feature documentation is kept; identical copies are accepted, while conflicting copies warn with `PLAY0559`.
+Both fields are report-only authoring metadata (`PLAY0270`), not executable conditions. They do not add bytes to the executable semantic model (ESM) or require a new ESM version. The printer keeps them on their owning declaration, and MCP `declaration-details` includes both fields in its summary wherever supported. In a folder model, the first module or feature documentation is kept; identical copies are accepted, while conflicting copies warn with `PLAY0559`.
 
 Malformed, empty or repeated documentation on these new owners reports `PLAY0558`; events retain `PLAY0477`. Other kinds, including projections and screens, do not accept documentation. These diagnostics have no automatic repair: choose the text to retain, the correct fence language or the owning file explicitly.
 
@@ -198,7 +204,7 @@ There is no automatic split because the new slice's name, placement and specific
 | `reaction` | `Automation` | [Reactions](reactions.md) |
 | `capture` | `Translate` | [Captures](captures.md) |
 
-Every one of these may appear as many times as the behavior needs — several events, several commands, [several projections](projections/index.md#several-projections-in-one-slice). Only `description` is limited to one. A slice is one behavior, not one artifact of each kind.
+Use as many of these constructs as the behavior needs. A slice may contain several commands or events, or [several projections](projections/index.md#several-projections-in-one-slice). Only `description` is limited to one; the boundary is the behavior, not a count of artifacts.
 
 ## Example
 
