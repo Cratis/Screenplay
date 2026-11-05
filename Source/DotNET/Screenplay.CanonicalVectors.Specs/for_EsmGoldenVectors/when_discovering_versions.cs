@@ -14,6 +14,6 @@ public class when_discovering_versions : given.golden_files
 
     void Because() => _versions = EsmGoldenVectors.Versions;
 
-    [Fact] void should_include_every_declared_version() => _versions.ShouldEqual(EsmSchemaV37Support.SemanticVersions.Select(version => (int)version.Major));
-    [Fact] void should_match_the_golden_folder() => _versions.ShouldEqual(Directory.GetFiles(_goldenFolder, "full-esm-v*.json").Select(path => int.Parse(Path.GetFileNameWithoutExtension(path)["full-esm-v".Length..], CultureInfo.InvariantCulture)).Order());
+    [Fact] void should_include_every_declared_version() => _versions.ShouldEqual(EsmSchemaV37Support.SemanticVersions.Where(version => version.Minor == 0).Select(version => (int)version.Major));
+    [Fact] void should_match_the_golden_folder() => _versions.ShouldEqual(Directory.GetFiles(_goldenFolder, "full-esm-v*.json").Select(path => Path.GetFileNameWithoutExtension(path)["full-esm-v".Length..]).Where(version => !version.Contains('.')).Select(version => int.Parse(version, CultureInfo.InvariantCulture)).Order());
 }

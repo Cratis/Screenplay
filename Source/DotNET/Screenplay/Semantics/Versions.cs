@@ -193,6 +193,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V37 = new(37, 0);
 
     /// <summary>
+    /// Gets ESM version 37.1 with optional read-model declaration-order metadata.
+    /// </summary>
+    public static readonly LanguageVersion V37_1 = new(37, 1);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -406,6 +411,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting the application calendar, command calendars, declared context time zones and clock operands (decisions 0106, 0107 and 0132).
     /// </summary>
     public static readonly SemanticVersion V37 = new(37, 0);
+
+    /// <summary>
+    /// Gets ESM version 37.1 with optional read-model declaration-order metadata.
+    /// </summary>
+    public static readonly SemanticVersion V37_1 = new(37, 1);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
