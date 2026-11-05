@@ -1,5 +1,5 @@
 ---
-title: "Grammar (EBNF)"
+title: "Screenplay projection grammar (EBNF)"
 description: "Cratis Screenplay projection grammar uses EBNF to define blocks, mappings, keys and expressions in the Projection Declaration Language."
 ---
 

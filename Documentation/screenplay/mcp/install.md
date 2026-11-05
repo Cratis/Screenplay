@@ -149,7 +149,8 @@ or later**. CLI hosting and board support are separate requirements. The host
 must also support MCP Apps. See [View a model](view.md).
 
 In a client configuration, use `"command": "cratis"` and
-`"args": ["screenplay", "mcp", "/Users/you/work/shop/specifications"]`.
+`"args": ["screenplay", "mcp", "<absolute-path-to-your-model>"]`. JSON does not expand
+environment variables, so supply the real absolute path for your operating system.
 Project-local AI registration and user-level desktop installation are separate
 operations. Installing AI guidance alone does not install a desktop extension or
 the server. `cratis screenplay generate` generates source models;
@@ -317,8 +318,11 @@ The container sees only the directory you mount. Every configuration below mount
 it at `/model` and starts the server on that path:
 
 ```bash
-docker run -i --rm -v /Users/you/work/shop/specifications:/model cratis/screenplay mcp /model
+docker run -i --rm -v "<path-to-your-model>:/model" cratis/screenplay mcp /model
 ```
+
+Replace `<path-to-your-model>` with the absolute path of your model directory, for
+example `"$HOME/<your-model-directory>:/model"` in a POSIX shell.
 
 The server waits for MCP messages on standard input, so the container runs with
 `-i` and without `-t`. Starting it by hand does not open a UI. Your MCP client
@@ -359,7 +363,7 @@ Code runs:
 
 ```bash
 claude mcp add --transport stdio screenplay -- \
-  docker run -i --rm -v /Users/you/work/shop/specifications:/model cratis/screenplay mcp /model
+  docker run -i --rm -v "<path-to-your-model>:/model" cratis/screenplay mcp /model
 ```
 
 The default scope is private to you and the current project, which suits a
@@ -410,7 +414,7 @@ IDE extension and the desktop app. Register the server from a terminal:
 
 ```bash
 codex mcp add screenplay -- \
-  docker run -i --rm -v /Users/you/work/shop/specifications:/model cratis/screenplay mcp /model
+  docker run -i --rm -v "<path-to-your-model>:/model" cratis/screenplay mcp /model
 ```
 
 Or add the table yourself. A `.codex/config.toml` inside a trusted project
@@ -421,7 +425,7 @@ scopes the server to that project:
 command = "docker"
 args = [
   "run", "-i", "--rm",
-  "-v", "/Users/you/work/shop/specifications:/model",
+  "-v", "<absolute-path-to-your-model>:/model",
   "cratis/screenplay", "mcp", "/model",
 ]
 startup_timeout_sec = 30
@@ -472,7 +476,7 @@ and restart the app:
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
-        "-v", "/Users/you/work/shop/specifications:/model",
+        "-v", "<absolute-path-to-your-model>:/model",
         "cratis/screenplay", "mcp", "/model"
       ]
     }
@@ -512,11 +516,12 @@ the arguments with `mcp` followed by the absolute path of the root, with no
 mount. For example, in Claude Code:
 
 ```bash
-claude mcp add --transport stdio screenplay -- screenplay mcp /Users/you/work/shop/specifications
+claude mcp add --transport stdio screenplay -- screenplay mcp "<path-to-your-model>"
 ```
 
 In a JSON or TOML configuration that becomes `"command": "screenplay"` and
-`"args": ["mcp", "/Users/you/work/shop/specifications"]`.
+`"args": ["mcp", "<absolute-path-to-your-model>"]`. Supply the real absolute path for your
+operating system; JSON and TOML do not expand environment variables.
 
 ## Verify the connection
 

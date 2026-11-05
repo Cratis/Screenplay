@@ -19,7 +19,7 @@ released artifact was executed. A run on a local build is listed as progress, no
 
 The initial matrix was reconciled on 9 and 10 October 2026 against the historical vector below. The original criteria
 refer to this vector unless a section or row names a later one; they do not describe the latest releases. Later
-production Studio execution is recorded under criterion 766.4.
+Studio behavior is outside the scope of this public page.
 
 | Component | Version | Notes |
 | --- | --- | --- |
@@ -27,7 +27,6 @@ production Studio execution is recorded under criterion 766.4.
 | Screenplay | 4.124.0 | Conformance harness and corpus, and screen composition syntax for exposures, instances and template content ([Screenplay#602](https://github.com/Cratis/Screenplay/pull/602)). The CLI and Stage bundle the 4.114.0 screen ABI. |
 | Stage | 4.51.3 / 4.52.0 | 4.51.3 is the CLI 3.41.0 default. 4.52.0 renders generated React applications on the Stage frontend runtime ([Stage#289](https://github.com/Cratis/Stage/pull/289)); no public CLI bundles it yet. |
 | CLI | 3.41.0 | Defaults to Stage 4.51.3. Refuses a UI profile it cannot honor with nothing published, and lets `cratis screenplay generate` recover a rendered application ([cli#301](https://github.com/Cratis/cli/pull/301)). |
-| Studio | 0.141.0 | Deployed. Adds generation previews with digests, Play and static parity, guarded slice planning and migration checks ([Studio#1638](https://github.com/Cratis/Studio/pull/1638)), and composite template selection ([Studio#1639](https://github.com/Cratis/Studio/pull/1639)). Production required a signed-in user; no Studio behavior was executed against this historical vector. |
 | AI | 7.20.0 | Screen guidance names the passing public vector ([AI#573](https://github.com/Cratis/AI/pull/573)); real MCP stdio transcript ([AI#563](https://github.com/Cratis/AI/pull/563)). |
 
 ## Executed proof
@@ -45,7 +44,6 @@ production Studio execution is recorded under criterion 766.4.
 | CLI render | CLI 3.41.0 + Stage 4.51.3 | Pass, with two preserved guarded-action warnings. 38 artifacts, byte-identical across two renders, with no timestamps, foreign GUIDs, absolute paths or environment bytes (`screen-composition-render-audit.cjs`). |
 | CLI profile rejection | CLI 3.41.0 | Pass. A profile naming an unknown package is refused with `CLI-RENDER-007` and one naming a missing layout with `CLI-RENDER-008`, each with exit 5 and nothing published; a modified managed `scene.json` is refused and left untouched. On CLI 3.40.6 both profile changes still published every artifact. |
 | Render then recover | CLI 3.41.0 | Pass. `cratis screenplay generate` recovers the rendered application to all 45 slices and command, event, read model and query members the source declares. CLI 3.40.6 refused it with `CLI0017`. |
-| Studio production Play | Studio 0.141.0 | Not executed. Automation exists ([Studio#1628](https://github.com/Cratis/Studio/pull/1628)). Production returns 401 to every unauthenticated request; the run needs the access described under [Studio production access](#studio-production-access). |
 
 Rerun every harness against the installed CLI, and the Stage image it defaults to, with one command:
 
@@ -55,8 +53,7 @@ SCREENPLAY_EXPECTED_CLI_VERSION=<cli> SCREENPLAY_EXPECTED_STAGE_TAG=<stage> \
 ```
 
 It first runs the self-tests of the browser and render-audit harnesses, then the browser harness, the render audit
-(determinism, portable artifacts, profile rejection and render-then-recover), the MCP transcript and the Studio
-harness. It fails when the CLI or the started Stage image differs from the expected versions, so a drifted vector
+(determinism, portable artifacts, profile rejection and render-then-recover), and the MCP transcript. It fails when the CLI or the started Stage image differs from the expected versions, so a drifted vector
 cannot pass as the intended one.
 
 ## Browser blockers
@@ -76,28 +73,10 @@ clear them.
 | B6 Theme effect | Stage 4.50.0 | CLI 3.40.4 + Stage 4.49.7: the background did not change. |
 | B7 Guarded actions | Not cleared, by design | Guarded Close and the double-click interaction stay fail-closed with `STAGE-SCENE-ACTION-001` and `STAGE-SCENE-INTERACTION-001`. |
 
-## Studio production access
+## Studio scope
 
-Studio 0.139.0 is deployed at `https://app.cratis.studio`. Every path, including `/`, returns 401 without a session,
-because the whole host sits behind Studio's AuthProxy, which handles OpenID Connect sign-in and the invitation flow.
-
-The production automation from [Studio#1628](https://github.com/Cratis/Studio/pull/1628)
-(`scripts/screen-editor/check-studio-production-play.mjs`) cannot get through that proxy as written. It authenticates
-by sending the local development `X-MS-CLIENT-PRINCIPAL` headers for the test user Alice Admin, and AuthProxy strips
-caller-supplied identity headers before forwarding. Those headers only work against a local Studio without AuthProxy.
-
-To run it against production, the automation needs:
-
-| Requirement | Detail |
-| --- | --- |
-| A Studio user | A real account that can sign in through the production identity provider, is a member of an organization, and has access to a project. |
-| A signed-in session | Sign in interactively once, save the browser state (for example with Playwright `storageState`), and have the automation load it instead of the Alice headers. Agents must not hold the account password. |
-| A target event model | `STUDIO_URL` plus `STUDIO_PROJECT_ID`, `STUDIO_APPLICATION_ID`, `STUDIO_DOMAIN_ID` and `STUDIO_EVENT_MODEL_ID`, or a full `STUDIO_EVENT_MODEL_ROUTE`. |
-| Fixture content | An event model whose screens include the destination the script edits (`STUDIO_SCREEN_DESTINATION_ITEM`, defaulting to `Orders`), and `STUDIO_IMPORT_JSON_FILE` for the import step. |
-| Permission to write | The run saves, imports and starts Play in that project, so the account and project should be dedicated to testing. |
-
-Creating that account and choosing the project is a decision for the Studio owner; this harness does not create
-accounts or change authentication.
+Cratis Studio is a private product. This page does not describe its deployments, versions, access arrangements or
+test results. Rows that mention Studio list only what the Screenplay side of the contract provides.
 
 ## The AddComment identifier
 
@@ -203,7 +182,7 @@ change from expecting an input to verifying the generated identifier in the proj
 | 168.7 | Copied Screenplay fixtures migrate with byte and semantic parity before v2. | PASS | `RegisterProjectCorpus.LegacyV1` ([#169](https://github.com/Cratis/Screenplay/pull/169)). |
 | 168.8 | Stage consumes the corpus and pins ordered artifact paths, hashes and bytes. | PARTIAL | Pinned for RegisterProject ([Stage#75](https://github.com/Cratis/Stage/pull/75)). The screens vector pins the Scene digest, not every artifact. |
 | 168.9 | The CLI materializes the corpus forms and produces exactly the Stage plan. | PARTIAL | CLI 3.41.0 renders the authored composition deterministically. Plan parity with Studio has not run. |
-| 168.10 | Studio export matches the corpus source, identities, ESM and Stage plan. | OPEN | Studio export has not run; production Studio is not deployed. |
+| 168.10 | Studio export matches the corpus source, identities, ESM and Stage plan. | OPEN | Not covered by the public acceptance run. |
 | 168.11 | Arc/Generation render-then-recover compares portable ids, contracts and outcomes. | PASS | `screen-composition-render-audit.cjs` renders the corpus with CLI 3.41.0, recovers it with `cratis screenplay generate`, and finds all 45 slices and command, event, read model and query members the source declares, with none missing or added. |
 | 168.12 | v2 preserves ids, advances the event revision, removes the payload id and carries stream context. | PASS | `RegisterProjectCorpus.V2` ([#270](https://github.com/Cratis/Screenplay/pull/270)). |
 | 168.13 | Unsupported, stale or conflicting vectors commit zero artifacts or model changes. | PARTIAL | A stale MCP apply is refused with `StaleRevision`, and a refused UI profile publishes nothing on CLI 3.41.0. Unsupported screen semantics still publish with guarded warnings (B7). |
@@ -217,7 +196,7 @@ change from expecting an input to verifying the generated identifier in the proj
 | 173.2 | Compare plans, package resolution, artifact bytes and behavior across consumers. | PARTIAL | Only the CLI side runs, and it passes. Studio and generated React are not compared. |
 | 173.3 | A host-configured package set in embedded rendering; consistent diagnostics, no fallback UI. | OPEN | No embedded-host run. |
 | 173.4 | Record the exact released matrix and browser results before closing the tracker. | PARTIAL | Recorded for every public vector so far in `ReleasedVectorResults`; not yet green. |
-| 173.5 | CLI and Studio use the same released Screenplay and Stage packages. | OPEN | Studio is not deployed on the released vector. |
+| 173.5 | CLI and Studio use the same released Screenplay and Stage packages. | OPEN | Not covered by the public acceptance run. |
 | 173.6 | Identical inputs produce identical profile and plan digests. | PARTIAL | Two CLI 3.41.0 renders of the same input are byte-identical across all 38 artifacts. Studio reports deterministic profile and plan digests ([Studio#1638](https://github.com/Cratis/Studio/pull/1638)); the two have not been compared. |
 | 173.7 | Artifact paths, bytes and hashes are byte-identical. | OPEN | Requires both consumers. |
 | 173.8 | Unsupported semantics produce matching diagnostics and zero artifacts. | PARTIAL | Guarded-action warnings and `PLAY0268`/`PLAY0269` are preserved on the CLI side only. |
@@ -296,8 +275,8 @@ change from expecting an input to verifying the generated identifier in the proj
 
 ## Studio
 
-No Studio behavior has been executed against the deployed build: production requires a signed-in user (see
-[Studio production access](#studio-production-access)). Merged implementation is listed so that, where it exists, only the production execution remains.
+Studio is a private product, so this page makes no claim about Studio execution or releases. The rows below track
+the Screenplay-side criteria only.
 
 ### [StudioIssues#156](https://github.com/Cratis/StudioIssues/issues/156) the Scene-based editor with designers and actions
 
@@ -440,11 +419,9 @@ and Studio rows are tracked in their repositories.
 
 ### [Screenplay#766](https://github.com/Cratis/Screenplay/issues/766) conformance gate for the application shell (spec 13.1)
 
-`run-public-acceptance.sh` runs the gate: the published `screen-shell-navigation-runnable` vector is rendered by the public CLI (`shell-cli`), run on a live Stage (`cratis run`, `screen-shell-conformance.cjs`), imported into a scratch project of the deployed Studio whose Preview is driven with Playwright (`check-studio-production-shell-preview.mjs` in Cratis/Studio), and the shell each draws is compared module by module.
+`run-public-acceptance.sh` runs the gate: the published `screen-shell-navigation-runnable` vector is rendered by the public CLI (`shell-cli`), run on a live Stage (`cratis run`, `screen-shell-conformance.cjs`), and the shell each draws is compared module by module.
 
 | # | Criterion | Status | Evidence or remaining work |
 | --- | --- | --- | --- |
-| 766.1 | Shell, navigation (inherit / extend / override), toolbar slice button and sample-data rules render the same in the CLI render, live Stage and production Studio's Preview. | PASS | CLI 3.77.0 / Stage 4.143.0 / Studio 0.210.1 or later: topbar, sidebar, active items, page title and toolbar buttons of Home, Sales and Support equal between Stage and Studio's Preview; the toolbar button opens the same State Change dialog (`New order`, `State Change · PlaceOrder`, three fields) in both and its submit in Preview is a dry run. |
+| 766.1 | Shell, navigation (inherit / extend / override), toolbar slice button and sample-data rules render the same in the CLI render and on a live Stage. | PASS | Topbar, sidebar, active items, page title and toolbar buttons of Home, Sales and Support match between the CLI render and the live Stage. |
 | 766.2 | Deep links, history, and no sample data served by Stage. | PASS | `screen-shell-conformance.cjs` on live Stage: deep link restores the module sidebar and page, back returns to the previous feature, `/stage/scene` carries no sample data. |
-| 766.3 | Defects the gate found are fixed and released. | PASS | Studio's editor surface, Play and Preview resolved component names with the imported profile alone, so an application whose profile names only `core` and `Cratis.Components` showed "Unresolved component: appShell" in Preview and "not available in this UI profile" in the editor (Cratis/Studio#1916, released in 0.210.x). |
-| 766.4 | Studio's own authoring round trip of the vector on production (the `studio` harness of the acceptance script). | PASS | `run-public-acceptance.sh` with the published corpus (`Cratis.Screenplay.CanonicalCorpus` 4.220.2) on CLI 3.82.0 / Stage 4.159.0 / production Studio 0.231.1: every harness passes (browser, render-audit, shell-cli, shell-studio-preview, shell-conformance, mcp, studio). The `studio` harness imports the corpus into a scratch project, edits a screen, saves, reloads, exports (0 corpus lines absent from the export), plays the Stage (no unresolved component, Frontend / API / Chronicle switch, Stop returns to the board) and removes the project. It was blocked by the loss of the literal values a command gives its event (`PLAY0273` on Play, Cratis/StudioIssues#837), fixed in Studio 0.231.x (Cratis/Studio#2068). |

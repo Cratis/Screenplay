@@ -358,14 +358,15 @@ in the CLI or bundle you install before that distribution is compatible.
 
 In **User settings**, configure the absolute executable and one existing physical
 model directory inside your trusted filesystem workspace. For a complete unpacked
-native bundle, replace these illustrative paths with your installation:
+native bundle, replace the placeholders with absolute paths for your operating system. VS Code settings do not
+expand them for you:
 
 ```json
 {
     "screenplay.repairs.enabled": true,
-    "screenplay.repairs.executable": "/Users/you/tools/screenplay/server/Cratis.Screenplay.Tool",
+    "screenplay.repairs.executable": "<absolute-path-to-unpacked-bundle>/server/Cratis.Screenplay.Tool",
     "screenplay.repairs.arguments": ["mcp"],
-    "screenplay.repairs.modelRoot": "/Users/you/work/shop/specifications"
+    "screenplay.repairs.modelRoot": "<absolute-path-to-your-model>"
 }
 ```
 

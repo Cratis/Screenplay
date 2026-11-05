@@ -1,6 +1,6 @@
 ---
-title: MCP reference
-description: Every Screenplay MCP server tool, argument, limit and validation policy, plus the embedding API for hosts.
+title: Screenplay MCP server reference
+description: Reference for every Screenplay MCP server tool, with its arguments, limits and validation policy, plus the embedding API for hosts.
 ---
 
 This page is the reference for the server's tools. To use the server through an

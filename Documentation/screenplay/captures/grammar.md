@@ -1,5 +1,5 @@
 ---
-title: "Grammar (EBNF)"
+title: "Screenplay capture grammar (EBNF)"
 description: "The EBNF grammar for Cratis Screenplay's Change Data Capture Language (CDL) covers sources, mappings, append triggers and nested scopes."
 ---
 

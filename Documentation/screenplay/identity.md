@@ -1,6 +1,6 @@
 ---
 title: Identity details
-description: Declare typed caller details from claims, queries or opaque implementations without changing token built-ins.
+description: Declare typed caller details from claims, queries or opaque implementations with the identity block, as authoring metadata that leaves token built-ins unchanged.
 ---
 
 A caller's token may identify the person without carrying their department or organization. Use the

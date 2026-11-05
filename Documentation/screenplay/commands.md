@@ -285,7 +285,7 @@ static SemanticExecutionResult DecideAndCommit(
 
 The [host loop](reactions.md#append-a-settled-command-in-a-live-host) covers settlement, the guarded write and when a lost guard may be retried.
 
-A target must explicitly admit and realize the version or refuse it; successful reference execution is not proof of Stage or Arc realization. Plain read-model injection is still not a protected decision. Use a `unique` [constraint](constraints.md) for uniqueness and see [keeping decisions correct in Arc](/arc/backend/csharp/chronicle/consistency/) for hand-written code.
+A target must explicitly admit and realize the version or refuse it; successful reference execution is not proof of Stage or Arc realization. Plain read-model injection is still not a protected decision. Use a `unique` [constraint](constraints.md) for uniqueness and see [stream decisions in Arc](/arc/backend/csharp/chronicle/commands/stream-decisions/) for hand-written code.
 
 Eligible legacy models receive informational `PLAY0786` at the first command read. The typed workspace/MCP repair previews the preamble insertion, checks workspace/catalog revisions, preserves comments and requires individual review before explicit apply. Refused reads list their compiler reasons; the repair never silently upgrades a model.
 

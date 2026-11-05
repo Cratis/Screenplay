@@ -1,6 +1,6 @@
 ---
-title: "Domain"
-description: "Declare the business domain a Screenplay .play file belongs to, as a qualified name that groups related files."
+title: "Screenplay domain declarations"
+description: "Use the optional domain declaration to place a Screenplay .play file in a business domain by qualified name, first in the file, once per file."
 ---
 
 # Domain

@@ -204,25 +204,10 @@ business application. The runtime route is served by the app you already started
 
 ## Share a public model with Studio
 
-The anonymous viewer needs no account:
-
-```text
-https://view.cratis.studio/?url=<public .play URL>
-```
-
-Replace the placeholder with a URL-encoded, publicly accessible raw `.play` URL,
-not a GitHub HTML file page. The anonymous viewer works with self-contained,
-single-file models supported by its compiler; it does not follow file imports
-yet. A Commerce slice is a fragment, and its root imports the other files. Do not
-expect either URL to load that sample.
-Never put a private model URL, access token, or customer data into a share link.
-
-For editing, sign in to [Cratis Studio](https://app.cratis.studio/). Import a
-Screenplay `.play` file or a folder zip into an event model, review the import's
-warnings, and accept only what you intend to keep. Export either a single `.play`
-document or a folder zip to bring the model back to your editor. Review the
-exported source: canvas import/export is not a lossless round trip for every
-language construct.
+Cratis Studio is a product for working with event models visually, and it can
+display a Screenplay model. Its capabilities and availability are described by
+Studio itself rather than on this page.
+Never put a private model URL, access token, or customer data into a link you share.
 
 ## Get a model from existing code
 
