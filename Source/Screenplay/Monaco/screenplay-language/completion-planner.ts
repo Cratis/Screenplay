@@ -70,6 +70,10 @@ function expansionEntry(text: string, indent: number): CompletionEntry {
 export function completionEntriesFor(chain: string[], where: CompletionScope = { headers: [], document: [] }): CompletionEntry[] {
     const construct = chain[0];
     if (construct === undefined || construct === 'domain') return topLevelEntries(where.document);
+    if (chain.includes('sample') && !chain.includes('ui')) {
+        if (construct === 'row') return scope.sampleRowItems;
+        if (chain[1] === 'row' && /^[A-Za-z_]\w*$/.test(where.headers[0] ?? construct)) return scope.sampleShapeItems;
+    }
     const subLanguage = getSubLanguage(construct);
     if (subLanguage) return subLanguage.completions ?? [];
     const header = where.headers[0];
@@ -257,6 +261,16 @@ export function planCompletions(
     const refusal = refusalContext(lines, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
     if (/\$refusal\.\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: refusal === undefined ? [] : ['reason', 'message', ...(/^on\s+refused\s+by\s+constraint(?:\s|$)/.test(refusal) ? ['constraint'] : [])].map(member => ({ label: member, insertText: member, documentation: 'String refusal value in branch event mappings; executable from ESM v19. Constraint is available only in a by constraint branch.' })) };
+    }
+    const clockChain = enclosingChain(lines, fences, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
+    if (clockChain[0] === 'command' && /^\s*calendar\s+from\s+(?:\$[\w.]*)?$/.test(textBefore)) {
+        const prefix = textBefore.match(/\$[\w.]*$/)?.[0];
+        return { kind: 'entries', entries: items.calendarContextEntries(lines, prefix) };
+    }
+    if (clockChain.includes('command') && (clockChain[0] === 'validate' || (clockChain[0] === 'command' && /^\s*produces\s+when\b/.test(textBefore))) &&
+        /^\s*(?:require\s+|produces\s+when\s+)?[a-z_]\w*(?:\.\w+)*\s*(?:==|!=|>=|<=|>|<)\s+(?:[a-z ]*)$/.test(textBefore)) {
+        const afterDateOf = /\bdate\s+of\s+\w*$/.test(textBefore);
+        return { kind: 'entries', entries: afterDateOf ? items.clockOperandItems.filter(item => ['today', 'now'].includes(item.label)) : items.clockOperandItems };
     }
     const contextVariableMatch = textBefore.match(/\$[\w.]*$/);
     if (contextVariableMatch) {

@@ -51,6 +51,19 @@ passing it to another tool; use the separate
 behavior. The [error-handling section](#when-the-model-has-errors) explains why
 editor, board and C# results can differ.
 
+## Board readability
+
+The event model board starts with **comfortable** spacing and **medium** text.
+In VS Code's User Settings, choose:
+
+- `screenplay.eventModelBoard.density`: `compact`, `comfortable` (default), or `spacious`.
+- `screenplay.eventModelBoard.textSize`: `small`, `medium` (default), or `large`.
+
+These user preferences apply across open boards and later sessions, not to your
+workspace or `.play` files. Settings changes update open boards immediately.
+Text size is independent of spacing and canvas zoom; changing native **View**
+options keeps both readability choices.
+
 ## Restricted Mode
 
 In an untrusted workspace, the board and local language assistance (including

@@ -1,4 +1,4 @@
-// Syntax-only preview (#824), decisions 0106/0107. Execution reports PLAY0268.
+// Clock admission (ESM v37), decisions 0106, 0107 and 0132: binds and executes.
 time zone configurable default "Europe/Oslo"
 context
   description "Time zones the business reasons in."
@@ -8,10 +8,18 @@ module Clocks
   feature Scheduling
     slice StateChange Schedule
       command ScheduleAppointment
+        appointmentId String identifier
         occurred DateTime
         calendar from $context.timeZone
         produces when date of occurred <= date of now + 2 hours
           AppointmentScheduled
+            for appointmentId
       event AppointmentScheduled
       specification InOslo
         given time zone "Europe/Oslo"
+        given clock "2025-03-01T10:00:00Z"
+        when ScheduleAppointment
+          appointmentId = "a"
+          occurred = "2025-03-01T11:00:00Z"
+        then AppointmentScheduled
+          for "a"

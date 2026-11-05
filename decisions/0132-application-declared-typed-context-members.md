@@ -126,6 +126,10 @@ Verify by: binder specifications for declared, undeclared and reserved members; 
 - A model that uses the fixed `timeZone` member (revision 2) is already refused by Stage. That is explicit, and it means no clock model renders until Stage admits revision 2.
 - Container images that lack tzdata cannot resolve an IANA id (0106 Consequences). This is unverified and is a Stage runtime concern.
 
+## Status notes
+
+**2026-11-04 — admitted as ESM v37.** The application time zone, command calendars, declared context time-zone members, `given time zone` and clock operands in command conditions and `validate` comparison rules bind to language/semantic `37.0` (`schemaVersion: 37`). Strict readers and the canonical writer refuse every clock member below v37, and a model without them keeps its version and bytes. The typed-context sidecar writes revision 3 only when a model reads a declared member. See the [interoperability table](../Documentation/screenplay/interoperability.md).
+
 ## Related
 
 Decisions 0012, 0025, 0052 and 0106. Cratis/Screenplay#1120, #1044, #824 and #1126. #1126 changes the zone member spelled in the two clock fixtures and overlaps with the fixtures this work edits.

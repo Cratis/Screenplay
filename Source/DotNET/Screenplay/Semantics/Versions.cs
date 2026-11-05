@@ -178,9 +178,24 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V34 = new(34, 0);
 
     /// <summary>
-    /// Gets the language version admitting state machines and workflows (decision 0124). Version 35 stays reserved for handler result contract v2 (decision 0119).
+    /// Gets the language version admitting handler result contract v2: command handlers that declare possible events (decision 0119).
+    /// </summary>
+    public static readonly LanguageVersion V35 = new(35, 0);
+
+    /// <summary>
+    /// Gets the language version admitting state machines and workflows (decision 0124).
     /// </summary>
     public static readonly LanguageVersion V36 = new(36, 0);
+
+    /// <summary>
+    /// Gets the language version admitting the application calendar, command calendars, declared context time zones and clock operands (decisions 0106, 0107 and 0132).
+    /// </summary>
+    public static readonly LanguageVersion V37 = new(37, 0);
+
+    /// <summary>
+    /// Gets ESM version 37.1 with optional read-model declaration-order metadata.
+    /// </summary>
+    public static readonly LanguageVersion V37_1 = new(37, 1);
 
     /// <summary>
     /// Parses a canonical, supported language version.
@@ -383,9 +398,24 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     public static readonly SemanticVersion V34 = new(34, 0);
 
     /// <summary>
-    /// Gets the semantic version admitting state machines and workflows (decision 0124). Version 35 stays reserved for handler result contract v2 (decision 0119).
+    /// Gets the semantic version admitting handler result contract v2: command handlers that declare possible events (decision 0119).
+    /// </summary>
+    public static readonly SemanticVersion V35 = new(35, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting state machines and workflows (decision 0124).
     /// </summary>
     public static readonly SemanticVersion V36 = new(36, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting the application calendar, command calendars, declared context time zones and clock operands (decisions 0106, 0107 and 0132).
+    /// </summary>
+    public static readonly SemanticVersion V37 = new(37, 0);
+
+    /// <summary>
+    /// Gets ESM version 37.1 with optional read-model declaration-order metadata.
+    /// </summary>
+    public static readonly SemanticVersion V37_1 = new(37, 1);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1206,7 +1236,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV36Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV37Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1219,7 +1249,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV36Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV37Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

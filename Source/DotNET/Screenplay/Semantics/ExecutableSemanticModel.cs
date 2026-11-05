@@ -86,15 +86,10 @@ public sealed record ExecutableSemanticModel
     /// <returns>The validated model.</returns>
     public static ExecutableSemanticModel Create(LanguageVersion languageVersion, SemanticVersion semanticVersion, SemanticApplication application, int utcAssessmentYear)
     {
-        EsmSchemaV36Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV37Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion, utcAssessmentYear);
         return CreateValidated(languageVersion, semanticVersion, application);
     }
-
-    // A clock-operands candidate runs in-process for specifications only: it carries the working major, has no revision,
-    // and cannot be serialized (see SemanticModelCanonicalJson.RefuseUnpublishedClock).
-    internal static ExecutableSemanticModel CreateClockCandidate(ClockOperandsBinding binding) =>
-        new(binding.LanguageVersion, binding.SemanticVersion, default, binding.Application);
 
     internal static ExecutableSemanticModel CreateValidated(LanguageVersion languageVersion, SemanticVersion semanticVersion, SemanticApplication application)
     {
@@ -145,6 +140,7 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("Reaction production mode must be atomic and requires ESM v22 or later.");
         }
 
+        SemanticReadModelPropertyOrder.ValidateVersion(application, semanticVersion, assessmentYear);
         ValidateCompositeReadModelKeyVersion(application, semanticVersion);
         ValidateDecisionReadVersion(application, semanticVersion);
         ValidateDateComparisonVersion(application, semanticVersion);
@@ -155,6 +151,7 @@ internal static partial class SemanticModelValidator
         ValidateTypedCaptureKeyVersion(application, semanticVersion);
         ValidateEventSourceCaptureKeyVersion(application, semanticVersion);
         ValidateThenInvocationVersion(application, semanticVersion);
+        ValidateHandlerResultV2Version(application, semanticVersion);
         ValidateDescribedHandlerVersion(application, semanticVersion);
         ValidateTextRuleVersion(application, semanticVersion);
         ValidateQueryRejectionVersion(application, semanticVersion);
@@ -177,6 +174,7 @@ internal static partial class SemanticModelValidator
         ValidateResponseVersion(application, semanticVersion);
         ValidateImplementationAttachmentVersion(application, semanticVersion);
         ValidateLifecycleVersion(application, semanticVersion);
+        ValidateClockVersion(application, semanticVersion);
     }
 
     static void RejectDuplicateRequirementIds(IEnumerable<string?> requirementIds, string owner)

@@ -87,6 +87,25 @@ highlight the board, and inferred dependencies do not prove executable readiness
 
 [Timeline findings](../imports.md#timeline-diagnostics) appear in the consumer slice header's information badge.
 
+### Spacing and text size
+
+The event model board starts with **comfortable** spacing and **medium** text.
+Open **Spacing and text size** in the board toolbar and choose:
+
+- **Spacing**: **Compact**, **Comfortable** (default), or **Spacious**.
+- **Text size**: **Small**, **Medium** (default), or **Large**.
+
+These choices affect the event model board, not the dependency map or your `.play`
+files. Text size is independent of canvas zoom. Native **View** choices, such as
+Properties, remain separate.
+
+Your choices stay while the same view is mounted, including redraws, model
+refreshes, Current/Proposed switches, Board/Map switches, and fullscreen changes.
+Closing or recreating the view starts at the defaults. The current MCP integration
+has no host preference-storage contract: choices live only in this mounted app,
+not in durable host or browser storage, and are not restored after a host restart
+or in another conversation.
+
 ### Highlight dependencies on the board
 
 Select a slice, feature or module header to trace its connections. You can click

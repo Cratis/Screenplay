@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Indexing.for_AuthoringIndex;
 public class when_indexing_an_application_context : Specification
 {
     [Fact]
-    void should_index_members_in_context_scope_without_claiming_execution()
+    void should_index_members_in_context_scope_as_admitted()
     {
         var index = new AuthoringSnapshot(new Dictionary<string, string>
         {
@@ -20,7 +20,6 @@ public class when_indexing_an_application_context : Specification
         member.Address.ShouldEqual("context.businessTimeZone");
         member.Location.Line.ShouldEqual(2);
         var details = JsonSerializer.SerializeToElement(member.Details);
-        details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
-        details.GetProperty("executionReadiness").GetString().ShouldContain("#824");
+        details.GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
     }
 }

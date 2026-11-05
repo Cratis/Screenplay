@@ -36,8 +36,10 @@ internal static partial class SemanticModelRead
     internal static SemanticReadModel ReadModel(ref Utf8JsonReader reader)
     {
         Object(ref reader, "read model");
-        var (id, name, properties) = NamedProperties(ref reader, "read model");
-        return new(id, name, properties);
+        var state = new ReadModelState();
+        ReadModelState.Fields.Read(ref reader, state);
+        Required(state.HasIdentity && !state.Properties.IsDefault, "read model");
+        return new(state.Id, state.Name!, state.Properties) { PropertyOrder = state.PropertyOrder };
     }
 
     internal static SemanticProjection Projection(ref Utf8JsonReader reader, uint schemaVersion)

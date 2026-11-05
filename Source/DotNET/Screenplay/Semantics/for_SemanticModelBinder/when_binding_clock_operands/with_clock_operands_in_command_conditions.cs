@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_clock_operands.given;
+
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_clock_operands;
 
 public class with_clock_operands_in_command_conditions : given.a_clock_binder

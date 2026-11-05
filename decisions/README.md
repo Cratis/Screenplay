@@ -125,3 +125,5 @@
 | [0133](0133-derive-hash-sha256-over-utf8-text.md) | `derive` hashes with SHA-256 over UTF-8 text, as lowercase hex, for high-entropy secrets and fingerprints | accepted | none | 2026-11-03 | woksin (delegated through L0) |
 | [0134](0134-per-language-implementation-alternatives.md) | A member carries at most one implementation body per language, written as sibling payloads | accepted | none | 2026-11-01 | woksin (direction accepted on #1086; syntax decided under delegated orchestration) |
 | [0135](0135-passive-read-models-are-realization-metadata.md) | Passive read models are an explicit realization choice outside portable ESM | accepted | none | 2026-11-02 | Accepted Screenplay#1129 implementation plan (delegated) |
+| [0136](0136-collection-sample-values-are-explicit-nested-rows.md) | Collection sample values are explicit nested pack rows | accepted | none | 2026-11-04 | woksin (decision comment on #1000) |
+| [0137](0137-admit-event-subject-lineage-as-esm-v39.md) | Admit event subject lineage into the executable model (ESM v39, opt-in until Stage supports it) | proposed | none | — | — |

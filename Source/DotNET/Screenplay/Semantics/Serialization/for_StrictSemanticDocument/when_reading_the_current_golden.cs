@@ -13,15 +13,15 @@ public class when_reading_the_current_golden : Specification
 
     void Establish()
     {
-        using var json = JsonDocument.Parse(canonical_serialization_golden_vectors.EsmV36Bytes);
+        using var json = JsonDocument.Parse(canonical_serialization_golden_vectors.EsmV37Bytes);
         _expectedRevision = SemanticRevision.Parse(json.RootElement.GetProperty("revision").GetString()!);
     }
 
-    void Because() => _document = StrictSemanticDocument.Read(canonical_serialization_golden_vectors.EsmV36Bytes);
+    void Because() => _document = StrictSemanticDocument.Read(canonical_serialization_golden_vectors.EsmV37Bytes);
 
-    [Fact] void should_keep_the_original_bytes() => _document.CopyBytes().ShouldEqual(canonical_serialization_golden_vectors.EsmV36Bytes);
+    [Fact] void should_keep_the_original_bytes() => _document.CopyBytes().ShouldEqual(canonical_serialization_golden_vectors.EsmV37Bytes);
     [Fact] void should_keep_the_document_revision() => _document.Revision.ShouldEqual(_expectedRevision);
-    [Fact] void should_keep_the_language_version() => _document.LanguageVersion.ShouldEqual(LanguageVersion.V36);
-    [Fact] void should_keep_the_semantic_version() => _document.SemanticVersion.ShouldEqual(SemanticVersion.V36);
+    [Fact] void should_keep_the_language_version() => _document.LanguageVersion.ShouldEqual(LanguageVersion.V37);
+    [Fact] void should_keep_the_semantic_version() => _document.SemanticVersion.ShouldEqual(SemanticVersion.V37);
     [Fact] void should_expose_the_validated_projection() => _document.Model.Revision.ShouldEqual(_document.Revision);
 }

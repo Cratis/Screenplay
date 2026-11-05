@@ -175,6 +175,7 @@ export interface ReadModelItemDocument {
 export interface QueryItemDocument {
     id: string;
     name: string;
+    description?: string;
     parameters: { name: string; type: number }[];
 }
 

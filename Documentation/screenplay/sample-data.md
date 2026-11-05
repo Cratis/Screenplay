@@ -44,7 +44,41 @@ The C# compiler checks authored fields against the matching read model. Unknown 
 | `Bool` | `true` or `false`. |
 | An `optional` property | Its usual literal or `null`. |
 
-Rows hold scalar literals, not collections or structured values. A shape that names no read model produces warning `PLAY0709`: the model may come from a blueprint, or the shape may need a profile mapping.
+Scalar fields hold literals; a collection uses nested rows (see [Composite collections](#composite-collections)). A shape that names no read model produces warning `PLAY0709`: the model may come from a blueprint, or the shape may need a profile mapping.
+
+## Composite collections
+
+Use a bare field name and nested `row` blocks for a collection whose element is a declared top-level `type`. Child fields are checked against that element's properties, recursively. Primitive collections and a single composite object do not accept nested rows (`PLAY0711`).
+
+```screenplay
+type Line
+  sku String
+  quantity Int
+
+module Shop
+  feature Baskets
+    slice StateView BasketList
+      readmodel Basket
+        lines Line[]
+
+sample data Demo
+  shape Basket
+    row
+      lines
+        row
+          sku = "BOOK"
+          quantity = 2
+        row
+          sku = "PEN"
+          quantity = 1
+    row
+      lines
+    row
+```
+
+The first record supplies two lines. The second supplies an **explicit empty list**: `lines` is present but has no child rows. The third omits `lines`, leaving generation or fallback to the preview. Omitting the field is not the same as authoring an empty list. Scalar-list literals and JSON are not collection syntax.
+
+In syntax JSON, a collection field has `syntaxKind: "Rows"`, a null `value`, and ordered `rows` containing `SampleDataRowSyntax` nodes. Empty `rows` is omitted from JSON and defaults to an empty sequence on deserialization. The `Rows` kind still distinguishes an explicit empty collection from an absent field. Existing scalar fields keep their JSON shape. See [decision 0136](https://github.com/Cratis/Screenplay/blob/main/decisions/0136-collection-sample-values-are-explicit-nested-rows.md).
 
 ## Choosing the active pack: once, in the ui profile
 
@@ -121,6 +155,6 @@ The C# compiler validates packs and profile selections. The [TypeScript compiler
 
 For structured editing through the Model Context Protocol (MCP), `read-ast` and `propose-ast` expose typed abstract syntax tree (AST) nodes: `SampleDataPackSyntax`, `SampleDataSelectionSyntax` and their children. They let a tool replace a row value or change the selected pack without treating the file as unstructured text. An undeclared active document pack is refused with `PLAY0714`.
 
-Stage's converter maps the blocks to Scene's `SampleDataPack` and the UI profile's `sampleData`. Running application contracts and production builds exclude sample data; packs are not a way to seed the executable backend.
+Stage's converter maps the blocks to Scene's `SampleDataPack` and the UI profile's `sampleData`. Nested `Rows` need matching Stage conversion and Studio export support before they preview downstream. Running application contracts and production builds exclude sample data; packs are not a way to seed the executable backend.
 
 The single application-wide choice is explained in [decision 0081](https://github.com/Cratis/Screenplay/blob/main/decisions/0081-choose-the-active-sample-data-pack-once-in-the-ui-profile.md). To localize labels and validation messages as well as choosing representative rows, use [internationalization](internationalization.md); a pack's locale does not select the UI's string table.

@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_possi
 
 public class with_handler_result_descriptors : given.a_possible_events_binder
 {
-    CompilationResult<PossibleEventsBinding> _binding;
+    CompilationResult<SemanticCompilation> _binding;
     SemanticTypedContextDescriptor _descriptor = null!;
 
     void Because()
@@ -27,7 +27,7 @@ public class with_handler_result_descriptors : given.a_possible_events_binder
     [Fact] void should_keep_the_context_at_v1() => _descriptor.ContextVersion.ShouldEqual(1u);
     [Fact] void should_advertise_pending_results() => _binding.ImplementationRequirements.Single().AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.Pending);
     [Fact] void should_keep_v1_serialization_available() => SemanticTypedContextSerializer.Serialize([_descriptor with { Result = null }]).ShouldNotBeEmpty();
-    [Fact] void should_refuse_portable_v2_serialization() => Assert.Throws<InvalidOperationException>(() => SemanticTypedContextSerializer.Serialize([_descriptor])).Message.ShouldEqual("Handler result descriptors are not yet portable.");
+    [Fact] void should_serialize_portable_v2_results() => System.Text.Encoding.UTF8.GetString(SemanticTypedContextSerializer.Serialize([_descriptor])).ShouldContain("\"resultVersion\":2");
 
     [Fact]
     void should_leave_a_v1_handler_without_a_result_descriptor()

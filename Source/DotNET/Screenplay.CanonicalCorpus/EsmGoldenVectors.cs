@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 /// <summary>
 /// Provides the exact version-pinned ESM golden bytes embedded in the released corpus package.
 /// </summary>
-public static class EsmGoldenVectors
+public static partial class EsmGoldenVectors
 {
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Esm.";
     const string FullPrefix = $"{Prefix}full-esm-v";
@@ -23,7 +23,9 @@ public static class EsmGoldenVectors
     /// </summary>
     public static ImmutableArray<int> Versions { get; } = [.. typeof(EsmGoldenVectors).Assembly.GetManifestResourceNames()
         .Where(name => name.StartsWith(FullPrefix, StringComparison.Ordinal) && name.EndsWith(Extension, StringComparison.Ordinal))
-        .Select(name => int.Parse(name.AsSpan(FullPrefix.Length, name.Length - FullPrefix.Length - Extension.Length), CultureInfo.InvariantCulture))
+        .Select(name => name.Substring(FullPrefix.Length, name.Length - FullPrefix.Length - Extension.Length))
+        .Where(version => !version.Contains('.'))
+        .Select(version => int.Parse(version, CultureInfo.InvariantCulture))
         .Order()];
 
     /// <summary>

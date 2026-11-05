@@ -9,7 +9,7 @@ A Cratis Screenplay command requests a state change. Define what the caller supp
 
 Start with properties typed by [concepts](concepts.md). Add [`reads`](#what-the-command-reads) when the decision depends on existing state, then use [`produces`](#the-produces-block) for declarative event mappings or a [`handler`](#the-handler-block) when the decision needs code. Check both acceptance and refusal with [specifications](specifications.md).
 
-Execution tools consume a normalized executable semantic model (ESM). The syntax below includes forms that it cannot execute; each section states the relevant limit. In particular, a code attachment needs a host that can execute it, and calendar operands remain [syntax-only](#calendar-and-clock-operands--syntax-only).
+Execution tools consume a normalized executable semantic model (ESM). The syntax below includes forms that it cannot execute; each section states the relevant limit. In particular, a code attachment needs a host that can execute it, and [calendar and clock operands](#calendar-and-clock-operands) need a host that supplies the time zone (ESM v37).
 
 ## Syntax
 
@@ -861,19 +861,19 @@ Inside either form, `context` is the [`CommandContext`](context.md) — the comm
 
 ### What a handler body can and cannot do
 
-A body is not an escape hatch from `produces`. The productions fix which events are appended, how many and in what order; the body only fills in their property values. Because of that, a command with a `handler` body that has no `produces`, or whose `produces` are conditional (`produces ... when`), is refused with `PLAY0800`. The refusal message names the failed condition when the command declares a `produces`. With no `produces`, the short, published message stays unchanged. In either case, use these repairs:
+A body is not an escape hatch. Either `produces` or a `may produce` block declares which events the command can append, and the body only fills in their values. A command with a `handler` body that has neither, or whose `produces` are conditional (`produces ... when`), is refused with `PLAY0800`. The refusal message names the failed condition when the command declares a `produces`. With no `produces`, the short, published message stays unchanged. In either case, use these repairs:
 
 | Condition | What to do |
 | --- | --- |
-| The command declares no `produces` | Declare an unconditional `produces <Event>` beside the handler body |
+| The command declares no `produces` | Declare an unconditional `produces <Event>`, or a `may produce` block inside the handler (see below) |
 | A `produces ... when` sits beside the body | Declare an unconditional `produces <Event>`, split conditional or variable outcomes into separate commands, or move them to declarative `produces ... when` without a body |
 | The body is empty, missing or a file the host did not supply | Attach a resolved, nonempty, language-tagged body |
 
 Authoring hints can stay beside an attached body; they are not part of its resolved executable requirement. A requirement that still carries hints is not a resolved body. Pending intent without a body is a different shape: conditional productions report `PLAY0697` and no productions report `PLAY0696`.
 
-A body that decides how many events to append, or which event type, is not expressible. Split the outcomes into separate commands, or express each branch with declarative `produces ... when`:
+A body that decides how many events to append, or which event type, declares them in a `may produce` block (handler result contract v2, ESM v35). The block lists the events the body may return, in order. The body returns an ordered subset or multiset of them with `result.Add`; a `for one of` destination picks among several streams. `may produce` cannot sit beside `produces`. Each listed event needs a destination.
 
-Refused with `PLAY0800` — the body has no `produces` beside it:
+Refused with `PLAY0800` — the body declares no events at all:
 
 ````text
 command ProcessBatch
@@ -905,7 +905,33 @@ event BatchCompleted
   completedAt DateTime
 ````
 
-A handler body cannot read views (read models). Put a decision that depends on a view in a declarative `require` on the command, as described under [what `reads` guarantees](#what-reads-guarantees). The [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) keeps `ProcessInvoiceBatch` as a deliberate example of the refusal.
+A body that must choose events declares them like this, from the [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play):
+
+````screenplay
+command ProcessInvoiceBatch
+  batchId    BatchId identifier
+  invoiceIds InvoiceId[]
+  action     String
+
+  handler
+    may produce
+      InvoiceBatchProcessingStarted for batchId
+      InvoiceSent for one of invoiceIds
+      InvoiceCancelled for one of invoiceIds
+      InvoiceBatchProcessingCompleted for batchId
+    ```csharp
+    result.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));
+    foreach (var id in InvoiceIds)
+        result.Add(id, Action switch {
+            "send"   => new InvoiceSent(context.Occurred, null),
+            "cancel" => new InvoiceCancelled("Batch", context.Occurred, context.Identity.Id, "Batch"),
+            _        => throw new InvalidOperationException($"Unknown action: {Action}")
+        });
+    result.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));
+    ```
+````
+
+A handler body cannot read views (read models). Put a decision that depends on a view in a declarative `require` on the command, as described under [what `reads` guarantees](#what-reads-guarantees). The [Invoicing sample](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) uses `ProcessInvoiceBatch` as the worked example of `may produce`.
 
 ### Implementation intent (handlers only)
 
@@ -951,13 +977,30 @@ The RequirementId and ESM payload do not change when a pending intent becomes at
 
 `implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Unconstrained or unresolved file/inline handlers retain `PLAY0800`; both pending and attached command-handler admission require consumers to explicitly admit v23. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
 
-## Calendar and clock operands — syntax only
+## Calendar and clock operands
 
-Application-root `time zone "Europe/Oslo"` (or `time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"` (or `calendar from $context.timeZone`), and specification `given time zone "Europe/Oslo"` record calendar intent. Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and `now - 30 minutes`, or take a calendar date with `date of occurred` and `date of now`. Bare `today` and `now` remain ordinary paths, preserving properties with those names.
+Decisions 0106, 0107 and 0132 admit application-root `time zone "Europe/Oslo"` (or
+`time zone configurable default "Europe/Oslo"`), command `calendar "Europe/Oslo"`
+(or `calendar from $context.timeZone`, or `calendar from $context.<member>` for a
+[declared context member](context.md)), and specification `given time zone "Europe/Oslo"`.
+Conditions can spell offsets such as `today - 7 days`, `now + 2 hours` and
+`now - 30 minutes`, and take the calendar date with `date of occurred` or `date of now`.
+Bare `today` and `now` remain ordinary paths when a property has that name.
 
-These forms are syntax-only in the public executable contract. Both parsers preserve them, but executable binding reports `PLAY0268`, “not yet admitted (decision 0106/0107) (#824).” They do not select an ESM version or introduce runtime behavior. Zone ids are retained rather than validated against the host's time-zone database, and no machine-local calendar is inferred. The [clock operand fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play) shows the authoring forms; executable Invoicing does not use them. Readiness reports syntax-only for affected members without blocking unrelated members or properties named `today` or `now`.
+Clock operands are admitted in command conditions (`validate` / `require` and `produces when`)
+and as the right operand of a `validate` comparison rule on a `Date` or `DateTime` property.
+A clock is compared with a required scalar command property of the same primitive: `today` and
+`date of …` are dates, `now` is an instant. Offsets on `today` must be whole days; use `now`
+for hours or minutes. Clock operands in other positions, such as concepts, reactions and screens,
+report `PLAY0268`.
 
-The internal clock candidate has a narrower operand contract: offsets and `date of` work only in conditions (`validate` / `require` and `produces when`), including bare `date of now` and `date of today`. Properties named `now` or `today` shadow those clocks inside `date of`. Offsets on `today` must be whole days; hours and minutes report `PLAY0268`, so sub-day offsets use `now`. A `validate` property rule can compare against bare `today`, but `dueDate >= today - 7 days` and `dueDate >= date of now` report `PLAY0268`; those operands require a `require` condition in the candidate. Its zone ids resolve through the host database, including that database's aliases and case sensitivity, so use an exact-case canonical IANA id. None of this changes the public syntax-only boundary.
+A model that uses any of these forms selects ESM v37 (see [interoperability](interoperability.md)).
+A command evaluates its clock in its calendar; without one, the application time zone applies, and
+an application without a declared zone uses UTC, never the machine's zone. Zone ids must be
+canonical, exact-case IANA ids. A specification fixes the clock with `given clock` and the zone
+with `given time zone`. The
+[clock fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/clock-preview.play)
+is a complete, executable example.
 
 ## Concurrency
 

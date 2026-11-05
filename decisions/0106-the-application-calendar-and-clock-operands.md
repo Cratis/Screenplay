@@ -150,6 +150,8 @@ record are to these revisions.
 
 **2026-11-02 — open point 1 resolved.** [0132](0132-application-declared-typed-context-members.md) decides the typed-context contract for application-declared time-zone members (open point 1). The form `calendar from $context.<member>` is admitted together with that contract, in the order 0132 sets out.
 
+**2026-11-04 — admitted as ESM v37.** The application time zone, command calendars, declared context time-zone members, `given time zone` and clock operands in command conditions and `validate` comparison rules bind to language/semantic `37.0` (`schemaVersion: 37`). Strict readers and the canonical writer refuse every clock member below v37, and a model without them keeps its version and bytes. The typed-context sidecar writes revision 3 only when a model reads a declared member. See the [interoperability table](../Documentation/screenplay/interoperability.md).
+
 ## Related
 
 Decisions 0004, 0006, 0009, 0012, 0025, 0066 and 0087; Screenplay #824; the record that lifts the freeze (0105 on branch

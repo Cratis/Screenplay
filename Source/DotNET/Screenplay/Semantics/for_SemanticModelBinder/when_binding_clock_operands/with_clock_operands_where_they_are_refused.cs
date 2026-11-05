@@ -18,10 +18,11 @@ public class with_clock_operands_where_they_are_refused : given.a_clock_binder
         result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
     }
 
+    // A property rule compares with a clock operand only; 'date of' a command property belongs in a condition.
     [Theory]
-    [InlineData("today - 7 days")]
-    [InlineData("date of now")]
-    public void should_refuse_offsets_and_date_of_in_validate_property_rules(string operand)
+    [InlineData("date of occurred")]
+    [InlineData("now")]
+    public void should_refuse_date_of_a_property_or_a_mismatched_clock_in_validate_property_rules(string operand)
     {
         var result = BindClock(Source($"        validate\n          dueDate >= {operand}\n"));
         result.Success.ShouldBeFalse();
@@ -53,13 +54,5 @@ public class with_clock_operands_where_they_are_refused : given.a_clock_binder
         result.Success.ShouldBeTrue();
         SemanticClockUsage.UsesCommand(Command(result.Value!)).ShouldBeFalse();
         result.Value!.LanguageVersion.Major.ShouldBeLessThan(36u);
-    }
-
-    [Fact]
-    void should_refuse_the_clock_operand_in_the_public_binding()
-    {
-        var result = Bind(Source("        validate\n          require dueDate >= today\n"));
-        result.Success.ShouldBeFalse();
-        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
     }
 }

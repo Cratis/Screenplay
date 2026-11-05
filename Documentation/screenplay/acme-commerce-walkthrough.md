@@ -434,7 +434,7 @@ and sets round corners and `source-serif-4`. Read those alongside `navigation.pl
 `<Domain>/shell/sampledata.play` supplies [sample data](sample-data.md) packs such as `AcmeStorefront` and `AcmeCatalog`, with
 locale `nb-NO`. Use these rows to inspect a screen's design without first producing every business event. They are excluded
 from generated production artifacts. The CLI can separately opt a disposable sandbox into deriving seed events from supported
-sample-data shapes with `--sample-data`; that does not seed production data.
+sample-data shapes with `--sample-data`; that does not seed production data. The Storefront pack authors `BasketContents.lines` as two nested rows of the declared `BasketLine` type, matching the cart indicator's two lines and total of 647. A bare `lines` field without rows means an explicit empty list; leaving it out means generated data. These collection values require matching Stage/Studio conversion support for preview.
 
 ### Navigation and the logo
 

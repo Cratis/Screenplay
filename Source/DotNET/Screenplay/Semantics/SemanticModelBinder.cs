@@ -46,8 +46,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticClockUsage.Uses(application)) return (LanguageVersion.V37, SemanticVersion.V37);
         if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
-        if (application.Modules.SelectMany(module => module.Features).SelectMany(PossibleEventSlices).SelectMany(slice => slice.Commands).Any(command => command.Handler is { ResultVersion: 2 })) return (new(35, 0), new(35, 0));
+        if (SemanticModelValidator.UsesHandlerResultV2(application)) return (LanguageVersion.V35, SemanticVersion.V35);
         if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
         if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
         return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
@@ -253,7 +254,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV36Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV37Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -357,8 +358,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
         readonly ApplicationIdentity _applicationIdentity = documents.IdentityCatalog.Application;
 
-        internal bool AllowPossibleEvents { get; init; }
-
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
@@ -394,6 +393,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal static SemanticApplication PromoteV2Destinations(SemanticApplication application) =>
             application with { Modules = [.. application.Modules.Select(PromoteV2Destinations)] };
 
+        // A clock model states its effective zone; an undeclared one is non-configurable UTC (decision 0106), so canonical bytes round-trip.
+        internal static SemanticApplication WithEffectiveTimeZone(SemanticApplication application) =>
+            application.TimeZone is null && SemanticClockUsage.Uses(application) ? application with { TimeZone = new("UTC", false) } : application;
+
         internal SemanticApplication BindApplication()
         {
             ReportTopLevelDispositions();
@@ -405,7 +408,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             ValidateComplianceAdmission();
             ValidateClockOperandAdmission();
             var timeZone = BindApplicationTimeZone();
-            RefuseApplicationContext();
+            BindApplicationContext();
 
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();
@@ -436,10 +439,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 EventSources = eventSources,
                 ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
                 TimeZone = timeZone,
+                ContextMembers = [.. _contextMembers],
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
             ValidateExampleAdmission(application);
-            application = BindRoutedFixtureSources(application);
+            application = WithEffectiveTimeZone(BindRoutedFixtureSources(application));
             UsesEventRoutes = SemanticEventRouting.Uses(application);
             ReportLegacyDecisionReads();
 

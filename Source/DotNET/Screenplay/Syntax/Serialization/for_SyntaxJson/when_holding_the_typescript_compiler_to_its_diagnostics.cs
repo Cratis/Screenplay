@@ -17,13 +17,13 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
 {
     static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web);
     readonly List<string> _mismatches = [];
-    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind, Dictionary<string, string[]>? Files, string[]? Roots, string[]? Locations)> _vectors;
+    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind, Dictionary<string, string[]>? Files, string[]? Roots, string[]? Locations, string[]? Severities)> _vectors;
 
     void Establish() => _vectors = [.. Vectors()];
 
     void Because()
     {
-        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments, bind, files, roots, locations) in _vectors)
+        foreach (var (name, source, expected, validate, registeredTriggers, messages, arguments, bind, files, roots, locations, severities) in _vectors)
         {
             var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(triggers: registeredTriggers.Select(triggerName => new TriggerDefinition(triggerName))));
             CompilationResult<ApplicationSyntax> result;
@@ -38,7 +38,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
                     roots ?? [.. files.Keys.Order(StringComparer.Ordinal)],
                     new InMemoryPlayDocumentSource(files.ToDictionary(file => file.Key, file => string.Join('\n', file.Value), StringComparer.Ordinal))).Result;
             }
-            if (bind) result = result with { Diagnostics = [.. result.Diagnostics, .. BinderDiagnostics(result.Value!, source)] };
+            if (bind) result = result with { Diagnostics = [.. result.Diagnostics, .. BinderDiagnostics(result.Value, source)] };
             var reported = result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ToArray();
             if (!reported.SequenceEqual(expected, StringComparer.Ordinal))
             {
@@ -49,6 +49,8 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             {
                 _mismatches.Add($"{name}: diagnostic locations differ");
             }
+
+            _mismatches.AddRange(SeverityMismatches(name, result.Diagnostics, severities));
 
             if (arguments is not null && !result.Diagnostics.Select(diagnostic => diagnostic.Arguments).SequenceEqual(arguments))
             {
@@ -88,10 +90,19 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             directory = directory.Parent;
         }
 
-        return directory!.FullName;
+        return directory.FullName;
     }
 
-    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind, Dictionary<string, string[]>? Files, string[]? Roots, string[]? Locations)> Vectors()
+    static IEnumerable<string> SeverityMismatches(string name, IEnumerable<Diagnostic> diagnostics, string[]? expected) =>
+        expected is not null && !diagnostics.Select(diagnostic => diagnostic.Severity.ToString().ToLowerInvariant()).SequenceEqual(expected, StringComparer.Ordinal)
+            ? [$"{name}: diagnostic severities differ"]
+            : [];
+
+    static string[]? Severities(JsonElement vector) => vector.TryGetProperty("severities", out var severities)
+        ? [.. severities.EnumerateArray().Select(severity => severity.GetString())]
+        : null;
+
+    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers, string[]? Messages, DiagnosticArguments[]? Arguments, bool Bind, Dictionary<string, string[]>? Files, string[]? Roots, string[]? Locations, string[]? Severities)> Vectors()
     {
         var file = Path.Combine(Root(), "Source", "Screenplay", "Compiler", "Conformance", "diagnostics.json");
         using var document = JsonDocument.Parse(File.ReadAllText(file));
@@ -106,6 +117,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             vector.TryGetProperty("bind", out var bind) && bind.GetBoolean(),
             vector.TryGetProperty("files", out var files) ? JsonSerializer.Deserialize<Dictionary<string, string[]>>(files.GetRawText(), _options) : null,
             vector.TryGetProperty("roots", out var roots) ? roots.EnumerateArray().Select(root => root.GetString()!).ToArray() : null,
-            vector.TryGetProperty("locations", out var locations) ? locations.EnumerateArray().Select(location => location.GetString()!).ToArray() : null))];
+            vector.TryGetProperty("locations", out var locations) ? locations.EnumerateArray().Select(location => location.GetString()!).ToArray() : null,
+            Severities(vector)))];
     }
 }

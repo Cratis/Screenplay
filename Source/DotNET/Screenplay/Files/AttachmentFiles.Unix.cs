@@ -3,6 +3,7 @@
 
 using System.Buffers.Binary;
 using System.Runtime.InteropServices;
+using Cratis.Screenplay.Diagnostics;
 using Microsoft.Win32.SafeHandles;
 
 namespace Cratis.Screenplay.Files;
@@ -63,9 +64,10 @@ public static partial class AttachmentFiles
         }
     }
 
-    static FileStream? OpenUnixAttachment(SafeFileHandle? root, string key, out long length, out string reason)
+    static FileStream? OpenUnixAttachment(SafeFileHandle? root, string key, out long length, out string reason, out string refusalCode)
     {
         length = 0;
+        refusalCode = DiagnosticCodes.AttachmentUnreadable;
         reason = "cannot verify the file type on this platform";
         if (root is null) return null;
         reason = "cannot be opened";
@@ -74,7 +76,7 @@ public static partial class AttachmentFiles
         {
             handle = OpenUnixRelative(root, key);
             if (handle is null) return null;
-            if (!TryReadUnixStatus(handle, out length, out reason)) return null;
+            if (!TryReadUnixStatus(handle, out length, out reason, out refusalCode)) return null;
             var stream = new FileStream(handle, FileAccess.Read);
             handle = null; // The stream owns the final descriptor from here on.
             return stream;
@@ -90,9 +92,10 @@ public static partial class AttachmentFiles
         }
     }
 
-    static bool TryReadUnixStatus(SafeFileHandle handle, out long length, out string reason)
+    static bool TryReadUnixStatus(SafeFileHandle handle, out long length, out string reason, out string refusalCode)
     {
         length = 0;
+        refusalCode = DiagnosticCodes.AttachmentUnreadable;
         reason = "cannot verify the file type on this platform";
         var status = new byte[512];
         var mac = OperatingSystem.IsMacOS();
@@ -108,6 +111,20 @@ public static partial class AttachmentFiles
             return false;
         }
 
+        var linkCount = status.AsSpan(UnixLinkCountOffset());
+        var links = (mac, x64) switch
+        {
+            (true, _) => BinaryPrimitives.ReadUInt16LittleEndian(linkCount),
+            (false, true) => BinaryPrimitives.ReadUInt64LittleEndian(linkCount),
+            _ => BinaryPrimitives.ReadUInt32LittleEndian(linkCount)
+        };
+        if (links > 1)
+        {
+            reason = "has more than one hard link";
+            refusalCode = DiagnosticCodes.AttachmentLinkRefused;
+            return false;
+        }
+
         length = BinaryPrimitives.ReadInt64LittleEndian(status.AsSpan(mac ? 96 : 48));
         return length >= 0;
     }
@@ -117,6 +134,14 @@ public static partial class AttachmentFiles
         (true, _) => 4,
         (false, Architecture.X64) => 24,
         _ => 16
+    };
+
+    // Darwin stat64: u16 at 6. Linux x64: u64 at 16. Linux arm64: u32 at 20.
+    static int UnixLinkCountOffset() => (OperatingSystem.IsMacOS(), RuntimeInformation.ProcessArchitecture) switch
+    {
+        (true, _) => 6,
+        (false, Architecture.X64) => 16,
+        _ => 20
     };
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]

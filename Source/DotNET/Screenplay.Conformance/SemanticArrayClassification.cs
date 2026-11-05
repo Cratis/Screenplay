@@ -32,7 +32,7 @@ internal static class SemanticArrayClassification
 
     static readonly string[] _nameSets =
     [
-        "application/policies", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
+        "application/policies", "application/contextMembers", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
         "stateMachines/specifications", "workflows/specifications", "slices/reducers", "slices/constraints", "record/fields", "records/fields", "thenReturns/fields",
     ];
 
@@ -56,8 +56,10 @@ internal static class SemanticArrayClassification
         "source/path", "value/path", "factor/path",
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
+        "handler/possibleEvents",
         "invokes/mappings", "invokes/onRefused", "onRefused/produces",
         "map/targets", "map/template", "map/translations", "mappings/target",
+        "possibleEvents/mappings", "possibleEvents/tags",
         "produces/mappings", "produces/tags",
         "stateMachines/transitions", "states/entering", "workflows/edges", "specifications/given", "specifications/outcomes", "specifications/then",
         "queries/filters", "reactions/triggers", "triggers/invokes", "triggers/produces",

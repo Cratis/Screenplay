@@ -46,9 +46,9 @@ public static class UnknownPreservingSemanticModelReader
         ValidateEnvelope(root, semanticVersion);
         ValidateRange(range, languageVersion, semanticVersion);
         if (!EsmBaselineShapes.Majors.Contains(semanticVersion.Major)) throw new InvalidSemanticContract("The package has no frozen baseline descriptor for this ESM major.");
-        var registeredMinor = EsmSchemaV36Support.SemanticVersions.Where(version => version.Major == semanticVersion.Major).Max(version => version.Minor);
+        var registeredMinor = EsmSchemaV37Support.SemanticVersions.Where(version => version.Major == semanticVersion.Major && version.Minor <= semanticVersion.Minor).Max(version => version.Minor);
         var revision = SemanticRevision.Parse(root.GetProperty("revision").GetString()!);
-        var unknowns = new EsmUnknownCollector(semanticVersion.Major, semanticVersion.Minor > registeredMinor).Collect(root);
+        var unknowns = new EsmUnknownCollector(semanticVersion.Major, semanticVersion.Minor > registeredMinor, registeredMinor).Collect(root);
         var canonical = new EsmAdmissionCanonicalJson(root, semanticVersion.Major, registeredMinor);
         var projectionRevision = SemanticRevision.Compute(canonical.Write(projection: true, revision: null));
         var model = SemanticModelSerializer.Deserialize(canonical.Write(projection: true, revision: projectionRevision));

@@ -9,6 +9,10 @@ The syntax tree is a public API. Every consumer that compiles Screenplay to some
 
 This page states those promises. It is deliberately narrow: a guarantee you cannot rely on is worse than one that was never made.
 
+## Nested sample rows
+
+`SampleDataValueKind.Rows = 4` is additive; the existing enum values, positional constructor and deconstruction of `SampleDataFieldSyntax` are unchanged. Its init-only `Rows` sequence defaults to empty and is omitted from syntax JSON when empty, including on legacy scalar fields. `syntaxKind: "Rows"` distinguishes an explicit empty collection from an omitted field. Nonempty child rows keep authored order and recurse through the same row/field syntax. Only collections of declared top-level types admit nested rows; read-model shapes remain invalid member types (`PLAY0273`). See [sample data](sample-data.md#composite-collections).
+
 ## Attached command handler admission
 
 No AST shape changes. Direct and wrapped file/tagged-fence handler forms now accept
@@ -41,9 +45,8 @@ it contains canonical text and `LeftExpression` holds the structured expression.
 `ClockOffsetExpressionSyntax` and `DateOfExpressionSyntax` may appear on either side.
 A bare `today` or `now` is still a path, not a globally reserved keyword.
 
-These additions are syntax-only. Binding them reports `PLAY0268` naming decisions
-0106/0107; ESM versions and executable payloads are unchanged. See
-[commands](commands.md#calendar-and-clock-operands--syntax-only).
+A model that uses these additions binds to ESM v37 (decisions 0106 and 0107). See
+[commands](commands.md#calendar-and-clock-operands).
 
 ## What the tree is
 

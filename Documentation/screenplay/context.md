@@ -110,7 +110,7 @@ context
   customerTimeZone time zone
 ```
 
-The compiler parses, prints, serializes and indexes this declaration, but executable binding rejects any document that declares it with `PLAY0268`. Time-zone execution is tracked in #824. Declaring these names does not extend the executable `$context` roots or change an existing command calendar operand.
+A command reads a member as its calendar with `calendar from $context.<member>`, and the model then selects ESM v37. The host supplies the member's IANA zone at run time; a specification supplies it with `given time zone`. A member is a calendar source only: it does not add a `$context` value to mappings or conditions.
 
 Declare at most one block per application folder, across all its files, as with `identity`. The block may be empty and may have one description. Members have a lower-case-leading name and the type `time zone`; no other type or member body is supported. Names are unique after removing an `@` escape. `timeZone` and every existing `$context` root (`command`, `arguments`, `tenant`, `causedBy`, `causation`, `occurred` and `identity`) are reserved. Escape a member named `description` as `@description`; the printer retains that escape.
 
@@ -155,6 +155,13 @@ These are sidecars of the **same compilation** as the ESM: canonical v1–v4 byt
 An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations.
 
 ValueGeneration descriptors have only non-null Now (`DateTime`) and Tenant (`TenantId`) runtime members. Compilation checks owner/rule identity, role, context/result versions, capability and sole body-source linkage; an ESM-only loader can check the requirement id format but cannot fabricate this sidecar.
+
+A command handler descriptor also carries a `result` object when its body declares `may produce` (result contract v2). Its members are:
+
+- `resultVersion`: the result contract version.
+- `entries`: one per possible event, in declaration order. Each has `eventContract`, `eventName`, `eventRevision`, `payload` (a context type), `destinationKind`, `destinationProperty` and `destinationType`.
+
+The destination members say where the event is appended: the kind, the command property that names the stream, and that property's type.
 
 ## The values they carry
 

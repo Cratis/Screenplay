@@ -141,8 +141,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             _ => []
         };
 
-        return [.. LocalFeatures().Concat(Feature(ClockRefused(node), "calendar and clock operands (#824)"))
-            .Concat(Feature(node is ApplicationContextSyntax or ContextMemberSyntax || (node is ApplicationSyntax && application.Context is not null), "application context members (#824)"))
+        return [.. LocalFeatures().Concat(Feature(ClockRefused(node), "clock operands outside command rules (decisions 0106 and 0107)"))
             .Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
             .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))
@@ -275,8 +274,13 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             else VisitNode(node);
         }
 
-        public override void VisitNode(SyntaxNode node) => Unadmitted |= node is
-            TimeZoneSyntax or CommandCalendarSyntax or SpecificationTimeZoneSyntax or ClockOffsetExpressionSyntax or DateOfExpressionSyntax;
+        // ESM v37 admits the application calendar, command calendars, given time zone and the clock in command rules;
+        // a clock operand anywhere else (reactions, screens) stays refused by the binder.
+        public override void VisitCommand(CommandSyntax syntax)
+        {
+        }
+
+        public override void VisitNode(SyntaxNode node) => Unadmitted |= node is ClockOffsetExpressionSyntax or DateOfExpressionSyntax;
     }
 
     sealed class ComplianceReadinessWalker(ImmutableArray<Diagnostic> refusals) : ScreenplaySyntaxWalker

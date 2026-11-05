@@ -17,5 +17,5 @@ public class when_binding_library_today : Semantics.for_SemanticModelBinder.give
         _result = Bind(File.ReadAllText(Path.Combine(root, "Samples/Library/library.play")));
     }
 
-    [Fact] void should_not_admit_today_with_date_ordering() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("date", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_admit_today_with_date_ordering() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("'dueDate'", StringComparison.Ordinal)).ShouldBeFalse();
 }

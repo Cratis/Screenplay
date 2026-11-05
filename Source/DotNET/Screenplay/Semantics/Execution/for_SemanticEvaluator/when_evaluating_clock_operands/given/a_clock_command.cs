@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator.when_evaluating_clock_operands.given;
 
 public class a_clock_command : Semantics.for_SemanticModelBinder.when_binding_clock_operands.given.a_clock_binder
@@ -10,8 +12,9 @@ public class a_clock_command : Semantics.for_SemanticModelBinder.when_binding_cl
 
     protected void Compile(string source)
     {
-        var binding = BindClock(source).Value!;
-        var model = ExecutableSemanticModel.CreateClockCandidate(binding);
+        var result = BindClock(source);
+        var binding = result.Value ?? throw new InvalidOperationException(string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        var model = ExecutableSemanticModel.Create(binding.LanguageVersion, binding.SemanticVersion, binding.Application);
         Plan = SemanticExecutionPlan.Compile(model).Plan!;
         CommandModel = Command(binding);
     }
@@ -19,6 +22,8 @@ public class a_clock_command : Semantics.for_SemanticModelBinder.when_binding_cl
     protected sealed record RunOptions
     {
         public string? ContextZone { get; init; }
+
+        public ImmutableDictionary<string, string> ContextZones { get; init; } = ImmutableDictionary<string, string>.Empty;
 
         public string? ConfiguredZone { get; init; }
 
@@ -39,6 +44,7 @@ public class a_clock_command : Semantics.for_SemanticModelBinder.when_binding_cl
         {
             Occurrence = options.WithOccurrence ? new(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null,
             ContextTimeZone = options.ContextZone,
+            ContextTimeZones = options.ContextZones,
             ConfiguredTimeZone = options.ConfiguredZone,
             ScenarioTimeZone = options.ScenarioZone
         };

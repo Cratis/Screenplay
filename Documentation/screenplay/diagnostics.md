@@ -21,7 +21,7 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0820` | Warning | Several declared nominal keys could fill an input. Write an explicit binding. |
 | `PLAY0821` | Warning | A guarded action `for screen` cannot choose an item from collection-valued data. |
 | `PLAY0822` | Error | A handler `may produce` declaration is malformed: an entry is not `<Event>`, `<Event> for <property>` or `<Event> for one of <collection property>`, an event is declared twice, or the command also declares `produces`. |
-| `PLAY0823` | Error | A handler possible-event set violates its result contract: it is empty, names an event outside the command's scope, repeats an event, or omits or misdirects an event's destination. Admission is internal until ESM v35. |
+| `PLAY0823` | Error | A handler possible-event set violates its result contract: it is empty, sits beside `produces`, has no body, names an event outside the command's scope, repeats an event, or omits or misdirects an event's destination. |
 | `PLAY0824` | Information | A composite key is written with braces (`key {` ... `}`) that the indented parts already make redundant. A repair removes the braces. |
 | `PLAY0825` | Information | An `authorize` declaration writes adjacent policies without the `and` they mean. A repair writes the `and`. |
 | `PLAY0826` | Error | An `onboarding` line carries anything beyond the keyword. See [onboarding](onboarding.md). |
@@ -51,7 +51,7 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0850` | Information | A `join` has a single incoming branch, so it joins nothing. |
 | `PLAY0851` | Error | A workflow names a command, event, persona or policy, state machine, read model or collection property that is not declared, or follows a different read model than its state machine. |
 | `PLAY0852` | Error | An application `time zone`, a command `calendar` or a specification `given time zone` names an id that is not a known IANA time zone. There is no fallback to UTC. |
-| `PLAY0853` | Error | A command `calendar from $context.<member>` names a member other than `timeZone`, the one trusted time-zone member the host supplies. |
+| `PLAY0853` | Error | A command `calendar from $context.<member>` names a member other than `timeZone` or a declared `context` time-zone member, the members the host supplies. |
 | `PLAY0854` | Error | A `context` header or member is malformed, a member has a body, the block is repeated in one file, or it is outside the application root. |
 | `PLAY0855` | Error | A context member uses an unsupported type. Only `time zone` is supported. |
 | `PLAY0856` | Error | A context member name is repeated after removing its `@` escape. The first declaration is retained. |
@@ -392,7 +392,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0033` | Error | A `command` line is not `command <Name>`. |
 | `PLAY0034` | Error | A line in a command body opens with a word a command declares nothing by. |
 | `PLAY0035` | Retired | No longer reported. Pending and attached command handlers may declare unconditional `produces` as result contract v1. This code remains reserved forever. |
-| `PLAY0800` | Error | A file/inline command handler lacks a constrained result contract or resolved nonempty language-tagged body. Unconditional `produces` plus a resolved attachment binds in ESM v23 without this diagnostic. The `subject` argument identifies the command; hosts switch on this code rather than matching message text. The message names the failed condition when the command declares a `produces` (a conditional `produces ... when`, or an empty, unresolved or hinted body); the fix is an unconditional `produces <Event>` beside a resolved handler body, or separate commands for conditional outcomes. A command with no `produces` keeps the short message. See [what a handler body can and cannot do](commands.md#what-a-handler-body-can-and-cannot-do). |
+| `PLAY0800` | Error | A file/inline command handler lacks a constrained result contract or resolved nonempty language-tagged body. Unconditional `produces` (result contract v1) or a handler `may produce` set (result contract v2, ESM v35) plus a resolved attachment binds without this diagnostic. The `subject` argument identifies the command; hosts switch on this code rather than matching message text. The message names the failed condition when the command declares a `produces` (a conditional `produces ... when`, or an empty, unresolved or hinted body); the fix is an unconditional `produces <Event>` or a handler `may produce` set beside a resolved handler body, or separate commands for conditional outcomes. A command with no `produces` and no `may produce` keeps the short message. See [what a handler body can and cannot do](commands.md#what-a-handler-body-can-and-cannot-do). |
 | `PLAY0695` | Information | A described command is admitted in ESM v23 but its pending payload implementation needs a target. The message names the command and RequirementId. |
 | `PLAY0696` | Error | A pending command handler has no productions, including response-only commands. Source remains valid; executable binding requires at least one production. |
 | `PLAY0697` | Error | A pending command handler has conditional productions (`produces when`). Result contract v1 requires unconditional productions. |
@@ -667,7 +667,7 @@ Collection queries, performer-served or unbuilt views, projection-backed views, 
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
-| `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares, including projection `remove with`, `remove via join on`, and capture `append`. |
+| `PLAY0166` | Warning or error | An event is referred to that nothing in the document or its imports declares, including projection `remove with`, `remove via join on`, and capture `append`. An unresolved qualified `from` input of a `source events` capture is an error; unknown bare inputs and other event usages remain warnings. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
 | `PLAY0168` | Error | A concept and a type, two of either, or two policies are declared under one name in a document; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
@@ -1123,7 +1123,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated-concept rules outside the supported rule forms (supported rules are checked for consistency instead: refuted rules report `PLAY0688` errors and unproven rules `PLAY0689` warnings), and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, clock operands (`today`, `now`, `date of`), application time zones, command calendars, `given time zone` and date comparisons outside the supported shapes (`==`, `!=`, `>`, `>=`, `<`, `<=` over required scalar command properties of the same primitive, or matching literals, in `require` and `produces when`), non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated-concept rules outside the supported rule forms (supported rules are checked for consistency instead: refuted rules report `PLAY0688` errors and unproven rules `PLAY0689` warnings), and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, clock operands (`today`, `now`, `date of`) outside command conditions and `validate` comparison rules, and date comparisons outside the supported shapes (`==`, `!=`, `>`, `>=`, `<`, `<=` over required scalar command properties of the same primitive, or matching literals, in `require` and `produces when`), non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, a query a performer answers (an opaque read, left out of the executable model), compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
@@ -1687,7 +1687,7 @@ The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-butto
 
 ## Application calendar and clock operands
 
-Decisions 0106 and 0107 add the application calendar and clock operands. Both compilers parse the forms; the binder refuses every one of them with `PLAY0268` ("not yet admitted, decision 0106/0107") until a later slice admits it, so no model that uses them reaches an executable semantic model yet.
+Decisions 0106 and 0107 add the application calendar and clock operands. A model that uses them binds to ESM v37. Clock operands outside command conditions and `validate` comparison rules, a clock compared with another clock, and a `today` offset in hours or minutes report `PLAY0268`.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -1697,7 +1697,7 @@ Decisions 0106 and 0107 add the application calendar and clock operands. Both co
 
 ## Application-declared context members
 
-Decision 0132 adds the [application-root `context` block](context.md#application-declared-context-members). It is parsed but refused at binding with `PLAY0268` until #824 admits execution. One block is allowed per application folder across its files; a second file's block reports `PLAY0172`, as with `identity`.
+Decision 0132 adds the [application-root `context` block](context.md#application-declared-context-members). A command reads a member as its calendar, and the model then binds to ESM v37. A command calendar naming an undeclared member reports `PLAY0853`. One block is allowed per application folder across its files; a second file's block reports `PLAY0172`, as with `identity`.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |

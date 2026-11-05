@@ -130,6 +130,7 @@ public static partial class AttachmentFiles
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var fullRoot = Path.GetFullPath(root);
         using var unixRoot = OpenUnixRoot(fullRoot);
+        using var windowsRoot = OpenWindowsRoot(fullRoot, out var windowsRootPath, out var windowsRootIsLink);
         var total = 0L;
         foreach (var reference in references)
         {
@@ -146,9 +147,15 @@ public static partial class AttachmentFiles
 
             try
             {
-                if (File.GetAttributes(fullRoot).HasFlag(FileAttributes.ReparsePoint))
+                if (windowsRootIsLink || File.GetAttributes(fullRoot).HasFlag(FileAttributes.ReparsePoint))
                 {
                     diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' has a symbolic-link or reparse-point model root.", reference.Location));
+                    continue;
+                }
+
+                if (OperatingSystem.IsWindows() && windowsRoot is null)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
                     continue;
                 }
             }
@@ -241,12 +248,13 @@ public static partial class AttachmentFiles
 
                 beforeOpen?.Invoke(path);
                 var length = 0L;
+                var refusalCode = DiagnosticCodes.AttachmentUnreadable;
                 using var stream = OperatingSystem.IsWindows()
-                    ? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
-                    : OpenUnixAttachment(unixRoot, key, out length, out reason);
+                    ? OpenWindowsAttachment(windowsRootPath!, path, key, out reason, out refusalCode)
+                    : OpenUnixAttachment(unixRoot, key, out length, out reason, out refusalCode);
                 if (stream is null)
                 {
-                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' {reason}.", reference.Location));
+                    diagnostics.Add(Diagnostic.Warning(refusalCode, $"File attachment '{reference.Path}' {reason}.", reference.Location));
                     continue;
                 }
 

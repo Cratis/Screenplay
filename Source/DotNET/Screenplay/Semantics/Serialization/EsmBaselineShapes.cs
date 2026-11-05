@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace Cratis.Screenplay.Semantics.Serialization;
 
 /// <summary>
-/// Frozen C(M.0) structural vocabulary for the shipped majors 1–34 and 36 (35 is reserved, decision 0119). The strict per-major
+/// Frozen C(M.0) structural vocabulary for the shipped majors 1–37. The strict per-major
 /// reader/writer supplies baseline field ordering, optionality, variants and array ordering.
 /// These tables identify extension boundaries independently of future semantic knowledge.
 /// The @major and @first-last annotations freeze the strict reader's sinceVersion gates
@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -31,7 +31,7 @@ internal static class EsmBaselineShapes
     static readonly ImmutableDictionary<EsmBaselineShape, string> _definitions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema schemaVersion languageVersion semanticVersion revision application:Application",
-        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25",
+        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember",
         ["Concept"] = "id name primitive values validations:Validation numbers@12 compliance@13:Compliance generation@15:Generation",
         ["Generation"] = "kind pattern checksum min max requirement size count encoding alphabet prefix case",
         ["Compliance"] = "personal:Personal secret:Secret",
@@ -45,9 +45,9 @@ internal static class EsmBaselineShapes
         ["Slice"] = "id name kind events:EventContract commands:Command readModels:ReadModel projections:Projection reducers:Reducer queries:Query specifications:Specification constraints:Constraint reactions@6:Reaction captures@6:Capture direction@9",
         ["EventContract"] = "id contractId contractRevision name storedName@16 properties:Property tags visibility@9 origin@9 predecessor@4 priorRevisions@4:PriorRevision",
         ["PriorRevision"] = "contractRevision predecessor properties:Property tags",
-        ["Command"] = "id name properties:Property validations:Validation codeValidations:CodeValidation produces:ProducedEvent requirements:Requirement authorization:Authorization destination:Destination response@7:Response route@8:CommandRoute handler@23:Handler reads@25:DecisionRead",
+        ["Command"] = "id name properties:Property validations:Validation codeValidations:CodeValidation produces:ProducedEvent requirements:Requirement authorization:Authorization destination:Destination response@7:Response route@8:CommandRoute handler@23:Handler reads@25:DecisionRead calendar@37:CommandCalendar",
         ["CodeValidation"] = "requirementId",
-        ["Handler"] = "requirementId resultVersion",
+        ["Handler"] = "requirementId resultVersion possibleEvents@35:ProducedEvent",
         ["DecisionRead"] = "name readModel key presence",
         ["ProducedEvent"] = "eventContract condition:Expression destination:Expression mappings:Mapping when:Condition tags destinationType@6:TypeReference route@10:CommandRoute",
         ["Destination"] = "type:TypeReference value:Expression",
@@ -75,7 +75,7 @@ internal static class EsmBaselineShapes
         ["QueryKeyPart"] = "id name type:TypeReference keyProperty",
         ["QueryFilter"] = "id name type:TypeReference property",
         ["QueryFilterValue"] = "filter value:Value",
-        ["Specification"] = "id name givenEvents:SpecificationEvent givenReadModels:SpecificationReadModel givenCaller:Caller when:SpecificationCommand whenAppended:SpecificationEvent whenRedelivered@17:Redelivered thenEvents:SpecificationEvent thenNoEvents@17 thenEventsInAnyOrder thenReadModels:SpecificationReadModel thenAbsentReadModels@5:AbsentReadModel thenQueries:SpecificationQuery thenErrors:SpecificationError thenDenied thenReturns@7:ThenReturns givenClock@6 givenCaptures@6:SpecificationCapture givenGenerated@30:PinnedValue whenClock@6 whenTrigger@6:WhenTrigger whenCapture@6:SpecificationCapture thenInvocations@34:SpecificationCommand",
+        ["Specification"] = "id name givenEvents:SpecificationEvent givenReadModels:SpecificationReadModel givenCaller:Caller when:SpecificationCommand whenAppended:SpecificationEvent whenRedelivered@17:Redelivered thenEvents:SpecificationEvent thenNoEvents@17 thenEventsInAnyOrder thenReadModels:SpecificationReadModel thenAbsentReadModels@5:AbsentReadModel thenQueries:SpecificationQuery thenErrors:SpecificationError thenDenied thenReturns@7:ThenReturns givenClock@6 givenCaptures@6:SpecificationCapture givenGenerated@30:PinnedValue whenClock@6 whenTrigger@6:WhenTrigger whenCapture@6:SpecificationCapture thenInvocations@34:SpecificationCommand givenTimeZone@37",
         ["SpecificationEvent"] = "eventContract values:PropertyValue eventSource:EventSource route@8:FixtureRoute unrouted@8",
         ["SpecificationCommand"] = "command values:PropertyValue generatedValues@7:PropertyValue eventSource:EventSource",
         ["SpecificationReadModel"] = "readModel key:Value values:PropertyValue exactly",
@@ -84,7 +84,7 @@ internal static class EsmBaselineShapes
         ["SpecificationError"] = "code message",
         ["Redelivered"] = "reaction given",
         ["EventSource"] = "type:TypeReference value:Value",
-        ["Validation"] = "property kind operand:Value message severity name requirementId",
+        ["Validation"] = "property kind operand:Value message severity name requirementId clock@37:ClockOperand",
         ["Constraint"] = "name kind scope targets:ConstraintTarget releasedBy ignoreCasing message",
         ["ConstraintTarget"] = "eventContract properties",
         ["Expression"] = "kind value:Value contextValue type:TypeReference member read@25 property@25 root source target",
@@ -92,7 +92,12 @@ internal static class EsmBaselineShapes
         ["PropertyValue"] = "targetProperty value:Value",
         ["Requirement"] = "condition:Condition message severity",
         ["Condition"] = "kind left:ConditionOperand operator right:ConditionOperand",
-        ["ConditionOperand"] = "read@25 property value:Value",
+        ["ConditionOperand"] = "clock@37:ClockOperand read@25 property dateOf@37 value:Value",
+        ["ClockOperand"] = "kind offset:ClockOffset dateOf",
+        ["ClockOffset"] = "amount unit",
+        ["CommandCalendar"] = "timeZone contextMember",
+        ["ApplicationTimeZone"] = "id configurable",
+        ["ContextMember"] = "name type",
         ["Response"] = "kind source type:TypeReference fields:ResponseField",
         ["ResponseField"] = "name source type:TypeReference",
         ["ThenReturns"] = "kind value:Value fields:ReturnField",
