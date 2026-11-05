@@ -21,7 +21,7 @@ Choose the part you want to understand:
 - [Read a domain's rules](#domain-by-domain) to find the command, state and specification behind a decision.
 - [Inspect the screens](#screens) to see how forms and templates give a person access to those commands.
 - [Verify or consume the model](#compile-test-package-render-and-run) to distinguish compiler checks, specification execution, generated code and a sandbox.
-- [Use Studio for shared review](#what-each-studio-feature-shows) if you want to discuss the model with others.
+- [Use Studio for shared review](#review-the-model-in-cratis-studio) if you want to discuss the model with others.
 
 | Context folder | Module | Start with this task |
 | --- | --- | --- |
@@ -705,8 +705,6 @@ The [CLI run reference](/cli/reference/run/) covers Docker setup, `--port`, appr
 output for unsupported commands, queries or lifecycle constructs before relying on the session. The render-variant helper
 and a sandbox have different execution paths; generating one variant does not establish that the full Acme Commerce source
 can run unchanged.
-
-<a id="what-each-studio-feature-shows"></a>
 
 ## Review the model in Cratis Studio
 
