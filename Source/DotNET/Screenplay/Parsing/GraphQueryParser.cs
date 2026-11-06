@@ -117,8 +117,8 @@ internal static partial class GraphQueryParser
         var index = start.Length;
         while (index < text.Length)
         {
-            var hop = HopRegex().Match(text, index);
-            if (!hop.Success || hop.Index != index)
+            var hop = HopRegex().Match(text[index..]);
+            if (!hop.Success)
             {
                 context.Error(DiagnosticCodes.InvalidGraphQuery, $"Invalid pattern '{text}' - at '{text[index..].Trim()}' expected '-[alias:]TYPE-> [alias:]Label' or '<-[alias:]TYPE- [alias:]Label'", line.Location);
                 return null;
@@ -127,8 +127,8 @@ internal static partial class GraphQueryParser
             var outgoing = hop.Groups["out"].Success;
             var edgeAlias = outgoing ? hop.Groups["oa"] : hop.Groups["ia"];
             var edgeType = outgoing ? hop.Groups["ot"] : hop.Groups["it"];
-            var node = new GraphPatternNodeSyntax(Alias(hop.Groups["na"]), hop.Groups["nl"].Value, line.LocationAt(offset + hop.Groups["nl"].Index));
-            hops.Add(new(Alias(edgeAlias), edgeType.Value, outgoing, node, line.LocationAt(offset + hop.Index)));
+            var node = new GraphPatternNodeSyntax(Alias(hop.Groups["na"]), hop.Groups["nl"].Value, line.LocationAt(offset + index + hop.Groups["nl"].Index));
+            hops.Add(new(Alias(edgeAlias), edgeType.Value, outgoing, node, line.LocationAt(offset + index)));
             index += hop.Length;
         }
 
@@ -237,10 +237,10 @@ internal static partial class GraphQueryParser
     [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?(?:\?|\s+optional)?)\s+graph\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^(?:([A-Za-z_]\w*):)?([A-Za-z_]\w*)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:([A-Za-z_]\w*):)?([A-Za-z_]\w*)", RegexOptions.NonBacktracking)]
     private static partial Regex StartRegex();
 
-    [GeneratedRegex(@"\G\s*(?:-(?:(?<oa>[A-Za-z_]\w*):)?(?<ot>[A-Za-z_]\w*)->(?<out>)|<-(?:(?<ia>[A-Za-z_]\w*):)?(?<it>[A-Za-z_]\w*)-)\s*(?:(?<na>[A-Za-z_]\w*):)?(?<nl>[A-Za-z_]\w*)", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^\s*(?:-(?:(?<oa>[A-Za-z_]\w*):)?(?<ot>[A-Za-z_]\w*)->(?<out>)|<-(?:(?<ia>[A-Za-z_]\w*):)?(?<it>[A-Za-z_]\w*)-)\s*(?:(?<na>[A-Za-z_]\w*):)?(?<nl>[A-Za-z_]\w*)", RegexOptions.NonBacktracking)]
     private static partial Regex HopRegex();
 
     [GeneratedRegex(@"^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=\s*(.+)$", RegexOptions.NonBacktracking)]
