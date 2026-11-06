@@ -124,7 +124,7 @@ internal static class EsmBaselineShapes
         ["GraphElementHandlers"] = "name handlers:GraphHandler",
         ["GraphHandler"] = "event key:ProjectionValue source:ProjectionValue target:ProjectionValue identity:ProjectionValue removes detach mappings:GraphMapping",
         ["GraphMapping"] = "name operation source:ProjectionValue factor:ProjectionValue",
-        ["GraphSpecification"] = "owner name given:SpecificationEvent givenGraphs:GraphStep whenAppended:SpecificationEvent thenGraphs:GraphStep thenQueries@40:GraphQueryExpectation",
+        ["GraphSpecification"] = "owner name given:SpecificationEvent givenGraphs:GraphStep whenAppended:SpecificationEvent thenGraphs:GraphStep thenQueries@40:GraphQueryExpectation clock@40",
         ["GraphQueryExpectation"] = "query exactly arguments:GraphPropertyValue rows:GraphRow",
         ["GraphRow"] = "values:GraphPropertyValue",
         ["GraphStep"] = "graph elements:GraphElementStep",

@@ -271,7 +271,7 @@ public sealed partial class SemanticModelBinder
             var thenGraphs = specification.ThenGraphs.Select(step => BindGraphStep(step, graphs)).OfType<SemanticGraphStep>().ToImmutableArray();
             return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before
                 ? null
-                : new(slice.Name, specification.Name, given.ToImmutable()) { GivenGraphs = givenGraphs, WhenAppended = appended, ThenGraphs = thenGraphs, ThenQueries = thenQueries.ToImmutable() };
+                : new(slice.Name, specification.Name, given.ToImmutable()) { GivenGraphs = givenGraphs, WhenAppended = appended, ThenGraphs = thenGraphs, ThenQueries = thenQueries.ToImmutable(), Clock = specification.GivenClock is null ? null : BindClock(specification.GivenClock) };
         }
 
         SemanticGraphQueryExpectation? BindGraphQueryExpectation(SliceSyntax slice, SpecificationQuerySyntax expectation)

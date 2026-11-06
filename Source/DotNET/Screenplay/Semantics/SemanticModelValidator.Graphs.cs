@@ -13,7 +13,7 @@ internal static partial class SemanticModelValidator
 
     // ESM v40 constructs: queries that read a graph.
     internal static bool UsesGraphQueries(SemanticApplication application) =>
-        !application.GraphQueries.IsDefaultOrEmpty || application.GraphSpecifications.Any(specification => !specification.ThenQueries.IsDefaultOrEmpty);
+        !application.GraphQueries.IsDefaultOrEmpty || application.GraphSpecifications.Any(specification => !specification.ThenQueries.IsDefaultOrEmpty || specification.Clock is not null);
 
     static void ValidateGraphQueryVersion(SemanticApplication application, SemanticVersion version)
     {

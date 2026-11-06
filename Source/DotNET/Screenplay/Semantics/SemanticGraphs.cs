@@ -160,6 +160,12 @@ public sealed record SemanticGraphSpecification(string Owner, string Name, Immut
     public ImmutableArray<SemanticGraphQueryExpectation> ThenQueries { get; init; } = [];
 
     /// <summary>
+    /// Gets the instant every appended event occurs at, as the <c language="screenplay">given clock</c> line states it (ESM v40).
+    /// Without it the reference runner uses a fixed instant.
+    /// </summary>
+    public string? Clock { get; init; }
+
+    /// <summary>
     /// Gets the graphs seeded before the events are applied.
     /// </summary>
     public ImmutableArray<SemanticGraphStep> GivenGraphs { get; init; } = [];

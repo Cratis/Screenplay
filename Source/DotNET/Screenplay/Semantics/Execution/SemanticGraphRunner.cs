@@ -50,7 +50,7 @@ public static class SemanticGraphRunner
         foreach (var step in specification.GivenGraphs) Seed(state, step);
         foreach (var @event in specification.Given.Concat(specification.WhenAppended is null ? [] : [specification.WhenAppended]))
         {
-            foreach (var projection in application.GraphProjections) Apply(state, graphs[projection.Graph], projection, @event);
+            foreach (var projection in application.GraphProjections) Apply(state, graphs[projection.Graph], projection, @event, specification.Clock ?? DefaultClock);
         }
 
         var failures = ImmutableArray.CreateBuilder<string>();
@@ -67,6 +67,9 @@ public static class SemanticGraphRunner
 
         return failures.ToImmutable();
     }
+
+    /// <summary>The instant events occur at when a specification states no <c>given clock</c>.</summary>
+    internal const string DefaultClock = "2000-01-01T00:00:00.0000000Z";
 
     static void Seed(GraphState state, SemanticGraphStep step)
     {
@@ -85,14 +88,14 @@ public static class SemanticGraphRunner
         }
     }
 
-    static void Apply(GraphState state, SemanticGraph graph, SemanticGraphProjection projection, SemanticSpecificationEvent @event)
+    static void Apply(GraphState state, SemanticGraph graph, SemanticGraphProjection projection, SemanticSpecificationEvent @event, string clock)
     {
         foreach (var node in projection.Nodes)
         {
             var declared = graph.Nodes.First(candidate => candidate.Label == node.Name);
             foreach (var handler in node.Handlers.Where(handler => handler.Event == @event.EventContract))
             {
-                if (Canon(Evaluate(handler.Key, @event)) is not { } key) continue;
+                if (Canon(Evaluate(handler.Key, @event, clock)) is not { } key) continue;
                 if (handler.Removes)
                 {
                     state.DeleteNode(graph.Name, node.Name, key, handler.Detach);
@@ -100,8 +103,8 @@ public static class SemanticGraphRunner
                 }
 
                 var properties = state.UpsertNode(graph.Name, node.Name, key);
-                properties[declared.Properties.First(property => property.IsKey).Name] = Evaluate(handler.Key, @event)!;
-                ApplyMappings(properties, handler, @event);
+                properties[declared.Properties.First(property => property.IsKey).Name] = Evaluate(handler.Key, @event, clock)!;
+                ApplyMappings(properties, handler, @event, clock);
             }
         }
 
@@ -109,25 +112,25 @@ public static class SemanticGraphRunner
         {
             foreach (var handler in edge.Handlers.Where(handler => handler.Event == @event.EventContract))
             {
-                if (Canon(Evaluate(handler.Source, @event)) is not { } source || Canon(Evaluate(handler.Target, @event)) is not { } target) continue;
-                var identity = Canon(Evaluate(handler.Identity, @event));
+                if (Canon(Evaluate(handler.Source, @event, clock)) is not { } source || Canon(Evaluate(handler.Target, @event, clock)) is not { } target) continue;
+                var identity = Canon(Evaluate(handler.Identity, @event, clock));
                 if (handler.Removes)
                 {
                     state.DeleteEdge(graph.Name, edge.Name, source, target, identity);
                     continue;
                 }
 
-                ApplyMappings(state.UpsertEdge(graph.Name, edge.Name, source, target, identity), handler, @event);
+                ApplyMappings(state.UpsertEdge(graph.Name, edge.Name, source, target, identity), handler, @event, clock);
             }
         }
     }
 
-    static void ApplyMappings(Dictionary<string, SemanticValue> properties, SemanticGraphHandler handler, SemanticSpecificationEvent @event)
+    static void ApplyMappings(Dictionary<string, SemanticValue> properties, SemanticGraphHandler handler, SemanticSpecificationEvent @event, string clock)
     {
         foreach (var mapping in handler.Mappings)
         {
-            var source = Evaluate(mapping.Source, @event);
-            var factor = mapping.Factor is null ? 1m : Number(Evaluate(mapping.Factor, @event)) ?? 1m;
+            var source = Evaluate(mapping.Source, @event, clock);
+            var factor = mapping.Factor is null ? 1m : Number(Evaluate(mapping.Factor, @event, clock)) ?? 1m;
             var current = properties.TryGetValue(mapping.Property, out var existing) ? Number(existing) ?? 0m : 0m;
             switch (mapping.Operation)
             {
@@ -153,11 +156,13 @@ public static class SemanticGraphRunner
         }
     }
 
-    static SemanticValue? Evaluate(SemanticProjectionValue? value, SemanticSpecificationEvent @event) => value switch
+    static SemanticValue? Evaluate(SemanticProjectionValue? value, SemanticSpecificationEvent @event, string clock) => value switch
     {
         SemanticProjectionLiteral literal => literal.Value,
         SemanticProjectionEventSourceIdentity => @event.EventSource?.Value,
         SemanticProjectionEventProperty property => EventProperty(property.Path, @event),
+        SemanticProjectionEventContextValue { Path: "occurred" } => SemanticValue.Text(clock),
+        SemanticProjectionEventContextValue { Path: "eventSourceId" } => @event.EventSource?.Value,
         _ => null
     };
 

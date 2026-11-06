@@ -210,6 +210,7 @@ internal static partial class SemanticModelRead
         SemanticSpecificationEvent? whenAppended = null;
         ImmutableArray<SemanticGraphStep> thenGraphs = default;
         ImmutableArray<SemanticGraphQueryExpectation> thenQueries = [];
+        string? clock = null;
         while (NextProperty(ref reader, seen, "graph specification") is { } property)
         {
             switch (property)
@@ -221,12 +222,13 @@ internal static partial class SemanticModelRead
                 case "whenAppended": RequiredToken(ref reader, JsonTokenType.StartObject, property); whenAppended = SpecificationEvent(ref reader, 38, false); break;
                 case "thenGraphs": thenGraphs = Array(ref reader, GraphStep, property); break;
                 case "thenQueries": thenQueries = Array(ref reader, GraphQueryExpectation, property); break;
+                case "clock": clock = String(ref reader, property); break;
                 default: throw Unknown(property, "graph specification");
             }
         }
 
         Required(owner is not null && name is not null && !given.IsDefault && !givenGraphs.IsDefault && !thenGraphs.IsDefault, "graph specification");
-        return new(owner!, name!, given) { GivenGraphs = givenGraphs, WhenAppended = whenAppended, ThenGraphs = thenGraphs, ThenQueries = thenQueries };
+        return new(owner!, name!, given) { GivenGraphs = givenGraphs, WhenAppended = whenAppended, ThenGraphs = thenGraphs, ThenQueries = thenQueries, Clock = clock };
     }
 
     static SemanticGraphStep GraphStep(ref Utf8JsonReader reader)

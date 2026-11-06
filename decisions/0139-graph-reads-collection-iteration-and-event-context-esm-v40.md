@@ -62,7 +62,7 @@ edge SCORES
 
 ### 3. Context in graph specifications
 
-A `given <Event>` and a `when append <Event>` in a graph specification may carry an `occurred` line (a date and time) and a `caused by` line, which the reference evaluator uses for `$eventContext.<path>`. Without them the evaluator uses a fixed clock and an anonymous subject, so a specification that does not care is unchanged. `has node` and `has edge` then assert properties taken from context.
+A graph specification may carry the existing `given clock "<instant>"` line. The reference evaluator uses it as `$eventContext.occurred` for every event the specification appends (`$eventContext.eventSourceId` is the event's `for` identity). Without it the evaluator uses a fixed instant (`2000-01-01T00:00:00Z`), so a specification that does not care is unchanged. `has node` and `has edge` then assert properties taken from context. No new syntax: the clock line is the one ordinary specifications already use. The executable model carries it as the graph specification's `clock` (ESM v40).
 
 ### 4. ESM v40
 

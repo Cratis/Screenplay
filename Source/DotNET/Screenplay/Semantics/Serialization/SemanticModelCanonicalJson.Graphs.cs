@@ -200,6 +200,7 @@ public static partial class SemanticModelCanonicalJson
 
         WriteArray(writer, "thenGraphs", specification.ThenGraphs, WriteGraphStep);
         if (!specification.ThenQueries.IsDefaultOrEmpty) WriteArray(writer, "thenQueries", specification.ThenQueries, WriteGraphQueryExpectation);
+        if (specification.Clock is not null) CanonicalJson.WriteString(writer, "clock", specification.Clock);
         writer.WriteEndObject();
     }
 
