@@ -18,10 +18,10 @@ const graphTarget = pattern('^projection\\s+(@?[\\w.]+)\\s*=>\\s*graph\\b');
 const header = pattern('^projection\\s+(@?[\\w.]+)\\s*=>\\s*graph\\s+(@?[\\w.]+)$');
 const nodePattern = pattern('^node\\s+(@?[A-Za-z_]\\w*)$');
 const edgePattern = pattern('^edge\\s+(@?[A-Za-z_]\\w*)$');
-const fromNodePattern = pattern('^from\\s+(@?[\\w.]+)\\s+key\\s+(.+)$');
-const fromEdgePattern = pattern('^from\\s+(@?[\\w.]+)\\s+source\\s+(.+?)\\s+target\\s+(.+?)(?:\\s+identified\\s+by\\s+(.+))?$');
-const removeNodePattern = pattern('^remove\\s+with\\s+(@?[\\w.]+)\\s+key\\s+(.+?)(\\s+detach)?$');
-const removeEdgePattern = pattern('^remove\\s+with\\s+(@?[\\w.]+)\\s+source\\s+(.+?)\\s+target\\s+(.+?)(?:\\s+identified\\s+by\\s+(.+?))?(\\s+detach)?$');
+const fromNodePattern = pattern('^from\\s+(@?[\\w.]+)(?:\\s+foreach\\s+(@?[\\w.]+))?\\s+key\\s+(.+)$');
+const fromEdgePattern = pattern('^from\\s+(@?[\\w.]+)(?:\\s+foreach\\s+(@?[\\w.]+))?\\s+source\\s+(.+?)\\s+target\\s+(.+?)(?:\\s+identified\\s+by\\s+(.+))?$');
+const removeNodePattern = pattern('^remove\\s+with\\s+(@?[\\w.]+)(?:\\s+foreach\\s+(@?[\\w.]+))?\\s+key\\s+(.+?)(\\s+detach)?$');
+const removeEdgePattern = pattern('^remove\\s+with\\s+(@?[\\w.]+)(?:\\s+foreach\\s+(@?[\\w.]+))?\\s+source\\s+(.+?)\\s+target\\s+(.+?)(?:\\s+identified\\s+by\\s+(.+?))?(\\s+detach)?$');
 const readModelOnly = new Set(['children', 'nested', 'join', 'all', 'clear', 'variant', 'key', 'sequence', 'automap', 'no', 'parent']);
 
 export const isGraphProjectionHeader = (content: string): boolean => graphTarget.test(content);
@@ -106,12 +106,12 @@ class Parser {
         if (edge !== null) {
             if (isNode) this.wrongForm(line, "a node is identified by 'key', not by source and target");
             return {
-                kind: 'GraphFromSyntax', event: unescapeIdentifier(edge[1]), source: this.expression(edge[2], line), target: this.expression(edge[3], line),
-                ...(edge[4] === undefined ? {} : { identity: this.expression(edge[4], line) }), mappings, location: locationOf(line),
+                kind: 'GraphFromSyntax', event: unescapeIdentifier(edge[1]), source: this.expression(edge[3], line), target: this.expression(edge[4], line),
+                ...(edge[5] === undefined ? {} : { identity: this.expression(edge[5], line) }), ...this.forEach(edge[2], line), mappings, location: locationOf(line),
             };
         }
         if (!isNode) this.wrongForm(line, "an edge is identified by 'source' and 'target', not by 'key'");
-        return { kind: 'GraphFromSyntax', event: unescapeIdentifier(node![1]), key: this.expression(node![2], line), mappings, location: locationOf(line) };
+        return { kind: 'GraphFromSyntax', event: unescapeIdentifier(node![1]), key: this.expression(node![3], line), ...this.forEach(node![2], line), mappings, location: locationOf(line) };
     }
 
     private every(line: SourceLine): EverySyntax {
@@ -131,19 +131,29 @@ class Parser {
             this.context.error(DiagnosticCodes.InvalidGraphProjection, 'A graph removal has no body', locationOf(child));
             this.context.skipBlock(line.indent);
         }
-        const detachedEdge = (!isNode && ((edge !== null && edge[5] !== undefined) || (node !== null && node[3] !== undefined)));
+        const detachedEdge = (!isNode && ((edge !== null && edge[6] !== undefined) || (node !== null && node[4] !== undefined)));
         if (detachedEdge) {
             this.context.error(DiagnosticCodes.InvalidGraphEdgeRemoval, "'detach' removes the edges attached to a node; it cannot be written on an edge removal", locationOf(line));
         }
         if (edge !== null) {
             if (isNode) this.wrongForm(line, "a node is identified by 'key', not by source and target");
             return {
-                kind: 'GraphRemoveSyntax', event: unescapeIdentifier(edge[1]), source: this.expression(edge[2], line), target: this.expression(edge[3], line),
-                ...(edge[4] === undefined ? {} : { identity: this.expression(edge[4], line) }), detach: edge[5] !== undefined, location: locationOf(line),
+                kind: 'GraphRemoveSyntax', event: unescapeIdentifier(edge[1]), source: this.expression(edge[3], line), target: this.expression(edge[4], line),
+                ...(edge[5] === undefined ? {} : { identity: this.expression(edge[5], line) }), ...this.forEach(edge[2], line), detach: edge[6] !== undefined, location: locationOf(line),
             };
         }
         if (!isNode) this.wrongForm(line, "an edge is identified by 'source' and 'target', not by 'key'");
-        return { kind: 'GraphRemoveSyntax', event: unescapeIdentifier(node![1]), key: this.expression(node![2], line), detach: node![3] !== undefined, location: locationOf(line) };
+        return { kind: 'GraphRemoveSyntax', event: unescapeIdentifier(node![1]), key: this.expression(node![3], line), ...this.forEach(node![2], line), detach: node![4] !== undefined, location: locationOf(line) };
+    }
+
+    // One level only: the collection is a property of the event itself, never a property of an item (nested iteration is refused, PLAY0886).
+    private forEach(collection: string | undefined, line: SourceLine): { readonly forEach?: string } {
+        if (collection === undefined) return {};
+        const name = unescapeIdentifier(collection);
+        if (name.includes('.')) {
+            this.context.error(DiagnosticCodes.UnsupportedGraphForEach, `'foreach ${name}' iterates a collection inside another; 'foreach' names a property of the event itself`, locationOf(line));
+        }
+        return { forEach: name };
     }
 
     private mappings(parent: SourceLine): MappingSyntax[] {

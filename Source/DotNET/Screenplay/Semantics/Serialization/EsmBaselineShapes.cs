@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -122,7 +122,7 @@ internal static class EsmBaselineShapes
         ["GraphProperty"] = "name type:TypeReference key",
         ["GraphProjection"] = "name graph nodes:GraphElementHandlers edges:GraphElementHandlers",
         ["GraphElementHandlers"] = "name handlers:GraphHandler",
-        ["GraphHandler"] = "event key:ProjectionValue source:ProjectionValue target:ProjectionValue identity:ProjectionValue removes detach mappings:GraphMapping",
+        ["GraphHandler"] = "event key:ProjectionValue source:ProjectionValue target:ProjectionValue identity:ProjectionValue forEach@41 removes detach mappings:GraphMapping",
         ["GraphMapping"] = "name operation source:ProjectionValue factor:ProjectionValue",
         ["GraphSpecification"] = "owner name given:SpecificationEvent givenGraphs:GraphStep whenAppended:SpecificationEvent thenGraphs:GraphStep thenQueries@40:GraphQueryExpectation clock@40",
         ["GraphQueryExpectation"] = "graphQuery exactly arguments:GraphPropertyValue rows:GraphRow",

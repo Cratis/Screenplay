@@ -77,6 +77,11 @@ public record GraphFromSyntax(
     /// Gets the expression of the identifying edge property, when the edge declares <c>identified by</c>.
     /// </summary>
     public ExpressionSyntax? Identity { get; init; }
+
+    /// <summary>
+    /// Gets the collection property of the event the handler runs once per item of, when the handler says <c language="screenplay">foreach</c> (ESM v41).
+    /// </summary>
+    public string? ForEach { get; init; }
 }
 
 /// <summary>
@@ -100,4 +105,9 @@ public record GraphRemoveSyntax(
     /// Gets the expression of the identifying edge property, when the edge declares <c>identified by</c>.
     /// </summary>
     public ExpressionSyntax? Identity { get; init; }
+
+    /// <summary>
+    /// Gets the collection property of the event the handler runs once per item of, when the handler says <c language="screenplay">foreach</c> (ESM v41).
+    /// </summary>
+    public string? ForEach { get; init; }
 }

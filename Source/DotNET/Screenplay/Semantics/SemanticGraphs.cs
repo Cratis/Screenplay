@@ -90,6 +90,11 @@ public sealed record SemanticGraphHandler(SemanticId Event, ImmutableArray<Seman
     public bool Removes { get; init; }
 
     /// <summary>
+    /// Gets the collection property of the event the handler runs once per item of; its expressions address an item's properties through it (ESM v41).
+    /// </summary>
+    public SemanticId? ForEach { get; init; }
+
+    /// <summary>
     /// Gets whether a node removal also removes the edges attached to the node.
     /// </summary>
     public bool Detach { get; init; }

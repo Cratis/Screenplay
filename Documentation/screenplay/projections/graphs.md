@@ -61,15 +61,15 @@ A graph projection is declared in a slice, next to the graph it builds. It holds
 projection <Name> => graph <Graph>
   [description "<text>"]
   node <Label>
-    from <Event> key <expression>
+    from <Event> [foreach <collection>] key <expression>
       <mapping>
     every
       <mapping>
-    remove with <Event> key <expression> [detach]
+    remove with <Event> [foreach <collection>] key <expression> [detach]
   edge <TYPE>
-    from <Event> source <expression> target <expression> [identified by <expression>]
+    from <Event> [foreach <collection>] source <expression> target <expression> [identified by <expression>]
       <mapping>
-    remove with <Event> source <expression> target <expression> [identified by <expression>]
+    remove with <Event> [foreach <collection>] source <expression> target <expression> [identified by <expression>]
 ```
 
 ## Node blocks
@@ -91,6 +91,41 @@ projection <Name> => graph <Graph>
 ## Mappings
 
 A mapping inside `from` or `every` is the [property mapping](property-mapping.md) of a read-model projection: `property = expression`, `$eventContext.<member>`, and the [counters](counters.mdx) `increment`, `decrement`, `count`, `add ... by` and `subtract ... by`. They set or change node and edge properties. A property the node or edge does not declare is `PLAY0868`. As with a read model, properties an event shares with the node or edge by name are mapped automatically, so `name = name` above can be left out.
+
+## One element per item of a collection
+
+An event that carries a list can draw one node or edge per item. Write `foreach <collection>` after the event name; the handler then runs once per item, the item's properties are written `<collection>.<property>`, and every other expression is the event's:
+
+```screenplay
+type ModelSlot
+  slot   String
+  series Uuid
+
+module Scoring
+  feature Models
+    slice StateView ModelScores
+      event ModelDefined
+        slots ModelSlot[]
+
+      event ModelRetired
+        slots ModelSlot[]
+
+      graph Scoring
+        node Model
+          modelId Uuid key
+        node Series
+          seriesId Uuid key
+        edge SCORES source Model target Series identified by slot
+          slot String
+
+      projection ModelScores => graph Scoring
+        edge SCORES
+          from ModelDefined foreach slots source $eventSourceId target slots.series identified by slots.slot
+            slot = slots.slot
+          remove with ModelRetired foreach slots source $eventSourceId target slots.series identified by slots.slot
+```
+
+The collection is a property of the event that is a list of a composite type (`PLAY0886` otherwise), and iteration goes one level deep: `foreach slots.parts` is refused. An absent or empty list does nothing. A model that uses `foreach` selects ESM version 41; see [decision 0140](https://github.com/Cratis/Screenplay/blob/main/decisions/0140-graph-foreach-esm-v41.md). Chronicle runs the handler once per item (Chronicle 19.134 and later).
 
 ## What a graph projection cannot say
 

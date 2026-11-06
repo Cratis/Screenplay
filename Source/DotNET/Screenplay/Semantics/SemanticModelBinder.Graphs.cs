@@ -167,24 +167,36 @@ public sealed partial class SemanticModelBinder
                 switch (block)
                 {
                     case GraphFromSyntax from when _events.TryGetValue(ShortName(from.Event), out var @event):
-                        handlers.Add(new(@event.Contract.Id, BindGraphMappings([.. every, .. from.Mappings], properties, @event))
                         {
-                            Key = BindGraphValue(from.Key, @event),
-                            Source = BindGraphValue(from.Source, @event),
-                            Target = BindGraphValue(from.Target, @event),
-                            Identity = BindGraphValue(from.Identity, @event)
-                        });
+                            var forEach = BeginGraphForEach(from.ForEach, @event, from.Location);
+                            handlers.Add(new(@event.Contract.Id, BindGraphMappings([.. every, .. from.Mappings], properties, @event))
+                            {
+                                Key = BindGraphValue(from.Key, @event),
+                                Source = BindGraphValue(from.Source, @event),
+                                Target = BindGraphValue(from.Target, @event),
+                                Identity = BindGraphValue(from.Identity, @event),
+                                ForEach = forEach
+                            });
+                            _graphForEach = null;
+                        }
+
                         break;
                     case GraphRemoveSyntax remove when _events.TryGetValue(ShortName(remove.Event), out var @event):
-                        handlers.Add(new(@event.Contract.Id, [])
                         {
-                            Key = BindGraphValue(remove.Key, @event),
-                            Source = BindGraphValue(remove.Source, @event),
-                            Target = BindGraphValue(remove.Target, @event),
-                            Identity = BindGraphValue(remove.Identity, @event),
-                            Removes = true,
-                            Detach = remove.Detach
-                        });
+                            var forEach = BeginGraphForEach(remove.ForEach, @event, remove.Location);
+                            handlers.Add(new(@event.Contract.Id, [])
+                            {
+                                Key = BindGraphValue(remove.Key, @event),
+                                Source = BindGraphValue(remove.Source, @event),
+                                Target = BindGraphValue(remove.Target, @event),
+                                Identity = BindGraphValue(remove.Identity, @event),
+                                Removes = true,
+                                Detach = remove.Detach,
+                                ForEach = forEach
+                            });
+                            _graphForEach = null;
+                        }
+
                         break;
                     case GraphFromSyntax or GraphRemoveSyntax:
                         Error(DiagnosticCodes.InvalidSemanticBinding, "A graph handler event is unresolved.", block.Location);
@@ -193,6 +205,27 @@ public sealed partial class SemanticModelBinder
             }
 
             return handlers.ToImmutable();
+        }
+
+        // Names the collection the handler iterates for the expressions bound next, and returns its identity; null when the handler iterates nothing.
+        SemanticId? BeginGraphForEach(string? collection, BoundEvent @event, SourceLocation location)
+        {
+            _graphForEach = null;
+            if (collection is null) return null;
+            if (!@event.Properties.TryGetValue(collection, out var property))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"'foreach {collection}': event '{@event.Contract.Name}' has no such property.", location);
+                return null;
+            }
+
+            if (!property.Type.IsCollection || property.Type.Kind != SemanticTypeReferenceKind.CompositeType)
+            {
+                Error(DiagnosticCodes.UnsupportedGraphForEach, $"'foreach {collection}' needs a list of a composite type; '{collection}' of '{@event.Contract.Name}' is not one.", location);
+                return null;
+            }
+
+            _graphForEach = collection;
+            return property.Id;
         }
 
         SemanticProjectionValue? BindGraphValue(ExpressionSyntax? expression, BoundEvent @event) =>

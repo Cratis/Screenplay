@@ -541,4 +541,5 @@ export const DiagnosticCodes = {
     GraphQueryOptionalReturn: 'PLAY0883',
     DuplicateGraphQueryAlias: 'PLAY0884',
     UnsupportedGraphQueryConstruct: 'PLAY0885',
+    UnsupportedGraphForEach: 'PLAY0886',
 } as const;

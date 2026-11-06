@@ -140,14 +140,18 @@ internal static partial class GraphProjectionParser
         if (edge.Success)
         {
             if (isNode) WrongForm(context, line, "a node is identified by 'key', not by source and target");
-            return new(LineText.Unescape(edge.Groups[1].Value), null, Expression(edge.Groups[2]), Expression(edge.Groups[3]), mappings, line.Location)
+            return new(LineText.Unescape(edge.Groups[1].Value), null, Expression(edge.Groups[3]), Expression(edge.Groups[4]), mappings, line.Location)
             {
-                Identity = edge.Groups[4].Success ? Expression(edge.Groups[4]) : null
+                Identity = edge.Groups[5].Success ? Expression(edge.Groups[5]) : null,
+                ForEach = ForEach(context, edge.Groups[2], line)
             };
         }
 
         if (!isNode) WrongForm(context, line, "an edge is identified by 'source' and 'target', not by 'key'");
-        return new(LineText.Unescape(node.Groups[1].Value), Expression(node.Groups[2]), null, null, mappings, line.Location);
+        return new(LineText.Unescape(node.Groups[1].Value), Expression(node.Groups[3]), null, null, mappings, line.Location)
+        {
+            ForEach = ForEach(context, node.Groups[2], line)
+        };
     }
 
     static EverySyntax ParseEvery(ParserContext context, SourceLine line) =>
@@ -174,24 +178,41 @@ internal static partial class GraphProjectionParser
         if (edge.Success)
         {
             if (isNode) WrongForm(context, line, "a node is identified by 'key', not by source and target");
-            if (edge.Groups[5].Success && !isNode)
+            if (edge.Groups[6].Success && !isNode)
             {
                 context.Error(DiagnosticCodes.InvalidGraphEdgeRemoval, "'detach' removes the edges attached to a node; it cannot be written on an edge removal", line.Location);
             }
 
-            return new(LineText.Unescape(edge.Groups[1].Value), null, Expression(edge.Groups[2]), Expression(edge.Groups[3]), edge.Groups[5].Success, line.Location)
+            return new(LineText.Unescape(edge.Groups[1].Value), null, Expression(edge.Groups[3]), Expression(edge.Groups[4]), edge.Groups[6].Success, line.Location)
             {
-                Identity = edge.Groups[4].Success ? Expression(edge.Groups[4]) : null
+                Identity = edge.Groups[5].Success ? Expression(edge.Groups[5]) : null,
+                ForEach = ForEach(context, edge.Groups[2], line)
             };
         }
 
         if (!isNode) WrongForm(context, line, "an edge is identified by 'source' and 'target', not by 'key'");
-        if (node.Groups[3].Success && !isNode)
+        if (node.Groups[4].Success && !isNode)
         {
             context.Error(DiagnosticCodes.InvalidGraphEdgeRemoval, "'detach' removes the edges attached to a node; it cannot be written on an edge removal", line.Location);
         }
 
-        return new(LineText.Unescape(node.Groups[1].Value), Expression(node.Groups[2]), null, null, node.Groups[3].Success, line.Location);
+        return new(LineText.Unescape(node.Groups[1].Value), Expression(node.Groups[3]), null, null, node.Groups[4].Success, line.Location)
+        {
+            ForEach = ForEach(context, node.Groups[2], line)
+        };
+    }
+
+    // One level only: the collection is a property of the event, never a property of an item (nested iteration is refused, PLAY0886).
+    static string? ForEach(ParserContext context, Group group, SourceLine line)
+    {
+        if (!group.Success) return null;
+        var collection = LineText.Unescape(group.Value);
+        if (collection.Contains('.', StringComparison.Ordinal))
+        {
+            context.Error(DiagnosticCodes.UnsupportedGraphForEach, $"'foreach {collection}' iterates a collection inside another; 'foreach' names a property of the event itself", line.Location);
+        }
+
+        return collection;
     }
 
     static List<MappingSyntax> ParseMappings(ParserContext context, SourceLine parent)
@@ -235,15 +256,15 @@ internal static partial class GraphProjectionParser
     [GeneratedRegex(@"^edge\s+(@?[A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EdgeRegex();
 
-    [GeneratedRegex(@"^from\s+(@?[\w.]+)\s+key\s+(.+)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^from\s+(@?[\w.]+)(?:\s+foreach\s+(@?[\w.]+))?\s+key\s+(.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex FromNodeRegex();
 
-    [GeneratedRegex(@"^from\s+(@?[\w.]+)\s+source\s+(.+?)\s+target\s+(.+?)(?:\s+identified\s+by\s+(.+))?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^from\s+(@?[\w.]+)(?:\s+foreach\s+(@?[\w.]+))?\s+source\s+(.+?)\s+target\s+(.+?)(?:\s+identified\s+by\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex FromEdgeRegex();
 
-    [GeneratedRegex(@"^remove\s+with\s+(@?[\w.]+)\s+key\s+(.+?)(\s+detach)?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^remove\s+with\s+(@?[\w.]+)(?:\s+foreach\s+(@?[\w.]+))?\s+key\s+(.+?)(\s+detach)?$", RegexOptions.NonBacktracking)]
     private static partial Regex RemoveNodeRegex();
 
-    [GeneratedRegex(@"^remove\s+with\s+(@?[\w.]+)\s+source\s+(.+?)\s+target\s+(.+?)(?:\s+identified\s+by\s+(.+?))?(\s+detach)?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^remove\s+with\s+(@?[\w.]+)(?:\s+foreach\s+(@?[\w.]+))?\s+source\s+(.+?)\s+target\s+(.+?)(?:\s+identified\s+by\s+(.+?))?(\s+detach)?$", RegexOptions.NonBacktracking)]
     private static partial Regex RemoveEdgeRegex();
 }

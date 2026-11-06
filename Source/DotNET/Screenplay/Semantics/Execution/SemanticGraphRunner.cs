@@ -93,40 +93,63 @@ public static class SemanticGraphRunner
         }
     }
 
-    static void Apply(GraphState state, SemanticGraph graph, SemanticGraphProjection projection, SemanticSpecificationEvent @event, string clock)
+    static void Apply(GraphState state, SemanticGraph graph, SemanticGraphProjection projection, SemanticSpecificationEvent appended, string clock)
     {
         foreach (var node in projection.Nodes)
         {
             var declared = graph.Nodes.First(candidate => candidate.Label == node.Name);
-            foreach (var handler in node.Handlers.Where(handler => handler.Event == @event.EventContract))
+            foreach (var handler in node.Handlers.Where(handler => handler.Event == appended.EventContract))
             {
-                if (Canon(Evaluate(handler.Key, @event, clock)) is not { } key) continue;
-                if (handler.Removes)
+                foreach (var @event in Occurrences(handler, appended))
                 {
-                    state.DeleteNode(graph.Name, node.Name, key, handler.Detach);
-                    continue;
-                }
+                    if (Canon(Evaluate(handler.Key, @event, clock)) is not { } key) continue;
+                    if (handler.Removes)
+                    {
+                        state.DeleteNode(graph.Name, node.Name, key, handler.Detach);
+                        continue;
+                    }
 
-                var properties = state.UpsertNode(graph.Name, node.Name, key);
-                properties[declared.Properties.First(property => property.IsKey).Name] = Evaluate(handler.Key, @event, clock)!;
-                ApplyMappings(properties, handler, @event, clock);
+                    var properties = state.UpsertNode(graph.Name, node.Name, key);
+                    properties[declared.Properties.First(property => property.IsKey).Name] = Evaluate(handler.Key, @event, clock)!;
+                    ApplyMappings(properties, handler, @event, clock);
+                }
             }
         }
 
         foreach (var edge in projection.Edges)
         {
-            foreach (var handler in edge.Handlers.Where(handler => handler.Event == @event.EventContract))
+            foreach (var handler in edge.Handlers.Where(handler => handler.Event == appended.EventContract))
             {
-                if (Canon(Evaluate(handler.Source, @event, clock)) is not { } source || Canon(Evaluate(handler.Target, @event, clock)) is not { } target) continue;
-                var identity = Canon(Evaluate(handler.Identity, @event, clock));
-                if (handler.Removes)
+                foreach (var @event in Occurrences(handler, appended))
                 {
-                    state.DeleteEdge(graph.Name, edge.Name, source, target, identity);
-                    continue;
-                }
+                    if (Canon(Evaluate(handler.Source, @event, clock)) is not { } source || Canon(Evaluate(handler.Target, @event, clock)) is not { } target) continue;
+                    var identity = Canon(Evaluate(handler.Identity, @event, clock));
+                    if (handler.Removes)
+                    {
+                        state.DeleteEdge(graph.Name, edge.Name, source, target, identity);
+                        continue;
+                    }
 
-                ApplyMappings(state.UpsertEdge(graph.Name, edge.Name, source, target, identity), handler, @event, clock);
+                    ApplyMappings(state.UpsertEdge(graph.Name, edge.Name, source, target, identity), handler, @event, clock);
+                }
             }
+        }
+    }
+
+    // A handler that iterates a collection runs once per item, on the event with the collection replaced by that item - so an
+    // expression written as slots.series resolves to the item's series, exactly as it does in the kernel. An absent or empty collection yields nothing.
+    static IEnumerable<SemanticSpecificationEvent> Occurrences(SemanticGraphHandler handler, SemanticSpecificationEvent appended)
+    {
+        if (handler.ForEach is not { } collection)
+        {
+            yield return appended;
+            yield break;
+        }
+
+        if (appended.Values.FirstOrDefault(value => value.TargetProperty == collection)?.Value is not SemanticArrayValue items) yield break;
+        foreach (var item in items.Values)
+        {
+            yield return appended with { Values = [.. appended.Values.Select(value => value.TargetProperty == collection ? value with { Value = item } : value)] };
         }
     }
 

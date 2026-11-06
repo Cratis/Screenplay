@@ -152,6 +152,7 @@ internal static partial class SemanticModelRead
         SemanticProjectionValue? source = null;
         SemanticProjectionValue? target = null;
         SemanticProjectionValue? identity = null;
+        SemanticId? forEach = null;
         var removes = false;
         var detach = false;
         ImmutableArray<SemanticGraphMapping> mappings = default;
@@ -164,6 +165,7 @@ internal static partial class SemanticModelRead
                 case "source": source = Nested(ref reader, ProjectionValue, property); break;
                 case "target": target = Nested(ref reader, ProjectionValue, property); break;
                 case "identity": identity = Nested(ref reader, ProjectionValue, property); break;
+                case "forEach": forEach = SemanticId.Parse(String(ref reader, property)); break;
                 case "removes": removes = OnlyTrue(ref reader, property, "graph handler"); break;
                 case "detach": detach = OnlyTrue(ref reader, property, "graph handler"); break;
                 case "mappings": mappings = Array(ref reader, GraphMapping, property); break;
@@ -172,7 +174,7 @@ internal static partial class SemanticModelRead
         }
 
         Required(@event.IsSet && !mappings.IsDefault, "graph handler");
-        return new(@event, mappings) { Key = key, Source = source, Target = target, Identity = identity, Removes = removes, Detach = detach };
+        return new(@event, mappings) { Key = key, Source = source, Target = target, Identity = identity, ForEach = forEach, Removes = removes, Detach = detach };
     }
 
     static SemanticGraphMapping GraphMapping(ref Utf8JsonReader reader)

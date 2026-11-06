@@ -107,6 +107,8 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     ReactionSyntax: ['from'],
     ReducerSyntax: ['from'],
     RemoveWithSyntax: ['partsKey'],
+    GraphFromSyntax: ['forEach'],
+    GraphRemoveSyntax: ['forEach'],
     ProducesSyntax: ['stream'],
     ConceptAttributeSyntax: ['scope', 'specialCategory'],
     ConceptSyntax: ['description', 'valueNumbers', 'generation'],

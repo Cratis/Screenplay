@@ -14,6 +14,9 @@ public sealed partial class SemanticModelBinder
     {
         Dictionary<SemanticId, Dictionary<string, SemanticProperty>>? _compositeProperties;
 
+        // The collection property of the event a graph handler iterates while its expressions are bound: a path may step through it into one item.
+        string? _graphForEach;
+
         SemanticProjectionKey BindKey(KeySyntax? key, BoundEvent @event)
         {
             switch (key)
@@ -231,7 +234,8 @@ public sealed partial class SemanticModelBinder
             {
                 if (property is not null)
                 {
-                    if (property.Type.IsCollection || CompositeProperties(property.Type) is not { } next)
+                    var iterated = ids.Count == 1 && _graphForEach is not null && property.Name == _graphForEach;
+                    if ((property.Type.IsCollection && !iterated) || CompositeProperties(property.Type) is not { } next)
                     {
                         return null;
                     }
