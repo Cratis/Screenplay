@@ -63,7 +63,7 @@ internal static class SemanticGraphQueryRunner
         Dictionary<string, string?> arguments)
     {
         var graph = application.Graphs.First(candidate => candidate.Name == query.Graph);
-        var bindings = new List<Binding> { new(ImmutableDictionary<string, Dictionary<string, SemanticValue>?>.Empty, ImmutableDictionary<string, (string Label, string? Key)>.Empty) }.AsEnumerable();
+        var bindings = new List<Binding> { Binding.Empty }.AsEnumerable();
         foreach (var match in query.Matches) bindings = Extend(bindings, snapshot, graph, match);
         var rows = new List<Dictionary<string, SemanticValue>>();
         foreach (var binding in bindings)
@@ -153,5 +153,11 @@ internal static class SemanticGraphQueryRunner
     }
 
     // One path binding: the node and edge elements the aliases stand for, with the key of each node so a hop can continue from it.
-    sealed record Binding(ImmutableDictionary<string, Dictionary<string, SemanticValue>?> Elements, ImmutableDictionary<string, (string Label, string? Key)> Nodes);
+    sealed record Binding(ImmutableDictionary<string, Dictionary<string, SemanticValue>?> Elements, ImmutableDictionary<string, (string Label, string? Key)> Nodes)
+    {
+        // net8 and net9 have no collection expression for an immutable dictionary, so the empty binding is built once, explicitly.
+#pragma warning disable IDE0301
+        public static readonly Binding Empty = new(ImmutableDictionary<string, Dictionary<string, SemanticValue>?>.Empty, ImmutableDictionary<string, (string Label, string? Key)>.Empty);
+#pragma warning restore IDE0301
+    }
 }
