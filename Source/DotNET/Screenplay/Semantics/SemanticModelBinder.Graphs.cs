@@ -14,17 +14,14 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        HashSet<string>? _graphQueryNames;
-
-        HashSet<string> GraphQueryNames => _graphQueryNames ??= ScreenplayValidator.ScopedSlices(syntax).SelectMany(entry => entry.Slice.GraphQueries).Select(query => query.Name).ToHashSet(StringComparer.Ordinal);
-
         bool HasGraphStep(SpecificationSyntax specification) =>
-            specification.GivenGraphs.Any() || specification.ThenGraphs.Any() || specification.ThenQueries.Any(query => GraphQueryNames.Contains(query.Query));
+            specification.GivenGraphs.Any() || specification.ThenGraphs.Any() ||
+            specification.ThenQueries.Any(query => ScreenplayValidator.ScopedSlices(syntax).Any(entry => entry.Slice.GraphQueries.Any(declared => declared.Name == query.Query)));
 
         (ImmutableArray<SemanticGraph> Graphs, ImmutableArray<SemanticGraphProjection> Projections, ImmutableArray<SemanticGraphSpecification> Specifications, ImmutableArray<SemanticGraphQuery> Queries) BindGraphs(ImmutableArray<SemanticModule> modules)
         {
             var scoped = ScreenplayValidator.ScopedSlices(syntax).ToList();
-            var slices = scoped.Select(entry => entry.Slice).ToList();
+            var slices = scoped.ConvertAll(entry => entry.Slice);
             if (!slices.Exists(slice => slice.Graphs.Any() || slice.GraphProjections.Any() || slice.GraphQueries.Any() || slice.Specifications.Any(HasGraphStep))) return ([], [], [], []);
             var graphs = slices.SelectMany(slice => slice.Graphs).Select(BindGraph).OfType<SemanticGraph>().ToImmutableArray();
             var byName = graphs.GroupBy(graph => graph.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
@@ -66,7 +63,7 @@ public sealed partial class SemanticModelBinder
                 else Error(DiagnosticCodes.InvalidSemanticBinding, $"Graph query '{query.Name}' returns '{@return.Property}', which read model '{query.ReturnType.Name}' does not declare.", @return.Location);
             }
 
-            SemanticGraphPatternNode Node(GraphPatternNodeSyntax node) => new(node.Alias, node.Label);
+            static SemanticGraphPatternNode Node(GraphPatternNodeSyntax node) => new(node.Alias, node.Label);
             var matches = query.Matches.Select(match => new SemanticGraphMatch(
                 match.IsOptional,
                 Node(match.Start),
@@ -80,7 +77,9 @@ public sealed partial class SemanticModelBinder
             var module = scope.Segments[0];
             var featurePath = scope.Segments.Skip(1).Take(scope.Segments.Count - 2).ToImmutableArray();
             var authorization = EffectiveAuthorization(query.Authorize, arguments.Where(argument => argument.IsKey).Select(argument => new SemanticProperty(default, argument.Name, argument.Type, false)), module, featurePath, queryFilterNames: query.Filters.Select(filter => filter.Name));
-            var cardinality = query.ReturnType.IsCollection ? SemanticQueryCardinality.Many : query.ReturnType.IsOptional ? SemanticQueryCardinality.ZeroOrOne : SemanticQueryCardinality.One;
+            var cardinality = SemanticQueryCardinality.One;
+            if (query.ReturnType.IsCollection) cardinality = SemanticQueryCardinality.Many;
+            else if (query.ReturnType.IsOptional) cardinality = SemanticQueryCardinality.ZeroOrOne;
             return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before
                 ? null
                 : new(query.Name, query.Graph, readModel.Model.Id, cardinality, query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot, arguments, matches, conditions, returns.ToImmutable()) { Authorization = authorization };

@@ -31,6 +31,9 @@ public sealed record SemanticGraphSpecificationResult(string Owner, string Name,
 /// </remarks>
 public static class SemanticGraphRunner
 {
+    /// <summary>The instant events occur at when a specification states no <c>given clock</c>.</summary>
+    internal const string DefaultClock = "2000-01-01T00:00:00.0000000Z";
+
     /// <summary>
     /// Runs every graph specification of a model.
     /// </summary>
@@ -42,6 +45,11 @@ public static class SemanticGraphRunner
         if (application.GraphSpecifications.IsDefaultOrEmpty) return [];
         return [.. application.GraphSpecifications.Select(specification => new SemanticGraphSpecificationResult(specification.Owner, specification.Name, Run(application, specification)))];
     }
+
+    /// <summary>Gets the comparable text of a value, as the runner compares values.</summary>
+    /// <param name="value">The value.</param>
+    /// <returns>Its canonical text, or null for no value.</returns>
+    internal static string? Canonical(SemanticValue? value) => Canon(value);
 
     static ImmutableArray<string> Run(SemanticApplication application, SemanticGraphSpecification specification)
     {
@@ -67,9 +75,6 @@ public static class SemanticGraphRunner
 
         return failures.ToImmutable();
     }
-
-    /// <summary>The instant events occur at when a specification states no <c>given clock</c>.</summary>
-    internal const string DefaultClock = "2000-01-01T00:00:00.0000000Z";
 
     static void Seed(GraphState state, SemanticGraphStep step)
     {
@@ -232,14 +237,12 @@ public static class SemanticGraphRunner
             edges.Where(edge => edge.Key.Graph == graph && edge.Key.Type == type).Select(edge => (edge.Key.Source, edge.Key.Target, edge.Value));
     }
 
-    internal static string? Canonical(SemanticValue? value) => Canon(value);
-
     sealed class GraphState(Dictionary<string, SemanticGraph> graphs)
     {
-        public GraphSnapshot Snapshot() => new(_nodes, _edges);
-
         readonly Dictionary<(string Graph, string Label, string Key), Dictionary<string, SemanticValue>> _nodes = [];
         readonly Dictionary<(string Graph, string Type, string Source, string Target, string? Identity), Dictionary<string, SemanticValue>> _edges = [];
+
+        public GraphSnapshot Snapshot() => new(_nodes, _edges);
 
         public Dictionary<string, SemanticValue>? Node(string graph, string label, string? key) => key is not null && _nodes.TryGetValue((graph, label, key), out var node) ? node : null;
 

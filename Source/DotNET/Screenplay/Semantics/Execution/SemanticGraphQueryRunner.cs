@@ -10,12 +10,7 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 internal static class SemanticGraphQueryRunner
 {
-    // One path binding: the node and edge elements the aliases stand for, with the key of each node so a hop can continue from it.
-    sealed record Binding(ImmutableDictionary<string, Dictionary<string, SemanticValue>?> Elements, ImmutableDictionary<string, (string Label, string? Key)> Nodes);
-
     internal static IEnumerable<SemanticSlice> SlicesOf(SemanticModule module) => module.Features.SelectMany(SlicesOf);
-
-    static IEnumerable<SemanticSlice> SlicesOf(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(SlicesOf));
 
     internal static void Assert(
         SemanticApplication application,
@@ -55,6 +50,8 @@ internal static class SemanticGraphQueryRunner
             failures.Add($"Expected graph query '{query.Name}' to return {expectation.Rows.Length} row(s), but it returned {actual.Count}.");
         }
     }
+
+    static IEnumerable<SemanticSlice> SlicesOf(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(SlicesOf));
 
     static string Describe(SemanticGraphRow row) => "{ " + string.Join(", ", row.Values.Select(value => $"{value.Property} = {SemanticGraphRunner.Canonical(value.Value)}")) + " }";
 
@@ -105,7 +102,7 @@ internal static class SemanticGraphQueryRunner
 
     static IEnumerable<Binding> Paths(Binding binding, SemanticGraphRunner.GraphSnapshot snapshot, SemanticGraph graph, SemanticGraphMatch match)
     {
-        IEnumerable<(Binding Binding, string Key)> current = Starts(binding, snapshot, graph, match.Start);
+        var current = Starts(binding, snapshot, graph, match.Start);
         foreach (var hop in match.Hops)
         {
             current = current.SelectMany(step => Hop(step.Binding, step.Key, snapshot, graph, hop, match));
@@ -154,4 +151,7 @@ internal static class SemanticGraphQueryRunner
         var expected = condition.Argument is not null ? arguments.GetValueOrDefault(condition.Argument) : SemanticGraphRunner.Canonical(condition.Literal);
         return SemanticGraphRunner.Canonical(held) == expected;
     }
+
+    // One path binding: the node and edge elements the aliases stand for, with the key of each node so a hop can continue from it.
+    sealed record Binding(ImmutableDictionary<string, Dictionary<string, SemanticValue>?> Elements, ImmutableDictionary<string, (string Label, string? Key)> Nodes);
 }

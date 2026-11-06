@@ -50,8 +50,7 @@ internal static partial class GraphQueryParser
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            var word = LineText.FirstWord(line.Content);
-            switch (word)
+            switch (LineText.FirstWord(line.Content))
             {
                 case "description":
                     description = DescriptionParser.Parse(context, line, description, $"Query '{name}'");
@@ -82,7 +81,7 @@ internal static partial class GraphQueryParser
             }
         }
 
-        if (matches.Count == 0 || matches.All(candidate => candidate.IsOptional))
+        if (matches.Count == 0 || matches.TrueForAll(candidate => candidate.IsOptional))
         {
             context.Error(DiagnosticCodes.InvalidGraphQuery, $"Graph query '{name}' needs at least one 'match' (not 'optional match')", header.Location);
         }
@@ -163,7 +162,7 @@ internal static partial class GraphQueryParser
             }
 
             var raw = condition.Groups[3].Value.Trim();
-            ExpressionSyntax? value = raw.StartsWith('$') && ArgumentRegex().IsMatch(raw)
+            var value = raw.StartsWith('$') && ArgumentRegex().IsMatch(raw)
                 ? new PathExpressionSyntax(raw[1..], line.Location)
                 : ExpressionParser.ParseLiteral(context, raw, line.Location);
             if (value is null && raw.Contains(" or ", StringComparison.Ordinal))
@@ -238,10 +237,10 @@ internal static partial class GraphQueryParser
     [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?(?:\?|\s+optional)?)\s+graph\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^(?:([A-Za-z_]\w*):)?([A-Za-z_]\w*)", RegexOptions.None)]
+    [GeneratedRegex(@"^(?:([A-Za-z_]\w*):)?([A-Za-z_]\w*)", RegexOptions.None, 1000)]
     private static partial Regex StartRegex();
 
-    [GeneratedRegex(@"\G\s*(?:-(?:(?<oa>[A-Za-z_]\w*):)?(?<ot>[A-Za-z_]\w*)->(?<out>)|<-(?:(?<ia>[A-Za-z_]\w*):)?(?<it>[A-Za-z_]\w*)-)\s*(?:(?<na>[A-Za-z_]\w*):)?(?<nl>[A-Za-z_]\w*)", RegexOptions.None)]
+    [GeneratedRegex(@"\G\s*(?:-(?:(?<oa>[A-Za-z_]\w*):)?(?<ot>[A-Za-z_]\w*)->(?<out>)|<-(?:(?<ia>[A-Za-z_]\w*):)?(?<it>[A-Za-z_]\w*)-)\s*(?:(?<na>[A-Za-z_]\w*):)?(?<nl>[A-Za-z_]\w*)", RegexOptions.None, 1000)]
     private static partial Regex HopRegex();
 
     [GeneratedRegex(@"^([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*=\s*(.+)$", RegexOptions.NonBacktracking)]
