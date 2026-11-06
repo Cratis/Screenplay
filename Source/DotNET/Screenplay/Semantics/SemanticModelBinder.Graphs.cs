@@ -14,12 +14,18 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        static bool HasGraphStep(SpecificationSyntax specification) => specification.GivenGraphs.Any() || specification.ThenGraphs.Any();
+        HashSet<string>? _graphQueryNames;
 
-        (ImmutableArray<SemanticGraph> Graphs, ImmutableArray<SemanticGraphProjection> Projections, ImmutableArray<SemanticGraphSpecification> Specifications) BindGraphs(ImmutableArray<SemanticModule> modules)
+        HashSet<string> GraphQueryNames => _graphQueryNames ??= ScreenplayValidator.ScopedSlices(syntax).SelectMany(entry => entry.Slice.GraphQueries).Select(query => query.Name).ToHashSet(StringComparer.Ordinal);
+
+        bool HasGraphStep(SpecificationSyntax specification) =>
+            specification.GivenGraphs.Any() || specification.ThenGraphs.Any() || specification.ThenQueries.Any(query => GraphQueryNames.Contains(query.Query));
+
+        (ImmutableArray<SemanticGraph> Graphs, ImmutableArray<SemanticGraphProjection> Projections, ImmutableArray<SemanticGraphSpecification> Specifications, ImmutableArray<SemanticGraphQuery> Queries) BindGraphs(ImmutableArray<SemanticModule> modules)
         {
-            var slices = ScreenplayValidator.ScopedSlices(syntax).Select(entry => entry.Slice).ToList();
-            if (!slices.Exists(slice => slice.Graphs.Any() || slice.GraphProjections.Any() || slice.Specifications.Any(HasGraphStep))) return ([], [], []);
+            var scoped = ScreenplayValidator.ScopedSlices(syntax).ToList();
+            var slices = scoped.Select(entry => entry.Slice).ToList();
+            if (!slices.Exists(slice => slice.Graphs.Any() || slice.GraphProjections.Any() || slice.GraphQueries.Any() || slice.Specifications.Any(HasGraphStep))) return ([], [], [], []);
             var graphs = slices.SelectMany(slice => slice.Graphs).Select(BindGraph).OfType<SemanticGraph>().ToImmutableArray();
             var byName = graphs.GroupBy(graph => graph.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
             var projections = slices.SelectMany(slice => slice.GraphProjections).Select(projection => BindGraphProjection(projection, byName)).OfType<SemanticGraphProjection>().ToImmutableArray();
@@ -29,7 +35,55 @@ public sealed partial class SemanticModelBinder
             var specifications = slices
                 .SelectMany(slice => slice.Specifications.Where(HasGraphStep).Select(specification => BindGraphSpecification(slice, specification, byName, commands)))
                 .OfType<SemanticGraphSpecification>().ToImmutableArray();
-            return (graphs, projections, specifications);
+            var queries = scoped
+                .SelectMany(entry => entry.Slice.GraphQueries.Select(query => BindGraphQuery(query, entry.Scope, byName)))
+                .OfType<SemanticGraphQuery>().ToImmutableArray();
+            return (graphs, projections, specifications, queries);
+        }
+
+        SemanticGraphQuery? BindGraphQuery(GraphQuerySyntax query, DeclarationScope scope, Dictionary<string, SemanticGraph> graphs)
+        {
+            if (!graphs.ContainsKey(query.Graph))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Graph query '{query.Name}' graph '{query.Graph}' is unresolved.", query.Location);
+                return null;
+            }
+
+            if (!_readModels.TryGetValue(query.ReturnType.Name, out var readModel))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Graph query '{query.Name}' returns read model '{query.ReturnType.Name}', which is unresolved.", query.ReturnType.Location);
+                return null;
+            }
+
+            var before = _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+            var arguments = (query.By is null ? [] : new[] { (Parameter: query.By, IsKey: true) })
+                .Concat(query.Filters.Select(filter => (Parameter: filter, IsKey: false)))
+                .Select(argument => new SemanticGraphQueryArgument(argument.Parameter.Name, BindTypeReference(argument.Parameter.Type), argument.IsKey)).ToImmutableArray();
+            var returns = ImmutableArray.CreateBuilder<SemanticGraphReturn>();
+            foreach (var @return in query.Returns)
+            {
+                if (readModel.Properties.TryGetValue(@return.Property, out var property)) returns.Add(new(property.Id, @return.Alias, @return.Source));
+                else Error(DiagnosticCodes.InvalidSemanticBinding, $"Graph query '{query.Name}' returns '{@return.Property}', which read model '{query.ReturnType.Name}' does not declare.", @return.Location);
+            }
+
+            SemanticGraphPatternNode Node(GraphPatternNodeSyntax node) => new(node.Alias, node.Label);
+            var matches = query.Matches.Select(match => new SemanticGraphMatch(
+                match.IsOptional,
+                Node(match.Start),
+                [.. match.Hops.Select(hop => new SemanticGraphHop(hop.Alias, hop.Type, hop.Outgoing, Node(hop.Node)))])).ToImmutableArray();
+            var conditions = query.Conditions.Select(condition => condition.Value switch
+            {
+                PathExpressionSyntax argument => new SemanticGraphCondition(condition.Alias, condition.Property) { Argument = argument.Path },
+                LiteralExpressionSyntax literal => new SemanticGraphCondition(condition.Alias, condition.Property) { Literal = BindLiteral(literal) },
+                _ => null
+            }).OfType<SemanticGraphCondition>().ToImmutableArray();
+            var module = scope.Segments[0];
+            var featurePath = scope.Segments.Skip(1).Take(scope.Segments.Count - 2).ToImmutableArray();
+            var authorization = EffectiveAuthorization(query.Authorize, arguments.Where(argument => argument.IsKey).Select(argument => new SemanticProperty(default, argument.Name, argument.Type, false)), module, featurePath, queryFilterNames: query.Filters.Select(filter => filter.Name));
+            var cardinality = query.ReturnType.IsCollection ? SemanticQueryCardinality.Many : query.ReturnType.IsOptional ? SemanticQueryCardinality.ZeroOrOne : SemanticQueryCardinality.One;
+            return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before
+                ? null
+                : new(query.Name, query.Graph, readModel.Model.Id, cardinality, query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot, arguments, matches, conditions, returns.ToImmutable()) { Authorization = authorization };
         }
 
         SemanticGraph? BindGraph(GraphSyntax graph)
@@ -207,11 +261,60 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Graph specification '{specification.Name}' states a command, query or outcome other than 'when append' and 'then graph'.", specification.Location);
             }
 
+            var thenQueries = ImmutableArray.CreateBuilder<SemanticGraphQueryExpectation>();
+            foreach (var expectation in specification.ThenQueries)
+            {
+                if (BindGraphQueryExpectation(slice, expectation) is { } boundExpectation) thenQueries.Add(boundExpectation);
+            }
+
             var givenGraphs = specification.GivenGraphs.Select(step => BindGraphStep(step, graphs)).OfType<SemanticGraphStep>().ToImmutableArray();
             var thenGraphs = specification.ThenGraphs.Select(step => BindGraphStep(step, graphs)).OfType<SemanticGraphStep>().ToImmutableArray();
             return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before
                 ? null
-                : new(slice.Name, specification.Name, given.ToImmutable()) { GivenGraphs = givenGraphs, WhenAppended = appended, ThenGraphs = thenGraphs };
+                : new(slice.Name, specification.Name, given.ToImmutable()) { GivenGraphs = givenGraphs, WhenAppended = appended, ThenGraphs = thenGraphs, ThenQueries = thenQueries.ToImmutable() };
+        }
+
+        SemanticGraphQueryExpectation? BindGraphQueryExpectation(SliceSyntax slice, SpecificationQuerySyntax expectation)
+        {
+            var query = ScreenplayValidator.ScopedSlices(syntax).SelectMany(entry => entry.Slice.GraphQueries).FirstOrDefault(candidate => candidate.Name == expectation.Query);
+            if (query is null || !_readModels.TryGetValue(query.ReturnType.Name, out var readModel))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Graph specification of slice '{slice.Name}' asserts query '{expectation.Query}', which is not a graph query with a known read model.", expectation.Location);
+                return null;
+            }
+
+            var declared = (query.By is null ? [] : new[] { query.By }).Concat(query.Filters).ToDictionary(argument => argument.Name, StringComparer.Ordinal);
+            var arguments = ImmutableArray.CreateBuilder<SemanticGraphPropertyValue>();
+            foreach (var argument in expectation.Arguments)
+            {
+                if (!declared.TryGetValue(argument.Property, out var parameter))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Graph query '{query.Name}' has no argument '{argument.Property}'.", argument.Location);
+                    continue;
+                }
+
+                if (BindConcreteValue(argument.Source, BindTypeReference(parameter.Type), "graph query argument", false) is { } value) arguments.Add(new(argument.Property, value));
+            }
+
+            var rows = ImmutableArray.CreateBuilder<SemanticGraphRow>();
+            foreach (var result in expectation.Results)
+            {
+                var values = ImmutableArray.CreateBuilder<SemanticGraphPropertyValue>();
+                foreach (var property in result.Properties)
+                {
+                    if (!readModel.Properties.TryGetValue(property.Property, out var target))
+                    {
+                        Error(DiagnosticCodes.InvalidSemanticBinding, $"Read model '{readModel.Syntax.Name}' has no property '{property.Property}'.", property.Location);
+                        continue;
+                    }
+
+                    if (BindConcreteValue(property.Source, target.Type, "graph query row", false) is { } value) values.Add(new(property.Property, value));
+                }
+
+                rows.Add(new(values.ToImmutable()));
+            }
+
+            return new(query.Name, expectation.Exactly || expectation.Results.Any(result => result.Exactly), arguments.ToImmutable(), rows.ToImmutable());
         }
 
         SemanticGraphStep? BindGraphStep(SpecificationGraphSyntax step, Dictionary<string, SemanticGraph> graphs)

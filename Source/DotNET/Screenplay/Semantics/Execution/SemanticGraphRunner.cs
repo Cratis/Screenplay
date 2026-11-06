@@ -59,6 +59,12 @@ public static class SemanticGraphRunner
             foreach (var element in step.Elements) Assert(state, step.Graph, element, failures);
         }
 
+        var readModels = application.Modules.SelectMany(SemanticGraphQueryRunner.SlicesOf).SelectMany(slice => slice.ReadModels).ToDictionary(readModel => readModel.Id);
+        foreach (var expectation in specification.ThenQueries)
+        {
+            SemanticGraphQueryRunner.Assert(application, readModels, state.Snapshot(), expectation, failures);
+        }
+
         return failures.ToImmutable();
     }
 
@@ -212,8 +218,21 @@ public static class SemanticGraphRunner
         _ => value.ToString()
     };
 
+    internal sealed class GraphSnapshot(Dictionary<(string Graph, string Label, string Key), Dictionary<string, SemanticValue>> nodes, Dictionary<(string Graph, string Type, string Source, string Target, string? Identity), Dictionary<string, SemanticValue>> edges)
+    {
+        public IEnumerable<(string Key, Dictionary<string, SemanticValue> Properties)> Nodes(string graph, string label) =>
+            nodes.Where(node => node.Key.Graph == graph && node.Key.Label == label).Select(node => (node.Key.Key, node.Value));
+
+        public IEnumerable<(string Source, string Target, Dictionary<string, SemanticValue> Properties)> Edges(string graph, string type) =>
+            edges.Where(edge => edge.Key.Graph == graph && edge.Key.Type == type).Select(edge => (edge.Key.Source, edge.Key.Target, edge.Value));
+    }
+
+    internal static string? Canonical(SemanticValue? value) => Canon(value);
+
     sealed class GraphState(Dictionary<string, SemanticGraph> graphs)
     {
+        public GraphSnapshot Snapshot() => new(_nodes, _edges);
+
         readonly Dictionary<(string Graph, string Label, string Key), Dictionary<string, SemanticValue>> _nodes = [];
         readonly Dictionary<(string Graph, string Type, string Source, string Target, string? Identity), Dictionary<string, SemanticValue>> _edges = [];
 
@@ -225,7 +244,15 @@ public static class SemanticGraphRunner
         public Dictionary<string, SemanticValue> UpsertNode(string graph, string label, string? key)
         {
             var identity = (graph, label, key!);
-            if (!_nodes.TryGetValue(identity, out var node)) _nodes[identity] = node = [];
+            if (!_nodes.TryGetValue(identity, out var node))
+            {
+                _nodes[identity] = node = [];
+                if (key is not null && graphs[graph].Nodes.First(candidate => candidate.Label == label).Properties.FirstOrDefault(property => property.IsKey) is { } keyProperty)
+                {
+                    node[keyProperty.Name] = SemanticValue.Text(key);
+                }
+            }
+
             return node;
         }
 

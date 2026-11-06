@@ -1,9 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { PropertySyntax } from './Declarations';
+import { AuthorizeSyntax } from './Authorization';
+import { PropertySyntax, TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { EverySyntax, MappingSyntax } from './Projections';
+import { QueryParameterSyntax } from './Queries';
 import { SourceOptions } from './SourceOptions';
 import { SyntaxNode } from './SyntaxNode';
 
@@ -105,4 +107,60 @@ export interface SpecificationGraphSyntax extends SyntaxNode {
     readonly kind: 'SpecificationGraphSyntax';
     readonly graph: string;
     readonly elements: readonly SpecificationGraphElementSyntax[];
+}
+
+// A node in a path pattern: 'alias:Label' or 'Label'.
+export interface GraphPatternNodeSyntax extends SyntaxNode {
+    readonly kind: 'GraphPatternNodeSyntax';
+    readonly alias: string | null;
+    readonly label: string;
+}
+
+// An edge and the node it leads to in a path pattern: '-alias:TYPE-> node' (outgoing) or '<-alias:TYPE- node'.
+export interface GraphPatternHopSyntax extends SyntaxNode {
+    readonly kind: 'GraphPatternHopSyntax';
+    readonly alias: string | null;
+    readonly type: string;
+    readonly outgoing: boolean;
+    readonly node: GraphPatternNodeSyntax;
+}
+
+// One 'match' or 'optional match' path pattern of a graph query.
+export interface GraphMatchSyntax extends SyntaxNode {
+    readonly kind: 'GraphMatchSyntax';
+    readonly isOptional: boolean;
+    readonly start: GraphPatternNodeSyntax;
+    readonly hops: readonly GraphPatternHopSyntax[];
+}
+
+// '<alias>.<property> = $argument | literal' in a graph query 'where'.
+export interface GraphConditionSyntax extends SyntaxNode {
+    readonly kind: 'GraphConditionSyntax';
+    readonly alias: string;
+    readonly property: string;
+    readonly value: ExpressionSyntax;
+}
+
+// '<property> = <alias>.<property>' in a graph query 'return'.
+export interface GraphReturnSyntax extends SyntaxNode {
+    readonly kind: 'GraphReturnSyntax';
+    readonly property: string;
+    readonly alias: string;
+    readonly source: string;
+}
+
+// 'query <Name> => [observable] <ReadModel>[] graph <Graph>': a query that reads a graph and returns a read model.
+export interface GraphQuerySyntax extends SyntaxNode {
+    readonly kind: 'GraphQuerySyntax';
+    readonly name: string;
+    readonly returnType: TypeRefSyntax;
+    readonly graph: string;
+    readonly by: QueryParameterSyntax | null;
+    readonly filters: readonly QueryParameterSyntax[];
+    readonly authorize: AuthorizeSyntax | null;
+    readonly matches: readonly GraphMatchSyntax[];
+    readonly conditions: readonly GraphConditionSyntax[];
+    readonly returns: readonly GraphReturnSyntax[];
+    readonly isObservable: boolean;
+    readonly description: string | null;
 }

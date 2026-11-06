@@ -193,7 +193,7 @@ internal static partial class ScreenplayValidator
         RunConsistencyValidators(application, declarations, expansion, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
-        ValidateSpecificationQueries(scopedSlices, knownQueries, context);
+        ValidateSpecificationQueries(scopedSlices, [.. knownQueries, .. scopedSlices.SelectMany(entry => entry.Slice.GraphQueries.Select(query => new Declaration(query.Name, entry.Scope)))], context);
 
         var (knownCommandDeclarations, commandsByDeclaration) = CommandDeclarations(scopedSlices);
         var references = new InteractionReferences(knownCommandDeclarations, knownScreenDeclarations, knownQueries, _noNames, names.Events, _noNames);

@@ -155,6 +155,11 @@ public sealed record SemanticGraphStep(string Graph, ImmutableArray<SemanticGrap
 public sealed record SemanticGraphSpecification(string Owner, string Name, ImmutableArray<SemanticSpecificationEvent> Given)
 {
     /// <summary>
+    /// Gets the graph queries the specification runs and the rows it expects (ESM v40).
+    /// </summary>
+    public ImmutableArray<SemanticGraphQueryExpectation> ThenQueries { get; init; } = [];
+
+    /// <summary>
     /// Gets the graphs seeded before the events are applied.
     /// </summary>
     public ImmutableArray<SemanticGraphStep> GivenGraphs { get; init; } = [];
@@ -169,3 +174,99 @@ public sealed record SemanticGraphSpecification(string Owner, string Name, Immut
     /// </summary>
     public ImmutableArray<SemanticGraphStep> ThenGraphs { get; init; } = [];
 }
+
+/// <summary>
+/// Represents an argument of a graph query: a caller-supplied value the conditions compare against.
+/// </summary>
+/// <param name="Name">The argument name.</param>
+/// <param name="Type">The argument type.</param>
+/// <param name="IsKey">Whether it was declared with <c language="screenplay">by</c> rather than <c language="screenplay">filter</c>.</param>
+public sealed record SemanticGraphQueryArgument(string Name, SemanticTypeReference Type, bool IsKey);
+
+/// <summary>
+/// Represents a node in a path pattern.
+/// </summary>
+/// <param name="Alias">The alias, or null.</param>
+/// <param name="Label">The node label.</param>
+public sealed record SemanticGraphPatternNode(string? Alias, string Label);
+
+/// <summary>
+/// Represents an edge and the node it leads to in a path pattern.
+/// </summary>
+/// <param name="Alias">The edge alias, or null.</param>
+/// <param name="Type">The edge type.</param>
+/// <param name="Outgoing">Whether the edge points away from the previous node.</param>
+/// <param name="Node">The node it leads to.</param>
+public sealed record SemanticGraphHop(string? Alias, string Type, bool Outgoing, SemanticGraphPatternNode Node);
+
+/// <summary>
+/// Represents one path pattern of a graph query.
+/// </summary>
+/// <param name="IsOptional">Whether the path may be absent from a row.</param>
+/// <param name="Start">The first node.</param>
+/// <param name="Hops">The hops that follow it.</param>
+public sealed record SemanticGraphMatch(bool IsOptional, SemanticGraphPatternNode Start, ImmutableArray<SemanticGraphHop> Hops);
+
+/// <summary>
+/// Represents an equality condition between a property of a matched node or edge and an argument or a literal.
+/// </summary>
+/// <param name="Alias">The alias of the node or edge.</param>
+/// <param name="Property">Its property.</param>
+public sealed record SemanticGraphCondition(string Alias, string Property)
+{
+    /// <summary>Gets the argument the property is compared with, or null when it is compared with <see cref="Literal"/>.</summary>
+    public string? Argument { get; init; }
+
+    /// <summary>Gets the literal the property is compared with, or null when it is compared with <see cref="Argument"/>.</summary>
+    public SemanticValue? Literal { get; init; }
+}
+
+/// <summary>
+/// Represents the assignment of a read-model property from a property of a matched node or edge.
+/// </summary>
+/// <param name="Property">The read-model property identity.</param>
+/// <param name="Alias">The alias of the node or edge.</param>
+/// <param name="Source">Its property.</param>
+public sealed record SemanticGraphReturn(SemanticId Property, string Alias, string Source);
+
+/// <summary>
+/// Represents a query that reads a graph and returns rows as a read model.
+/// </summary>
+/// <param name="Name">The query name.</param>
+/// <param name="Graph">The graph it reads.</param>
+/// <param name="ReadModel">The read model the rows are returned as.</param>
+/// <param name="Cardinality">How many rows it returns.</param>
+/// <param name="Delivery">Whether it is answered once or re-evaluated as the graph changes.</param>
+/// <param name="Arguments">The arguments it takes.</param>
+/// <param name="Matches">The path patterns.</param>
+/// <param name="Conditions">The conditions the rows satisfy.</param>
+/// <param name="Returns">The read-model property assignments.</param>
+public sealed record SemanticGraphQuery(
+    string Name,
+    string Graph,
+    SemanticId ReadModel,
+    SemanticQueryCardinality Cardinality,
+    SemanticQueryDelivery Delivery,
+    ImmutableArray<SemanticGraphQueryArgument> Arguments,
+    ImmutableArray<SemanticGraphMatch> Matches,
+    ImmutableArray<SemanticGraphCondition> Conditions,
+    ImmutableArray<SemanticGraphReturn> Returns)
+{
+    /// <summary>Gets the effective authorization, or null for an unrestricted query.</summary>
+    public SemanticAuthorization? Authorization { get; init; }
+}
+
+/// <summary>
+/// Represents one expected row of a graph query.
+/// </summary>
+/// <param name="Values">The asserted read-model properties.</param>
+public sealed record SemanticGraphRow(ImmutableArray<SemanticGraphPropertyValue> Values);
+
+/// <summary>
+/// Represents a graph query a specification runs, with the rows it expects.
+/// </summary>
+/// <param name="Query">The graph query name.</param>
+/// <param name="Exactly">Whether every property of a row must match rather than the asserted subset.</param>
+/// <param name="Arguments">The argument values.</param>
+/// <param name="Rows">The expected rows, compared without regard to order. The row count is exact.</param>
+public sealed record SemanticGraphQueryExpectation(string Query, bool Exactly, ImmutableArray<SemanticGraphPropertyValue> Arguments, ImmutableArray<SemanticGraphRow> Rows);

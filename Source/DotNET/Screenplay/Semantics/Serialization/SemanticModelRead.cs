@@ -72,6 +72,7 @@ internal static partial class SemanticModelRead
             .Add("graphs", LanguageVersion.V38.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Graphs = Array(ref reader, Graph, property))
             .Add("graphProjections", LanguageVersion.V38.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.GraphProjections = Array(ref reader, GraphProjection, property))
             .Add("graphSpecifications", LanguageVersion.V38.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.GraphSpecifications = Array(ref reader, GraphSpecification, property))
+            .Add("graphQueries", LanguageVersion.V40.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.GraphQueries = Array(ref reader, GraphQuery, property))
             .Add("eventSources", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadEventSources(ref reader, property))
             .Add("reactionProductionMode", LanguageVersion.V22.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReactionProductionMode = String(ref reader, property) == "atomic" ? SemanticReactionProductionMode.Atomic : throw new InvalidSemanticContract("Unknown reaction production mode."))
             .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."))
@@ -97,6 +98,8 @@ internal static partial class SemanticModelRead
         public ImmutableArray<SemanticGraphProjection> GraphProjections { get; set; } = [];
 
         public ImmutableArray<SemanticGraphSpecification> GraphSpecifications { get; set; } = [];
+
+        public ImmutableArray<SemanticGraphQuery> GraphQueries { get; set; } = [];
 
         public ImmutableArray<SemanticEventSource> EventSources { get; set; } = [];
 
@@ -125,7 +128,7 @@ internal static partial class SemanticModelRead
         public SemanticApplication Build()
         {
             Required(HasIdentity && HasCollections && (SchemaVersion < LanguageVersion.V37.Major || TimeZone is not null), "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers };
+            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers };
         }
     }
 

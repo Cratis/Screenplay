@@ -718,6 +718,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitGraphProjection(graphProjection);
         }
 
+        foreach (var graphQuery in syntax.GraphQueries)
+        {
+            VisitGraphQuery(graphQuery);
+        }
+
         foreach (var reducer in syntax.Reducers ?? [])
         {
             VisitReducer(reducer);

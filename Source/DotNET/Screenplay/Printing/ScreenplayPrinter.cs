@@ -1014,6 +1014,7 @@ public sealed partial class ScreenplayPrinter :
             AddSeparatedMembers(members, writer, slice.Operations, 2, WriteOperation);
             AddSeparatedMembers(members, writer, slice.Constraints, 3, WriteConstraint);
             AddSeparatedMembers(members, writer, slice.Queries, 4, WriteQuery);
+            AddSeparatedMembers(members, writer, slice.GraphQueries, 4, WriteGraphQuery);
 
             // A read model comes before whatever builds it - the shape first, then where it comes from.
             AddSeparatedMembers(members, writer, slice.ReadModels ?? [], 5, WriteReadModel);

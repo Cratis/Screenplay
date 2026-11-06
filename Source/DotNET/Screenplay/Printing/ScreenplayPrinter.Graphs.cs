@@ -23,6 +23,41 @@ public partial class ScreenplayPrinter
         return text;
     }
 
+    static string PatternNode(GraphPatternNodeSyntax node) => node.Alias is null ? node.Label : $"{node.Alias}:{node.Label}";
+
+    static string Pattern(GraphMatchSyntax match) =>
+        PatternNode(match.Start) + string.Concat(match.Hops.Select(hop =>
+        {
+            var edge = hop.Alias is null ? hop.Type : $"{hop.Alias}:{hop.Type}";
+            return $" {(hop.Outgoing ? $"-{edge}->" : $"<-{edge}-")} {PatternNode(hop.Node)}";
+        }));
+
+    void WriteGraphQuery(ScreenplayWriter writer, GraphQuerySyntax query)
+    {
+        using var anchor = writer.Anchor(query);
+        var returnType = ScreenplaySyntaxText.TypeRef(query.ReturnType);
+        writer.Line($"query {query.Name} => {(query.IsObservable ? "observable " : string.Empty)}{returnType} graph {query.Graph}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, query.Description, query);
+            if (query.By is not null) writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}", query.By);
+            foreach (var filter in query.Filters) writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}", filter);
+            if (query.Authorize is not null) WriteAuthorize(writer, query.Authorize);
+            foreach (var match in query.Matches) writer.Line($"{(match.IsOptional ? "optional match" : "match")} {Pattern(match)}", match);
+            if (query.Conditions.Any())
+            {
+                writer.Line("where " + string.Join(" and ", query.Conditions.Select(condition =>
+                    $"{condition.Alias}.{condition.Property} = {(condition.Value is PathExpressionSyntax argument ? "$" + argument.Path : writer.Expression(condition.Value))}")));
+            }
+
+            writer.Line("return");
+            using (writer.Indent())
+            {
+                foreach (var @return in query.Returns) writer.Line($"{@return.Property} = {@return.Alias}.{@return.Source}", @return);
+            }
+        }
+    }
+
     void WriteGraph(ScreenplayWriter writer, GraphSyntax graph)
     {
         using var anchor = writer.Anchor(graph);

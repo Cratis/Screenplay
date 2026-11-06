@@ -62,6 +62,7 @@ internal static partial class SliceParser
         var readModels = new List<ReadModelSyntax>();
         var graphs = new List<GraphSyntax>();
         var graphProjections = new List<GraphProjectionSyntax>();
+        var graphQueries = new List<GraphQuerySyntax>();
         var reducers = new List<ReducerSyntax>();
         var templates = new List<TemplateAssignmentSyntax>();
         var purposes = new List<PurposeReferenceSyntax>();
@@ -127,7 +128,15 @@ internal static partial class SliceParser
                     commands.Add(CommandParser.Parse(context, line));
                     break;
                 case "query":
-                    queries.Add(QueryParser.Parse(context, line));
+                    if (GraphQueryParser.IsGraphHeader(line.Content))
+                    {
+                        graphQueries.Add(GraphQueryParser.Parse(context, line));
+                    }
+                    else
+                    {
+                        queries.Add(QueryParser.Parse(context, line));
+                    }
+
                     break;
                 case "projection":
                     if (GraphProjectionParser.IsGraphHeader(line.Content))
@@ -194,6 +203,7 @@ internal static partial class SliceParser
             Purposes = purposes,
             Graphs = graphs,
             GraphProjections = graphProjections,
+            GraphQueries = graphQueries,
             DirectiveLocations = directiveLocations
         };
     }

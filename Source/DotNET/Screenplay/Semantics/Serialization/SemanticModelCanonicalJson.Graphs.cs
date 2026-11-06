@@ -14,6 +14,11 @@ public static partial class SemanticModelCanonicalJson
 {
     static void WriteGraphs(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
     {
+        if (SemanticModelValidator.UsesGraphQueries(application) && version.Major < 40)
+        {
+            throw new InvalidSemanticContract("Graph queries require ESM v40 or later.");
+        }
+
         if (SemanticModelValidator.UsesGraphs(application) && version.Major < 38)
         {
             throw new InvalidSemanticContract("Graphs, graph projections and graph specifications require ESM v38 or later.");
@@ -21,7 +26,82 @@ public static partial class SemanticModelCanonicalJson
 
         if (!application.Graphs.IsDefaultOrEmpty) WriteArray(writer, "graphs", application.Graphs.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraph);
         if (!application.GraphProjections.IsDefaultOrEmpty) WriteArray(writer, "graphProjections", application.GraphProjections.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraphProjection);
+        if (!application.GraphQueries.IsDefaultOrEmpty) WriteArray(writer, "graphQueries", application.GraphQueries.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraphQuery);
         if (!application.GraphSpecifications.IsDefaultOrEmpty) WriteArray(writer, "graphSpecifications", application.GraphSpecifications.OrderBy(_ => _.Owner, StringComparer.Ordinal).ThenBy(_ => _.Name, StringComparer.Ordinal), WriteGraphSpecification);
+    }
+
+    static void WriteGraphQuery(Utf8JsonWriter writer, SemanticGraphQuery query)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", query.Name);
+        CanonicalJson.WriteString(writer, "graph", query.Graph);
+        writer.WriteString("readModel", query.ReadModel.ToString());
+        writer.WriteString("cardinality", QueryCardinality(query.Cardinality));
+        writer.WriteString("delivery", QueryDelivery(query.Delivery));
+        WriteArray(writer, "arguments", query.Arguments, (output, argument) =>
+        {
+            output.WriteStartObject();
+            CanonicalJson.WriteString(output, "name", argument.Name);
+            output.WritePropertyName("type");
+            WriteTypeReference(output, argument.Type);
+            output.WriteBoolean("key", argument.IsKey);
+            output.WriteEndObject();
+        });
+        WriteArray(writer, "matches", query.Matches, (output, match) =>
+        {
+            output.WriteStartObject();
+            output.WriteBoolean("optional", match.IsOptional);
+            output.WritePropertyName("start");
+            WriteGraphPatternNode(output, match.Start);
+            WriteArray(output, "hops", match.Hops, (item, hop) =>
+            {
+                item.WriteStartObject();
+                if (hop.Alias is not null) CanonicalJson.WriteString(item, "alias", hop.Alias);
+                CanonicalJson.WriteString(item, "type", hop.Type);
+                item.WriteBoolean("outgoing", hop.Outgoing);
+                item.WritePropertyName("node");
+                WriteGraphPatternNode(item, hop.Node);
+                item.WriteEndObject();
+            });
+            output.WriteEndObject();
+        });
+        WriteArray(writer, "conditions", query.Conditions, (output, condition) =>
+        {
+            output.WriteStartObject();
+            CanonicalJson.WriteString(output, "alias", condition.Alias);
+            CanonicalJson.WriteString(output, "property", condition.Property);
+            if (condition.Argument is not null) CanonicalJson.WriteString(output, "argument", condition.Argument);
+            if (condition.Literal is not null)
+            {
+                output.WritePropertyName("literal");
+                WriteValue(output, condition.Literal);
+            }
+
+            output.WriteEndObject();
+        });
+        WriteArray(writer, "returns", query.Returns, (output, @return) =>
+        {
+            output.WriteStartObject();
+            output.WriteString("property", @return.Property.ToString());
+            CanonicalJson.WriteString(output, "alias", @return.Alias);
+            CanonicalJson.WriteString(output, "source", @return.Source);
+            output.WriteEndObject();
+        });
+        if (query.Authorization is not null)
+        {
+            writer.WritePropertyName("authorization");
+            WriteAuthorization(writer, query.Authorization);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    static void WriteGraphPatternNode(Utf8JsonWriter writer, SemanticGraphPatternNode node)
+    {
+        writer.WriteStartObject();
+        if (node.Alias is not null) CanonicalJson.WriteString(writer, "alias", node.Alias);
+        CanonicalJson.WriteString(writer, "label", node.Label);
+        writer.WriteEndObject();
     }
 
     static void WriteGraph(Utf8JsonWriter writer, SemanticGraph graph)
@@ -119,6 +199,32 @@ public static partial class SemanticModelCanonicalJson
         }
 
         WriteArray(writer, "thenGraphs", specification.ThenGraphs, WriteGraphStep);
+        if (!specification.ThenQueries.IsDefaultOrEmpty) WriteArray(writer, "thenQueries", specification.ThenQueries, WriteGraphQueryExpectation);
+        writer.WriteEndObject();
+    }
+
+    static void WriteGraphPropertyValues(Utf8JsonWriter writer, string name, ImmutableArray<SemanticGraphPropertyValue> values) =>
+        WriteArray(writer, name, values, (item, value) =>
+        {
+            item.WriteStartObject();
+            CanonicalJson.WriteString(item, "name", value.Property);
+            item.WritePropertyName("value");
+            WriteValue(item, value.Value);
+            item.WriteEndObject();
+        });
+
+    static void WriteGraphQueryExpectation(Utf8JsonWriter writer, SemanticGraphQueryExpectation expectation)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "query", expectation.Query);
+        writer.WriteBoolean("exactly", expectation.Exactly);
+        WriteGraphPropertyValues(writer, "arguments", expectation.Arguments);
+        WriteArray(writer, "rows", expectation.Rows, (output, row) =>
+        {
+            output.WriteStartObject();
+            WriteGraphPropertyValues(output, "values", row.Values);
+            output.WriteEndObject();
+        });
         writer.WriteEndObject();
     }
 

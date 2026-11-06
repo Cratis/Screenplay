@@ -3855,4 +3855,28 @@ public static class DiagnosticCodes
 
     /// <summary>A graph projection is declared outside a slice.</summary>
     public const string GraphProjectionOutsideSlice = "PLAY0877";
+
+    /// <summary>A graph query is malformed: its header, a pattern, a condition or a return.</summary>
+    public const string InvalidGraphQuery = "PLAY0878";
+
+    /// <summary>A graph query names an undeclared graph, node label, edge type, alias or property.</summary>
+    public const string UnknownGraphQueryReference = "PLAY0879";
+
+    /// <summary>A graph query hop names an edge that does not connect the two labels in that direction.</summary>
+    public const string GraphQueryEdgeMismatch = "PLAY0880";
+
+    /// <summary>A graph query does not return exactly the properties of its read model, or returns a property of an incompatible type.</summary>
+    public const string GraphQueryReturnMismatch = "PLAY0881";
+
+    /// <summary>A graph query condition names an argument the query does not declare, or compares incompatible types.</summary>
+    public const string GraphQueryArgumentMismatch = "PLAY0882";
+
+    /// <summary>A property returned from an optional match is assigned to a read-model property that is not optional.</summary>
+    public const string GraphQueryOptionalReturn = "PLAY0883";
+
+    /// <summary>A graph query uses an alias twice.</summary>
+    public const string DuplicateGraphQueryAlias = "PLAY0884";
+
+    /// <summary>A graph query uses a construct this version does not have: variable-length paths, or, ranges, functions and aggregates.</summary>
+    public const string UnsupportedGraphQueryConstruct = "PLAY0885";
 }

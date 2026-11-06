@@ -14,6 +14,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
     static readonly HashSet<string> _featureVectors =
     [
         "command-reads",
+        "graph-queries",
         "reaction-batches",
         "identity",
         "application-context",

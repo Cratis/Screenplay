@@ -4,10 +4,11 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
-import { PropertySyntax } from '../Syntax/Declarations';
+import { PropertySyntax, ReadModelSyntax } from '../Syntax/Declarations';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { GraphEdgeBlockSyntax, GraphHandlerSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphSyntax, SpecificationGraphSyntax } from '../Syntax/Graphs';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { validateGraphQuery } from './GraphQueryValidator';
 import { ParserContext } from './ParserContext';
 
 const primitives = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'];
@@ -25,8 +26,11 @@ export function validateGraphs(application: ApplicationSyntax, context: ParserCo
     const byName = new Map<string, GraphSyntax>();
     for (const graph of graphs) if (!byName.has(graph.name)) byName.set(graph.name, graph);
     const events = new Set([...slices.flatMap(slice => eventDeclarations(slice).map(event => event.name)), ...application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!)]);
+    const readModels = new Map<string, ReadModelSyntax>();
+    for (const readModel of slices.flatMap(slice => slice.readModels)) if (!readModels.has(readModel.name)) readModels.set(readModel.name, readModel);
     for (const slice of slices) {
         (slice.graphProjections ?? []).forEach(projection => validateProjection(projection, byName, events, context));
+        (slice.graphQueries ?? []).forEach(query => validateGraphQuery(query, byName, readModels, context));
         for (const specification of slice.specifications) {
             [...(specification.givenGraphs ?? []), ...(specification.thenGraphs ?? [])].forEach(step => validateStep(step, byName, context));
         }

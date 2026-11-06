@@ -136,6 +136,11 @@ public sealed record SemanticApplication(
     public ImmutableArray<SemanticGraphSpecification> GraphSpecifications { get; init; } = [];
 
     /// <summary>
+    /// Gets the queries that read a graph (ESM v40).
+    /// </summary>
+    public ImmutableArray<SemanticGraphQuery> GraphQueries { get; init; } = [];
+
+    /// <summary>
     /// Gets the declared event sources, or an empty collection for models without event routes.
     /// </summary>
     public ImmutableArray<SemanticEventSource> EventSources { get; init; } = [];
