@@ -32,15 +32,8 @@ export function isGraphQueryHeader(content: string): boolean {
 
 // Reads a graph query and its body: a read model's rows, found by a typed path match over a declared graph.
 export function parseGraphQuery(context: ParserContext, line: SourceLine): GraphQuerySyntax {
-    const match = header.exec(line.content);
-    if (match === null) {
-        context.error(DiagnosticCodes.InvalidGraphQuery, `Invalid graph query declaration '${line.content}' - expected 'query <Name> => [observable] <ReadModel>[] graph <Graph>'`, locationOf(line));
-        context.skipBlock(line.indent);
-        return {
-            kind: 'GraphQuerySyntax', name: firstWord(line.content), returnType: parseTypeRef('', locationOf(line)), graph: '', by: null, filters: [], authorize: null,
-            matches: [], conditions: [], returns: [], isObservable: false, description: null, location: locationOf(line),
-        };
-    }
+    // The caller has matched the header's tail with the same pattern, so this always matches.
+    const match = header.exec(line.content) as RegExpExecArray;
     const name = match[1];
     const returnType = parseTypeRef(match[3], { ...locationOf(line), column: line.indent + 1 + line.content.indexOf(match[3], line.content.indexOf('=>')) });
     let by: QueryParameterSyntax | null = null;
