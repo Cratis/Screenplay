@@ -1,0 +1,72 @@
+// A graph projection handler that runs once per item of an event's collection.
+
+concept ModelId  : Uuid
+concept SeriesId : Uuid
+concept SlotName : String
+
+type ModelSlot
+  slot   SlotName
+  series SeriesId
+
+module Scoring
+  feature Models
+    slice StateView ModelScores
+      event ModelDefined
+        slots ModelSlot[]
+
+      event ModelRetired
+        slots ModelSlot[]
+
+      graph Scoring
+        node Model
+          modelId ModelId key
+        node Series
+          seriesId SeriesId key
+        edge SCORES source Model target Series identified by slot
+          slot SlotName
+
+      projection ModelScores => graph Scoring
+        node Model
+          from ModelDefined key $eventSourceId
+        node Series
+          from ModelDefined foreach slots key slots.series
+        edge SCORES
+          from ModelDefined foreach slots source $eventSourceId target slots.series identified by slots.slot
+            slot = slots.slot
+          remove with ModelRetired foreach slots source $eventSourceId target slots.series identified by slots.slot
+
+      specification EachSlotIsAnEdge
+        given ModelDefined
+          for "11111111-1111-4111-8111-111111111111"
+          slots
+            item
+              slot = "fuel"
+              series = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+            item
+              slot = "speed"
+              series = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+        then graph Scoring
+          has edge SCORES from "11111111-1111-4111-8111-111111111111" to "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1" identified by "fuel"
+            slot = "fuel"
+          has edge SCORES from "11111111-1111-4111-8111-111111111111" to "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2" identified by "speed"
+          has node Series "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+
+      specification RetiringRemovesTheListedEdges
+        given ModelDefined
+          for "11111111-1111-4111-8111-111111111111"
+          slots
+            item
+              slot = "fuel"
+              series = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+            item
+              slot = "speed"
+              series = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+        when append ModelRetired
+          for "11111111-1111-4111-8111-111111111111"
+          slots
+            item
+              slot = "fuel"
+              series = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+        then graph Scoring
+          no edge SCORES from "11111111-1111-4111-8111-111111111111" to "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1" identified by "fuel"
+          has edge SCORES from "11111111-1111-4111-8111-111111111111" to "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2" identified by "speed"

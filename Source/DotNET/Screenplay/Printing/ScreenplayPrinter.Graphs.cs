@@ -13,9 +13,9 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
-    static string GraphIdentity(ScreenplayWriter writer, ExpressionSyntax? key, ExpressionSyntax? source, ExpressionSyntax? target, ExpressionSyntax? identity)
+    static string GraphIdentity(ScreenplayWriter writer, string? forEach, ExpressionSyntax? key, ExpressionSyntax? source, ExpressionSyntax? target, ExpressionSyntax? identity)
     {
-        var text = string.Empty;
+        var text = forEach is null ? string.Empty : $" foreach {forEach}";
         if (key is not null) text += $" key {writer.Expression(key)}";
         if (source is not null) text += $" source {writer.Expression(source)}";
         if (target is not null) text += $" target {writer.Expression(target)}";
@@ -110,7 +110,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent()) foreach (var handler in edge.Blocks) WriteGraphBlock(writer, handler);
                 break;
             case GraphFromSyntax from:
-                writer.Line($"from {from.Event}{GraphIdentity(writer, from.Key, from.Source, from.Target, from.Identity)}");
+                writer.Line($"from {from.Event}{GraphIdentity(writer, from.ForEach, from.Key, from.Source, from.Target, from.Identity)}");
                 using (writer.Indent()) WriteMappings(writer, from.Mappings, ReservedWords.None);
                 break;
             case EverySyntax every:
@@ -118,7 +118,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent()) WriteMappings(writer, every.Mappings, ReservedWords.None);
                 break;
             case GraphRemoveSyntax remove:
-                writer.Line($"remove with {remove.Event}{GraphIdentity(writer, remove.Key, remove.Source, remove.Target, remove.Identity)}{(remove.Detach ? " detach" : string.Empty)}");
+                writer.Line($"remove with {remove.Event}{GraphIdentity(writer, remove.ForEach, remove.Key, remove.Source, remove.Target, remove.Identity)}{(remove.Detach ? " detach" : string.Empty)}");
                 break;
             default:
                 throw new UnsupportedSyntaxForPrinting("graph projection block", block.GetType().Name);

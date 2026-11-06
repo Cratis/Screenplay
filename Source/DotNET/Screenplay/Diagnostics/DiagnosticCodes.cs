@@ -3879,4 +3879,7 @@ public static class DiagnosticCodes
 
     /// <summary>A graph query uses a construct this version does not have: variable-length paths, or, ranges, functions and aggregates.</summary>
     public const string UnsupportedGraphQueryConstruct = "PLAY0885";
+
+    /// <summary>A graph handler iterates something this version cannot iterate: a nested collection, an item of another collection, or a collection that is not a list of a composite type.</summary>
+    public const string UnsupportedGraphForEach = "PLAY0886";
 }

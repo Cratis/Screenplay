@@ -15,6 +15,20 @@ internal static partial class SemanticModelValidator
     internal static bool UsesGraphQueries(SemanticApplication application) =>
         !application.GraphQueries.IsDefaultOrEmpty || application.GraphSpecifications.Any(specification => !specification.ThenQueries.IsDefaultOrEmpty || specification.Clock is not null);
 
+    // ESM v41 constructs: graph projection handlers that run once per item of an event collection.
+    internal static bool UsesGraphForEach(SemanticApplication application) =>
+        application.GraphProjections.Any(projection => projection.Nodes.Concat(projection.Edges).Any(element => element.Handlers.Any(handler => handler.ForEach is not null)));
+
+    static void ValidateGraphForEachVersion(SemanticApplication application, SemanticVersion version)
+    {
+        ValidateFeatureVersion(
+            UsesGraphForEach(application),
+            version,
+            SemanticVersion.V41,
+            "An ESM v41 model must declare a graph handler that iterates an event collection.",
+            "Graph handlers that iterate an event collection require ESM v41.");
+    }
+
     static void ValidateGraphQueryVersion(SemanticApplication application, SemanticVersion version)
     {
         ValidateFeatureVersion(

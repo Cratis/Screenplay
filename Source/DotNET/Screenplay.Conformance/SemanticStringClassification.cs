@@ -18,7 +18,7 @@ internal static class SemanticStringClassification
     // These names have only identity-typed uses in the canonical writer. Overloaded names are scoped below.
     static readonly HashSet<string> _identities = new(StringComparer.Ordinal)
     {
-        "id", "contractId", "eventContract", "targetProperty", "property", "readModel", "event", "command",
+        "id", "contractId", "eventContract", "targetProperty", "property", "readModel", "event", "forEach", "command",
         "keyProperty", "filter", "reaction", "query", "capture", "stream", "on", "trigger", "target", "sourceEvents", "releasedBy",
     };
 

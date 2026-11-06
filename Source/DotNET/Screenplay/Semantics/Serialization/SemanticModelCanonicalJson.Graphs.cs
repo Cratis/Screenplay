@@ -164,6 +164,7 @@ public static partial class SemanticModelCanonicalJson
         WriteOptionalProjectionValue(writer, "source", handler.Source);
         WriteOptionalProjectionValue(writer, "target", handler.Target);
         WriteOptionalProjectionValue(writer, "identity", handler.Identity);
+        if (handler.ForEach is { } forEach) writer.WriteString("forEach", forEach.ToString());
         if (handler.Removes) writer.WriteBoolean("removes", true);
         if (handler.Detach) writer.WriteBoolean("detach", true);
         WriteArray(writer, "mappings", handler.Mappings, (output, mapping) =>

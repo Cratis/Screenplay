@@ -129,3 +129,4 @@
 | [0137](0137-admit-event-subject-lineage-as-esm-v39.md) | Admit event subject lineage into the executable model (ESM v39, opt-in until Stage supports it) | proposed | none | — | — |
 | [0138](0138-graphs-and-graph-projections-esm-v38.md) | Admit property graphs and graph projections (ESM v38) | accepted | none | 2026-11-05 | Einar Ingebrigtsen (requested in Cratis/Screenplay#1159 and #1160) |
 | [0139](0139-graph-reads-collection-iteration-and-event-context-esm-v40.md) | Read a graph with a typed path match, iterate event collections, give graph specifications event context (ESM v40) | accepted | none | 2026-11-06 | Einar Ingebrigtsen (approved in conversation on #1169, #1170 and #1171) |
+| [0140](0140-graph-foreach-esm-v41.md) | Run a graph projection handler once per item of an event collection (ESM v41) | accepted | none | 2026-11-06 | Einar Ingebrigtsen (approved in conversation on #1170) |

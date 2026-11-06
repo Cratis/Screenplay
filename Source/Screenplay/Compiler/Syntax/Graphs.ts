@@ -36,7 +36,7 @@ export interface GraphSyntax extends SyntaxNode {
     readonly edges: readonly GraphEdgeSyntax[];
 }
 
-// 'from <Event> key <expr>' in a node block, or 'from <Event> source <expr> target <expr> [identified by <expr>]' in an edge block.
+// 'from <Event> [foreach <collection>] key <expr>' in a node block, or 'from <Event> source <expr> target <expr> [identified by <expr>]' in an edge block.
 export interface GraphFromSyntax extends SyntaxNode {
     readonly kind: 'GraphFromSyntax';
     readonly event: string;
@@ -44,6 +44,7 @@ export interface GraphFromSyntax extends SyntaxNode {
     readonly source?: ExpressionSyntax | null;
     readonly target?: ExpressionSyntax | null;
     readonly identity?: ExpressionSyntax | null;
+    readonly forEach?: string | null;
     readonly mappings: readonly MappingSyntax[];
 }
 
@@ -55,6 +56,7 @@ export interface GraphRemoveSyntax extends SyntaxNode {
     readonly source?: ExpressionSyntax | null;
     readonly target?: ExpressionSyntax | null;
     readonly identity?: ExpressionSyntax | null;
+    readonly forEach?: string | null;
     readonly detach: boolean;
 }
 

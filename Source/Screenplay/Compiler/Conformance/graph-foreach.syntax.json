@@ -1,0 +1,629 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ModelId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "SeriesId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "SlotName",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Models",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ModelDefined",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "slots",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "ModelSlot"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ModelRetired",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "slots",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "ModelSlot"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "graphProjections": [
+                {
+                  "kind": "GraphProjectionSyntax",
+                  "blocks": [
+                    {
+                      "kind": "GraphNodeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "ModelDefined",
+                          "key": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "mappings": []
+                        }
+                      ],
+                      "label": "Model"
+                    },
+                    {
+                      "kind": "GraphNodeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "ModelDefined",
+                          "forEach": "slots",
+                          "key": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "slots.series"
+                          },
+                          "mappings": []
+                        }
+                      ],
+                      "label": "Series"
+                    },
+                    {
+                      "kind": "GraphEdgeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "ModelDefined",
+                          "forEach": "slots",
+                          "identity": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "slots.slot"
+                          },
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "slot"
+                            }
+                          ],
+                          "source": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "target": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "slots.series"
+                          }
+                        },
+                        {
+                          "kind": "GraphRemoveSyntax",
+                          "detach": false,
+                          "event": "ModelRetired",
+                          "forEach": "slots",
+                          "identity": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "slots.slot"
+                          },
+                          "source": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "target": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "slots.series"
+                          }
+                        }
+                      ],
+                      "type": "SCORES"
+                    }
+                  ],
+                  "graph": "Scoring",
+                  "name": "ModelScores"
+                }
+              ],
+              "graphs": [
+                {
+                  "kind": "GraphSyntax",
+                  "description": null,
+                  "edges": [
+                    {
+                      "kind": "GraphEdgeSyntax",
+                      "identifiedBy": "slot",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "slot",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "SlotName"
+                          }
+                        }
+                      ],
+                      "source": "Model",
+                      "target": "Series",
+                      "type": "SCORES"
+                    }
+                  ],
+                  "name": "Scoring",
+                  "nodes": [
+                    {
+                      "kind": "GraphNodeSyntax",
+                      "label": "Model",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "isKey": true,
+                          "name": "modelId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "ModelId"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "GraphNodeSyntax",
+                      "label": "Series",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "isKey": true,
+                          "name": "seriesId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "SeriesId"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "name": "ModelScores",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ModelDefined",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "slots",
+                          "source": {
+                            "kind": "ListExpressionSyntax",
+                            "items": [
+                              {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "slot",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "fuel"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "series",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "slot",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "speed"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "series",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "EachSlotIsAnEdge",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenGraphs": [
+                    {
+                      "kind": "SpecificationGraphSyntax",
+                      "elements": [
+                        {
+                          "kind": "SpecificationGraphEdgeSyntax",
+                          "absent": false,
+                          "identity": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "fuel"
+                          },
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "slot",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "fuel"
+                              }
+                            }
+                          ],
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11111111-1111-4111-8111-111111111111"
+                          },
+                          "target": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+                          },
+                          "type": "SCORES"
+                        },
+                        {
+                          "kind": "SpecificationGraphEdgeSyntax",
+                          "absent": false,
+                          "identity": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "speed"
+                          },
+                          "properties": [],
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11111111-1111-4111-8111-111111111111"
+                          },
+                          "target": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+                          },
+                          "type": "SCORES"
+                        },
+                        {
+                          "kind": "SpecificationGraphNodeSyntax",
+                          "absent": false,
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+                          },
+                          "label": "Series",
+                          "properties": []
+                        }
+                      ],
+                      "graph": "Scoring"
+                    }
+                  ],
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ModelDefined",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "slots",
+                          "source": {
+                            "kind": "ListExpressionSyntax",
+                            "items": [
+                              {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "slot",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "fuel"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "series",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "slot",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "speed"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "series",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RetiringRemovesTheListedEdges",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenGraphs": [
+                    {
+                      "kind": "SpecificationGraphSyntax",
+                      "elements": [
+                        {
+                          "kind": "SpecificationGraphEdgeSyntax",
+                          "absent": true,
+                          "identity": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "fuel"
+                          },
+                          "properties": [],
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11111111-1111-4111-8111-111111111111"
+                          },
+                          "target": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+                          },
+                          "type": "SCORES"
+                        },
+                        {
+                          "kind": "SpecificationGraphEdgeSyntax",
+                          "absent": false,
+                          "identity": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "speed"
+                          },
+                          "properties": [],
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "11111111-1111-4111-8111-111111111111"
+                          },
+                          "target": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"
+                          },
+                          "type": "SCORES"
+                        }
+                      ],
+                      "graph": "Scoring"
+                    }
+                  ],
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "ModelRetired",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "11111111-1111-4111-8111-111111111111"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "slots",
+                        "source": {
+                          "kind": "ListExpressionSyntax",
+                          "items": [
+                            {
+                              "kind": "ObjectExpressionSyntax",
+                              "members": [
+                                {
+                                  "kind": "ObjectMemberSyntax",
+                                  "name": "slot",
+                                  "value": {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": "fuel"
+                                  }
+                                },
+                                {
+                                  "kind": "ObjectMemberSyntax",
+                                  "name": "series",
+                                  "value": {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Scoring"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": [
+    {
+      "kind": "TypeSyntax",
+      "description": null,
+      "name": "ModelSlot",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "slot",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "SlotName"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "series",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "SeriesId"
+          }
+        }
+      ]
+    }
+  ]
+}
