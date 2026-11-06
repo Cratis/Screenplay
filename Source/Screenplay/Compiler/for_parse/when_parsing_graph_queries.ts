@@ -21,7 +21,7 @@ const valid = [
     '  return', '    personId = person.personId', '    person = person.name', '    group = group.groupId', '    since = link.since',
 ];
 const compile = (...body: string[]) => parse([...declarations, ...body.map(line => `      ${line}`)].join('\n'));
-const codes = (...body: string[]) => compile(...body).diagnostics.filter(diagnostic => diagnostic.severity !== 'info').map(diagnostic => diagnostic.code);
+const codes = (...body: string[]) => compile(...body).diagnostics.filter(diagnostic => diagnostic.severity !== 'information').map(diagnostic => diagnostic.code);
 const replaced = (from: string, to: string) => valid.map(line => line.replace(from, to));
 const queryOf = (...body: string[]): GraphQuerySyntax => compile(...body).value.modules[0].features[0].slices[0].graphQueries![0];
 
