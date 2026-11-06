@@ -147,7 +147,7 @@ internal static partial class QueryParser
         };
     }
 
-    static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)
+    internal static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)
     {
         var parameter = line.Content[keyword.Length..];
         var leading = parameter.Length - parameter.TrimStart().Length;

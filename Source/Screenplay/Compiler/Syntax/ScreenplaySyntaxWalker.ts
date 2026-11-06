@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
+import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import { IdentitySyntax } from './IdentitySyntax';
@@ -238,6 +238,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.readModels.forEach(node => this.visitReadModel(node));
         syntax.graphs?.forEach(node => this.visitGraph(node));
         syntax.graphProjections?.forEach(node => this.visitGraphProjection(node));
+        syntax.graphQueries?.forEach(node => this.visitGraphQuery(node));
         syntax.captures.forEach(node => this.visitCapture(node));
         syntax.reactions.forEach(node => this.visitReaction(node));
         syntax.screens.forEach(node => this.visitScreen(node));
@@ -509,6 +510,27 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.nodes.forEach(node => { this.visitNode(node); node.properties.forEach(property => this.visitProperty(property)); });
         syntax.edges.forEach(edge => { this.visitNode(edge); edge.properties.forEach(property => this.visitProperty(property)); });
+    }
+
+    visitGraphQuery(syntax: GraphQuerySyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.returnType);
+        if (syntax.by !== null) this.visitQueryParameter(syntax.by);
+        syntax.filters.forEach(filter => this.visitQueryParameter(filter));
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        for (const match of syntax.matches) {
+            this.visitNode(match);
+            this.visitNode(match.start);
+            for (const hop of match.hops) {
+                this.visitNode(hop);
+                this.visitNode(hop.node);
+            }
+        }
+        for (const condition of syntax.conditions) {
+            this.visitNode(condition);
+            this.visitExpression(condition.value);
+        }
+        syntax.returns.forEach(node => this.visitNode(node));
     }
 
     visitGraphProjection(syntax: GraphProjectionSyntax): void {

@@ -1,0 +1,79 @@
+// Queries that read a graph: a typed path match that returns an ordinary read model.
+
+concept PersonId : Uuid
+concept GroupId  : Uuid
+concept Name     : String
+
+module Organization
+  feature Chart
+    slice StateView OrganizationChart
+      event PersonRegistered
+        name Name
+
+      event GroupCreated
+        name Name
+
+      event MemberAdded
+        groupId GroupId
+
+      graph Organization
+        node Person
+          personId PersonId key
+          name     Name
+        node Group
+          groupId GroupId key
+          name    Name
+        edge MEMBER_OF source Person target Group
+          since DateTime optional
+        edge LEADS source Person target Group
+
+      projection OrganizationChart => graph Organization
+        node Person
+          from PersonRegistered key $eventSourceId
+            name = name
+        node Group
+          from GroupCreated key $eventSourceId
+            name = name
+        edge MEMBER_OF
+          from MemberAdded source $eventSourceId target groupId
+
+      readmodel Membership
+        personId PersonId key
+        person   Name
+        group    Name
+        since    DateTime optional
+
+      readmodel Leadership
+        groupId GroupId key
+        leader  Name optional
+
+      query MembersOf => Membership[] graph Organization
+        description "Everyone who belongs to a group"
+        filter groupId GroupId
+        authorize Admin
+        match person:Person -link:MEMBER_OF-> group:Group
+        where group.groupId = $groupId
+        return
+          personId = person.personId
+          person   = person.name
+          group    = group.name
+          since    = link.since
+
+      query LeaderOf => observable Leadership graph Organization
+        by groupId GroupId
+        match group:Group
+        optional match group:Group <-LEADS- leader:Person
+        where group.groupId = $groupId and group.name = "Ops"
+        return
+          groupId = group.groupId
+          leader  = leader.name
+
+      specification SeeingMembers
+        given PersonRegistered
+          for "11111111-1111-4111-8111-111111111111"
+          name = "Kari"
+        then query MembersOf
+          arguments
+            groupId = "22222222-2222-4222-8222-222222222222"
+          result
+            person = "Kari"

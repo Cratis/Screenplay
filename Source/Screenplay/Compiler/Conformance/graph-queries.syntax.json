@@ -1,0 +1,634 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "PersonId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "GroupId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Name",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Chart",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PersonRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Name"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "GroupCreated",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Name"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "MemberAdded",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "groupId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "GroupId"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "graphProjections": [
+                {
+                  "kind": "GraphProjectionSyntax",
+                  "blocks": [
+                    {
+                      "kind": "GraphNodeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "PersonRegistered",
+                          "key": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "name"
+                            }
+                          ]
+                        }
+                      ],
+                      "label": "Person"
+                    },
+                    {
+                      "kind": "GraphNodeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "GroupCreated",
+                          "key": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "name"
+                            }
+                          ]
+                        }
+                      ],
+                      "label": "Group"
+                    },
+                    {
+                      "kind": "GraphEdgeBlockSyntax",
+                      "blocks": [
+                        {
+                          "kind": "GraphFromSyntax",
+                          "event": "MemberAdded",
+                          "mappings": [],
+                          "source": {
+                            "kind": "EventSourceIdExpressionSyntax"
+                          },
+                          "target": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "groupId"
+                          }
+                        }
+                      ],
+                      "type": "MEMBER_OF"
+                    }
+                  ],
+                  "graph": "Organization",
+                  "name": "OrganizationChart"
+                }
+              ],
+              "graphQueries": [
+                {
+                  "kind": "GraphQuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "Admin"
+                    }
+                  },
+                  "by": null,
+                  "conditions": [
+                    {
+                      "kind": "GraphConditionSyntax",
+                      "alias": "group",
+                      "property": "groupId",
+                      "value": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "groupId"
+                      }
+                    }
+                  ],
+                  "description": "Everyone who belongs to a group",
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "groupId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "GroupId"
+                      }
+                    }
+                  ],
+                  "graph": "Organization",
+                  "isObservable": false,
+                  "matches": [
+                    {
+                      "kind": "GraphMatchSyntax",
+                      "hops": [
+                        {
+                          "kind": "GraphPatternHopSyntax",
+                          "alias": "link",
+                          "node": {
+                            "kind": "GraphPatternNodeSyntax",
+                            "alias": "group",
+                            "label": "Group"
+                          },
+                          "outgoing": true,
+                          "type": "MEMBER_OF"
+                        }
+                      ],
+                      "isOptional": false,
+                      "start": {
+                        "kind": "GraphPatternNodeSyntax",
+                        "alias": "person",
+                        "label": "Person"
+                      }
+                    }
+                  ],
+                  "name": "MembersOf",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Membership"
+                  },
+                  "returns": [
+                    {
+                      "kind": "GraphReturnSyntax",
+                      "alias": "person",
+                      "property": "personId",
+                      "source": "personId"
+                    },
+                    {
+                      "kind": "GraphReturnSyntax",
+                      "alias": "person",
+                      "property": "person",
+                      "source": "name"
+                    },
+                    {
+                      "kind": "GraphReturnSyntax",
+                      "alias": "group",
+                      "property": "group",
+                      "source": "name"
+                    },
+                    {
+                      "kind": "GraphReturnSyntax",
+                      "alias": "link",
+                      "property": "since",
+                      "source": "since"
+                    }
+                  ]
+                },
+                {
+                  "kind": "GraphQuerySyntax",
+                  "authorize": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "groupId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "GroupId"
+                    }
+                  },
+                  "conditions": [
+                    {
+                      "kind": "GraphConditionSyntax",
+                      "alias": "group",
+                      "property": "groupId",
+                      "value": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "groupId"
+                      }
+                    },
+                    {
+                      "kind": "GraphConditionSyntax",
+                      "alias": "group",
+                      "property": "name",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "Ops"
+                      }
+                    }
+                  ],
+                  "description": null,
+                  "filters": [],
+                  "graph": "Organization",
+                  "isObservable": true,
+                  "matches": [
+                    {
+                      "kind": "GraphMatchSyntax",
+                      "hops": [],
+                      "isOptional": false,
+                      "start": {
+                        "kind": "GraphPatternNodeSyntax",
+                        "alias": "group",
+                        "label": "Group"
+                      }
+                    },
+                    {
+                      "kind": "GraphMatchSyntax",
+                      "hops": [
+                        {
+                          "kind": "GraphPatternHopSyntax",
+                          "alias": null,
+                          "node": {
+                            "kind": "GraphPatternNodeSyntax",
+                            "alias": "leader",
+                            "label": "Person"
+                          },
+                          "outgoing": false,
+                          "type": "LEADS"
+                        }
+                      ],
+                      "isOptional": true,
+                      "start": {
+                        "kind": "GraphPatternNodeSyntax",
+                        "alias": "group",
+                        "label": "Group"
+                      }
+                    }
+                  ],
+                  "name": "LeaderOf",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "Leadership"
+                  },
+                  "returns": [
+                    {
+                      "kind": "GraphReturnSyntax",
+                      "alias": "group",
+                      "property": "groupId",
+                      "source": "groupId"
+                    },
+                    {
+                      "kind": "GraphReturnSyntax",
+                      "alias": "leader",
+                      "property": "leader",
+                      "source": "name"
+                    }
+                  ]
+                }
+              ],
+              "graphs": [
+                {
+                  "kind": "GraphSyntax",
+                  "description": null,
+                  "edges": [
+                    {
+                      "kind": "GraphEdgeSyntax",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "since",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": true,
+                            "name": "DateTime"
+                          }
+                        }
+                      ],
+                      "source": "Person",
+                      "target": "Group",
+                      "type": "MEMBER_OF"
+                    },
+                    {
+                      "kind": "GraphEdgeSyntax",
+                      "properties": [],
+                      "source": "Person",
+                      "target": "Group",
+                      "type": "LEADS"
+                    }
+                  ],
+                  "name": "Organization",
+                  "nodes": [
+                    {
+                      "kind": "GraphNodeSyntax",
+                      "label": "Person",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "isKey": true,
+                          "name": "personId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "PersonId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "name",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Name"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "GraphNodeSyntax",
+                      "label": "Group",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "isKey": true,
+                          "name": "groupId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "GroupId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "name",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "Name"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "name": "OrganizationChart",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Membership",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "personId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PersonId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "person",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Name"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "group",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Name"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "since",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "DateTime"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Leadership",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "groupId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "GroupId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "leader",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "Name"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PersonRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "11111111-1111-4111-8111-111111111111"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Kari"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "SeeingMembers",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Organization"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

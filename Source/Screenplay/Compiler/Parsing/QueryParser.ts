@@ -110,6 +110,8 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     };
 }
 
+export const parseQueryParameter = (context: ParserContext, line: SourceLine, keyword: string): QueryParameterSyntax | undefined => parseParameter(context, line, keyword);
+
 function parseParameter(context: ParserContext, line: SourceLine, keyword: string): QueryParameterSyntax | undefined {
     const match = parameterPattern.exec(line.content.substring(keyword.length).trim());
     if (match === null) {

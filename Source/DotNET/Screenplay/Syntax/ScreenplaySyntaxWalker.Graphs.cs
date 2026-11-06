@@ -15,6 +15,37 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="GraphSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="GraphSyntax"/> to visit.</param>
+    /// <summary>
+    /// Visits a <see cref="GraphQuerySyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="GraphQuerySyntax"/> to visit.</param>
+    public virtual void VisitGraphQuery(GraphQuerySyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitTypeRef(syntax.ReturnType);
+        if (syntax.By is not null) VisitQueryParameter(syntax.By);
+        foreach (var filter in syntax.Filters) VisitQueryParameter(filter);
+        if (syntax.Authorize is not null) VisitAuthorize(syntax.Authorize);
+        foreach (var match in syntax.Matches)
+        {
+            VisitNode(match);
+            VisitNode(match.Start);
+            foreach (var hop in match.Hops)
+            {
+                VisitNode(hop);
+                VisitNode(hop.Node);
+            }
+        }
+
+        foreach (var condition in syntax.Conditions)
+        {
+            VisitNode(condition);
+            VisitExpression(condition.Value);
+        }
+
+        foreach (var @return in syntax.Returns) VisitNode(@return);
+    }
+
     public virtual void VisitGraph(GraphSyntax syntax)
     {
         VisitNode(syntax);

@@ -91,4 +91,23 @@ public class when_running_graph_specifications : for_SemanticModelBinder.given.a
     [Fact]
     void should_fail_an_absence_that_does_not_hold() =>
         Run($"{Registered()}        when append Visited\n          for \"{Person}\"\n          groupId = \"{Group}\"\n          points = 1\n        then graph G\n          no node Person \"{Person}\"\n          no edge VISITED from \"{Person}\" to \"{Group}\"\n").Single().Failures.Length.ShouldEqual(2);
+
+    const string Clocked =
+        "command reads protected\nconcept PersonId : Uuid\nconcept GroupId : Uuid\n" +
+        "module M\n  feature F\n    slice StateView S\n" +
+        "      event MemberAdded\n        groupId GroupId\n" +
+        "      graph G\n        node Person\n          personId PersonId key\n        node Group\n          groupId GroupId key\n" +
+        "        edge MEMBER_OF source Person target Group\n          since DateTime\n" +
+        "      projection P => graph G\n        edge MEMBER_OF\n          from MemberAdded source $eventSourceId target groupId\n            since = $eventContext.occurred\n";
+
+    IReadOnlyList<SemanticGraphSpecificationResult> RunClocked(string clock, string expected)
+    {
+        var result = Bind($"{Clocked}      specification S\n{clock}        when append MemberAdded\n          for \"{Person}\"\n          groupId = \"{Group}\"\n        then graph G\n          has edge MEMBER_OF from \"{Person}\" to \"{Group}\"\n            since = \"{expected}\"\n");
+        result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeEmpty();
+        return SemanticGraphRunner.RunAll(result.Value!.Model);
+    }
+
+    [Fact] void should_use_the_stated_clock_for_event_context() => RunClocked("        given clock \"2026-03-04T05:06:07Z\"\n", "2026-03-04T05:06:07Z").Single().Passed.ShouldBeTrue();
+    [Fact] void should_use_a_fixed_clock_when_none_is_stated() => RunClocked(string.Empty, SemanticGraphRunner.DefaultClock).Single().Passed.ShouldBeTrue();
+    [Fact] void should_fail_when_the_asserted_instant_differs() => RunClocked("        given clock \"2026-03-04T05:06:07Z\"\n", "2030-01-01T00:00:00Z").Single().Passed.ShouldBeFalse();
 }

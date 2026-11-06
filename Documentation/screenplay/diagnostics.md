@@ -76,6 +76,14 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0875` | Error | A `given graph` or `then graph` step is malformed. Expected `has node <Label> <key>`, `has edge <TYPE> from <source> to <target> [identified by <identity>]`, and in `then graph` also `no node` and `no edge`, with property assertions underneath. |
 | `PLAY0876` | Error | A `given graph` or `then graph` step names a graph, node label or edge type that is not declared. |
 | `PLAY0877` | Error | A graph projection is declared outside a slice, for example in a standalone projection document. Declare it in a slice next to its graph. |
+| `PLAY0878` | Error | A graph query is malformed: its header, a `match` pattern, a `where` condition or its `return` block. |
+| `PLAY0879` | Error | A graph query names a graph, node label, edge type, alias or property that is not declared. |
+| `PLAY0880` | Error | A graph query hop uses an edge that does not connect those two labels in that direction. |
+| `PLAY0881` | Error | A graph query does not return exactly the properties its read model requires, or returns a property of a different type. |
+| `PLAY0882` | Error | A graph query condition uses an argument the query does not declare, or compares values of different types. |
+| `PLAY0883` | Error | A property returned from an `optional match` is assigned to a read-model property that is not optional. |
+| `PLAY0884` | Error | A graph query uses the same alias twice. |
+| `PLAY0885` | Error | A graph query uses a construct this version does not have: variable-length paths, `or`, ranges, functions or aggregates. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 

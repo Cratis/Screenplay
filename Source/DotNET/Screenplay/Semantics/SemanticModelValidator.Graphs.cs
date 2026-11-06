@@ -11,6 +11,40 @@ internal static partial class SemanticModelValidator
     internal static bool UsesGraphs(SemanticApplication application) =>
         !application.Graphs.IsDefaultOrEmpty || !application.GraphProjections.IsDefaultOrEmpty || !application.GraphSpecifications.IsDefaultOrEmpty;
 
+    // ESM v40 constructs: queries that read a graph.
+    internal static bool UsesGraphQueries(SemanticApplication application) =>
+        !application.GraphQueries.IsDefaultOrEmpty || application.GraphSpecifications.Any(specification => !specification.ThenQueries.IsDefaultOrEmpty || specification.Clock is not null);
+
+    static void ValidateGraphQueryVersion(SemanticApplication application, SemanticVersion version)
+    {
+        ValidateFeatureVersion(
+            UsesGraphQueries(application),
+            version,
+            SemanticVersion.V40,
+            "An ESM v40 model must declare a graph query.",
+            "Graph queries require ESM v40.");
+        if (!version.IsAtLeast(SemanticVersion.V40)) return;
+        RejectGraphDuplicates(application.GraphQueries.Select(_ => _.Name), "graph query");
+        var graphs = application.Graphs.ToDictionary(graph => graph.Name, StringComparer.Ordinal);
+        var readModels = SlicesOf(application).SelectMany(slice => slice.ReadModels).ToDictionary(readModel => readModel.Id);
+        foreach (var query in application.GraphQueries)
+        {
+            if (!graphs.TryGetValue(query.Graph, out var graph)) throw new InvalidSemanticContract($"Graph query '{query.Name}' names unknown graph '{query.Graph}'.");
+            if (!readModels.TryGetValue(query.ReadModel, out var readModel)) throw new InvalidSemanticContract($"Graph query '{query.Name}' returns unknown read model '{query.ReadModel}'.");
+            if (query.Matches.IsDefaultOrEmpty || query.Matches.All(match => match.IsOptional)) throw new InvalidSemanticContract($"Graph query '{query.Name}' has no required match.");
+            foreach (var @return in query.Returns)
+            {
+                if (readModel.Properties.All(property => property.Id != @return.Property)) throw new InvalidSemanticContract($"Graph query '{query.Name}' returns a property read model '{readModel.Name}' does not have.");
+            }
+
+            foreach (var condition in query.Conditions)
+            {
+                if ((condition.Argument is null) == (condition.Literal is null)) throw new InvalidSemanticContract($"Graph query '{query.Name}' condition on '{condition.Alias}.{condition.Property}' must compare with exactly one of an argument and a literal.");
+                if (condition.Argument is not null && query.Arguments.All(argument => argument.Name != condition.Argument)) throw new InvalidSemanticContract($"Graph query '{query.Name}' uses undeclared argument '{condition.Argument}'.");
+            }
+        }
+    }
+
     static void ValidateGraphVersion(SemanticApplication application, SemanticVersion version)
     {
         ValidateFeatureVersion(

@@ -133,7 +133,7 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     ModuleSyntax: ['dependsOn'],
     FeatureSyntax: ['dependsOn'],
     SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs'],
-    SliceSyntax: ['graphs', 'graphProjections'],
+    SliceSyntax: ['graphs', 'graphProjections', 'graphQueries'],
     InvokesSyntax: ['onRefused']
 };
 

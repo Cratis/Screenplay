@@ -30,9 +30,10 @@ import { ParserContext } from './ParserContext';
 import { parseOperation } from './OperationParser';
 import { OperationSyntax } from '../Syntax/Operations';
 import { parseGraph } from './GraphParser';
+import { isGraphQueryHeader, parseGraphQuery } from './GraphQueryParser';
 import { isGraphProjectionHeader, parseGraphProjection } from './GraphProjectionParser';
 import { parseProjection, pushMapping } from './ProjectionParser';
-import { GraphProjectionSyntax, GraphSyntax } from '../Syntax/Graphs';
+import { GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax } from '../Syntax/Graphs';
 import { parseQuery } from './QueryParser';
 import { parseReaction } from './ReactionParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
@@ -81,6 +82,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const readModels: ReadModelSyntax[] = [];
     const graphs: GraphSyntax[] = [];
     const graphProjections: GraphProjectionSyntax[] = [];
+    const graphQueries: GraphQuerySyntax[] = [];
     const screens: ScreenSyntax[] = [];
     const reducers: ReducerSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -111,7 +113,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         } else if (keyword === 'command') {
             commands.push(parseCommand(context, child));
         } else if (keyword === 'query') {
-            queries.push(parseQuery(context, child));
+            if (isGraphQueryHeader(child.content)) graphQueries.push(parseGraphQuery(context, child));
+            else queries.push(parseQuery(context, child));
         } else if (keyword === 'projection') {
             if (isGraphProjectionHeader(child.content)) graphProjections.push(parseGraphProjection(context, child, pushMapping));
             else projections.push(parseProjection(context, child));
@@ -143,7 +146,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     const syntax: SliceSyntax = {
-        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, ...(graphs.length > 0 ? { graphs } : {}), ...(graphProjections.length > 0 ? { graphProjections } : {}), screens,
+        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, ...(graphs.length > 0 ? { graphs } : {}), ...(graphProjections.length > 0 ? { graphProjections } : {}), ...(graphQueries.length > 0 ? { graphQueries } : {}), screens,
         location: locationOf(line),
     };
     dependencySources.set(syntax, { reducers });

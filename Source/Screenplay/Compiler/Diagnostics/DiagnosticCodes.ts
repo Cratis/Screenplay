@@ -533,4 +533,12 @@ export const DiagnosticCodes = {
     InvalidGraphSpecification: 'PLAY0875',
     UnknownGraphSpecificationReference: 'PLAY0876',
     GraphProjectionOutsideSlice: 'PLAY0877',
+    InvalidGraphQuery: 'PLAY0878',
+    UnknownGraphQueryReference: 'PLAY0879',
+    GraphQueryEdgeMismatch: 'PLAY0880',
+    GraphQueryReturnMismatch: 'PLAY0881',
+    GraphQueryArgumentMismatch: 'PLAY0882',
+    GraphQueryOptionalReturn: 'PLAY0883',
+    DuplicateGraphQueryAlias: 'PLAY0884',
+    UnsupportedGraphQueryConstruct: 'PLAY0885',
 } as const;

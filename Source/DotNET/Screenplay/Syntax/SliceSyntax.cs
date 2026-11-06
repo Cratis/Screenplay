@@ -151,4 +151,9 @@ public record SliceSyntax(
     /// Gets the projections that build a graph, declared <c>projection &lt;Name&gt; =&gt; graph &lt;Graph&gt;</c>.
     /// </summary>
     public IEnumerable<GraphProjectionSyntax> GraphProjections { get; init; } = [];
+
+    /// <summary>
+    /// Gets the queries that read a graph, declared <c language="screenplay">query &lt;Name&gt; =&gt; &lt;ReadModel&gt;[] graph &lt;Graph&gt;</c>.
+    /// </summary>
+    public IEnumerable<GraphQuerySyntax> GraphQueries { get; init; } = [];
 }

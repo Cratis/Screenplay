@@ -209,6 +209,8 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticGraphStep> givenGraphs = default;
         SemanticSpecificationEvent? whenAppended = null;
         ImmutableArray<SemanticGraphStep> thenGraphs = default;
+        ImmutableArray<SemanticGraphQueryExpectation> thenQueries = [];
+        string? clock = null;
         while (NextProperty(ref reader, seen, "graph specification") is { } property)
         {
             switch (property)
@@ -219,12 +221,14 @@ internal static partial class SemanticModelRead
                 case "givenGraphs": givenGraphs = Array(ref reader, GraphStep, property); break;
                 case "whenAppended": RequiredToken(ref reader, JsonTokenType.StartObject, property); whenAppended = SpecificationEvent(ref reader, 38, false); break;
                 case "thenGraphs": thenGraphs = Array(ref reader, GraphStep, property); break;
+                case "thenQueries": thenQueries = Array(ref reader, GraphQueryExpectation, property); break;
+                case "clock": clock = String(ref reader, property); break;
                 default: throw Unknown(property, "graph specification");
             }
         }
 
         Required(owner is not null && name is not null && !given.IsDefault && !givenGraphs.IsDefault && !thenGraphs.IsDefault, "graph specification");
-        return new(owner!, name!, given) { GivenGraphs = givenGraphs, WhenAppended = whenAppended, ThenGraphs = thenGraphs };
+        return new(owner!, name!, given) { GivenGraphs = givenGraphs, WhenAppended = whenAppended, ThenGraphs = thenGraphs, ThenQueries = thenQueries, Clock = clock };
     }
 
     static SemanticGraphStep GraphStep(ref Utf8JsonReader reader)
@@ -295,5 +299,217 @@ internal static partial class SemanticModelRead
 
         Required(name is not null && value is not null, "graph property value");
         return new(name!, value!);
+    }
+
+    static SemanticGraphQuery GraphQuery(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph query");
+        var seen = NewSeen();
+        string? name = null;
+        string? graph = null;
+        SemanticId? readModel = null;
+        SemanticQueryCardinality? cardinality = null;
+        SemanticQueryDelivery? delivery = null;
+        ImmutableArray<SemanticGraphQueryArgument> arguments = default;
+        ImmutableArray<SemanticGraphMatch> matches = default;
+        ImmutableArray<SemanticGraphCondition> conditions = default;
+        ImmutableArray<SemanticGraphReturn> returns = default;
+        SemanticAuthorization? authorization = null;
+        while (NextProperty(ref reader, seen, "graph query") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "graph": graph = String(ref reader, property); break;
+                case "readModel": readModel = Identifier(ref reader, property); break;
+                case "cardinality": cardinality = ParseQueryCardinality(String(ref reader, property)); break;
+                case "delivery": delivery = ParseQueryDelivery(String(ref reader, property)); break;
+                case "arguments": arguments = Array(ref reader, GraphQueryArgument, property); break;
+                case "matches": matches = Array(ref reader, GraphMatch, property); break;
+                case "conditions": conditions = Array(ref reader, GraphCondition, property); break;
+                case "returns": returns = Array(ref reader, GraphReturn, property); break;
+                case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
+                default: throw Unknown(property, "graph query");
+            }
+        }
+
+        Required(name is not null && graph is not null && readModel is not null && cardinality is not null && delivery is not null && !arguments.IsDefault && !matches.IsDefault && !conditions.IsDefault && !returns.IsDefault, "graph query");
+        return new(name!, graph!, readModel!.Value, cardinality!.Value, delivery!.Value, arguments, matches, conditions, returns) { Authorization = authorization };
+    }
+
+    static SemanticGraphQueryArgument GraphQueryArgument(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph query argument");
+        var seen = NewSeen();
+        string? name = null;
+        SemanticTypeReference? type = null;
+        bool? key = null;
+        while (NextProperty(ref reader, seen, "graph query argument") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "type": type = Nested(ref reader, TypeReference, property); break;
+                case "key": key = Boolean(ref reader, property); break;
+                default: throw Unknown(property, "graph query argument");
+            }
+        }
+
+        Required(name is not null && type is not null && key is not null, "graph query argument");
+        return new(name!, type!, key!.Value);
+    }
+
+    static SemanticGraphMatch GraphMatch(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph match");
+        var seen = NewSeen();
+        bool? optional = null;
+        SemanticGraphPatternNode? start = null;
+        ImmutableArray<SemanticGraphHop> hops = default;
+        while (NextProperty(ref reader, seen, "graph match") is { } property)
+        {
+            switch (property)
+            {
+                case "optional": optional = Boolean(ref reader, property); break;
+                case "start": start = Nested(ref reader, GraphPatternNode, property); break;
+                case "hops": hops = Array(ref reader, GraphHop, property); break;
+                default: throw Unknown(property, "graph match");
+            }
+        }
+
+        Required(optional is not null && start is not null && !hops.IsDefault, "graph match");
+        return new(optional!.Value, start!, hops);
+    }
+
+    static SemanticGraphPatternNode GraphPatternNode(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph pattern node");
+        var seen = NewSeen();
+        string? alias = null;
+        string? label = null;
+        while (NextProperty(ref reader, seen, "graph pattern node") is { } property)
+        {
+            switch (property)
+            {
+                case "alias": alias = String(ref reader, property); break;
+                case "label": label = String(ref reader, property); break;
+                default: throw Unknown(property, "graph pattern node");
+            }
+        }
+
+        Required(label is not null, "graph pattern node");
+        return new(alias, label!);
+    }
+
+    static SemanticGraphHop GraphHop(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph hop");
+        var seen = NewSeen();
+        string? alias = null;
+        string? type = null;
+        bool? outgoing = null;
+        SemanticGraphPatternNode? node = null;
+        while (NextProperty(ref reader, seen, "graph hop") is { } property)
+        {
+            switch (property)
+            {
+                case "alias": alias = String(ref reader, property); break;
+                case "type": type = String(ref reader, property); break;
+                case "outgoing": outgoing = Boolean(ref reader, property); break;
+                case "node": node = Nested(ref reader, GraphPatternNode, property); break;
+                default: throw Unknown(property, "graph hop");
+            }
+        }
+
+        Required(type is not null && outgoing is not null && node is not null, "graph hop");
+        return new(alias, type!, outgoing!.Value, node!);
+    }
+
+    static SemanticGraphCondition GraphCondition(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph condition");
+        var seen = NewSeen();
+        string? alias = null;
+        string? name = null;
+        string? argument = null;
+        SemanticValue? literal = null;
+        while (NextProperty(ref reader, seen, "graph condition") is { } property)
+        {
+            switch (property)
+            {
+                case "alias": alias = String(ref reader, property); break;
+                case "name": name = String(ref reader, property); break;
+                case "argument": argument = String(ref reader, property); break;
+                case "literal": literal = Nested(ref reader, Value, property); break;
+                default: throw Unknown(property, "graph condition");
+            }
+        }
+
+        Required(alias is not null && name is not null, "graph condition");
+        return new(alias!, name!) { Argument = argument, Literal = literal };
+    }
+
+    static SemanticGraphReturn GraphReturn(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph return");
+        var seen = NewSeen();
+        SemanticId? target = null;
+        string? alias = null;
+        string? source = null;
+        while (NextProperty(ref reader, seen, "graph return") is { } property)
+        {
+            switch (property)
+            {
+                case "property": target = Identifier(ref reader, property); break;
+                case "alias": alias = String(ref reader, property); break;
+                case "source": source = String(ref reader, property); break;
+                default: throw Unknown(property, "graph return");
+            }
+        }
+
+        Required(target is not null && alias is not null && source is not null, "graph return");
+        return new(target!.Value, alias!, source!);
+    }
+
+    static SemanticGraphQueryExpectation GraphQueryExpectation(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph query expectation");
+        var seen = NewSeen();
+        string? query = null;
+        bool? exactly = null;
+        ImmutableArray<SemanticGraphPropertyValue> arguments = default;
+        ImmutableArray<SemanticGraphRow> rows = default;
+        while (NextProperty(ref reader, seen, "graph query expectation") is { } property)
+        {
+            switch (property)
+            {
+                case "graphQuery": query = String(ref reader, property); break;
+                case "exactly": exactly = Boolean(ref reader, property); break;
+                case "arguments": arguments = Array(ref reader, GraphPropertyValue, property); break;
+                case "rows": rows = Array(ref reader, GraphRow, property); break;
+                default: throw Unknown(property, "graph query expectation");
+            }
+        }
+
+        Required(query is not null && exactly is not null && !arguments.IsDefault && !rows.IsDefault, "graph query expectation");
+        return new(query!, exactly!.Value, arguments, rows);
+    }
+
+    static SemanticGraphRow GraphRow(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph row");
+        var seen = NewSeen();
+        ImmutableArray<SemanticGraphPropertyValue> values = default;
+        while (NextProperty(ref reader, seen, "graph row") is { } property)
+        {
+            switch (property)
+            {
+                case "values": values = Array(ref reader, GraphPropertyValue, property); break;
+                default: throw Unknown(property, "graph row");
+            }
+        }
+
+        Required(!values.IsDefault, "graph row");
+        return new(values);
     }
 }

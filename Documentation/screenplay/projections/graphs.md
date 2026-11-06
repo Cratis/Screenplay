@@ -117,3 +117,47 @@ The reference executor keeps an in-memory graph and applies these operations, wh
 The event model board, dependency and lineage queries, find-references and rename follow read-model projections only. A graph projection is compiled, printed, bound and executed like any other construct, but those tools do not draw it or rewrite its event references; renaming an event leaves a graph projection that the compiler then reports as unknown.
 
 See also [graph declarations](../graphs.md).
+
+## Reading a graph
+
+A query that ends in `graph <Graph>` follows a path over the graph's declared nodes and edges and returns an ordinary read model (decision 0139, ESM v40):
+
+```screenplay
+concept PersonId : Uuid
+concept GroupId  : Uuid
+concept Name     : String
+
+module Organization
+  feature Chart
+    slice StateView OrganizationChart
+      graph Organization
+        node Person
+          personId PersonId key
+          name     Name
+        node Group
+          groupId GroupId key
+          title   Name
+        edge MEMBER_OF source Person target Group
+          since DateTime optional
+
+      readmodel Membership
+        personId PersonId key
+        person   Name
+        since    DateTime optional
+
+      query MembersOf => Membership[] graph Organization
+        filter groupId GroupId
+        match person:Person -link:MEMBER_OF-> group:Group
+        where group.groupId = $groupId
+        return
+          personId = person.personId
+          person   = person.name
+          since    = link.since
+```
+
+- `match` is a path of `alias:Label`, `-alias:TYPE->` (outgoing) and `<-alias:TYPE-` (incoming) steps; an alias is needed only where `where` or `return` names it. `optional match` follows a path that may be absent, so what it returns must go to optional read-model properties (`PLAY0883`).
+- `where` joins equality tests with `and`; each compares a node or edge property with a `$argument` or a literal.
+- `return` assigns every required read-model property from a node or edge property of the pattern.
+- Not in this version (`PLAY0885`): variable-length paths, `or`, ranges, functions and aggregates. There is no engine-native query text.
+- A specification asserts it with `then query <Name>` after `given graph`, or after events a projection turns into nodes and edges. `given clock "<instant>"` sets `$eventContext.occurred` for those events; without it the reference runner uses a fixed instant.
+

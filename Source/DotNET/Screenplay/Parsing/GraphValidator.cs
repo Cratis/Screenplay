@@ -33,6 +33,12 @@ internal static class GraphValidator
             GraphProjectionValidator.Validate(projection, byName, names, context);
         }
 
+        var readModels = slices.SelectMany(slice => slice.ReadModels ?? []).GroupBy(readModel => readModel.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        foreach (var query in slices.SelectMany(slice => slice.GraphQueries))
+        {
+            GraphQueryValidator.Validate(query, byName, readModels, context);
+        }
+
         foreach (var specification in slices.SelectMany(slice => slice.Specifications))
         {
             foreach (var step in specification.GivenGraphs.Concat(specification.ThenGraphs))

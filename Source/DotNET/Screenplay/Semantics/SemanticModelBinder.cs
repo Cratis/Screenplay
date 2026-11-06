@@ -46,6 +46,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesGraphQueries(application)) return (LanguageVersion.V40, SemanticVersion.V40);
         if (SemanticModelValidator.UsesGraphs(application)) return (LanguageVersion.V38, SemanticVersion.V38);
         if (SemanticClockUsage.Uses(application)) return (LanguageVersion.V37, SemanticVersion.V37);
         if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
@@ -255,7 +256,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV38Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV40Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -423,7 +424,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var (stateMachines, workflows) = BindLifecycles(modules);
-            var (graphs, graphProjections, graphSpecifications) = BindGraphs(modules);
+            var (graphs, graphProjections, graphSpecifications, graphQueries) = BindGraphs(modules);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
             ValidateReactionIdentities(modules, policies);
@@ -441,6 +442,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Graphs = graphs,
                 GraphProjections = graphProjections,
                 GraphSpecifications = graphSpecifications,
+                GraphQueries = graphQueries,
                 EventSources = eventSources,
                 ReactionProductionMode = syntax.ReactionProductionMode is null ? null : SemanticReactionProductionMode.Atomic,
                 TimeZone = timeZone,
