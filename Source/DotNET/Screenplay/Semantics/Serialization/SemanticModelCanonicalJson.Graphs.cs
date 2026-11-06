@@ -69,7 +69,7 @@ public static partial class SemanticModelCanonicalJson
         {
             output.WriteStartObject();
             CanonicalJson.WriteString(output, "alias", condition.Alias);
-            CanonicalJson.WriteString(output, "property", condition.Property);
+            CanonicalJson.WriteString(output, "name", condition.Property);
             if (condition.Argument is not null) CanonicalJson.WriteString(output, "argument", condition.Argument);
             if (condition.Literal is not null)
             {
@@ -217,7 +217,7 @@ public static partial class SemanticModelCanonicalJson
     static void WriteGraphQueryExpectation(Utf8JsonWriter writer, SemanticGraphQueryExpectation expectation)
     {
         writer.WriteStartObject();
-        CanonicalJson.WriteString(writer, "query", expectation.Query);
+        CanonicalJson.WriteString(writer, "graphQuery", expectation.Query);
         writer.WriteBoolean("exactly", expectation.Exactly);
         WriteGraphPropertyValues(writer, "arguments", expectation.Arguments);
         WriteArray(writer, "rows", expectation.Rows, (output, row) =>

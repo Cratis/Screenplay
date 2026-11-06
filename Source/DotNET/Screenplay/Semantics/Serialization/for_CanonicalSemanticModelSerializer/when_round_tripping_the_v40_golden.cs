@@ -27,5 +27,5 @@ public class when_round_tripping_the_v40_golden : Specification
     [Fact] void should_leave_earlier_readers_unextended() => EsmSchemaV38Support.Supports(LanguageVersion.V40, SemanticVersion.V40).ShouldBeFalse();
     [Fact] void should_write_the_graph_query() => _text.ShouldContain("\"graphQueries\":[{\"name\":\"MembersOf\",\"graph\":\"Organization\"");
     [Fact] void should_write_the_optional_hop_alias() => _text.ShouldContain("\"alias\":\"link\",\"type\":\"MEMBER_OF\",\"outgoing\":true");
-    [Fact] void should_write_the_query_expectation() => _text.ShouldContain("\"thenQueries\":[{\"query\":\"MembersOf\"");
+    [Fact] void should_write_the_query_expectation() => _text.ShouldContain("\"thenQueries\":[{\"graphQuery\":\"MembersOf\"");
 }

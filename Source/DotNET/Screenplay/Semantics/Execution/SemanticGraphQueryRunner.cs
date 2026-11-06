@@ -63,7 +63,7 @@ internal static class SemanticGraphQueryRunner
         Dictionary<string, string?> arguments)
     {
         var graph = application.Graphs.First(candidate => candidate.Name == query.Graph);
-        var bindings = new List<Binding> { new([], []) }.AsEnumerable();
+        var bindings = new List<Binding> { new(ImmutableDictionary<string, Dictionary<string, SemanticValue>?>.Empty, ImmutableDictionary<string, (string Label, string? Key)>.Empty) }.AsEnumerable();
         foreach (var match in query.Matches) bindings = Extend(bindings, snapshot, graph, match);
         var rows = new List<Dictionary<string, SemanticValue>>();
         foreach (var binding in bindings)

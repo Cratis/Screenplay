@@ -438,7 +438,7 @@ internal static partial class SemanticModelRead
             switch (property)
             {
                 case "alias": alias = String(ref reader, property); break;
-                case "property": name = String(ref reader, property); break;
+                case "name": name = String(ref reader, property); break;
                 case "argument": argument = String(ref reader, property); break;
                 case "literal": literal = Nested(ref reader, Value, property); break;
                 default: throw Unknown(property, "graph condition");
@@ -483,7 +483,7 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "query": query = String(ref reader, property); break;
+                case "graphQuery": query = String(ref reader, property); break;
                 case "exactly": exactly = Boolean(ref reader, property); break;
                 case "arguments": arguments = Array(ref reader, GraphPropertyValue, property); break;
                 case "rows": rows = Array(ref reader, GraphRow, property); break;
