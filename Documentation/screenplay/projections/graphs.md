@@ -123,14 +123,36 @@ See also [graph declarations](../graphs.md).
 A query that ends in `graph <Graph>` follows a path over the graph's declared nodes and edges and returns an ordinary read model (decision 0139, ESM v40):
 
 ```screenplay
-query MembersOf => Membership[] graph Organization
-  filter groupId GroupId
-  match person:Person -link:MEMBER_OF-> group:Group
-  where group.groupId = $groupId
-  return
-    personId = person.personId
-    person   = person.name
-    since    = link.since
+concept PersonId : Uuid
+concept GroupId  : Uuid
+concept Name     : String
+
+module Organization
+  feature Chart
+    slice StateView OrganizationChart
+      graph Organization
+        node Person
+          personId PersonId key
+          name     Name
+        node Group
+          groupId GroupId key
+          title   Name
+        edge MEMBER_OF source Person target Group
+          since DateTime optional
+
+      readmodel Membership
+        personId PersonId key
+        person   Name
+        since    DateTime optional
+
+      query MembersOf => Membership[] graph Organization
+        filter groupId GroupId
+        match person:Person -link:MEMBER_OF-> group:Group
+        where group.groupId = $groupId
+        return
+          personId = person.personId
+          person   = person.name
+          since    = link.since
 ```
 
 - `match` is a path of `alias:Label`, `-alias:TYPE->` (outgoing) and `<-alias:TYPE-` (incoming) steps; an alias is needed only where `where` or `return` names it. `optional match` follows a path that may be absent, so what it returns must go to optional read-model properties (`PLAY0883`).
