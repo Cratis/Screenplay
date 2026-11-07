@@ -1694,7 +1694,7 @@ The items of a navigation outlet - `outlet <name> of navigation` on a layout or 
 
 ## Slots
 
-Screenplay 6 calls every region content is placed in a slot; see [Slot roles](templates.md#slot-roles). The Screenplay 5 forms that wrote a slot as `outlet` are errors, with no deprecation period. Each message names the replacement and the migration that rewrites the model: `screenplay migrate --from 5 --to 6` (slots and outlets). The TypeScript compiler reports the component and navigation forms; layouts, templates and contributions are opaque to it, so the C# compiler reports the other two.
+Screenplay 6 calls every region content is placed in a slot; see [Slot roles](templates.md#slot-roles). The Screenplay 5 forms that wrote a slot as `outlet` are errors, with no deprecation period. Each message names the replacement and the migration that rewrites the model: `screenplay migrate --from 5 --to 6` (the `slots-and-outlets` step). The TypeScript compiler reports the component and navigation forms; layouts, templates and contributions are opaque to it, so the C# compiler reports the other two.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -1705,7 +1705,7 @@ Screenplay 6 calls every region content is placed in a slot; see [Slot roles](te
 
 ## Outlets
 
-An outlet is a named list of items a layout or template offers, and a lower level changes; see [Outlets](outlets.md). The Screenplay 5 forms it replaces are errors, with no deprecation period, and each message names the migration `screenplay migrate --from 5 --to 6` (slots and outlets). Layouts, templates and contributions are opaque to the TypeScript compiler, so it reports `PLAY0894` (module regions), `PLAY0896`, `PLAY0897`, `PLAY0898` and `PLAY0904`; the C# compiler reports every code.
+An outlet is a named list of items a layout or template offers, and a lower level changes; see [Outlets](outlets.md). The Screenplay 5 forms it replaces are errors, with no deprecation period, and each message names the migration `screenplay migrate --from 5 --to 6` (the `slots-and-outlets` step). Layouts, templates and contributions are opaque to the TypeScript compiler, so it reports `PLAY0894` (module regions), `PLAY0896`, `PLAY0897`, `PLAY0898` and `PLAY0904`; the C# compiler reports every code.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |

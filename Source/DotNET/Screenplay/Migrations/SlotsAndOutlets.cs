@@ -183,6 +183,35 @@ public class SlotsAndOutlets : IScreenplayMigration
             }
         }
 
+        // A layout or template declares the outlets it offers, with their defaults.
+        public void Declare(RetiredForm form, string owner, List<SlotSyntax> slots, List<OutletSyntax> outlets)
+        {
+            switch (form)
+            {
+                case RetiredNavigationRegion region:
+                    DeclareRegion(region, owner, outlets);
+                    break;
+                case RetiredSlotContribution contribution:
+                    var navigation = new OutletSyntax(contribution.Point, OutletKind.Navigation, OutletMode.Unspecified, [], contribution.Location) { Slot = contribution.Slot.Name };
+                    Change(contribution.Location, [contribution.Slot, navigation], new ReplaceLine(contribution.Location.Line, [contribution.Slot, navigation]));
+                    Add(outlets, navigation, owner);
+                    break;
+                case RetiredSlotItems items:
+                    DeclareSlotItems(items, owner, slots, outlets);
+                    break;
+                default:
+                    Review(form.Location, $"a {owner} cannot hold this retired form - rewrite it by hand");
+                    break;
+            }
+        }
+
+        static string Keyword(OutletMode mode) => mode switch
+        {
+            OutletMode.Override => "overrides",
+            OutletMode.Inherit => "inherits",
+            _ => "extends"
+        };
+
         // A module's region changes the layout's navigation outlet; its buttons are actions, so they change the layout's
         // actions outlet for that region - the one the layout's own region buttons moved to.
         IEnumerable<OutletSyntax> ChangeRegion(RetiredNavigationRegion region, string owner, IReadOnlySet<string> offeredActions)
@@ -223,35 +252,6 @@ public class SlotsAndOutlets : IScreenplayMigration
             }
         }
 
-        static string Keyword(OutletMode mode) => mode switch
-        {
-            OutletMode.Override => "overrides",
-            OutletMode.Inherit => "inherits",
-            _ => "extends"
-        };
-
-        // A layout or template declares the outlets it offers, with their defaults.
-        public void Declare(RetiredForm form, string owner, List<SlotSyntax> slots, List<OutletSyntax> outlets)
-        {
-            switch (form)
-            {
-                case RetiredNavigationRegion region:
-                    DeclareRegion(region, owner, outlets);
-                    break;
-                case RetiredSlotContribution contribution:
-                    var navigation = new OutletSyntax(contribution.Point, OutletKind.Navigation, OutletMode.Unspecified, [], contribution.Location) { Slot = contribution.Slot.Name };
-                    Change(contribution.Location, [contribution.Slot, navigation], new ReplaceLine(contribution.Location.Line, [contribution.Slot, navigation]));
-                    Add(outlets, navigation, owner);
-                    break;
-                case RetiredSlotItems items:
-                    DeclareSlotItems(items, owner, slots, outlets);
-                    break;
-                default:
-                    Review(form.Location, $"a {owner} cannot hold this retired form - rewrite it by hand");
-                    break;
-            }
-        }
-
         void DeclareRegion(RetiredNavigationRegion region, string owner, List<OutletSyntax> outlets)
         {
             var items = region.Items.OfType<NavigationItemSyntax>().Select(item => item with { IsDefault = true }).ToArray();
@@ -260,7 +260,7 @@ public class SlotsAndOutlets : IScreenplayMigration
             edits.AddRange(items.Select(item => new ReplaceLine(item.Location.Line, [item])));
             if (region.Mode is { } mode)
             {
-                Review(region.Location, $"a {owner} declares its outlets - the mode '{mode.ToString().ToLowerInvariant()}' was dropped");
+                Review(region.Location, $"a {owner} declares its outlets, so '{Keyword(mode)}' was dropped - move what it meant to a module, feature or screen that changes outlet '{region.Region}'");
             }
 
             Add(outlets, outlet, owner);
@@ -309,7 +309,7 @@ public class SlotsAndOutlets : IScreenplayMigration
                 var held = buttons.Length + toolbarItems.Length;
                 Review(
                     items.Location,
-                    $"the {items.Slot.Name} slot on {owner} holds {held} item{(held == 1 ? string.Empty : "s")} and {items.Others.Count} other line{(items.Others.Count == 1 ? string.Empty : "s")} (a component, for example). Moved the items to outlet {outlet.Name}; left the rest where it was - place it with a screen's 'fits' or remove it");
+                    $"the {items.Slot.Name} slot on {owner} holds {held} item{(held == 1 ? string.Empty : "s")} and {items.Others.Count} other line{(items.Others.Count == 1 ? string.Empty : "s")}, such as a component - the items moved to outlet '{outlet.Name}' and the rest stays where it was: place it with a screen's 'fits' or remove it");
             }
         }
 

@@ -112,6 +112,9 @@ internal sealed class HookValidator
         _ => ScreenFit.Page
     };
 
+    // A button that names a slice is a hook; the messages call it that.
+    static string Hook(ToolbarButtonSyntax button) => $"Hook '{button.Id}'";
+
     void Offer(IEnumerable<SlotSyntax> slots, IEnumerable<OutletSyntax> outlets)
     {
         foreach (var outlet in outlets.Where(outlet => outlet.Kind is not null))
@@ -204,7 +207,7 @@ internal sealed class HookValidator
     void CheckButton(ToolbarButtonSyntax button, IReadOnlyList<IEnumerable<SlotSyntax>> slots, ScreenSyntax? screen, ScreenActionSubjectKind? outletSubject)
     {
         var subject = button.Subject ?? outletSubject;
-        CheckEnabledWhen(button.EnabledWhen, subject, $"Toolbar button '{button.Id}'", button.Location);
+        CheckEnabledWhen(button.EnabledWhen, subject, Hook(button), button.Location);
         if (button.Slice is null || Resolve(button.Slice) is not { Type: SliceType.StateChange } slice)
         {
             return;
@@ -217,7 +220,7 @@ internal sealed class HookValidator
             {
                 _context.Error(
                     DiagnosticCodes.RunsHookNeedsForm,
-                    $"Toolbar button '{button.Id}' runs slice '{button.Slice}' directly, but nothing supplies its input '{unresolved.Name}' without a form - remove 'runs' so the slice's screen asks for it",
+                    $"{Hook(button)} runs slice '{button.Slice}' directly, but nothing supplies its input '{unresolved.Name}' without a form - remove 'runs' so the slice's screen asks for it",
                     button.Location);
             }
 
@@ -236,7 +239,7 @@ internal sealed class HookValidator
             var fix = unresolved is null
                 ? "write 'runs' instead of 'opens'"
                 : $"give the slice a screen - its input '{unresolved.Name}' needs a form";
-            _context.Error(DiagnosticCodes.HookToScreenlessSlice, $"Toolbar button '{button.Id}' opens slice '{button.Slice}', which has no screen to open and cannot run - {fix}", button.Location);
+            _context.Error(DiagnosticCodes.HookToScreenlessSlice, $"{Hook(button)} opens slice '{button.Slice}', which has no screen to open and cannot run - {fix}", button.Location);
             return;
         }
 
@@ -257,13 +260,13 @@ internal sealed class HookValidator
         var slot = slots.SelectMany(declared => declared).FirstOrDefault(declared => declared.Name == name);
         if (slot is null)
         {
-            _context.Error(DiagnosticCodes.HookSlotNotDeclared, $"Toolbar button '{button.Id}' opens in slot '{name}', which the template offering it does not declare", button.Location);
+            _context.Error(DiagnosticCodes.HookSlotNotDeclared, $"{Hook(button)} opens in slot '{name}', which the template offering it does not declare", button.Location);
             return;
         }
 
         if (screen?.Directives.OfType<ScreenTemplateReferenceSyntax>().Any(template => template.Slots.Any(filled => filled.Name == name)) == true)
         {
-            _context.Error(DiagnosticCodes.HookSlotAlreadyFilled, $"Toolbar button '{button.Id}' opens in slot '{name}', which screen '{screen.Name}' already fills", button.Location);
+            _context.Error(DiagnosticCodes.HookSlotAlreadyFilled, $"{Hook(button)} opens in slot '{name}', which screen '{screen.Name}' already fills", button.Location);
             return;
         }
 
@@ -271,7 +274,7 @@ internal sealed class HookValidator
         {
             _context.Error(
                 DiagnosticCodes.HookSlotRoleNotFitted,
-                $"Toolbar button '{button.Id}' opens in slot '{name}', a {ScreenFitsParser.Keyword(Fit(role))} slot, but screen '{target.Name}' fits {string.Join(", ", target.Fits.Select(ScreenFitsParser.Keyword))}",
+                $"{Hook(button)} opens in slot '{name}', a {ScreenFitsParser.Keyword(Fit(role))} slot, but screen '{target.Name}' fits {string.Join(", ", target.Fits.Select(ScreenFitsParser.Keyword))}",
                 button.Location);
         }
     }

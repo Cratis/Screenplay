@@ -7,7 +7,7 @@ description: "Rewrite .play files written for an earlier Screenplay version with
 
 A Screenplay major version can retire a form. The compiler does not keep the old form working for a while: it reports
 it as an error whose message names the replacement and the migration that writes it, for example
-`run 'screenplay migrate --from 5 --to 6' to rewrite the model (slots and outlets)`. The migration rewrites the files
+`run 'screenplay migrate --from 5 --to 6' (the slots-and-outlets step) to rewrite the model`. The migration rewrites the files
 for you and tells you what it could not decide alone.
 
 ```bash

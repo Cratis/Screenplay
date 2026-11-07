@@ -15,7 +15,7 @@ export const slotsAndOutletsMigrationCommand = 'screenplay migrate --from 5 --to
  * @returns The diagnostic message.
  */
 export function replacedForSlotsAndOutlets(old: string, replacement: string): string {
-    return `${old} is written '${replacement}' since Screenplay 6 - an item list a template offers is an outlet; run '${slotsAndOutletsMigrationCommand}' to rewrite the model (slots and outlets)`;
+    return `${old} is written '${replacement}' since Screenplay 6 - an item list a template offers is an outlet; run '${slotsAndOutletsMigrationCommand}' (the slots-and-outlets step) to rewrite the model`;
 }
 
 /**
@@ -25,5 +25,5 @@ export function replacedForSlotsAndOutlets(old: string, replacement: string): st
  * @returns The diagnostic message.
  */
 export function renamedForSlotsAndOutlets(old: string, replacement: string): string {
-    return `${old} is written '${replacement}' since Screenplay 6 - a region content is placed in is a slot; run '${slotsAndOutletsMigrationCommand}' to rewrite the model (slots and outlets)`;
+    return `${old} is written '${replacement}' since Screenplay 6 - a region content is placed in is a slot; run '${slotsAndOutletsMigrationCommand}' (the slots-and-outlets step) to rewrite the model`;
 }

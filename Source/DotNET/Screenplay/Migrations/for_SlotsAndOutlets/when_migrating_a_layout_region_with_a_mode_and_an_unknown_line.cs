@@ -28,7 +28,7 @@ public class when_migrating_a_layout_region_with_a_mode_and_an_unknown_line : gi
 
     [Fact] void should_need_review() => _result.Outcome.ShouldEqual(MigrationOutcome.NeedsReview);
     [Fact] void should_declare_the_outlet() => _result.Migrated.ShouldContain("  outlet sidebar of navigation\n    default orders");
-    [Fact] void should_say_the_mode_was_dropped() => _result.Reviews.Single(review => review.Message.Contains("mode")).Message.ShouldContain("a layout AppShell declares its outlets - the mode 'override' was dropped");
-    [Fact] void should_locate_the_mode_on_the_region() => _result.Reviews.Single(review => review.Message.Contains("mode")).Location.Line.ShouldEqual(5);
+    [Fact] void should_say_the_mode_was_dropped() => _result.Reviews.Single(review => review.Message.Contains("was dropped")).Message.ShouldContain("a layout AppShell declares its outlets, so 'overrides' was dropped - move what it meant to a module, feature or screen that changes outlet 'sidebar'");
+    [Fact] void should_locate_the_mode_on_the_region() => _result.Reviews.Single(review => review.Message.Contains("was dropped")).Location.Line.ShouldEqual(5);
     [Fact] void should_name_the_unknown_line() => ReviewAt(7).Message.ShouldContain("'divider' in the sidebar region is neither an item, a button nor a logo");
 }
