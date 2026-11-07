@@ -213,6 +213,7 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Purposes, WritePurpose);
         WriteSection(writer, application.Policies, WritePolicy);
         WriteSection(writer, application.Personas ?? [], WritePersona);
+        WriteSection(writer, application.Users, WriteUser);
         WriteSection(writer, application.StickyNotes, WriteStickyNote);
         WriteSection(writer, application.StateMachines, WriteStateMachine);
         WriteSection(writer, application.Workflows, WriteWorkflow);
@@ -699,6 +700,16 @@ public sealed partial class ScreenplayPrinter :
 
             WriteCanvasPlacement(writer, persona.X, persona.Y, persona.Width, persona.Height);
         }
+    }
+
+    void WriteUser(ScreenplayWriter writer, UserSyntax user)
+    {
+        using var anchor = writer.Anchor(user);
+        var line = $"user {user.Name}";
+        if (user.DisplayName is not null) line += $" {StringLiteral.Quote(user.DisplayName)}";
+        var personas = user.Personas.ToList();
+        if (personas.Count > 0) line += $" as {string.Join(", ", personas)}";
+        writer.Line(line);
     }
 
     void WriteStickyNote(ScreenplayWriter writer, StickyNoteSyntax note)

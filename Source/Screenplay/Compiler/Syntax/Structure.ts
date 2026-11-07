@@ -6,7 +6,7 @@ import { CommandReadMode } from './CommandReadMode';
 import { ReactionProductionMode } from './ReactionProductionMode';
 import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
-import { AuthorizeSyntax, PersonaSyntax, StickyNoteSyntax } from './Authorization';
+import { AuthorizeSyntax, PersonaSyntax, StickyNoteSyntax, UserSyntax } from './Authorization';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -150,6 +150,9 @@ export interface ApplicationSyntax extends SyntaxNode {
     // What layouts and templates expose, and what instances store for it - written only when present.
     readonly exposures?: readonly ExposureSyntax[];
     readonly instanceContributions?: readonly InstanceContributionsSyntax[];
+
+    // The development and test users - written only when present.
+    readonly users?: readonly UserSyntax[];
 
     // The sticky notes on the personas canvas - written only when present.
     readonly stickyNotes?: readonly StickyNoteSyntax[];

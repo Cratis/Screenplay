@@ -3882,4 +3882,19 @@ public static class DiagnosticCodes
 
     /// <summary>A graph handler iterates something this version cannot iterate: a nested collection, an item of another collection, or a collection that is not a list of a composite type.</summary>
     public const string UnsupportedGraphForEach = "PLAY0886";
+
+    /// <summary>
+    /// A <c>user</c> declaration is not <c>user &lt;name&gt; ["&lt;display name&gt;"] [as &lt;Persona&gt;, ...]</c>.
+    /// </summary>
+    public const string InvalidUserDeclaration = "PLAY0887";
+
+    /// <summary>
+    /// A <c>user</c> plays a persona no <c>persona</c> declaration names.
+    /// </summary>
+    public const string UnknownUserPersona = "PLAY0888";
+
+    /// <summary>
+    /// Two <c>user</c> declarations carry the same name.
+    /// </summary>
+    public const string DuplicateUser = "PLAY0889";
 }

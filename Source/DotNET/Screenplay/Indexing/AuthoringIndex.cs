@@ -156,6 +156,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case TypeSyntax value: Declare("Type", value.Name, value); break;
             case PolicySyntax value: Declare("Policy", value.Name, value, value.Description); break;
             case PersonaSyntax value: Declare("Persona", value.Name, value); break;
+            case UserSyntax value: Declare("User", value.Name, value); break;
             case ContextMemberSyntax value: Declare("ContextMember", value.Name, value, details: new { type = "time zone", syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case IdentityDetailSyntax value: Declare("IdentityDetail", value.Name, value, details: new { value.Type, value.Source, syntaxOnly = true, authoringMetadata = true }); break;
             case LayoutSyntax value: Declare("Layout", value.Name, value); break;

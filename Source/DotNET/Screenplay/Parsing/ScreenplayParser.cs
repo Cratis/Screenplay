@@ -428,6 +428,30 @@ internal static partial class ScreenplayParser
         return new(name, type, attributes, values, line.Location, validations) { Generation = generation, Description = description, File = file, ValueNumbers = members.Finish(context, line, values.Count), DirectiveLocations = directiveLocations };
     }
 
+    static UserSyntax ParseUser(ParserContext context, SourceLine line)
+    {
+        var match = UserRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidUserDeclaration, $"Invalid user declaration '{line.Content}' - expected 'user <name> [\"<display name>\"] [as <Persona>, ...]'", line.Location);
+            context.SkipBlock(line.Indent);
+            return new(LineText.FirstWord(line.Content), null, [], line.Location);
+        }
+
+        // A user is one line: its body would have nothing to say, so a nested line is reported instead of silently dropped.
+        if (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Error(DiagnosticCodes.InvalidUserDeclaration, $"A user is declared on one line; '{child.Content}' has no place under it", child.Location);
+            context.SkipBlock(line.Indent);
+        }
+
+        var displayName = match.Groups[2].Success ? StringLiteral.Unescape(match.Groups[2].Value) : null;
+        var personas = match.Groups[3].Success
+            ? match.Groups[3].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            : [];
+        return new(match.Groups[1].Value, displayName, personas, line.Location);
+    }
+
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
     {
         var match = PersonaRegex().Match(line.Content);
@@ -609,6 +633,9 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaPolicyRegex();
+
+    [GeneratedRegex(@"^user\s+([A-Za-z_]\w*)(?:\s+""(" + StringLiteral.BodyPattern + @")"")?(?:\s+as\s+([A-Za-z_]\w*(?:\s*,\s*[A-Za-z_]\w*)*))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex UserRegex();
 
     [GeneratedRegex(@"^goal\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaGoalRegex();

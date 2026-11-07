@@ -474,6 +474,7 @@
     "unique",
     "unload",
     "use",
+    "user",
     "users",
     "uses",
     "using",
@@ -530,6 +531,7 @@
     "trigger",
     "type",
     "ui",
+    "user",
     "workflow"
   ],
   "constructs": [
@@ -46242,6 +46244,502 @@
       ]
     },
     {
+      "name": "user",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "persona Person\nuser ada \u0022Ada\u0022 as Person\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": null,
+          "diagnostics": [],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 22,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 23,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 24,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 25,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 26,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 27,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 28,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 29,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 30,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 31,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 32,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 33,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 34,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 35,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 36,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 37,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 38,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 40,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 41,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 11,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 12,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 13,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 14,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 15,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 16,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 17,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 18,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 19,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 20,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 21,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 22,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 23,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 24,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 25,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 26,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 27,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 28,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 29,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 30,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 31,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 32,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 33,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 34,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 35,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 36,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 37,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 38,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 40,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 41,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        }
+      ]
+    },
+    {
       "name": "workflow",
       "parseStatus": "accepted",
       "probes": [
@@ -56058,6 +56556,39 @@
         "error"
       ],
       "title": "A graph handler iterates something this version cannot iterate: a nested collection, an item of another collection, or a collection that is not a list of a composite type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0887",
+      "name": "InvalidUserDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A user declaration is not user \u003Cname\u003E [\u0022\u003Cdisplay name\u003E\u0022] [as \u003CPersona\u003E, ...].",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0888",
+      "name": "UnknownUserPersona",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A user plays a persona no persona declaration names.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0889",
+      "name": "DuplicateUser",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Two user declarations carry the same name.",
       "reserved": false,
       "retired": false
     }

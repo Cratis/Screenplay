@@ -24,7 +24,7 @@ export interface DeclarationHeader {
 const header = new RegExp(
     '^(\\s*(?:public\\s+)?(?:' + [
         'screen\\s+template', 'dialog\\s+template', 'slice\\s+\\w+', 'ui\\s+profile', 'sample\\s+data', 'toolbar',
-        'concept', 'type', 'policy', 'purpose', 'persona', 'module', 'layout', 'theme', 'feature', 'event', 'system', 'eventsource',
+        'concept', 'type', 'policy', 'purpose', 'persona', 'user', 'module', 'layout', 'theme', 'feature', 'event', 'system', 'eventsource',
         'operation', 'command', 'query', 'projection', 'reaction', 'reducer', 'readmodel', 'trigger', 'screen', 'dialog', 'form',
         'constraint', 'specification', 'behavior', 'exposure', 'instance',
     ].join('|') + ')\\s+)([A-Za-z_][\\w.]*)');

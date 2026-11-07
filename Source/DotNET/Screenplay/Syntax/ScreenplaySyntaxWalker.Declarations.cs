@@ -101,6 +101,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitPersona(PersonaSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="UserSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="UserSyntax"/> to visit.</param>
+    public virtual void VisitUser(UserSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="StickyNoteSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="StickyNoteSyntax"/> to visit.</param>

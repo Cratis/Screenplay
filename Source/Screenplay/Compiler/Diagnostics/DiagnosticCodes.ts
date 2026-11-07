@@ -542,4 +542,7 @@ export const DiagnosticCodes = {
     DuplicateGraphQueryAlias: 'PLAY0884',
     UnsupportedGraphQueryConstruct: 'PLAY0885',
     UnsupportedGraphForEach: 'PLAY0886',
+    InvalidUserDeclaration: 'PLAY0887',
+    UnknownUserPersona: 'PLAY0888',
+    DuplicateUser: 'PLAY0889',
 } as const;

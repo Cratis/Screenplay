@@ -1,0 +1,22 @@
+// Development and test users: people a session can act as, each playing zero or more personas (decision 0141).
+policy Staff
+  require authenticated
+
+policy Approver
+  require role "approver"
+
+persona Clerk
+  description "Works the front desk"
+  policy Staff
+
+persona Manager
+  description "Approves what the clerks prepare"
+  policy Staff
+  policy Approver
+
+persona Visitor
+
+user mia "Mia Clerk" as Clerk
+user max "Max \"The Boss\" Manager" as Manager, Clerk
+user vera "Vera Visitor" as Visitor
+user guest

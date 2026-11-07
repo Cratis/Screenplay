@@ -27,6 +27,7 @@ export const constructKeywords = [
     'policy',
     'purpose',
     'persona',
+    'user',
     'sticky',
     'authentication',
     'onboarding',

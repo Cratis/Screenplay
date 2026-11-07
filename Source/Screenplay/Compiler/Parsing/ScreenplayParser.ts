@@ -15,7 +15,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
-import { PersonaSyntax, StickyNoteSyntax } from '../Syntax/Authorization';
+import { PersonaSyntax, StickyNoteSyntax, UserSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { TimeZoneSyntax } from '../Syntax/Calendar';
@@ -63,6 +63,7 @@ const importPattern = pattern(`^import\\s+([\\w.]+)(?:\\s+from\\s+"(?<origin>${s
 const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@?\\w+)*)$');
 const enumValuePattern = pattern('^@?[a-z_]\\w*$');
 const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
+const userPattern = pattern(`^user\\s+([A-Za-z_]\\w*)(?:\\s+"(${stringBodyPattern})")?(?:\\s+as\\s+([A-Za-z_]\\w*(?:\\s*,\\s*[A-Za-z_]\\w*)*))?$`);
 const personaPolicyPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
 const personaGoalPattern = pattern(`^goal\\s+"(${stringBodyPattern})"$`);
 const stickyNotePattern = pattern('^sticky\\s+note\\s+on\\s+(personas|eventsources|givencontexts|seeddata)$');
@@ -116,6 +117,7 @@ interface RootState {
     readonly eventSources: EventSourceSyntax[];
     readonly modules: ModuleSyntax[];
     readonly personas: PersonaSyntax[];
+    readonly users: UserSyntax[];
     readonly stickyNotes: StickyNoteSyntax[];
     readonly policies: PolicySyntax[];
     readonly purposes: PurposeSyntax[];
@@ -139,7 +141,7 @@ function createRootState(placement: PlayPlacement): RootState {
         identity: null, applicationContext: null, reactionProductionMode: null, sawReactionBatches: false, commandReadMode: null,
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
         imports: [], fileImports: [], concepts: [], types: [], systems: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
-        personas: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: []
+        personas: [], users: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: []
     };
 }
 
@@ -167,6 +169,7 @@ const bodyRules: readonly RootRule[] = [
     { matches: isKeyword('type'), parse: (context, line, state) => { state.types.push(parseType(context, line)); } },
     { matches: (keyword, _, state) => keyword === 'module' && !isDocumentPlacement(state.placement), parse: (context, line, state) => parseModuleInPlacedFile(context, line, state.placement, state.moduleBody) },
     { matches: isKeyword('module'), parse: (context, line, state) => { state.modules.push(parseModule(context, line)); } },
+    { matches: isKeyword('user'), parse: (context, line, state) => { state.users.push(parseUser(context, line)); } },
     { matches: isKeyword('persona'), parse: (context, line, state) => { state.personas.push(parsePersona(context, line)); } },
     { matches: isKeyword('sticky'), parse: parseRootStickyNote },
     { matches: isKeyword('seed'), parse: (context, line, state) => { state.seeds.push(parseSeed(context.valueContext, line)); } },
@@ -309,8 +312,8 @@ function buildApplication(context: ParserContext, state: RootState): Application
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
+    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -324,7 +327,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     }
     if (keyword === 'identity') return line.content === 'identity';
     if (keyword === 'context') return line.content === 'context';
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'user' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -453,6 +456,29 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
     }
     const valueNumbers = members.finish(context, line, values.length);
     return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, ...(generation === null ? {} : { generation }), ...(valueNumbers === undefined ? {} : { valueNumbers }), location: locationOf(line) };
+}
+
+// 'user <name> ["<display name>"] [as <Persona>, ...]' - the port of the C# ParseUser.
+function parseUser(context: ParserContext, line: SourceLine): UserSyntax {
+    const match = userPattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidUserDeclaration, `Invalid user declaration '${line.content}' - expected 'user <name> ["<display name>"] [as <Persona>, ...]'`, locationOf(line));
+        context.skipBlock(line.indent);
+        return { kind: 'UserSyntax', name: firstWord(line.content), displayName: null, personas: [], location: locationOf(line) };
+    }
+    // A user is one line: its body would have nothing to say, so a nested line is reported instead of silently dropped.
+    const child = context.peekChild(line.indent);
+    if (child !== undefined) {
+        context.error(DiagnosticCodes.InvalidUserDeclaration, `A user is declared on one line; '${child.content}' has no place under it`, locationOf(child));
+        context.skipBlock(line.indent);
+    }
+    return {
+        kind: 'UserSyntax',
+        name: match[1],
+        displayName: match[2] === undefined ? null : unescapeString(match[2]),
+        personas: match[3] === undefined ? [] : match[3].split(',').map(name => name.trim()).filter(name => name !== ''),
+        location: locationOf(line),
+    };
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.
