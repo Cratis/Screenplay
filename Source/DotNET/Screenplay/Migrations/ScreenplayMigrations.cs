@@ -67,7 +67,9 @@ public static class ScreenplayMigrations
         while (at < to)
         {
             var next = Array.Find(ordered, step => step.From == at)
-                ?? throw new InvalidMigrationPlan($"No migration step goes from Screenplay {at} - cannot migrate from {from} to {to}");
+                ?? throw new InvalidMigrationPlan(ordered.Length > 0 && at == from && at < ordered[0].From
+                    ? $"No migration step goes from Screenplay {at} - the oldest step starts at Screenplay {ordered[0].From} - a model written for an earlier version migrates from {ordered[0].From}"
+                    : $"No migration step goes from Screenplay {at} - cannot migrate from {from} to {to}");
 
             if (next.To > to)
             {

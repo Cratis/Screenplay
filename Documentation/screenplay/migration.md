@@ -11,18 +11,22 @@ it as an error whose message names the replacement and the migration that writes
 for you and tells you what it could not decide alone.
 
 ```bash
-screenplay migrate Samples/Shop --from 5
+screenplay migrate shop --from 5
 ```
 
 ```text
 Migrating 3 files from Screenplay 5 to 6 (1 step: 5→6 slots-and-outlets)
+orders.play
+  5:5 toolbar → toolbar + outlet actions of actions in toolbar
+  15:5 toolbar actions → outlet actions extends
 shell.play
   8:3 navigation topbar → outlet topbar of navigation + outlet topbarActions of actions
   13:3 navigation sidebar → outlet sidebar of navigation
-orders.play
-  4:5 toolbar actions → outlet actions extends
-3 files rewritten · 0 need review · 0 refused
+2 files rewritten · 0 need review · 0 refused
 ```
+
+A file the migration does not change - here the third file - is compiled with the others and never written; it is
+listed only when it still needs review.
 
 A file does not say which version it was written for, so `--from` is required. Migrations only move forward.
 
@@ -33,7 +37,7 @@ A file does not say which version it was written for, so `--from` is required. M
 | Option | Meaning |
 | --- | --- |
 | `<file.play\|folder>` | A folder migrates every `.play` file beneath it as one application. A file migrates that file; the other files of its folder give it its place in the application and are compiled with it, unchanged. |
-| `--from <version>` | The version the files are written in, as a major: `5`, `5.11` or `v5.11.0` all mean 5. |
+| `--from <version>` | The version the files are written in, as a major: `5`, `5.11` or `v5.11.0` all mean 5. A model written for Screenplay 4 or earlier uses `--from 5`: no step starts before 5, and such a model writes slots, outlets, navigation regions and toolbars in the forms the 5 → 6 step reads. `--from 4` is refused with a message that says so. |
 | `--to <version>` | The version to end at. Defaults to the version the compiler reads. |
 | `--dry-run` | Print what would change and write nothing. |
 | `--report <file>` | Also write the result as JSON: the steps, and for every file its outcome, changes, reviews and the compiler's remaining errors and warnings, each with its line. |
@@ -92,6 +96,8 @@ destinations - that modules, features and screens change without copying the tem
 ```bash
 screenplay migrate <folder> --from 5 --to 6
 ```
+
+A Screenplay 4 model migrates the same way, with `--from 5`.
 
 The `slots-and-outlets` step rewrites:
 
