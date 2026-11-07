@@ -775,6 +775,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitOutletItem(syntax: OutletItemSyntax): void {
         this.visitNode(syntax);
         if (syntax.kind === 'ToolbarButtonSyntax' && syntax.authorize) this.visitAuthorize(syntax.authorize);
+        if (syntax.kind === 'ToolbarButtonSyntax' && syntax.enabledWhen) this.visitCondition(syntax.enabledWhen);
         if (syntax.kind === 'OutletGroupSyntax') syntax.buttons.forEach(button => this.visitOutletItem(button));
         if (syntax.kind === 'NavigationItemSyntax') {
             if (syntax.target) this.visitNode(syntax.target);
@@ -844,8 +845,12 @@ export abstract class ScreenplaySyntaxWalker {
                         this.visitUiBinding(parameter.binding);
                     });
                     item.presentation.forEach(node => this.visitNode(node));
+                    if (item.enabledWhen) this.visitCondition(item.enabledWhen);
                 });
-                (syntax.buttons ?? []).forEach(button => this.visitNode(button));
+                (syntax.buttons ?? []).forEach(button => {
+                    this.visitNode(button);
+                    if (button.enabledWhen) this.visitCondition(button.enabledWhen);
+                });
                 break;
             case 'ScreenCodeSyntax':
                 this.visitNode(syntax.code);

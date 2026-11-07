@@ -558,4 +558,8 @@ export const DiagnosticCodes = {
     InvalidOutletDeclaration: 'PLAY0897',
     InvalidOutletItem: 'PLAY0898',
     DuplicateOutlet: 'PLAY0904',
+    // Placement, hooks and bindings (Screenplay 6). This compiler reads the forms on screens and buttons; forms are opaque
+    // here, and the checks of what a line names (PLAY0907-PLAY0913, PLAY0915 and the reference half of PLAY0914) are C#-only.
+    InvalidScreenFits: 'PLAY0906',
+    InvalidScreenShow: 'PLAY0914',
 } as const;

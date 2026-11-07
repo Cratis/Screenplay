@@ -36,6 +36,21 @@ export interface ScreenSyntax extends SyntaxNode {
     readonly directives: readonly ScreenDirectiveSyntax[];
     readonly contributions?: readonly ScreenContributionSyntax[];
     readonly outlets?: readonly OutletSyntax[];
+    readonly fits?: readonly ScreenFit[];
+}
+
+// Where a slice's screen fits, written 'fits <role>, ...' in order of preference.
+export type ScreenFit = 'Dialog' | 'Drawer' | 'Pane' | 'Panel' | 'Page';
+
+// How a hook opens its slice when it names it: 'runs', 'opens dialog', 'opens drawer' or 'opens in slot <name>'.
+export type HookOpening = 'Runs' | 'Dialog' | 'Drawer' | 'Slot';
+
+// 'show <Screen> by <param> from <element>.selection' in a template slot.
+export interface ScreenShowSyntax extends SyntaxNode {
+    readonly kind: 'ScreenShowSyntax';
+    readonly screen: string;
+    readonly by: string;
+    readonly element: string;
 }
 
 // 'data <ReadModel>[[]] via query <Query> [by <param>]'.
@@ -217,6 +232,7 @@ export interface ToolbarItemSyntax extends SyntaxNode {
     readonly confirm?: string | null;
     readonly parameters: readonly ScreenNavigationParameterSyntax[];
     readonly presentation: readonly PresentationValueSyntax[];
+    readonly enabledWhen?: ConditionSyntax | null;
 }
 
 export type ToolbarEmphasis = 'Primary' | 'Secondary' | 'Quiet';
@@ -232,6 +248,10 @@ export interface ToolbarButtonSyntax extends SyntaxNode {
     readonly authorize?: AuthorizeSyntax | null;
     readonly confirm?: string | null;
     readonly runs?: string | null;
+    readonly subject?: ScreenActionSubjectKind | null;
+    readonly opens?: HookOpening | null;
+    readonly opensSlot?: string | null;
+    readonly enabledWhen?: ConditionSyntax | null;
     readonly isDefault?: boolean;
     readonly position?: OutletPositionSyntax | null;
 }
@@ -273,6 +293,7 @@ export type ScreenDirectiveSyntax =
     | ScreenTemplateReferenceSyntax
     | ScreenSectionSyntax
     | ScreenTitleSyntax
+    | ScreenShowSyntax
     | ScreenTableSyntax
     | ScreenSummarySyntax
     | ScreenComponentSyntax
