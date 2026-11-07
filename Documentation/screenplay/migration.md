@@ -119,6 +119,10 @@ Every sample as it was in Screenplay 5.11 migrates to warning-free Screenplay 6 
 specifications in `Source/DotNET/Screenplay/Migrations` hold the migration to that and to a before-and-after fixture
 for every row above.
 
+Screenplay 6 also reports a State Change command nothing issues (`PLAY0533`) in every model check, without `--check`.
+A `--check PLAY0533` or a validation gate that names it does not need changing: the code is still accepted and still
+selects `input-surfaces`, as it did in Screenplay 5. See [Completeness checks](completeness.md).
+
 The [TypeScript compiler](typescript-compiler.md) reports the Screenplay 5 forms with the same messages, but does not
 migrate: the migration runs in the C# compiler, behind the CLI, the MCP tool and the VS Code command.
 

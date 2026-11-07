@@ -12,7 +12,7 @@ screenplay model --scope Billing.Invoices --check all
 
 Repeat `--check` to combine selections. Names and diagnostic codes are case-sensitive; an unknown or empty selection exits `2`. A code selects its whole check. Findings are warnings or information; `--warnaserror` fails on warnings in the reported set. Ordinary compilation does not run these checks.
 
-One check is on by default: every model check, CLI and MCP, reports a State Change command nothing issues (`PLAY0533`), with or without `--check`. A screen action, a guarded action, an attached `execute`, a reaction and a hook all issue a command; a hook issues its slice's commands when it `runs`, or when it opens a slice that has a screen. See [Outlets](outlets.md#hooks).
+One check is on by default: every model check, CLI and MCP, reports a State Change command nothing issues (`PLAY0533`), with or without `--check`. A screen action, a guarded action, an attached `execute`, a reaction and a hook all issue a command; a hook issues its slice's commands when it `runs`, or when it opens a slice that has a screen. See [Outlets](outlets.md#hooks). `PLAY0533` is still accepted as a selection, as it was in Screenplay 5, and still selects `input-surfaces`, so a `--check PLAY0533` or a validation gate that names it keeps working and reports what it reported.
 
 Checks require the **whole application** to have no source errors, even when checking one scope. Otherwise the CLI prints `completeness checks skipped: the model has N error(s)`. Fix source errors before treating an empty completeness result as evidence. Source warnings do not prevent checks.
 
