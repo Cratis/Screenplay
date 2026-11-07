@@ -25,5 +25,14 @@ public class a_fixture : Specification
         _result = migrator.Migrate([new PlayFileContent("document.play", before)], migrator.Plan(5, 6)).Files.Single();
     }
 
+    protected void MigrateSource(string source)
+    {
+        _expected = source;
+        var migrator = new ScreenplayMigrator();
+        _result = migrator.Migrate([new PlayFileContent("document.play", source)], migrator.Plan(5, 6)).Files.Single();
+    }
+
+    protected MigrationReview ReviewAt(int line) => _result.Reviews.Single(review => review.Location.Line == line);
+
     static string FixturePath(string name, [CallerFilePath] string path = "") => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path)!, "..", "fixtures", name));
 }
