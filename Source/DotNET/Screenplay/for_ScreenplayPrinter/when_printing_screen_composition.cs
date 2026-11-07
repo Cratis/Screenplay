@@ -27,7 +27,7 @@ public class when_printing_screen_composition : given.a_printer
         module Sales
           screen template Shell
             category Test
-            outlet detail
+            slot detail
             display "Sales shell"
             description "A list beside its details"
             scopes slice
@@ -61,7 +61,7 @@ public class when_printing_screen_composition : given.a_printer
               screen Browse
                 template Shell
                 navigate to Browse
-                  outlet detail
+                  slot detail
                 contribute to Actions order 10
                   action Register for screen
                 contribute to Navigation
@@ -99,5 +99,5 @@ public class when_printing_screen_composition : given.a_printer
     [Fact] void should_keep_slot_grow_weight() => ((ArrangementSlotSyntax)Grid.Children.First()).GrowFactor.ShouldEqual(2d);
     [Fact] void should_keep_screen_contributions() => Screen.Contributions.Select(_ => _.ContributionPoint).ShouldEqual(["Actions", "Navigation"]);
     [Fact] void should_keep_contribution_order() => Screen.Contributions.First().Order.ShouldEqual(10);
-    [Fact] void should_keep_navigation_outlets() => Screen.Directives.OfType<ScreenNavigateSyntax>().Single().Outlet.ShouldEqual("detail");
+    [Fact] void should_keep_navigation_slots() => Screen.Directives.OfType<ScreenNavigateSyntax>().Single().Slot.ShouldEqual("detail");
 }

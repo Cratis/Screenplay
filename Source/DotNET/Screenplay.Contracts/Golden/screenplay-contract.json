@@ -311,7 +311,10 @@
     "overrides",
     "package",
     "packages",
+    "page",
     "palette",
+    "pane",
+    "panel",
     "parallel",
     "parameter",
     "parent",
@@ -380,6 +383,7 @@
     "root",
     "round",
     "route",
+    "routed",
     "row",
     "rowGap",
     "rowSpan",
@@ -53853,12 +53857,12 @@
     },
     {
       "code": "PLAY0630",
-      "name": "UnknownNavigationOutlet",
+      "name": "UnknownNavigationSlot",
       "severity": "error",
       "severities": [
         "error"
       ],
-      "title": "A navigation\u0027s outlet \u003Cname\u003E names an outlet no layout, template or component declares.",
+      "title": "A navigation\u0027s slot \u003Cname\u003E names a slot no layout, template or component declares.",
       "reserved": false,
       "retired": false
     },
@@ -54123,7 +54127,7 @@
       "severities": [
         "error"
       ],
-      "title": "A navigation contribution\u0027s destination outlet or destination dialog names an outlet or dialog template nothing declares.",
+      "title": "A navigation contribution\u0027s destination slot or destination dialog names a slot or dialog template nothing declares.",
       "reserved": false,
       "retired": false
     },
@@ -55424,12 +55428,12 @@
     },
     {
       "code": "PLAY0795",
-      "name": "RootTemplateWithoutContentOutlet",
+      "name": "RootTemplateWithoutContentSlot",
       "severity": "error",
       "severities": [
         "error"
       ],
-      "title": "A ui profile\u0027s root template has no outlet for the screens\u0027 content.",
+      "title": "A ui profile\u0027s root template has no slot for the screens\u0027 content.",
       "reserved": false,
       "retired": false,
       "arguments": [
@@ -55443,7 +55447,7 @@
           "name": "template",
           "kind": "text",
           "optional": false,
-          "meaning": "The root template that has no content outlet."
+          "meaning": "The root template that has no content slot."
         },
         {
           "name": "blueprint",
@@ -55452,10 +55456,10 @@
           "meaning": "The blueprint the template comes from."
         },
         {
-          "name": "outlet",
+          "name": "slot",
           "kind": "text",
           "optional": false,
-          "meaning": "The outlet the screens\u0027 content is placed in."
+          "meaning": "The slot the screens\u0027 content is placed in."
         }
       ]
     },
@@ -56589,6 +56593,50 @@
         "error"
       ],
       "title": "Two user declarations carry the same name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0890",
+      "name": "RemovedComponentOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component declares outlet \u003Cname\u003E, which Screenplay 6 writes slot \u003Cname\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0891",
+      "name": "RemovedDestinationOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation contribution declares destination outlet \u003Cname\u003E, which Screenplay 6 writes destination slot \u003Cname\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0892",
+      "name": "RemovedNavigationOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation declares outlet \u003Cname\u003E, which Screenplay 6 writes slot \u003Cname\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0893",
+      "name": "RemovedTemplateOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A layout, screen template or dialog template declares outlet \u003Cname\u003E, which Screenplay 6 writes slot \u003Cname\u003E.",
       "reserved": false,
       "retired": false
     }

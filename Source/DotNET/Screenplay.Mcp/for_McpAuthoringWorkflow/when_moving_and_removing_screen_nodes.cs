@@ -13,7 +13,7 @@ public class when_moving_and_removing_screen_nodes : given.an_authoring_connecti
 {
     const string Application = """
         layout Shell
-          outlet main
+          slot main
           navigation contributes Navigation
           content
 
@@ -31,7 +31,7 @@ public class when_moving_and_removing_screen_nodes : given.an_authoring_connecti
 
         module Sales
           screen template Browser
-            outlet detail
+            slot detail
             list
             detail
 
@@ -70,13 +70,13 @@ public class when_moving_and_removing_screen_nodes : given.an_authoring_connecti
                   id "invoices:list"
                   property selected from data selected
                   property title = "Invoices"
-                  outlet detail
+                  slot detail
                     title "Selected"
                 toolbar primary
                   item register navigate to Register
                   item archive navigate to Browse
                 navigate to Browse
-                  outlet main
+                  slot main
                 title "Invoices"
         """;
 
@@ -102,8 +102,8 @@ public class when_moving_and_removing_screen_nodes : given.an_authoring_connecti
         Transcript("remove dialog template", () => Remove(Nodes("DialogTemplateSyntax", revision).First()));
         Transcript("remove form", () => Remove(Nodes("FormSyntax", revision).Single()));
         Transcript("remove binding", () => Remove(Nodes("ComponentPropertySyntax", revision).First()));
-        Transcript("remove component outlet", () => Remove(Nodes("ComponentOutletSyntax", revision).Single()));
-        Transcript("remove navigation", () => Remove(Nodes("ScreenNavigateSyntax", revision).Single(node => node.GetProperty("node").TryGetProperty("outlet", out var outlet) && outlet.ValueKind == JsonValueKind.String)));
+        Transcript("remove component slot", () => Remove(Nodes("ComponentSlotSyntax", revision).Single()));
+        Transcript("remove navigation", () => Remove(Nodes("ScreenNavigateSyntax", revision).Single(node => node.GetProperty("node").TryGetProperty("slot", out var slot) && slot.ValueKind == JsonValueKind.String)));
         Transcript("remove navigation contribution", () => Remove(Nodes("ContributionSyntax", revision).Last()));
         Transcript("remove toolbar", () => Remove(Nodes("ScreenToolbarSyntax", revision).Single()));
         Transcript("remove ui profile", () => Remove(Nodes("UiProfileSyntax", revision).Single()));
@@ -126,8 +126,8 @@ public class when_moving_and_removing_screen_nodes : given.an_authoring_connecti
     [Fact] void should_remove_a_dialog_template() => Text("remove dialog template").ShouldNotContain("dialog template Confirm");
     [Fact] void should_remove_a_form() => Text("remove form").ShouldNotContain("form RegisterForm");
     [Fact] void should_remove_a_binding() => Text("remove binding").ShouldNotContain("property selected from data selected");
-    [Fact] void should_remove_a_component_outlet() => Text("remove component outlet").ShouldNotContain("title \"Selected\"");
-    [Fact] void should_remove_a_navigation() => Text("remove navigation").ShouldNotContain("outlet main\n        title");
+    [Fact] void should_remove_a_component_slot() => Text("remove component slot").ShouldNotContain("title \"Selected\"");
+    [Fact] void should_remove_a_navigation() => Text("remove navigation").ShouldNotContain("slot main\n        title");
     [Fact] void should_remove_a_navigation_contribution() => Text("remove navigation contribution").ShouldNotContain("label \"Archive\"");
     [Fact] void should_remove_a_toolbar() => Text("remove toolbar").ShouldNotContain("toolbar primary");
     [Fact] void should_remove_a_ui_profile() => Text("remove ui profile").ShouldNotContain("ui profile Web");

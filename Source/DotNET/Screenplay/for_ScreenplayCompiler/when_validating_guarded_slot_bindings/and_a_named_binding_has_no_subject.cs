@@ -3,13 +3,13 @@
 
 using Cratis.Screenplay.Diagnostics;
 
-namespace Cratis.Screenplay.for_ScreenplayCompiler.when_validating_guarded_outlet_bindings;
+namespace Cratis.Screenplay.for_ScreenplayCompiler.when_validating_guarded_slot_bindings;
 
-public class and_an_inline_binding_has_no_subject : given.a_component_outlet
+public class and_a_named_binding_has_no_subject : given.a_component_slot
 {
-    void Because() => CompileOutlet(named: false);
+    void Because() => CompileSlot(named: true);
 
     [Fact] void should_compile() => _result.Success.ShouldBeTrue();
     [Fact] void should_report_only_the_missing_subject() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldEqual(DiagnosticCodes.UnresolvedActionSubject);
-    [Fact] void should_locate_the_warning_at_the_binding() => _result.Diagnostics.Single().Location.Line.ShouldEqual(21);
+    [Fact] void should_locate_the_warning_at_the_attachment() => _result.Diagnostics.Single().Location.Line.ShouldEqual(21);
 }

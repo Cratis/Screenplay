@@ -13,7 +13,7 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// </summary>
 static class CompositionDefaults
 {
-    static readonly HashSet<string> _optionalBooleans = new(StringComparer.Ordinal) { nameof(LayoutSyntax.RestrictsScopes), nameof(Captures.CaptureSyntax.KeyIsEventSource) };
+    static readonly HashSet<string> _optionalBooleans = new(StringComparer.Ordinal) { nameof(LayoutSyntax.RestrictsScopes), nameof(Captures.CaptureSyntax.KeyIsEventSource), nameof(SlotSyntax.Routed), nameof(SlotSyntax.Primary), nameof(SlotSyntax.Optional) };
 
     static readonly Dictionary<string, Default> _templateMembers = new(StringComparer.Ordinal)
     {
@@ -32,7 +32,8 @@ static class CompositionDefaults
         [typeof(SeedSyntax)] = new(StringComparer.Ordinal) { ["name"] = Default.Null, ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(EventSourceSyntax)] = new(StringComparer.Ordinal) { ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty },
-        [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["outlet"] = Default.Null },
+        [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["slot"] = Default.Null },
+        [typeof(SlotSyntax)] = new(StringComparer.Ordinal) { ["role"] = Default.Null, ["routed"] = Default.False, ["routedBy"] = Default.Null, ["primary"] = Default.False, ["optional"] = Default.False },
         [typeof(ContributionSyntax)] = new(StringComparer.Ordinal) { ["id"] = Default.Null, ["icon"] = Default.Null, ["presentation"] = Default.Null, ["group"] = Default.Null, ["destination"] = Default.Null },
         [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty, ["sliceKinds"] = Default.Empty, ["navigation"] = Default.Empty },
         [typeof(TemplateAssignmentSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
@@ -90,7 +91,7 @@ static class CompositionDefaults
     /// <returns><see langword="true"/> when an absent member reads as its default.</returns>
     internal static bool IsOptional(PropertyInfo property) =>
         _optionalBooleans.Contains(property.Name) &&
-        (property.DeclaringType == typeof(LayoutSyntax) || property.DeclaringType == typeof(ScreenTemplateSyntax) || property.DeclaringType == typeof(DialogTemplateSyntax) || property.DeclaringType == typeof(Captures.CaptureSyntax));
+        (property.DeclaringType == typeof(LayoutSyntax) || property.DeclaringType == typeof(ScreenTemplateSyntax) || property.DeclaringType == typeof(DialogTemplateSyntax) || property.DeclaringType == typeof(Captures.CaptureSyntax) || property.DeclaringType == typeof(SlotSyntax));
 
     static bool IsEmpty(object? value) => value is null || (value is IEnumerable items && !items.Cast<object>().Any());
 }

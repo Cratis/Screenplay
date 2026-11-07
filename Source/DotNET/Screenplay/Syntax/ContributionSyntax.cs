@@ -11,9 +11,9 @@ namespace Cratis.Screenplay.Syntax;
 public enum ContributionDestinationKind
 {
     /// <summary>
-    /// The item opens in a named outlet.
+    /// The item opens in a named slot.
     /// </summary>
-    Outlet = 0,
+    Slot = 0,
 
     /// <summary>
     /// The item opens a dialog.
@@ -69,15 +69,15 @@ public record ContributionSyntax(
     public string? Group { get; init; }
 
     /// <summary>
-    /// Gets where the item opens, or <c>null</c> for the default outlet. Maps to Scene's <c>NavigationItem.Destination</c>.
+    /// Gets where the item opens, or <c>null</c> for the default slot. Maps to Scene's <c>NavigationItem.Destination</c>.
     /// </summary>
     public ContributionDestinationSyntax? Destination { get; init; }
 }
 
 /// <summary>
-/// Represents a <c>destination outlet|dialog|external &lt;target&gt;</c> line in a contribution.
+/// Represents a <c>destination slot|dialog|external &lt;target&gt;</c> line in a contribution.
 /// </summary>
 /// <param name="Kind">The <see cref="ContributionDestinationKind"/>.</param>
-/// <param name="Target">The outlet name, dialog name, or external route.</param>
+/// <param name="Target">The slot name, dialog name, or external route.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record ContributionDestinationSyntax(ContributionDestinationKind Kind, string Target, SourceLocation Location) : SyntaxNode(Location);

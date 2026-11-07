@@ -299,7 +299,7 @@ public class when_loading_the_v1_screen_corpus : Specification
         module.Forms.Single(form => form.Name == "RenameWorkItemForm").Columns.Single().Property.ShouldEqual("title");
         listSlice.Screens.Single().Directives.OfType<ScreenToolbarSyntax>().Single().Items.Select(item => item.Name).ShouldEqual("create", "refresh");
         listSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Properties.Single(property => property.Property == "selectedItem").Binding!.NullBehavior.ShouldEqual(UiBindingNullBehavior.Clear);
-        detailSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Outlets.Single().Name.ShouldEqual("actions");
+        detailSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Slots.Single().Name.ShouldEqual("actions");
         dialogSlice.Screens.Single().Directives.OfType<ScreenTemplateReferenceSyntax>().Single().Name.ShouldEqual("EditWorkItemDialog");
     }
 

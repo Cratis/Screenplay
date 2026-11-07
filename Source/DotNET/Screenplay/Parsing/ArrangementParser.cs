@@ -41,7 +41,7 @@ internal static partial class ArrangementParser
         var directiveLocations = new Dictionary<string, SourceLocation>();
         string? templateType = null;
         var exposes = new List<TemplateExposedValueSyntax>();
-        var outlets = new List<TemplateOutletSyntax>();
+        var recursiveSlots = new List<TemplateSlotSyntax>();
         var metadata = new TemplateMetadata();
         var navigation = new List<NavigationRegionSyntax>();
 
@@ -77,14 +77,19 @@ internal static partial class ArrangementParser
                     }
 
                     break;
+                case "slot" when child.Content.Length > "slot".Length:
+                    recursiveSlots.Add(new TemplateSlotSyntax(child.Content["slot".Length..].Trim(), child.Location));
+                    break;
                 case "outlet":
-                    outlets.Add(new TemplateOutletSyntax(child.Content["outlet".Length..].Trim(), child.Location));
+                    var renamed = new TemplateSlotSyntax(child.Content["outlet".Length..].Trim(), child.Location);
+                    context.Error(DiagnosticCodes.RemovedTemplateOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed.Name}' in a {keyword}", $"slot {renamed.Name}"), child.Location);
+                    recursiveSlots.Add(renamed);
                     break;
                 case "scopes" or "display" or "description" or "content" when !SlotDeclarationRegex().IsMatch(child.Content):
                     // A bare word is a slot declaration, so a slot may still be named 'content' or 'display'.
                     ParseMetadata(context, child, keyword, metadata);
                     break;
-                case "navigation" when NavigationParser.IsRegionHeader(child.Content):
+                case "navigation" when NavigationParser.IsRegionHeader(child.Content) && !SlotDeclarationRegex().IsMatch(child.Content):
                     var region = NavigationParser.ParseRegion(context, child);
                     if (keyword == "layout")
                     {
@@ -109,7 +114,7 @@ internal static partial class ArrangementParser
         }
 
         ValidateContentSlots(context, keyword, name, slots, metadata.Content);
-        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, outlets)
+        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, recursiveSlots)
         {
             DirectiveLocations = directiveLocations,
             RestrictsScopes = metadata.Scopes is not null,
@@ -170,7 +175,7 @@ internal static partial class ArrangementParser
         {
             context.Error(
                 DiagnosticCodes.InvalidLayoutSlotName,
-                $"Invalid slot declaration '{line.Content}' - expected an identifier, optionally followed by 'contributes <Point>'",
+                $"Invalid slot declaration '{line.Content}' - expected an identifier, optionally followed by a role ('page', 'pane' or 'panel'), 'routed [by <param>]', 'primary', 'optional' and 'contributes <Point>', in that order",
                 line.Location);
             context.SkipBlock(line.Indent);
             return;
@@ -186,7 +191,14 @@ internal static partial class ArrangementParser
             return;
         }
 
-        AddSlot(slots, new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location));
+        AddSlot(slots, new(match.Groups[1].Value, match.Groups[7].Success ? match.Groups[7].Value : null, line.Location)
+        {
+            Role = match.Groups[2].Success ? Enum.Parse<SlotRole>(match.Groups[2].Value, ignoreCase: true) : null,
+            Routed = match.Groups[3].Success,
+            RoutedBy = match.Groups[4].Success ? match.Groups[4].Value : null,
+            Primary = match.Groups[5].Success,
+            Optional = match.Groups[6].Success
+        });
     }
 
     static void AddSlot(List<SlotSyntax> slots, SlotSyntax slot)
@@ -505,7 +517,7 @@ internal static partial class ArrangementParser
     [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.NonBacktracking)]
     private static partial Regex TemplateExposesRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+(page|pane|panel))?(?:\s+(routed)(?:\s+by\s+([A-Za-z_]\w*))?)?(?:\s+(primary))?(?:\s+(optional))?(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex SlotDeclarationRegex();
 
     [GeneratedRegex(@"^(row|column|grid)(?:\s+gap\s+(\d+))?(?:\s+columns\s+(\d+))?(?:\s+rows\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.NonBacktracking)]
@@ -540,7 +552,7 @@ internal static partial class ArrangementParser
         string? Category,
         string? TemplateType,
         IReadOnlyList<TemplateExposedValueSyntax> Exposes,
-        IReadOnlyList<TemplateOutletSyntax> Outlets)
+        IReadOnlyList<TemplateSlotSyntax> RecursiveSlots)
     {
         /// <summary>
         /// Gets the source position of the directives whose printed line a comment can follow, keyed by directive.

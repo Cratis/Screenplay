@@ -1,6 +1,6 @@
 layout Shell
   category Shell
-  outlet main
+  slot main
   navigation contributes Navigation
   content
 
@@ -8,7 +8,7 @@ module Workspaces
   contribute to Navigation
     navigate to WorkItemList
     label "Work items"
-    destination outlet sidebar
+    destination slot sidebar
 
   contribute to Navigation
     navigate to WorkItemList

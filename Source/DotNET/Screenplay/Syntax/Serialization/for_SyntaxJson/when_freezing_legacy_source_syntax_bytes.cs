@@ -136,6 +136,9 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // Template categories (PLAY0720) have their own conformance vector; the frozen bytes predate them.
             legacy = WithoutTemplateCategories(legacy);
 
+            // Slot roles and modifiers (Screenplay 6) are new members the living samples demonstrate; the frozen bytes predate them.
+            legacy = WithoutSlotRoles(legacy);
+
             // Report-only metadata has its own conformance vector. Keep existing event metadata
             // protected, and project only the newly supported owners out of pre-metadata bytes.
             var json = SyntaxJson.Serialize(WithoutNewAuthoringMetadata(legacy));
@@ -153,7 +156,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"recursiveSlots\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal)
                 .Replace("\"appearance\":null,", string.Empty, StringComparison.Ordinal)
@@ -237,6 +240,22 @@ public partial class when_freezing_legacy_source_syntax_bytes
             DialogTemplates = module.DialogTemplates?.Select(template => template with { Category = null })
         })
     };
+
+    static ApplicationSyntax WithoutSlotRoles(ApplicationSyntax application)
+    {
+        static IEnumerable<SlotSyntax> Plain(IEnumerable<SlotSyntax> slots) =>
+            slots.Select(slot => slot with { Role = null, Routed = false, RoutedBy = null, Primary = false, Optional = false }).ToArray();
+
+        return application with
+        {
+            Layouts = application.Layouts?.Select(layout => layout with { Slots = Plain(layout.Slots) }).ToArray(),
+            Modules = application.Modules.Select(module => module with
+            {
+                ScreenTemplates = module.ScreenTemplates.Select(template => template with { Slots = Plain(template.Slots) }).ToArray(),
+                DialogTemplates = module.DialogTemplates?.Select(template => template with { Slots = Plain(template.Slots) }).ToArray()
+            }).ToArray()
+        };
+    }
 
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {

@@ -314,13 +314,13 @@ internal static partial class ProfileShellValidator
             return;
         }
 
-        if (!template.Slots.Contains(template.PrimaryOutlet, StringComparer.Ordinal))
+        if (!template.Slots.Contains(template.PrimarySlot, StringComparer.Ordinal))
         {
             context.Error(
-                DiagnosticCodes.RootTemplateWithoutContentOutlet,
-                $"The root template '{name}' has no '{template.PrimaryOutlet}' outlet, so no screen can be placed in it - add a line '{template.PrimaryOutlet}' to it",
+                DiagnosticCodes.RootTemplateWithoutContentSlot,
+                $"The root template '{name}' has no '{template.PrimarySlot}' slot, so no screen can be placed in it - add a line '{template.PrimarySlot}' to it",
                 location,
-                TemplateArguments(profile, name, blueprint).With("outlet", DiagnosticArgument.Text(template.PrimaryOutlet)));
+                TemplateArguments(profile, name, blueprint).With("slot", DiagnosticArgument.Text(template.PrimarySlot)));
         }
 
         ValidateOptions(profile, root, template, context);

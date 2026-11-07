@@ -258,10 +258,10 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUiBinding(exposed.Binding);
         }
         foreach (var presentation in syntax.Presentation) VisitNode(presentation);
-        foreach (var outlet in syntax.Outlets)
+        foreach (var slot in syntax.Slots)
         {
-            VisitNode(outlet);
-            foreach (var directive in outlet.Directives) VisitScreenDirective(directive);
+            VisitNode(slot);
+            foreach (var directive in slot.Directives) VisitScreenDirective(directive);
         }
         foreach (var behavior in syntax.Behaviors) VisitBehavior(behavior);
         foreach (var uses in syntax.UsedBehaviors) VisitUsesBehavior(uses);

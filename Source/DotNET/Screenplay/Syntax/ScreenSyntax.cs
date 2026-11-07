@@ -104,9 +104,9 @@ public record ScreenNavigateSyntax(string Screen, string? By, SourceLocation Loc
     public string? Route { get; init; }
 
     /// <summary>
-    /// Gets the named outlet the destination opens in, or <c>null</c> for the default outlet.
+    /// Gets the named slot the destination opens in, or <c>null</c> for the default slot.
     /// </summary>
-    public string? Outlet { get; init; }
+    public string? Slot { get; init; }
 
     /// <summary>
     /// Gets the route or navigation parameters supplied by the author.
@@ -271,9 +271,9 @@ public record ScreenComponentSyntax(string Component, string Name, SourceLocatio
     public string? Icon { get; init; }
 
     /// <summary>
-    /// Gets recursive outlets authored inside the component.
+    /// Gets the slots authored inside the component, each filled with its own directives.
     /// </summary>
-    public IEnumerable<ComponentOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<ComponentSlotSyntax> Slots { get; init; } = [];
 
     /// <summary>
     /// Gets interactions attached to the component instance.
@@ -312,12 +312,12 @@ public record ComponentExposedValueSyntax(string Name, UiBindingSyntax Binding, 
 public record PresentationValueSyntax(string Name, string Value, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents a recursive outlet nested inside a component.
+/// Represents a slot nested inside a component - a region the component offers, filled with its own directives.
 /// </summary>
-/// <param name="Name">The outlet name.</param>
-/// <param name="Directives">The screen directives rendered inside the outlet.</param>
+/// <param name="Name">The slot name.</param>
+/// <param name="Directives">The screen directives rendered inside the slot.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ComponentOutletSyntax(string Name, IEnumerable<ScreenDirectiveSyntax> Directives, SourceLocation Location) : SyntaxNode(Location);
+public record ComponentSlotSyntax(string Name, IEnumerable<ScreenDirectiveSyntax> Directives, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a <c>toolbar</c> directive.

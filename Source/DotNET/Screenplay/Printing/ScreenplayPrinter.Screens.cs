@@ -109,9 +109,9 @@ public partial class ScreenplayPrinter
             writer.Line($"route {ScreenplaySyntaxText.LocalizableString(navigate.Route)}", navigate);
         }
 
-        if (navigate.Outlet is not null)
+        if (navigate.Slot is not null)
         {
-            writer.Line($"outlet {navigate.Outlet}", navigate);
+            writer.Line($"slot {navigate.Slot}", navigate);
         }
 
         foreach (var parameter in navigate.Parameters)
@@ -305,12 +305,12 @@ public partial class ScreenplayPrinter
                 WriteBindingLine(writer, $"exposes {exposed.Name}", exposed.Binding, exposed);
             }
 
-            foreach (var outlet in component.Outlets)
+            foreach (var slot in component.Slots)
             {
-                writer.Line($"outlet {outlet.Name}", outlet);
+                writer.Line($"slot {slot.Name}", slot);
                 using (writer.Indent())
                 {
-                    foreach (var directive in outlet.Directives)
+                    foreach (var directive in slot.Directives)
                     {
                         WriteScreenDirective(writer, directive);
                     }

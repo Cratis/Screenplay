@@ -57,9 +57,9 @@ public record LayoutSyntax(
     public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
 
     /// <summary>
-    /// Gets recursively fillable outlets declared by the template.
+    /// Gets the recursively fillable slots the template declares with <c>slot &lt;name&gt;</c>.
     /// </summary>
-    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<TemplateSlotSyntax> RecursiveSlots { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
@@ -138,9 +138,9 @@ public record ScreenTemplateSyntax(
     public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
 
     /// <summary>
-    /// Gets recursively fillable outlets declared by the template.
+    /// Gets the recursively fillable slots the template declares with <c>slot &lt;name&gt;</c>.
     /// </summary>
-    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<TemplateSlotSyntax> RecursiveSlots { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
@@ -220,9 +220,9 @@ public record DialogTemplateSyntax(
     public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
 
     /// <summary>
-    /// Gets recursively fillable outlets declared by the template.
+    /// Gets the recursively fillable slots the template declares with <c>slot &lt;name&gt;</c>.
     /// </summary>
-    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<TemplateSlotSyntax> RecursiveSlots { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
@@ -263,7 +263,33 @@ public record DialogTemplateSyntax(
 /// <param name="Name">The name of the slot.</param>
 /// <param name="Contributes">The name of the contribution point this slot accepts contributions for, or <c>null</c> if it does not accept any.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SlotSyntax(string Name, string? Contributes, SourceLocation Location) : SyntaxNode(Location);
+public record SlotSyntax(string Name, string? Contributes, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the role of the slot - <c>page</c>, <c>pane</c> or <c>panel</c> - or <c>null</c> when the slot declares none.
+    /// </summary>
+    public SlotRole? Role { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the slot is <c>routed</c>: what it shows is part of the address.
+    /// </summary>
+    public bool Routed { get; init; }
+
+    /// <summary>
+    /// Gets the route parameter a <c>routed by &lt;param&gt;</c> slot is addressed by, or <c>null</c> when it names none.
+    /// </summary>
+    public string? RoutedBy { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the slot is the <c>primary</c> one of its structure.
+    /// </summary>
+    public bool Primary { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the slot is <c>optional</c> and may be left empty.
+    /// </summary>
+    public bool Optional { get; init; }
+}
 
 /// <summary>
 /// Represents a template value exposed to descendants or package consumers.
@@ -274,8 +300,8 @@ public record SlotSyntax(string Name, string? Contributes, SourceLocation Locati
 public record TemplateExposedValueSyntax(string Name, TypeRefSyntax? Type, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents a recursive outlet declared by a template.
+/// Represents a recursively fillable slot a template declares with <c>slot &lt;name&gt;</c>.
 /// </summary>
-/// <param name="Name">The outlet name.</param>
+/// <param name="Name">The slot name.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record TemplateOutletSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);
+public record TemplateSlotSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);

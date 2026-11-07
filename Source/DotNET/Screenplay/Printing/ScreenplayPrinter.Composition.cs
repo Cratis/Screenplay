@@ -156,7 +156,7 @@ public partial class ScreenplayPrinter
             writer.Line(
                 destination.Kind switch
                 {
-                    ContributionDestinationKind.Outlet => $"destination outlet {destination.Target}",
+                    ContributionDestinationKind.Slot => $"destination slot {destination.Target}",
                     ContributionDestinationKind.Dialog => $"destination dialog {destination.Target}",
                     _ => $"destination external {StringLiteral.Quote(destination.Target)}"
                 },

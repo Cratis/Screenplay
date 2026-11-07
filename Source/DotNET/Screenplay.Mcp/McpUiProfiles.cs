@@ -23,7 +23,7 @@ static class McpUiProfiles
         DiagnosticCodes.UnknownRootBlueprint,
         DiagnosticCodes.RootTemplateVersionNotSatisfied,
         DiagnosticCodes.RootTemplateNotApplicable,
-        DiagnosticCodes.RootTemplateWithoutContentOutlet,
+        DiagnosticCodes.RootTemplateWithoutContentSlot,
         DiagnosticCodes.UnknownShellOption,
         DiagnosticCodes.InvalidAppearanceValue,
         DiagnosticCodes.DuplicateProfileRootTemplate,
@@ -48,7 +48,7 @@ static class McpUiProfiles
             snapshot.Compilation.Success,
             snapshot.SourceRevision,
             profiles = selected.Select(profile => Describe(profile, diagnostics)).ToArray(),
-            applicableRootTemplates = own.Where(template => ProfileShellValidator.Applicability(template, ProfileShellValidator.ApplicationScope, asShell: true).Count == 0 && template.Slots.Contains(template.PrimaryOutlet, StringComparer.Ordinal))
+            applicableRootTemplates = own.Where(template => ProfileShellValidator.Applicability(template, ProfileShellValidator.ApplicationScope, asShell: true).Count == 0 && template.Slots.Contains(template.PrimarySlot, StringComparer.Ordinal))
                 .Select(Template).ToArray(),
             applicableNewScreenTemplates = own.Where(template => ProfileShellValidator.Applicability(template, ProfileShellValidator.FeatureScope, asShell: false).Count == 0)
                 .Select(Template).ToArray(),
@@ -89,7 +89,7 @@ static class McpUiProfiles
     {
         template.Name,
         kind = template.Kind.ToString(),
-        template.PrimaryOutlet,
+        template.PrimarySlot,
         options = template.Options ?? []
     };
 }

@@ -120,17 +120,22 @@ internal static partial class ContributionParser
             var destination = DestinationRegex().Match(line.Content);
             if (!destination.Success)
             {
-                context.Error(DiagnosticCodes.UnknownContributionDirective, $"Invalid destination '{line.Content}' - expected 'destination outlet <name>', 'destination dialog <Name>' or 'destination external \"<route>\"'", line.Location);
+                context.Error(DiagnosticCodes.UnknownContributionDirective, $"Invalid destination '{line.Content}' - expected 'destination slot <name>', 'destination dialog <Name>' or 'destination external \"<route>\"'", line.Location);
                 return;
             }
 
             var kind = destination.Groups[1].Value switch
             {
-                "outlet" => ContributionDestinationKind.Outlet,
+                "slot" or "outlet" => ContributionDestinationKind.Slot,
                 "dialog" => ContributionDestinationKind.Dialog,
                 _ => ContributionDestinationKind.External
             };
             var target = destination.Groups[2].Success ? destination.Groups[2].Value : StringLiteral.Unescape(destination.Groups[3].Value);
+            if (destination.Groups[1].Value == "outlet")
+            {
+                context.Error(DiagnosticCodes.RemovedDestinationOutlet, SlotsAndOutletsMigration.Renamed($"'destination outlet {target}'", $"destination slot {target}"), line.Location);
+            }
+
             item.Destination = new(kind, target, line.Location);
             return;
         }
@@ -179,7 +184,7 @@ internal static partial class ContributionParser
     [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("^destination\\s+(?:(outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("^destination\\s+(?:(slot|outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
     private static partial Regex DestinationRegex();
 
     [GeneratedRegex("^(?:([A-Za-z_][\\w.-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]

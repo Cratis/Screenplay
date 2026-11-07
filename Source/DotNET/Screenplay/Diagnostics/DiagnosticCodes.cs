@@ -2975,9 +2975,9 @@ public static class DiagnosticCodes
     public const string UnknownTemplateContentSlot = "PLAY0629";
 
     /// <summary>
-    /// A navigation's <c>outlet &lt;name&gt;</c> names an outlet no layout, template or component declares.
+    /// A navigation's <c>slot &lt;name&gt;</c> names a slot no layout, template or component declares.
     /// </summary>
-    public const string UnknownNavigationOutlet = "PLAY0630";
+    public const string UnknownNavigationSlot = "PLAY0630";
 
     /// <summary>
     /// A screen uses a template whose <c>scopes</c> do not include the screen's scope.
@@ -3130,7 +3130,7 @@ public static class DiagnosticCodes
     public const string DuplicateComplianceMarker = "PLAY0653";
 
     /// <summary>
-    /// A navigation contribution's <c>destination outlet</c> or <c>destination dialog</c> names an outlet or dialog template nothing declares.
+    /// A navigation contribution's <c>destination slot</c> or <c>destination dialog</c> names a slot or dialog template nothing declares.
     /// </summary>
     public const string UnknownNavigationDestination = "PLAY0654";
 
@@ -3597,10 +3597,10 @@ public static class DiagnosticCodes
     public const string RootTemplateNotApplicable = "PLAY0794";
 
     /// <summary>
-    /// A ui profile's root template has no outlet for the screens' content.
+    /// A ui profile's root template has no slot for the screens' content.
     /// </summary>
-    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the root template.", "template:text;The root template that has no content outlet.", "blueprint:text?;The blueprint the template comes from.", "outlet:text;The outlet the screens' content is placed in.")]
-    public const string RootTemplateWithoutContentOutlet = "PLAY0795";
+    [DiagnosticArgumentDefinitions("profile:text;The ui profile that names the root template.", "template:text;The root template that has no content slot.", "blueprint:text?;The blueprint the template comes from.", "slot:text;The slot the screens' content is placed in.")]
+    public const string RootTemplateWithoutContentSlot = "PLAY0795";
 
     /// <summary>
     /// A ui profile sets a shell option the root template does not expose.
@@ -3897,4 +3897,24 @@ public static class DiagnosticCodes
     /// Two <c>user</c> declarations carry the same name.
     /// </summary>
     public const string DuplicateUser = "PLAY0889";
+
+    /// <summary>
+    /// A component declares <c>outlet &lt;name&gt;</c>, which Screenplay 6 writes <c>slot &lt;name&gt;</c>.
+    /// </summary>
+    public const string RemovedComponentOutlet = "PLAY0890";
+
+    /// <summary>
+    /// A navigation contribution declares <c>destination outlet &lt;name&gt;</c>, which Screenplay 6 writes <c>destination slot &lt;name&gt;</c>.
+    /// </summary>
+    public const string RemovedDestinationOutlet = "PLAY0891";
+
+    /// <summary>
+    /// A navigation declares <c>outlet &lt;name&gt;</c>, which Screenplay 6 writes <c>slot &lt;name&gt;</c>.
+    /// </summary>
+    public const string RemovedNavigationOutlet = "PLAY0892";
+
+    /// <summary>
+    /// A layout, screen template or dialog template declares <c>outlet &lt;name&gt;</c>, which Screenplay 6 writes <c>slot &lt;name&gt;</c>.
+    /// </summary>
+    public const string RemovedTemplateOutlet = "PLAY0893";
 }

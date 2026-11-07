@@ -257,7 +257,7 @@ public static class ScreenCompositionCorpus
                 Rejection(
                     "missing-outlet",
                     "MissingOutlet",
-                    Diagnostic("PLAY0630", "Unknown outlet 'details' - no layout, template or component declares 'outlet details'")),
+                    Diagnostic("PLAY0630", "Unknown slot 'details' - no layout, template or component declares 'slot details'")),
                 Rejection(
                     "missing-references",
                     "MissingReferences",
@@ -283,7 +283,7 @@ public static class ScreenCompositionCorpus
                 Rejection(
                     "unknown-navigation-destination",
                     "UnknownNavigationDestination",
-                    Diagnostic("PLAY0654", "Unknown destination outlet 'sidebar' - nothing declares it"),
+                    Diagnostic("PLAY0654", "Unknown destination slot 'sidebar' - nothing declares it"),
                     Diagnostic("PLAY0654", "Unknown destination dialog template 'ConfirmDialog' - nothing declares it")),
                 Rejection(
                     "navigation-target-missing",
@@ -324,7 +324,7 @@ public static class ScreenCompositionCorpus
                     "UiProfileRootNotAShell",
                     Diagnostic("PLAY0794", "The root template 'Sheet' of ui profile 'Sheet' cannot be the application's shell: it is a screen template, and only a layout or an application-scope screen template can be the shell; it does not declare scope 'application'"),
                     Diagnostic("PLAY0794", "The root template 'Confirm' of ui profile 'Dialog' cannot be the application's shell: it is a dialog template, and only a layout or an application-scope screen template can be the shell"),
-                    Diagnostic("PLAY0795", "The root template 'Bare' has no 'content' outlet, so no screen can be placed in it - add a line 'content' to it"),
+                    Diagnostic("PLAY0795", "The root template 'Bare' has no 'content' slot, so no screen can be placed in it - add a line 'content' to it"),
                     Diagnostic("PLAY0799", "The new screens use template 'AppShell' of ui profile 'Layout' cannot start a screen in a feature: it is a layout, and a layout or an application-scope screen template can only be the shell"),
                     Diagnostic("PLAY0799", "The new screens use template 'Docked' of ui profile 'Application' cannot start a screen in a feature: it is a screen template with the root role, and a layout or an application-scope screen template can only be the shell; it does not declare scope 'feature'")),
                 Rejection(

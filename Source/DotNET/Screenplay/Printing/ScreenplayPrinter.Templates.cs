@@ -20,7 +20,7 @@ public sealed partial class ScreenplayPrinter
         writer.Line($"layout {layout.Name}");
         using (writer.Indent())
         {
-            WriteTemplateMetadata(writer, new(layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets), layout);
+            WriteTemplateMetadata(writer, new(layout.Category, layout.TemplateType, layout.Exposes, layout.RecursiveSlots), layout);
             WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes, layout.SliceKinds);
             WriteSlots(writer, layout.Slots);
             foreach (var region in layout.Navigation)
@@ -45,7 +45,7 @@ public sealed partial class ScreenplayPrinter
                 writer.Blank();
             }
 
-            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.Outlets), template);
+            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.RecursiveSlots), template);
             WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes, template.SliceKinds);
             WriteSlots(writer, template.Slots);
             WriteTemplateContent(writer, template.Content);
@@ -60,7 +60,7 @@ public sealed partial class ScreenplayPrinter
         writer.Line($"dialog template {template.Name}");
         using (writer.Indent())
         {
-            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.Outlets), template);
+            WriteTemplateMetadata(writer, new(template.Category, template.TemplateType, template.Exposes, template.RecursiveSlots), template);
             WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes, template.SliceKinds);
             WriteSlots(writer, template.Slots);
             WriteTemplateContent(writer, template.Content);
@@ -90,9 +90,9 @@ public sealed partial class ScreenplayPrinter
                 exposed);
         }
 
-        foreach (var outlet in metadata.Outlets)
+        foreach (var slot in metadata.RecursiveSlots)
         {
-            writer.Line($"outlet {outlet.Name}", outlet);
+            writer.Line($"slot {slot.Name}", slot);
         }
     }
 
@@ -109,7 +109,18 @@ public sealed partial class ScreenplayPrinter
     {
         foreach (var slot in slots)
         {
-            writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}", slot);
+            writer.Line(SlotLine(slot), slot);
+        }
+
+        static string SlotLine(SlotSyntax slot)
+        {
+            var parts = new List<string> { slot.Name };
+            if (slot.Role is { } role) parts.Add(role.ToString().ToLowerInvariant());
+            if (slot.Routed) parts.Add(slot.RoutedBy is null ? "routed" : $"routed by {slot.RoutedBy}");
+            if (slot.Primary) parts.Add("primary");
+            if (slot.Optional) parts.Add("optional");
+            if (slot.Contributes is not null) parts.Add($"contributes {slot.Contributes}");
+            return string.Join(' ', parts);
         }
     }
 
@@ -287,5 +298,5 @@ public sealed partial class ScreenplayPrinter
         string? Category,
         string? TemplateType,
         IEnumerable<TemplateExposedValueSyntax> Exposes,
-        IEnumerable<TemplateOutletSyntax> Outlets);
+        IEnumerable<TemplateSlotSyntax> RecursiveSlots);
 }
