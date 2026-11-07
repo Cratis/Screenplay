@@ -31,12 +31,13 @@ internal static partial class NavigationParser
     public static bool IsRegionHeader(string content) => RegionHeaderRegex().IsMatch(content);
 
     /// <summary>
-    /// Reports a Screenplay 5 navigation region and skips its block.
+    /// Reports a Screenplay 5 navigation region and reads its block so a migration can rewrite it.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
     /// <param name="header">The consumed <c>navigation topbar|sidebar</c> line.</param>
     /// <param name="owner">What declares it - <c>layout</c> or <c>module</c>.</param>
-    public static void ReportRegion(ParserContext context, SourceLine header, string owner)
+    /// <returns>The <see cref="RetiredNavigationRegion"/> read.</returns>
+    public static RetiredNavigationRegion ReportRegion(ParserContext context, SourceLine header, string owner)
     {
         var match = RegionHeaderRegex().Match(header.Content);
         var region = match.Success ? match.Groups[1].Value : "<name>";
@@ -44,7 +45,52 @@ internal static partial class NavigationParser
             ? $"outlet {region} of navigation"
             : $"outlet {region} {(match.Groups[2].Success ? match.Groups[2].Value : "extends")}";
         context.Error(DiagnosticCodes.RemovedNavigationRegion, SlotsAndOutletsMigration.Replaced($"'{header.Content}' in a {owner}", replacement), header.Location);
-        context.SkipBlock(header.Indent);
+
+        // The region is reported once, as a whole; what it holds is read quietly for the migration to judge.
+        var quiet = context.Quiet();
+        NavigationLogoSyntax? logo = null;
+        var items = new List<OutletItemSyntax>();
+        var unrecognized = new List<SourceLocation>();
+        while (quiet.TryPeekChild(header.Indent, out var child))
+        {
+            quiet.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "logo":
+                    // A malformed or second logo is not one the region can hold; it is left for review like any other line.
+                    var parsed = ParseLogo(quiet, child);
+                    if (parsed is not null && logo is null)
+                    {
+                        logo = parsed;
+                    }
+                    else
+                    {
+                        unrecognized.Add(child.Location);
+                    }
+
+                    break;
+                case "item" when ParseItem(quiet, child) is { } item:
+                    items.Add(item);
+                    break;
+                case "button" when ToolbarButtonParser.Parse(quiet, child, allowPosition: false) is { } button:
+                    items.Add(button);
+                    break;
+                default:
+                    unrecognized.Add(child.Location);
+                    quiet.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        OutletMode? mode = match.Success && match.Groups[2].Success
+            ? match.Groups[2].Value switch
+            {
+                "inherits" => OutletMode.Inherit,
+                "overrides" => OutletMode.Override,
+                _ => OutletMode.Extend
+            }
+            : null;
+        return new(region, mode, logo, items, unrecognized, header.Location);
     }
 
     /// <summary>

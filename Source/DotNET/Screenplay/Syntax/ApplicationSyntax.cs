@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax;
@@ -44,6 +45,13 @@ public record ApplicationSyntax(
     /// Gets the immutable numeric interpretation of this document.
     /// </summary>
     public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this document that sit in no layout, template, module or
+    /// feature of their own - a renamed <c>outlet</c> line, for example. Kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 
     /// <summary>
     /// Gets the authoring-only metadata for additional caller details.

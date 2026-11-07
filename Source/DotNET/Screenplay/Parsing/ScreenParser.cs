@@ -131,6 +131,7 @@ internal static partial class ScreenParser
             {
                 context.Error(DiagnosticCodes.RemovedNavigationOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {outletMatch.Groups[1].Value}' in a navigation", $"slot {outletMatch.Groups[1].Value}"), child.Location);
                 slot = outletMatch.Groups[1].Value;
+                context.Retire(new RetiredOutlet(RetiredOutletPlace.Navigation, slot, new TemplateSlotSyntax(slot, child.Location), child.Location));
                 continue;
             }
 
@@ -161,17 +162,22 @@ internal static partial class ScreenParser
     }
 
     /// <summary>
-    /// Reports a Screenplay 5 feature or module toolbar, which Screenplay 6 writes as an extending outlet, and skips its block.
+    /// Reports a Screenplay 5 feature or module toolbar, which Screenplay 6 writes as an extending outlet, and reads its
+    /// block so a migration can rewrite it.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
     /// <param name="line">The consumed <c>toolbar</c> line.</param>
     /// <param name="owner">What declares it - <c>feature</c> or <c>module</c>.</param>
-    internal static void ReportFeatureToolbar(ParserContext context, SourceLine line, string owner)
+    /// <returns>The <see cref="RetiredToolbar"/> read.</returns>
+    internal static RetiredToolbar ReportFeatureToolbar(ParserContext context, SourceLine line, string owner)
     {
         var name = line.Content["toolbar".Length..].Trim();
         var outlet = name.Length == 0 ? "<name>" : name;
         context.Error(DiagnosticCodes.RemovedFeatureToolbar, SlotsAndOutletsMigration.Replaced($"'{line.Content}' in a {owner}", $"outlet {outlet} extends"), line.Location);
-        context.SkipBlock(line.Indent);
+
+        // The block is read on a throwaway context: the form is already an error, and what it holds is the
+        // migration's to judge - one error per retired form, not one per line beneath it.
+        return new(ParseToolbar(context.Quiet(), line), line.Location);
     }
 
     static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)
@@ -518,7 +524,9 @@ internal static partial class ScreenParser
                 case "outlet":
                     var renamed = child.Content["outlet".Length..].Trim();
                     context.Error(DiagnosticCodes.RemovedComponentOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed}' in a component", $"slot {renamed}"), child.Location);
-                    slots.Add(ParseComponentSlot(context, child, "outlet"));
+                    var componentSlot = ParseComponentSlot(context, child, "outlet");
+                    context.Retire(new RetiredOutlet(RetiredOutletPlace.Component, componentSlot.Name, componentSlot, child.Location));
+                    slots.Add(componentSlot);
                     break;
                 case "on":
                 case "uses":

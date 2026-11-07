@@ -44,6 +44,7 @@ internal static partial class ArrangementParser
         var recursiveSlots = new List<TemplateSlotSyntax>();
         var metadata = new TemplateMetadata();
         var outlets = new List<OutletSyntax>();
+        var retired = new List<RetiredForm>();
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -97,6 +98,7 @@ internal static partial class ArrangementParser
                 case "outlet":
                     var renamed = new TemplateSlotSyntax(child.Content["outlet".Length..].Trim(), child.Location);
                     context.Error(DiagnosticCodes.RemovedTemplateOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed.Name}' in a {keyword}", $"slot {renamed.Name}"), child.Location);
+                    context.Retire(new RetiredOutlet(RetiredOutletPlace.Template, renamed.Name, renamed, child.Location));
                     recursiveSlots.Add(renamed);
                     break;
                 case "scopes" or "display" or "description" or "content" when !SlotDeclarationRegex().IsMatch(child.Content):
@@ -104,7 +106,7 @@ internal static partial class ArrangementParser
                     ParseMetadata(context, child, keyword, metadata);
                     break;
                 case "navigation" when NavigationParser.IsRegionHeader(child.Content):
-                    NavigationParser.ReportRegion(context, child, keyword);
+                    retired.Add(NavigationParser.ReportRegion(context, child, keyword));
                     break;
                 case "on":
                 case "uses":
@@ -113,7 +115,7 @@ internal static partial class ArrangementParser
                     InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 default:
-                    AddSlot(context, child, slots);
+                    AddSlot(context, child, slots, retired);
                     break;
             }
         }
@@ -128,7 +130,8 @@ internal static partial class ArrangementParser
             DisplayName = metadata.DisplayName,
             Description = metadata.Description,
             Content = metadata.Content,
-            Outlets = outlets
+            Outlets = outlets,
+            RetiredForms = retired.Count == 0 ? [] : [.. retired]
         };
     }
 
@@ -173,7 +176,7 @@ internal static partial class ArrangementParser
         fitsSlotLocation = line.Location;
     }
 
-    static void AddSlot(ParserContext context, SourceLine line, List<SlotSyntax> slots)
+    static void AddSlot(ParserContext context, SourceLine line, List<SlotSyntax> slots, List<RetiredForm> retired)
     {
         var match = SlotDeclarationRegex().Match(line.Content);
         if (!match.Success)
@@ -186,13 +189,21 @@ internal static partial class ArrangementParser
             return;
         }
 
+        var slot = new SlotSyntax(match.Groups[1].Value, line.Location)
+        {
+            Role = match.Groups[2].Success ? Enum.Parse<SlotRole>(match.Groups[2].Value, ignoreCase: true) : null,
+            Routed = match.Groups[3].Success,
+            RoutedBy = match.Groups[4].Success ? match.Groups[4].Value : null,
+            Primary = match.Groups[5].Success,
+            Optional = match.Groups[6].Success
+        };
         if (context.TryPeekChild(line.Indent, out _))
         {
             context.Error(
                 DiagnosticCodes.UnknownLayoutDirective,
                 $"Unexpected block under '{line.Content}' - a slot declaration names a slot and nothing more; arrange slots in the 'arrangement' block",
                 line.Location);
-            context.SkipBlock(line.Indent);
+            retired.Add(ReadSlotItems(context, line, slot));
             return;
         }
 
@@ -202,16 +213,39 @@ internal static partial class ArrangementParser
                 DiagnosticCodes.RemovedSlotContribution,
                 SlotsAndOutletsMigration.Replaced($"'contributes {match.Groups[7].Value}' on slot '{match.Groups[1].Value}'", $"outlet {match.Groups[7].Value} of navigation in {match.Groups[1].Value}"),
                 line.Location);
+            retired.Add(new RetiredSlotContribution(slot, match.Groups[7].Value, line.Location));
         }
 
-        AddSlot(slots, new(match.Groups[1].Value, line.Location)
+        AddSlot(slots, slot);
+    }
+
+    // A slot holding items is not a slot declaration. The block is read quietly so a migration can turn the items into
+    // an outlet: a toolbar line with its buttons and items, and bare buttons, count as items; anything else is left for review.
+    static RetiredSlotItems ReadSlotItems(ParserContext context, SourceLine line, SlotSyntax slot)
+    {
+        var quiet = context.Quiet();
+        ScreenToolbarSyntax? toolbar = null;
+        var buttons = new List<ToolbarButtonSyntax>();
+        var others = new List<SourceLocation>();
+        while (quiet.TryPeekChild(line.Indent, out var child))
         {
-            Role = match.Groups[2].Success ? Enum.Parse<SlotRole>(match.Groups[2].Value, ignoreCase: true) : null,
-            Routed = match.Groups[3].Success,
-            RoutedBy = match.Groups[4].Success ? match.Groups[4].Value : null,
-            Primary = match.Groups[5].Success,
-            Optional = match.Groups[6].Success
-        });
+            quiet.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "toolbar" when toolbar is null:
+                    toolbar = ScreenParser.ParseToolbar(quiet, child);
+                    break;
+                case "button" when ToolbarButtonParser.Parse(quiet, child) is { } button:
+                    buttons.Add(button);
+                    break;
+                default:
+                    others.Add(child.Location);
+                    quiet.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(slot, toolbar, buttons, others, line.Location);
     }
 
     static void AddSlot(List<SlotSyntax> slots, SlotSyntax slot)
@@ -596,6 +630,11 @@ internal static partial class ArrangementParser
         /// Gets the navigation regions a layout declares.
         /// </summary>
         public IReadOnlyList<OutletSyntax> Outlets { get; init; } = [];
+
+        /// <summary>
+        /// Gets the forms an earlier Screenplay version wrote in the body, kept for a migration.
+        /// </summary>
+        public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 
         /// <summary>
         /// Gets the template picker description, or <c>null</c>.

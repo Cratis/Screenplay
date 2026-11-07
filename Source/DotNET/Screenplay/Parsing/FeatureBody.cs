@@ -30,6 +30,7 @@ internal sealed class FeatureBody(string name)
     readonly List<DependsOnSyntax> _dependsOn = [];
     readonly List<TemplateAssignmentSyntax> _templates = [];
     readonly List<OutletSyntax> _outlets = [];
+    readonly List<RetiredForm> _retiredForms = [];
     readonly List<PurposeReferenceSyntax> _purposes = [];
     string? _description;
     string? _documentation;
@@ -105,7 +106,7 @@ internal sealed class FeatureBody(string name)
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
             case "toolbar":
-                ScreenParser.ReportFeatureToolbar(context, line, "feature");
+                _retiredForms.Add(ScreenParser.ReportFeatureToolbar(context, line, "feature"));
                 return true;
             case "outlet":
                 OutletParser.AddOverride(context, line, "feature", _outlets);
@@ -142,6 +143,7 @@ internal sealed class FeatureBody(string name)
             IsPlacement = isPlacement,
             Templates = _templates,
             Purposes = _purposes,
-            Outlets = _outlets
+            Outlets = _outlets,
+            RetiredForms = _retiredForms.Count == 0 ? [] : [.. _retiredForms]
         };
 }

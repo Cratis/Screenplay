@@ -32,6 +32,7 @@ internal sealed class ModuleBody(string name)
     readonly List<DependsOnSyntax> _dependsOn = [];
     readonly List<TemplateAssignmentSyntax> _templates = [];
     readonly List<OutletSyntax> _outlets = [];
+    readonly List<RetiredForm> _retiredForms = [];
     readonly List<PurposeReferenceSyntax> _purposes = [];
     int _restatedHeaders;
     string? _description;
@@ -110,10 +111,10 @@ internal sealed class ModuleBody(string name)
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
             case "navigation":
-                NavigationParser.ReportRegion(context, line, "module");
+                _retiredForms.Add(NavigationParser.ReportRegion(context, line, "module"));
                 return true;
             case "toolbar":
-                ScreenParser.ReportFeatureToolbar(context, line, "module");
+                _retiredForms.Add(ScreenParser.ReportFeatureToolbar(context, line, "module"));
                 return true;
             case "outlet":
                 OutletParser.AddOverride(context, line, "module", _outlets);
@@ -156,7 +157,8 @@ internal sealed class ModuleBody(string name)
             IsPlacement = isPlacement,
             Templates = _templates,
             Purposes = _purposes,
-            Outlets = _outlets
+            Outlets = _outlets,
+            RetiredForms = _retiredForms.Count == 0 ? [] : [.. _retiredForms]
         };
 
     internal void RecordRestatedHeader(SourceLocation location) =>

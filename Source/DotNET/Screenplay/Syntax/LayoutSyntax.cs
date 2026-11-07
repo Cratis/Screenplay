@@ -82,6 +82,12 @@ public record LayoutSyntax(
     /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the layout offers, with their defaults.
     /// </summary>
     public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this layout, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>
@@ -178,6 +184,12 @@ public record ScreenTemplateSyntax(
     /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the template offers, with their defaults.
     /// </summary>
     public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this template, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>
@@ -265,6 +277,12 @@ public record DialogTemplateSyntax(
     /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the template offers, with their defaults.
     /// </summary>
     public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this template, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>

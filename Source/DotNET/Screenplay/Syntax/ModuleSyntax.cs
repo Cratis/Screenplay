@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax;
@@ -85,6 +86,12 @@ public record ModuleSyntax(
     /// An outlet it does not mention keeps the items it inherits.
     /// </summary>
     public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote directly in this module, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>
@@ -161,4 +168,10 @@ public record FeatureSyntax(
     /// Gets the outlets this feature changes for its screens - and its sub features' - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
     /// </summary>
     public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote directly in this feature, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }

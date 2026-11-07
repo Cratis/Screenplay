@@ -149,6 +149,10 @@ internal static partial class ContributionParser
             }
 
             item.Destination = new(kind, target, line.Location);
+            if (destination.Groups[1].Value == "outlet")
+            {
+                context.Retire(new RetiredOutlet(RetiredOutletPlace.Destination, target, item.Destination, line.Location));
+            }
             return;
         }
 
