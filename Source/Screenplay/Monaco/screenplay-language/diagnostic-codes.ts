@@ -293,6 +293,19 @@ export const diagnosticCodes = {
     removedDestinationOutlet: 'PLAY0891',
     removedNavigationOutlet: 'PLAY0892',
     removedTemplateOutlet: 'PLAY0893',
+    // Outlets (Screenplay 6): the forms they replace, and the checks of their declarations, changes and items.
+    removedNavigationRegion: 'PLAY0894',
+    removedSlotContribution: 'PLAY0895',
+    removedFeatureToolbar: 'PLAY0896',
+    invalidOutletDeclaration: 'PLAY0897',
+    invalidOutletItem: 'PLAY0898',
+    outletItemNotInherited: 'PLAY0899',
+    outletItemWrongKind: 'PLAY0900',
+    outletFilterParameterUnknown: 'PLAY0901',
+    outletStatFromListQuery: 'PLAY0902',
+    unknownOutlet: 'PLAY0903',
+    duplicateOutlet: 'PLAY0904',
+    duplicateOutletItem: 'PLAY0905',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

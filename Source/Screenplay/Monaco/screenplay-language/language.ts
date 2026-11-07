@@ -221,6 +221,18 @@ export const clauseKeywords = [
     'target',
     'slot',
     'routed', // A slot line's modifiers: '<name> [page|pane|panel] [routed [by <param>]] [primary] [optional]'.
+    'actions', // Outlet kinds and item forms: 'outlet <name> of actions|filters|tabs|stats|navigation' with 'default', 'hide', 'before' and 'after'.
+    'filters',
+    'tabs',
+    'stats',
+    'default',
+    'hide',
+    'before',
+    'group',
+    'tab',
+    'stat',
+    'sets',
+    'shows',
     'page',
     'pane',
     'panel',

@@ -26,8 +26,8 @@ export const moduleScopeItems: CompletionEntry[] = [
     { label: 'screen template', insertText: 'screen template ${1:Name}\n    fits slot ${2:content}\n\n    ${3:slot}', documentation: 'Declares a reusable screen shape that fits a slot of the shell.' },
     { label: 'dialog template', insertText: 'dialog template ${1:Name}\n    ${2:body}\n    ${3:actions}', documentation: 'Declares a reusable dialog shape that opens over the shell.' },
     { label: 'form', insertText: 'form ${1:Name} for ${2:Command}\n    field ${3:property} label "${4:Label}"', documentation: 'Declares a form bound to a command.' },
-    { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a slot of the shell, such as navigation.' },
-    { label: 'navigation sidebar extends', insertText: 'navigation ${1|sidebar,topbar|} ${2|extends,overrides,inherits|}\n    item ${3:id} title "${4:Title}" target ${5:Module.Feature}', documentation: 'Changes a navigation region for this module: `extends` adds items after the application\'s, `overrides` replaces them, `inherits` shows the application\'s.' },
+    { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Adds an entry to an outlet a layout or template declares, such as navigation.' },
+    { label: 'outlet extends', insertText: 'outlet ${1:sidebar} ${2|extends,overrides,inherits|}\n    item ${3:id} title "${4:Title}" target ${5:Module.Feature}', documentation: 'Changes an outlet the template declares, for the screens beneath: `extends` adds items after the inherited ones, `overrides` replaces them, `inherits` keeps them.' },
     ...interactionItems,
 ];
 
@@ -44,7 +44,8 @@ export const featureScopeItems: CompletionEntry[] = [
     { label: 'slice StateView', insertText: 'slice StateView ${1:Name}\n    ', documentation: 'A query + projection + screen; something that reads the system.' },
     { label: 'slice Automation', insertText: 'slice Automation ${1:Name}\n    ', documentation: 'A reaction or reducer; something that runs when something happens.' },
     { label: 'slice Translate', insertText: 'slice Translate ${1:Name}\n    ', documentation: 'A capture; converts external data into events.' },
-    { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a slot of the shell, such as navigation.' },
+    { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Adds an entry to an outlet a layout or template declares, such as navigation.' },
+    { label: 'outlet extends', insertText: 'outlet ${1:sidebar} ${2|extends,overrides,inherits|}\n    item ${3:id} title "${4:Title}" target ${5:Module.Feature}', documentation: 'Changes an outlet the template declares, for the screens beneath: `extends` adds items after the inherited ones, `overrides` replaces them, `inherits` keeps them.' },
     ...interactionItems,
 ];
 
@@ -209,8 +210,8 @@ export const sampleRowItems: CompletionEntry[] = [
 
 export const layoutItems: CompletionEntry[] = [
     { label: 'slot', insertText: '${1:slot}', documentation: 'A named slot of the shell.' },
-    { label: 'slot contributes', insertText: '${1:slot} contributes ${2:Name}', documentation: 'A slot other declarations contribute to, such as `navigation contributes Navigation`.' },
-    { label: 'navigation topbar', insertText: 'navigation ${1|topbar,sidebar|}\n    logo image "${2:/logo.svg}" title "${3:Application}"\n    item ${4:id} title "${5:Title}" target ${6:Module}', documentation: 'The application\'s navigation region: a logo and items that target a module or feature.' },
+    { label: 'outlet', insertText: 'outlet ${1:toolbar} of ${2|actions,filters,tabs,stats,navigation|} in ${3:slot}', documentation: 'An item list the structure offers, which modules, features and screens inherit, extend or override.' },
+    { label: 'outlet of navigation', insertText: 'outlet ${1|topbar,sidebar|} of navigation\n    logo image "${2:/logo.svg}" title "${3:Application}"\n    default ${4:id} title "${5:Title}" target ${6:Module}', documentation: 'The application\'s navigation outlet: a logo and default items that target a module or feature.' },
     { label: 'arrangement', insertText: 'arrangement flow\n    column\n        ${1:slot}', documentation: 'How the slots are placed.' },
 ];
 
@@ -225,6 +226,27 @@ export const navigationItems: CompletionEntry[] = [
     { label: 'logo', insertText: 'logo image "${1:/logo.svg}" title "${2:Application}"', documentation: 'The application logo. Declared once, in a layout.' },
     { label: 'item', insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature}', documentation: 'A navigation item with a title, an optional `icon`, a `target` module or feature and an optional rendering `slot`. Sidebar items may nest `item` lines.' },
     { label: 'item (with slot)', insertText: 'item ${1:id} title "${2:Title}" icon ${3:icon} target ${4:Module.Feature} slot ${5:content}', documentation: 'A navigation item that renders its target into a named layout slot.' },
+];
+
+// Under 'outlet <name> of <kind>' on a layout or template: the items it shows by default.
+export const outletDeclarationItems: CompletionEntry[] = [
+    { label: 'default button', insertText: 'default ${1:id} title "${2:Title}" ${3|runs close,runs submit,runs refresh,slice Module.Feature.Slice|}', documentation: 'A default action. `runs` names a built-in; a placeholder without a slice is filled by a lower level.' },
+    { label: 'default item', insertText: 'default ${1:id} title "${2:Title}" target ${3:Module}', documentation: 'A default navigation item.' },
+    { label: 'default filter', insertText: 'default ${1:id} title "${2:Title}" sets ${3:Query}.${4:param}', documentation: 'A default filter bound to a query parameter.' },
+    { label: 'default tab', insertText: 'default ${1:id} title "${2:Title}" shows ${3:Screen}', documentation: 'A default tab showing a screen.' },
+    { label: 'default stat', insertText: 'default ${1:id} title "${2:Title}" value from ${3:Query}.${4:field}', documentation: 'A default figure read from a single-result query.' },
+    { label: 'logo', insertText: 'logo image "${1:/logo.svg}" title "${2:Application}"', documentation: 'The application logo. Declared once, in a layout\'s navigation outlet.' },
+];
+
+// Under 'outlet <name> inherits|extends|overrides' on a module, feature or screen.
+export const outletChangeItems: CompletionEntry[] = [
+    { label: 'hide', insertText: 'hide ${1:id}', documentation: 'Drops an inherited item.' },
+    { label: 'button', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice}', documentation: 'An action that invokes a State Change slice.' },
+    { label: 'group', insertText: 'group ${1:id} title "${2:Title}" icon ${3:icon}\n    button ${4:id} title "${5:Title}" slice ${6:Module.Feature.Slice}', documentation: 'A menu of buttons.' },
+    { label: 'filter', insertText: 'filter ${1:id} title "${2:Title}" sets ${3:Query}.${4:param}', documentation: 'A filter that sets a parameter of the screen\'s query.' },
+    { label: 'tab', insertText: 'tab ${1:id} title "${2:Title}" shows ${3:Screen}', documentation: 'A tab that shows a screen.' },
+    { label: 'stat', insertText: 'stat ${1:id} title "${2:Title}" value from ${3:Query}.${4:field}', documentation: 'A figure read from a single-result query.' },
+    { label: 'item', insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature}', documentation: 'A navigation item.' },
 ];
 
 export const templateItems: CompletionEntry[] = [

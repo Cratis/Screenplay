@@ -15,8 +15,8 @@ const offered = (text: string): string[] => {
 const scopes: Record<string, [string, string[]]> = {
     'the root': ['', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
     'a domain': ['domain Catalog\n  ', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
-    'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'navigation sidebar extends', 'on', 'screen', 'screen template', 'uses']],
-    'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
+    'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'outlet extends', 'screen', 'screen template', 'uses']],
+    'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'outlet extends', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
     'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
     'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['documentation', 'event', 'event from', 'event generation', 'example', 'file', 'graph', 'projection', 'projection graph', 'public event', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'specification']],
     'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'reaction', 'readmodel', 'reducer', 'specification']],
@@ -46,9 +46,10 @@ const scopes: Record<string, [string, string[]]> = {
     'a nested sample row': ['sample data P\n  shape S\n    row\n      lines\n        row\n          ', ['collection', 'field']],
     'a recursive sample collection header': ['sample data P\n  shape S\n    row\n      lines\n        row\n          children\n            ', ['row']],
     'a ui profile sample data block': ['ui profile P\n  sample data\n    ', ['active', 'bind', 'shape maps to']],
-    'a navigation region': ['layout L\n  navigation topbar\n    ', ['item', 'item (with slot)', 'logo']],
+    'an outlet declaration': ['layout L\n  outlet sidebar of navigation\n    ', ['default button', 'default filter', 'default item', 'default stat', 'default tab', 'logo']],
+    'an outlet change': ['module M\n  outlet sidebar extends\n    ', ['button', 'filter', 'group', 'hide', 'item', 'stat', 'tab']],
     'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (with emphasis)', 'item action', 'item navigate']],
-    'a layout': ['layout L\n  ', ['arrangement', 'navigation topbar', 'slot', 'slot contributes']],
+    'a layout': ['layout L\n  ', ['arrangement', 'outlet', 'outlet of navigation', 'slot']],
 };
 
 describe('when completing an empty line in each scope', () => {
