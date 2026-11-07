@@ -47,10 +47,11 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Layout** — the application's base navigational look: the shell with its top bar, navigation, content and footer. An application has one, declared at the top level and selected by a `ui profile`.
 - **Screen template** — a reusable shape with named slots that goes inside the shell, declared at module level and referenced by screens. An application has many; `fits slot` says which slot of its parent each one fills — matched by slot name, to any depth.
 - **Dialog template** — a screen template for content that opens over the application. It declares no `fits slot`, because it occupies no slot.
-- **Slot** — a named region a layout or template declares. One parent fills it, or it opens to many by declaring `contributes <ContributionPoint>`.
+- **Slot** — a named region a layout or template declares, which one parent fills.
+- **Outlet** — a named list of items a layout or template offers (`outlet <name> of actions|filters|tabs|stats|navigation`). Modules, features and screens inherit, extend or override it; `contribute to` adds to it from anywhere.
 - **Arrangement** — how a layout or template positions the slots it declares: responsive `flow` or pixel-precise `freeform`.
 - **Contribution point** — a named many-to-one extension point declared on a slot. `Navigation` is the first user of the mechanism.
-- **Contribution** — one piece of content targeting a contribution point, declared with `contribute to`. It attaches to the nearest enclosing structure declaring a matching point.
+- **Contribution** — items or an entry added to an outlet, declared with `contribute to`. It attaches to the nearest enclosing structure declaring a matching outlet.
 - **UI profile** — a build's selections: `target platform`, `target size`, `layout`, `theme` and `packages`. Names artifacts; does not contain them.
 - **Package** — a named set of components a profile draws from, in override-priority order. `core` is the final fallback.
 - **Size class** — `compact`, `regular` or `expanded`, on the width and height axes. A class, not a pixel breakpoint.

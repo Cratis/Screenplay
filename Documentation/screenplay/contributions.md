@@ -1,52 +1,56 @@
 ---
-title: "Screenplay contributions: add feature-owned navigation"
-description: "Use contribute to in Screenplay when features need to add entries to a shared slot. Each feature declares its own link, label and order near its screens."
+title: "Screenplay contributions: add items to any outlet"
+description: "Use contribute to in Screenplay when a module or feature adds items to an outlet a layout or template declares. Each feature declares its own entry near its screens."
 ---
 
 # Contributions
 
-Use Screenplay contributions when several features need to add entries to a shared navigation area without maintaining one central list. The layout or template declares a named contribution point, and each feature declares the link it owns with `contribute to`.
+Use Screenplay contributions when several modules or features need to add entries to a shared list without maintaining one central list. The layout or template declares an [outlet](outlets.md), and each module or feature declares what it adds with `contribute to <outlet>`.
 
-A normal slot takes one block of content from its parent. A contribution point lets that slot collect entries from several modules or features, keeping each entry near the screens it links to.
+A lower level's `outlet <name> extends` changes the list for the screens beneath it. A contribution adds to the outlet wherever it appears, so the entry stays next to the screens it belongs to.
 
 ## Syntax
 
-First mark the receiving slot with `contributes <ContributionPoint>`. Slots on an application [`layout`](templates.md), `screen template` or `dialog template` can accept contributions:
+The layout or template declares the outlet:
 
 ```screenplay
 layout <Name>
-  <slot-name> contributes <ContributionPoint>
   <slot-name>
+  outlet <OutletName> of actions|filters|tabs|stats|navigation [for item|for screen] [in <slot-name>]
 ```
 
-```screenplay
-module <Name>
-  screen template <TemplateName>
-    <slot-name> contributes <ContributionPoint>
-    <slot-name>
-```
-
-Then add an entry on a module or feature. The entry names the contribution point, not the layout or template that receives it:
+A module or feature names the outlet, not the layout or template that declares it:
 
 ```screenplay
-contribute to <ContributionPoint>
+contribute to <OutletName>
   navigate to <Screen> [by <param>]
   label "<text>"
   order <number>
+  <item lines of the outlet's kind>
 ```
 
-- `<slot-name> contributes <ContributionPoint>` - marks a slot as the target for contributions under that name. A slot without `contributes` behaves exactly as it always has.
-- `contribute to <ContributionPoint>` - one contributed item. Declared directly on a `module` (alongside `screen template`, `dialog template`, `form` and `feature`) or on a `feature` at any nesting depth. `navigate`, `label` and `order` are all optional. `label` accepts an unquoted `$strings.<key>` token in place of a literal - see [Internationalization](internationalization.md).
+- `contribute to <OutletName>` - declared directly on a `module` or on a `feature` at any nesting depth. It works for any outlet, from any module or feature.
+- `navigate`, `label` and `order` describe one navigation entry; all are optional. `label` accepts an unquoted `$strings.<key>` token in place of a literal - see [Internationalization](internationalization.md).
+- Item lines - `button`, `group`, `filter`, `tab`, `stat` or `item` - add items of the outlet's kind, after the items it already has. An item of another kind is `PLAY0900`.
 
 ## Example
 
-The InvoiceManagement feature owns the Invoices link. Its module's `AppShell` template receives that entry in `navbar`, so adding another feature's link does not require editing the template:
+The InvoiceManagement feature owns the Invoices link, and the Payments feature adds a tab to the invoice page without editing the template:
 
 ```screenplay
+layout AppShell
+  category Shell
+  navbar panel
+  main page routed primary
+  outlet Navigation of navigation in navbar
+
 module Invoicing
-  screen template AppShell
-    navbar contributes Navigation
-    main
+  screen template InvoicePage
+    category Detail
+    fits slot main
+    header
+    detail pane
+    outlet detailTabs of tabs in detail
 
   feature InvoiceManagement
     slice StateView InvoiceList
@@ -56,9 +60,16 @@ module Invoicing
       navigate to InvoiceList
       label "Invoices"
       order 10
+
+  feature Payments
+    slice StateView InvoicePayments
+      screen InvoicePayments
+
+    contribute to detailTabs
+      tab payments title "Payments" shows InvoicePayments
 ```
 
-`contribute to Navigation` adds one flat item to a slot. For the application's topbar and sidebar as a whole - hierarchy, targets, rendering slots and module level inherit, extend and override - use the [`navigation` regions](navigation.md).
+For the application's topbar and sidebar as a whole - hierarchy, targets, rendering slots and module level inherit, extend and override - use [navigation outlets](navigation.md).
 
 ## Navigation item metadata
 
@@ -84,28 +95,20 @@ contribute to Navigation
 
 ## How a contribution resolves
 
-The compiler first checks the contribution's own module for a template slot with the matching `contributes` name. A local match keeps the contribution within that module, including contributions declared in nested features. Multiple matching slots in the module produce an ambiguity warning.
+The compiler first checks the contribution's own module for a template that declares the outlet. A local match keeps the contribution within that module, including contributions declared in nested features. Multiple matching templates in the module produce an ambiguity warning.
 
-If there is no local match, the compiler checks matching points outside the module, including application layouts. Other modules and layouts are checked together, not as separate precedence levels. Competing matches across modules, or between a module and a layout, produce an ambiguity warning.
+If there is no local match, the compiler checks outlets outside the module, including application layouts. Other modules and layouts are checked together, not as separate precedence levels. Competing matches across modules, or between a module and a layout, produce an ambiguity warning.
 
-Put an application-wide point such as `Navigation` on the layout when all modules should contribute to the shared shell. Put it on a module's template when that module should collect its own entries. Features do not declare templates; a feature that needs a separate structure uses a template declared on its module. See [Layouts and templates](templates.md).
+Declare an application-wide outlet such as `Navigation` on the layout when all modules should contribute to the shared shell. Declare it on a module's template when that module should collect its own entries. Features do not declare templates; a feature that needs a separate structure uses a template declared on its module. See [Layouts and templates](templates.md).
 
-An unresolved point also produces a warning because it may resolve outside the document. Review unresolved and ambiguous points before relying on the resulting navigation.
-
-```screenplay
-module Payments
-  contribute to Navigation
-    navigate to InvoiceList
-```
-
-If `Payments` has no matching point of its own and two other modules each declare a `contributes Navigation` slot, the compiler reports ambiguity. The contribution does not select one of those modules.
+A contribution to an outlet nothing declares is an error (`PLAY0903`). A document that uses a blueprint is exempt, since the blueprint's templates may declare the outlet.
 
 ## Route arguments
 
-Use `navigate to <Screen> by <param>` to pass a typed value to the destination, not to interpolate a route string. It uses the same navigation binding as a screen's `action` and `on row-click`, with compiler name checks. The widget consuming the contribution point decides how that binding becomes a URL, query string or native deep link.
+Use `navigate to <Screen> by <param>` to pass a typed value to the destination, not to interpolate a route string. It uses the same navigation binding as a screen's `action` and `on row-click`, with compiler name checks. The widget consuming the outlet decides how that binding becomes a URL, query string or native deep link.
 
-## Scope
+## From Screenplay 5
 
-`Navigation` is a contribution point name, not a reserved destination. You can name another point, but entries still use the supported directives described above; the name does not define a new property schema. Grouped ordering beyond a flat list and an explicit override for contribution-point resolution are not supported.
+Screenplay 5 marked the receiving slot with `<slot> contributes <Point>`. That form is an error since Screenplay 6 (`PLAY0895`); write `outlet <Point> of navigation in <slot>`, or run `screenplay migrate --from 5 --to 6`.
 
-For a topbar or sidebar with nested destinations and module inheritance, continue with [navigation regions](navigation.md). For a screen that fills one slot directly, use [layouts and templates](templates.md).
+For a topbar or sidebar with nested destinations and module inheritance, continue with [navigation outlets](navigation.md). For every outlet kind, see [Outlets](outlets.md). For a screen that fills one slot directly, use [layouts and templates](templates.md).

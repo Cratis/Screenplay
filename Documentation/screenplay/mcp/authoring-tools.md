@@ -362,7 +362,7 @@ rejected.
 
 ## Author the application shell
 
-The application shell - navigation regions, toolbar buttons, blueprint template references and sample data - is typed
+The application shell - outlets, toolbar buttons, blueprint template references and sample data - is typed
 syntax like every other construct. `read-ast` returns it, `propose-ast` edits it, every proposal is checked against the
 compiler's own diagnostics before it can be applied, and `apply` refuses a proposal whose workspace or catalog revision no
 longer matches (`StaleRevision`). Each construct follows the same transcript: open, read the typed nodes, propose, refuse a
@@ -370,10 +370,11 @@ stale revision, apply, reopen.
 
 | Construct | `read-ast` kind | Edit it with |
 | --- | --- | --- |
-| A navigation region of a layout or module | `NavigationRegionSyntax` | `replace` to change `mode` or `items`; `add` to `navigation` on a `LayoutSyntax` or `ModuleSyntax` |
-| A navigation item (and its sub-items) | `NavigationItemSyntax` | `replace` to retitle, retarget or reslot; `add` to a region's `items` or an item's `children`; `remove`; `move` |
-| The application logo | `NavigationLogoSyntax` | `replace`; it lives on the layout's region only (`PLAY0744`) |
-| A toolbar button | `ToolbarButtonSyntax` | `add` to a `ScreenToolbarSyntax`'s `buttons`; `replace` the `slice`, `emphasis`, `icon` or title; `remove` |
+| An outlet of a layout, template, module, feature or screen | `OutletSyntax` | `replace` to change `mode`, `items` or `hides`; `add` to `outlets` on a `LayoutSyntax`, `ScreenTemplateSyntax`, `DialogTemplateSyntax`, `ModuleSyntax`, `FeatureSyntax` or `ScreenSyntax` |
+| An outlet item | `ToolbarButtonSyntax`, `OutletGroupSyntax`, `OutletFilterSyntax`, `OutletTabSyntax`, `OutletStatSyntax` | `add` to an outlet's `items` or a contribution's `items`; `replace` its title, binding or `position`; `remove`; `move` |
+| A navigation item (and its sub-items) | `NavigationItemSyntax` | `replace` to retitle, retarget or reslot; `add` to an outlet's `items` or an item's `children`; `remove`; `move` |
+| The application logo | `NavigationLogoSyntax` | `replace`; it lives on the layout's navigation outlet only (`PLAY0744`) |
+| A toolbar button | `ToolbarButtonSyntax` | `add` to a `ScreenToolbarSyntax`'s `buttons` or an outlet's `items`; `replace` the `slice`, `emphasis`, `icon`, `runs` or title; `remove` |
 | A template assignment or reference | `TemplateAssignmentSyntax`, `ScreenTemplateReferenceSyntax` | `replace` the `blueprint`, `name` or `version` |
 | The profile's root template | `RootTemplateSyntax` | `replace` the `name`, `blueprint` or `version`; see [The profile's shell](#the-profiles-shell) |
 | A shell option | `ShellOptionSyntax` | `add` to a `RootTemplateSyntax`'s `options`; `replace` the `value` (`syntaxKind` is `Word`, `Text`, `Number` or `Flag`); `remove` |
@@ -381,23 +382,23 @@ stale revision, apply, reopen.
 | The template a new screen starts from | `NewScreenTemplateSyntax` | `replace` the `name`, `blueprint` or `version`; `remove` |
 | A sample data pack and the pack the profile selects | `SampleDataPackSyntax`, `SampleDataSelectionSyntax` | `replace` a row value or the `active` pack; `remove` a pack - see [Sample data](../sample-data.md) |
 
-A member that holds nothing is left out of the node JSON (a module without `navigation`, a toolbar without `buttons`, an
+A member that holds nothing is left out of the node JSON (a module without `outlets`, a toolbar without `buttons`, an
 item without `children`). Adding the first child still works: `add` accepts any member the node kind declares, so
-`add` with `member: "navigation"` on a module that has no region yet creates the first one.
+`add` with `member: "outlets"` on a module that has no outlet yet creates the first one.
 
 ### Switch a module's navigation mode
 
-A module region is `inherits`, `extends` or `overrides` the application's items ([Navigation regions](../navigation.md)).
-The edit is a typed `replace` of the region (or an `add` when the module has none):
+A module's outlet `inherits`, `extends` or `overrides` the items the layout declares ([Outlets](../outlets.md)).
+The edit is a typed `replace` of the outlet (or an `add` when the module has none):
 
-- **inherit to extend** - `mode: "Extend"` and the module's own items; the first `+` on an inheriting region does exactly this.
+- **inherit to extend** - `mode: "Extend"` and the module's own items; the first `+` on an inheriting outlet does exactly this.
 - **extend to override** - `mode: "Override"`; the application's items stop applying, so copy any you still want.
 - **inherit to override** - `mode: "Override"` and a copy of the application's items. A module's own items may only target
   that module (`PLAY0750`), so retarget each copied item to one of the module's features; a copy that still targets another
   module is refused with `PLAY0750` and nothing is written.
-- **override or extend to inherit** - `mode: "Inherit"` and no items (`PLAY0745` when items remain).
+- **override or extend to inherit** - `mode: "Inherit"` and no items (`PLAY0897` when items remain).
 
-Extending modules must not reuse an application item id (`PLAY0747`); a copied item keeps its id under `override`, where
+Extending modules must not reuse an inherited item id (`PLAY0905`); a copied item keeps its id under `override`, where
 only the module's own ids count.
 
 ### Toolbar buttons

@@ -855,7 +855,6 @@ Hosts read the refusal from the `PLAY0781` `reason` argument instead of the mess
 | `PLAY0221` | Error | A contribution declares `order` more than once. |
 | `PLAY0222` | Error | A contribution's `label` line is not `label "..."` or `label $strings....`. |
 | `PLAY0223` | Error | A contribution's `order` line is not `order <number>`. |
-| `PLAY0224` | Warning | A contribution names a contribution point nothing in scope declares. |
 
 ### Themes
 
@@ -1058,7 +1057,7 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope, or - at `slice` scope - whose slice kinds (`scopes slice statechange`) exclude the slice's kind. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 | `PLAY0654` | Error | A navigation contribution's `destination slot` or `destination dialog` names a slot or dialog template nothing declares. |
-| `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
+| `PLAY0655` | Error | A screen's `contribute to <Point>` names an outlet no layout or template declares. A module or feature `contribute to` reports `PLAY0903` instead; screen contributions belong to the screen-composition checks. |
 | `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
 | `PLAY0720` | Warning | A `layout`, `screen template` or `dialog template` declares no `category`. A template picker groups by category, so every template needs one. A blueprint package build runs with warnings as errors, so there a missing category fails the build; an own template only warns. See [Layouts and templates](templates.md#category-and-picker-metadata). |
 | `PLAY0721` | Error | A template reference's `version` is not a range Scene understands: `*`, an exact version, or a `^`, `~`, `>=`, `>`, `<=` or `<` range over `major[.minor[.patch]]`. |
@@ -1678,25 +1677,20 @@ See [Policies](policies.md#portable-evaluation) for three-valued evaluation and 
 
 Both compilers check these forms. Repairs require individual review (`CanFixAll: false`) and refuse trailing-comment relocation or comment loss. Conditions reuse PLAY0344–PLAY0348; fallback ordering uses PLAY0343 and missing alternatives uses PLAY0342. See [Interactions](interactions.md#choose-an-action-list-by-item-state). Interactions still report PLAY0269 at ESM binding; syntax support is not runtime admission.
 
-## Navigation regions
+## Navigation outlets
 
-The `navigation topbar` and `navigation sidebar` blocks of a layout and a module. See [Navigation regions](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler recognizes and skips the blocks, like layouts. The canonical corpus pins `PLAY0744`, `PLAY0747`, `PLAY0748` and `PLAY0749` as rejection vectors beside the `screen-shell-navigation-positive` shell, and a stale or breaking MCP edit meets the same codes (see [Author the application shell](mcp/authoring-tools.md#author-the-application-shell)).
+The items of a navigation outlet - `outlet <name> of navigation` on a layout or template, and `outlet <name> inherits|extends|overrides` on a module, feature or screen. See [Navigation](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler parses a module's, feature's or screen's items and reports their form. The canonical corpus pins `PLAY0744`, `PLAY0748`, `PLAY0749` and `PLAY0905` as rejection vectors beside the `screen-shell-navigation-positive` shell, and a stale or breaking MCP edit meets the same codes (see [Author the application shell](mcp/authoring-tools.md#author-the-application-shell)).
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0740` | Error | A `navigation` header is not `navigation topbar|sidebar`, optionally followed by `inherits`, `extends` or `overrides`. |
-| `PLAY0741` | Error | A line in a navigation region is not a well formed `item <id> title "…" [icon X] [target Module[.Feature]] [slot name]`: no or an unquoted title, an unknown or repeated part, or text under an item that is not a sub-item. |
-| `PLAY0742` | Error | A layout or module declares the same navigation region (`topbar` or `sidebar`) more than once. |
+| `PLAY0741` | Error | A navigation item is not a well formed `item <id> title "…" [icon X] [target Module[.Feature]] [slot name]`: no or an unquoted title, an unknown or repeated part, or text under an item that is not a sub-item. |
 | `PLAY0743` | Error | A `logo` line is not `logo image "…" title "…"`. |
-| `PLAY0744` | Error | A `logo` is declared in a module's navigation, or a layout declares a second logo. The logo belongs to the application. |
-| `PLAY0745` | Error | A layout's region states `inherits`, `extends` or `overrides` - the application is the base and has no mode - or a module region that `inherits` lists items of its own. |
-| `PLAY0746` | Error | A topbar item has sub-items. Only the sidebar nests items. |
-| `PLAY0747` | Error | Two items of one region share an id, within the region or between an extending module and the application. Mirrors Scene `navDuplicateId`. |
+| `PLAY0744` | Error | A `logo` is declared below the layout - in a template, module, feature or screen outlet - or a layout declares a second logo. The logo belongs to the application. |
 | `PLAY0748` | Error | An item has neither a target nor sub-items, or targets a module or feature the document does not declare. Mirrors Scene `navTargetMissing`. |
 | `PLAY0749` | Error | An item's `slot` is declared by no layout. An item without a slot renders into the layout's primary content slot. Mirrors Scene `navSlotUnknown`. |
 | `PLAY0750` | Error | A module's own item targets another module. Mirrors Scene `navTargetOutOfScope`. |
 | `PLAY0751` | Warning | An item targets a module that has no feature to go to. Mirrors Scene `navModuleWithoutFeatures`. |
-| `PLAY0752` | Warning | A module region that `overrides` the application's declares no items, so the region is empty in that module. |
+| `PLAY0752` | Warning | An outlet that `overrides` the inherited items declares none of its own, so the outlet is empty there. |
 
 ## Slots
 
@@ -1707,21 +1701,39 @@ Screenplay 6 calls every region content is placed in a slot; see [Slot roles](te
 | `PLAY0890` | Error | A component declares `outlet <name>`. Write `slot <name>`. |
 | `PLAY0891` | Error | A navigation contribution declares `destination outlet <name>`. Write `destination slot <name>`. |
 | `PLAY0892` | Error | A `navigate to` declares `outlet <name>`. Write `slot <name>`. |
-| `PLAY0893` | Error | A layout, screen template or dialog template declares `outlet <name>`. Write `slot <name>`. |
+| `PLAY0893` | Error | A layout, screen template or dialog template declares `outlet <name>` with no kind. Write `slot <name>`; an item list is `outlet <name> of <kind>`. |
 
-## Toolbar buttons
+## Outlets
 
-The `button` lines of a screen `toolbar`. See [Screens](screens.md#toolbar-buttons). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.
+An outlet is a named list of items a layout or template offers, and a lower level changes; see [Outlets](outlets.md). The Screenplay 5 forms it replaces are errors, with no deprecation period, and each message names the migration `screenplay migrate --from 5 --to 6` (slots and outlets). Layouts, templates and contributions are opaque to the TypeScript compiler, so it reports `PLAY0894` (module regions), `PLAY0896`, `PLAY0897`, `PLAY0898` and `PLAY0904`; the C# compiler reports every code.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0760` | Error | A toolbar `button` line is malformed: no or an unquoted title, an unknown or repeated part, an unknown `emphasis`, or a block under it. |
+| `PLAY0894` | Error | A layout or module declares `navigation topbar|sidebar`. Write `outlet <name> of navigation` on the layout and `outlet <name> inherits|extends|overrides` on the module. |
+| `PLAY0895` | Error | A slot declares `contributes <Point>`. Write `outlet <Point> of navigation in <slot>`. |
+| `PLAY0896` | Error | A feature or module declares `toolbar <name>`. Write `outlet <name> extends`. |
+| `PLAY0897` | Error | An `outlet` line is malformed or misplaced: an unknown kind, a kind below a layout or template, a mode on a layout or template, or items under `inherits`. |
+| `PLAY0898` | Error | A line in an outlet or contribution is not an item form, or an item form is malformed - for example a `filter` whose binding is not `sets <Query>.<param>`, or a second `before`/`after`. |
+| `PLAY0899` | Error | A `hide`, `before` or `after` names an item the inherited outlet does not have. |
+| `PLAY0900` | Error | An item is of the wrong kind for its outlet - a `tab` in an actions outlet, a `button` in a navigation outlet. |
+| `PLAY0901` | Error | A `filter` sets a parameter the query does not have. |
+| `PLAY0902` | Error | A `stat` reads its value from a query that returns a list; a stat reads a field of a single-result query. |
+| `PLAY0903` | Error | A `contribute to`, or a lower level's `outlet <name> inherits|extends|overrides`, names an outlet no layout or template declares. A document that uses a blueprint is exempt, since the blueprint's templates may declare it. |
+| `PLAY0904` | Error | A layout, template, module, feature or screen declares or changes the same outlet twice. |
+| `PLAY0905` | Error | Two items of one outlet share an id, or an extending level's item repeats the id of an inherited one. |
+
+## Toolbar buttons
+
+The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0760` | Error | A toolbar `button` line is malformed: no or an unquoted title, an unknown or repeated part, an unknown `emphasis`, a `runs` other than `close`, `submit` or `refresh`, or a block under it. |
 | `PLAY0761` | Error | A toolbar button's `slice` names no slice the document declares. Mirrors Scene `toolbarButtonSliceNotFound`. |
 | `PLAY0762` | Error | A toolbar button's `slice` is a State View, Automation or Translate slice; a button invokes State Change slices only. Mirrors Scene `toolbarButtonSliceNotStateChange`. |
-| `PLAY0763` | Warning | A toolbar button names no `slice`, so it invokes nothing. Mirrors Scene `toolbarButtonSliceEmpty`. |
+| `PLAY0763` | Warning | A toolbar button names no `slice` and runs no built-in, so it invokes nothing. A layout's or template's `default` button is a placeholder and is exempt. Mirrors Scene `toolbarButtonSliceEmpty`. |
 | `PLAY0764` | Error | A toolbar button's `slice` matches slices in more than one feature; qualify it with the feature or module. |
 | `PLAY0765` | Error | Two buttons, or a button and an item, of one toolbar share an id. |
-| `PLAY0808` | Warning | A toolbar item of a feature or module links a command that no slice of that feature or module declares. |
 | `PLAY0809` | Error | A capture declares `is event source` on its key but is not a `source events` capture with a single property key. |
 
 ## Application calendar and clock operands
@@ -1774,3 +1786,10 @@ A retired code stays out of use forever.
 | `PLAY0035` | Attached-handler admission (decision 0117) | Unconditional `produces` declares result contract v1 beside an attached or pending handler; unconstrained or unresolved attachments retain `PLAY0800`. |
 | `PLAY0176` | v4.25.0 | Repeated reads without aliases are reported as `PLAY0410`. |
 | `PLAY0686` | v4.152.0 | Event rename pins that differ from the name are carried as `storedName` in ESM v16 (decision 0075); no warning is needed. |
+| `PLAY0224` | Screenplay 6 (outlets) | A contribution to an outlet nothing declares is the error `PLAY0903`. |
+| `PLAY0740` | Screenplay 6 (outlets) | Navigation regions are outlets; a malformed outlet is `PLAY0897` and the old header is `PLAY0894`. |
+| `PLAY0742` | Screenplay 6 (outlets) | An outlet declared or changed twice is `PLAY0904`. |
+| `PLAY0745` | Screenplay 6 (outlets) | A mode on a layout's outlet, or items under `inherits`, is `PLAY0897`. |
+| `PLAY0746` | Screenplay 6 (outlets) | Any navigation outlet nests items. |
+| `PLAY0747` | Screenplay 6 (outlets) | A repeated item id is `PLAY0905`. |
+| `PLAY0808` | Screenplay 6 (outlets) | Feature and module toolbars are outlets, whose buttons name slices (`PLAY0761`). |

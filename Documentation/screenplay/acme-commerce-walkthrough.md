@@ -438,7 +438,7 @@ sample-data shapes with `--sample-data`; that does not seed production data. The
 
 ### Navigation and the logo
 
-Open `<Domain>/shell/navigation.play` for the [navigation regions](navigation.md). It declares the topbar and a sidebar grouped
+Open `<Domain>/shell/navigation.play` for the [navigation outlets](navigation.md). It declares the topbar and a sidebar grouped
 by module and feature. The logo is an inline SVG data URI, `logo image "data:image/svg+xml;base64,..."`, so the model does not
 need to load a separate logo file. `tools/embed-logos.py` derives those values from `assets/logos`.
 
@@ -446,16 +446,16 @@ A module can inherit or replace the application's navigation:
 
 | Module | Statement | Effect |
 | --- | --- | --- |
-| `Shop` | `navigation topbar overrides` | the storefront has its own light topbar |
+| `Shop` | `outlet topbar overrides` | the storefront has its own light topbar |
 | `Merchandising`, `Orders`, `Buying`, `Stock` | none | inherit the application's navigation |
 
 ### Toolbars
 
-The application's topbar declares buttons once, for every page (`Catalog/shell/navigation.play`), and a policy gates each:
+The application's layout declares its buttons once, for every page, as an actions outlet in the topbar (`Catalog/shell/navigation.play`), and a policy gates each:
 
 ```text
-navigation topbar
-  button newProduct title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+outlet topbarActions of actions
+  default newProduct title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
     authorize CanCurateCatalog
 ```
 
@@ -562,7 +562,7 @@ feature Publication
 
 | Domain | Feature | Template | Why it fits |
 | --- | --- | --- | --- |
-| Catalog | Publication | `ListScreen` | the approval list and its feature toolbar (Approve product, Withdraw product): `ListScreen` has the `toolbar` slot |
+| Catalog | Publication | `ListScreen` | the approval list and the buttons its feature adds with `outlet actions extends` (Approve product, Withdraw product) |
 | Catalog | Pricing | `BoardScreen` | the pricing board |
 | Catalog | Reporting | `DashboardScreen` | the catalogue dashboard |
 | Purchasing | PurchaseOrders | `ListScreen` | the purchase orders list |
@@ -734,5 +734,5 @@ both translations before moving on to implementation.
 
 - [Folders](folders.md) and [imports](imports.md): composing many files into one application.
 - [Reactions](reactions.md), [captures](captures.md) and [constraints](constraints.md).
-- [Screens](screens.md), [templates](templates.md), [navigation regions](navigation.md) and [sample data](sample-data.md).
+- [Screens](screens.md), [templates](templates.md), [outlets](outlets.md), [navigation](navigation.md) and [sample data](sample-data.md).
 - [Compiler and CLI](tool.md).

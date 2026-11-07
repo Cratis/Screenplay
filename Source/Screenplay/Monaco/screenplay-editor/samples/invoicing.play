@@ -409,17 +409,18 @@ theme NordicDark
 layout AppShell
   category Shell
   topbar
-  navigation contributes Navigation
+  navigation
+  outlet Navigation of navigation in navigation
   // A slot's role says what goes in it: the content slot holds whole pages, is part of the address and is the shell's main slot.
   content page routed primary
   footer
 
   // The application's own navigation. A module inherits these items, extends them or overrides them.
-  navigation topbar
+  outlet topbar of navigation
     logo image "/assets/billing-hub.svg" title "Billing Hub"
-    item invoicing title "Invoicing" icon receipt target Invoicing
-  navigation sidebar
-    item invoicing title "Invoicing" icon receipt target Invoicing
+    default invoicing title "Invoicing" icon receipt target Invoicing
+  outlet sidebar of navigation
+    default invoicing title "Invoicing" icon receipt target Invoicing
       item invoices title "Invoices" target Invoicing.InvoiceManagement
       item payments title "Payments" target Invoicing.Payments
       item portal title "Customer portal" target Invoicing.CustomerPortal slot content
@@ -776,7 +777,7 @@ module Invoicing
     destination slot detail
 
   // The sidebar keeps the application's items and adds the module's own; the topbar is inherited as is.
-  navigation sidebar extends
+  outlet sidebar extends
     item auditing title "Auditing" icon shield target Invoicing.Auditing
 
   // Screen templates fit a slot of the shell; dialog templates open over it.
@@ -827,7 +828,8 @@ module Invoicing
     description "Invoices grouped into columns by payment state"
     scopes slice
 
-    toolbar contributes BoardActions
+    toolbar
+    outlet BoardActions of navigation in toolbar
     due
     overdue
     settled
@@ -852,10 +854,24 @@ module Invoicing
     toolbar
     items
 
+    // Outlets are the item lists the template offers; features and screens inherit, extend or override them.
+    outlet actions of actions in toolbar
+      default refresh title "Refresh" icon refresh runs refresh
+      default export title "Export" icon download
+    outlet filters of filters in toolbar
+    outlet stats of stats in toolbar
+    outlet rowActions of actions for item in items
+    outlet views of tabs in items
+
   dialog template CommandDialog
     category Dialog
     body
     actions
+
+    // A dialog's buttons are an actions outlet; the built-ins need no slice.
+    outlet actions of actions in actions
+      default cancel title "Cancel" runs close
+      default confirm title "Confirm" emphasis primary runs submit
 
     on leave
       refresh ListInvoices
@@ -923,6 +939,22 @@ module Invoicing
       ```
     description "Registering and managing the lifecycle of invoices"
     authorize IsInvoicingStaff
+
+    // The invoice list's buttons, filters and counters, for every screen of the feature.
+    outlet actions extends
+      hide export
+      button register title "Register invoice" slice RegisterInvoice emphasis primary icon plus
+        before refresh
+      group bulk title "Bulk" icon layers
+        button batch title "Process a batch" slice ProcessInvoiceBatch
+        button archive title "Archive old invoices" slice ArchiveOldInvoices
+          confirm "Archive every invoice older than the retention period?"
+    outlet filters extends
+      filter status title "Status" sets ListInvoices.status
+      filter customer title "Customer" sets ListInvoices.customerId
+    outlet stats extends
+      stat total title "Invoices" value from GetInvoiceSummary.totalCount
+      stat drafts title "Drafts" value from GetInvoiceSummary.draftCount
 
     uses RefreshOnEnter
       query ListInvoices
@@ -1920,6 +1952,10 @@ module Invoicing
         ```typescript
         export const statusLabel = (status: string) => status.toUpperCase();
         ```
+        outlet actions inherits
+        outlet views extends
+          tab overview title "Overview" shows InvoiceList
+            before collections
 
       specification ListingARegisteredInvoice
         given caller
@@ -2608,6 +2644,10 @@ module Invoicing
       navigate to CollectionsBoard
       label $strings.navigation.collections
       order 20
+
+    // Payments adds its own view of the invoice list without the list's feature naming it.
+    contribute to views
+      tab collections title "Collections" shows CollectionsBoard
 
     slice StateChange RecordPayment
       description "Records money received against an invoice"

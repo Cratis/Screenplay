@@ -108,8 +108,9 @@ This is a configuration fragment: the shell option assumes an `exposure for AppS
 ```screenplay
 layout AppShell
   topbar
-  navigation contributes Navigation
-  content
+  navigation panel
+  content page routed primary
+  outlet Navigation of navigation in navigation
 
 theme Aurora
   compatible with core

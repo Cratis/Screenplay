@@ -1,105 +1,104 @@
 ---
-title: "Screenplay navigation regions: define shell destinations"
-description: "Declare topbar and sidebar destinations on a Screenplay layout. Modules can inherit, extend or replace each region to guide users through their features."
+title: "Screenplay navigation: navigation outlets in the shell"
+description: "Declare topbar and sidebar destinations as navigation outlets on a Screenplay layout. Modules, features and screens inherit, extend or override them to guide users through their features."
 ---
 
-# Navigation regions
+# Navigation
 
-Screenplay navigation regions define the topbar and sidebar destinations in the application shell. Declare shared items on a `layout`, then let each module inherit them, add its own destinations or replace a region. This keeps application-wide navigation separate from the screens that users reach through it.
+Screenplay navigation is an [outlet](outlets.md) of kind `navigation`: a named list of destinations the layout offers. Declare the application-wide items once on the `layout`, then let each module, feature or screen inherit them, add its own destinations or replace the list. This keeps application-wide navigation separate from the screens users reach through it.
 
-Use regions to guide users to modules and features. For a link to a particular screen or record, use [screen navigation](screens.md#navigation-metadata) or an [interaction](interactions.md).
+Use navigation outlets to guide users to modules and features. For a link to a particular screen or record, use [screen navigation](screens.md#navigation-metadata) or an [interaction](interactions.md).
 
 ## At application level
 
-Start with regions inside a [`layout`](templates.md), next to its slots. The layout supplies the base navigation, so these region blocks have no inheritance mode. In this example, the topbar links to Sales and Support, while the sidebar gives Sales a feature hierarchy:
+A layout declares each navigation outlet with `outlet <name> of navigation`, optionally `in <slot>` to say which slot it fills, and lists its items with `default`. The topbar carries the application's one `logo`:
 
 ```screenplay
 layout AppShell
-  category application
+  category Shell
   topbar
-  navigation contributes Navigation
-  content
-  side
+  side panel
+  content page routed primary
 
-  navigation topbar
+  outlet topbar of navigation in topbar
     logo image "/assets/acme.svg" title "Acme"
-    item sales title "Sales" icon receipt target Sales
-    item support title "Support" target Support.Tickets slot content
-  navigation sidebar
-    item sales title "Sales" target Sales
+    default sales title "Sales" icon receipt target Sales
+    default support title "Support" target Support slot content
+  outlet sidebar of navigation in side
+    default sales title "Sales" icon receipt target Sales
       item orders title "Orders" target Sales.Orders
       item returns title "Returns" target Sales.Orders.Returns slot side
-    item help title $strings.nav.help target Support
+    default support title "Support" target Support
 
 module Sales
   feature Orders
     feature Returns
 
 module Support
-  feature Tickets
 ```
 
-- `navigation topbar` and `navigation sidebar` each appear at most once per layout. `navigation contributes Navigation` is still a slot declaration; `navigation` followed by `topbar` or `sidebar` is a region.
-- `logo image "<path>" title "<text>"` is the application's logo. It is declared once, in a layout - never in a module (`PLAY0744`).
-- `item <id> title "<text>" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]` is one item. The id is unique within the region (`PLAY0747`). The title is a quoted string or a `$strings.<key>` token, see [Internationalization](internationalization.md). `icon` takes an identifier or a quoted string.
-- `target` names a module, or a module and a feature path (`Sales.Orders.Returns` for a nested feature). A module target goes to the module's first feature. An item with no target must have sub-items (`PLAY0748`).
-- `slot` names the layout slot the target renders into. Without it the target renders into the layout's primary content slot. A slot no layout declares is `PLAY0749`.
-- In the sidebar, an item may nest further `item` lines: top-level items target modules and sub-items target features. Topbar items do not nest (`PLAY0746`).
-- `button <id> title "<text>" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>]` is an application-level toolbar button in `navigation topbar`. It has the grammar and the checks of a [screen toolbar button](screens.md): the slice is a State Change slice (`PLAY0761` to `PLAY0765`), and the button opens that slice's task dialog over whichever page the user is on. An indented `authorize <Policy>` line under the button limits who sees it; it takes the same policy expression as `authorize` on a command. Buttons are not allowed in `navigation sidebar` (`PLAY0741`). In a module, `navigation topbar extends` adds buttons after the application's, `overrides` shows only the module's own, and `inherits` keeps the application's, exactly as for items.
+A navigation item is `<id> title "…" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]` - after `default` on a layout, after `item` below it:
+
+| Part | Meaning |
+| --- | --- |
+| `<id>` | Unique within the outlet. Quote it when it is not an identifier: `default "nav:help" title "Help"`. |
+| `title` | A quoted string or a `$strings.<key>` token. |
+| `icon` | Optional icon name. |
+| `target` | A module, or a module and a feature path - `Sales.Orders.Returns` for a nested feature. An item without a target must have sub-items. |
+| `slot` | The layout slot the target renders into. Without it, the target renders into the layout's primary slot. |
+
+Any item nests sub-items as `item` lines under it.
 
 ## At module level
 
-Declare a region on a module only when its screens need different navigation. If you omit the region, it inherits the application's items. Here, Sales adds Customers to the shared sidebar but replaces the topbar with its Orders destination:
+A module changes an outlet with `outlet <name> inherits|extends|overrides`. An outlet a module does not mention keeps the items it inherits:
 
 ```screenplay
 layout AppShell
-  category application
-  content
-
-  navigation sidebar
-    item sales title "Sales" target Sales
-    item support title "Support" target Support
+  category Shell
+  content page routed primary
+  outlet topbar of navigation
+    default sales title "Sales" target Sales
+  outlet sidebar of navigation
+    default sales title "Sales" target Sales
 
 module Sales
-  navigation sidebar extends
+  outlet sidebar extends
     item customers title "Customers" icon people target Sales.Customers
-  navigation topbar overrides
-    item orders title "Orders" target Sales.Orders
-
-  feature Orders
+  outlet topbar inherits
   feature Customers
 
 module Support
+  outlet sidebar overrides
+    item tickets title "Tickets" target Support.Tickets
   feature Tickets
 ```
 
-| Written | Effective items in the module |
+| Mode | Shows |
 | --- | --- |
-| no block | The application's items (inherits). |
-| `navigation <region> inherits` | The application's items. The explicit form of the default; it lists no items (`PLAY0745`). |
-| `navigation <region> extends` | The application's items, followed by the module's own. |
-| `navigation <region> overrides` | The module's own items only. An override with no items leaves the region empty and warns (`PLAY0752`). |
+| `inherits` | The inherited items, unchanged. The explicit form of writing nothing; it lists no items (`PLAY0897`). |
+| `extends` | The inherited items, then the module's own. |
+| `overrides` | The module's own items only. Overriding with none warns (`PLAY0752`). |
 
-- Each region has its own mode; `topbar` and `sidebar` are independent.
-- A module's own items may only target that module (`PLAY0750`). To link elsewhere, put the item in the layout.
-- An extending module's item ids must not repeat the application's (`PLAY0747`).
-- Targeting a module with no feature warns (`PLAY0751`).
+A feature and a slice screen change an outlet the same way, for the screens beneath them. `hide <id>` drops an inherited item and `before <id>` or `after <id>` under an item places it among the inherited ones - see [Outlets](outlets.md#change-an-outlet-below-the-template).
 
-A layout region that states a mode is rejected with `PLAY0745`.
+A module's own items may only target that module (`PLAY0750`). The logo belongs to the application: a logo below the layout is `PLAY0744`.
 
-## `navigation` and `contribute to Navigation`
+## Navigation outlets and `contribute to`
 
-Use a region block when you need a destination tree with hierarchy, target slots and module inheritance. Use [`contribute to Navigation`](contributions.md) when a feature should add a flat item to a slot marked `contributes Navigation`, without maintaining a central list.
-
-The two declarations are independent: neither generates the other, and a layout can use both. Start a new application's navigation with regions, then add contributions where features need to supply their own entries.
+Use a navigation outlet when you need a destination tree with hierarchy, target slots and inheritance. Use [`contribute to <outlet>`](contributions.md) when a feature should add an entry to an outlet without the module listing it. A contribution may target any outlet, from any module or feature.
 
 ## Checks and the TypeScript compiler
 
-Use the C# compiler to validate navigation against the document's modules, features and layout slots. It reports [`PLAY0740`-`PLAY0752`](diagnostics.md#navigation-regions), matching Scene's `navTargetMissing`, `navSlotUnknown`, `navDuplicateId`, `navTargetOutOfScope` and `navModuleWithoutFeatures` findings.
+Use the C# compiler to validate navigation against the document's modules, features and layout slots. It reports [`PLAY0741`, `PLAY0743`, `PLAY0744` and `PLAY0748`-`PLAY0752`](diagnostics.md#navigation-outlets) and the [outlet checks](diagnostics.md#outlets), matching Scene's `navTargetMissing`, `navSlotUnknown`, `navDuplicateId`, `navTargetOutOfScope` and `navModuleWithoutFeatures` findings.
 
-The TypeScript compiler skips module `navigation` blocks, as it skips layouts; it does not run these checks. Navigation blocks are authoring syntax, not part of the executable model. Stage plans them from the syntax tree.
+Layouts stay opaque to the TypeScript compiler. It reads a module's, feature's or screen's outlets and reports their form, but not the reference checks. Outlets are authoring syntax, not part of the executable model. Stage plans them from the syntax tree.
 
-Parser, printer and parser again keep every item, id, icon, slot, target and mode. The syntax tree carries `NavigationRegionSyntax` (on `LayoutSyntax` and `ModuleSyntax`), `NavigationItemSyntax`, `NavigationTargetSyntax` and `NavigationLogoSyntax`; see [AST compatibility](ast-compatibility.md).
+Parser, printer and parser again keep every item, id, icon, slot, target, mode, hidden item and position. The syntax tree carries `OutletSyntax` (on `LayoutSyntax`, `ScreenTemplateSyntax`, `DialogTemplateSyntax`, `ModuleSyntax`, `FeatureSyntax` and `ScreenSyntax`), `NavigationItemSyntax`, `NavigationTargetSyntax` and `NavigationLogoSyntax`; see [AST compatibility](ast-compatibility.md).
+
+## From Screenplay 5
+
+Screenplay 5 wrote these lists as `navigation topbar|sidebar` blocks and a slot's `contributes <Point>`. Both are errors since Screenplay 6 (`PLAY0894`, `PLAY0895`); run `screenplay migrate --from 5 --to 6` to rewrite a model.
 
 ## Rename and move
 
@@ -107,7 +106,8 @@ When renaming or moving a module or feature, update the navigation items that ta
 
 ## See also
 
+- [Outlets](outlets.md) for every outlet kind and how lower levels change them.
 - [Layouts and templates](templates.md) for the shell and its slots.
-- [UI profile](ui-profile.md) for the `root template` that selects the shell the navigation regions live in.
+- [UI profile](ui-profile.md) for the `root template` that selects the shell the navigation outlets live in.
 - [Contributions](contributions.md) for the many-to-one `contribute to`.
 - [Screens capability matrix](screens-capability-matrix.md).

@@ -24,7 +24,7 @@ module Invoicing
 
 The screen names a template, not the application's `layout`. A [UI profile](ui-profile.md) selects the application shell once per build, separately from the content each screen supplies.
 
-A slot may also declare `contributes <ContributionPoint>`, opening it up to many contributors declared anywhere in the module/feature tree instead of the one parent that owns the slot - see [Contributions](contributions.md).
+A template may also declare [outlets](outlets.md) - item lists such as a toolbar's buttons or a list's filters - which the screen changes with `outlet <name> inherits|extends|overrides` and any module or feature adds to with [`contribute to`](contributions.md).
 
 A template also says how its slots share space and vary by device size - responsive `flow` or pixel-precise `freeform` - see [Layout arrangement](layout-arrangement.md).
 
@@ -137,6 +137,7 @@ Widgets:
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
 | `toolbar <name>` | `item` actions, navigation entries and dialog entries with labels, icons, parameters and presentation hints, and `button` lines that invoke a State Change slice - see [Toolbar buttons](#toolbar-buttons) |
+| `outlet <name> inherits\|extends\|overrides` | Changes an [outlet](outlets.md) the screen's template declares |
 | `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive slots (`slot <name>`) |
 
 ## Toolbar buttons
@@ -175,38 +176,44 @@ Buttons sit beside `item` entries; the printer writes the items first, then the 
 
 ## Feature and module toolbars
 
-A template declares a `toolbar` slot; a **feature** (or a module) adds buttons to it once, for every screen beneath it, instead of repeating the same buttons on each screen. Each entry is linked to a command of the feature: an `item … action <Command>` opens the command's form dialog (or runs it after the confirmation), a `button … slice <Slice>` does the same through the State Change slice.
+A feature or a module adds buttons to the toolbar of every screen beneath it once, instead of repeating them on each screen. Since Screenplay 6 that is an [outlet](outlets.md): the template declares `outlet toolbar of actions`, and the feature extends it.
 
 ```screenplay
 module Shop
+  screen template Page
+    category Page
+    header
+    main
+    outlet toolbar of actions in header
+
   feature Orders
-    toolbar actions
-      item cancel action CancelOrder
-        label "Cancel order"
-        icon trash
+    outlet toolbar extends
+      button cancel title "Cancel order" slice CancelOrder icon trash
         confirm "Cancel this order?"
-      button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+      button place title "Place order" slice PlaceOrder emphasis primary icon plus
+        confirm $strings.orders.confirmPlace
+
     slice StateChange PlaceOrder
       command PlaceOrder
         orderId Uuid identifier
         produces OrderPlaced
-          orderId = orderId
+          for orderId
       event OrderPlaced
         orderId Uuid
+
     slice StateChange CancelOrder
       command CancelOrder
         orderId Uuid identifier
         produces OrderCancelled
-          orderId = orderId
+          for orderId
       event OrderCancelled
         orderId Uuid
 ```
 
-- `toolbar <name>` is allowed in a `feature` and a `module` body and takes the same `item` and `button` lines as a screen toolbar.
-- `confirm "<text>"` (or a `$strings.<key>` token) is an optional child line of an `item` and of a `button`: the user confirms before the command runs or the dialog opens. A button's dialog is its own confirmation, so `confirm` on a button asks first and then opens it.
-- The entries are contributed to the `toolbar` slot of every screen of the feature - its sub features' included - whose template declares one, after the screen's own entries. A module toolbar reaches every screen of the module the same way; the nearer toolbar comes later.
-- A `toolbar <name>` with no entry is valid and prints back unchanged, so you can declare the toolbar before choosing its buttons. Through typed edits, add a `ScreenToolbarSyntax` to the `toolbars` member of a `FeatureSyntax` or `ModuleSyntax`, then add buttons to its `buttons`.
-- An `item … action <Command>` must name a command that a slice of the feature (or module) declares; otherwise `PLAY0808` warns. Ids are unique within the toolbar and shared with the buttons (`PLAY0765`); a button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`).
+- A module, feature and screen write `outlet <name> inherits|extends|overrides`, and may `hide` an inherited button or place one `before` or `after` another - see [Outlets](outlets.md#change-an-outlet-below-the-template).
+- `confirm "<text>"` (or a `$strings.<key>` token) under a `button` asks before the command runs.
+- A button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`), and an id repeated within the outlet or across the levels it inherits from is `PLAY0905`.
+- Screenplay 5 wrote `toolbar <name>` on a feature or module. That form is an error since Screenplay 6 (`PLAY0896`); write `outlet <name> extends`, or run `screenplay migrate --from 5 --to 6`.
 
 Like every screen construct these are authoring syntax: the executable model does not carry them, and the printer writes them back where they were written.
 

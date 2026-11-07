@@ -99,9 +99,11 @@
   href: layout-arrangement.md
 - name: Forms
   href: forms.md
+- name: Outlets
+  href: outlets.md
 - name: Contributions
   href: contributions.md
-- name: Navigation regions
+- name: Navigation
   href: navigation.md
 - name: Sub-languages and inline code
   href: sub-languages.md

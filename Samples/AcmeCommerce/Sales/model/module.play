@@ -5,7 +5,7 @@ module Orders
 
   // The module adds these to the toolbar of every screen of its features: each runs one command of one of them, so they are always at hand.
   // Cancelling asks first.
-  toolbar actions
+  outlet actions extends
     button approve title "Approve order" slice Orders.Decision.ApproveOrder emphasis primary icon check
     button cancel title "Cancel order" slice Orders.Fulfilment.CancelOrder emphasis quiet icon ban
       confirm "Cancel this order?"

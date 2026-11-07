@@ -3,7 +3,8 @@ layout ApplicationShell
   type masterDetail
   exposes selectedItem String
   slot details
-  navigation contributes Navigation
+  navigation
+  outlet Navigation of navigation in navigation
   content
 
 ui profile Web
