@@ -67,7 +67,7 @@ internal static class ScreenBindingValidator
         }
 
         var name = show.Screen.Split('.')[^1];
-        var target = screens.FirstOrDefault(candidate => candidate.Name == name);
+        var target = screens.Find(candidate => candidate.Name == name);
         if (target is null)
         {
             context.Error(DiagnosticCodes.InvalidScreenShow, $"Screen '{screen.Name}' shows screen '{show.Screen}', which the document does not declare", show.Location);
