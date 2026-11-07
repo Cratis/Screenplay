@@ -410,7 +410,8 @@ layout AppShell
   category Shell
   topbar
   navigation contributes Navigation
-  content
+  // A slot's role says what goes in it: the content slot holds whole pages, is part of the address and is the shell's main slot.
+  content page routed primary
   footer
 
   // The application's own navigation. A module inherits these items, extends them or overrides them.
@@ -772,7 +773,7 @@ module Invoicing
     icon receipt
     presentation primary
     group "Billing"
-    destination outlet detail
+    destination slot detail
 
   // The sidebar keeps the application's items and adds the module's own; the topbar is inherited as is.
   navigation sidebar extends
@@ -783,8 +784,9 @@ module Invoicing
     fits slot content
     category Workspace
 
-    sidebar
-    main
+    // The sidebar is a pane addressed by the selected invoice, and stays empty until one is chosen.
+    sidebar pane routed by invoiceId optional
+    main panel
 
     arrangement flow
       row gap 16
@@ -1872,7 +1874,7 @@ module Invoicing
           property rowActions none
           icon invoice
           exposes selectedInvoice from component invoiceGrid.selected
-          outlet detail
+          slot detail
             summary selectedInvoice
               field invoiceNumber label $strings.invoices.fields.number
         section registerInvoiceInput
@@ -3025,7 +3027,7 @@ module Invoicing
         contribute to BoardActions order 10
           action RecordPayment
             navigate to InvoiceDetails
-              outlet detail
+              slot detail
 
       specification MovingAnInvoiceFromDueToOverdue
         given caller

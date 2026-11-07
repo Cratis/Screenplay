@@ -220,6 +220,10 @@ export const clauseKeywords = [
     'icon',
     'target',
     'slot',
+    'routed', // A slot line's modifiers: '<name> [page|pane|panel] [routed [by <param>]] [primary] [optional]'.
+    'page',
+    'pane',
+    'panel',
     'presentation',
     'exposes',
     'mode',

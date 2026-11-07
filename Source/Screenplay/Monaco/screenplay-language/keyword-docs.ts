@@ -155,6 +155,8 @@ export const keywordDocs: Record<string, string> = {
     specification: 'Given/when/then acceptance criteria for a slice: prior events and state, the command, query or appended event under test, and the events, state, results, errors or denials that follow.',
     dialog: 'A dialog opened over the shell, or with `dialog template` a reusable dialog shape.',
     form: 'A form bound to a command — `form <Name> for <Command>` with a `field` per input.',
+    slot: 'A slot is a region content is placed in. A plain line of a layout or template declares one: `<name> [page|pane|panel] [routed [by <param>]] [primary] [optional]`. `slot <name>` in a template or component declares a slot filled recursively, `slot <name>` under `navigate to` opens the destination in it, and `destination slot <name>` sends a navigation item there. Screenplay 6 renamed these from `outlet`; run `screenplay migrate --from 5 --to 6`.',
+    routed: 'Marks a slot as routed - what it shows is part of the address. `routed by <param>` names the route parameter it is addressed by: `detail pane routed by sku optional`.',
     contribute: 'Contributes entries to a slot of the shell — `contribute to Navigation` with `navigate to`, `label` and `order`.',
     button: 'A toolbar button that invokes a State Change slice — `button <id> title "…" slice <Module>.<Feature>.<Slice> [emphasis primary|secondary|quiet] [icon <name>]`. The slice names the command and the dialog it opens.',
     navigation: 'A navigation region of the shell — `navigation topbar` or `navigation sidebar`. A layout declares the application\'s regions with a `logo` and `item` lines; a module adds `inherits`, `extends` or `overrides` to change what it shows.',

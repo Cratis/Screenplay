@@ -37,7 +37,7 @@ export const diagnosticCodes = {
     contributionNotExposed: 'PLAY0627',
     contributionTypeMismatch: 'PLAY0628',
     unknownTemplateContentSlot: 'PLAY0629',
-    unknownNavigationOutlet: 'PLAY0630',
+    unknownNavigationSlot: 'PLAY0630',
     templateScopeMismatch: 'PLAY0631',
     incompatibleComponentPackage: 'PLAY0632',
     unknownNavigationDestination: 'PLAY0654',
@@ -288,6 +288,11 @@ export const diagnosticCodes = {
     responseNameUsedOnFailure: 'PLAY0685',
     // Retired by ESM v16; preserve supplied warnings from earlier native compilers.
     eventIdPinNotCarriedToRenderers: 'PLAY0686',
+    // Screenplay 6 renamed these forms; the old forms are errors whose message names the migration.
+    removedComponentOutlet: 'PLAY0890',
+    removedDestinationOutlet: 'PLAY0891',
+    removedNavigationOutlet: 'PLAY0892',
+    removedTemplateOutlet: 'PLAY0893',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
