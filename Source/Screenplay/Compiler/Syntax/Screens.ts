@@ -94,7 +94,7 @@ export interface ScreenNavigateSyntax extends SyntaxNode {
     readonly screen: string;
     readonly by: string | null;
     readonly route: string | null;
-    readonly outlet?: string | null;
+    readonly slot?: string | null;
     readonly parameters: readonly ScreenNavigationParameterSyntax[];
 }
 
@@ -183,8 +183,8 @@ export interface PresentationValueSyntax extends SyntaxNode {
     readonly value: string;
 }
 
-export interface ComponentOutletSyntax extends SyntaxNode {
-    readonly kind: 'ComponentOutletSyntax';
+export interface ComponentSlotSyntax extends SyntaxNode {
+    readonly kind: 'ComponentSlotSyntax';
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
 }
@@ -199,7 +199,7 @@ export interface ScreenComponentSyntax extends SyntaxNode {
     readonly exposes: readonly ComponentExposedValueSyntax[];
     readonly presentation: readonly PresentationValueSyntax[];
     readonly icon: string | null;
-    readonly outlets: readonly ComponentOutletSyntax[];
+    readonly slots: readonly ComponentSlotSyntax[];
 }
 
 export type ToolbarItemKind = 'Unknown' | 'Action' | 'Navigate' | 'Dialog';

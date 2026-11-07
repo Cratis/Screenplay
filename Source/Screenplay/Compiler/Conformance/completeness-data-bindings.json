@@ -88,8 +88,8 @@
             "diagnostics": []
         },
         {
-            "name": "component outlets are not binding containers",
-            "directives": ["data R[] via query Q", "component Panel panel", "  outlet body", "    data R[] via query Q2"],
+            "name": "component slots are not binding containers",
+            "directives": ["data R[] via query Q", "component Panel panel", "  slot body", "    data R[] via query Q2"],
             "diagnostics": []
         },
         {

@@ -115,7 +115,7 @@ describe('when parsing screen release UI bindings', () => {
             '          icon table',
             '          presentation density "compact"',
             '          exposes selectedInvoice from component invoices.selectedItem',
-            '          outlet detail',
+            '          slot detail',
             '            summary selectedInvoice',
             '              field invoiceId label "Invoice"',
         );
@@ -132,7 +132,7 @@ describe('when parsing screen release UI bindings', () => {
     it('should read literal bindings', () => component.properties[1].binding!.should.deep.include({ bindingKind: 'Literal', literal: { kind: 'LiteralExpressionSyntax', value: 25, location: { line: 16, column: 11, path: 'Document.play' } } }));
     it('should read component literals', () => component.properties[2].value!.should.deep.include({ kind: 'LiteralExpressionSyntax', value: 'Invoices' }));
     it('should read component exposed bindings', () => component.exposes[0].binding.componentId!.should.equal('invoices'));
-    it('should read component outlets', () => component.outlets[0].directives[0].kind.should.equal('ScreenSummarySyntax'));
+    it('should read component slots', () => component.slots[0].directives[0].kind.should.equal('ScreenSummarySyntax'));
 });
 
 describe('when parsing invalid screen release UI bindings', () => {

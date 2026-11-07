@@ -50,7 +50,7 @@ export function dataBindingDiagnostics(application: ApplicationSyntax): readonly
                     message: `Data binding '${data.type.name}' does not match query '${data.query}' return type or cardinality`, location: data.location });
             }
         }
-        // Only sections and filled template slots are containers in the C# check. Component outlets and
+        // Only sections and filled template slots are containers in the C# check. Component slots and
         // screen contributions deliberately do not extend data-binding visibility.
         for (const directive of directives) {
             if (directive.kind === 'ScreenSectionSyntax') checkContainer(directive.directives, visible, slice);

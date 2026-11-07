@@ -812,9 +812,9 @@ export abstract class ScreenplaySyntaxWalker {
                     this.visitUiBinding(exposed.binding);
                 });
                 syntax.presentation.forEach(node => this.visitNode(node));
-                syntax.outlets.forEach(outlet => {
-                    this.visitNode(outlet);
-                    outlet.directives.forEach(node => this.visitScreenDirective(node));
+                syntax.slots.forEach(slot => {
+                    this.visitNode(slot);
+                    slot.directives.forEach(node => this.visitScreenDirective(node));
                 });
                 break;
             case 'ScreenToolbarSyntax':

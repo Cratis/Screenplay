@@ -62,16 +62,16 @@ describe('when validating interaction shadowing after parsing', () => {
         const source = [...declarations, '      command Retry', '      screen Actions', '        data Item via query Details', '        on click', ...alternatives, '        action "Again"', '          when item.ready == true execute Retry', '          when item.ready == true execute Retry', '        on select', ...alternatives];
         parse(source.join('\n')).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0347').map(diagnostic => diagnostic.location.line).should.deep.equal([16, 20, 24]);
     });
-    it('should validate component bindings before bindings in their outlets', () => {
-        const source = [...declarations, '        component App.Panel panel', '          outlet content', '            on click', ...alternatives.map(line => `    ${line}`), '          on select', ...alternatives.map(line => `  ${line}`)];
+    it('should validate component bindings before bindings in their slots', () => {
+        const source = [...declarations, '        component App.Panel panel', '          slot content', '            on click', ...alternatives.map(line => `    ${line}`), '          on select', ...alternatives.map(line => `  ${line}`)];
         parse(source.join('\n')).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0347@20', 'PLAY0347@15']);
     });
     it('should follow table, section and template slot attachments', () => {
         const source = [...declarations, '        table Item', '          on click', ...alternatives.map(line => `  ${line}`), '        section nested', '          on select', ...alternatives.map(line => `  ${line}`), '        template Page', '          actions', '            on double click', ...alternatives.map(line => `    ${line}`)];
         parse(source.join('\n')).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0347@14', 'PLAY0347@20', 'PLAY0347@27']);
     });
-    it('should follow nested sections and template slots inside component outlets', () => {
-        const source = [...declarations, '        component App.Panel panel', '          outlet content', '            section nested', '              template Page', '                actions', '                  on click', ...alternatives.map(line => `          ${line}`)];
+    it('should follow nested sections and template slots inside component slots', () => {
+        const source = [...declarations, '        component App.Panel panel', '          slot content', '            section nested', '              template Page', '                actions', '                  on click', ...alternatives.map(line => `          ${line}`)];
         parse(source.join('\n')).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(['PLAY0347@18']);
     });
     it('should not mistake screen templates for screen declarations', () => {

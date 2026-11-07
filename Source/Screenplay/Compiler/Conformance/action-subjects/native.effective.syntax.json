@@ -1081,9 +1081,11 @@
                       "exposes": [],
                       "icon": null,
                       "name": "panel",
-                      "outlets": [
+                      "presentation": [],
+                      "properties": [],
+                      "slots": [
                         {
-                          "kind": "ComponentOutletSyntax",
+                          "kind": "ComponentSlotSyntax",
                           "directives": [
                             {
                               "kind": "ScreenActionSyntax",
@@ -1119,8 +1121,6 @@
                           "name": "detail"
                         }
                       ],
-                      "presentation": [],
-                      "properties": [],
                       "stableId": null,
                       "usedBehaviors": []
                     }

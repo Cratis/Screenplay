@@ -74,7 +74,7 @@ export const DiagnosticCodes = {
     ContributionNotExposed: 'PLAY0627',
     ContributionTypeMismatch: 'PLAY0628',
     UnknownTemplateContentSlot: 'PLAY0629',
-    UnknownNavigationOutlet: 'PLAY0630',
+    UnknownNavigationSlot: 'PLAY0630',
     TemplateScopeMismatch: 'PLAY0631',
     IncompatibleComponentPackage: 'PLAY0632',
     UnknownNavigationDestination: 'PLAY0654',
@@ -545,4 +545,8 @@ export const DiagnosticCodes = {
     InvalidUserDeclaration: 'PLAY0887',
     UnknownUserPersona: 'PLAY0888',
     DuplicateUser: 'PLAY0889',
+    // Screenplay 6 renamed these forms; the old forms are errors whose message names the migration.
+    // The layout, template and contribution forms (PLAY0891, PLAY0893) are C#-only: those declarations are opaque here.
+    RemovedComponentOutlet: 'PLAY0890',
+    RemovedNavigationOutlet: 'PLAY0892',
 } as const;

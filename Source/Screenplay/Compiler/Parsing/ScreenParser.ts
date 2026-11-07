@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
-    ComponentExposedValueSyntax, ComponentOutletSyntax, ComponentPropertySyntax, PresentationValueSyntax,
+    ComponentExposedValueSyntax, ComponentSlotSyntax, ComponentPropertySyntax, PresentationValueSyntax,
     ScreenActionSyntax, ScreenGuardedActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenComponentSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax,
     ScreenNavigateSyntax, ScreenNavigationParameterSyntax, ScreenSectionSyntax, ScreenSlotSyntax, ScreenSummarySyntax, ScreenSyntax, ScreenTableSyntax,
     ScreenTemplateReferenceSyntax, ScreenTitleSyntax, ScreenToolbarSyntax, ToolbarButtonSyntax, ToolbarEmphasis, ToolbarItemKind, ToolbarItemSyntax,
@@ -28,6 +28,7 @@ import { parseFromClause, parseFromClauseOn } from './UiBindingParser';
 import { ScreenContributionSyntax } from '../Syntax/CompositionSyntax';
 import { locationOf, SourceLine } from './SourceLine';
 import { parseStructuredValue, StructuredMarker } from './StructuredBlockParser';
+import { renamedForSlotsAndOutlets } from './SlotsAndOutletsMigration';
 
 // Parses 'screen' declarations the way the C# ScreenParser does - intent level directives, the template
 // whose slots they fill, and inline code. Interaction bodies remain opaque in the AST, but 'on' alternatives
@@ -42,6 +43,7 @@ const guardedAction = pattern(`^action\\s+${operand}$`);
 const navigate = pattern('^navigate\\s+to\\s+(\\w+(?:\\.\\w+)*)(?:\\s+by\\s+(\\w+))?$');
 const route = pattern(`^route\\s+${operand}$`);
 const outletPattern = pattern('^outlet\\s+([A-Za-z_]\\w*)$');
+const navigationSlotPattern = pattern('^slot\\s+([A-Za-z_]\\w*)$');
 const contributionPattern = pattern('^contribute\\s+to\\s+([A-Za-z_]\\w*)(?:\\s+order\\s+(-?\\d+))?$');
 const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const component = pattern('^component\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)\\s+([A-Za-z_]\\w*)$');
@@ -219,7 +221,7 @@ function parseNavigate(context: ParserContext, text: string, line: SourceLine): 
     }
     const parameters: ScreenNavigationParameterSyntax[] = [];
     let routeValue: string | null = null;
-    let outletValue: string | null = null;
+    let slotValue: string | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const parameterMatch = parameter.exec(child.content);
@@ -232,14 +234,20 @@ function parseNavigate(context: ParserContext, text: string, line: SourceLine): 
             routeValue = operandText(routeMatch, 1);
             continue;
         }
-        const outletMatch = outletPattern.exec(child.content);
-        if (outletMatch !== null) {
-            outletValue = outletMatch[1];
+        const slotMatch = navigationSlotPattern.exec(child.content);
+        if (slotMatch !== null) {
+            slotValue = slotMatch[1];
             continue;
         }
-        context.error(DiagnosticCodes.InvalidNavigation, `Unexpected '${child.content}' in navigation - expected 'route "..."', 'outlet <name>' or 'parameter <name> from <binding>'`, locationOf(child));
+        const outletMatch = outletPattern.exec(child.content);
+        if (outletMatch !== null) {
+            context.error(DiagnosticCodes.RemovedNavigationOutlet, renamedForSlotsAndOutlets(`'outlet ${outletMatch[1]}' in a navigation`, `slot ${outletMatch[1]}`), locationOf(child));
+            slotValue = outletMatch[1];
+            continue;
+        }
+        context.error(DiagnosticCodes.InvalidNavigation, `Unexpected '${child.content}' in navigation - expected 'route "..."', 'slot <name>' or 'parameter <name> from <binding>'`, locationOf(child));
     }
-    return { kind: 'ScreenNavigateSyntax', screen: match[1], by: match[2] ?? null, route: routeValue, ...(outletValue === null ? {} : { outlet: outletValue }), parameters, location: locationOf(line) };
+    return { kind: 'ScreenNavigateSyntax', screen: match[1], by: match[2] ?? null, route: routeValue, ...(slotValue === null ? {} : { slot: slotValue }), parameters, location: locationOf(line) };
 }
 
 function parseTemplateReference(context: ParserContext, line: SourceLine): ScreenTemplateReferenceSyntax {
@@ -338,7 +346,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
     const properties: ComponentPropertySyntax[] = [];
     const exposedValues: ComponentExposedValueSyntax[] = [];
     const presentationValues: PresentationValueSyntax[] = [];
-    const outlets: ComponentOutletSyntax[] = [];
+    const slots: ComponentSlotSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
@@ -360,9 +368,15 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
             case 'exposes':
                 parseExposedValue(context, child, exposedValues);
                 break;
-            case 'outlet':
-                outlets.push({ kind: 'ComponentOutletSyntax', name: child.content.substring('outlet'.length).trim(), directives: parseDirectives(context, child), location: locationOf(child) });
+            case 'slot':
+                slots.push({ kind: 'ComponentSlotSyntax', name: child.content.substring('slot'.length).trim(), directives: parseDirectives(context, child), location: locationOf(child) });
                 break;
+            case 'outlet': {
+                const renamed = child.content.substring('outlet'.length).trim();
+                context.error(DiagnosticCodes.RemovedComponentOutlet, renamedForSlotsAndOutlets(`'outlet ${renamed}' in a component`, `slot ${renamed}`), locationOf(child));
+                slots.push({ kind: 'ComponentSlotSyntax', name: renamed, directives: parseDirectives(context, child), location: locationOf(child) });
+                break;
+            }
             case 'on':
                 collectInputUses(context, child);
                 break;
@@ -370,13 +384,13 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
                 collectInputUses(context, child);
                 break;
             default:
-                context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${child.content}' in component - expected context, id, property, icon, presentation, exposes, outlet, on or uses`, locationOf(child));
+                context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${child.content}' in component - expected context, id, property, icon, presentation, exposes, slot, on or uses`, locationOf(child));
                 context.skipBlock(child.indent);
                 break;
         }
     }
 
-    return { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, outlets, location: locationOf(line) };
+    return { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, slots, location: locationOf(line) };
 }
 
 function parseUiContext(context: ParserContext, line: SourceLine) {

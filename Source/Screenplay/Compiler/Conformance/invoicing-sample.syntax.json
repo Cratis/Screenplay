@@ -7710,25 +7710,6 @@
                       ],
                       "icon": "invoice",
                       "name": "invoiceGrid",
-                      "outlets": [
-                        {
-                          "kind": "ComponentOutletSyntax",
-                          "directives": [
-                            {
-                              "kind": "ScreenSummarySyntax",
-                              "fields": [
-                                {
-                                  "kind": "ScreenFieldSyntax",
-                                  "label": "$strings.invoices.fields.number",
-                                  "property": "invoiceNumber"
-                                }
-                              ],
-                              "target": "selectedInvoice"
-                            }
-                          ],
-                          "name": "detail"
-                        }
-                      ],
                       "presentation": [],
                       "properties": [
                         {
@@ -7800,6 +7781,25 @@
                             "kind": "ListExpressionSyntax",
                             "items": []
                           }
+                        }
+                      ],
+                      "slots": [
+                        {
+                          "kind": "ComponentSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSummarySyntax",
+                              "fields": [
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "$strings.invoices.fields.number",
+                                  "property": "invoiceNumber"
+                                }
+                              ],
+                              "target": "selectedInvoice"
+                            }
+                          ],
+                          "name": "detail"
                         }
                       ],
                       "stableId": null
@@ -13086,10 +13086,10 @@
                           "navigate": {
                             "kind": "ScreenNavigateSyntax",
                             "by": null,
-                            "outlet": "detail",
                             "parameters": [],
                             "route": null,
-                            "screen": "InvoiceDetails"
+                            "screen": "InvoiceDetails",
+                            "slot": "detail"
                           }
                         }
                       ],
