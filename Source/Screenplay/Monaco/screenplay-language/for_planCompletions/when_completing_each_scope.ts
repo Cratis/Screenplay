@@ -23,7 +23,7 @@ const scopes: Record<string, [string, string[]]> = {
     'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'direction', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'public event', 'specification']],
     'a read model': ['module M\n  feature F\n    slice StateView S\n      readmodel R\n        ', ['description', 'documentation', 'file', 'passive', 'property']],
     'a reducer': ['module M\n  feature F\n    slice StateView S\n      reducer R => V\n        ', ['description', 'from', 'on']],
-    'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'on', 'populate from item', 'populate via query', 'uses']],
+    'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'field (picker)', 'on', 'populate from item', 'populate via query', 'uses']],
     'a contribution': ['module M\n  contribute to Navigation\n    ', ['label', 'navigate to', 'order']],
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],
     'a persona': ['persona P\n  ', ['description', 'goal', 'policy', 'position', 'size']],
@@ -47,8 +47,8 @@ const scopes: Record<string, [string, string[]]> = {
     'a recursive sample collection header': ['sample data P\n  shape S\n    row\n      lines\n        row\n          children\n            ', ['row']],
     'a ui profile sample data block': ['ui profile P\n  sample data\n    ', ['active', 'bind', 'shape maps to']],
     'an outlet declaration': ['layout L\n  outlet sidebar of navigation\n    ', ['default button', 'default filter', 'default item', 'default stat', 'default tab', 'logo']],
-    'an outlet change': ['module M\n  outlet sidebar extends\n    ', ['button', 'filter', 'group', 'hide', 'item', 'stat', 'tab']],
-    'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (with emphasis)', 'item action', 'item navigate']],
+    'an outlet change': ['module M\n  outlet sidebar extends\n    ', ['button', 'button (opens)', 'button (runs)', 'filter', 'group', 'hide', 'item', 'stat', 'tab']],
+    'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (opens)', 'button (runs)', 'button (with emphasis)', 'item action', 'item navigate']],
     'a layout': ['layout L\n  ', ['arrangement', 'outlet', 'outlet of navigation', 'slot']],
 };
 

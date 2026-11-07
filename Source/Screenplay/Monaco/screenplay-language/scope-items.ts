@@ -68,6 +68,7 @@ export const formItems: CompletionEntry[] = [
     { label: 'populate via query', insertText: 'populate via query ${1:Query} by ${2:parameter}', documentation: 'Fills the form from a query before it is shown.' },
     { label: 'populate from item', insertText: 'populate from item', documentation: 'Fills the form from the item the screen was opened for.' },
     { label: 'field', insertText: 'field ${1:property} label "${2:Label}"', documentation: 'A form field bound to a command property.' },
+    { label: 'field (picker)', insertText: 'field ${1:property}\n    choose from query ${2:Query} show ${3:name}', documentation: 'A form field that picks one of the rows a list query returns.' },
     ...interactionItems,
 ];
 
@@ -220,6 +221,8 @@ export const toolbarItems: CompletionEntry[] = [
     { label: 'button (with emphasis)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} emphasis ${4|primary,secondary,quiet|} icon ${5:icon}', documentation: 'A toolbar button with an emphasis and an icon.' },
     { label: 'item action', insertText: 'item ${1:name} action ${2:Command}', documentation: 'A toolbar entry that runs a command.' },
     { label: 'item navigate', insertText: 'item ${1:name} navigate to ${2:Screen}', documentation: 'A toolbar entry that navigates to a screen.' },
+    { label: 'button (runs)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} for item\n    runs\n    enabled when item.${4:status} == "${5:open}"', documentation: 'A hook that issues its slice\'s command directly, without a form, when every input resolves from the item.' },
+    { label: 'button (opens)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} opens ${4|dialog,drawer,in slot detail|}', documentation: 'A hook that opens its slice\'s screen in a dialog, a drawer or a named slot.' },
 ];
 
 export const navigationItems: CompletionEntry[] = [
@@ -241,6 +244,8 @@ export const outletDeclarationItems: CompletionEntry[] = [
 // Under 'outlet <name> inherits|extends|overrides' on a module, feature or screen.
 export const outletChangeItems: CompletionEntry[] = [
     { label: 'hide', insertText: 'hide ${1:id}', documentation: 'Drops an inherited item.' },
+    { label: 'button (runs)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} for item\n    runs\n    enabled when item.${4:status} == "${5:open}"', documentation: 'A hook that issues its slice\'s command directly, without a form, when every input resolves from the item.' },
+    { label: 'button (opens)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} opens ${4|dialog,drawer,in slot detail|}', documentation: 'A hook that opens its slice\'s screen in a dialog, a drawer or a named slot.' },
     { label: 'button', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice}', documentation: 'An action that invokes a State Change slice.' },
     { label: 'group', insertText: 'group ${1:id} title "${2:Title}" icon ${3:icon}\n    button ${4:id} title "${5:Title}" slice ${6:Module.Feature.Slice}', documentation: 'A menu of buttons.' },
     { label: 'filter', insertText: 'filter ${1:id} title "${2:Title}" sets ${3:Query}.${4:param}', documentation: 'A filter that sets a parameter of the screen\'s query.' },

@@ -123,7 +123,8 @@ describe('when validating a document with a problem of every coded kind', () => 
         const nativeOnly = ['PLAY0691', 'PLAY0692', 'PLAY0688', 'PLAY0689', 'PLAY0682', 'PLAY0683', 'PLAY0684', 'PLAY0686', 'PLAY0650', 'PLAY0651', 'PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0559', 'PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
             'PLAY0345', 'PLAY0346', 'PLAY0347', 'PLAY0348', 'PLAY0540', 'PLAY0541', 'PLAY0542', 'PLAY0544', 'PLAY0546',
             'PLAY0661', 'PLAY0666', 'PLAY0690', 'PLAY0573', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY0578', 'PLAY0579', 'PLAY0580', 'PLAY0585', 'PLAY0588', 'PLAY0589',
-            'PLAY0622', 'PLAY0623', 'PLAY0624', 'PLAY0626', 'PLAY0627', 'PLAY0628', 'PLAY0629', 'PLAY0630', 'PLAY0631', 'PLAY0632', 'PLAY0654', 'PLAY0655', 'PLAY0656', 'PLAY0720', 'PLAY0722', 'PLAY0891', 'PLAY0893', 'PLAY0894', 'PLAY0895', 'PLAY0896', 'PLAY0897', 'PLAY0898', 'PLAY0899', 'PLAY0900', 'PLAY0901', 'PLAY0902', 'PLAY0903', 'PLAY0904', 'PLAY0905'];
+            'PLAY0622', 'PLAY0623', 'PLAY0624', 'PLAY0626', 'PLAY0627', 'PLAY0628', 'PLAY0629', 'PLAY0630', 'PLAY0631', 'PLAY0632', 'PLAY0654', 'PLAY0655', 'PLAY0656', 'PLAY0720', 'PLAY0722', 'PLAY0891', 'PLAY0893', 'PLAY0894', 'PLAY0895', 'PLAY0896', 'PLAY0897', 'PLAY0898', 'PLAY0899', 'PLAY0900', 'PLAY0901', 'PLAY0902', 'PLAY0903', 'PLAY0904', 'PLAY0905',
+            'PLAY0906', 'PLAY0907', 'PLAY0908', 'PLAY0909', 'PLAY0910', 'PLAY0911', 'PLAY0912', 'PLAY0913', 'PLAY0914', 'PLAY0915'];
         // Malformed screen composition is a parse error both compilers report.
         issues.push(...validateLines(['module M', '  feature F', '    slice StateView S', '      screen Home', '        template blueprint Crm Page version "latest"']));
         issues.push(...validateLines(['exposure Shell', 'instance']));

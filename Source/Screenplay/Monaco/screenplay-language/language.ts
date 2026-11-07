@@ -233,6 +233,13 @@ export const clauseKeywords = [
     'stat',
     'sets',
     'shows',
+    'fits', // Placement (Screenplay 6): 'fits dialog, drawer, pane', 'opens dialog|drawer|in slot <name>', 'enabled when', 'show … from <element>.selection', 'choose from query'.
+    'drawer',
+    'opens',
+    'enabled',
+    'show',
+    'selection',
+    'choose',
     'page',
     'pane',
     'panel',

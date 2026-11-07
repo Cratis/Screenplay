@@ -433,6 +433,8 @@ export const screenItems: CompletionEntry[] = [
     { label: 'table', insertText: 'table ${1:name}\n    column ${2:property} label "${3:text}"', documentation: 'A table widget over a read model or collection.' },
     { label: 'summary', insertText: 'summary ${1:ReadModel}\n    field ${2:property} label "${3:text}"', documentation: 'A summary widget showing labeled fields.' },
     { label: 'title', insertText: 'title "${1:text}"', documentation: 'The title of the screen or section.' },
+    { label: 'fits', insertText: 'fits ${1|dialog,drawer,pane,panel,page|}', documentation: 'Where the slice\'s screen fits, in order of preference — `fits dialog, drawer, pane`.' },
+    { label: 'show', insertText: 'show ${1:Screen} by ${2:param} from ${3:table}.selection', documentation: 'In a template slot: shows another screen for the row a table or component has selected.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Full external implementation — Stage uses the referenced file.' },
     { label: 'react', insertText: fenced('react'), documentation: 'Inline React/TSX component receiving the data contract as Props.' },
     { label: 'typescript', insertText: fenced('typescript'), documentation: 'Inline plain TypeScript.' },

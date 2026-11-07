@@ -306,6 +306,17 @@ export const diagnosticCodes = {
     unknownOutlet: 'PLAY0903',
     duplicateOutlet: 'PLAY0904',
     duplicateOutletItem: 'PLAY0905',
+    // Placement, hooks and bindings (Screenplay 6).
+    invalidScreenFits: 'PLAY0906',
+    runsHookNeedsForm: 'PLAY0907',
+    hookToScreenlessSlice: 'PLAY0908',
+    hookSlotNotDeclared: 'PLAY0909',
+    hookSlotAlreadyFilled: 'PLAY0910',
+    hookSlotRoleNotFitted: 'PLAY0911',
+    unboundScreenText: 'PLAY0912',
+    invalidFormFieldChoices: 'PLAY0913',
+    invalidScreenShow: 'PLAY0914',
+    enabledWhenWithoutItem: 'PLAY0915',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
