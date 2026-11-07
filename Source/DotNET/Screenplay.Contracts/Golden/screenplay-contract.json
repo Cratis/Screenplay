@@ -59,6 +59,7 @@
     "change",
     "checksum",
     "children",
+    "choose",
     "claim",
     "clear",
     "click",
@@ -122,12 +123,14 @@
     "documentation",
     "domain",
     "double",
+    "drawer",
     "each",
     "edge",
     "emails",
     "emphasis",
     "employmentLaw",
     "empty",
+    "enabled",
     "ends",
     "enter",
     "entering",
@@ -300,6 +303,7 @@
     "one",
     "oneWay",
     "open",
+    "opens",
     "operation",
     "operations",
     "option",
@@ -26407,10 +26411,18 @@
       "parseStatus": "accepted",
       "probes": [
         {
-          "source": "module M\n  screen template Page\n    category Test\n    header\n    outlet actions of actions in header\n  feature F\n    outlet actions extends\n      button record title \u0022Record\u0022 slice S\n        confirm \u0022Record it?\u0022\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n",
+          "source": "module M\n  screen template Page\n    category Test\n    header\n    outlet actions of actions in header\n  feature F\n    outlet actions extends\n      button record title \u0022Record\u0022 slice S\n        confirm \u0022Record it?\u0022\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n      screen Input\n        fits dialog, drawer\n        action Record\n",
           "minimumSemanticVersion": "1.0",
           "diagnostic": "PLAY0269",
           "diagnostics": [
+            {
+              "code": "PLAY0818",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            },
             {
               "code": "PLAY0269",
               "severity": "information"
@@ -57287,6 +57299,116 @@
         "error"
       ],
       "title": "Two items of one outlet share an id, or a lower level\u0027s item repeats the id of an inherited one.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0906",
+      "name": "InvalidScreenFits",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen\u0027s fits line is malformed: it names a place other than dialog, drawer, pane, panel or page, names one twice, the screen has two, or it is a template\u0027s fits slot.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0907",
+      "name": "RunsHookNeedsForm",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook runs a slice whose command has an input nothing supplies without a form.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0908",
+      "name": "HookToScreenlessSlice",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens a State Change slice that has no screen and cannot run - an input needs a form, or the hook names a place to open it in.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0909",
+      "name": "HookSlotNotDeclared",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens in slot a slot the template that offers its outlet does not declare.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0910",
+      "name": "HookSlotAlreadyFilled",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens in slot a slot the screen it is on already fills.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0911",
+      "name": "HookSlotRoleNotFitted",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens in slot a slot whose role the slice\u0027s screen does not list in what it fits.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0912",
+      "name": "UnboundScreenText",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A component on a screen is bound to nothing and given no value, so all it can show is sample text.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0913",
+      "name": "InvalidFormFieldChoices",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A form field\u0027s choose from query line is malformed, names a query that is not a list query, or shows a field its rows do not have.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0914",
+      "name": "InvalidScreenShow",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A show \u003CScreen\u003E by \u003Cparam\u003E from \u003Celement\u003E.selection line is malformed, stands outside a template slot, or names a screen or element that does not exist.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0915",
+      "name": "EnabledWhenWithoutItem",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A button or item\u0027s enabled when reads item, but it acts for screen, so there is no item to read.",
       "reserved": false,
       "retired": false
     }

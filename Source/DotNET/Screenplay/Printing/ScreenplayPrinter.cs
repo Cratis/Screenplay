@@ -837,6 +837,13 @@ public sealed partial class ScreenplayPrinter :
             foreach (var field in form.Fields)
             {
                 writer.Line(WriteFormField(field), field);
+                if (field.Choices is { } choices)
+                {
+                    using (writer.Indent())
+                    {
+                        writer.Line($"choose from query {choices.Query} show {choices.Show}", choices);
+                    }
+                }
             }
 
             WriteFormColumns(writer, form);

@@ -34,6 +34,8 @@ public class when_compiling_feature_and_module_outlets : Specification
                   orderId = orderId
               event OrderPlaced
                 orderId Uuid
+              screen PlaceOrder
+                action PlaceOrder
             slice StateChange CancelOrder
               command CancelOrder
                 orderId Uuid identifier
@@ -41,6 +43,8 @@ public class when_compiling_feature_and_module_outlets : Specification
                   orderId = orderId
               event OrderCancelled
                 orderId Uuid
+              screen CancelOrder
+                action CancelOrder
         """;
 
     CompilationResult<ApplicationSyntax> _result;

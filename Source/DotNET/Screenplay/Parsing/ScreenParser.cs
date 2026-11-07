@@ -34,12 +34,17 @@ internal static partial class ScreenParser
         var directives = new List<ScreenDirectiveSyntax>();
         var contributions = new List<ScreenContributionSyntax>();
         var outlets = new List<OutletSyntax>();
+        List<ScreenFit>? fits = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Screen '{name.Groups[1].Value}'", directiveLocations)) continue;
-            if (LineText.FirstWord(line.Content) == "contribute")
+            if (LineText.FirstWord(line.Content) == "fits")
+            {
+                fits = ScreenFitsParser.Parse(context, line, name.Groups[1].Value, fits, directiveLocations);
+            }
+            else if (LineText.FirstWord(line.Content) == "contribute")
             {
                 if (ParseContribution(context, line) is { } contribution) contributions.Add(contribution);
             }
@@ -57,7 +62,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets, Fits = fits ?? [] };
     }
 
     /// <summary>
@@ -209,6 +214,8 @@ internal static partial class ScreenParser
                 return ParseToolbar(context, line);
             case "navigate":
                 return ParseNavigate(context, line.Content, line);
+            case "show":
+                return ParseShow(context, line);
             case "on":
                 return InteractionParser.ParseInlineBehavior(context, line) is { } behavior
                     ? new ScreenBehaviorSyntax(behavior, line.Location)
@@ -605,6 +612,7 @@ internal static partial class ScreenParser
         var label = inlineLabel;
         string? icon = null;
         string? confirm = null;
+        ConditionSyntax? enabledWhen = null;
         var parameters = new List<ScreenNavigationParameterSyntax>();
         var presentation = new List<PresentationValueSyntax>();
 
@@ -622,6 +630,12 @@ internal static partial class ScreenParser
             if (confirmMatch.Success)
             {
                 confirm = OperandText(confirmMatch, 1);
+                continue;
+            }
+
+            if (enabledWhen is null && ToolbarButtonParser.IsEnabledWhen(child.Content, out var enabled))
+            {
+                enabledWhen = ToolbarButtonParser.ParseEnabledWhen(context, child, enabled);
                 continue;
             }
 
@@ -644,10 +658,10 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, parameter or presentation", child.Location);
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, enabled when, parameter or presentation", child.Location);
         }
 
-        return item with { Label = label, Icon = icon, Confirm = confirm, Parameters = parameters, Presentation = presentation };
+        return item with { Label = label, Icon = icon, Confirm = confirm, Parameters = parameters, Presentation = presentation, EnabledWhen = enabledWhen };
     }
 
     static PresentationValueSyntax? ParsePresentation(ParserContext context, SourceLine line)

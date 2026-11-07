@@ -133,3 +133,4 @@
 | [0141](0141-development-users-declared-in-the-model.md) | Declare development and test users in the model with `user ... as <Persona>` | accepted | none | 2026-11-07 | Einar Ingebrigtsen (approved in conversation) |
 | [0142](0142-slots-with-roles-screenplay-6.md) | Every region content is placed in is a slot, with an optional role (Screenplay 6) | proposed | none | — | — |
 | [0143](0143-outlets-are-item-lists-screenplay-6.md) | An item list a template offers is an outlet that lower levels inherit, extend or override (Screenplay 6) | proposed | none | — | — |
+| [0144](0144-placement-hooks-and-bindings-screenplay-6.md) | A slice's screen says where it fits, and a hook opens or runs it (Screenplay 6) | proposed | none | — | — |

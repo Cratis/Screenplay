@@ -38,6 +38,8 @@ public class when_compiling_outlets_that_are_wrong : Specification
                   for orderId
               event OrderPlaced
                 orderId Uuid
+              screen PlaceOrder
+                action PlaceOrder
 
             slice StateView OrderList
               readmodel OrderRow

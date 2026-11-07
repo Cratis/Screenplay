@@ -358,7 +358,7 @@ static class ContractAdmission
         new("form", Slice + Event + Command + "  form Input for Record\n    field value\n", [Slice + Event + Command + "  form Input for Record\n    description \"Form intent\"\n    field value\n"]),
         new("contribute", "layout Shell\n  navigation\n  content\n  outlet Navigation of navigation in navigation\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n"),
         new("toolbar", Slice + "      screen Screen\n        toolbar actions\n          button record title \"Record\" slice S\n"),
-        new("outlet", "module M\n  screen template Page\n    category Test\n    header\n    outlet actions of actions in header\n  feature F\n    outlet actions extends\n      button record title \"Record\" slice S\n        confirm \"Record it?\"\n    slice StateChange S\n" + Event + Command),
+        new("outlet", "module M\n  screen template Page\n    category Test\n    header\n    outlet actions of actions in header\n  feature F\n    outlet actions extends\n      button record title \"Record\" slice S\n        confirm \"Record it?\"\n    slice StateChange S\n" + Event + Command + "      screen Input\n        fits dialog, drawer\n        action Record\n"),
         new("navigation", "layout Shell\n  content\n  outlet sidebar of navigation\n    default home title \"Home\" target M\nmodule M\n  outlet sidebar extends\n    item reports title \"Reports\" target M.F\n  feature F\n    slice StateView S\n      screen Screen\n"),
     ];
 

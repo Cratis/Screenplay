@@ -563,7 +563,14 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="FormFieldSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="FormFieldSyntax"/> to visit.</param>
-    public virtual void VisitFormField(FormFieldSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitFormField(FormFieldSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Choices is not null)
+        {
+            VisitNode(syntax.Choices);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="FormColumnSyntax"/> node.

@@ -9,6 +9,8 @@ module Shop
           reason = reason
       event OrderPlaced
         reason String
+      screen PlaceOrder
+        title "Place order"
 
     slice Automation ChaseOrders
       description "Reminds customers while an order is late"

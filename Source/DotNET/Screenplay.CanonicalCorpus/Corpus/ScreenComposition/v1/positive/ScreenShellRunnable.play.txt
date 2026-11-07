@@ -92,6 +92,8 @@ module Sales
       event OrderPlaced
         customer String
         quantity Int
+      screen PlaceOrder
+        action PlaceOrder
     slice StateView OrderList
       readmodel OrderRow
         orderId OrderId

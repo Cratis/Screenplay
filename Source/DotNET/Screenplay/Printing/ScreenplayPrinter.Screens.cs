@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Printing;
@@ -22,6 +23,11 @@ public partial class ScreenplayPrinter
             if (screen.File is not null)
             {
                 writer.Line($"file {screen.File.Path}", screen.File);
+            }
+
+            if (screen.Fits.Any())
+            {
+                writer.Line($"fits {string.Join(", ", screen.Fits.Select(ScreenFitsParser.Keyword))}");
             }
 
             foreach (var directive in screen.Directives)
@@ -64,6 +70,9 @@ public partial class ScreenplayPrinter
                 break;
             case ScreenTitleSyntax title:
                 writer.Line($"title {ScreenplaySyntaxText.LocalizableString(title.Text)}");
+                break;
+            case ScreenShowSyntax show:
+                writer.Line($"show {show.Screen} by {show.By} from {show.Element}.selection");
                 break;
             case ScreenTableSyntax table:
                 WriteScreenTable(writer, table);
@@ -362,11 +371,29 @@ public partial class ScreenplayPrinter
         if (button.Emphasis is { } emphasis) line += $" emphasis {emphasis.ToString().ToLowerInvariant()}";
         if (button.Icon is not null) line += $" icon {WriteItemValue(button.Icon)}";
         if (button.Runs is not null) line += $" runs {button.Runs}";
+        line += WriteActionSubject(button.Subject);
+        line += button.Opens switch
+        {
+            HookOpening.Dialog => " opens dialog",
+            HookOpening.Drawer => " opens drawer",
+            HookOpening.Slot => $" opens in slot {button.OpensSlot}",
+            _ => string.Empty
+        };
         writer.Line(ItemHead(button, line), button);
-        if (button.Authorize is not null || button.Confirm is not null || button.Position is not null)
+        if (button.Authorize is not null || button.Confirm is not null || button.Position is not null || button.Opens == HookOpening.Runs || button.EnabledWhen is not null)
         {
             using (writer.Indent())
             {
+                if (button.Opens == HookOpening.Runs)
+                {
+                    writer.Line("runs");
+                }
+
+                if (button.EnabledWhen is not null)
+                {
+                    writer.Line($"enabled when {ScreenplaySyntaxText.Condition(button.EnabledWhen)}");
+                }
+
                 if (button.Confirm is not null)
                 {
                     writer.Line($"confirm {ScreenplaySyntaxText.LocalizableString(button.Confirm)}");
@@ -407,6 +434,11 @@ public partial class ScreenplayPrinter
             if (item.Confirm is not null)
             {
                 writer.Line($"confirm {ScreenplaySyntaxText.LocalizableString(item.Confirm)}");
+            }
+
+            if (item.EnabledWhen is not null)
+            {
+                writer.Line($"enabled when {ScreenplaySyntaxText.Condition(item.EnabledWhen)}");
             }
 
             foreach (var parameter in item.Parameters)

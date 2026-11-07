@@ -34,6 +34,8 @@ public class when_adding_to_a_member_that_is_omitted_while_empty : Specification
                   reason = reason
               event OrderPlaced
                 reason String
+              screen PlaceOrder
+                action PlaceOrder
 
             slice StateView OrderList
               readmodel OrderRow

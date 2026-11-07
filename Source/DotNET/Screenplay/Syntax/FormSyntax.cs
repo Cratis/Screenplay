@@ -162,7 +162,23 @@ public record FormPopulateFromItemSyntax(SourceLocation Location) : FormPopulate
 /// <param name="From">The optional source property, when it differs from <see cref="Property"/>.</param>
 /// <param name="ComposeUsing">The optional callback that computes the property's value.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record FormFieldSyntax(string Property, string? Label, string? From, string? ComposeUsing, SourceLocation Location) : SyntaxNode(Location);
+public record FormFieldSyntax(string Property, string? Label, string? From, string? ComposeUsing, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the <c>choose from query &lt;Query&gt; show &lt;field&gt;</c> line, or <c>null</c> when the field does not say -
+    /// see <see cref="Parsing.FormFieldChoices"/> for when a picker is inferred.
+    /// </summary>
+    public FormFieldChoicesSyntax? Choices { get; init; }
+}
+
+/// <summary>
+/// Represents a <c>choose from query &lt;Query&gt; show &lt;field&gt;</c> line under a form field - the field is a picker over
+/// the rows a list query returns, showing one of their fields.
+/// </summary>
+/// <param name="Query">The list query whose rows are the choices.</param>
+/// <param name="Show">The field of each row the picker shows.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record FormFieldChoicesSyntax(string Query, string Show, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a manually authored form column.

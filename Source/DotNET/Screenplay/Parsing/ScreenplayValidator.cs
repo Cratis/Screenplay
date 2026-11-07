@@ -220,6 +220,9 @@ internal static partial class ScreenplayValidator
         ValidateArrangements(application, context);
         OutletValidator.Validate(application, context);
         ToolbarButtonValidator.Validate(application, context);
+        HookValidator.Validate(application, context);
+        ScreenBindingValidator.Validate(application, context);
+        FormFieldChoices.Validate(application, context);
         CompositionValidator.Validate(application, context);
     }
 

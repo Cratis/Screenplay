@@ -77,6 +77,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ScreenTitleSyntax title:
                 VisitScreenTitle(title);
                 break;
+            case ScreenShowSyntax show:
+                VisitNode(show);
+                break;
             case ScreenTableSyntax table:
                 VisitScreenTable(table);
                 break;
@@ -298,6 +301,7 @@ public abstract partial class ScreenplaySyntaxWalker
                 VisitUiBinding(parameter.Binding);
             }
             foreach (var presentation in item.Presentation) VisitNode(presentation);
+            if (item.EnabledWhen is not null) VisitCondition(item.EnabledWhen);
         }
 
         foreach (var button in syntax.Buttons)
@@ -317,6 +321,11 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Authorize is not null)
         {
             VisitAuthorize(syntax.Authorize);
+        }
+
+        if (syntax.EnabledWhen is not null)
+        {
+            VisitCondition(syntax.EnabledWhen);
         }
     }
 

@@ -47,10 +47,13 @@ public class when_printing_outlets : given.a_printer
           feature Products
             outlet toolbar overrides
               hide export
-              button add title "Add product" slice DraftProduct emphasis primary
+              button add title "Add product" slice DraftProduct emphasis primary opens dialog
                 before refresh
               group more title "More" icon dots
-                button withdraw title "Withdraw" slice WithdrawProduct
+                button withdraw title "Withdraw" slice WithdrawProduct for item
+                  runs
+                  enabled when item.status == "onSale"
+                  confirm "Withdraw this product?"
             outlet filters extends
               filter status title "Status" sets AllProducts.status
             outlet stats extends
@@ -63,6 +66,9 @@ public class when_printing_outlets : given.a_printer
                   sku = sku
               event ProductDrafted
                 sku String
+              screen DraftProduct
+                fits dialog, drawer
+                action DraftProduct for screen
 
             slice StateChange WithdrawProduct
               command WithdrawProduct
@@ -115,8 +121,9 @@ public class when_printing_outlets : given.a_printer
     [Fact] void should_print_an_outlet_for_the_item() => _roundtrip.Printed.ShouldContain("    outlet rowActions of actions for item\n");
     [Fact] void should_print_a_tabs_outlet_in_a_slot() => _roundtrip.Printed.ShouldContain("    outlet detailTabs of tabs in detail\n");
     [Fact] void should_print_the_dialog_buttons() => _roundtrip.Printed.ShouldContain("      default save title \"Save\" emphasis primary runs submit\n");
-    [Fact] void should_print_an_override_with_a_hidden_item() => _roundtrip.Printed.ShouldContain("    outlet toolbar overrides\n      hide export\n      button add title \"Add product\" slice DraftProduct emphasis primary\n        before refresh\n");
-    [Fact] void should_print_a_group() => _roundtrip.Printed.ShouldContain("      group more title \"More\" icon dots\n        button withdraw title \"Withdraw\" slice WithdrawProduct\n");
+    [Fact] void should_print_an_override_with_a_hidden_item() => _roundtrip.Printed.ShouldContain("    outlet toolbar overrides\n      hide export\n      button add title \"Add product\" slice DraftProduct emphasis primary opens dialog\n        before refresh\n");
+    [Fact] void should_print_a_group() => _roundtrip.Printed.ShouldContain("      group more title \"More\" icon dots\n        button withdraw title \"Withdraw\" slice WithdrawProduct for item\n          runs\n          enabled when item.status == \"onSale\"\n          confirm \"Withdraw this product?\"\n");
+    [Fact] void should_print_where_a_screen_fits() => _roundtrip.Printed.ShouldContain("      screen DraftProduct\n        fits dialog, drawer\n");
     [Fact] void should_print_a_filter() => _roundtrip.Printed.ShouldContain("      filter status title \"Status\" sets AllProducts.status\n");
     [Fact] void should_print_a_stat() => _roundtrip.Printed.ShouldContain("      stat drafts title \"Drafts\" value from ProductStats.drafts\n");
     [Fact] void should_print_a_contributed_tab() => _roundtrip.Printed.ShouldContain("    contribute to detailTabs\n      tab pricing title \"Pricing\" shows ProductPricing\n");

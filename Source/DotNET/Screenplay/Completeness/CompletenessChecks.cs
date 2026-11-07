@@ -69,7 +69,7 @@ public sealed record CompletenessChecks(ImmutableHashSet<CompletenessCheck> Sele
         var groups = new (CompletenessCheck Check, string[] Names)[]
         {
             (CompletenessCheck.DataBindings, ["data-bindings", "PLAY0530", "PLAY0531"]),
-            (CompletenessCheck.InputSurfaces, ["input-surfaces", "PLAY0532", "PLAY0533"]),
+            (CompletenessCheck.InputSurfaces, ["input-surfaces", "PLAY0532"]),
             (CompletenessCheck.FieldOrigins, ["field-origins", "PLAY0534"]),
             (CompletenessCheck.QueryKeys, ["query-keys", "PLAY0535"]),
             (CompletenessCheck.EventConsumers, ["event-consumers", "PLAY0536"]),

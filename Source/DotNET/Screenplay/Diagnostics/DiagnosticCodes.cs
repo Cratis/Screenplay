@@ -3988,4 +3988,54 @@ public static class DiagnosticCodes
     /// Two items of one outlet share an id, or a lower level's item repeats the id of an inherited one.
     /// </summary>
     public const string DuplicateOutletItem = "PLAY0905";
+
+    /// <summary>
+    /// A screen's <c>fits</c> line is malformed: it names a place other than dialog, drawer, pane, panel or page, names one twice, the screen has two, or it is a template's <c>fits slot</c>.
+    /// </summary>
+    public const string InvalidScreenFits = "PLAY0906";
+
+    /// <summary>
+    /// A hook <c>runs</c> a slice whose command has an input nothing supplies without a form.
+    /// </summary>
+    public const string RunsHookNeedsForm = "PLAY0907";
+
+    /// <summary>
+    /// A hook opens a State Change slice that has no screen and cannot run - an input needs a form, or the hook names a place to open it in.
+    /// </summary>
+    public const string HookToScreenlessSlice = "PLAY0908";
+
+    /// <summary>
+    /// A hook <c>opens in slot</c> a slot the template that offers its outlet does not declare.
+    /// </summary>
+    public const string HookSlotNotDeclared = "PLAY0909";
+
+    /// <summary>
+    /// A hook <c>opens in slot</c> a slot the screen it is on already fills.
+    /// </summary>
+    public const string HookSlotAlreadyFilled = "PLAY0910";
+
+    /// <summary>
+    /// A hook <c>opens in slot</c> a slot whose role the slice's screen does not list in what it <c>fits</c>.
+    /// </summary>
+    public const string HookSlotRoleNotFitted = "PLAY0911";
+
+    /// <summary>
+    /// A component on a screen is bound to nothing and given no value, so all it can show is sample text.
+    /// </summary>
+    public const string UnboundScreenText = "PLAY0912";
+
+    /// <summary>
+    /// A form field's <c>choose from query</c> line is malformed, names a query that is not a list query, or shows a field its rows do not have.
+    /// </summary>
+    public const string InvalidFormFieldChoices = "PLAY0913";
+
+    /// <summary>
+    /// A <c>show &lt;Screen&gt; by &lt;param&gt; from &lt;element&gt;.selection</c> line is malformed, stands outside a template slot, or names a screen or element that does not exist.
+    /// </summary>
+    public const string InvalidScreenShow = "PLAY0914";
+
+    /// <summary>
+    /// A button or item's <c>enabled when</c> reads <c>item</c>, but it acts <c>for screen</c>, so there is no item to read.
+    /// </summary>
+    public const string EnabledWhenWithoutItem = "PLAY0915";
 }

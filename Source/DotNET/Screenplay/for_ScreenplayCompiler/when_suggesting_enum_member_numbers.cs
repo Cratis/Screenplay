@@ -16,11 +16,11 @@ public class when_suggesting_enum_member_numbers : Specification
     void Because()
     {
         _result = new ScreenplayCompiler().Compile("concept Status : Enum\n  draft\n  issued\ntype Detail\n  status Status[] optional\ntype Envelope\n  detail Detail\nmodule M\n  feature F\n    slice StateChange S\n      event E\n        envelope Envelope\n      command C\n        produces event Changed\n          status Status = \"draft\"");
-        _findings = ModelCompleteness.Check(_result, new([CompletenessCheck.EnumPinning]));
+        _findings = [.. ModelCompleteness.Check(_result, new([CompletenessCheck.EnumPinning])).Where(IsHint)];
     }
 
     [Fact] void should_not_hint_in_ordinary_compilation() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnpinnedStoredEnumeration).ShouldBeFalse();
-    [Fact] void should_not_hint_when_the_check_is_not_selected() => ModelCompleteness.Check(_result, CompletenessChecks.None).ShouldBeEmpty();
+    [Fact] void should_not_hint_when_the_check_is_not_selected() => ModelCompleteness.Check(_result, CompletenessChecks.None).Where(IsHint).ShouldBeEmpty();
     [Fact] void should_hint_once_for_a_nested_and_inline_stored_enum() => _findings.Length.ShouldEqual(1);
     [Fact] void should_use_information_severity() => _findings.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
     [Fact] void should_point_to_the_enum() => _findings.Single().Location.Line.ShouldEqual(1);
@@ -34,7 +34,7 @@ public class when_suggesting_enum_member_numbers : Specification
     {
         CompletenessChecks.TryParse(selection, out var checks).ShouldBeTrue();
         checks.Selected.ShouldContainOnly(CompletenessCheck.EnumPinning);
-        ModelCompleteness.Check(_result, checks).SequenceEqual(_findings).ShouldBeTrue();
+        ModelCompleteness.Check(_result, checks).Where(IsHint).SequenceEqual(_findings).ShouldBeTrue();
     }
 
     [Theory]
@@ -44,5 +44,7 @@ public class when_suggesting_enum_member_numbers : Specification
     [InlineData("concept Status : Enum\n  draft = 0\n  issued\nmodule M\n  feature F\n    slice StateChange S\n      event E\n        status Status")]
     [InlineData("concept Status : Enum\n  draft = nope\nmodule M\n  feature F\n    slice StateChange S\n      event E\n        status Status")]
     [InlineData("concept Status : Enum\n  draft\nmodule M\n  feature F\n    slice StateChange S\n      event E\n        status Status\nconcept")]
-    void should_not_hint_for_unstored_numbered_or_invalid_enums(string source) => ModelCompleteness.Check(new ScreenplayCompiler().Compile(source), new([CompletenessCheck.EnumPinning])).ShouldBeEmpty();
+    void should_not_hint_for_unstored_numbered_or_invalid_enums(string source) => ModelCompleteness.Check(new ScreenplayCompiler().Compile(source), new([CompletenessCheck.EnumPinning])).Where(IsHint).ShouldBeEmpty();
+
+    static bool IsHint(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnpinnedStoredEnumeration;
 }

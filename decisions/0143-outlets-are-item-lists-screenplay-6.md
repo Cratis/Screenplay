@@ -45,7 +45,7 @@ Cratis/StudioIssues#1327).
 6. **No executable-model version**, as in decision 0142: outlets are screen authoring syntax and deferred from the ESM.
 
 Placement and hooks (`fits`, `opens`, `runs` on non-built-ins, `enabled when`), `choose from query` and
-`show … from …selection` are a later phase of #1178.
+`show … from …selection` are decision 0144.
 
 ## Consequences
 

@@ -28,6 +28,8 @@ public class when_compiling_application_toolbar_buttons_that_are_wrong : Specifi
                   orderId = orderId
               event OrderPlaced
                 orderId Uuid
+              screen PlaceOrder
+                action PlaceOrder
         """;
 
     static IEnumerable<string> Codes(string source) => new ScreenplayCompiler().Compile(source).Diagnostics.Where(_ => _.Severity != DiagnosticSeverity.Information).Select(_ => _.Code);

@@ -12,7 +12,7 @@ namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 /// </summary>
 public class when_authoring_a_module_outlet : given.an_authoring_connection
 {
-    const string Document = "module Shop\n  screen template Page\n    category Page\n    header\n    outlet actions of actions in header\n  feature Orders\n    slice StateChange PlaceOrder\n      command PlaceOrder\n        orderId Uuid identifier\n        produces OrderPlaced\n          orderId = orderId\n      event OrderPlaced\n        orderId Uuid\n";
+    const string Document = "module Shop\n  screen template Page\n    category Page\n    header\n    outlet actions of actions in header\n  feature Orders\n    slice StateChange PlaceOrder\n      command PlaceOrder\n        orderId Uuid identifier\n        produces OrderPlaced\n          orderId = orderId\n      event OrderPlaced\n        orderId Uuid\n      screen PlaceOrder\n        action PlaceOrder\n";
 
     string _emptyToolbarAdded = string.Empty;
     string _buttonAdded = string.Empty;

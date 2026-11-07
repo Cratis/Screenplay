@@ -104,7 +104,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed)))))),
                 "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
@@ -492,6 +492,35 @@ public partial class when_freezing_legacy_source_syntax_bytes
             Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAnIncompleteCurrencyCode")
         },
         _ => slice
+    };
+
+    // Screenplay 6 placement (Cratis/Screenplay#1178) - fits, pickers, slots that show a selection, the routed and docked slots of
+    // the List template and the slice only a hook issues - has its own parser, printer and compiler specs; the frozen bytes predate it.
+    static ApplicationSyntax WithoutSamplePlacement(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            ScreenTemplates = module.ScreenTemplates.Select(template => template.Name == "List"
+                ? template with { Slots = template.Slots.Where(slot => slot.Name is not ("detail" or "activity")).ToArray() }
+                : template).ToArray(),
+            Forms = module.Forms?.Select(form => form with { Fields = form.Fields.Select(field => field with { Choices = null }).ToArray() }).ToArray(),
+            Features = module.Features.Select(WithoutPlacement).ToArray()
+        }).ToArray()
+    };
+
+    static FeatureSyntax WithoutPlacement(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutPlacement).ToArray(),
+        Slices = feature.Slices.Where(slice => slice.Name != "SendInvoiceReminder").Select(slice => slice with
+        {
+            Screens = slice.Screens.Select(screen => screen with
+            {
+                Fits = [],
+                Directives = screen.Directives.Select(directive => directive is ScreenTemplateReferenceSyntax template
+                    ? template with { Slots = template.Slots.Where(filled => !filled.Directives.Any() || filled.Directives.Any(inner => inner is not ScreenShowSyntax)).ToArray() }
+                    : directive).ToArray()
+            }).ToArray()
+        }).ToArray()
     };
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with

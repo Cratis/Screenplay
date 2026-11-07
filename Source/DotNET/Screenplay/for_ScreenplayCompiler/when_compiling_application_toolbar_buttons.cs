@@ -40,6 +40,8 @@ public class when_compiling_application_toolbar_buttons : Specification
                   orderId = orderId
               event OrderPlaced
                 orderId Uuid
+              screen PlaceOrder
+                action PlaceOrder
         """;
 
     CompilationResult<ApplicationSyntax> _result;
