@@ -43,12 +43,13 @@ internal static partial class LayoutParser
             Category = body.Category,
             TemplateType = body.TemplateType,
             Exposes = body.Exposes,
-            Outlets = body.Outlets,
+            RecursiveSlots = body.RecursiveSlots,
             DirectiveLocations = body.DirectiveLocations,
             RestrictsScopes = body.RestrictsScopes,
             Scopes = body.Scopes,
             SliceKinds = body.SliceKinds,
-            Navigation = body.Navigation
+            Outlets = body.Outlets,
+            RetiredForms = body.RetiredForms
         };
     }
 
@@ -76,14 +77,16 @@ internal static partial class LayoutParser
             Category = body.Category,
             TemplateType = body.TemplateType,
             Exposes = body.Exposes,
-            Outlets = body.Outlets,
+            RecursiveSlots = body.RecursiveSlots,
             DirectiveLocations = body.DirectiveLocations,
             RestrictsScopes = body.RestrictsScopes,
             Scopes = body.Scopes,
             SliceKinds = body.SliceKinds,
             DisplayName = body.DisplayName,
             Description = body.Description,
-            Content = body.Content
+            Content = body.Content,
+            Outlets = body.Outlets,
+            RetiredForms = body.RetiredForms
         };
     }
 
@@ -105,19 +108,21 @@ internal static partial class LayoutParser
         var body = ArrangementParser.ParseBody(context, header, "dialog template", name, allowsFitsSlot: false);
         return new(name, body.Slots, header.Location, body.Arrangement)
         {
+            RetiredForms = body.RetiredForms,
             Behaviors = body.Behaviors,
             UsedBehaviors = body.UsedBehaviors,
             Category = body.Category,
             TemplateType = body.TemplateType,
             Exposes = body.Exposes,
-            Outlets = body.Outlets,
+            RecursiveSlots = body.RecursiveSlots,
             DirectiveLocations = body.DirectiveLocations,
             RestrictsScopes = body.RestrictsScopes,
             Scopes = body.Scopes,
             SliceKinds = body.SliceKinds,
             DisplayName = body.DisplayName,
             Description = body.Description,
-            Content = body.Content
+            Content = body.Content,
+            Outlets = body.Outlets
         };
     }
 

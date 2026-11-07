@@ -33,14 +33,24 @@ internal static partial class ScreenParser
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var directives = new List<ScreenDirectiveSyntax>();
         var contributions = new List<ScreenContributionSyntax>();
+        var outlets = new List<OutletSyntax>();
+        List<ScreenFit>? fits = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Screen '{name.Groups[1].Value}'", directiveLocations)) continue;
-            if (LineText.FirstWord(line.Content) == "contribute")
+            if (LineText.FirstWord(line.Content) == "fits")
+            {
+                fits = ScreenFitsParser.Parse(context, line, name.Groups[1].Value, fits, directiveLocations);
+            }
+            else if (LineText.FirstWord(line.Content) == "contribute")
             {
                 if (ParseContribution(context, line) is { } contribution) contributions.Add(contribution);
+            }
+            else if (LineText.FirstWord(line.Content) == "outlet")
+            {
+                OutletParser.AddOverride(context, line, "screen", outlets);
             }
             else if (FileReferenceParser.IsDirective(line))
             {
@@ -52,7 +62,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets, Fits = fits ?? [] };
     }
 
     /// <summary>
@@ -74,7 +84,7 @@ internal static partial class ScreenParser
     }
 
     /// <summary>
-    /// Parses a <c>navigate to &lt;Screen&gt; [by &lt;param&gt;]</c> line and its <c>route</c>, <c>outlet</c> and <c>parameter</c> children.
+    /// Parses a <c>navigate to &lt;Screen&gt; [by &lt;param&gt;]</c> line and its <c>route</c>, <c>slot</c> and <c>parameter</c> children.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="text">The navigation text.</param>
@@ -91,7 +101,7 @@ internal static partial class ScreenParser
 
         var parameters = new List<ScreenNavigationParameterSyntax>();
         string? route = null;
-        string? outlet = null;
+        string? slot = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -109,17 +119,26 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            var outletMatch = OutletRegex().Match(child.Content);
-            if (outletMatch.Success)
+            var slotMatch = NavigationSlotRegex().Match(child.Content);
+            if (slotMatch.Success)
             {
-                outlet = outletMatch.Groups[1].Value;
+                slot = slotMatch.Groups[1].Value;
                 continue;
             }
 
-            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"', 'outlet <name>' or 'parameter <name> from <binding>'", child.Location);
+            var outletMatch = OutletRegex().Match(child.Content);
+            if (outletMatch.Success)
+            {
+                context.Error(DiagnosticCodes.RemovedNavigationOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {outletMatch.Groups[1].Value}' in a navigation", $"slot {outletMatch.Groups[1].Value}"), child.Location);
+                slot = outletMatch.Groups[1].Value;
+                context.Retire(new RetiredOutlet(RetiredOutletPlace.Navigation, slot, new TemplateSlotSyntax(slot, child.Location), child.Location));
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"', 'slot <name>' or 'parameter <name> from <binding>'", child.Location);
         }
 
-        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Outlet = outlet, Parameters = parameters };
+        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Slot = slot, Parameters = parameters };
     }
 
     internal static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
@@ -140,6 +159,25 @@ internal static partial class ScreenParser
         }
 
         return new(name, items, line.Location) { Buttons = buttons };
+    }
+
+    /// <summary>
+    /// Reports a Screenplay 5 feature or module toolbar, which Screenplay 6 writes as an extending outlet, and reads its
+    /// block so a migration can rewrite it.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
+    /// <param name="line">The consumed <c>toolbar</c> line.</param>
+    /// <param name="owner">What declares it - <c>feature</c> or <c>module</c>.</param>
+    /// <returns>The <see cref="RetiredToolbar"/> read.</returns>
+    internal static RetiredToolbar ReportFeatureToolbar(ParserContext context, SourceLine line, string owner)
+    {
+        var name = line.Content["toolbar".Length..].Trim();
+        var outlet = name.Length == 0 ? "<name>" : name;
+        context.Error(DiagnosticCodes.RemovedFeatureToolbar, SlotsAndOutletsMigration.Replaced($"'{line.Content}' in a {owner}", $"outlet {outlet} extends"), line.Location);
+
+        // The block is read on a throwaway context: the form is already an error, and what it holds is the
+        // migration's to judge - one error per retired form, not one per line beneath it.
+        return new(ParseToolbar(context.Quiet(), line), line.Location);
     }
 
     static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)
@@ -182,6 +220,8 @@ internal static partial class ScreenParser
                 return ParseToolbar(context, line);
             case "navigate":
                 return ParseNavigate(context, line.Content, line);
+            case "show":
+                return ParseShow(context, line);
             case "on":
                 return InteractionParser.ParseInlineBehavior(context, line) is { } behavior
                     ? new ScreenBehaviorSyntax(behavior, line.Location)
@@ -451,7 +491,7 @@ internal static partial class ScreenParser
         var properties = new List<ComponentPropertySyntax>();
         var exposes = new List<ComponentExposedValueSyntax>();
         var presentation = new List<PresentationValueSyntax>();
-        var outlets = new List<ComponentOutletSyntax>();
+        var slots = new List<ComponentSlotSyntax>();
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
 
@@ -478,15 +518,22 @@ internal static partial class ScreenParser
                 case "exposes":
                     if (ParseComponentExposes(context, child) is { } exposed) exposes.Add(exposed);
                     break;
+                case "slot":
+                    slots.Add(ParseComponentSlot(context, child, "slot"));
+                    break;
                 case "outlet":
-                    outlets.Add(ParseComponentOutlet(context, child));
+                    var renamed = child.Content["outlet".Length..].Trim();
+                    context.Error(DiagnosticCodes.RemovedComponentOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed}' in a component", $"slot {renamed}"), child.Location);
+                    var componentSlot = ParseComponentSlot(context, child, "outlet");
+                    context.Retire(new RetiredOutlet(RetiredOutletPlace.Component, componentSlot.Name, componentSlot, child.Location));
+                    slots.Add(componentSlot);
                     break;
                 case "on":
                 case "uses":
                     InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, id, property, icon, presentation, exposes, outlet, on or uses", child.Location);
+                    context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, id, property, icon, presentation, exposes, slot, on or uses", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -500,7 +547,7 @@ internal static partial class ScreenParser
             Exposes = exposes,
             Presentation = presentation,
             Icon = string.IsNullOrWhiteSpace(icon) ? null : icon,
-            Outlets = outlets,
+            Slots = slots,
             Behaviors = behaviors,
             UsedBehaviors = usedBehaviors
         };
@@ -545,9 +592,9 @@ internal static partial class ScreenParser
         return new(match.Groups[1].Value, UiBindingParser.ParseFromClause(context, match.Groups[2].Value, line), line.Location);
     }
 
-    static ComponentOutletSyntax ParseComponentOutlet(ParserContext context, SourceLine line)
+    static ComponentSlotSyntax ParseComponentSlot(ParserContext context, SourceLine line, string keyword)
     {
-        var name = line.Content["outlet".Length..].Trim();
+        var name = line.Content[keyword.Length..].Trim();
         return new(name, ParseDirectiveBlock(context, line), line.Location);
     }
 
@@ -573,6 +620,7 @@ internal static partial class ScreenParser
         var label = inlineLabel;
         string? icon = null;
         string? confirm = null;
+        ConditionSyntax? enabledWhen = null;
         var parameters = new List<ScreenNavigationParameterSyntax>();
         var presentation = new List<PresentationValueSyntax>();
 
@@ -590,6 +638,12 @@ internal static partial class ScreenParser
             if (confirmMatch.Success)
             {
                 confirm = OperandText(confirmMatch, 1);
+                continue;
+            }
+
+            if (enabledWhen is null && ToolbarButtonParser.IsEnabledWhen(child.Content, out var enabled))
+            {
+                enabledWhen = ToolbarButtonParser.ParseEnabledWhen(context, child, enabled);
                 continue;
             }
 
@@ -612,10 +666,10 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, parameter or presentation", child.Location);
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, enabled when, parameter or presentation", child.Location);
         }
 
-        return item with { Label = label, Icon = icon, Confirm = confirm, Parameters = parameters, Presentation = presentation };
+        return item with { Label = label, Icon = icon, Confirm = confirm, Parameters = parameters, Presentation = presentation, EnabledWhen = enabledWhen };
     }
 
     static PresentationValueSyntax? ParsePresentation(ParserContext context, SourceLine line)
@@ -659,6 +713,9 @@ internal static partial class ScreenParser
 
     [GeneratedRegex(@"^outlet\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OutletRegex();
+
+    [GeneratedRegex(@"^slot\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex NavigationSlotRegex();
 
     [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)(?:\s+order\s+(-?\d+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ContributionRegex();

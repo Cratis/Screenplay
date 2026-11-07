@@ -53,7 +53,7 @@ const malformed = [
     '      screen Browse',
     '        contribute Actions',
     '        navigate to Browse',
-    '          outlet',
+    '          slot',
 ];
 
 const compositionCodes = [

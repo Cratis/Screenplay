@@ -1,0 +1,9 @@
+// The identities of the application. Each names the event source a stream of
+// facts belongs to - never a payload property on the stream it identifies.
+
+concept EngagementId : Uuid
+concept ConsultantId : Uuid
+concept AssignmentId : Uuid
+concept TimesheetId  : Uuid
+concept PayrollRunId : Uuid
+concept AbsenceId    : Uuid

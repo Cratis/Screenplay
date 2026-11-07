@@ -53,14 +53,14 @@ public record TemplateDescriptor(string Name, TemplateDescriptorKind Kind)
     public bool FitsSlot { get; init; }
 
     /// <summary>
-    /// Gets the names of the slots (outlets) the template declares.
+    /// Gets the names of the slots the template declares.
     /// </summary>
     public IReadOnlyList<string> Slots { get; init; } = [];
 
     /// <summary>
     /// Gets the slot every screen's content is placed in.
     /// </summary>
-    public string PrimaryOutlet { get; init; } = "content";
+    public string PrimarySlot { get; init; } = "content";
 
     /// <summary>
     /// Gets the names of the options the template exposes, or <see langword="null"/> when they are not known and are not checked.

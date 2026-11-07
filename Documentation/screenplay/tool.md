@@ -444,6 +444,10 @@ Do not parse the file's JSON yourself.
 
 `screenplay environment [<file.play|folder>] [--format text|json]` lists the keys a model needs from the [environment](environments.md) it runs in — each authentication provider's `clientId` and `clientSecret`, the mail settings of onboarding — and marks the ones that must be secrets. The default path is the current directory and the default format is text, one key per line. Source errors exit `1` and list nothing; bad arguments, unavailable paths and empty model directories exit `2`. A model that needs nothing prints a single line saying so.
 
+## Migrate files written for an earlier version
+
+`screenplay migrate <file.play|folder> --from <version> [--to <version>] [--dry-run] [--report <file>]` rewrites files written for an earlier Screenplay version - for example `--from 5` for the forms Screenplay 6 split into slots and outlets - and compiles the result. `--to` defaults to the version the compiler reads. It exits `0` when every file migrated, `2` when a file needs review and `1` when it could not run. See [Migrate a model to a new version](migration.md).
+
 ## Check structural completeness
 
 Select additional warnings and information with `--check data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation,purposes`, `--check enum-pinning` (or `PLAY0671`) or `--check all`. Combine with `--warnaserror` to gate on findings, and with `--scope` to limit the reported set. Checks are not part of ordinary compilation and run only when the whole application has no source errors. Otherwise output reports `completeness checks skipped: the model has N error(s)`. See [Completeness checks](completeness.md) for rules and exemptions.

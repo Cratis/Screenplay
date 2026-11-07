@@ -32,7 +32,7 @@ public class when_the_catalog_ships_a_shell_the_profile_misuses : given.a_profil
 
     void Because() => _diagnostics = Bind(Source);
 
-    [Fact] void should_report_the_shell_without_a_content_outlet() => _diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(12);
+    [Fact] void should_report_the_shell_without_a_content_slot() => _diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentSlot).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(12);
     [Fact] void should_report_the_option_the_shell_does_not_expose() => _diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownShellOption).Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(19);
     [Fact] void should_name_the_option_1() => _diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownShellOption).Message.ShouldContain("'showFooter'");
     [Fact] void should_name_the_option_2() => _diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownShellOption).Message.ShouldContain("'navigationMode'");

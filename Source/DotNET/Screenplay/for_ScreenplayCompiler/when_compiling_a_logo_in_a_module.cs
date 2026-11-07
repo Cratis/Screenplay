@@ -10,7 +10,7 @@ public class when_compiling_a_logo_in_a_module : given.a_navigation_document
 {
     const string SalesNavigation =
         """
-          navigation topbar extends
+          outlet topbar extends
             logo image "/x.svg" title "X"
             item a title "A" target Sales
         """;

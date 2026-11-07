@@ -28,7 +28,7 @@ internal static class CompositionValidator
 
         ValidateExposures(application, collector, context);
         ValidateInstances(application, collector, context);
-        ValidateOutlets(collector, context);
+        ValidateSlots(collector, context);
         ValidateDestinations(collector, context);
         ValidateScreenContributions(application, collector, context);
         ValidateTemplateNesting(application, context);
@@ -139,13 +139,13 @@ internal static class CompositionValidator
         }
     }
 
-    static void ValidateOutlets(CompositionCollector collector, ParserContext context)
+    static void ValidateSlots(CompositionCollector collector, ParserContext context)
     {
-        foreach (var navigate in collector.Navigations.Where(navigate => navigate.Outlet is not null && !collector.Outlets.Contains(navigate.Outlet)))
+        foreach (var navigate in collector.Navigations.Where(navigate => navigate.Slot is not null && !collector.Slots.Contains(navigate.Slot)))
         {
             context.Error(
-                DiagnosticCodes.UnknownNavigationOutlet,
-                $"Unknown outlet '{navigate.Outlet}' - no layout, template or component declares 'outlet {navigate.Outlet}'",
+                DiagnosticCodes.UnknownNavigationSlot,
+                $"Unknown slot '{navigate.Slot}' - no layout, template or component declares 'slot {navigate.Slot}'",
                 navigate.Location);
         }
     }
@@ -156,13 +156,13 @@ internal static class CompositionValidator
         {
             var known = destination.Kind switch
             {
-                ContributionDestinationKind.Outlet => collector.Outlets.Contains(destination.Target),
+                ContributionDestinationKind.Slot => collector.Slots.Contains(destination.Target),
                 ContributionDestinationKind.Dialog => collector.Dialogs.Contains(destination.Target),
                 _ => true
             };
             if (!known)
             {
-                var kind = destination.Kind == ContributionDestinationKind.Outlet ? "outlet" : "dialog template";
+                var kind = destination.Kind == ContributionDestinationKind.Slot ? "slot" : "dialog template";
                 context.Error(
                     DiagnosticCodes.UnknownNavigationDestination,
                     $"Unknown destination {kind} '{destination.Target}' - nothing declares it",
@@ -182,7 +182,7 @@ internal static class CompositionValidator
         {
             context.Error(
                 DiagnosticCodes.UnknownScreenContributionPoint,
-                $"Unknown contribution point '{contribution.ContributionPoint}' - no layout or template slot declares 'contributes {contribution.ContributionPoint}'",
+                $"Unknown outlet '{contribution.ContributionPoint}' - no layout or template declares 'outlet {contribution.ContributionPoint} of <kind>'",
                 contribution.Location);
         }
     }
@@ -400,7 +400,7 @@ internal static class CompositionValidator
 
         public HashSet<string> Screens { get; } = new(StringComparer.Ordinal);
 
-        public HashSet<string> Outlets { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> Slots { get; } = new(StringComparer.Ordinal);
 
         public List<ScreenNavigateSyntax> Navigations { get; } = [];
 
@@ -418,27 +418,27 @@ internal static class CompositionValidator
             {
                 case LayoutSyntax layout:
                     Structures.Add(layout.Name);
-                    Outlets.UnionWith(layout.Outlets.Select(outlet => outlet.Name));
+                    Slots.UnionWith(layout.RecursiveSlots.Select(slot => slot.Name));
                     break;
                 case ScreenTemplateSyntax template:
                     Structures.Add(template.Name);
                     Templates.Add(template.Name);
-                    Outlets.UnionWith(template.Outlets.Select(outlet => outlet.Name));
+                    Slots.UnionWith(template.RecursiveSlots.Select(slot => slot.Name));
                     break;
                 case DialogTemplateSyntax template:
                     Structures.Add(template.Name);
                     Dialogs.Add(template.Name);
                     Templates.Add(template.Name);
-                    Outlets.UnionWith(template.Outlets.Select(outlet => outlet.Name));
+                    Slots.UnionWith(template.RecursiveSlots.Select(slot => slot.Name));
                     break;
                 case ScreenSyntax screen:
                     Screens.Add(screen.Name);
                     break;
-                case SlotSyntax { Contributes: { } point }:
-                    ContributionPoints.Add(point);
+                case OutletSyntax { Kind: not null } outlet:
+                    ContributionPoints.Add(outlet.Name);
                     break;
-                case ComponentOutletSyntax outlet:
-                    Outlets.Add(outlet.Name);
+                case ComponentSlotSyntax slot:
+                    Slots.Add(slot.Name);
                     break;
                 case ScreenNavigateSyntax navigate:
                     Navigations.Add(navigate);

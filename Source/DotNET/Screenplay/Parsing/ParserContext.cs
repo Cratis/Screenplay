@@ -17,6 +17,12 @@ namespace Cratis.Screenplay.Parsing;
 internal sealed class ParserContext(LineReader reader, string? path = null, IScreenplayLanguageRegistry? languages = null)
 {
     readonly List<Diagnostic> _diagnostics = [];
+    readonly List<RetiredForm> _retiredForms = [];
+
+    /// <summary>
+    /// Gets the retired forms read outside a layout, template, module or feature body - see <see cref="Retire"/>.
+    /// </summary>
+    public IReadOnlyList<RetiredForm> RetiredForms => _retiredForms;
 
     /// <summary>
     /// Gets the immutable options established before reading document values.
@@ -121,6 +127,19 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// </summary>
     /// <param name="diagnostic">The <see cref="Diagnostic"/> to add.</param>
     public void Add(Diagnostic diagnostic) => _diagnostics.Add(diagnostic);
+
+    /// <summary>
+    /// Keeps a form an earlier Screenplay version wrote, after it has been reported, so a migration can rewrite it.
+    /// </summary>
+    /// <param name="form">The <see cref="RetiredForm"/> read.</param>
+    public void Retire(RetiredForm form) => _retiredForms.Add(form);
+
+    /// <summary>
+    /// Creates a context reading the same lines whose diagnostics and retired forms are discarded - for the block of a
+    /// retired form, which is reported once, as a whole.
+    /// </summary>
+    /// <returns>The quiet <see cref="ParserContext"/>.</returns>
+    public ParserContext Quiet() => new(reader, path, Languages) { StreamCandidates = StreamCandidates, SourceOptions = SourceOptions };
 
     /// <summary>
     /// Gets the next line belonging to the block of a parent line, without consuming it.

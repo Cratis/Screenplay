@@ -131,3 +131,6 @@
 | [0139](0139-graph-reads-collection-iteration-and-event-context-esm-v40.md) | Read a graph with a typed path match, iterate event collections, give graph specifications event context (ESM v40) | accepted | none | 2026-11-06 | Einar Ingebrigtsen (approved in conversation on #1169, #1170 and #1171) |
 | [0140](0140-graph-foreach-esm-v41.md) | Run a graph projection handler once per item of an event collection (ESM v41) | accepted | none | 2026-11-06 | Einar Ingebrigtsen (approved in conversation on #1170) |
 | [0141](0141-development-users-declared-in-the-model.md) | Declare development and test users in the model with `user ... as <Persona>` | accepted | none | 2026-11-07 | Einar Ingebrigtsen (approved in conversation) |
+| [0142](0142-slots-with-roles-screenplay-6.md) | Every region content is placed in is a slot, with an optional role (Screenplay 6) | proposed | none | — | — |
+| [0143](0143-outlets-are-item-lists-screenplay-6.md) | An item list a template offers is an outlet that lower levels inherit, extend or override (Screenplay 6) | proposed | none | — | — |
+| [0144](0144-placement-hooks-and-bindings-screenplay-6.md) | A slice's screen says where it fits, and a hook opens or runs it (Screenplay 6) | proposed | none | — | — |

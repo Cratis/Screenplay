@@ -7,8 +7,9 @@ layout ApplicationShell
   category application
   type masterDetail
   exposes selectedWorkItem WorkItemId
-  outlet details
-  navigation contributes Navigation
+  slot details
+  navigation
+  outlet Navigation of navigation in navigation
   content
 
 ui profile Web
@@ -63,11 +64,12 @@ module Workspaces
     category feature
     type masterDetail
     exposes selectedWorkItem WorkItemId
-    outlet detail
+    slot detail
     display "Workspace feature shell"
     description "A list with the selected item beside it"
     scopes module, feature, subfeature, slice
-    header contributes WorkspaceActions
+    header
+    outlet WorkspaceActions of navigation in header
     list
     detail
 
@@ -138,7 +140,7 @@ module Workspaces
       icon folder
       presentation primary
       group "Tracking"
-      destination outlet details
+      destination slot details
 
     contribute to Navigation
       navigate to WorkItemList
@@ -231,14 +233,14 @@ module Workspaces
           icon table
           presentation density "compact"
           exposes selectedWorkItem from component workItems.selectedItem.workItemId
-          outlet detail
+          slot detail
             summary selectedWorkItem
               field title label "Title"
               field status label "Status"
         contribute to WorkspaceActions order 10
           action CreateWorkItem
             navigate to WorkItemDetails
-              outlet details
+              slot details
               parameter workItemId from component "work-items:list".selectedItem.workItemId
         contribute to Navigation
           section quickFilters
@@ -277,7 +279,7 @@ module Workspaces
           property pinned from literal false
           icon file
           presentation route "work-items/{workItemId}"
-          outlet actions
+          slot actions
             component scene.web.CommandForm renameForm
               context from data workItemId
               property initialTitle from data title null preserve

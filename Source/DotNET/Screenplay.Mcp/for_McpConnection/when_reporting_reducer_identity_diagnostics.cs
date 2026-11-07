@@ -30,6 +30,8 @@ public class when_reporting_reducer_identity_diagnostics : given.a_connection
                     resource ResourceId identifier
                     produces Recorded
                       for resource
+                  screen Record
+                    action Record
             """);
         Initialize();
     }

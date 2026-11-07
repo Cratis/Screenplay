@@ -1,0 +1,229 @@
+// ============================================================
+// Warehouse / inbound translation: what Catalog, Sales and Purchasing say, in the warehouse's own words (P1, P3, P5, P11)
+//
+// The foreign contract is declared locally with a consumer-local name (<Event>At<Consumer>: one application cannot hold two events
+// of one name, PLAY0472); `from "<Origin>"` keeps the lineage. The warehouse keeps only what it needs: it never sees a price,
+// a description or a customer. A capture cannot read a list, so line-carrying contracts are consumed one scalar line at a time.
+// ============================================================
+
+module Stock
+  feature Levels
+
+    // P1 ProductPublished (Catalog): a product the shop will sell is a SKU the warehouse must be able to hold
+    slice Translate RegisterSkuFromCatalog
+      description "Catalog published a product; the warehouse registers the SKU with the default reorder point"
+      direction inbound
+
+      event ProductPublishedAtWarehouse from "Catalog"
+        productId ProductId
+        sku       Sku
+        name      ProductName
+
+      capture CatalogProductFeed
+        source events
+          from ProductPublishedAtWarehouse
+        key sku
+        append SkuRegistered
+          when added
+            sku  = $.sku
+            name = $.name
+
+      // The snapshot of the new SKU and the public stock level are the other slices', and are specified there
+      specification RegisteringAPublishedProduct
+        when append ProductPublishedAtWarehouse
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+          name      = "Acme mug"
+        then SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+
+    // P3 ProductRetired (Catalog): no more goods are received for a SKU the shop no longer sells
+    slice Translate BlockSkuFromCatalog
+      description "Catalog retired a product; the warehouse blocks the SKU for receiving"
+      direction inbound
+
+      event ProductRetiredAtWarehouse from "Catalog"
+        productId ProductId
+        sku       Sku
+
+      capture CatalogRetirementFeed
+        source events
+          from ProductRetiredAtWarehouse
+        key sku
+        append SkuBlockedForReceiving
+          when added
+
+      specification BlockingARetiredProduct
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when append ProductRetiredAtWarehouse
+          productId = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          sku       = "ACM-1000"
+        then SkuBlockedForReceiving
+          for "ACM-1000"
+
+  feature Reservations
+
+    // P5 OrderConfirmed (Sales): a confirmed order line is a reservation to make
+    slice Translate RequestReservationFromSales
+      description "Sales confirmed an order line; the warehouse is asked to reserve stock for it"
+      direction inbound
+
+      // Sales publishes the whole confirmed order. The order id is read twice in the warehouse's language: as the order the parcel is
+      // for and as the movement the reservation is (MovementId, a concept of its own over the same Uuid)
+      event OrderConfirmedAtWarehouse from "Sales"
+        orderId Uuid
+        lines   StockLine[]
+
+      // One reservation per line, found by its SKU: a repeat delivery adds nothing, a delivery with one more line adds only that line
+      capture SalesConfirmationFeed
+        source events
+          from OrderConfirmedAtWarehouse
+        key orderId
+        children lines identified by sku
+          append ReservationRequested
+            when added
+              orderId    = $.orderId
+              sku        = $.sku
+              quantity   = $.quantity
+              movementId = $.orderId
+
+      // The confirmation becomes a reservation request; reserving, planning the parcel and publishing are the other slices'
+      specification ReservingAConfirmedOrderLine
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append OrderConfirmedAtWarehouse
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
+        then ReservationRequested
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      // A second order for the same SKU is told apart by its order
+      specification ReservingASecondOrderForTheSameSku
+        given SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku             = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given OrderConfirmedAtWarehouse
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 3
+        when append OrderConfirmedAtWarehouse
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          lines
+            item
+              sku      = "ACM-1000"
+              quantity = 5
+        then ReservationRequested
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+          sku        = "ACM-1000"
+          quantity   = 5
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b02"
+
+  feature Receiving
+
+    // P11 PurchaseOrderReceived (Purchasing): delivered goods are stock to receive. The stock lands on the SKU, so the capture is
+    // keyed by SKU; a repeat delivery of the same SKU is told apart by its receipt.
+    slice Translate ReceiveStockFromPurchasing
+      description "Purchasing says goods arrived against a purchase order; the warehouse books them onto the shelf"
+      direction inbound
+
+      event PurchaseOrderReceivedAtWarehouse from "Purchasing"
+        purchaseOrderId PurchaseOrderId
+        supplierId      SupplierId
+        receiptId       Uuid
+        sku             Sku
+        quantity        Quantity
+        receivedAt      DateTime
+
+      capture PurchasingReceiptFeed
+        source events
+          from PurchaseOrderReceivedAtWarehouse
+        key sku
+        append StockReceived
+          when added
+            sku             = $.sku
+            purchaseOrderId = $.purchaseOrderId
+            quantity        = $.quantity
+            receivedAt      = $.receivedAt
+        append StockReceived
+          when receiptId
+            sku             = $.sku
+            purchaseOrderId = $.purchaseOrderId
+            quantity        = $.quantity
+            receivedAt      = $.receivedAt
+
+      // The snapshot that follows a delivery is SnapshotStockOnMovement's, and is specified there
+      specification BookingTheFirstDelivery
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when append PurchaseOrderReceivedAtWarehouse
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          supplierId      = "5a1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          sku             = "ACM-1000"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        then StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+
+      // A second delivery of the same SKU is told apart by its receipt
+      specification BookingARepeatDelivery
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given PurchaseOrderReceivedAtWarehouse
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          supplierId      = "5a1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a01"
+          sku             = "ACM-1000"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append PurchaseOrderReceivedAtWarehouse
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          supplierId      = "5a1f4a3e-0c0d-4c6a-9a41-3b6a1a0e2001"
+          receiptId       = "9d3e4f50-6172-4a83-8b94-0c1d2e3f4a02"
+          sku             = "ACM-1000"
+          quantity        = 20
+          receivedAt      = "2026-10-05T09:00:00Z"
+        then StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 20
+          receivedAt      = "2026-10-05T09:00:00Z"

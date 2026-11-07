@@ -2,8 +2,9 @@ layout ApplicationShell
   category application
   type masterDetail
   exposes selectedItem String
-  outlet details
-  navigation contributes Navigation
+  slot details
+  navigation
+  outlet Navigation of navigation in navigation
   content
 
 ui profile Web
@@ -27,7 +28,7 @@ module Sales
     category feature
     type masterDetail
     exposes selectedInvoice String
-    outlet detail
+    slot detail
     list
     detail
 
@@ -69,6 +70,6 @@ module Sales
           icon table
           presentation density "compact"
           exposes selectedInvoice from component invoices.selectedItem
-          outlet detail
+          slot detail
             summary selectedInvoice
               field invoiceId label "Invoice"

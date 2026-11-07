@@ -1,0 +1,26 @@
+// ============================================================
+// Storefront: the application's navigation and logo
+//
+// A customer-facing shop: a light top navigation (the module also states its own topbar), the shopper's pages in the sidebar.
+// The logo is the SVG in assets/logos/storefront.svg, inlined as a data URI (tools/embed-logos.py regenerates the line): Studio and Stage take
+// a Screenplay document only, never a file beside it, and a data URI cannot 404.
+// ============================================================
+
+layout StorefrontNavigation
+  category Shell
+  content
+
+  navigation topbar
+    logo image "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGOTczMTYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDMjQxMEMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNiIgZmlsbD0idXJsKCNnKSIvPjxwYXRoIGQ9Ik0xOSAyNWgyNmwyLjIgMjFhMyAzIDAgMCAxLTMgMy4zSDE5LjhhMyAzIDAgMCAxLTMtMy4zeiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNC41IDI4di00YTcuNSA3LjUgMCAwIDEgMTUgMHY0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMy4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMjYgMzYuNXE2IDUuMiAxMiAwIiBmaWxsPSJub25lIiBzdHJva2U9IiNDMjQxMEMiIHN0cm9rZS13aWR0aD0iMi44IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4K" title "Acme Shop"
+    item browse title "Browse" target Shop.Browse
+    item basket title "Basket" icon shopping-cart target Shop.Basket
+    item myorders title "My orders" target Shop.MyOrders
+    item account title "Account" target Shop.Account
+
+  navigation sidebar
+    item shop title "Shop" icon shopping-cart target Shop
+      item browse title "Browse" target Shop.Browse
+      item basket title "Basket" target Shop.Basket
+      item checkout title "Checkout" target Shop.Checkout
+      item myorders title "My orders" target Shop.MyOrders
+      item account title "Account" target Shop.Account

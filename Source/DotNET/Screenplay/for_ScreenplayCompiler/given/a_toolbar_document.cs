@@ -35,6 +35,8 @@ public class a_toolbar_document : a_compiler
             "          orderId = orderId\n" +
             "      event OrderPlaced\n" +
             "        orderId Uuid\n" +
+            "      screen Place\n" +
+            "        action PlaceOrder\n" +
             "    slice StateView OrderList\n" +
             "      readmodel OrderRow\n" +
             "        orderId Uuid\n" +
@@ -48,6 +50,8 @@ public class a_toolbar_document : a_compiler
             "          orderId = orderId\n" +
             "      event InvoiceOrderPlaced\n" +
             "        orderId Uuid\n" +
+            "      screen PlaceInvoice\n" +
+            "        action PlaceInvoiceOrder\n" +
             "    slice Automation Chase\n" +
             "      reaction Chaser\n" +
             "        when InvoiceOrderPlaced\n");

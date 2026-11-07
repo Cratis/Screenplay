@@ -104,7 +104,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed)))))),
                 "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
@@ -136,6 +136,10 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // Template categories (PLAY0720) have their own conformance vector; the frozen bytes predate them.
             legacy = WithoutTemplateCategories(legacy);
 
+            // Slot roles and modifiers (Screenplay 6) are new members the living samples demonstrate; the frozen bytes predate them.
+            // So do outlets: Screenplay 6 moved a slot's 'contributes <Point>' into an outlet, which has its own vectors.
+            legacy = WithoutSlotRoles(legacy);
+
             // Report-only metadata has its own conformance vector. Keep existing event metadata
             // protected, and project only the newly supported owners out of pre-metadata bytes.
             var json = SyntaxJson.Serialize(WithoutNewAuthoringMetadata(legacy));
@@ -153,7 +157,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"recursiveSlots\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleDataPacks\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"sampleData\":null", string.Empty, StringComparison.Ordinal)
                 .Replace("\"appearance\":null,", string.Empty, StringComparison.Ordinal)
@@ -185,7 +189,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 File.WriteAllBytes(path, actual);
             }
 
-            var expected = File.ReadAllBytes(path);
+            // The frozen bytes carry the slot member Screenplay 6 removed; project it out of them, not into the compiler.
+            var expected = Encoding.UTF8.GetBytes(RemovedSlotContribution().Replace(File.ReadAllText(path), string.Empty));
             var difference = expected.Zip(actual).TakeWhile(pair => pair.First == pair.Second).Count();
             Assert.True(expected.SequenceEqual(actual), $"Legacy syntax bytes changed for '{name}' at byte {difference}. Expected: {Encoding.UTF8.GetString(expected.AsSpan(difference, Math.Min(200, expected.Length - difference)))}. Actual: {Encoding.UTF8.GetString(actual.AsSpan(difference, Math.Min(200, actual.Length - difference)))}.");
             count++;
@@ -238,6 +243,35 @@ public partial class when_freezing_legacy_source_syntax_bytes
         })
     };
 
+    [GeneratedRegex("\"contributes\":(?:null|\"\\w+\"),", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex RemovedSlotContribution();
+
+    static ApplicationSyntax WithoutSlotRoles(ApplicationSyntax application)
+    {
+        static IEnumerable<SlotSyntax> Plain(IEnumerable<SlotSyntax> slots) =>
+            slots.Select(slot => slot with { Role = null, Routed = false, RoutedBy = null, Primary = false, Optional = false }).ToArray();
+
+        return application with
+        {
+            Layouts = application.Layouts?.Select(layout => layout with { Slots = Plain(layout.Slots) }).ToArray(),
+            Modules = application.Modules.Select(module => module with
+            {
+                ScreenTemplates = module.ScreenTemplates.Select(template => template with { Slots = Plain(template.Slots), Outlets = [] }).ToArray(),
+                DialogTemplates = module.DialogTemplates?.Select(template => template with { Slots = Plain(template.Slots), Outlets = [] }).ToArray(),
+                Contributions = module.Contributions?.Where(contribution => !contribution.Items.Any()).ToArray(),
+                Features = module.Features.Select(WithoutOutlets).ToArray()
+            }).ToArray()
+        };
+    }
+
+    static FeatureSyntax WithoutOutlets(FeatureSyntax feature) => feature with
+    {
+        Outlets = [],
+        Contributions = feature.Contributions?.Where(contribution => !contribution.Items.Any()).ToArray(),
+        Features = feature.Features.Select(WithoutOutlets).ToArray(),
+        Slices = feature.Slices.Select(slice => slice with { Screens = slice.Screens.Select(screen => screen with { Outlets = [] }).ToArray() }).ToArray()
+    };
+
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
         Onboarding = null,
@@ -253,10 +287,10 @@ public partial class when_freezing_legacy_source_syntax_bytes
             Attributes = concept.Attributes.Select(attribute => attribute with { Reason = LegacyReason(concept.Name, attribute.Name, attribute.Reason) })
         }),
         UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
-        Layouts = application.Layouts?.Select(layout => layout with { Navigation = [] }),
+        Layouts = application.Layouts?.Select(layout => layout with { Outlets = [] }),
         Modules = application.Modules.Select(module => module with
         {
-            Navigation = [],
+            Outlets = [],
             Documentation = null,
             Purposes = [],
             Forms = module.Forms?.Select(form => form with { Description = null }),
@@ -458,6 +492,35 @@ public partial class when_freezing_legacy_source_syntax_bytes
             Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAnIncompleteCurrencyCode")
         },
         _ => slice
+    };
+
+    // Screenplay 6 placement (Cratis/Screenplay#1178) - fits, pickers, slots that show a selection, the routed and docked slots of
+    // the List template and the slice only a hook issues - has its own parser, printer and compiler specs; the frozen bytes predate it.
+    static ApplicationSyntax WithoutSamplePlacement(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            ScreenTemplates = module.ScreenTemplates.Select(template => template.Name == "List"
+                ? template with { Slots = template.Slots.Where(slot => slot.Name is not ("detail" or "activity")).ToArray() }
+                : template).ToArray(),
+            Forms = module.Forms?.Select(form => form with { Fields = form.Fields.Select(field => field with { Choices = null }).ToArray() }).ToArray(),
+            Features = module.Features.Select(WithoutPlacement).ToArray()
+        }).ToArray()
+    };
+
+    static FeatureSyntax WithoutPlacement(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutPlacement).ToArray(),
+        Slices = feature.Slices.Where(slice => slice.Name != "SendInvoiceReminder").Select(slice => slice with
+        {
+            Screens = slice.Screens.Select(screen => screen with
+            {
+                Fits = [],
+                Directives = screen.Directives.Select(directive => directive is ScreenTemplateReferenceSyntax template
+                    ? template with { Slots = template.Slots.Where(filled => !filled.Directives.Any() || filled.Directives.Any(inner => inner is not ScreenShowSyntax)).ToArray() }
+                    : directive).ToArray()
+            }).ToArray()
+        }).ToArray()
     };
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with

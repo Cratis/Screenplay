@@ -1,0 +1,253 @@
+module Shop
+  feature Browse
+    // The shop's catalogue: every product Catalog published, in the shop's words. Four private events build it; they are the outcome of the
+    // inbound translations (translation/listing.play) and are declared here, in the slice that reads them.
+    slice StateView ProductBrowse
+      description "Listed products with display price and availability"
+
+      event ProductListed
+        description "The shop listed a product (translated from ProductPublished)"
+        productId        ProductId
+        title            ProductName
+        shortDescription ShortDescription
+        slug             Slug
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+
+      event DisplayPriceChanged
+        description "The price the shop shows changed (translated from ProductPriceChanged)"
+        displayPrice  Money
+        currency      CurrencyCode
+        effectiveFrom Date
+
+      event AvailabilityChanged
+        description "Stock changed for a listed product (translated from StockLevelChanged)"
+        available StockQuantity
+
+      event ProductDelisted
+        description "The product is no longer sold (translated from ProductRetired)"
+        productId ProductId
+
+      readmodel ListedProduct
+        description "One product as the shopper sees it"
+        id              Sku key
+        productId        ProductId
+        title            ProductName
+        shortDescription ShortDescription
+        slug             Slug
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+
+      query AllListedProducts => observable ListedProduct[]
+        description "Every product on sale"
+
+      query SearchListedProducts => observable ListedProduct[]
+        description "Products of one category"
+        filter category String optional
+
+      query ListedProductBySku => ListedProduct optional
+        by id Sku
+
+      projection ListedProductProjection => ListedProduct
+        from ProductListed
+          productId        = productId
+          title            = title
+          shortDescription = shortDescription
+          slug             = slug
+          category         = category
+          displayPrice     = displayPrice
+          currency         = currency
+          imageUrl         = imageUrl
+          available        = available
+        from DisplayPriceChanged
+          displayPrice = displayPrice
+          currency     = currency
+        from AvailabilityChanged
+          available = available
+        remove with ProductDelisted
+
+      screen Browse
+        description "The shop window: product cards with picture, name, price and stock; the search box in the topbar narrows them"
+        template ProductGrid
+          header
+            component Cratis.Blueprint.Default.pageHeader browseHeader
+              property title = "Shop"
+              property subtitle = "For the kitchen, the living room, the office and the trail"
+          filters
+            component Cratis.Blueprint.Default.filterBuilder gridFilters
+              id "gridFilters"
+              property fields
+                item
+                  name  = "category"
+                  label = "Category"
+                  type  = "select"
+                  options
+                    item "Kjøkken"
+                    item "Stue"
+                    item "Kontor"
+                    item "Belysning"
+                    item "Bad"
+                    item "Friluft"
+                item
+                  name  = "displayPrice"
+                  label = "Price"
+                  type  = "number"
+                item
+                  name  = "title"
+                  label = "Name"
+                  type  = "text"
+          products
+            data ListedProduct[] via query AllListedProducts
+            component Cratis.Blueprint.Default.dataList productList
+              id "productList"
+              property rows from query AllListedProducts
+              property filter from component "gridFilters".value
+              property variant = "cards"
+              property idField = "id"
+              property titleField = "title"
+              property imageField = "imageUrl"
+              property selectionMode = "single"
+              property pageSize = 12
+              property urlKey = "products"
+              property label = "Products"
+              property columns
+                item
+                  field  = "category"
+                  header = "Category"
+                item
+                  field    = "displayPrice"
+                  header   = "Price"
+                  kind     = "currency"
+                  currency = "NOK"
+                item
+                  field  = "available"
+                  header = "In stock"
+                  kind   = "number"
+              on select
+                navigate to ProductPage
+                  with sku from component.productList.value
+
+      specification ListingAProductThenChangingItsPrice
+        given caller
+          authenticated
+          role "Shopper"
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        given DisplayPriceChanged
+          for "ACM-1000"
+          displayPrice  = 59
+          currency      = "NOK"
+          effectiveFrom = "2026-11-01"
+        then readmodel ListedProduct
+          id          = "ACM-1000"
+          title        = "Acme mug"
+          displayPrice = 59
+
+    slice StateView ProductPage
+      description "One product with its price history and availability"
+
+      readmodel ProductPageEntry
+        description "Everything the product page shows"
+        sku              Sku key
+        title            ProductName
+        shortDescription ShortDescription
+        category         String
+        displayPrice     Money
+        currency         CurrencyCode
+        imageUrl         String
+        available        StockQuantity
+        priceChanges     Int
+
+      query ProductPageBySku => observable ProductPageEntry[]
+        by sku Sku
+
+      projection ProductPageProjection => ProductPageEntry
+        from ProductListed
+          title            = title
+          shortDescription = shortDescription
+          category         = category
+          displayPrice     = displayPrice
+          currency         = currency
+          imageUrl         = imageUrl
+          available        = available
+          priceChanges     = 0
+        from DisplayPriceChanged
+          displayPrice = displayPrice
+          currency     = currency
+          increment priceChanges
+        from AvailabilityChanged
+          available = available
+        remove with ProductDelisted
+
+      screen ProductPage
+        description "One product: its picture and name, the price and stock beside it, and the way to add it to the basket"
+        template SideSummary
+          header
+            component Cratis.Blueprint.Default.pageHeader productPageHeader
+              property title from query ProductPageBySku.0.title
+              property subtitle from query ProductPageBySku.0.shortDescription
+          main
+            data ProductPageEntry[] via query ProductPageBySku by sku
+            component Cratis.Blueprint.Default.dataList productCard
+              id "productCard"
+              property rows from query ProductPageBySku
+              property variant = "cards"
+              property idField = "sku"
+              property titleField = "title"
+              property imageField = "imageUrl"
+              property pageSize = 1
+              property label = "Product"
+              property columns
+                item
+                  field  = "category"
+                  header = "Category"
+          summary
+            component Cratis.Blueprint.Default.statCard productPrice
+              property label = "Price"
+              property value from query ProductPageBySku.0.displayPrice
+              property format = "currency"
+              property currency = "NOK"
+            component Cratis.Blueprint.Default.statCard productStock
+              property label = "In stock"
+              property value from query ProductPageBySku.0.available
+          actions
+            action AddToBasket
+              label "Add to basket"
+              navigate to Basket
+
+      specification ShowingAvailabilityOnTheProductPage
+        given caller
+          authenticated
+          role "Shopper"
+        given ProductListed
+          for "ACM-1000"
+          productId        = "6f1f4a3e-0c0d-4c6a-9a41-3b6a1a0e1001"
+          title            = "Acme mug"
+          shortDescription = "A sturdy enamel mug"
+          slug             = "ACM-1000"
+          category         = "Kitchen"
+          displayPrice     = 49
+          currency         = "NOK"
+          imageUrl         = "/img/acm-1000.png"
+          available        = 0
+        given AvailabilityChanged
+          for "ACM-1000"
+          available = 9
+        then readmodel ProductPageEntry
+          sku       = "ACM-1000"
+          available = 9

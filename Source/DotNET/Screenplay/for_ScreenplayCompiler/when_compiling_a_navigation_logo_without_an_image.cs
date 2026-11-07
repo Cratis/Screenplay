@@ -10,7 +10,7 @@ public class when_compiling_a_navigation_logo_without_an_image : given.a_navigat
 {
     const string Shell =
         """
-          navigation topbar
+          outlet topbar of navigation
             logo title "Acme"
         """;
 

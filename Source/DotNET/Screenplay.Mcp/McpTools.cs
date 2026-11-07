@@ -171,6 +171,7 @@ sealed class McpTools
                 McpJson.OptionalString(arguments, "document"),
                 McpJson.OptionalString(arguments, "case")),
             "processing-record" => McpProcessingRecord.Read(snapshot, arguments),
+            McpMigration.ToolName => McpMigration.Read(documents, arguments),
             "find-modeling-smells" => McpModelingSmells.Read(snapshot, arguments),
             "trace-lineage" => McpLineage.Read(snapshot, arguments),
             "find-specification-obligations" => McpSpecificationObligations.Read(snapshot, arguments),

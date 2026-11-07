@@ -1,7 +1,7 @@
 module Orders
   feature Approval
     // What the person who decides reaches for from the approval inbox: a rejection (asks first) and a discount.
-    toolbar actions
+    outlet actions extends
       button reject title "Reject order" slice Orders.Approval.RejectOrder emphasis quiet icon times
         confirm "Reject this order?"
       button discount title "Apply discount" slice Orders.Approval.ApplyDiscount emphasis secondary icon percentage

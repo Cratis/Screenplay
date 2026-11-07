@@ -1,0 +1,40 @@
+// Driven by an application trigger: the carrier integration raises it, and
+// the document only says what an occurrence carries. The trigger is declared
+// here because nothing outside this slice reacts to it.
+trigger CarrierReturnedParcel
+  description "A carrier could not deliver a parcel and is sending it back"
+  orderId        OrderId
+  trackingNumber TrackingNumber
+  reason         String
+
+slice Automation HandleReturnedParcels
+  description "Records that a parcel is on its way back, so support can contact the customer"
+
+  event ParcelReturned
+    trackingNumber TrackingNumber
+    reason         String
+
+  reaction ReturnRecorder
+    description "Turns the carrier's return notice into a fact on the order"
+    when CarrierReturnedParcel
+      orderId
+      trackingNumber
+      reason
+      produces ParcelReturned
+        for orderId
+        trackingNumber = trackingNumber
+        reason         = reason
+
+  specification RecordingAReturnedParcel
+    given ShipmentDispatched
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      carrier        = "postNord"
+      trackingNumber = "PN00012345NO"
+    when trigger CarrierReturnedParcel
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      trackingNumber = "PN00012345NO"
+      reason         = "Recipient unknown at address"
+    then ParcelReturned
+      trackingNumber = "PN00012345NO"
+      reason         = "Recipient unknown at address"

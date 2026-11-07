@@ -97,6 +97,43 @@ A bare `field <property>` binds straight to the command property of the same nam
 
 `from` and `compose using` are mutually exclusive on one field; either may still carry a `label`. A field's `label` accepts an unquoted `$strings.<key>` token in place of a literal, the same as everywhere else in the document - see [Internationalization](internationalization.md).
 
+### Pickers
+
+A field that chooses one of the rows a list query returns says so on the line under it:
+
+```screenplay
+concept CategoryId : Uuid
+
+module Catalog
+  form DraftProductForm for DraftProduct
+    field category
+      choose from query AllCategories show name
+    field supplier
+
+  feature Products
+    slice StateChange DraftProduct
+      command DraftProduct
+        sku String identifier
+        category CategoryId
+        supplier String
+        produces ProductDrafted
+          for sku
+      event ProductDrafted
+        sku String
+      screen DraftProduct
+        action DraftProduct
+
+    slice StateView Categories
+      readmodel CategoryRow
+        id CategoryId key
+        name String
+      query AllCategories => CategoryRow[]
+```
+
+`choose from query <Query> show <field>` makes the field a picker over the query's rows, showing `<field>` of each. The query must return a list, and its rows must have the field (`PLAY0913`); an unknown query is `PLAY0196`.
+
+A field is a picker without the line when its command property's concept is the key of a read model exactly one list query returns: `category CategoryId` above would be inferred to choose from `AllCategories`, showing the read model's `name` or `title` field, or else its first field that is not the key. Write the line when two list queries return the read model, or to show another field.
+
 ## Columns and layout
 
 `columns` and `layout` answer different questions and can be used together: `columns` decides the order and labels of the fields, and `layout` decides their geometry. Neither replaces the other.

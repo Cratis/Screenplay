@@ -51,5 +51,5 @@ public class when_a_profile_names_a_new_screen_template_that_cannot_start_a_scre
     [Fact] void should_report_errors() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.NewScreenTemplateNotApplicable).ShouldEachConformTo(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     [Fact] void should_follow_scene_and_not_restrict_a_dialog_template_that_declares_no_scopes() => _result.Diagnostics.Where(diagnostic => diagnostic.Location.Line == 31).ShouldBeEmpty();
     [Fact] void should_say_why_a_scope_excludes_it() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.NewScreenTemplateNotApplicable).ElementAt(2).Message.ShouldContain("does not declare scope 'feature'");
-    [Fact] void should_not_check_it_as_a_shell() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentOutlet).ShouldBeEmpty();
+    [Fact] void should_not_check_it_as_a_shell() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RootTemplateWithoutContentSlot).ShouldBeEmpty();
 }

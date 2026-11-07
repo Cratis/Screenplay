@@ -13,8 +13,8 @@ public class when_a_move_would_leave_a_navigation_target_stale : given.a_refacto
         [Document("model", "application.play", """
             layout Shell
               content
-              navigation sidebar
-                item orders title "Orders" target Shop.Source.Moving
+              outlet sidebar of navigation
+                default orders title "Orders" target Shop.Source.Moving
 
             module Shop
               feature Source

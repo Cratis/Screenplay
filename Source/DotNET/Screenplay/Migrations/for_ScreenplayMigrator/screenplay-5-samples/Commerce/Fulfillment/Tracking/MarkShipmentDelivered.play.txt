@@ -1,0 +1,25 @@
+slice Automation MarkShipmentDelivered
+  description "Marks the order's shipment delivered once the carrier has scanned it at the door"
+
+  event ShipmentDelivered
+    orderId        OrderId
+    trackingNumber TrackingNumber
+
+  reaction DeliveryTranslator
+    description "Marks the order's shipment delivered once the carrier scans it at the door"
+    when ParcelDeliveryScanned
+      orderId
+      trackingNumber
+      produces ShipmentDelivered
+        for orderId
+        orderId        = orderId
+        trackingNumber = trackingNumber
+
+  specification AScannedParcelDeliversTheShipment
+    when append ParcelDeliveryScanned
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      trackingNumber = "PN00012345NO"
+    then ShipmentDelivered
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      trackingNumber = "PN00012345NO"

@@ -6,6 +6,7 @@ import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
 import type { ScreenContributionSyntax } from './CompositionSyntax';
+import type { OutletPositionSyntax, OutletSyntax } from './Outlets';
 import { SyntaxNode } from './SyntaxNode';
 
 export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty' | 'Literal';
@@ -34,6 +35,22 @@ export interface ScreenSyntax extends SyntaxNode {
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
     readonly contributions?: readonly ScreenContributionSyntax[];
+    readonly outlets?: readonly OutletSyntax[];
+    readonly fits?: readonly ScreenFit[];
+}
+
+// Where a slice's screen fits, written 'fits <role>, ...' in order of preference.
+export type ScreenFit = 'Dialog' | 'Drawer' | 'Pane' | 'Panel' | 'Page';
+
+// How a hook opens its slice when it names it: 'runs', 'opens dialog', 'opens drawer' or 'opens in slot <name>'.
+export type HookOpening = 'Runs' | 'Dialog' | 'Drawer' | 'Slot';
+
+// 'show <Screen> by <param> from <element>.selection' in a template slot.
+export interface ScreenShowSyntax extends SyntaxNode {
+    readonly kind: 'ScreenShowSyntax';
+    readonly screen: string;
+    readonly by: string;
+    readonly element: string;
 }
 
 // 'data <ReadModel>[[]] via query <Query> [by <param>]'.
@@ -94,7 +111,7 @@ export interface ScreenNavigateSyntax extends SyntaxNode {
     readonly screen: string;
     readonly by: string | null;
     readonly route: string | null;
-    readonly outlet?: string | null;
+    readonly slot?: string | null;
     readonly parameters: readonly ScreenNavigationParameterSyntax[];
 }
 
@@ -183,8 +200,8 @@ export interface PresentationValueSyntax extends SyntaxNode {
     readonly value: string;
 }
 
-export interface ComponentOutletSyntax extends SyntaxNode {
-    readonly kind: 'ComponentOutletSyntax';
+export interface ComponentSlotSyntax extends SyntaxNode {
+    readonly kind: 'ComponentSlotSyntax';
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
 }
@@ -199,7 +216,7 @@ export interface ScreenComponentSyntax extends SyntaxNode {
     readonly exposes: readonly ComponentExposedValueSyntax[];
     readonly presentation: readonly PresentationValueSyntax[];
     readonly icon: string | null;
-    readonly outlets: readonly ComponentOutletSyntax[];
+    readonly slots: readonly ComponentSlotSyntax[];
 }
 
 export type ToolbarItemKind = 'Unknown' | 'Action' | 'Navigate' | 'Dialog';
@@ -215,6 +232,7 @@ export interface ToolbarItemSyntax extends SyntaxNode {
     readonly confirm?: string | null;
     readonly parameters: readonly ScreenNavigationParameterSyntax[];
     readonly presentation: readonly PresentationValueSyntax[];
+    readonly enabledWhen?: ConditionSyntax | null;
 }
 
 export type ToolbarEmphasis = 'Primary' | 'Secondary' | 'Quiet';
@@ -229,6 +247,13 @@ export interface ToolbarButtonSyntax extends SyntaxNode {
     readonly icon?: string | null;
     readonly authorize?: AuthorizeSyntax | null;
     readonly confirm?: string | null;
+    readonly runs?: string | null;
+    readonly subject?: ScreenActionSubjectKind | null;
+    readonly opens?: HookOpening | null;
+    readonly opensSlot?: string | null;
+    readonly enabledWhen?: ConditionSyntax | null;
+    readonly isDefault?: boolean;
+    readonly position?: OutletPositionSyntax | null;
 }
 
 export interface ScreenToolbarSyntax extends SyntaxNode {
@@ -268,6 +293,7 @@ export type ScreenDirectiveSyntax =
     | ScreenTemplateReferenceSyntax
     | ScreenSectionSyntax
     | ScreenTitleSyntax
+    | ScreenShowSyntax
     | ScreenTableSyntax
     | ScreenSummarySyntax
     | ScreenComponentSyntax

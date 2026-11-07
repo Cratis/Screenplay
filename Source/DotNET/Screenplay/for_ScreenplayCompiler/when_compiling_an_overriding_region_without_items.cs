@@ -10,7 +10,7 @@ public class when_compiling_an_overriding_region_without_items : given.a_navigat
 {
     const string SalesNavigation =
         """
-          navigation sidebar overrides
+          outlet sidebar overrides
         """;
 
     void Because() => CompileWith("", SalesNavigation);

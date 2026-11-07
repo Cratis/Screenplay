@@ -18,7 +18,8 @@ public class when_expanding_forms_and_contributions : Specification
 
           screen template Shell
             category Test
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
 
           form RegisterForm for Register

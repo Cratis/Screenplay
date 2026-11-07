@@ -24,7 +24,7 @@ module Invoicing
 
 The screen names a template, not the application's `layout`. A [UI profile](ui-profile.md) selects the application shell once per build, separately from the content each screen supplies.
 
-A slot may also declare `contributes <ContributionPoint>`, opening it up to many contributors declared anywhere in the module/feature tree instead of the one parent that owns the slot - see [Contributions](contributions.md).
+A template may also declare [outlets](outlets.md) - item lists such as a toolbar's buttons or a list's filters - which the screen changes with `outlet <name> inherits|extends|overrides` and any module or feature adds to with [`contribute to`](contributions.md).
 
 A template also says how its slots share space and vary by device size - responsive `flow` or pixel-precise `freeform` - see [Layout arrangement](layout-arrangement.md).
 
@@ -137,11 +137,12 @@ Widgets:
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
 | `toolbar <name>` | `item` actions, navigation entries and dialog entries with labels, icons, parameters and presentation hints, and `button` lines that invoke a State Change slice - see [Toolbar buttons](#toolbar-buttons) |
-| `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive outlets |
+| `outlet <name> inherits\|extends\|overrides` | Changes an [outlet](outlets.md) the screen's template declares |
+| `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive slots (`slot <name>`) |
 
 ## Toolbar buttons
 
-A `button` invokes a State Change slice. The slice names the command and the dialog that opens over the page, so the button needs no command of its own - this is Scene's `ToolbarButton`.
+A `button` invokes a State Change slice. The slice names the command and the screen that opens over the page, so the button needs no command of its own - this is Scene's `ToolbarButton`. A button linked to a slice is a *hook*; see [Placement](#placement) for where it opens the slice and how it runs one without a form.
 
 ```screenplay
 module Shop
@@ -153,6 +154,8 @@ module Shop
           orderId = orderId
       event OrderPlaced
         orderId Uuid
+      screen PlaceOrder
+        action PlaceOrder
     slice StateView OrderList
       readmodel OrderRow
         orderId Uuid
@@ -163,7 +166,7 @@ module Shop
           button draft title "Draft"
 ```
 
-`button <id> title "<text>" [slice <Slice>] [emphasis primary|secondary|quiet] [icon <name>]`:
+`button <id> title "<text>" [slice <Slice>] [emphasis primary|secondary|quiet] [icon <name>] [for item|for screen] [opens dialog|drawer|in slot <name>]`:
 
 - `id` is unique within the toolbar, shared with the `item` names (`PLAY0765`). The title is a quoted string or a `$strings.<key>` token.
 - `slice` is a dotted path `Module.Feature.Slice` or any suffix that is unambiguous (`PLAY0764` otherwise). It must name a slice the document declares (`PLAY0761`) and a State Change slice (`PLAY0762`): a button invokes State Change slices only.
@@ -175,40 +178,152 @@ Buttons sit beside `item` entries; the printer writes the items first, then the 
 
 ## Feature and module toolbars
 
-A template declares a `toolbar` slot; a **feature** (or a module) adds buttons to it once, for every screen beneath it, instead of repeating the same buttons on each screen. Each entry is linked to a command of the feature: an `item … action <Command>` opens the command's form dialog (or runs it after the confirmation), a `button … slice <Slice>` does the same through the State Change slice.
+A feature or a module adds buttons to the toolbar of every screen beneath it once, instead of repeating them on each screen. Since Screenplay 6 that is an [outlet](outlets.md): the template declares `outlet toolbar of actions`, and the feature extends it.
 
 ```screenplay
 module Shop
+  screen template Page
+    category Page
+    header
+    main
+    outlet toolbar of actions in header
+
   feature Orders
-    toolbar actions
-      item cancel action CancelOrder
-        label "Cancel order"
-        icon trash
+    outlet toolbar extends
+      button cancel title "Cancel order" slice CancelOrder icon trash
         confirm "Cancel this order?"
-      button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+      button place title "Place order" slice PlaceOrder emphasis primary icon plus
+        confirm $strings.orders.confirmPlace
+
     slice StateChange PlaceOrder
       command PlaceOrder
         orderId Uuid identifier
         produces OrderPlaced
-          orderId = orderId
+          for orderId
       event OrderPlaced
         orderId Uuid
+      screen PlaceOrder
+        action PlaceOrder
+
     slice StateChange CancelOrder
       command CancelOrder
         orderId Uuid identifier
         produces OrderCancelled
-          orderId = orderId
+          for orderId
       event OrderCancelled
         orderId Uuid
+      screen CancelOrder
+        action CancelOrder
 ```
 
-- `toolbar <name>` is allowed in a `feature` and a `module` body and takes the same `item` and `button` lines as a screen toolbar.
-- `confirm "<text>"` (or a `$strings.<key>` token) is an optional child line of an `item` and of a `button`: the user confirms before the command runs or the dialog opens. A button's dialog is its own confirmation, so `confirm` on a button asks first and then opens it.
-- The entries are contributed to the `toolbar` slot of every screen of the feature - its sub features' included - whose template declares one, after the screen's own entries. A module toolbar reaches every screen of the module the same way; the nearer toolbar comes later.
-- A `toolbar <name>` with no entry is valid and prints back unchanged, so you can declare the toolbar before choosing its buttons. Through typed edits, add a `ScreenToolbarSyntax` to the `toolbars` member of a `FeatureSyntax` or `ModuleSyntax`, then add buttons to its `buttons`.
-- An `item … action <Command>` must name a command that a slice of the feature (or module) declares; otherwise `PLAY0808` warns. Ids are unique within the toolbar and shared with the buttons (`PLAY0765`); a button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`).
+- A module, feature and screen write `outlet <name> inherits|extends|overrides`, and may `hide` an inherited button or place one `before` or `after` another - see [Outlets](outlets.md#change-an-outlet-below-the-template).
+- `confirm "<text>"` (or a `$strings.<key>` token) under a `button` asks before the command runs.
+- A button's `slice` is checked as on a screen (`PLAY0761`-`PLAY0764`), and an id repeated within the outlet or across the levels it inherits from is `PLAY0905`.
+- Screenplay 5 wrote `toolbar <name>` on a feature or module. That form is an error since Screenplay 6 (`PLAY0896`); write `outlet <name> extends`, or run `screenplay migrate --from 5 --to 6`.
 
 Like every screen construct these are authoring syntax: the executable model does not carry them, and the printer writes them back where they were written.
+
+## Placement
+
+The template offers places, the slice says which it fits, and the hook that opens it picks one.
+
+- A template declares slots with roles (`page`, `pane`, `panel`; see [Templates](templates.md)), and the page always offers a dialog and a drawer over it.
+- A slice's screen lists where it fits, in order of preference: `fits dialog, drawer, pane`. Without `fits` it fits anywhere.
+- A hook - a `button` linked to a State Change slice - opens the slice's screen in its first fit the page has free, unless it names the place: `opens dialog`, `opens drawer` or `opens in slot <name>`.
+
+```screenplay
+module Catalog
+  screen template ListPage
+    category Lists
+    main
+    detail pane routed by sku optional
+    outlet toolbar of actions
+    outlet rowActions of actions for item
+
+  feature Products
+    outlet toolbar extends
+      button add title "Add product" slice DraftProduct emphasis primary opens dialog
+      button price title "Set price" slice SetProductPrice for item opens in slot detail
+    outlet rowActions extends
+      button withdraw title "Withdraw" slice WithdrawProduct
+        runs
+        enabled when item.status == "onSale"
+        confirm "Withdraw this product?"
+
+    slice StateChange DraftProduct
+      command DraftProduct
+        sku String identifier
+        name String
+        produces ProductDrafted
+          for sku
+      event ProductDrafted
+        sku String
+      screen DraftProduct
+        fits dialog, drawer, pane
+        action DraftProduct for screen
+
+    slice StateChange SetProductPrice
+      command SetProductPrice
+        sku String identifier
+        price Decimal
+        produces PriceSet
+          for sku
+      event PriceSet
+        sku String
+      screen SetProductPrice
+        fits pane, drawer
+        action SetProductPrice for screen
+
+    // No screen: the row's 'Withdraw' hook runs it, because its one input comes from the row.
+    slice StateChange WithdrawProduct
+      command WithdrawProduct
+        sku String identifier
+        produces ProductWithdrawn
+          for sku
+      event ProductWithdrawn
+        sku String
+
+    slice StateView ProductCatalog
+      readmodel ProductRow
+        sku String
+        status String
+      query AllProducts => ProductRow[]
+      screen ProductCatalog
+        template ListPage
+          main
+            table products
+              column sku
+              column status
+          detail
+            show ProductDetails by sku from products.selection
+
+    slice StateView ProductDetails
+      readmodel ProductDetail
+        sku String
+      query ProductBySku => ProductDetail
+        by sku String
+      screen ProductDetails
+        data ProductDetail via query ProductBySku by sku
+```
+
+On a hook:
+
+- `for item` makes the hook wait for a selected row, and the row supplies the command's identifier; `for screen` acts on the screen's own record. Without it the outlet decides (`outlet rowActions of actions for item`).
+- A `runs` line under the button issues the command directly, without a form. Every input must resolve without one - the identifier from the item or screen the hook acts on, generated values by the command - or it is `PLAY0907`. A State Change slice issued only by a `runs` hook needs no screen.
+- A slice with no screen fits nothing and can only run: a hook that names no place runs it, and one whose slice cannot run - an input needs a form - or that names a place to open it is `PLAY0908`.
+- `opens in slot <name>` needs a slot the template declares (`PLAY0909`), that the screen the hook is on does not already fill (`PLAY0910`), and whose role the slice's screen lists in its `fits` (`PLAY0911`).
+- `enabled when <condition>` uses the condition grammar of a [guarded action](#subject-and-conditions); `item.<field>` reads the selected row, so a hook that acts `for screen` cannot read `item` (`PLAY0915`). The same line goes under a toolbar `item`.
+- `confirm "<text>"` asks before the command runs.
+
+A malformed `fits` line - an unknown place, one listed twice, a second `fits` line, or a template's `fits slot <name>` on a screen - is `PLAY0906`.
+
+### A slot that shows the selection
+
+`show <Screen> by <param> from <element>.selection`, in a template slot, shows another screen for the row a table or component on this screen has selected. With a routed slot (`detail pane routed by sku`), the selection is in the address, so a shared link opens the same row. The line must stand in a template slot, name a screen the document declares and a table or component on this screen, and key the shown screen by a parameter its data is keyed by (`PLAY0914`).
+
+### Text bound to nothing
+
+A component with no `context`, no `property`, no `exposes`, no slot content and no behavior can only show sample text. On a screen that shows data - a State View slice's screen, or any screen with a `data` line, a table or a summary - it warns (`PLAY0912`). Bind it, or give it static text with `property <path> = "..."`. A form's screen with no data is not checked, because a component there is an input or decoration, and neither is a component a slot shows the selection of (`show <Screen> by <param> from <component>.selection`).
 
 ## Package components and typed bindings
 
@@ -249,7 +364,7 @@ screen BrowseInvoices
     icon table
     presentation density "compact"
     exposes selectedInvoice from component "invoices:list".selectedItem
-    outlet detail
+    slot detail
       summary selectedInvoice
         field invoiceId label "Invoice"
 ```

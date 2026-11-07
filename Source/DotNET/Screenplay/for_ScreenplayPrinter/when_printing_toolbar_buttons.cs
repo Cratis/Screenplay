@@ -18,6 +18,8 @@ public class when_printing_toolbar_buttons : given.a_printer
                   orderId = orderId
               event OrderPlaced
                 orderId Uuid
+              screen PlaceOrder
+                action PlaceOrder
             slice StateView OrderList
               readmodel OrderRow
                 orderId Uuid

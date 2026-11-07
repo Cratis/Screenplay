@@ -1,0 +1,69 @@
+// Or the manager returns the week to the consultant, saying why.
+
+// A file placed in a feature may contribute on the feature's behalf.
+contribute to Navigation
+  navigate to ApprovalBoard
+  label $strings.navigation.approvals
+  order 30
+
+slice StateChange RejectTimesheet
+  description "An engagement manager returns a week to the consultant with a reason"
+
+  command RejectTimesheet
+    timesheetId TimesheetId identifier
+    reason      RejectionReason
+
+    authorize IsEngagementManager
+
+    validate
+      reason not empty  message $strings.timesheets.validation.reasonRequired
+
+    produces TimesheetRejected
+      for timesheetId
+      timesheetId = timesheetId
+      reason      = reason
+      rejectedBy  = $context.identity.id
+
+  event TimesheetRejected
+    timesheetId TimesheetId
+    reason      RejectionReason
+    rejectedBy  String
+
+  screen RejectTimesheetDialog
+    template TimesheetDialog
+      body
+        title $strings.timesheets.reject.title
+      actions
+        action RejectTimesheet
+          label $strings.timesheets.reject.action
+
+  specification ReturningAWeek
+    given caller
+      authenticated
+      role "EngagementManager"
+    when RejectTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = "Tuesday is booked on the wrong engagement"
+    then TimesheetRejected
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = "Tuesday is booked on the wrong engagement"
+
+  specification RejectingAReturnWithoutAReason
+    given caller
+      authenticated
+      role "EngagementManager"
+    when RejectTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = ""
+    then error "$strings.timesheets.validation.reasonRequired"
+
+  specification PayrollCannotReturnWeeks
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when RejectTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = "Looks wrong"
+    then denied

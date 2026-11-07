@@ -517,6 +517,13 @@ including when replacement happened after inspection. Reload the window, review 
 new root and deliberately configure/discover it instead; reload does not recover
 the previous transaction.
 
+## Migrate a document to a new version
+
+**Screenplay: Migrate document** rewrites the open, saved `.play` document from an earlier Screenplay version - it asks
+which - through the same `screenplay mcp` bridge, and replaces the editor text with the result as an undoable edit. What
+changed and what needs review go to the **Screenplay migration** output. See
+[Migrate a model to a new version](migration.md#migrate-from-vs-code).
+
 ## C# completeness checks
 
 The [completeness checks](completeness.md) are opt-in and the editor's own validation does not compute them; several

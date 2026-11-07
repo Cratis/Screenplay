@@ -37,7 +37,7 @@ export const diagnosticCodes = {
     contributionNotExposed: 'PLAY0627',
     contributionTypeMismatch: 'PLAY0628',
     unknownTemplateContentSlot: 'PLAY0629',
-    unknownNavigationOutlet: 'PLAY0630',
+    unknownNavigationSlot: 'PLAY0630',
     templateScopeMismatch: 'PLAY0631',
     incompatibleComponentPackage: 'PLAY0632',
     unknownNavigationDestination: 'PLAY0654',
@@ -288,6 +288,35 @@ export const diagnosticCodes = {
     responseNameUsedOnFailure: 'PLAY0685',
     // Retired by ESM v16; preserve supplied warnings from earlier native compilers.
     eventIdPinNotCarriedToRenderers: 'PLAY0686',
+    // Screenplay 6 renamed these forms; the old forms are errors whose message names the migration.
+    removedComponentOutlet: 'PLAY0890',
+    removedDestinationOutlet: 'PLAY0891',
+    removedNavigationOutlet: 'PLAY0892',
+    removedTemplateOutlet: 'PLAY0893',
+    // Outlets (Screenplay 6): the forms they replace, and the checks of their declarations, changes and items.
+    removedNavigationRegion: 'PLAY0894',
+    removedSlotContribution: 'PLAY0895',
+    removedFeatureToolbar: 'PLAY0896',
+    invalidOutletDeclaration: 'PLAY0897',
+    invalidOutletItem: 'PLAY0898',
+    outletItemNotInherited: 'PLAY0899',
+    outletItemWrongKind: 'PLAY0900',
+    outletFilterParameterUnknown: 'PLAY0901',
+    outletStatFromListQuery: 'PLAY0902',
+    unknownOutlet: 'PLAY0903',
+    duplicateOutlet: 'PLAY0904',
+    duplicateOutletItem: 'PLAY0905',
+    // Placement, hooks and bindings (Screenplay 6).
+    invalidScreenFits: 'PLAY0906',
+    runsHookNeedsForm: 'PLAY0907',
+    hookToScreenlessSlice: 'PLAY0908',
+    hookSlotNotDeclared: 'PLAY0909',
+    hookSlotAlreadyFilled: 'PLAY0910',
+    hookSlotRoleNotFitted: 'PLAY0911',
+    unboundScreenText: 'PLAY0912',
+    invalidFormFieldChoices: 'PLAY0913',
+    invalidScreenShow: 'PLAY0914',
+    enabledWhenWithoutItem: 'PLAY0915',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

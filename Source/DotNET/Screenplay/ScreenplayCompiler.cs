@@ -44,7 +44,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     {
         var lines = SourceLineSplitter.Split(source);
         var context = SourceOptionsParser.Create(lines, languages: languages, streamCandidates: CommandStreamCandidates.Capture([lines], languages));
-        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages) };
+        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages), RetiredForms = RetiredForms(context) };
         application = ScreenplayValidator.Validate(application, context, deferImportedExampleTypes: true);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application), .. TimelineOrder.In(application)]);
     }
@@ -161,8 +161,11 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     static CompilationResult<ApplicationSyntax> ParseWithCandidates(IReadOnlyList<SourceLine> lines, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages, CommandStreamCandidates candidates)
     {
         var context = SourceOptionsParser.Create(lines, path, languages, streamCandidates: candidates);
-        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines) with { RegisteredTriggers = SnapshotTriggers(languages) }, context.Diagnostics);
+        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines) with { RegisteredTriggers = SnapshotTriggers(languages), RetiredForms = RetiredForms(context) }, context.Diagnostics);
     }
+
+    // A document of the current language shares the one empty list, so parsing the same text twice gives equal trees.
+    static IReadOnlyList<RetiredForm> RetiredForms(ParserContext context) => context.RetiredForms.Count == 0 ? [] : [.. context.RetiredForms];
 
     static ImmutableDictionary<string, TriggerDefinition> SnapshotTriggers(IScreenplayLanguageRegistry registry) =>
         registry.Triggers.ToImmutableDictionary(

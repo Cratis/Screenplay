@@ -1,0 +1,556 @@
+// ============================================================
+// Warehouse / Stock / Reservations - promising stock to an order, and the picking queue
+//
+// The sales context confirms an order (public event P5). The warehouse translates it into a ReservationRequested and an
+// automation tries to reserve: it either promises the stock (ReservationMade) or says it could not (ReservationFailed).
+// ============================================================
+
+module Stock
+  feature Reservations
+
+    slice StateChange RequestReservation
+      description "Asks for stock to be reserved for an order. Normally the sales public event does it (see RequestReservationFromSales); by hand for a phone order"
+      command RequestReservation
+        sku        Sku identifier
+        orderId    OrderId
+        quantity   Quantity
+        movementId MovementId generated
+        produces ReservationRequested
+          for sku
+          orderId    = orderId
+          sku        = sku
+          quantity   = quantity
+          movementId = movementId
+
+      event ReservationRequested
+        orderId    OrderId
+        sku        Sku
+        quantity   Quantity
+        movementId MovementId
+
+      example PhoneOrder : RequestReservation
+        orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        sku      = "ACM-1000"
+        quantity = 3
+
+      // The reservation outcome and its cascades are specified in ReserveStock and PublishReservation
+      specification AQuantityOfZeroIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when PhoneOrder quantity = 0
+        then error "A quantity is at least one"
+
+      screen RequestReservationDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RequestReservation
+              navigate to Reservations
+
+    // AUTOMATION with two outcomes: the stock is promised or the shortage is reported (and published, P7/P8)
+    slice Automation ReserveStock
+      event ReservationFailed
+        orderId OrderId
+        sku     Sku
+        shortBy Quantity
+
+      reaction ReserveStockReaction
+        description "Reserves the requested stock for the order, or reports that it could not"
+        runs as system role "WarehouseClerk"
+        when ReservationRequested
+          orderId
+          sku
+          quantity
+          movementId
+          invokes ReserveStockUnits
+            sku        = sku
+            orderId    = orderId
+            quantity   = quantity
+            movementId = movementId
+            on refused by validation
+              produces ReservationFailed
+                orderId = orderId
+                sku     = sku
+                // All or nothing: a reservation that cannot be met in full is short by the whole requested quantity
+                shortBy = quantity
+
+      // Success branch: the shelf covers the request and the reaction hands it to ReserveStockUnits (the promise and what follows it are
+      // the other slices', and are specified there)
+      specification ReservingWhatTheShelfCovers
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationRequested
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then invokes ReserveStockUnits
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      // Failure branch: the shelf is short, ReserveStockUnits refuses and nothing is promised (publishing the shortage is
+      // PublishReservationFailure's)
+      specification ReportingAShortage
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 2
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationRequested
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then ReservationFailed
+          for "ACM-1000"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+
+      specification ABlockedSkuIsNeverReserved
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given SkuBlockedForReceiving
+          for "ACM-1000"
+        when append ReservationRequested
+          for "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku        = "ACM-1000"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then ReservationFailed
+          for "ACM-1000"
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku     = "ACM-1000"
+          shortBy = 3
+
+    slice StateChange ReserveStockUnits
+      description "Promises units of one SKU to an order when the shelf can cover it and the SKU is not blocked"
+      command ReserveStockUnits
+        sku      Sku identifier
+        orderId    OrderId
+        quantity   Quantity
+        movementId MovementId
+        reads StockLevel by sku
+        validate
+          require StockLevel.blocked == false
+            message "That SKU is blocked"
+          require StockLevel.available >= quantity
+            message "The shelf holds less than that"
+        produces ReservationMade
+          for sku
+          sku        = sku
+          orderId    = orderId
+          quantity   = quantity
+          movementId = movementId
+
+      event ReservationMade
+        sku        Sku
+        orderId    OrderId
+        quantity   Quantity
+        movementId MovementId
+
+      example Promise : ReserveStockUnits
+        sku        = "ACM-1000"
+        orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        quantity   = 3
+        movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PromisingWhatTheShelfCovers
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku             = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when Promise
+        then ReservationMade
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      // What a promise sets going is specified in PlanShipmentWhenReserved, SnapshotStockOnMovement and PublishReservation
+      specification ReservingMoreThanTheShelfHoldsIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when Promise
+        then error "The shelf holds less than that"
+
+      specification ASalesRepCannotReserve
+        given caller
+          authenticated
+          role "SalesRep"
+        when Promise
+        then denied
+
+    slice StateView Reservations
+      description "What is promised to which order: the SKU, how many units and the order they are held for"
+
+      readmodel ReservationRow
+        id       MovementId key
+        sku      Sku
+        orderId  OrderId
+        quantity Quantity
+
+      query AllReservations => observable ReservationRow[]
+
+      projection ReservationRowProjection => ReservationRow
+        no automap
+        from ReservationMade key movementId
+          id       = movementId
+          sku      = sku
+          orderId  = orderId
+          quantity = quantity
+
+      screen Reservations
+        description "The stock promised to orders, with a way to reserve by hand"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader reservationsHeader
+              property title = "Reservations"
+              property subtitle = "Stock promised to orders"
+          toolbar
+            action RequestReservation
+              label "Reserve stock"
+          list
+            data ReservationRow[] via query AllReservations
+            table ReservationRow
+              column orderId  label "Order"
+              column sku      label "SKU"
+              column quantity label "Reserved"
+
+      specification AReservationIsListedUnderItsOrder
+        given SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
+        given ReservationMade
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+        then readmodel ReservationRow
+          id       = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b11"
+          sku      = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+
+  feature Picking
+    description "Parcels from planned to picked, packed and handed over"
+
+    // The reserved goods become something to pick
+    slice Automation PlanShipmentWhenReserved
+      reaction PlanShipmentWhenReservedReaction
+        description "A reservation creates the shipment the pickers work from"
+        runs as system role "WarehouseClerk"
+        when ReservationMade
+          orderId
+          sku
+          quantity
+          invokes PlanShipment
+            orderId  = orderId
+            sku      = sku
+            quantity = quantity
+
+      specification AReservationCreatesAShipmentToPick
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku             = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        when append ReservationMade
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity   = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        // the planned shipment is PlanShipment's, and is specified there
+        then invokes PlanShipment
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+
+    slice StateChange PlanShipment
+      command PlanShipment
+        orderId  OrderId identifier
+        sku      Sku
+        quantity Quantity
+        produces ShipmentPlanned
+          for orderId
+          sku      = sku
+          quantity = quantity
+
+      event ShipmentPlanned
+        sku      Sku
+        quantity Quantity
+
+      example Plan : PlanShipment
+        orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        sku      = "ACM-1000"
+        quantity = 3
+
+      specification PlanningAShipment
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Plan
+        then ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+
+      specification ASalesRepCannotPlanAShipment
+        given caller
+          authenticated
+          role "SalesRep"
+        when Plan
+        then denied
+
+    slice StateChange PickOrder
+      description "A picker starts collecting the order from the shelf"
+      command PickOrder
+        orderId OrderId identifier
+        reads PickingCard by orderId
+        validate
+          require PickingCard.status == toPick
+            message "The order is not waiting to be picked"
+        produces ShipmentPickingStarted
+          for orderId
+
+      event ShipmentPickingStarted
+
+      example Pick : PickOrder
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PickingAnOrderThatWaits
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        when Pick
+        then ShipmentPickingStarted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PickingTwiceIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPickingStarted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        when Pick
+        then error "The order is not waiting to be picked"
+
+      screen PickOrderDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action PickOrder
+              navigate to PickingQueue
+
+    slice StateChange PackShipment
+      description "The picker has collected everything and packed the parcel"
+      command PackShipment
+        orderId OrderId identifier
+        reads PickingCard by orderId
+        validate
+          require PickingCard.status == picking
+            message "The order is not being picked"
+        produces ShipmentPacked
+          for orderId
+
+      event ShipmentPacked
+
+      example Pack : PackShipment
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PackingAnOrderThatIsBeingPicked
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPickingStarted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        when Pack
+        then ShipmentPacked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      specification PackingBeforePickingIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        when Pack
+        then error "The order is not being picked"
+
+      screen PackShipmentDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action PackShipment
+              navigate to PickingQueue
+
+    slice StateChange CancelShipment
+      description "The order was cancelled before it left: the parcel is dropped from the picking queue"
+      command CancelShipment
+        orderId OrderId identifier
+        produces ShipmentCancelled
+          for orderId
+
+      event ShipmentCancelled
+
+      specification CancellingAShipment
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when CancelShipment
+          orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then ShipmentCancelled
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+
+      screen CancelShipmentDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action CancelShipment
+              navigate to PickingQueue
+
+    slice StateView PickingQueue
+      description "Parcels in columns by where they are: to pick, picking, packed, dispatched"
+
+      readmodel PickingCard
+        id        OrderId key
+        sku            Sku
+        quantity       Quantity
+        status         ShipmentStatus
+        carrier        Carrier optional
+        trackingNumber TrackingNumber optional
+
+      query AllPickingCards => observable PickingCard[]
+      query PickingCardByOrder => PickingCard optional
+        by id OrderId
+
+      projection PickingCardProjection => PickingCard
+        no automap
+        from ShipmentPlanned
+          id  = $eventSourceId
+          sku      = sku
+          quantity = quantity
+          status   = "toPick"
+        from ShipmentPickingStarted
+          status = "picking"
+        from ShipmentPacked
+          status = "packed"
+        from ShipmentHandedToCarrier
+          status         = "dispatched"
+          carrier        = carrier
+          trackingNumber = trackingNumber
+        remove with ShipmentCancelled
+
+      screen PickingQueue
+        template blueprint Cratis.Blueprint.Default BoardScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader pickingQueueHeader
+              property title = "Picking"
+              property subtitle = "Parcels from planned to picked, packed and dispatched"
+          board
+            data PickingCard[] via query AllPickingCards
+            component Cratis.Blueprint.Default.kanbanBoard pickingBoard
+              id "pickingBoard"
+              property columns
+                item
+                  id    = "toPick"
+                  label = "To pick"
+                item
+                  id    = "picking"
+                  label = "Picking"
+                item
+                  id    = "packed"
+                  label = "Packed"
+                item
+                  id    = "dispatched"
+                  label = "Dispatched"
+              property cards from query AllPickingCards
+              property cardId = "id"
+              property cardTitle = "id"
+              property cardColumn = "status"
+              property cardFields
+                item
+                  field = "sku"
+                  label = "SKU"
+                item
+                  field = "quantity"
+                  label = "Qty"
+                item
+                  field = "carrier"
+                  label = "Carrier"
+              property label = "Parcels by stage"
+
+      specification AParcelMovesAcrossTheBoard
+        given ShipmentPlanned
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+        given ShipmentPickingStarted
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        given ShipmentPacked
+          for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then readmodel PickingCard
+          id  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          sku      = "ACM-1000"
+          quantity = 3
+          status   = "packed"

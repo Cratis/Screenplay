@@ -776,8 +776,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Contributions ?? [], 7, WriteContribution);
         AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
-        AddSeparatedMembers(members, writer, module.Navigation, 10, WriteNavigationRegion);
-        AddMembers(members, module.Toolbars, 11, toolbar => WriteScreenToolbar(writer, toolbar));
+        AddSeparatedMembers(members, writer, module.Outlets, 10, WriteOutlet);
         WriteMembers(members, module);
     }
 
@@ -810,6 +809,11 @@ public sealed partial class ScreenplayPrinter :
             {
                 writer.DirectiveLine($"order {contribution.Order}", contribution, "order");
             }
+
+            foreach (var item in contribution.Items)
+            {
+                WriteOutletItem(writer, item);
+            }
         }
     }
 
@@ -833,6 +837,13 @@ public sealed partial class ScreenplayPrinter :
             foreach (var field in form.Fields)
             {
                 writer.Line(WriteFormField(field), field);
+                if (field.Choices is { } choices)
+                {
+                    using (writer.Indent())
+                    {
+                        writer.Line($"choose from query {choices.Query} show {choices.Show}", choices);
+                    }
+                }
             }
 
             WriteFormColumns(writer, form);
@@ -998,7 +1009,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, feature.Features, 5, WriteFeature);
         AddSeparatedMembers(members, writer, feature.Slices, 6, WriteSlice);
         AddSeparatedMembers(members, writer, feature.Contributions ?? [], 7, WriteContribution);
-        AddMembers(members, feature.Toolbars, 8, toolbar => WriteScreenToolbar(writer, toolbar));
+        AddMembers(members, feature.Outlets, 8, outlet => WriteOutlet(writer, outlet));
         WriteMembers(members, feature);
     }
 

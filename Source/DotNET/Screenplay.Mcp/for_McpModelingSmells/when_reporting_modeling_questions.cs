@@ -29,6 +29,6 @@ public class when_reporting_modeling_questions : given.a_model
     [Fact] void should_flag_the_generic_copy() => _items.Any(item => item.GetProperty("ruleId").GetString() == "SMELL003" && item.GetProperty("declaration").GetProperty("name").GetString() == "ProjectUpdated").ShouldBeTrue();
     [Fact] void should_name_the_fan_in_property() => _items.Single(item => item.GetProperty("ruleId").GetString() == "SMELL005").GetProperty("property").GetString().ShouldEqual("name");
     [Fact] void should_preserve_the_entire_compile_verdict() => _after.GetRawText().ShouldEqual(_before.GetRawText());
-    [Fact] void should_not_add_warnings_for_warnaserror_to_promote() => _after.GetProperty("summary").GetProperty("warnings").GetInt32().ShouldEqual(0);
+    [Fact] void should_not_add_warnings_for_warnaserror_to_promote() => _after.GetProperty("summary").GetProperty("warnings").GetInt32().ShouldEqual(_before.GetProperty("summary").GetProperty("warnings").GetInt32());
     [Fact] void should_resolve_every_finding_owner() => _details.All(detail => !detail.GetProperty("result").GetProperty("isError").GetBoolean()).ShouldBeTrue();
 }

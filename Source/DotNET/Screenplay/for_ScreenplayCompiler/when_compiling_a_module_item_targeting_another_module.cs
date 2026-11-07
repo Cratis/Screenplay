@@ -10,7 +10,7 @@ public class when_compiling_a_module_item_targeting_another_module : given.a_nav
 {
     const string SalesNavigation =
         """
-          navigation sidebar extends
+          outlet sidebar extends
             item a title "A" target Support
         """;
 

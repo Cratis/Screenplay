@@ -20,7 +20,8 @@ import { OperationSyntax, SystemSyntax } from './Operations';
 import { StateMachineSyntax, WorkflowSyntax } from './Lifecycles';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
-import { ScreenSyntax, ScreenToolbarSyntax } from './Screens';
+import { ScreenSyntax } from './Screens';
+import type { OutletSyntax } from './Outlets';
 import { SpecificationExampleSyntax, SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 import { SourceOptions } from './SourceOptions';
@@ -81,7 +82,7 @@ export interface FeatureSyntax extends SyntaxNode {
     readonly authorize: AuthorizeSyntax | null;
     readonly features: readonly FeatureSyntax[];
     readonly slices: readonly SliceSyntax[];
-    readonly toolbars?: readonly ScreenToolbarSyntax[];
+    readonly outlets?: readonly OutletSyntax[];
     readonly fileImports: readonly FileImportSyntax[];
 
     // Whether the feature is not written in the document but places it - the document was imported into
@@ -99,7 +100,7 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly description: string | null;
     readonly authorize: AuthorizeSyntax | null;
     readonly features: readonly FeatureSyntax[];
-    readonly toolbars?: readonly ScreenToolbarSyntax[];
+    readonly outlets?: readonly OutletSyntax[];
     readonly fileImports: readonly FileImportSyntax[];
 
     // Whether the module is not written in the document but places it - the document was imported into

@@ -108,8 +108,9 @@ This is a configuration fragment: the shell option assumes an `exposure for AppS
 ```screenplay
 layout AppShell
   topbar
-  navigation contributes Navigation
-  content
+  navigation panel
+  content page routed primary
+  outlet Navigation of navigation in navigation
 
 theme Aurora
   compatible with core
@@ -172,7 +173,7 @@ A host with that catalog passes it to `UiProfileShellBinder.Bind(application, bl
 | `PLAY0792` | The blueprint is not installed. |
 | `PLAY0793` | The installed version does not satisfy the profile's `version` pin. |
 | `PLAY0794` | The template cannot serve as the application shell. |
-| `PLAY0795` | The shell has no `content` outlet. |
+| `PLAY0795` | The shell has no `content` slot. |
 | `PLAY0796` | The shell does not expose the named option. |
 | `PLAY0799` | The new-screen default cannot start a screen in a feature. |
 

@@ -23,9 +23,11 @@ A layout is a top level declaration, alongside `ui profile` and `theme`:
 ```screenplay
 layout AppShell
   topbar
-  navigation contributes Navigation
-  content
+  navigation panel
+  content page routed primary
   footer
+
+  outlet Navigation of navigation in navigation
 
   arrangement flow
     column
@@ -36,11 +38,12 @@ layout AppShell
       footer height 32
 ```
 
-- Each plain line in the body **declares a slot**. `contributes <ContributionPoint>` opens it up to contributors declared anywhere in the document — see [Contributions](contributions.md). The application shell is where an application-wide contribution point such as `Navigation` belongs.
+- Each plain line in the body **declares a slot**: a region content is placed in.
+- A slot line can say what the slot is for, after its name and in this order: a role (`page`, `pane` or `panel`), `routed` or `routed by <param>`, `primary` and `optional`. See [Slot roles](#slot-roles).
 - `category <name>` and `type <name>` provide catalog metadata for designers and renderers. Every layout and template needs a `category` (`PLAY0720`).
 - `exposes <name> [<Type>]` names a value the structure makes available to descendants or package tooling.
-- `outlet <name>` declares a recursive fill point for package components and design-time tools.
-- `navigation topbar` and `navigation sidebar` blocks hold the application's own navigation: a logo and items with targets, slots and sub-items. A module inherits, extends or overrides them - see [Navigation regions](navigation.md).
+- `slot <name>` declares a recursive fill point for package components and design-time tools. Screenplay 5 wrote it `outlet <name>`; that form is now an error (`PLAY0893`) - run `screenplay migrate --from 5 --to 6`.
+- `outlet <name> of actions|filters|tabs|stats|navigation [for item|for screen] [in <slot>]` declares an **outlet**: a list of items the structure offers, with its `default` items. A module, feature or screen inherits, extends or overrides it, and `contribute to <name>` adds to it from anywhere - see [Outlets](outlets.md). The application's own navigation - a logo and items with targets, slots and sub-items - is a navigation outlet on the layout; see [Navigation](navigation.md).
 - `arrangement` says how those slots share the space. It is optional: a layout that only names its slots is a complete declaration.
 
 An application selects its layout from a [ui profile](ui-profile.md), the same way it selects its theme:
@@ -50,13 +53,44 @@ layout AppShell
   category application
   type masterDetail
   exposes selectedItem String
-  outlet details
+  slot details
   content
 
 ui profile Desktop
   target platform web
   root template AppShell
 ```
+
+### Slot roles
+
+A slot's role tells a renderer and a designer what kind of content goes in it. The words follow the slot's name, and each is optional:
+
+| Word | Meaning |
+| --- | --- |
+| `page` | The slot holds a whole page. |
+| `pane` | The slot holds a pane beside the page, such as a detail view. |
+| `panel` | The slot holds a panel within the page. |
+| `routed` | What the slot shows is part of the address. |
+| `routed by <param>` | The slot is addressed by a route parameter, such as the key of the selected row. |
+| `primary` | The slot is the main one of its structure. |
+| `optional` | The slot may be left empty. |
+
+```screenplay
+layout AppShell
+  category application
+  topbar
+  content page routed primary
+
+module Catalog
+  screen template ListPage
+    category Catalog
+    fits slot content
+    header
+    main
+    detail pane routed by sku optional
+```
+
+A slot without a role is still a slot; the role only adds meaning. A slice's screen lists the roles it fits (`fits pane, dialog`), and a hook that opens it `in slot <name>` needs a slot whose role the screen fits - see [Placement](screens.md#placement). A template slot can show another screen for what is selected on this one with `show <Screen> by <param> from <element>.selection`. Screenplay 6 calls every region content is placed in a slot: the Screenplay 5 forms `outlet <name>` and `destination outlet <name>` are errors whose message names `screenplay migrate --from 5 --to 6`.
 
 A document may declare more than one layout, so that different profiles can select different shells — but each profile selects exactly one, and a profile naming a layout the document does not declare is reported.
 
@@ -96,9 +130,15 @@ A dialog template declares slots for content that opens over the application. It
 ```screenplay
 module Invoicing
   dialog template RegisterInvoiceDialog
+    category Dialog
     body
-    actions
+    footer
+    outlet actions of actions in footer
+      default cancel title "Cancel" runs close
+      default register title "Register" emphasis primary runs submit
 ```
+
+A dialog or drawer template declares its buttons as an actions outlet. The built-ins `runs close` and `runs submit` close the dialog and submit the screen's command; see [Outlets](outlets.md#dialog-and-drawer-buttons).
 
 Writing `fits slot` on a dialog template — or on a layout — is a compile-time error.
 
@@ -284,5 +324,6 @@ Once the slots and template choices are in place, [arrange them](layout-arrangem
 - [Layout arrangement](layout-arrangement.md) — how a layout or template arranges the slots it declares.
 - [Screens](screens.md) — the three levels a screen is expressible at, and how its names resolve.
 - [Contributions](contributions.md) — the many-to-one counterpart of a slot.
-- [Navigation regions](navigation.md) — the topbar and sidebar of the shell, with module level inherit, extend and override.
+- [Outlets](outlets.md) — item lists a layout or template offers, which lower levels inherit, extend, override, hide and reorder.
+- [Navigation](navigation.md) — the topbar and sidebar of the shell as navigation outlets.
 - [UI profile](ui-profile.md) — where a build selects its layout, theme, platforms and packages.

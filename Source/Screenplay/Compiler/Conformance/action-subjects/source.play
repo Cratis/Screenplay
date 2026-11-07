@@ -99,7 +99,7 @@ module Work
       screen OutletScope
         data Row[] via query Rows
         component scene.web.Panel panel
-          outlet detail
+          slot detail
             action Retry
             data NamedRow[] via query NamedRows
       screen GuardedCollection

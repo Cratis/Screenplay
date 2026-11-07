@@ -28,5 +28,5 @@ public class when_checking_a_scope_after_renaming_an_event : given.a_model
     [Fact] void should_keep_the_clean_scope_exit_code() => _exitCode.ShouldEqual(0);
     [Fact] void should_not_claim_a_directly_affected_scope() => Output.ToString().ShouldContain("Affected scopes: none");
     [Fact] void should_report_the_unresolved_event_consumer() => Output.ToString().ShouldContain("Unresolved event consumers (cannot be attributed to a scope): 1 reference(s) in Other.F.Use");
-    [Fact] void should_report_the_whole_application_warning_as_a_failure_with_warnaserror() => Output.ToString().ShouldContain("\e[31mWhole application: 0 error(s), 1 warning(s) (1 outside the reported set)");
+    [Fact] void should_report_the_whole_application_warning_as_a_failure_with_warnaserror() => Output.ToString().ShouldContain("\e[31mWhole application: 0 error(s), 2 warning(s) (2 outside the reported set)");
 }

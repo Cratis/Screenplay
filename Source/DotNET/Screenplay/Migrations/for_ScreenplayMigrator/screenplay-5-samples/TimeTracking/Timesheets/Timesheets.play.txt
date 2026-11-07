@@ -1,0 +1,39 @@
+// ============================================================
+// Timesheets - the module, and the features it is made of
+//
+// Each feature carries its own gate and imports its own folder. A
+// command or query in Recording must pass HasWorkspaceAccess (the
+// module's) AND IsConsultant (the feature's) - the step files never
+// restate either.
+// ============================================================
+
+module Timesheets
+  description
+    ```text
+    Weekly timesheets.
+    Consultants record the hours they work against the engagements they are
+    staffed on and submit the week; engagement managers approve or return it.
+    Approved weeks flow on to payroll.
+    ```
+  authorize HasWorkspaceAccess
+
+  import "Screens.play"
+
+  feature Recording
+    description "Starting a week, recording hours against engagements, and submitting the week"
+    authorize IsConsultant
+    import "Recording/*.play"
+
+  feature Approval
+    description "Engagement managers approve submitted weeks or return them with a reason"
+    authorize IsEngagementManager
+    // A named behavior attached to the whole feature, its argument filled here:
+    // every screen in the feature re-reads the queue when it opens.
+    uses RefreshOnEnter
+      view SubmittedTimesheets
+    import "Approval/*.play"
+
+  // No feature gate: each query carries the one that fits its audience.
+  feature Reporting
+    description "Totals, the approval board and the calendar - what the rest of the module reads"
+    import "Reporting/*.play"

@@ -66,6 +66,8 @@ public sealed record CompletenessChecks(ImmutableHashSet<CompletenessCheck> Sele
 
     static ImmutableDictionary<string, CompletenessCheck> CreateNames()
     {
+        // PLAY0533 is on by default since Screenplay 6. Naming it keeps selecting the check it selected in Screenplay 5, so a
+        // --check or a gate file written then still works and reports what it reported.
         var groups = new (CompletenessCheck Check, string[] Names)[]
         {
             (CompletenessCheck.DataBindings, ["data-bindings", "PLAY0530", "PLAY0531"]),

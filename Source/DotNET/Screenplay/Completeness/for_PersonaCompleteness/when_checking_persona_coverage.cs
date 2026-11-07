@@ -29,8 +29,11 @@ public class when_checking_persona_coverage : Specification
     [Fact] void should_include_inherited_gates() => Findings(Source.Replace("module M", "module M\n  authorize Member", StringComparison.Ordinal)).Any(diagnostic => diagnostic.Code == DiagnosticCodes.PersonaWithoutGate).ShouldBeFalse();
     [Fact] void should_treat_an_unsynthesizable_persona_as_unknown() => Findings(Source.Replace("role \"A\" or role \"B\"", "not role \"Other\"", StringComparison.Ordinal)).Any(diagnostic => diagnostic.Code == DiagnosticCodes.GateWithoutPersona).ShouldBeFalse();
     [Fact] void should_treat_a_subject_comparison_as_unknown() => Findings(Source.Replace("require role \"Other\"", "require claim \"owner\" matches subject", StringComparison.Ordinal)).Any(diagnostic => diagnostic.Code == DiagnosticCodes.GateWithoutPersona).ShouldBeFalse();
-    [Fact] void should_stay_silent_without_personas() => Findings(Source.Replace("persona Person\n  policy Member\n", string.Empty, StringComparison.Ordinal)).ShouldBeEmpty();
-    [Fact] void should_not_run_without_selection() => ModelCompleteness.Check(new ScreenplayCompiler().Compile(Source), CompletenessChecks.None).ShouldBeEmpty();
+    [Fact] void should_stay_silent_without_personas() => Findings(Source.Replace("persona Person\n  policy Member\n", string.Empty, StringComparison.Ordinal)).Where(IsPersonaFinding).ShouldBeEmpty();
+    [Fact] void should_not_run_without_selection() => ModelCompleteness.Check(new ScreenplayCompiler().Compile(Source), CompletenessChecks.None).Where(IsPersonaFinding).ShouldBeEmpty();
+    [Fact] void should_report_the_default_checks_without_selection() => ModelCompleteness.Check(new ScreenplayCompiler().Compile(Source), CompletenessChecks.None).Single().Code.ShouldEqual(DiagnosticCodes.CommandWithoutInputSurface);
+
+    static bool IsPersonaFinding(Diagnostic diagnostic) => diagnostic.Code != DiagnosticCodes.CommandWithoutInputSurface;
 
     static IEnumerable<Diagnostic> Findings(string source)
     {

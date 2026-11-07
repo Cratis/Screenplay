@@ -1,0 +1,24 @@
+// Driven by the clock rather than by an event: every morning the warehouse
+// gets its first picking wave.
+slice Automation ReleasePickingWave
+  description "Opens the morning picking wave before the warehouse shift starts"
+
+  event PickingWaveReleased
+    wave       String
+    releasedAt DateTime
+
+  reaction MorningWave
+    description "Releases the morning wave at six every day"
+    at 06:00
+      produces PickingWaveReleased
+        wave       = "morning"
+        releasedAt = $context.occurred
+
+  // The clock reaches six; the reaction that is due runs, and the occurrence
+  // time it maps is the instant the clock reached.
+  specification ReleasingTheMorningWave
+    given clock "2026-10-05T06:00:00Z"
+    when clock "2026-10-05T06:00:00Z"
+    then PickingWaveReleased
+      wave       = "morning"
+      releasedAt = "2026-10-05T06:00:00.0000000Z"

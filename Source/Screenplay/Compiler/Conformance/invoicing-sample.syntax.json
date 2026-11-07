@@ -1811,6 +1811,144 @@
           "fileImports": [],
           "isPlacement": false,
           "name": "InvoiceManagement",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "hides": [
+                {
+                  "kind": "OutletHideSyntax",
+                  "id": "export"
+                }
+              ],
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "emphasis": "Primary",
+                  "icon": "plus",
+                  "id": "register",
+                  "opens": "Dialog",
+                  "position": {
+                    "kind": "OutletPositionSyntax",
+                    "id": "refresh",
+                    "placement": "Before"
+                  },
+                  "slice": "RegisterInvoice",
+                  "title": "Register invoice"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "cancel",
+                  "slice": "CancelInvoice",
+                  "subject": "Item",
+                  "title": "Cancel invoice"
+                },
+                {
+                  "kind": "OutletGroupSyntax",
+                  "buttons": [
+                    {
+                      "kind": "ToolbarButtonSyntax",
+                      "id": "batch",
+                      "slice": "ProcessInvoiceBatch",
+                      "title": "Process a batch"
+                    },
+                    {
+                      "kind": "ToolbarButtonSyntax",
+                      "confirm": "Archive every invoice older than the retention period?",
+                      "id": "archive",
+                      "slice": "ArchiveOldInvoices",
+                      "title": "Archive old invoices"
+                    }
+                  ],
+                  "icon": "layers",
+                  "id": "bulk",
+                  "title": "Bulk"
+                }
+              ],
+              "mode": "Extend",
+              "name": "actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "OutletFilterSyntax",
+                  "id": "status",
+                  "parameter": "status",
+                  "query": "ListInvoices",
+                  "title": "Status"
+                },
+                {
+                  "kind": "OutletFilterSyntax",
+                  "id": "customer",
+                  "parameter": "customerId",
+                  "query": "ListInvoices",
+                  "title": "Customer"
+                }
+              ],
+              "mode": "Extend",
+              "name": "filters"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "OutletStatSyntax",
+                  "field": "totalCount",
+                  "id": "total",
+                  "query": "GetInvoiceSummary",
+                  "title": "Invoices"
+                },
+                {
+                  "kind": "OutletStatSyntax",
+                  "field": "draftCount",
+                  "id": "drafts",
+                  "query": "GetInvoiceSummary",
+                  "title": "Drafts"
+                }
+              ],
+              "mode": "Extend",
+              "name": "stats"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "confirm": "Send the customer a reminder?",
+                  "enabledWhen": {
+                    "kind": "ComparisonConditionSyntax",
+                    "left": "item.status",
+                    "operator": "Equal",
+                    "right": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "overdue"
+                    }
+                  },
+                  "id": "remind",
+                  "opens": "Runs",
+                  "slice": "SendInvoiceReminder",
+                  "title": "Remind"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "tag",
+                  "opens": "Drawer",
+                  "slice": "TagInvoice",
+                  "title": "Tag"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "contact",
+                  "opens": "Slot",
+                  "opensSlot": "activity",
+                  "slice": "UpdateBillingContact",
+                  "title": "Billing contact"
+                }
+              ],
+              "mode": "Extend",
+              "name": "rowActions"
+            }
+          ],
           "slices": [
             {
               "kind": "SliceSyntax",
@@ -3610,6 +3748,11 @@
                       ]
                     }
                   ],
+                  "fits": [
+                    "Dialog",
+                    "Drawer",
+                    "Page"
+                  ],
                   "name": "RegisterInvoiceScreen"
                 }
               ],
@@ -5290,6 +5433,10 @@
                         }
                       ]
                     }
+                  ],
+                  "fits": [
+                    "Drawer",
+                    "Dialog"
                   ],
                   "name": "TagInvoiceScreen"
                 }
@@ -7001,6 +7148,10 @@
                       ]
                     }
                   ],
+                  "fits": [
+                    "Panel",
+                    "Dialog"
+                  ],
                   "name": "UpdateBillingContactScreen"
                 }
               ],
@@ -7184,6 +7335,140 @@
                               }
                             }
                           ]
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "CanManageInvoice"
+                    }
+                  },
+                  "description": null,
+                  "handler": null,
+                  "name": "SendInvoiceReminder",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceReminderRequested",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Reminds the customer about an overdue invoice",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceReminderRequested",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "SendInvoiceReminder",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "SendingAReminder",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceReminderRequested",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": []
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "SendInvoiceReminder",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
                         }
                       }
                     ]
@@ -7710,25 +7995,6 @@
                       ],
                       "icon": "invoice",
                       "name": "invoiceGrid",
-                      "outlets": [
-                        {
-                          "kind": "ComponentOutletSyntax",
-                          "directives": [
-                            {
-                              "kind": "ScreenSummarySyntax",
-                              "fields": [
-                                {
-                                  "kind": "ScreenFieldSyntax",
-                                  "label": "$strings.invoices.fields.number",
-                                  "property": "invoiceNumber"
-                                }
-                              ],
-                              "target": "selectedInvoice"
-                            }
-                          ],
-                          "name": "detail"
-                        }
-                      ],
                       "presentation": [],
                       "properties": [
                         {
@@ -7800,6 +8066,25 @@
                             "kind": "ListExpressionSyntax",
                             "items": []
                           }
+                        }
+                      ],
+                      "slots": [
+                        {
+                          "kind": "ComponentSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSummarySyntax",
+                              "fields": [
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "$strings.invoices.fields.number",
+                                  "property": "invoiceNumber"
+                                }
+                              ],
+                              "target": "selectedInvoice"
+                            }
+                          ],
+                          "name": "detail"
                         }
                       ],
                       "stableId": null
@@ -7883,6 +8168,18 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
+                              "kind": "ScreenShowSyntax",
+                              "by": "invoiceId",
+                              "element": "InvoiceListReadModel",
+                              "screen": "InvoiceDetails"
+                            }
+                          ],
+                          "name": "detail"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
                               "kind": "ScreenTableSyntax",
                               "columns": [
                                 {
@@ -7924,7 +8221,33 @@
                       }
                     }
                   ],
-                  "name": "InvoiceList"
+                  "name": "InvoiceList",
+                  "outlets": [
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [],
+                      "mode": "Inherit",
+                      "name": "actions"
+                    },
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [
+                        {
+                          "kind": "OutletTabSyntax",
+                          "id": "overview",
+                          "position": {
+                            "kind": "OutletPositionSyntax",
+                            "id": "collections",
+                            "placement": "Before"
+                          },
+                          "shows": "InvoiceList",
+                          "title": "Overview"
+                        }
+                      ],
+                      "mode": "Extend",
+                      "name": "views"
+                    }
+                  ]
                 }
               ],
               "specifications": [
@@ -13086,10 +13409,10 @@
                           "navigate": {
                             "kind": "ScreenNavigateSyntax",
                             "by": null,
-                            "outlet": "detail",
                             "parameters": [],
                             "route": null,
-                            "screen": "InvoiceDetails"
+                            "screen": "InvoiceDetails",
+                            "slot": "detail"
                           }
                         }
                       ],
@@ -18365,6 +18688,26 @@
       "fileImports": [],
       "isPlacement": false,
       "name": "Invoicing",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "shield",
+              "id": "auditing",
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Auditing",
+                "module": "Invoicing"
+              },
+              "title": "Auditing"
+            }
+          ],
+          "mode": "Extend",
+          "name": "sidebar"
+        }
+      ],
       "purposes": [
         {
           "kind": "PurposeReferenceSyntax",

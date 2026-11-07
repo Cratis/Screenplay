@@ -11,6 +11,9 @@ static class McpToolSchemas
     static readonly Dictionary<(string Tool, string Property), string> _describedArguments = new()
     {
         [("run-specifications", "proposalId")] = "Outstanding proposal from this connection. Runs its retained candidate and identity catalog without refreshing, applying or mutating it; an externally changed base does not replace the snapshot.",
+        [(McpMigration.ToolName, "from")] = "The Screenplay version the documents are written in, as a major such as \"5\".",
+        [(McpMigration.ToolName, "to")] = "The Screenplay version to end at; defaults to the compiler's version.",
+        [(McpMigration.ToolName, "document")] = "A root-relative .play path to migrate alone; the other documents give it its placement and are compiled as they are. With it, the result carries the migrated source.",
         [("run-specifications", "expectedSourceRevision")] = "Echo sourceRevision from the first execution response on continuation. With proposalId, pins the candidate source rather than the current model."
     };
 

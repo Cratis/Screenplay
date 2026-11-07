@@ -12,7 +12,8 @@ public class when_printing_a_contribution : given.a_printer
         module Invoicing
           screen template AppShell
             category Test
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
 
           contribute to Navigation
@@ -37,7 +38,7 @@ public class when_printing_a_contribution : given.a_printer
     [Fact] void should_compile_without_diagnostics() => _roundtrip.Original!.Diagnostics.ShouldBeEmpty();
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
-    [Fact] void should_print_the_slot_contribution_point() => _roundtrip.Printed.ShouldContain("navbar contributes Navigation");
+    [Fact] void should_print_the_outlet_the_contribution_resolves_to() => _roundtrip.Printed.ShouldContain("outlet Navigation of navigation in navbar");
     [Fact] void should_print_the_module_contribution_header() => _roundtrip.Printed.ShouldContain("contribute to Navigation");
     [Fact] void should_print_the_contribution_navigation() => _roundtrip.Printed.ShouldContain("navigate to InvoiceList");
     [Fact] void should_print_the_contribution_label() => _roundtrip.Printed.ShouldContain("label \"Invoices\"");

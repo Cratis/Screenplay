@@ -142,15 +142,15 @@ internal static partial class ScreenplayValidator
     }
 
     /// <summary>
-    /// Validates that every contribution in the document resolves to a contribution point some slot of the
-    /// application's layout or of a module's template declares, and that the screen it navigates to, if any, resolves.
+    /// Validates that every contribution in the document resolves to an outlet the application's layout or a
+    /// module's template declares, and that the screen it navigates to, if any, resolves.
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="screens">The screens the document declares, scoped to where they are declared.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <remarks>
-    /// A contribution resolves to the nearest enclosing structure that declares a matching contribution
-    /// point: first the contribution's own module - a module with its own matching slot stops contributions
+    /// A contribution resolves to the nearest enclosing structure that declares a matching outlet: first the
+    /// contribution's own module - a module with its own matching outlet stops contributions
     /// inside it from bubbling further out - then every other module in the document, and finally the
     /// application's own layouts, which belong to no module and are the outermost shell of all. This is a
     /// different algorithm from <see cref="ReferenceResolver"/>: it walks a physical containment tree
@@ -159,14 +159,12 @@ internal static partial class ScreenplayValidator
     static void ValidateContributions(ApplicationSyntax application, IReadOnlyList<Declaration> screens, ParserContext context)
     {
         var offers = application.Modules
-            .SelectMany(module => Structures(module).SelectMany(structure => structure.Slots
-                .Where(slot => slot.Contributes is not null)
-                .Select(slot => (Module: module.Name, Structure: structure.Name, Slot: slot.Name, ContributionPoint: slot.Contributes!))))
-            .Concat((application.Layouts ?? []).SelectMany(layout => layout.Slots
-                .Where(slot => slot.Contributes is not null)
-                .Select(slot => (Module: string.Empty, Structure: layout.Name, Slot: slot.Name, ContributionPoint: slot.Contributes!))))
+            .SelectMany(module => Structures(module).SelectMany(structure => structure.Outlets
+                .Select(outlet => (Module: module.Name, Structure: structure.Name, Slot: outlet.Name, ContributionPoint: outlet.Name))))
+            .Concat((application.Layouts ?? []).SelectMany(layout => layout.Outlets
+                .Select(outlet => (Module: string.Empty, Structure: layout.Name, Slot: outlet.Name, ContributionPoint: outlet.Name))))
             .ToList();
-        var validator = new ContributionValidator(offers, screens, context);
+        var validator = new ContributionValidator(offers, screens, context, OutletValidator.UsesBlueprints(application));
 
         foreach (var module in application.Modules)
         {
@@ -187,11 +185,11 @@ internal static partial class ScreenplayValidator
     }
 
     /// <summary>
-    /// Yields the slot bearing structures a module declares - its screen templates and its dialog templates.
+    /// Yields the outlet bearing structures a module declares - its screen templates and its dialog templates.
     /// </summary>
     /// <param name="module">The <see cref="ModuleSyntax"/> to read.</param>
-    /// <returns>The name and slots of each.</returns>
-    static IEnumerable<(string Name, IEnumerable<SlotSyntax> Slots)> Structures(ModuleSyntax module) =>
-        module.ScreenTemplates.Select(template => (template.Name, template.Slots))
-            .Concat((module.DialogTemplates ?? []).Select(template => (template.Name, template.Slots)));
+    /// <returns>The name and outlets of each.</returns>
+    static IEnumerable<(string Name, IEnumerable<OutletSyntax> Outlets)> Structures(ModuleSyntax module) =>
+        module.ScreenTemplates.Select(template => (template.Name, template.Outlets))
+            .Concat((module.DialogTemplates ?? []).Select(template => (template.Name, template.Outlets)));
 }

@@ -4,6 +4,7 @@
     "accent",
     "acknowledge",
     "action",
+    "actions",
     "active",
     "add",
     "added",
@@ -34,6 +35,7 @@
     "back",
     "basis",
     "batches",
+    "before",
     "behavior",
     "bind",
     "biometric",
@@ -57,6 +59,7 @@
     "change",
     "checksum",
     "children",
+    "choose",
     "claim",
     "clear",
     "click",
@@ -120,12 +123,14 @@
     "documentation",
     "domain",
     "double",
+    "drawer",
     "each",
     "edge",
     "emails",
     "emphasis",
     "employmentLaw",
     "empty",
+    "enabled",
     "ends",
     "enter",
     "entering",
@@ -164,6 +169,7 @@
     "file",
     "fill",
     "filter",
+    "filters",
     "final",
     "fits",
     "float",
@@ -198,6 +204,7 @@
     "healthCare",
     "height",
     "hidden",
+    "hide",
     "hint",
     "home",
     "hour",
@@ -296,6 +303,7 @@
     "one",
     "oneWay",
     "open",
+    "opens",
     "operation",
     "operations",
     "option",
@@ -311,7 +319,10 @@
     "overrides",
     "package",
     "packages",
+    "page",
     "palette",
+    "pane",
+    "panel",
     "parallel",
     "parameter",
     "parent",
@@ -380,6 +391,7 @@
     "root",
     "round",
     "route",
+    "routed",
     "row",
     "rowGap",
     "rowSpan",
@@ -407,12 +419,14 @@
     "sensitive",
     "sequence",
     "set",
+    "sets",
     "severity",
     "sexLifeOrSexualOrientation",
     "shape",
     "sharp",
     "short",
     "show",
+    "shows",
     "sidebar",
     "signup",
     "size",
@@ -426,8 +440,10 @@
     "split",
     "start",
     "starts",
+    "stat",
     "state",
     "statemachine",
+    "stats",
     "sticky",
     "stream",
     "streamId",
@@ -442,7 +458,9 @@
     "success",
     "summary",
     "system",
+    "tab",
     "table",
+    "tabs",
     "tag",
     "target",
     "template",
@@ -14743,7 +14761,7 @@
       "parseStatus": "accepted",
       "probes": [
         {
-          "source": "layout Shell\n  navigation contributes Navigation\n  content\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n",
+          "source": "layout Shell\n  navigation\n  content\n  outlet Navigation of navigation in navigation\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n",
           "minimumSemanticVersion": "1.0",
           "diagnostic": "PLAY0269",
           "diagnostics": [
@@ -24369,7 +24387,7 @@
       "parseStatus": "accepted",
       "probes": [
         {
-          "source": "layout Shell\n  content\n  navigation sidebar\n    item home title \u0022Home\u0022 target M\nmodule M\n  navigation sidebar extends\n    item reports title \u0022Reports\u0022 target M.F\n  feature F\n    slice StateView S\n      screen Screen\n",
+          "source": "layout Shell\n  content\n  outlet sidebar of navigation\n    default home title \u0022Home\u0022 target M\nmodule M\n  outlet sidebar extends\n    item reports title \u0022Reports\u0022 target M.F\n  feature F\n    slice StateView S\n      screen Screen\n",
           "minimumSemanticVersion": "1.0",
           "diagnostic": "PLAY0269",
           "diagnostics": [
@@ -26385,6 +26403,515 @@
           "status": "refused",
           "diagnostic": "PLAY0268",
           "issue": "https://github.com/Cratis/Screenplay/issues/301"
+        }
+      ]
+    },
+    {
+      "name": "outlet",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "module M\n  screen template Page\n    category Test\n    header\n    outlet actions of actions in header\n  feature F\n    outlet actions extends\n      button record title \u0022Record\u0022 slice S\n        confirm \u0022Record it?\u0022\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n      screen Input\n        fits dialog, drawer\n        action Record\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0818",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 22,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 23,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 24,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 25,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 26,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 27,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 28,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 29,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 30,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 31,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 32,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 33,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 34,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 35,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 36,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 37,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 38,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 40,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 41,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 11,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 12,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 13,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 14,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 15,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 16,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 17,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 18,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 19,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 20,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 21,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 22,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 23,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 24,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 25,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 26,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 27,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 28,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 29,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 30,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 31,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 32,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 33,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 34,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 35,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 36,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 37,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 38,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 40,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 41,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
         }
       ]
     },
@@ -44247,249 +44774,254 @@
       "parseStatus": "accepted",
       "probes": [
         {
-          "source": "module M\n  feature F\n    toolbar actions\n      item record action Record\n        label \u0022Record\u0022\n        confirm \u0022Record it?\u0022\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n",
+          "source": "module M\n  feature F\n    slice StateChange S\n      screen Screen\n        toolbar actions\n          button record title \u0022Record\u0022 slice S\n",
           "minimumSemanticVersion": "1.0",
-          "diagnostic": null,
-          "diagnostics": [],
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
           "admission": [
             {
               "esmVersion": 1,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 2,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 3,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 4,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 5,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 6,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 7,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 8,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 9,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 10,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 11,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 12,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 13,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 14,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 15,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 16,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 17,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 18,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 19,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 20,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 21,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 22,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 23,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 24,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 25,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 26,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 27,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 28,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 29,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 30,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 31,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 32,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 33,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 34,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 35,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 36,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 37,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 38,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 40,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             },
             {
               "esmVersion": 41,
-              "status": "admitted",
-              "diagnostic": null,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
               "issue": null
             }
           ]
@@ -44498,242 +45030,242 @@
       "admission": [
         {
           "esmVersion": 1,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 2,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 3,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 4,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 5,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 6,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 7,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 8,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 9,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 10,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 11,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 12,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 13,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 14,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 15,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 16,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 17,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 18,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 19,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 20,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 21,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 22,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 23,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 24,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 25,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 26,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 27,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 28,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 29,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 30,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 31,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 32,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 33,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 34,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 35,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 36,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 37,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 38,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 40,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         },
         {
           "esmVersion": 41,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
           "issue": null
         }
       ]
@@ -49416,8 +49948,9 @@
     {
       "code": "PLAY0196",
       "name": "UnknownQuery",
-      "severity": "warning",
+      "severity": "error",
       "severities": [
+        "error",
         "warning"
       ],
       "title": "A screen binds data to a query nothing in scope declares.",
@@ -49427,8 +49960,9 @@
     {
       "code": "PLAY0197",
       "name": "UnknownScreen",
-      "severity": "warning",
+      "severity": "error",
       "severities": [
+        "error",
         "warning"
       ],
       "title": "A screen navigates to a screen nothing in scope declares.",
@@ -49729,9 +50263,9 @@
       "severities": [
         "warning"
       ],
-      "title": "A contribution names a contribution point nothing in scope declares.",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: a contribution to an outlet nothing declares is PLAY0903 since Screenplay 6.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0225",
@@ -53853,12 +54387,12 @@
     },
     {
       "code": "PLAY0630",
-      "name": "UnknownNavigationOutlet",
+      "name": "UnknownNavigationSlot",
       "severity": "error",
       "severities": [
         "error"
       ],
-      "title": "A navigation\u0027s outlet \u003Cname\u003E names an outlet no layout, template or component declares.",
+      "title": "A navigation\u0027s slot \u003Cname\u003E names a slot no layout, template or component declares.",
       "reserved": false,
       "retired": false
     },
@@ -54123,7 +54657,7 @@
       "severities": [
         "error"
       ],
-      "title": "A navigation contribution\u0027s destination outlet or destination dialog names an outlet or dialog template nothing declares.",
+      "title": "A navigation contribution\u0027s destination slot or destination dialog names a slot or dialog template nothing declares.",
       "reserved": false,
       "retired": false
     },
@@ -54831,9 +55365,9 @@
       "severities": [
         "error"
       ],
-      "title": "A navigation block header is not navigation topbar|sidebar [inherits|extends|overrides].",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: navigation regions are outlets since Screenplay 6; a malformed outlet is PLAY0897.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0741",
@@ -54853,9 +55387,9 @@
       "severities": [
         "error"
       ],
-      "title": "A layout or module declares the same navigation region more than once.",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: navigation regions are outlets since Screenplay 6; an outlet declared twice is PLAY0904.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0743",
@@ -54886,9 +55420,9 @@
       "severities": [
         "error"
       ],
-      "title": "A layout\u0027s region states inherits, extends or overrides - the application is the base and has no mode - or a region that inherits lists items of its own.",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: navigation regions are outlets since Screenplay 6; a misplaced mode is PLAY0897.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0746",
@@ -54897,9 +55431,9 @@
       "severities": [
         "error"
       ],
-      "title": "A topbar item has sub-items; only the sidebar nests items.",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: navigation regions are outlets since Screenplay 6, and any navigation outlet nests items.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0747",
@@ -54908,9 +55442,9 @@
       "severities": [
         "error"
       ],
-      "title": "Two items of one navigation region share an id, within the region or between an extending module and the application (Scene navDuplicateId).",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: navigation regions are outlets since Screenplay 6; a repeated item id is PLAY0905.",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0748",
@@ -55424,12 +55958,12 @@
     },
     {
       "code": "PLAY0795",
-      "name": "RootTemplateWithoutContentOutlet",
+      "name": "RootTemplateWithoutContentSlot",
       "severity": "error",
       "severities": [
         "error"
       ],
-      "title": "A ui profile\u0027s root template has no outlet for the screens\u0027 content.",
+      "title": "A ui profile\u0027s root template has no slot for the screens\u0027 content.",
       "reserved": false,
       "retired": false,
       "arguments": [
@@ -55443,7 +55977,7 @@
           "name": "template",
           "kind": "text",
           "optional": false,
-          "meaning": "The root template that has no content outlet."
+          "meaning": "The root template that has no content slot."
         },
         {
           "name": "blueprint",
@@ -55452,10 +55986,10 @@
           "meaning": "The blueprint the template comes from."
         },
         {
-          "name": "outlet",
+          "name": "slot",
           "kind": "text",
           "optional": false,
-          "meaning": "The outlet the screens\u0027 content is placed in."
+          "meaning": "The slot the screens\u0027 content is placed in."
         }
       ]
     },
@@ -55692,9 +56226,9 @@
       "severities": [
         "warning"
       ],
-      "title": "A toolbar item of a feature or module links a command that no slice of that feature or module declares.",
-      "reserved": false,
-      "retired": false
+      "title": "Retired: feature and module toolbars are outlets since Screenplay 6, whose buttons name slices (PLAY0761).",
+      "reserved": true,
+      "retired": true
     },
     {
       "code": "PLAY0809",
@@ -56589,6 +57123,292 @@
         "error"
       ],
       "title": "Two user declarations carry the same name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0890",
+      "name": "RemovedComponentOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component declares outlet \u003Cname\u003E, which Screenplay 6 writes slot \u003Cname\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0891",
+      "name": "RemovedDestinationOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation contribution declares destination outlet \u003Cname\u003E, which Screenplay 6 writes destination slot \u003Cname\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0892",
+      "name": "RemovedNavigationOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation declares outlet \u003Cname\u003E, which Screenplay 6 writes slot \u003Cname\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0893",
+      "name": "RemovedTemplateOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A layout, screen template or dialog template declares outlet \u003Cname\u003E with no kind, which Screenplay 6 writes slot \u003Cname\u003E. An outlet with a kind - outlet \u003Cname\u003E of actions - is an item list.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0894",
+      "name": "RemovedNavigationRegion",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A layout or module declares navigation topbar|sidebar, which Screenplay 6 writes outlet \u003Cname\u003E of navigation on the layout and outlet \u003Cname\u003E inherits|extends|overrides on a module.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0895",
+      "name": "RemovedSlotContribution",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A slot declares contributes \u003CPoint\u003E, which Screenplay 6 writes outlet \u003CPoint\u003E of navigation.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0896",
+      "name": "RemovedFeatureToolbar",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A feature or module declares toolbar \u003Cname\u003E, which Screenplay 6 writes outlet \u003Cname\u003E extends.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0897",
+      "name": "InvalidOutletDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An outlet line is malformed, names an unknown kind, declares a kind below a layout or template, states a mode on a layout or template, or lists items under inherits.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0898",
+      "name": "InvalidOutletItem",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A line inside an outlet or a contribution is not an item form - default, button, group, filter, tab, stat, item, hide, before or after - or one of those is malformed.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0899",
+      "name": "OutletItemNotInherited",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hide, before or after names an item the inherited outlet does not have.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0900",
+      "name": "OutletItemWrongKind",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An outlet item is of the wrong kind for its outlet - a tab in an actions outlet, a button in a filters outlet.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0901",
+      "name": "OutletFilterParameterUnknown",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A filter sets a parameter the query does not have.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0902",
+      "name": "OutletStatFromListQuery",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A stat reads its value from a query that returns a list - a stat needs a single result.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0903",
+      "name": "UnknownOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A contribute to, or a lower level\u0027s outlet \u003Cname\u003E inherits|extends|overrides, names an outlet no layout or template declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0904",
+      "name": "DuplicateOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A layout, template, module, feature or screen declares the same outlet twice.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0905",
+      "name": "DuplicateOutletItem",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Two items of one outlet share an id, or a lower level\u0027s item repeats the id of an inherited one.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0906",
+      "name": "InvalidScreenFits",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen\u0027s fits line is malformed: it names a place other than dialog, drawer, pane, panel or page, names one twice, the screen has two, or it is a template\u0027s fits slot.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0907",
+      "name": "RunsHookNeedsForm",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook runs a slice whose command has an input nothing supplies without a form.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0908",
+      "name": "HookToScreenlessSlice",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens a State Change slice that has no screen and cannot run - an input needs a form, or the hook names a place to open it in.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0909",
+      "name": "HookSlotNotDeclared",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens in slot a slot the template that offers its outlet does not declare.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0910",
+      "name": "HookSlotAlreadyFilled",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens in slot a slot the screen it is on already fills.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0911",
+      "name": "HookSlotRoleNotFitted",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A hook opens in slot a slot whose role the slice\u0027s screen does not list in what it fits.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0912",
+      "name": "UnboundScreenText",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A component on a screen is bound to nothing and given no value, so all it can show is sample text.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0913",
+      "name": "InvalidFormFieldChoices",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A form field\u0027s choose from query line is malformed, names a query that is not a list query, or shows a field its rows do not have.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0914",
+      "name": "InvalidScreenShow",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A show \u003CScreen\u003E by \u003Cparam\u003E from \u003Celement\u003E.selection line is malformed, stands outside a template slot, or names a screen or element that does not exist.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0915",
+      "name": "EnabledWhenWithoutItem",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A button or item\u0027s enabled when reads item, but it acts for screen, so there is no item to read.",
       "reserved": false,
       "retired": false
     }
@@ -58059,6 +58879,37 @@
           }
         },
         "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "migrate",
+      "requiredParameters": [
+        "from"
+      ],
+      "optionalParameters": [
+        "document",
+        "to"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "The Screenplay version the documents are written in, as a major such as \u00225\u0022."
+          },
+          "to": {
+            "type": "string",
+            "description": "The Screenplay version to end at; defaults to the compiler\u0027s version."
+          },
+          "document": {
+            "type": "string",
+            "description": "A root-relative .play path to migrate alone; the other documents give it its placement and are compiled as they are. With it, the result carries the migrated source."
+          }
+        },
+        "required": [
+          "from"
+        ],
         "additionalProperties": false
       }
     },
@@ -62816,6 +63667,17 @@
       "usage": "screenplay environment [\u003Cfile.play|folder\u003E] [--format text|json]",
       "options": [
         "--format"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "migrate",
+      "usage": "screenplay migrate \u003Cfile.play|folder\u003E --from \u003Cversion\u003E [--to \u003Cversion\u003E] [--dry-run] [--report \u003Cfile\u003E]",
+      "options": [
+        "--dry-run",
+        "--from",
+        "--report",
+        "--to"
       ],
       "aliases": []
     },

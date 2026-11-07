@@ -1,0 +1,67 @@
+// A payroll officer opens the run for a week.
+
+slice StateChange OpenPayrollRun
+  description "A payroll officer opens the run for a week"
+
+  command OpenPayrollRun
+    payrollRunId PayrollRunId identifier
+    year         TimesheetYear
+    week         WeekNumber
+
+    produces PayrollRunOpened
+      for payrollRunId
+      payrollRunId = payrollRunId
+      year         = year
+      week         = week
+
+  event PayrollRunOpened
+    payrollRunId PayrollRunId
+    year         TimesheetYear
+    week         WeekNumber
+
+  screen OpenPayrollRunDialog
+    template PayrollDialog
+      body
+        title $strings.payroll.open.title
+      actions
+        action OpenPayrollRun
+          label $strings.payroll.open.action
+          navigate to PayrollRunsScreen
+
+  specification OpeningARun
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when OpenPayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    then PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+
+  specification RejectingWeekZero
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when OpenPayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 0
+    then error "Weeks are numbered from 1"
+
+  // The role alone is not enough - the claim is part of the module's gate.
+  specification PayrollOfficersOutsideFinanceAreTurnedAway
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Delivery"
+    when OpenPayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    then denied

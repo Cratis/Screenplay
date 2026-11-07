@@ -49,9 +49,9 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Contribution to '{contribution.ContributionPoint}' is explicitly deferred from the backend ESM v1 profile.", contribution.Location);
             }
 
-            foreach (var region in module.Navigation)
+            foreach (var outlet in module.Outlets)
             {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Navigation {(region.Region == NavigationRegionKind.Sidebar ? "sidebar" : "topbar")} of module '{module.Name}' is explicitly deferred from the backend ESM v1 profile.", region.Location);
+                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Outlet '{outlet.Name}' of module '{module.Name}' is explicitly deferred from the backend ESM v1 profile.", outlet.Location);
             }
 
             var address = SemanticAddress.ForModule(_applicationIdentity, module.Name);

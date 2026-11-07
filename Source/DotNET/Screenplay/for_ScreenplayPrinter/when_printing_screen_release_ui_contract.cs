@@ -13,8 +13,9 @@ public class when_printing_screen_release_ui_contract : given.a_printer
           category application
           type masterDetail
           exposes selectedItem String
-          outlet details
-          navigation contributes Navigation
+          slot details
+          navigation
+          outlet Navigation of navigation in navigation
           content
 
         ui profile Web
@@ -38,7 +39,7 @@ public class when_printing_screen_release_ui_contract : given.a_printer
             category feature
             type masterDetail
             exposes selectedInvoice String
-            outlet detail
+            slot detail
             list
             detail
 
@@ -80,7 +81,7 @@ public class when_printing_screen_release_ui_contract : given.a_printer
                   icon table
                   presentation density "compact"
                   exposes selectedInvoice from component invoices.selectedItem
-                  outlet detail
+                  slot detail
                     summary selectedInvoice
                       field invoiceId label "Invoice"
         """;
@@ -96,7 +97,7 @@ public class when_printing_screen_release_ui_contract : given.a_printer
     [Fact] void should_preserve_component_property_binding() => Component.Properties.First().Binding!.BindingKind.ShouldEqual(UiBindingKind.ComponentProperty);
     [Fact] void should_preserve_component_property_null_behavior() => Component.Properties.First().Binding!.NullBehavior.ShouldEqual(UiBindingNullBehavior.Preserve);
     [Fact] void should_preserve_component_literal_property() => ((LiteralExpressionSyntax)Component.Properties.Last().Value!).Value.ShouldEqual("Invoices");
-    [Fact] void should_preserve_component_outlet() => Component.Outlets.Single().Directives.Single().ShouldBeOfExactType<ScreenSummarySyntax>();
+    [Fact] void should_preserve_component_slot() => Component.Slots.Single().Directives.Single().ShouldBeOfExactType<ScreenSummarySyntax>();
     [Fact] void should_preserve_toolbar_presentation() => Toolbar.Items.First().Presentation.Single().Value.ShouldEqual("primary");
     [Fact] void should_preserve_manual_form_columns() => Form.Columns.Last().Label.ShouldEqual("Customer");
     [Fact] void should_preserve_profile_icons() => _roundtrip.Reparsed.Value!.UiProfiles!.Single().Icons.Single().ShouldEqual("scene.icons");

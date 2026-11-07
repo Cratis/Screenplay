@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
 /// <summary>
 /// One revision-checked transcript per construct of the application shell, run on the canonical shell vector: navigation
-/// regions (switching a module's mode, copying the application's items, hierarchical items), toolbar buttons that invoke
+/// outlets (switching a module's mode, copying the application's items, hierarchical items), toolbar buttons that invoke
 /// State Change slices and blueprint template references. Each reads the typed nodes, proposes a typed edit, refuses a stale
 /// revision, applies and reopens the workspace; each rule a proposal breaks is refused with the compiler's own diagnostic.
 /// Sample data packs keep their own transcript in <c>when_authoring_sample_data</c>.
@@ -50,12 +50,12 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
         Apply(empty, Result("propose-source", Arguments(empty, new { operation = "create-document", path = "application.play", stableKey = "application", source = shell })));
         var created = empty.GetProperty("revision").GetString()!;
 
-        foreach (var kind in new[] { "NavigationRegionSyntax", "NavigationItemSyntax", "NavigationTargetSyntax", "NavigationLogoSyntax", "ToolbarButtonSyntax", "TemplateAssignmentSyntax", "ScreenTemplateReferenceSyntax", "SampleDataPackSyntax", "SampleDataSelectionSyntax" })
+        foreach (var kind in new[] { "OutletSyntax", "NavigationItemSyntax", "NavigationTargetSyntax", "NavigationLogoSyntax", "ToolbarButtonSyntax", "TemplateAssignmentSyntax", "ScreenTemplateReferenceSyntax", "SampleDataPackSyntax", "SampleDataSelectionSyntax" })
         {
             _schemaMembers[kind] = [.. Result("syntax-schema", new { kind }).GetProperty("properties").EnumerateObject().Select(property => property.Name)];
         }
 
-        // Navigation regions.
+        // Navigation outlets.
         var opened = Open();
         _staleNavigation = Attempt(opened, Remove(Nodes("NavigationItemSyntax", opened).First()), created);
         _uncopiedOverride = Attempt(opened, AddRegion(opened, "Reports", region => region["mode"] = "Override"));
@@ -66,21 +66,21 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
         }));
 
         opened = Open();
-        _switchedToExtend = ApplyChange(Replace(Region(opened, "Support", "Sidebar"), region => region["mode"] = "Extend"));
+        _switchedToExtend = ApplyChange(Replace(Region(opened, "Support", "sidebar"), region => region["mode"] = "Extend"));
 
         opened = Open();
-        _inheritingRegionExtended = ApplyChange(Replace(Region(opened, "Sales", "Topbar"), region =>
+        _inheritingRegionExtended = ApplyChange(Replace(Region(opened, "Sales", "topbar"), region =>
         {
             region["mode"] = "Extend";
             region["items"] = new JsonArray(Item("sales-reports", "Reports", "Sales"));
         }));
 
         opened = Open();
-        var support = Nodes("NavigationItemSyntax", opened).Single(node => Id(node) == "support" && node.GetProperty("parent").GetProperty("path").GetString()!.StartsWith("/layouts/0/navigation/1", StringComparison.Ordinal));
+        var support = Nodes("NavigationItemSyntax", opened).Single(node => Id(node) == "support" && node.GetProperty("parent").GetProperty("path").GetString()!.StartsWith("/layouts/0/outlets/1", StringComparison.Ordinal));
         _childAdded = ApplyChange(new { operation = "add", parent = support.GetProperty("handle"), member = "children", node = Item("support-tickets", "Tickets", "Support") });
 
         opened = Open();
-        var tickets = Nodes("NavigationItemSyntax", opened).Single(node => Id(node) == "support-tickets" && node.GetProperty("parent").GetProperty("path").GetString()!.StartsWith("/layouts/0/navigation/1", StringComparison.Ordinal));
+        var tickets = Nodes("NavigationItemSyntax", opened).Single(node => Id(node) == "support-tickets" && node.GetProperty("parent").GetProperty("path").GetString()!.StartsWith("/layouts/0/outlets/1", StringComparison.Ordinal));
         _retargetedToMissingModule = Attempt(opened, Replace(tickets, item => item["target"]!.AsObject()["module"] = "Ghost"));
         _childRemoved = ApplyChange(Remove(tickets));
 
@@ -115,7 +115,7 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
         _reopened = File.ReadAllText(Path.Combine(RootPath, "application.play"));
     }
 
-    [Fact] void should_describe_a_navigation_region_in_the_json_schema() => Missing("NavigationRegionSyntax", "mode", "region", "items", "logo").ShouldBeEmpty();
+    [Fact] void should_describe_an_outlet_in_the_json_schema() => Missing("OutletSyntax", "name", "syntaxKind", "mode", "items", "hides", "logo").ShouldBeEmpty();
     [Fact] void should_describe_a_navigation_item_in_the_json_schema() => Missing("NavigationItemSyntax", "id", "title", "icon", "target", "slot", "children").ShouldBeEmpty();
     [Fact] void should_describe_a_navigation_target_in_the_json_schema() => Missing("NavigationTargetSyntax", "module", "feature").ShouldBeEmpty();
     [Fact] void should_describe_the_logo_in_the_json_schema() => Missing("NavigationLogoSyntax", "image", "title").ShouldBeEmpty();
@@ -128,10 +128,10 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
     [Fact] void should_refuse_a_stale_toolbar_revision() => _staleToolbar.GetRawText().ShouldContain("StaleRevision");
     [Fact] void should_refuse_a_stale_template_revision() => _staleTemplate.GetRawText().ShouldContain("StaleRevision");
     [Fact] void should_refuse_to_copy_application_items_that_target_other_modules() => _uncopiedOverride.GetRawText().ShouldContain("PLAY0750");
-    [Fact] void should_add_an_override_region_with_the_copied_items_retargeted_to_the_module() => _overrideAdded.ShouldContain("navigation sidebar overrides\n    item sales title \"Sales\" icon receipt target Reports.Monthly");
+    [Fact] void should_add_an_override_region_with_the_copied_items_retargeted_to_the_module() => _overrideAdded.ShouldContain("outlet sidebar overrides\n    item sales title \"Sales\" icon receipt target Reports.Monthly");
     [Fact] void should_keep_the_hierarchy_when_copying_items() => _overrideAdded.ShouldContain("      item orders title \"Orders\" target Reports.Monthly");
-    [Fact] void should_switch_a_module_region_from_override_to_extend() => _switchedToExtend.ShouldContain("navigation sidebar extends\n    item tickets title \"Tickets\" target Support.Tickets");
-    [Fact] void should_extend_an_inheriting_region_by_adding_its_first_item() => _inheritingRegionExtended.ShouldContain("navigation topbar extends\n    item sales-reports title \"Reports\" target Sales");
+    [Fact] void should_switch_a_module_region_from_override_to_extend() => _switchedToExtend.ShouldContain("outlet sidebar extends\n    item tickets title \"Tickets\" target Support.Tickets");
+    [Fact] void should_extend_an_inheriting_region_by_adding_its_first_item() => _inheritingRegionExtended.ShouldContain("outlet topbar extends\n    item sales-reports title \"Reports\" target Sales");
     [Fact] void should_add_a_sub_item_to_an_application_item() => _childAdded.ShouldContain("target Support\n      item support-tickets title \"Tickets\" target Support");
     [Fact] void should_refuse_an_item_that_targets_a_missing_module() => _retargetedToMissingModule.GetRawText().ShouldContain("PLAY0748");
     [Fact] void should_remove_a_sub_item() => _childRemoved.ShouldNotContain("item support-tickets");
@@ -143,7 +143,7 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
     [Fact] void should_refuse_a_blueprint_no_ui_profile_lists() => _unlistedBlueprint.GetRawText().ShouldContain("PLAY0722");
     [Fact] void should_change_the_version_range_of_a_module_template() => _moduleTemplateRange.ShouldContain("template blueprint Crm Workspace version \"^2.0\"");
     [Fact] void should_change_the_version_range_of_a_screen_template() => _screenTemplateRange.ShouldContain("template blueprint Crm CustomerDetail version \"~1.5.0\"");
-    [Fact] void should_keep_every_applied_edit_after_reopening() => new[] { "navigation sidebar overrides", "navigation sidebar extends", "item sales-reports", "version \"^2.0\"", "version \"~1.5.0\"" }.Where(text => !_reopened.Contains(text, StringComparison.Ordinal)).ShouldBeEmpty();
+    [Fact] void should_keep_every_applied_edit_after_reopening() => new[] { "outlet sidebar overrides", "outlet sidebar extends", "item sales-reports", "version \"^2.0\"", "version \"~1.5.0\"" }.Where(text => !_reopened.Contains(text, StringComparison.Ordinal)).ShouldBeEmpty();
     [Fact] void should_keep_the_sample_data_the_ui_profile_selects() => _reopened.ShouldContain("sample data\n    active NordicDemo");
 
     string[] Missing(string kind, params string[] members) => [.. members.Where(member => !_schemaMembers[kind].Contains(member))];
@@ -205,16 +205,27 @@ public class when_authoring_the_screen_shell : given.an_authoring_connection
     JsonElement Region(JsonElement opened, string module, string region)
     {
         var modulePath = Nodes("ModuleSyntax", opened).Single(node => node.GetProperty("name").GetString() == module).GetProperty("handle").GetProperty("path").GetString();
-        return Nodes("NavigationRegionSyntax", opened).Single(node => node.GetProperty("parent").GetProperty("path").GetString() == modulePath && node.GetProperty("node").GetProperty("region").GetString() == region);
+        return Nodes("OutletSyntax", opened).Single(node => node.GetProperty("parent").GetProperty("path").GetString() == modulePath && node.GetProperty("node").GetProperty("name").GetString() == region);
     }
 
     object AddRegion(JsonElement opened, string module, Action<JsonObject> edit)
     {
         var parent = Nodes("ModuleSyntax", opened).Single(node => node.GetProperty("name").GetString() == module);
-        var application = Nodes("NavigationRegionSyntax", opened).Single(node => node.GetProperty("parent").GetProperty("path").GetString()!.StartsWith("/layouts", StringComparison.Ordinal) && node.GetProperty("node").GetProperty("region").GetString() == "Sidebar");
+        var application = Nodes("OutletSyntax", opened).Single(node => node.GetProperty("parent").GetProperty("path").GetString()!.StartsWith("/layouts", StringComparison.Ordinal) && node.GetProperty("node").GetProperty("name").GetString() == "sidebar");
+
+        // A module changes the layout's outlet: it carries no kind, slot or logo, and its items are its own, not defaults.
         var region = JsonNode.Parse(application.GetProperty("node").GetRawText())!.AsObject();
+        region.Remove("syntaxKind");
+        region.Remove("slot");
+        region.Remove("subject");
+        region.Remove("logo");
+        foreach (var item in region["items"]!.AsArray().Select(entry => entry!.AsObject()))
+        {
+            item.Remove("isDefault");
+        }
+
         edit(region);
-        return new { operation = "add", parent = parent.GetProperty("handle"), member = "navigation", node = region };
+        return new { operation = "add", parent = parent.GetProperty("handle"), member = "outlets", node = region };
     }
 
     /// <summary>Proposes the operation against the given revision (the opened one unless a stale one is passed) and returns the refusal, or an accepted marker once it has discarded the proposal.</summary>

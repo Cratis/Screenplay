@@ -1,0 +1,12 @@
+// Sales' own vocabulary: words only Sales uses. The shared kernel (Shared/) holds what every context means the same way.
+
+// Why a decision was taken: shown to the shopper and kept for the audit trail
+concept DecisionReason : String
+  validate
+    not empty  message "A reason is required"
+    max 280    message "A reason has at most 280 characters"
+
+// The market an order belongs to: Sales keeps its figures per market
+concept Market : String
+  validate
+    length == 2  message "A market is a two-letter country code"

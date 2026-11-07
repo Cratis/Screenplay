@@ -41,6 +41,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["layout"] = ("LayoutDecl", "templates.md"),
             ["module"] = ("Module", "slices.md"),
             ["navigation"] = ("NavigationRegionDecl", "navigation.md"),
+            ["outlet"] = ("OutletChangeDecl", "outlets.md"),
             ["on"] = ("InteractionBinding", "interactions.md"),
             ["operation"] = ("OperationDecl", "grammar.md"),
             ["persona"] = ("PersonaDecl", "personas.md"),

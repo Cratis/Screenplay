@@ -43,6 +43,8 @@ public class when_closing_persona_callers : given.persona_documents
                   value String
                   produces Created
                     value = value
+                screen Write
+                  action Create
                 specification InheritedAllowed
                   given caller as Healthy
                   when Inherited value = "ok"

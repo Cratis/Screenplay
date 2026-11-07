@@ -409,16 +409,18 @@ theme NordicDark
 layout AppShell
   category Shell
   topbar
-  navigation contributes Navigation
-  content
+  navigation
+  outlet Navigation of navigation in navigation
+  // A slot's role says what goes in it: the content slot holds whole pages, is part of the address and is the shell's main slot.
+  content page routed primary
   footer
 
   // The application's own navigation. A module inherits these items, extends them or overrides them.
-  navigation topbar
+  outlet topbar of navigation
     logo image "/assets/billing-hub.svg" title "Billing Hub"
-    item invoicing title "Invoicing" icon receipt target Invoicing
-  navigation sidebar
-    item invoicing title "Invoicing" icon receipt target Invoicing
+    default invoicing title "Invoicing" icon receipt target Invoicing
+  outlet sidebar of navigation
+    default invoicing title "Invoicing" icon receipt target Invoicing
       item invoices title "Invoices" target Invoicing.InvoiceManagement
       item payments title "Payments" target Invoicing.Payments
       item portal title "Customer portal" target Invoicing.CustomerPortal slot content
@@ -772,10 +774,10 @@ module Invoicing
     icon receipt
     presentation primary
     group "Billing"
-    destination outlet detail
+    destination slot detail
 
   // The sidebar keeps the application's items and adds the module's own; the topbar is inherited as is.
-  navigation sidebar extends
+  outlet sidebar extends
     item auditing title "Auditing" icon shield target Invoicing.Auditing
 
   // Screen templates fit a slot of the shell; dialog templates open over it.
@@ -783,8 +785,9 @@ module Invoicing
     fits slot content
     category Workspace
 
-    sidebar
-    main
+    // The sidebar is a pane addressed by the selected invoice, and stays empty until one is chosen.
+    sidebar pane routed by invoiceId optional
+    main panel
 
     arrangement flow
       row gap 16
@@ -825,7 +828,8 @@ module Invoicing
     description "Invoices grouped into columns by payment state"
     scopes slice
 
-    toolbar contributes BoardActions
+    toolbar
+    outlet BoardActions of navigation in toolbar
     due
     overdue
     settled
@@ -849,11 +853,28 @@ module Invoicing
 
     toolbar
     items
+    // The selected row's details open in a routed pane; a hook can open a slice's screen in the docked panel.
+    detail pane routed by invoiceId optional
+    activity panel optional
+
+    // Outlets are the item lists the template offers; features and screens inherit, extend or override them.
+    outlet actions of actions in toolbar
+      default refresh title "Refresh" icon refresh runs refresh
+      default export title "Export" icon download
+    outlet filters of filters in toolbar
+    outlet stats of stats in toolbar
+    outlet rowActions of actions for item in items
+    outlet views of tabs in items
 
   dialog template CommandDialog
     category Dialog
     body
     actions
+
+    // A dialog's buttons are an actions outlet; the built-ins need no slice.
+    outlet actions of actions in actions
+      default cancel title "Cancel" runs close
+      default confirm title "Confirm" emphasis primary runs submit
 
     on leave
       refresh ListInvoices
@@ -867,6 +888,8 @@ module Invoicing
     field lines          compose using BuildInvoiceLines
     field billingContact label "Billing contact"
     field currency       from defaultCurrency label "Currency"
+      // A picker over the rows a list query returns. A field whose concept keys a read model one list query returns is a picker without this line.
+      choose from query ListExchangeRates show currency
     field paymentTerms
     field dueDate        label "Due date"
     field isProForma     label "Pro forma"
@@ -921,6 +944,33 @@ module Invoicing
       ```
     description "Registering and managing the lifecycle of invoices"
     authorize IsInvoicingStaff
+
+    // The invoice list's buttons, filters and counters, for every screen of the feature.
+    outlet actions extends
+      hide export
+      // A hook opens its slice's screen in the slice's first fit the page has free, unless it says 'opens dialog|drawer|in slot <name>'.
+      button register title "Register invoice" slice RegisterInvoice emphasis primary icon plus opens dialog
+        before refresh
+      // 'for item' waits for a selected row; the row supplies the command's identifier.
+      button cancel title "Cancel invoice" slice CancelInvoice for item
+      group bulk title "Bulk" icon layers
+        button batch title "Process a batch" slice ProcessInvoiceBatch
+        button archive title "Archive old invoices" slice ArchiveOldInvoices
+          confirm "Archive every invoice older than the retention period?"
+    outlet filters extends
+      filter status title "Status" sets ListInvoices.status
+      filter customer title "Customer" sets ListInvoices.customerId
+    outlet stats extends
+      stat total title "Invoices" value from GetInvoiceSummary.totalCount
+      stat drafts title "Drafts" value from GetInvoiceSummary.draftCount
+    outlet rowActions extends
+      // 'runs' issues the command directly, without a form: every input resolves from the row.
+      button remind title "Remind" slice SendInvoiceReminder
+        runs
+        enabled when item.status == "overdue"
+        confirm "Send the customer a reminder?"
+      button tag title "Tag" slice TagInvoice opens drawer
+      button contact title "Billing contact" slice UpdateBillingContact opens in slot activity
 
     uses RefreshOnEnter
       query ListInvoices
@@ -1170,6 +1220,8 @@ module Invoicing
         unique event InvoiceRegistered
 
       screen RegisterInvoiceScreen
+        // Where the slice's screen fits, in order of preference; a hook that names no place picks the first one free.
+        fits dialog, drawer, page
         description "Issue an invoice for the customer's delivered work"
         template CommandDialog
           body
@@ -1459,6 +1511,7 @@ module Invoicing
           taggedAt DateTime   = $context.occurred
 
       screen TagInvoiceScreen
+        fits drawer, dialog
         template CommandDialog
           body
             title "Tag invoice"
@@ -1744,6 +1797,7 @@ module Invoicing
         email EmailAddress
 
       screen UpdateBillingContactScreen
+        fits panel, dialog
         template CommandDialog
           body
             title "Billing contact"
@@ -1776,6 +1830,29 @@ module Invoicing
             name  = "Grace Hopper"
             email = "not-an-email"
         then error "Must be a valid email address"
+
+    // No screen: the row's 'Remind' hook runs it, because its one input comes from the selected row.
+    slice StateChange SendInvoiceReminder
+      description "Reminds the customer about an overdue invoice"
+
+      command SendInvoiceReminder
+        invoiceId InvoiceId identifier
+
+        authorize CanManageInvoice
+
+        produces InvoiceReminderRequested
+          for invoiceId
+
+      event InvoiceReminderRequested
+
+      specification SendingAReminder
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when SendInvoiceReminder
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then InvoiceReminderRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
 
     slice StateView InvoiceList
       description "The staff's list of every invoice"
@@ -1872,7 +1949,7 @@ module Invoicing
           property rowActions none
           icon invoice
           exposes selectedInvoice from component invoiceGrid.selected
-          outlet detail
+          slot detail
             summary selectedInvoice
               field invoiceNumber label $strings.invoices.fields.number
         section registerInvoiceInput
@@ -1899,6 +1976,9 @@ module Invoicing
                 raise BillingDirectorySyncRequested
                   on success
                     notify info "Synchronization requested"
+          // The routed pane shows the selected row's invoice; a shared link brings it back.
+          detail
+            show InvoiceDetails by invoiceId from InvoiceListReadModel.selection
           items
             table InvoiceListReadModel
               column invoiceNumber label $strings.invoices.fields.number
@@ -1918,6 +1998,10 @@ module Invoicing
         ```typescript
         export const statusLabel = (status: string) => status.toUpperCase();
         ```
+        outlet actions inherits
+        outlet views extends
+          tab overview title "Overview" shows InvoiceList
+            before collections
 
       specification ListingARegisteredInvoice
         given caller
@@ -2607,6 +2691,10 @@ module Invoicing
       label $strings.navigation.collections
       order 20
 
+    // Payments adds its own view of the invoice list without the list's feature naming it.
+    contribute to views
+      tab collections title "Collections" shows CollectionsBoard
+
     slice StateChange RecordPayment
       description "Records money received against an invoice"
 
@@ -3025,7 +3113,7 @@ module Invoicing
         contribute to BoardActions order 10
           action RecordPayment
             navigate to InvoiceDetails
-              outlet detail
+              slot detail
 
       specification MovingAnInvoiceFromDueToOverdue
         given caller
@@ -3844,6 +3932,74 @@ module Invoicing
         then InvoiceSentPublished
           sentAt  = "2026-09-01T09:00:00Z"
           channel = "sent"
+
+  // Reserve invoice numbers with private decision state, not another list or query.
+  form ReserveInvoiceNumberForm for ReserveInvoiceNumber
+    field invoiceId label "Invoice"
+    field invoiceNumber label "Invoice number"
+
+  feature InvoiceReservations
+    authorize IsInvoicingStaff
+
+    contribute to Navigation
+      navigate to ReserveInvoiceNumberScreen
+      label "Reserve an invoice number"
+      order 20
+      group "Billing"
+      destination dialog CommandDialog
+
+    slice StateChange ReserveInvoiceNumber
+      command ReserveInvoiceNumber
+        invoiceId InvoiceId identifier
+        invoiceNumber InvoiceNumber
+        reads InvoiceReservationState as reservation by invoiceId
+        validate
+          require reservation.isReserved == false
+        produces InvoiceNumberReserved
+          for invoiceId
+          invoiceNumber = invoiceNumber
+
+      event InvoiceNumberReserved
+        invoiceNumber InvoiceNumber
+
+      event InvoiceNumberReservationReleased
+
+      // Replayed for the command, with no query or screen data surface.
+      readmodel InvoiceReservationState
+        passive
+        invoiceId InvoiceId key
+        isReserved Bool
+
+      projection InvoiceReservations => InvoiceReservationState
+        from InvoiceRegistered
+          invoiceId = $eventSourceId
+          isReserved = false
+        from InvoiceNumberReserved
+          isReserved = true
+        from InvoiceNumberReservationReleased
+          isReserved = false
+
+      screen ReserveInvoiceNumberScreen
+        template CommandDialog
+          body
+            title "Reserve an invoice number"
+          actions
+            action ReserveInvoiceNumber
+              label "Reserve"
+
+      specification ReservingAnInvoiceNumber
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given InvoiceRegistered
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          invoiceNumber = "INV-2026-000"
+        when ReserveInvoiceNumber
+          invoiceId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          invoiceNumber = "INV-2026-001"
+        then InvoiceNumberReserved
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          invoiceNumber = "INV-2026-001"
 
 // ============================================================
 // A public module - no sign-in needed

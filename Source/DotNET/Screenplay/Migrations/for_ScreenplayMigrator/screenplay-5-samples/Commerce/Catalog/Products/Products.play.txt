@@ -1,0 +1,15 @@
+// Placed in module Catalog by Catalog.play, so this file's top level is the
+// module body. The feature gate ANDs onto every command and query in it -
+// including those of the nested Repricing feature.
+feature Products
+  description "Registering, listing and retiring the products the shop sells"
+  authorize IsMerchandiser
+
+  contribute to Navigation
+    navigate to ProductList
+    label $strings.navigation.products
+    order 20
+
+  // Every slice file next to this one, then the nested feature's own file.
+  import "*.play"
+  import "Repricing/Repricing.play"

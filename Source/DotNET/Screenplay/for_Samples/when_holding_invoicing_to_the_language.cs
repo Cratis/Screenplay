@@ -49,7 +49,7 @@ public class when_holding_invoicing_to_the_language : Specification
         (typeof(SpecificationInvocationSyntax), "Samples/AcmeCommerce/Sales/model/approval.play", "Invocation expectations state what an automation slice's own reaction invokes; the Acme Commerce automations show it, where each slice is specified on its own."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(TemplateOutletSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
+        (typeof(TemplateSlotSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
     ];
 
     // No production error/trivia SyntaxNode kinds exist today. Never use this list for authoring constructs.

@@ -34,6 +34,11 @@ public abstract partial class ScreenplaySyntaxWalker
                 VisitScreenDirective(directive);
             }
         }
+
+        foreach (var outlet in syntax.Outlets)
+        {
+            VisitOutlet(outlet);
+        }
     }
 
     /// <summary>
@@ -71,6 +76,9 @@ public abstract partial class ScreenplaySyntaxWalker
                 break;
             case ScreenTitleSyntax title:
                 VisitScreenTitle(title);
+                break;
+            case ScreenShowSyntax show:
+                VisitNode(show);
                 break;
             case ScreenTableSyntax table:
                 VisitScreenTable(table);
@@ -258,10 +266,10 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUiBinding(exposed.Binding);
         }
         foreach (var presentation in syntax.Presentation) VisitNode(presentation);
-        foreach (var outlet in syntax.Outlets)
+        foreach (var slot in syntax.Slots)
         {
-            VisitNode(outlet);
-            foreach (var directive in outlet.Directives) VisitScreenDirective(directive);
+            VisitNode(slot);
+            foreach (var directive in slot.Directives) VisitScreenDirective(directive);
         }
         foreach (var behavior in syntax.Behaviors) VisitBehavior(behavior);
         foreach (var uses in syntax.UsedBehaviors) VisitUsesBehavior(uses);
@@ -293,6 +301,7 @@ public abstract partial class ScreenplaySyntaxWalker
                 VisitUiBinding(parameter.Binding);
             }
             foreach (var presentation in item.Presentation) VisitNode(presentation);
+            if (item.EnabledWhen is not null) VisitCondition(item.EnabledWhen);
         }
 
         foreach (var button in syntax.Buttons)
@@ -308,9 +317,15 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitToolbarButton(ToolbarButtonSyntax syntax)
     {
         VisitNode(syntax);
+        VisitOutletPosition(syntax);
         if (syntax.Authorize is not null)
         {
             VisitAuthorize(syntax.Authorize);
+        }
+
+        if (syntax.EnabledWhen is not null)
+        {
+            VisitCondition(syntax.EnabledWhen);
         }
     }
 

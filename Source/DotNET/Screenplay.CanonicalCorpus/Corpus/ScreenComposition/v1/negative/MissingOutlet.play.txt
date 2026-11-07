@@ -3,4 +3,4 @@ module Workspaces
     slice StateView WorkItemList
       screen WorkItemList
         navigate to WorkItemList
-          outlet details
+          slot details
