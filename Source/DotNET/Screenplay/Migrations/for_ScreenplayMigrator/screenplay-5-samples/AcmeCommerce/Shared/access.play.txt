@@ -1,0 +1,90 @@
+// ============================================================
+// Who may do what: policies, then the personas that hold them
+//
+// A screen is gated by policies; the persona holding them is the row the event model board draws the screen in.
+// ============================================================
+
+policy IsAuthenticated
+  require authenticated
+
+policy IsShopper
+  require role "Shopper"
+
+policy IsMerchandiser
+  require role "Merchandiser"
+
+policy IsSalesRep
+  require role "SalesRep"
+
+policy IsSalesManager
+  require role "SalesManager"
+
+// What a module admits: the persona who works there. A sales manager may do what a rep may.
+policy CanCurateCatalog
+  require role "Merchandiser"
+
+policy CanWorkOrders
+  require role "SalesRep"
+    or role "SalesManager"
+
+policy IsBuyer
+  require role "Buyer"
+
+policy IsWarehouseClerk
+  require role "WarehouseClerk"
+
+policy CanBuy
+  require role "Buyer"
+
+policy CanWorkWarehouse
+  require role "WarehouseClerk"
+
+persona Shopper
+  description "A signed-in customer who browses, fills a basket and checks out"
+  goal "Find the right product quickly"
+  goal "See the total price before committing"
+  goal "Check out in under a minute"
+  policy IsAuthenticated
+  policy IsShopper
+
+persona Merchandiser
+  description "Curates the catalogue: drafts, describes, prices and approves products"
+  goal "Keep the catalogue accurate and appealing"
+  goal "Price products consistently"
+  goal "Retire products without breaking open orders"
+  policy IsAuthenticated
+  policy IsMerchandiser
+  policy CanCurateCatalog
+
+persona SalesRep
+  description "Works incoming orders"
+  goal "Confirm routine orders quickly"
+  goal "Never lose an order that needs attention"
+  policy IsAuthenticated
+  policy IsSalesRep
+  policy CanWorkOrders
+
+persona SalesManager
+  description "Approves what reps may not"
+  goal "Decide the orders that need approval"
+  goal "Keep the reps unblocked"
+  policy IsAuthenticated
+  policy IsSalesManager
+  policy CanWorkOrders
+
+persona Buyer
+  description "Buys from suppliers: replenishment and purchase orders"
+  goal "Replenish stock before it runs out"
+  goal "Keep supplier details current"
+  policy IsAuthenticated
+  policy IsBuyer
+  policy CanBuy
+
+persona WarehouseClerk
+  description "Receives, picks, packs and dispatches"
+  goal "Pick and pack paid orders without mistakes"
+  goal "Dispatch every paid order the same day"
+  goal "Receive deliveries against purchase orders"
+  policy IsAuthenticated
+  policy IsWarehouseClerk
+  policy CanWorkWarehouse

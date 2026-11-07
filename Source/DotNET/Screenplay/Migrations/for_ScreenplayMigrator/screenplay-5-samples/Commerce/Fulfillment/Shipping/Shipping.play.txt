@@ -1,0 +1,10 @@
+feature Shipping
+  description "Packing paid orders and handing them to a carrier"
+  authorize IsWarehouseClerk
+
+  contribute to Navigation
+    navigate to ShipmentQueue
+    label $strings.navigation.shipments
+    order 60
+
+  import "*.play"

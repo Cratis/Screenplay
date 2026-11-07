@@ -1,0 +1,36 @@
+layout AppShell
+  category Shell
+  navigation contributes Navigation
+  content
+
+  arrangement flow
+    row
+      navigation width 240
+      content grow
+
+module Shop
+  screen template MasterDetail
+    fits slot content
+    category Workspace
+    outlet detail
+    main
+
+    arrangement flow
+      row
+        main grow
+
+  contribute to Navigation
+    navigate to OrderList
+    label "Orders"
+    // The orders open in the template's detail region, not in the content.
+    destination outlet detail
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders

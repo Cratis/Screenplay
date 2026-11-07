@@ -1,0 +1,88 @@
+// A filled run is handed to the external payroll provider.
+
+slice StateChange ExportPayrollRun
+  description "Hands a filled run to the payroll provider"
+
+  command ExportPayrollRun
+    payrollRunId PayrollRunId identifier
+
+    reads PayrollRun by payrollRunId
+
+    validate
+      require PayrollRun.lineCount > 0
+        message $strings.payroll.validation.emptyRun
+      require PayrollRun.exported == false
+        severity warning
+        message $strings.payroll.validation.alreadyExported
+
+    produces PayrollRunExported
+      for payrollRunId
+      payrollRunId = payrollRunId
+      lineCount    = PayrollRun.lineCount
+      totalHours   = PayrollRun.totalHours
+
+  event PayrollRunExported
+    payrollRunId PayrollRunId
+    lineCount    Int
+    totalHours   Decimal
+
+  screen ExportPayrollRunDialog
+    uses ConfirmThenExecute
+      command ExportPayrollRun
+      message $strings.payroll.export.confirm
+    template PayrollDialog
+      body
+        title $strings.payroll.export.title
+        data PayrollRun via query PayrollRunById by payrollRunId
+        summary PayrollRun
+          field lineCount  label $strings.payroll.fields.lines
+          field totalHours label $strings.payroll.fields.totalHours
+      actions
+        action ExportPayrollRun
+          label $strings.payroll.export.action
+
+  specification ExportingAFilledRun
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    when ExportPayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+    then PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+
+  specification RejectingAnEmptyRun
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    when ExportPayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+    then error "$strings.payroll.validation.emptyRun"
+
+  specification ConsultantsCannotExportPayroll
+    given caller
+      authenticated
+      role "Consultant"
+    when ExportPayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+    then denied

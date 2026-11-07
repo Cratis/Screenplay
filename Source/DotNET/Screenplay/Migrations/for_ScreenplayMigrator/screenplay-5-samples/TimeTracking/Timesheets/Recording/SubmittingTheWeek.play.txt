@@ -1,0 +1,90 @@
+// At the end of the week the consultant hands it in for approval.
+
+slice StateChange SubmitTimesheet
+  description "A consultant hands the week in for approval"
+
+  command SubmitTimesheet
+    timesheetId TimesheetId identifier
+
+    // State built by the reducer in Reporting/TotallingTheWeek.play.
+    reads TimesheetSummary by timesheetId
+
+    validate
+      require TimesheetSummary.totalHours > 0
+        message $strings.timesheets.validation.nothingToSubmit
+
+    produces TimesheetSubmitted
+      for timesheetId
+      timesheetId  = timesheetId
+      consultantId = TimesheetSummary.consultantId
+      totalHours   = TimesheetSummary.totalHours
+
+  event TimesheetSubmitted
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    totalHours   WeeklyHours
+
+  screen SubmitTimesheetDialog
+    uses ConfirmThenExecute
+      command SubmitTimesheet
+      message $strings.timesheets.submit.confirm
+    template TimesheetDialog
+      body
+        title $strings.timesheets.submit.title
+        data TimesheetSummary via query TimesheetById by timesheetId
+        summary TimesheetSummary
+          field totalHours    label $strings.timesheets.fields.totalHours
+          field billableHours label $strings.timesheets.fields.billableHours
+      actions
+        action SubmitTimesheet
+          label $strings.timesheets.submit.action
+          navigate to MyTimesheetsScreen
+
+  specification SubmittingAWeek
+    given caller
+      authenticated
+      role "Consultant"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    given TimeRecorded
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Data mapping workshop"
+    when SubmitTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 7.5
+
+  specification RejectingAnEmptyWeek
+    given caller
+      authenticated
+      role "Consultant"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when SubmitTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then error "$strings.timesheets.validation.nothingToSubmit"
+
+  specification ManagersCannotSubmitForConsultants
+    given caller
+      authenticated
+      role "EngagementManager"
+    when SubmitTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then denied

@@ -1,0 +1,47 @@
+layout AppShell
+  category Shell
+  topbar
+  navigation
+  content
+
+  // The application's own navigation. A module inherits these items, extends them or overrides them.
+  navigation topbar
+    logo image "/assets/shop.svg" title "Shop"
+    item orders title "Orders" icon receipt target Shop
+    // Registering a customer is an action, not a destination.
+    button register title "Register customer" slice Shop.Customers.RegisterCustomer emphasis primary icon plus
+  navigation sidebar
+    item orders title "Orders" icon receipt target Shop.Orders
+      item open title "Open orders" target Shop.Orders
+
+  arrangement flow
+    column
+      topbar height 56
+      row
+        navigation width 240
+        content grow
+
+module Shop
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders
+
+  feature Customers
+    slice StateChange RegisterCustomer
+      command RegisterCustomer
+        customerId Uuid identifier
+        name String
+        produces CustomerRegistered
+          name = name
+
+      event CustomerRegistered
+        name String
+
+      screen RegisterCustomer
+        title "Register a customer"

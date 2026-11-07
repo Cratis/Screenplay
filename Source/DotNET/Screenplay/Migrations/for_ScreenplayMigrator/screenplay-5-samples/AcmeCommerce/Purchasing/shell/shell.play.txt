@@ -1,0 +1,40 @@
+// ============================================================
+// Purchasing: the application shell and look - a dense buyer desk with a labelled icon rail.
+//
+// Each Acme domain is its own application: its own logo (see navigation.play), theme, accent, colour scheme and menu, on the shared
+// platform (Cratis.Components + the Default blueprint's AppShell, ^1). The profile lists only the packages every Stage ships, so a screen
+// built from stock components plays everywhere, Studio's Play included.
+// ============================================================
+
+theme AcmePurchasing
+  compatible with Cratis.Components
+  compatible with Cratis.Blueprint.Default
+  compatible with PrimeReact
+  compatible with Acme.Commerce
+
+ui profile Purchasing
+  target platform web
+  target size regular
+  theme AcmePurchasing
+
+  packages
+    Cratis.Components
+    Cratis.Blueprint.Default
+
+  root template blueprint Cratis.Blueprint.Default AppShell version "^1"
+    option navigationMode slimPlus
+    option menuTheme light
+
+  identity
+    name "Acme Purchasing"
+    logo image "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGNTlFMEIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNCNDUzMDkiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMCIgZmlsbD0idXJsKCNnKSIvPjxwYXRoIGQ9Ik0xMCAyMGEyIDIgMCAwIDEgMi0yaDI0YTIgMiAwIDAgMSAyIDJ2MjJIMTB6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTM4IDI2aDguNmEyIDIgMCAwIDEgMS42LjhsNS4yIDYuOWEyIDIgMCAwIDEgLjQgMS4yVjQySDM4eiIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjIxIiBjeT0iNDUiIHI9IjUuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjQjQ1MzA5IiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSI0NCIgY3k9IjQ1IiByPSI1LjIiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI0I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHBhdGggZD0iTTQyIDI5LjVoNC40bDMuNCA0LjVINDJ6IiBmaWxsPSIjQjQ1MzA5IiBvcGFjaXR5PSIuNiIvPjxwYXRoIGQ9Ik0xNiAyNmgxNE0xNiAzMWg5IiBzdHJva2U9IiNCNDUzMDkiIHN0cm9rZS13aWR0aD0iMi42IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9Ii41NSIvPjwvc3ZnPgo="
+    show name false
+
+  appearance
+    color scheme light
+    accent "#B45309"
+    corners default
+    font ibm-plex-sans
+
+  sample data
+    active AcmePurchasing

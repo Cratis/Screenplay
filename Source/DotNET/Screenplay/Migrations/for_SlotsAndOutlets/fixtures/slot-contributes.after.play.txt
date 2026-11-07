@@ -1,0 +1,34 @@
+layout AppShell
+  category Shell
+  // Modules and features add their destinations to the navigation slot.
+  navigation
+  outlet Navigation of navigation in navigation
+  content
+
+  arrangement flow
+    row
+      navigation width 240
+      content grow
+
+module Shop
+  screen template Board
+    fits slot content
+    category Workspace
+    toolbar
+    outlet BoardActions of navigation in toolbar
+    lanes
+
+    arrangement flow
+      column
+        toolbar height 48
+        lanes grow
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders

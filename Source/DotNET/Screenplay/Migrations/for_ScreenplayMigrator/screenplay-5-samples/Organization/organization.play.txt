@@ -1,0 +1,545 @@
+// ============================================================
+// Organization - events projected onto a property graph
+//
+// People belong to groups, groups nest inside groups, and a
+// person can hold several roles in the same group. Nobody
+// writes to the graph: every node and edge is what the events
+// of the organization leave behind.
+//
+// Verify it with:  screenplay --warnaserror Samples/Organization
+// ============================================================
+
+command reads protected
+
+reaction batches atomic
+
+time zone configurable default "Europe/Oslo"
+
+concept PersonId     : Uuid
+concept GroupId      : Uuid
+concept AssignmentId : Uuid
+concept PersonName   : String
+concept GroupName    : String
+concept RoleName     : String
+
+policy IsAdministrator
+  require role "Administrator"
+
+persona Administrator
+  description "Keeps the organization chart up to date"
+  goal "Know who belongs where, and in which role"
+  policy IsAdministrator
+
+module Organization
+  description "People, groups and the roles people hold in them"
+
+  dialog template Dialog
+    category Dialog
+    body
+    actions
+
+  form RegisterPersonInput for RegisterPerson
+    field personId
+    field name
+
+  form CreateGroupInput for CreateGroup
+    field groupId
+    field name
+
+  form NestGroupInput for NestGroup
+    field groupId
+    field parentGroupId
+
+  form AddMemberInput for AddMember
+    field personId
+    field groupId
+
+  form RemoveMemberInput for RemoveMember
+    field personId
+    field groupId
+
+  form AssignRoleInput for AssignRole
+    field personId
+    field groupId
+    field assignmentId
+    field role
+
+  form RevokeRoleInput for RevokeRole
+    field personId
+    field groupId
+    field assignmentId
+
+  form RemovePersonInput for RemovePerson
+    field personId
+
+  feature People
+    description "The people of the organization"
+
+    slice StateChange RegisterPerson
+
+      command RegisterPerson
+        personId PersonId identifier
+        name     PersonName
+
+        authorize IsAdministrator
+
+        validate
+          name not empty  message "A person needs a name"
+
+        produces PersonRegistered
+          for personId
+          name = name
+
+      event PersonRegistered
+        name PersonName
+
+      screen RegisterPerson
+        template Dialog
+          body
+            title "Register a person"
+          actions
+            action RegisterPerson
+
+      specification RegisteringAPerson
+        given caller
+          authenticated
+          role "Administrator"
+        when RegisterPerson
+          personId = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name     = "Ada Lovelace"
+        then PersonRegistered
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name = "Ada Lovelace"
+
+      specification RejectingAPersonWithNoName
+        given caller
+          authenticated
+          role "Administrator"
+        when RegisterPerson
+          personId = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name     = ""
+        then error "A person needs a name"
+
+    slice StateChange RemovePerson
+
+      command RemovePerson
+        personId PersonId identifier
+
+        authorize IsAdministrator
+
+        produces PersonRemoved
+          for personId
+
+      event PersonRemoved
+
+      screen RemovePerson
+        template Dialog
+          body
+            title "Remove a person"
+          actions
+            action RemovePerson
+
+      specification RemovingAPerson
+        given caller
+          authenticated
+          role "Administrator"
+        when RemovePerson
+          personId = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+        then PersonRemoved
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+
+  feature Groups
+    description "The groups people belong to, and how groups nest"
+
+    slice StateChange CreateGroup
+
+      command CreateGroup
+        groupId GroupId identifier
+        name    GroupName
+
+        authorize IsAdministrator
+
+        validate
+          name not empty  message "A group needs a name"
+
+        produces GroupCreated
+          for groupId
+          name = name
+
+      event GroupCreated
+        name GroupName
+
+      screen CreateGroup
+        template Dialog
+          body
+            title "Create a group"
+          actions
+            action CreateGroup
+
+      specification CreatingAGroup
+        given caller
+          authenticated
+          role "Administrator"
+        when CreateGroup
+          groupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          name    = "Engineering"
+        then GroupCreated
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          name = "Engineering"
+
+    slice StateChange NestGroup
+
+      command NestGroup
+        groupId       GroupId identifier
+        parentGroupId GroupId
+
+        authorize IsAdministrator
+
+        produces GroupNested
+          for groupId
+          parentGroupId = parentGroupId
+
+      event GroupNested
+        parentGroupId GroupId
+
+      screen NestGroup
+        template Dialog
+          body
+            title "Put a group inside another"
+          actions
+            action NestGroup
+
+      specification NestingAGroup
+        given caller
+          authenticated
+          role "Administrator"
+        when NestGroup
+          groupId       = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          parentGroupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then GroupNested
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          parentGroupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+  feature Membership
+    description "Who belongs to which group, and in which role"
+
+    slice StateChange AddMember
+
+      command AddMember
+        personId PersonId identifier
+        groupId  GroupId
+
+        authorize IsAdministrator
+
+        produces MemberAdded
+          for personId
+          groupId = groupId
+
+      event MemberAdded
+        groupId GroupId
+
+      screen AddMember
+        template Dialog
+          body
+            title "Add a member"
+          actions
+            action AddMember
+
+      specification AddingAMember
+        given caller
+          authenticated
+          role "Administrator"
+        when AddMember
+          personId = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId  = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then MemberAdded
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+    slice StateChange RemoveMember
+
+      command RemoveMember
+        personId PersonId identifier
+        groupId  GroupId
+
+        authorize IsAdministrator
+
+        produces MemberRemoved
+          for personId
+          groupId = groupId
+
+      event MemberRemoved
+        groupId GroupId
+
+      screen RemoveMember
+        template Dialog
+          body
+            title "Remove a member"
+          actions
+            action RemoveMember
+
+      specification RemovingAMember
+        given caller
+          authenticated
+          role "Administrator"
+        when RemoveMember
+          personId = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId  = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then MemberRemoved
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+    slice StateChange AssignRole
+
+      command AssignRole
+        personId     PersonId identifier
+        groupId      GroupId
+        assignmentId AssignmentId
+        role         RoleName
+
+        authorize IsAdministrator
+
+        validate
+          role not empty  message "A role needs a name"
+
+        produces RoleAssigned
+          for personId
+          groupId      = groupId
+          assignmentId = assignmentId
+          role         = role
+
+      event RoleAssigned
+        groupId      GroupId
+        assignmentId AssignmentId
+        role         RoleName
+
+      screen AssignRole
+        template Dialog
+          body
+            title "Assign a role"
+          actions
+            action AssignRole
+
+      specification AssigningARole
+        given caller
+          authenticated
+          role "Administrator"
+        when AssignRole
+          personId     = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          role         = "Lead"
+        then RoleAssigned
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          role         = "Lead"
+
+    slice StateChange RevokeRole
+
+      command RevokeRole
+        personId     PersonId identifier
+        groupId      GroupId
+        assignmentId AssignmentId
+
+        authorize IsAdministrator
+
+        produces RoleRevoked
+          for personId
+          groupId      = groupId
+          assignmentId = assignmentId
+
+      event RoleRevoked
+        groupId      GroupId
+        assignmentId AssignmentId
+
+      screen RevokeRole
+        template Dialog
+          body
+            title "Revoke a role"
+          actions
+            action RevokeRole
+
+      specification RevokingARole
+        given caller
+          authenticated
+          role "Administrator"
+        when RevokeRole
+          personId     = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then RoleRevoked
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+  feature Chart
+    description "The organization as a graph"
+
+    slice StateView OrganizationChart
+      description "People, groups and the edges between them, built from the events of the organization"
+
+      graph Organization
+        description "Who belongs to which group, how groups nest, and the roles people hold"
+        node Person
+          personId PersonId key
+          name     PersonName
+        node Group
+          groupId GroupId key
+          name    GroupName
+        edge MEMBER_OF source Person target Group
+          since DateTime
+        edge PART_OF source Group target Group
+        edge HAS_ROLE source Person target Group identified by assignmentId
+          assignmentId AssignmentId
+          role         RoleName
+          since        DateTime
+
+      projection OrganizationChart => graph Organization
+        description "Project the organization's events onto people, groups and their edges"
+        node Person
+          from PersonRegistered key $eventSourceId
+            personId = $eventSourceId
+            name     = name
+          remove with PersonRemoved key $eventSourceId detach
+        node Group
+          from GroupCreated key $eventSourceId
+            groupId = $eventSourceId
+            name    = name
+        edge MEMBER_OF
+          from MemberAdded source $eventSourceId target groupId
+            since = $eventContext.occurred
+          remove with MemberRemoved source $eventSourceId target groupId
+        edge PART_OF
+          from GroupNested source $eventSourceId target parentGroupId
+        edge HAS_ROLE
+          from RoleAssigned source $eventSourceId target groupId identified by assignmentId
+            assignmentId = assignmentId
+            role         = role
+            since        = $eventContext.occurred
+          remove with RoleRevoked source $eventSourceId target groupId identified by assignmentId
+
+      specification RegisteringAPersonAddsANode
+        given caller
+          authenticated
+          role "Administrator"
+        when append PersonRegistered
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name = "Ada Lovelace"
+        then graph Organization
+          has node Person "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+            name = "Ada Lovelace"
+
+      specification AddingAMemberDrawsAnEdge
+        given caller
+          authenticated
+          role "Administrator"
+        given PersonRegistered
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name = "Ada Lovelace"
+        given GroupCreated
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          name = "Engineering"
+        when append MemberAdded
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then graph Organization
+          has node Group "0f8fad5b-d9cb-469f-a165-70867728950e"
+            name = "Engineering"
+          has edge MEMBER_OF from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+      specification RemovingAMemberDeletesTheEdge
+        given caller
+          authenticated
+          role "Administrator"
+        given PersonRegistered
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name = "Ada Lovelace"
+        given GroupCreated
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          name = "Engineering"
+        given MemberAdded
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        when append MemberRemoved
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then graph Organization
+          has node Person "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          no edge MEMBER_OF from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+      specification NestingAGroupDrawsAnEdgeBetweenGroups
+        given caller
+          authenticated
+          role "Administrator"
+        given GroupCreated
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          name = "Engineering"
+        given GroupCreated
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          name = "Platform"
+        when append GroupNested
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          parentGroupId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then graph Organization
+          has edge PART_OF from "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11" to "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+      specification TwoRolesInOneGroupAreTwoEdges
+        given caller
+          authenticated
+          role "Administrator"
+        given RoleAssigned
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          role         = "Lead"
+        when append RoleAssigned
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          role         = "Reviewer"
+        then graph Organization
+          has edge HAS_ROLE from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e" identified by "9c858901-8a57-4791-81fe-4c455b099bc9"
+            role = "Lead"
+          has edge HAS_ROLE from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e" identified by "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            role = "Reviewer"
+
+      specification RevokingARoleDeletesOnlyThatEdge
+        given caller
+          authenticated
+          role "Administrator"
+        given RoleAssigned
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          role         = "Lead"
+        given RoleAssigned
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          role         = "Reviewer"
+        when append RoleRevoked
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          groupId      = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          assignmentId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then graph Organization
+          no edge HAS_ROLE from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e" identified by "9c858901-8a57-4791-81fe-4c455b099bc9"
+          has edge HAS_ROLE from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e" identified by "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            role = "Reviewer"
+
+      specification RemovingAPersonDetachesTheirEdges
+        given caller
+          authenticated
+          role "Administrator"
+        given graph Organization
+          has node Person "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+            name = "Ada Lovelace"
+          has node Group "0f8fad5b-d9cb-469f-a165-70867728950e"
+            name = "Engineering"
+          has edge MEMBER_OF from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e"
+        when append PersonRemoved
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+        then graph Organization
+          no node Person "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          no edge MEMBER_OF from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e"
+          has node Group "0f8fad5b-d9cb-469f-a165-70867728950e"

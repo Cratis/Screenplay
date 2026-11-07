@@ -1,0 +1,13 @@
+// Warehouse: physical stock. Module skeleton (features are filled by the Warehouse slices).
+// Inherits the application's navigation.
+module Stock
+  description "Stock levels, reservations, receiving and dispatch"
+  authorize CanWorkWarehouse
+
+  feature Levels
+  feature Adjustments
+  feature Reservations
+  feature Picking
+  feature Receiving
+  feature Dispatch
+  feature Overview

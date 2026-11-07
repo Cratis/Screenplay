@@ -1,0 +1,440 @@
+// ============================================================
+// Warehouse / Stock / Levels - what is on the shelf, per SKU
+//
+// Every event here lands on the StockItem event source (identifier: the SKU), so the StockLevel view is keyed by the
+// SKU and commands can read it (protected reads). The warehouse knows SKUs in its own words: it never sees a product.
+// ============================================================
+
+module Stock
+  feature Levels
+
+    slice StateView StockLevels
+      description "Every SKU with what is on hand, what is promised and what is left"
+
+      readmodel StockLevel
+        id             Sku key
+        name            ProductName
+        onHand          StockQuantity
+        reserved        StockQuantity
+        available       StockQuantity
+        reorderPoint    StockQuantity
+        reorderQuantity Quantity
+        blocked         Bool
+        alertOpen       Bool
+        lastCounted     StockQuantity optional
+
+      query AllStockLevels => observable StockLevel[]
+      query StockLevelBySku => StockLevel optional
+        by id Sku
+
+      projection StockLevelProjection => StockLevel
+        no automap
+        from SkuRegistered
+          id             = $eventSourceId
+          name            = name
+          onHand          = 0
+          reserved        = 0
+          available       = 0
+          reorderPoint    = 10
+          reorderQuantity = 50
+          blocked         = false
+          alertOpen       = false
+        from SkuBlockedForReceiving
+          blocked = true
+        from ReorderPointSet
+          reorderPoint    = reorderPoint
+          reorderQuantity = reorderQuantity
+        from StockCounted
+          lastCounted = counted
+        from StockReceived
+          add onHand by quantity
+          add available by quantity
+          alertOpen = false
+        from StockIncreased
+          add onHand by quantity
+          add available by quantity
+          alertOpen = false
+        from StockDecreased
+          subtract onHand by quantity
+          subtract available by quantity
+        from ReservationMade
+          add reserved by quantity
+          subtract available by quantity
+        from StockDispatched
+          subtract onHand by quantity
+          subtract reserved by quantity
+        from ReorderPointCrossed
+          alertOpen = true
+        remove with SkuRemoved
+
+      event SkuRemoved
+
+      screen StockLevels
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader stockLevelsHeader
+              property title = "Stock levels"
+              property subtitle = "What is on the shelves, what is promised and what is left"
+          toolbar
+            toolbar actions
+              button register title "Register SKU" slice Stock.Levels.RegisterSku emphasis primary icon plus
+            action AdjustStock
+              label "Adjust stock"
+            action CountStock
+              label "Count"
+            action SetReorderPoint
+              label "Reorder point"
+            action BlockSku
+              label "Block SKU"
+          list
+            data StockLevel[] via query AllStockLevels
+            table StockLevel
+              column id        label "SKU"
+              column name      label "Product"
+              column onHand    label "On hand"
+              column reserved  label "Reserved"
+              column available label "Available"
+              column reorderPoint label "Reorder at"
+              on double click
+                navigate to ItemPage
+                  with id from item.id
+
+      specification TheShelfStartsEmpty
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        then readmodel StockLevel
+          id       = "ACM-1000"
+          name      = "Acme mug"
+          onHand    = 0
+          available = 0
+          reorderPoint = 10
+
+      specification ReceivingAndReservingMovesTheNumbers
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        given StockReceived
+          for "ACM-1000"
+          sku = "ACM-1000"
+          purchaseOrderId = "7b2f4a3e-0c0d-4c6a-9a41-3b6a1a0e4001"
+          quantity        = 40
+          receivedAt      = "2026-10-02T09:00:00Z"
+        given ReservationMade
+          for "ACM-1000"
+          sku = "ACM-1000"
+          orderId  = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+          quantity = 3
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+        then readmodel StockLevel
+          id       = "ACM-1000"
+          onHand    = 40
+          reserved  = 3
+          available = 37
+
+    slice StateChange RegisterSku
+      description "Puts a SKU on the warehouse's books. Normally the catalogue's public event does it (see RegisterSkuFromCatalog); by hand for a consumable that has no product"
+      command RegisterSku
+        sku  Sku identifier
+        name ProductName
+        produces SkuRegistered
+          for sku
+          sku  = sku
+          name = name
+
+      event SkuRegistered
+        sku  Sku
+        name ProductName
+
+      example Mug : RegisterSku
+        sku  = "ACM-1000"
+        name = "Acme mug"
+
+      // What the registration sets going (the snapshot and the public event) belongs to other slices, and is specified there.
+      specification RegisteringASkuByHand
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Mug
+        then SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
+
+      specification ASkuNeedsThePrefix
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Mug sku = "MUG-1000"
+        then error "A SKU starts with ACM-"
+
+      specification ASalesRepCannotRegisterASku
+        given caller
+          authenticated
+          role "SalesRep"
+        when Mug
+        then denied
+
+      screen RegisterSkuDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action RegisterSku
+              navigate to StockLevels
+
+    slice StateChange BlockSku
+      description "Stops receiving a SKU that the catalogue has retired"
+      command BlockSku
+        sku Sku identifier
+        produces SkuBlockedForReceiving
+          for sku
+
+      event SkuBlockedForReceiving
+
+      specification BlockingASku
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when BlockSku
+          sku = "ACM-1000"
+        then SkuBlockedForReceiving
+          for "ACM-1000"
+
+      screen BlockSkuDialog
+        template blueprint Cratis.Blueprint.Default ConfirmDialog version "^1"
+          actions
+            action BlockSku
+              navigate to StockLevels
+
+    slice StateChange SetReorderPoint
+      description "Sets when a SKU counts as running out and how much to suggest buying when it does"
+      command SetReorderPoint
+        sku             Sku identifier
+        reorderPoint    StockQuantity
+        reorderQuantity Quantity
+        produces ReorderPointSet
+          for sku
+          reorderPoint    = reorderPoint
+          reorderQuantity = reorderQuantity
+
+      event ReorderPointSet
+        reorderPoint    StockQuantity
+        reorderQuantity Quantity
+
+      example Reorder : SetReorderPoint
+        sku             = "ACM-1000"
+        reorderPoint    = 12
+        reorderQuantity = 60
+
+      specification SettingTheReorderPoint
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when Reorder
+        then ReorderPointSet
+          for "ACM-1000"
+          reorderPoint    = 12
+          reorderQuantity = 60
+
+      specification AReorderQuantityOfZeroIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when Reorder reorderQuantity = 0
+        then error "A quantity is at least one"
+
+      screen SetReorderPointDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action SetReorderPoint
+              navigate to StockLevels
+
+    slice StateChange CountStock
+      description "Records what the clerk counted on the shelf. The count changes nothing by itself: a difference is settled with AdjustStock"
+      command CountStock
+        sku     Sku identifier
+        counted StockQuantity
+        produces StockCounted
+          for sku
+          counted = counted
+
+      event StockCounted
+        counted StockQuantity
+
+      example ShelfCount : CountStock
+        sku     = "ACM-1000"
+        counted = 38
+
+      specification CountingTheShelf
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when ShelfCount
+        then StockCounted
+          for "ACM-1000"
+          counted = 38
+
+      specification ACountCannotBeNegative
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        when ShelfCount counted = -1
+        then error "Stock cannot be negative"
+
+      screen CountStockDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action CountStock
+              navigate to StockAdjustments
+
+    slice StateChange AdjustStock
+      description "Adds to or takes from the shelf for a stated reason (found, returned, damaged, count, correction)"
+      command AdjustStock
+        sku      Sku identifier
+        quantity Quantity
+        // true adds to the shelf, false takes from it
+        increase Bool
+        reason   StockAdjustmentReason
+        movementId MovementId generated
+        reads StockLevel by sku
+        validate
+          require increase == true or StockLevel.available >= quantity
+            message "The shelf holds less than that"
+        produces when increase == true
+          StockIncreased
+            for sku
+            sku          = sku
+            movementId = movementId
+            quantity     = quantity
+            reason       = reason
+        produces when increase == false
+          StockDecreased
+            for sku
+            sku          = sku
+            movementId = movementId
+            quantity     = quantity
+            reason       = reason
+
+      event StockIncreased
+        sku          Sku
+        movementId MovementId
+        quantity     Quantity
+        reason       StockAdjustmentReason
+
+      event StockDecreased
+        sku          Sku
+        movementId MovementId
+        quantity     Quantity
+        reason       StockAdjustmentReason
+
+      example FoundMugs : AdjustStock
+        sku      = "ACM-1000"
+        quantity = 5
+        increase = true
+        reason   = found
+
+      // The accepted paths cascade into the stock level and the reorder watch; the guard is specified here
+      specification TakingMoreThanTheShelfHoldsIsRejected
+        given caller
+          authenticated
+          role "WarehouseClerk"
+        given SkuRegistered
+          for "ACM-1000"
+          sku = "ACM-1000"
+          name = "Acme mug"
+        when FoundMugs increase = false
+        then error "The shelf holds less than that"
+
+      specification ASalesRepCannotAdjustStock
+        given caller
+          authenticated
+          role "SalesRep"
+        when FoundMugs
+        then denied
+
+      screen AdjustStockDialog
+        template blueprint Cratis.Blueprint.Default QuickCreateDialog version "^1"
+          actions
+            action AdjustStock
+              navigate to StockAdjustments
+
+  feature Adjustments
+    description "Corrections of the shelf and the reasons for them"
+
+    slice StateView StockAdjustments
+      description "Every correction of the shelf with its reason: what was found, returned, damaged or counted off"
+
+      readmodel StockAdjustmentRow
+        id        MovementId key
+        sku       Sku
+        quantity  Quantity
+        increased Bool
+        reason    StockAdjustmentReason
+
+      query AllStockAdjustments => observable StockAdjustmentRow[]
+
+      projection StockAdjustmentRowProjection => StockAdjustmentRow
+        no automap
+        from StockIncreased key movementId
+          id        = movementId
+          sku       = sku
+          quantity  = quantity
+          reason    = reason
+          increased = true
+        from StockDecreased key movementId
+          id        = movementId
+          sku       = sku
+          quantity  = quantity
+          reason    = reason
+          increased = false
+
+      screen StockAdjustments
+        description "The history of corrections, with the buttons to correct or count the shelf"
+        template blueprint Cratis.Blueprint.Default ListScreen version "^1"
+          header
+            component Cratis.Blueprint.Default.pageHeader stockAdjustmentsHeader
+              property title = "Adjustments"
+              property subtitle = "Corrections of the shelf and why they were made"
+          toolbar
+            action AdjustStock
+              label "Adjust stock"
+            action CountStock
+              label "Count"
+          list
+            data StockAdjustmentRow[] via query AllStockAdjustments
+            table StockAdjustmentRow
+              column sku       label "SKU"
+              column quantity  label "Units"
+              column increased label "Added to the shelf"
+              column reason    label "Reason"
+
+      specification ACorrectionIsLoggedWithItsReason
+        given SkuRegistered
+          for "ACM-1000"
+          sku  = "ACM-1000"
+          name = "Acme mug"
+        given StockDecreased
+          for "ACM-1000"
+          sku        = "ACM-1000"
+          movementId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+          quantity   = 2
+          reason     = damaged
+        then readmodel StockAdjustmentRow
+          id        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b21"
+          sku       = "ACM-1000"
+          quantity  = 2
+          increased = false
+          reason    = damaged

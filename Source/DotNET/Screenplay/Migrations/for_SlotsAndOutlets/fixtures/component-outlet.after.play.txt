@@ -1,0 +1,17 @@
+module Shop
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+        customer String
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        component Cratis.Components.DataGrid orders
+          context from query AllOrders
+          exposes selectedOrder from component orders.selected
+          // The selected order's details open in the grid's detail region.
+          slot detail  // kept beside the slot
+            summary selectedOrder
+              field customer label "Customer"

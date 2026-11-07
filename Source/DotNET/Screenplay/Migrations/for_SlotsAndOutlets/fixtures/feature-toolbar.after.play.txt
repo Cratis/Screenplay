@@ -1,0 +1,35 @@
+module Shop
+  screen template ListPage
+    fits slot content
+    category List
+    header
+    main
+
+    outlet actions of actions in header
+
+    arrangement flow
+      column
+        header height 48
+        main grow
+
+  // Every screen of the module offers a refresh.
+  outlet actions extends
+    button refresh title "Refresh" runs refresh
+
+  feature Orders
+    // The feature adds its own command to the toolbar of every screen it has.
+    outlet actions extends
+      button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
+        confirm "Place this order?"
+
+    slice StateChange PlaceOrder
+      command PlaceOrder
+        orderId Uuid identifier
+        produces OrderPlaced
+          orderId = orderId
+
+      event OrderPlaced
+        orderId Uuid
+
+      screen PlaceOrder
+        title "Place an order"

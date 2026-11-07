@@ -1,0 +1,23 @@
+// ============================================================
+// Sales: the application's navigation and logo
+//
+// The order desk: the pipeline, order lookup, the approval inbox and the dashboard.
+// The logo is the SVG in assets/logos/sales.svg, inlined as a data URI (tools/embed-logos.py regenerates the line): Studio and Stage take
+// a Screenplay document only, never a file beside it, and a data URI cannot 404.
+// ============================================================
+
+layout SalesNavigation
+  category Shell
+  content
+
+  navigation topbar
+    logo image "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMzQjgyRjYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMxRDRFRDgiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMCIgZmlsbD0idXJsKCNnKSIvPjxwYXRoIGQ9Ik0xOCAxMmgyOGEyIDIgMCAwIDEgMiAydjM4bC00LjctMy40LTQuNiAzLjQtNC43LTMuNC00LjYgMy40LTQuNy0zLjRMMTYgNTJWMTRhMiAyIDAgMCAxIDItMnoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMjMgMzhsNi03IDUgNC41IDgtMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzFENEVEOCIgc3Ryb2tlLXdpZHRoPSIzLjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik0yMyA0NGgxOCIgc3Ryb2tlPSIjMUQ0RUQ4IiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuNDUiLz48L3N2Zz4K" title "Acme Sales"
+
+  navigation sidebar
+    item sales title "Sales" icon receipt target Orders
+      item pipeline title "Pipeline" target Orders.Fulfilment
+      item orderlist title "Orders" target Orders.Lookup
+      item inbox title "Approval inbox" target Orders.Approval
+      item cancellations title "Cancellations" target Orders.Cancellations
+      item dashboard title "Dashboard" target Orders.Reporting
+      item pricelist title "Price list" target Orders.Intake

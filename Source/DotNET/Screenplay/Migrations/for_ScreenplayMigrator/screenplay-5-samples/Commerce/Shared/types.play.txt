@@ -1,0 +1,17 @@
+// Composite shapes that commands, events and read models carry beyond a
+// single value.
+
+type Address
+  description "Where an order is delivered - the personal data lives here, not on the order"
+  recipient  PersonName
+  street     StreetAddress
+  postalCode PostalCode
+  city       String
+  country    CountryCode
+
+type OrderLine
+  description "One product on an order, priced when the order was placed"
+  productId ProductId
+  sku       Sku
+  quantity  Quantity
+  unitPrice Money

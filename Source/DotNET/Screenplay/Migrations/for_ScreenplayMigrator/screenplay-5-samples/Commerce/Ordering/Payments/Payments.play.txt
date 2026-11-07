@@ -1,0 +1,5 @@
+// Nothing here has a screen: payments arrive from the provider, not from a user.
+feature Payments
+  description "Turning the payment provider's settlements into paid orders"
+
+  import "*.play"

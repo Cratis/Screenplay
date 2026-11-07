@@ -1,0 +1,99 @@
+// A consultant's week begins: the timesheet for it is opened.
+
+// Contributes to the module's own TimesheetActions point (the WeekView
+// template), on behalf of the Recording feature this file is placed in.
+contribute to TimesheetActions
+  navigate to StartTimesheetDialog
+  label $strings.timesheets.start.action
+  order 10
+
+slice StateChange StartTimesheet
+  description "A consultant opens the timesheet for a week"
+
+  command StartTimesheet
+    timesheetId  TimesheetId identifier
+    consultantId ConsultantId
+    year         TimesheetYear
+    week         WeekNumber
+
+    produces TimesheetStarted
+      for timesheetId
+      timesheetId  = timesheetId
+      consultantId = consultantId
+      year         = year
+      week         = week
+
+  event TimesheetStarted
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    year         TimesheetYear
+    week         WeekNumber
+
+  // One week, one timesheet - held by the event store, across three values.
+  constraint OneTimesheetPerConsultantWeek
+    unique consultantId, year, week on TimesheetStarted
+    message "You already have a timesheet for that week"
+
+  screen StartTimesheetDialog
+    template TimesheetDialog
+      body
+        title $strings.timesheets.start.title
+      actions
+        action StartTimesheet
+          label $strings.timesheets.start.action
+          navigate to MyTimesheetsScreen
+
+  specification StartingAWeek
+    given caller
+      authenticated
+      role "Consultant"
+    when StartTimesheet
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    then TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+
+  specification RejectingAWeekThatDoesNotExist
+    given caller
+      authenticated
+      role "Consultant"
+    when StartTimesheet
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 54
+    then error "A year has at most 53 weeks"
+
+  specification RejectingASecondTimesheetForTheSameWeek
+    given caller
+      authenticated
+      role "Consultant"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when StartTimesheet
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a42"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    then error "You already have a timesheet for that week"
+
+  specification ManagersDoNotKeepTimesheets
+    given caller
+      authenticated
+      role "EngagementManager"
+    when StartTimesheet
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    then denied

@@ -1,0 +1,64 @@
+slice StateChange ChangeProductPrice
+  description "Sets a new price on an existing product"
+
+  command ChangeProductPrice
+    productId ProductId identifier
+    newPrice  Money
+
+    authorize IsMerchandiser
+
+    validate
+      newPrice > 0  message "A product cannot be given away for free"
+
+    produces ProductPriceChanged
+      for productId
+      newPrice = newPrice
+
+  event ProductPriceChanged
+    newPrice Money
+
+  specification RepricingAProduct
+    given caller
+      authenticated
+      role "Merchandiser"
+    given ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku    = "MUG-0042"
+      name   = "Stoneware mug"
+      price  = 12.5
+      weight = 0.4
+    when ChangeProductPrice
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice  = 14.0
+    then ProductPriceChanged
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice = 14.0
+
+  specification RejectingAFreeProduct
+    given caller
+      authenticated
+      role "Merchandiser"
+    when ChangeProductPrice
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice  = 0
+    then error "A product cannot be given away for free"
+
+  specification AWarehouseClerkCannotChangePrices
+    given caller
+      authenticated
+      role "WarehouseClerk"
+    when ChangeProductPrice
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice  = 9.0
+    then denied
+
+  // Opened from a row in the product list; ChangeProductPriceForm (declared
+  // in Catalog.play) populates itself from ProductById.
+  screen ChangeProductPriceScreen
+    template ProductDialog
+      body
+        title "Change price"
+      actions
+        action ChangeProductPrice
+          label "Save price"
+          navigate to ProductList
