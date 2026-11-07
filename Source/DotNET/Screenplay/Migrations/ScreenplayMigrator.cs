@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Printing;
@@ -76,7 +77,10 @@ public sealed class ScreenplayMigrator(IEnumerable<IScreenplayMigration> steps)
         // Compile the documents as they will be: migrated where they were migrated, as they are elsewhere.
         var migrated = files.ToDictionary(file => file.Path, file => file.Migrated, StringComparer.Ordinal);
         var compilation = new PlayFileCompiler().CompileFolder(contents.Select(document => migrated.TryGetValue(document.RelativePath, out var text) ? document with { Content = text } : document));
+
+        // The checks that are on by default belong to a normal compile, so the result reports them too.
         var diagnostics = compilation.Result.Diagnostics
+            .Concat(ModelCompleteness.Check(compilation.Result, CompletenessChecks.None))
             .Where(diagnostic => diagnostic.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
             .ToLookup(diagnostic => PlayGlob.Normalize(diagnostic.Location.Path ?? string.Empty), StringComparer.Ordinal);
         return new(plan, [.. files.Select(file => file.Failure is null ? file with { Diagnostics = [.. diagnostics[file.Path]] } : file)]);

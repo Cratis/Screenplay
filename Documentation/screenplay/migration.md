@@ -55,7 +55,9 @@ reports the form - rewrites the syntax tree, and prints the changed declarations
 comments, blank lines, alignment and the comment at the end of a rewritten line.
 
 When the steps have run, the current compiler compiles the result and reports any errors and warnings with the file
-and line, so you see straight away what still needs attention.
+and line, so you see straight away what still needs attention. It reports what a normal compile reports, the checks
+that are on by default included - such as `PLAY0533` for a State Change command nothing issues. A warning is reported
+but does not make a file need review; an error does.
 
 Steps chain by version. Migrating from 5 to 7 would run the 5 → 6 step, then the 6 → 7 step, each reading the output
 of the one before. The runner refuses a gap (no step leaves a version on the way) and an overlap (two steps cover the
