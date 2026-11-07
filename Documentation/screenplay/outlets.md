@@ -78,6 +78,54 @@ module Invoicing
 
 `runs refresh` reloads the screen's data.
 
+### Hooks
+
+A `button` that names a State Change `slice` is a hook. It opens the slice's screen in its first fit the page has free, or where it says, and it can run the slice without a form:
+
+```screenplay
+module Catalog
+  screen template ListPage
+    category Lists
+    main
+    detail pane routed by sku optional
+    outlet rowActions of actions for item
+
+  feature Products
+    outlet rowActions extends
+      button price title "Set price" slice SetProductPrice opens in slot detail
+      button withdraw title "Withdraw" slice WithdrawProduct
+        runs
+        enabled when item.status == "onSale"
+        confirm "Withdraw this product?"
+
+    slice StateChange SetProductPrice
+      command SetProductPrice
+        sku String identifier
+        price Decimal
+        produces PriceSet
+          for sku
+      event PriceSet
+        sku String
+      screen SetProductPrice
+        fits pane, drawer
+        action SetProductPrice for screen
+
+    slice StateChange WithdrawProduct
+      command WithdrawProduct
+        sku String identifier
+        produces ProductWithdrawn
+          for sku
+      event ProductWithdrawn
+        sku String
+```
+
+- `opens dialog`, `opens drawer` and `opens in slot <name>` name where the slice's screen opens; without one it opens in the screen's first [fit](screens.md#placement) the page has free.
+- `for item` or `for screen` on the button says what it acts on, overriding the outlet's.
+- A `runs` line issues the command directly. A slice issued only by a `runs` hook needs no screen, and a hook counts as issuing its slice's commands for `PLAY0533`.
+- `enabled when <condition>` and `confirm "<text>"` go under the button.
+
+`PLAY0907`-`PLAY0911` and `PLAY0915` check hooks; see [Placement, hooks and bindings](diagnostics.md#placement-hooks-and-bindings).
+
 ## Change an outlet below the template
 
 A module, feature or slice screen writes `outlet <name> inherits|extends|overrides`. It names an outlet the layout or template declares; an unknown outlet is `PLAY0903`. A level that mentions nothing keeps what it inherits.
@@ -126,6 +174,8 @@ module Catalog
           for sku
       event ProductDrafted
         sku String
+      screen DraftProduct
+        action DraftProduct
 
     slice StateChange WithdrawProduct
       command WithdrawProduct
@@ -134,6 +184,8 @@ module Catalog
           for sku
       event ProductWithdrawn
         sku String
+      screen WithdrawProduct
+        action WithdrawProduct
 
     slice StateView ProductCatalog
       readmodel ProductRow
@@ -166,7 +218,7 @@ module Invoicing
 
 ## Checks and the TypeScript compiler
 
-Both compilers read a module's, feature's and screen's outlets and report their form: `PLAY0896`, `PLAY0897`, `PLAY0898` and `PLAY0904`. Layouts, templates and contributions stay opaque to the TypeScript compiler, so the declarations and the checks that need them - `PLAY0895`, `PLAY0899`-`PLAY0903` and `PLAY0905` - are reported by the C# compiler. See [Outlets diagnostics](diagnostics.md#outlets).
+Both compilers read a module's, feature's and screen's outlets and report their form: `PLAY0896`, `PLAY0897`, `PLAY0898` and `PLAY0904`; a malformed hook part (`opens`, `for`, `runs`) is `PLAY0760` in both. Layouts, templates and contributions stay opaque to the TypeScript compiler, so the declarations and the checks that need them - `PLAY0895`, `PLAY0899`-`PLAY0903` and `PLAY0905` - are reported by the C# compiler. See [Outlets diagnostics](diagnostics.md#outlets).
 
 Outlets are authoring syntax and are not part of the executable model, like every screen construct; the semantic binder reports a module's outlets as deferred.
 

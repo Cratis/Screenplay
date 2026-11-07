@@ -90,7 +90,7 @@ module Catalog
     detail pane routed by sku optional
 ```
 
-A slot without a role is still a slot; the role only adds meaning. Screenplay 6 calls every region content is placed in a slot: the Screenplay 5 forms `outlet <name>` and `destination outlet <name>` are errors whose message names `screenplay migrate --from 5 --to 6`.
+A slot without a role is still a slot; the role only adds meaning. A slice's screen lists the roles it fits (`fits pane, dialog`), and a hook that opens it `in slot <name>` needs a slot whose role the screen fits - see [Placement](screens.md#placement). A template slot can show another screen for what is selected on this one with `show <Screen> by <param> from <element>.selection`. Screenplay 6 calls every region content is placed in a slot: the Screenplay 5 forms `outlet <name>` and `destination outlet <name>` are errors whose message names `screenplay migrate --from 5 --to 6`.
 
 A document may declare more than one layout, so that different profiles can select different shells — but each profile selects exactly one, and a profile naming a layout the document does not declare is reported.
 

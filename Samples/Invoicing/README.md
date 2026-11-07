@@ -142,10 +142,12 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
 | `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
-| `navigation topbar` and `navigation sidebar` in the `AppShell` layout: `logo`, `item` with `title`, `icon`, `target`, `slot` and nested sidebar items | Application navigation |
+| Outlets of every kind - `actions`, `filters`, `tabs`, `stats` and `navigation` - with `default` items, changed below the template with `extends`/`overrides`, `hide`, `before` and `group` | `List` template, `InvoiceManagement` |
+| Placement: `fits dialog, drawer, page` on a slice's screen; hooks that `opens dialog`, `opens drawer` and `opens in slot activity`, act `for item`, `runs` a screenless slice with `enabled when` and `confirm`; `show InvoiceDetails by invoiceId from … .selection` in the routed `detail` pane; a `choose from query` picker | `InvoiceManagement`, `SendInvoiceReminder`, `RegisterInvoiceForm` |
+| `outlet topbar of navigation` and `outlet sidebar of navigation` in the `AppShell` layout: `logo`, `item` with `title`, `icon`, `target`, `slot` and nested sidebar items | Application navigation |
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
-| module `description` (fenced), `authorize`, `on event`, `contribute to`, `navigation sidebar extends` | `module Invoicing` |
-| Slot roles and modifiers: `content page routed primary` in `AppShell`, `sidebar pane routed by invoiceId optional` and `main panel` in `MasterDetail`; a component `slot`, `navigate to` with `slot` and `destination slot` | `layout AppShell`, `module Invoicing` |
+| module `description` (fenced), `authorize`, `on event`, `contribute to`, `outlet sidebar extends` | `module Invoicing` |
+| Slot roles and modifiers: `content page routed primary` in `AppShell`, `sidebar pane routed by invoiceId optional` and `main panel` in `MasterDetail`, `detail pane routed by invoiceId optional` and `activity panel optional` in `List`; a component `slot`, `navigate to` with `slot` and `destination slot` | `layout AppShell`, `module Invoicing` |
 | `screen template` with `fits slot`, `flow` with `grid`/`span`, `freeform` with `variant`/`place … hidden`, a `contributes` slot; `dialog template` with `on leave` | `module Invoicing` |
 | `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate` by a returned identity, `on change` | `module Invoicing`; `RegisterInvoiceForm` binds the returned `invoiceId`; `TagInvoiceForm` reuses the selected row |
 | feature `authorize`, `depends on`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |

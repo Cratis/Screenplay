@@ -1826,6 +1826,7 @@
                   "emphasis": "Primary",
                   "icon": "plus",
                   "id": "register",
+                  "opens": "Dialog",
                   "position": {
                     "kind": "OutletPositionSyntax",
                     "id": "refresh",
@@ -1833,6 +1834,13 @@
                   },
                   "slice": "RegisterInvoice",
                   "title": "Register invoice"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "cancel",
+                  "slice": "CancelInvoice",
+                  "subject": "Item",
+                  "title": "Cancel invoice"
                 },
                 {
                   "kind": "OutletGroupSyntax",
@@ -1900,6 +1908,45 @@
               ],
               "mode": "Extend",
               "name": "stats"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "confirm": "Send the customer a reminder?",
+                  "enabledWhen": {
+                    "kind": "ComparisonConditionSyntax",
+                    "left": "item.status",
+                    "operator": "Equal",
+                    "right": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "overdue"
+                    }
+                  },
+                  "id": "remind",
+                  "opens": "Runs",
+                  "slice": "SendInvoiceReminder",
+                  "title": "Remind"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "tag",
+                  "opens": "Drawer",
+                  "slice": "TagInvoice",
+                  "title": "Tag"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "contact",
+                  "opens": "Slot",
+                  "opensSlot": "activity",
+                  "slice": "UpdateBillingContact",
+                  "title": "Billing contact"
+                }
+              ],
+              "mode": "Extend",
+              "name": "rowActions"
             }
           ],
           "slices": [
@@ -3701,6 +3748,11 @@
                       ]
                     }
                   ],
+                  "fits": [
+                    "Dialog",
+                    "Drawer",
+                    "Page"
+                  ],
                   "name": "RegisterInvoiceScreen"
                 }
               ],
@@ -5381,6 +5433,10 @@
                         }
                       ]
                     }
+                  ],
+                  "fits": [
+                    "Drawer",
+                    "Dialog"
                   ],
                   "name": "TagInvoiceScreen"
                 }
@@ -7092,6 +7148,10 @@
                       ]
                     }
                   ],
+                  "fits": [
+                    "Panel",
+                    "Dialog"
+                  ],
                   "name": "UpdateBillingContactScreen"
                 }
               ],
@@ -7275,6 +7335,140 @@
                               }
                             }
                           ]
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "CanManageInvoice"
+                    }
+                  },
+                  "description": null,
+                  "handler": null,
+                  "name": "SendInvoiceReminder",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceReminderRequested",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": "Reminds the customer about an overdue invoice",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceReminderRequested",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "SendInvoiceReminder",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "SendingAReminder",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceReminderRequested",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": []
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "SendInvoiceReminder",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
                         }
                       }
                     ]
@@ -7969,6 +8163,18 @@
                             }
                           ],
                           "name": "toolbar"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenShowSyntax",
+                              "by": "invoiceId",
+                              "element": "InvoiceListReadModel",
+                              "screen": "InvoiceDetails"
+                            }
+                          ],
+                          "name": "detail"
                         },
                         {
                           "kind": "ScreenSlotSyntax",
@@ -18116,6 +18322,365 @@
                 }
               ],
               "type": "Translate"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": {
+            "kind": "AuthorizeSyntax",
+            "requirement": {
+              "kind": "PolicyReferenceSyntax",
+              "name": "IsInvoicingStaff"
+            }
+          },
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "InvoiceReservations",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "ReserveInvoiceNumber",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceNumberReserved",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceNumber"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceNumber",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceNumber"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": []
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceNumberReserved",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceNumber",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceNumber"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceNumberReservationReleased",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "ReserveInvoiceNumber",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "isReserved"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceNumberReserved"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "isReserved"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceNumberReservationReleased"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "isReserved"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InvoiceReservations",
+                  "readModel": "InvoiceReservationState",
+                  "sequence": null
+                }
+              ],
+              "queries": [],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "isPassive": true,
+                  "name": "InvoiceReservationState",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "isReserved",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "CommandDialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Reserve an invoice number"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "ReserveInvoiceNumber",
+                              "label": "Reserve",
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ReserveInvoiceNumberScreen"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2026-000"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ReservingAnInvoiceNumber",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceNumberReserved",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "INV-2026-001"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "ReserveInvoiceNumber",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceNumber",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-2026-001"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
             }
           ]
         }

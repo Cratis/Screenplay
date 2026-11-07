@@ -1190,7 +1190,7 @@ These structural warnings run only when selected, after error-free whole-applica
 | `PLAY0530` | Warning (opt-in: `--check data-bindings`) | Visible screen bindings share a name but disagree on cardinality, resolved query or `by` parameter. Identical rebinding and sibling sections are allowed. |
 | `PLAY0531` | Warning (opt-in: `--check data-bindings`) | A screen binding's resolved read model or cardinality differs from its query's return. Optional and observable qualifiers are ignored; unresolved or ambiguous names are skipped. |
 | `PLAY0532` | Warning (opt-in: `--check input-surfaces`) | An action has no module-level command-bound form or issuing screen in the command's own slice. Post-action navigation does not supply input; a title-only screen does not issue a command. Commands with only generated properties (including no properties) require no typed input. |
-| `PLAY0533` | Warning (opt-in: `--check input-surfaces`) | A StateChange command has no used screen action or attached behavior execute, and no reaction invokes it. A form alone is not an issuer; attached navigation or open dialog may reach an issuing screen. Automation and Translate commands are exempt. |
+| `PLAY0533` | Warning (on by default) | A StateChange command has no used screen action, hook or attached behavior execute, and no reaction invokes it. A hook issues its slice's commands when it `runs`, or when it opens a slice that has a screen. Since Screenplay 6 the check runs with every model check and is no longer selected by `--check input-surfaces` or `--check PLAY0533`. A form alone is not an issuer; attached navigation or open dialog may reach an issuing screen. Automation and Translate commands are exempt. |
 | `PLAY0534` | Warning (opt-in: `--check field-origins`) | A declared read model has no builder or performer, or a top-level field lacks an identity, mapping, compatible AutoMap source, child or nested target. Variants are checked independently, including entering-event AutoMap; the owning slice's keyed-query property counts as identity. Opaque builders and unknown coverage are skipped. |
 | `PLAY0535` | Warning (opt-in: `--check query-keys`) | A query parameter cannot be held by its view's known identity or fields. Collection `by` parameters are held by a same-named compatible view field or composite key part, or by the identity; single-result `by` parameters must match the identity. Parameter optionality is ignored. Identity comes from the owning slice's unambiguous single-result keyed-query property or structurally resolved projection keys. Performer-served views, tenant-context parameters and unknown identity types are skipped. |
 | `PLAY0536` | Warning (opt-in: `--check event-consumers`) | The newest generation of a local event has no declared projection, reducer, reaction, constraint or interaction consumer. Specifications and production do not count. Imported external contracts are exempt; legitimate terminal facts may still be reported. |
@@ -1721,6 +1721,23 @@ An outlet is a named list of items a layout or template offers, and a lower leve
 | `PLAY0903` | Error | A `contribute to`, or a lower level's `outlet <name> inherits|extends|overrides`, names an outlet no layout or template declares. A document that uses a blueprint is exempt, since the blueprint's templates may declare it. |
 | `PLAY0904` | Error | A layout, template, module, feature or screen declares or changes the same outlet twice. |
 | `PLAY0905` | Error | Two items of one outlet share an id, or an extending level's item repeats the id of an inherited one. |
+
+## Placement, hooks and bindings
+
+Where a slice's screen fits, how a hook opens its slice and what a screen's elements are bound to; see [Screens](screens.md#placement), [Outlets](outlets.md#hooks) and [Forms](forms.md#pickers). Both compilers read the forms on screens and buttons and report `PLAY0906` and the malformed `show` of `PLAY0914`; forms, and every check of what a line names, are the C# compiler's.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0906` | Error | A screen's `fits` line is malformed: it names a place other than `dialog`, `drawer`, `pane`, `panel` or `page`, names one twice, the screen has two `fits` lines, or it writes a template's `fits slot <name>`. |
+| `PLAY0907` | Error | A hook `runs` a slice whose command has an input nothing supplies without a form. An identifier comes from the item or screen the hook acts on; any other input needs the slice's screen. |
+| `PLAY0908` | Error | A hook links a State Change slice that has no screen and cannot run: an input needs a form, or the hook names a place to open it (`opens …`). A hook that names no place runs a screenless slice whose inputs resolve. |
+| `PLAY0909` | Error | A hook `opens in slot` a slot the template offering its outlet - or the template of the screen it is on - does not declare. |
+| `PLAY0910` | Error | A hook `opens in slot` a slot the screen it is on already fills. |
+| `PLAY0911` | Error | A hook `opens in slot` a slot whose role (`page`, `pane`, `panel`) the slice's screen does not list in its `fits`. A screen without `fits` fits every role. |
+| `PLAY0912` | Warning | A component on a slice screen is bound to nothing and given no value, so all it can show is sample text. Bind it with `context` or `property <path> from <binding>`, or give it static text with `property <path> = "..."`. |
+| `PLAY0913` | Error | A form field's `choose from query` line is malformed, chooses from a query that returns one result, or shows a field the query's rows do not have. An unknown query is `PLAY0196`. |
+| `PLAY0914` | Error | A `show <Screen> by <param> from <element>.selection` line is malformed, stands outside a template slot, names a screen the document does not declare or an element the screen does not have, or keys the shown screen by a parameter its data is not keyed by. |
+| `PLAY0915` | Error | A button or toolbar item's `enabled when` reads `item`, but it acts `for screen`, so there is no item to read. |
 
 ## Toolbar buttons
 

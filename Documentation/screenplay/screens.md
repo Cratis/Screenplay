@@ -142,7 +142,7 @@ Widgets:
 
 ## Toolbar buttons
 
-A `button` invokes a State Change slice. The slice names the command and the dialog that opens over the page, so the button needs no command of its own - this is Scene's `ToolbarButton`.
+A `button` invokes a State Change slice. The slice names the command and the screen that opens over the page, so the button needs no command of its own - this is Scene's `ToolbarButton`. A button linked to a slice is a *hook*; see [Placement](#placement) for where it opens the slice and how it runs one without a form.
 
 ```screenplay
 module Shop
@@ -154,6 +154,8 @@ module Shop
           orderId = orderId
       event OrderPlaced
         orderId Uuid
+      screen PlaceOrder
+        action PlaceOrder
     slice StateView OrderList
       readmodel OrderRow
         orderId Uuid
@@ -164,7 +166,7 @@ module Shop
           button draft title "Draft"
 ```
 
-`button <id> title "<text>" [slice <Slice>] [emphasis primary|secondary|quiet] [icon <name>]`:
+`button <id> title "<text>" [slice <Slice>] [emphasis primary|secondary|quiet] [icon <name>] [for item|for screen] [opens dialog|drawer|in slot <name>]`:
 
 - `id` is unique within the toolbar, shared with the `item` names (`PLAY0765`). The title is a quoted string or a `$strings.<key>` token.
 - `slice` is a dotted path `Module.Feature.Slice` or any suffix that is unambiguous (`PLAY0764` otherwise). It must name a slice the document declares (`PLAY0761`) and a State Change slice (`PLAY0762`): a button invokes State Change slices only.
@@ -200,6 +202,8 @@ module Shop
           for orderId
       event OrderPlaced
         orderId Uuid
+      screen PlaceOrder
+        action PlaceOrder
 
     slice StateChange CancelOrder
       command CancelOrder
@@ -208,6 +212,8 @@ module Shop
           for orderId
       event OrderCancelled
         orderId Uuid
+      screen CancelOrder
+        action CancelOrder
 ```
 
 - A module, feature and screen write `outlet <name> inherits|extends|overrides`, and may `hide` an inherited button or place one `before` or `after` another - see [Outlets](outlets.md#change-an-outlet-below-the-template).
@@ -216,6 +222,108 @@ module Shop
 - Screenplay 5 wrote `toolbar <name>` on a feature or module. That form is an error since Screenplay 6 (`PLAY0896`); write `outlet <name> extends`, or run `screenplay migrate --from 5 --to 6`.
 
 Like every screen construct these are authoring syntax: the executable model does not carry them, and the printer writes them back where they were written.
+
+## Placement
+
+The template offers places, the slice says which it fits, and the hook that opens it picks one.
+
+- A template declares slots with roles (`page`, `pane`, `panel`; see [Templates](templates.md)), and the page always offers a dialog and a drawer over it.
+- A slice's screen lists where it fits, in order of preference: `fits dialog, drawer, pane`. Without `fits` it fits anywhere.
+- A hook - a `button` linked to a State Change slice - opens the slice's screen in its first fit the page has free, unless it names the place: `opens dialog`, `opens drawer` or `opens in slot <name>`.
+
+```screenplay
+module Catalog
+  screen template ListPage
+    category Lists
+    main
+    detail pane routed by sku optional
+    outlet toolbar of actions
+    outlet rowActions of actions for item
+
+  feature Products
+    outlet toolbar extends
+      button add title "Add product" slice DraftProduct emphasis primary opens dialog
+      button price title "Set price" slice SetProductPrice for item opens in slot detail
+    outlet rowActions extends
+      button withdraw title "Withdraw" slice WithdrawProduct
+        runs
+        enabled when item.status == "onSale"
+        confirm "Withdraw this product?"
+
+    slice StateChange DraftProduct
+      command DraftProduct
+        sku String identifier
+        name String
+        produces ProductDrafted
+          for sku
+      event ProductDrafted
+        sku String
+      screen DraftProduct
+        fits dialog, drawer, pane
+        action DraftProduct for screen
+
+    slice StateChange SetProductPrice
+      command SetProductPrice
+        sku String identifier
+        price Decimal
+        produces PriceSet
+          for sku
+      event PriceSet
+        sku String
+      screen SetProductPrice
+        fits pane, drawer
+        action SetProductPrice for screen
+
+    // No screen: the row's 'Withdraw' hook runs it, because its one input comes from the row.
+    slice StateChange WithdrawProduct
+      command WithdrawProduct
+        sku String identifier
+        produces ProductWithdrawn
+          for sku
+      event ProductWithdrawn
+        sku String
+
+    slice StateView ProductCatalog
+      readmodel ProductRow
+        sku String
+        status String
+      query AllProducts => ProductRow[]
+      screen ProductCatalog
+        template ListPage
+          main
+            table products
+              column sku
+              column status
+          detail
+            show ProductDetails by sku from products.selection
+
+    slice StateView ProductDetails
+      readmodel ProductDetail
+        sku String
+      query ProductBySku => ProductDetail
+        by sku String
+      screen ProductDetails
+        data ProductDetail via query ProductBySku by sku
+```
+
+On a hook:
+
+- `for item` makes the hook wait for a selected row, and the row supplies the command's identifier; `for screen` acts on the screen's own record. Without it the outlet decides (`outlet rowActions of actions for item`).
+- A `runs` line under the button issues the command directly, without a form. Every input must resolve without one - the identifier from the item or screen the hook acts on, generated values by the command - or it is `PLAY0907`. A State Change slice issued only by a `runs` hook needs no screen.
+- A slice with no screen fits nothing and can only run: a hook that names no place runs it, and one whose slice cannot run - an input needs a form - or that names a place to open it is `PLAY0908`.
+- `opens in slot <name>` needs a slot the template declares (`PLAY0909`), that the screen the hook is on does not already fill (`PLAY0910`), and whose role the slice's screen lists in its `fits` (`PLAY0911`).
+- `enabled when <condition>` uses the condition grammar of a [guarded action](#subject-and-conditions); `item.<field>` reads the selected row, so a hook that acts `for screen` cannot read `item` (`PLAY0915`). The same line goes under a toolbar `item`.
+- `confirm "<text>"` asks before the command runs.
+
+A malformed `fits` line - an unknown place, one listed twice, a second `fits` line, or a template's `fits slot <name>` on a screen - is `PLAY0906`.
+
+### A slot that shows the selection
+
+`show <Screen> by <param> from <element>.selection`, in a template slot, shows another screen for the row a table or component on this screen has selected. With a routed slot (`detail pane routed by sku`), the selection is in the address, so a shared link opens the same row. The line must stand in a template slot, name a screen the document declares and a table or component on this screen, and key the shown screen by a parameter its data is keyed by (`PLAY0914`).
+
+### Text bound to nothing
+
+A component on a slice screen with no `context`, no `property`, no `exposes`, no slot content and no behavior can only show sample text, so it warns (`PLAY0912`). Bind it, or give it static text with `property <path> = "..."`.
 
 ## Package components and typed bindings
 

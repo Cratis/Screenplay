@@ -853,6 +853,9 @@ module Invoicing
 
     toolbar
     items
+    // The selected row's details open in a routed pane; a hook can open a slice's screen in the docked panel.
+    detail pane routed by invoiceId optional
+    activity panel optional
 
     // Outlets are the item lists the template offers; features and screens inherit, extend or override them.
     outlet actions of actions in toolbar
@@ -885,6 +888,8 @@ module Invoicing
     field lines          compose using BuildInvoiceLines
     field billingContact label "Billing contact"
     field currency       from defaultCurrency label "Currency"
+      // A picker over the rows a list query returns. A field whose concept keys a read model one list query returns is a picker without this line.
+      choose from query ListExchangeRates show currency
     field paymentTerms
     field dueDate        label "Due date"
     field isProForma     label "Pro forma"
@@ -943,8 +948,11 @@ module Invoicing
     // The invoice list's buttons, filters and counters, for every screen of the feature.
     outlet actions extends
       hide export
-      button register title "Register invoice" slice RegisterInvoice emphasis primary icon plus
+      // A hook opens its slice's screen in the slice's first fit the page has free, unless it says 'opens dialog|drawer|in slot <name>'.
+      button register title "Register invoice" slice RegisterInvoice emphasis primary icon plus opens dialog
         before refresh
+      // 'for item' waits for a selected row; the row supplies the command's identifier.
+      button cancel title "Cancel invoice" slice CancelInvoice for item
       group bulk title "Bulk" icon layers
         button batch title "Process a batch" slice ProcessInvoiceBatch
         button archive title "Archive old invoices" slice ArchiveOldInvoices
@@ -955,6 +963,14 @@ module Invoicing
     outlet stats extends
       stat total title "Invoices" value from GetInvoiceSummary.totalCount
       stat drafts title "Drafts" value from GetInvoiceSummary.draftCount
+    outlet rowActions extends
+      // 'runs' issues the command directly, without a form: every input resolves from the row.
+      button remind title "Remind" slice SendInvoiceReminder
+        runs
+        enabled when item.status == "overdue"
+        confirm "Send the customer a reminder?"
+      button tag title "Tag" slice TagInvoice opens drawer
+      button contact title "Billing contact" slice UpdateBillingContact opens in slot activity
 
     uses RefreshOnEnter
       query ListInvoices
@@ -1204,6 +1220,8 @@ module Invoicing
         unique event InvoiceRegistered
 
       screen RegisterInvoiceScreen
+        // Where the slice's screen fits, in order of preference; a hook that names no place picks the first one free.
+        fits dialog, drawer, page
         description "Issue an invoice for the customer's delivered work"
         template CommandDialog
           body
@@ -1493,6 +1511,7 @@ module Invoicing
           taggedAt DateTime   = $context.occurred
 
       screen TagInvoiceScreen
+        fits drawer, dialog
         template CommandDialog
           body
             title "Tag invoice"
@@ -1778,6 +1797,7 @@ module Invoicing
         email EmailAddress
 
       screen UpdateBillingContactScreen
+        fits panel, dialog
         template CommandDialog
           body
             title "Billing contact"
@@ -1810,6 +1830,29 @@ module Invoicing
             name  = "Grace Hopper"
             email = "not-an-email"
         then error "Must be a valid email address"
+
+    // No screen: the row's 'Remind' hook runs it, because its one input comes from the selected row.
+    slice StateChange SendInvoiceReminder
+      description "Reminds the customer about an overdue invoice"
+
+      command SendInvoiceReminder
+        invoiceId InvoiceId identifier
+
+        authorize CanManageInvoice
+
+        produces InvoiceReminderRequested
+          for invoiceId
+
+      event InvoiceReminderRequested
+
+      specification SendingAReminder
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when SendInvoiceReminder
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then InvoiceReminderRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
 
     slice StateView InvoiceList
       description "The staff's list of every invoice"
@@ -1933,6 +1976,9 @@ module Invoicing
                 raise BillingDirectorySyncRequested
                   on success
                     notify info "Synchronization requested"
+          // The routed pane shows the selected row's invoice; a shared link brings it back.
+          detail
+            show InvoiceDetails by invoiceId from InvoiceListReadModel.selection
           items
             table InvoiceListReadModel
               column invoiceNumber label $strings.invoices.fields.number
