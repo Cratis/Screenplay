@@ -43,6 +43,14 @@ export interface PersonaSyntax extends SyntaxNode {
     readonly height?: number;
 }
 
+// 'user <name> ["<display name>"] [as <Persona>, ...]' - a person a development or test session can act as. Authoring metadata, never executable.
+export interface UserSyntax extends SyntaxNode {
+    readonly kind: 'UserSyntax';
+    readonly name: string;
+    readonly displayName: string | null;
+    readonly personas: readonly string[];
+}
+
 // 'sticky note on <canvas>' - a free-standing note placed on a domain canvas. Authoring metadata, never executable.
 export interface StickyNoteSyntax extends SyntaxNode {
     readonly kind: 'StickyNoteSyntax';

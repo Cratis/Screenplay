@@ -81,6 +81,27 @@ Synthesis refuses a persona without policies, any policy containing `not`, and i
 
 Hover and MCP `declaration-details` with `kind: "Persona"`, `view: "caller"` show the synthesized caller, its policy contributions, or the refusal. `find-fixtures` reports persona origins. The opt-in [completeness](completeness.md) check `personas` reports unused personas, commands or queries definitely denied to every synthesized persona, and unpinned buildable alternatives. Ordinary compilation does not run it.
 
+## Users
+
+A `user` is a person a development or test session can act as. It is declared on one line, names the personas it plays, and
+holds whatever roles and claims those personas' policies give it.
+
+```screenplay
+user kari "Kari Nordmann" as Accountant, InvoiceManager
+user ola "Ola Nordmann" as Accountant
+user guest "Guest"
+```
+
+The name is the identity a session presents; the quoted display name is optional and the name stands in without it. A user
+that plays no persona is authenticated and holds no roles, which is how to test what a signed-in person without access sees.
+
+- A user plays only declared personas; an unknown one is `PLAY0888`, and a name used twice is `PLAY0889`.
+- Users, like goals and positions, never enter the executable semantic model: its bytes and revision are unchanged by them,
+  and a model without users compiles exactly as before.
+- Users exist for tooling that exercises a running application: [Stage](https://github.com/Cratis/Stage) offers them to
+  Lens when its own development mode and its explicit users switch are both on, and
+  never in a published or rendered application.
+
 ## Guidance
 
 Name personas after roles, not people: `Accountant`, not `Alice`. Put the rules in policies so the model keeps the role and its requirements distinct.

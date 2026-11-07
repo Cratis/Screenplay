@@ -290,6 +290,7 @@ static class WorkspaceReferenceMembers
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
+        UserSyntax => [("personas", WorkspaceReferenceDomain.Persona)],
         SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
         _ => null
     };

@@ -98,6 +98,11 @@ public record ApplicationSyntax(
     public IEnumerable<InstanceContributionsSyntax> InstanceContributions { get; init; } = [];
 
     /// <summary>
+    /// Gets the development and test users: people a session can act as, each playing zero or more personas. Authoring metadata, never part of the executable model.
+    /// </summary>
+    public IEnumerable<UserSyntax> Users { get; init; } = [];
+
+    /// <summary>
     /// Gets the sticky notes placed on the personas canvas: authoring metadata around the personas, never part of the executable model.
     /// </summary>
     public IEnumerable<StickyNoteSyntax> StickyNotes { get; init; } = [];

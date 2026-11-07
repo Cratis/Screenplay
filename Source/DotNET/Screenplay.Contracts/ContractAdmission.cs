@@ -272,6 +272,7 @@ static class ContractAdmission
         new("context", "context\n  businessTimeZone time zone\n"),
         new("time", "time zone \"Europe/Oslo\"\n", ["time zone configurable default \"Europe/Oslo\"\n"]),
         new("persona", "persona Person\n"),
+        new("user", "persona Person\nuser ada \"Ada\" as Person\n", Baseline: "persona Person\n"),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("public", Slice + "      public event Recorded\n        value String\n"),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),

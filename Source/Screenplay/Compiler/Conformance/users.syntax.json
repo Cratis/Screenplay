@@ -1,0 +1,69 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Works the front desk",
+      "name": "Clerk",
+      "policies": [
+        "Staff"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": "Approves what the clerks prepare",
+      "name": "Manager",
+      "policies": [
+        "Staff",
+        "Approver"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": null,
+      "name": "Visitor",
+      "policies": []
+    }
+  ],
+  "systems": [],
+  "types": [],
+  "users": [
+    {
+      "kind": "UserSyntax",
+      "displayName": "Mia Clerk",
+      "name": "mia",
+      "personas": [
+        "Clerk"
+      ]
+    },
+    {
+      "kind": "UserSyntax",
+      "displayName": "Max \"The Boss\" Manager",
+      "name": "max",
+      "personas": [
+        "Manager",
+        "Clerk"
+      ]
+    },
+    {
+      "kind": "UserSyntax",
+      "displayName": "Vera Visitor",
+      "name": "vera",
+      "personas": [
+        "Visitor"
+      ]
+    },
+    {
+      "kind": "UserSyntax",
+      "displayName": null,
+      "name": "guest",
+      "personas": []
+    }
+  ]
+}

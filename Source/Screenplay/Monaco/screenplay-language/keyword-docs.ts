@@ -35,6 +35,7 @@ export const keywordDocs: Record<string, string> = {
     erasure: 'An erasure exception under Art. 17(3); Chronicle crypto-shredding remains per subject, not per purpose.',
     exception: 'One declared Art. 17(3) exception: expression, legalObligation, publicTask, publicHealth, archiving or legalClaims.',
     persona: 'A named role interacting with the application, with an optional description, goals, its associated policies and, on the personas canvas, a position and size.',
+    user: '`user <name> ["<display name>"] [as <Persona>, ...]` declares a person a development or test session can act as; the roles come from the personas it plays. Authoring metadata for development tooling, never part of the executable model.',
     sticky: '`sticky note on personas|eventsources|givencontexts|seeddata` places a free-standing note (description, optional colour yellow/pink/green/blue, position, size) on that domain canvas. Authoring metadata only; never part of the executable model.',
     goal: 'What a persona is trying to achieve, as a quoted line; repeatable. Authoring metadata only.',
     colour: 'The colour of a sticky note: yellow, pink, green or blue.',

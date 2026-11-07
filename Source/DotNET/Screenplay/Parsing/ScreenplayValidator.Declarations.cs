@@ -22,6 +22,24 @@ internal static partial class ScreenplayValidator
         }
     }
 
+    static void ValidateUsers(ApplicationSyntax application, ParserContext context)
+    {
+        var personas = (application.Personas ?? []).Select(persona => persona.Name).ToHashSet(StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var user in application.Users)
+        {
+            if (!seen.Add(user.Name))
+            {
+                context.Error(DiagnosticCodes.DuplicateUser, $"User '{user.Name}' is declared more than once", user.Location);
+            }
+
+            foreach (var name in user.Personas.Where(name => !personas.Contains(name)).Distinct(StringComparer.Ordinal))
+            {
+                context.Error(DiagnosticCodes.UnknownUserPersona, $"Unknown persona '{name}' for user '{user.Name}' - declare it with 'persona {name}'", user.Location);
+            }
+        }
+    }
+
     static void ValidatePersonaPolicies(ApplicationSyntax application, HashSet<string> knownPolicies, bool allowUnresolvedPersonaPolicies, ParserContext context)
     {
         foreach (var persona in application.Personas ?? [])

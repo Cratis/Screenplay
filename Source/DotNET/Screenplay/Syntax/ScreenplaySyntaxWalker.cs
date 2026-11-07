@@ -104,6 +104,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitPersona(persona);
         }
 
+        foreach (var user in syntax.Users)
+        {
+            VisitUser(user);
+        }
+
         if (syntax.Identity is not null) VisitIdentity(syntax.Identity);
 
         if (syntax.Authentication is not null)

@@ -11,7 +11,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { authorizationWasRefused, combineAuthorize } from '../Parsing/AuthorizeParser';
 import { CompilationResult } from '../ScreenplayCompiler';
-import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
+import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax, UserSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { invalidSourceOptions, isAuthoredDocument, legacySourceOptions, SourceOptions, validatedSourceOptions } from '../Syntax/SourceOptions';
@@ -69,6 +69,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     // Modules merge before personas are claimed, so the diagnostics come in the order the C# merge reports them.
     const modules = mergeModules(applications.flatMap(application => application.modules), diagnostics);
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
+    const users = declaredInOneFile<UserSyntax>(applications.flatMap(application => application.users ?? []), 'user', diagnostics);
     const declaredPolicies = applications.flatMap(application => application.policies ?? []);
     const policies = declaredInOneFile(declaredPolicies, 'policy', diagnostics);
     // Like the C# merge, a policy dropped as repeated across files is not also reported as repeated within its file.
@@ -94,6 +95,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
         modules,
         personas,
+        ...presentOnly('users', users),
         policies,
         seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
@@ -115,7 +117,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

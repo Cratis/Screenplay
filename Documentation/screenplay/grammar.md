@@ -25,7 +25,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | UserDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -375,6 +375,10 @@ PersonaDecl    = "persona", Ident, NL,
                    { DescriptionDecl | "goal", String, NL | "policy", Ident, NL
                    | "position", Integer, Integer, NL | "size", Integer, Integer, NL },
                  DEDENT ;
+
+(* A person a development or test session can act as. One line; authoring *)
+(* metadata for tooling, never part of the executable model.             *)
+UserDecl       = "user", Ident, [ String ], [ "as", Ident, { ",", Ident } ], NL ;
 
 (* Authoring metadata for the domain canvases; never part of the executable model. *)
 StickyNoteDecl = "sticky", "note", "on", ( "personas" | "eventsources" | "givencontexts" | "seeddata" ), NL,

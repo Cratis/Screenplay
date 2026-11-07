@@ -33,6 +33,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "specification-examples",
         "persona-callers",
         "personas-canvas",
+        "users",
         "specification-tables",
         "guarded-actions",
         "guarded-interactions",

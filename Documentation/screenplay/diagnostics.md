@@ -85,6 +85,9 @@ Decision 0110 adds the following catalog entries:
 | `PLAY0884` | Error | A graph query uses the same alias twice. |
 | `PLAY0885` | Error | A graph query uses a construct this version does not have: variable-length paths, `or`, ranges, functions or aggregates. |
 | `PLAY0886` | Error | A graph handler's `foreach` names a collection inside another, or something that is not a list of a composite type of the event. |
+| `PLAY0887` | Error | A `user` declaration is not `user <name> ["<display name>"] [as <Persona>, ...]`, or has a line nested under it. |
+| `PLAY0888` | Error | A `user` plays a persona that no `persona` declaration names. |
+| `PLAY0889` | Error | Two `user` declarations carry the same name. |
  See [action subjects](action-subjects.md#diagnostics-and-migration)
 for triggers and safe fixes. PLAY0319, PLAY0345 and PLAY0346 keep their existing meanings.
 
