@@ -3,16 +3,16 @@
 
 namespace Cratis.Screenplay.Syntax;
 
-/// <content>
-/// Visiting of navigation regions, their logo and items.
-/// </content>
+/// <summary>
+/// Walks outlets - the item lists layouts and templates offer - and their items.
+/// </summary>
 public abstract partial class ScreenplaySyntaxWalker
 {
     /// <summary>
-    /// Visits a <see cref="NavigationRegionSyntax"/> node and its children.
+    /// Visits an <see cref="OutletSyntax"/> and its logo, items and hidden items.
     /// </summary>
-    /// <param name="syntax">The <see cref="NavigationRegionSyntax"/> to visit.</param>
-    public virtual void VisitNavigationRegion(NavigationRegionSyntax syntax)
+    /// <param name="syntax">The outlet.</param>
+    public virtual void VisitOutlet(OutletSyntax syntax)
     {
         VisitNode(syntax);
 
@@ -23,9 +23,47 @@ public abstract partial class ScreenplaySyntaxWalker
 
         foreach (var item in syntax.Items)
         {
-            VisitNavigationItem(item);
+            VisitOutletItem(item);
         }
 
+        foreach (var hide in syntax.Hides)
+        {
+            VisitNode(hide);
+        }
+    }
+
+    /// <summary>
+    /// Visits one outlet item, dispatching on its form.
+    /// </summary>
+    /// <param name="syntax">The item.</param>
+    public virtual void VisitOutletItem(OutletItemSyntax syntax)
+    {
+        switch (syntax)
+        {
+            case ToolbarButtonSyntax button:
+                VisitToolbarButton(button);
+                break;
+            case NavigationItemSyntax item:
+                VisitNavigationItem(item);
+                break;
+            case OutletGroupSyntax group:
+                VisitOutletGroup(group);
+                break;
+            default:
+                VisitNode(syntax);
+                VisitOutletPosition(syntax);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Visits an <see cref="OutletGroupSyntax"/> and its buttons.
+    /// </summary>
+    /// <param name="syntax">The group.</param>
+    public virtual void VisitOutletGroup(OutletGroupSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitOutletPosition(syntax);
         foreach (var button in syntax.Buttons)
         {
             VisitToolbarButton(button);
@@ -33,18 +71,19 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
-    /// Visits a <see cref="NavigationLogoSyntax"/> node.
+    /// Visits a <see cref="NavigationLogoSyntax"/>.
     /// </summary>
-    /// <param name="syntax">The <see cref="NavigationLogoSyntax"/> to visit.</param>
+    /// <param name="syntax">The logo.</param>
     public virtual void VisitNavigationLogo(NavigationLogoSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
-    /// Visits a <see cref="NavigationItemSyntax"/> node and its children.
+    /// Visits a <see cref="NavigationItemSyntax"/> and its target and sub-items.
     /// </summary>
-    /// <param name="syntax">The <see cref="NavigationItemSyntax"/> to visit.</param>
+    /// <param name="syntax">The item.</param>
     public virtual void VisitNavigationItem(NavigationItemSyntax syntax)
     {
         VisitNode(syntax);
+        VisitOutletPosition(syntax);
 
         if (syntax.Target is not null)
         {
@@ -58,8 +97,20 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
-    /// Visits a <see cref="NavigationTargetSyntax"/> node.
+    /// Visits a <see cref="NavigationTargetSyntax"/>.
     /// </summary>
-    /// <param name="syntax">The <see cref="NavigationTargetSyntax"/> to visit.</param>
+    /// <param name="syntax">The target.</param>
     public virtual void VisitNavigationTarget(NavigationTargetSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits where an outlet item stands, when it says.
+    /// </summary>
+    /// <param name="syntax">The item.</param>
+    protected void VisitOutletPosition(OutletItemSyntax syntax)
+    {
+        if (syntax.Position is not null)
+        {
+            VisitNode(syntax.Position);
+        }
+    }
 }

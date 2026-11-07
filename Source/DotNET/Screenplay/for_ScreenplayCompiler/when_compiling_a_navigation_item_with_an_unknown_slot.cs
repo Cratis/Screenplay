@@ -10,8 +10,8 @@ public class when_compiling_a_navigation_item_with_an_unknown_slot : given.a_nav
 {
     const string Shell =
         """
-          navigation sidebar
-            item a title "A" target Sales slot nowhere
+          outlet sidebar of navigation
+            default a title "A" target Sales slot nowhere
         """;
 
     void Because() => CompileWith(Shell);

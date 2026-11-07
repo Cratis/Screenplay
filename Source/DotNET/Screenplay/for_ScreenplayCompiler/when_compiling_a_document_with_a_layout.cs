@@ -12,7 +12,8 @@ public class when_compiling_a_document_with_a_layout : given.a_compiler
         layout AppShell
           category Test
           topbar
-          navigation contributes Navigation
+          navigation
+          outlet Navigation of navigation in navigation
           content
           footer
 
@@ -44,8 +45,8 @@ public class when_compiling_a_document_with_a_layout : given.a_compiler
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_parse_the_layout_name() => _layout.Name.ShouldEqual("AppShell");
     [Fact] void should_parse_the_slots_in_declaration_order() => _layout.Slots.Select(slot => slot.Name).ShouldContainOnly("topbar", "navigation", "content", "footer");
-    [Fact] void should_parse_the_contribution_point_on_the_navigation_slot() => _layout.Slots.Single(slot => slot.Name == "navigation").Contributes.ShouldEqual("Navigation");
-    [Fact] void should_leave_the_other_slots_without_a_contribution_point() => _layout.Slots.Where(slot => slot.Name != "navigation").All(slot => slot.Contributes is null).ShouldBeTrue();
+    [Fact] void should_parse_the_navigation_outlet_in_the_navigation_slot() => _layout.Outlets.Single().Slot.ShouldEqual("navigation");
+    [Fact] void should_declare_the_outlet_as_navigation() => _layout.Outlets.Single().Kind.ShouldEqual(OutletKind.Navigation);
     [Fact] void should_arrange_by_flow() => _layout.Arrangement!.Mode.ShouldEqual(ArrangementMode.Flow);
     [Fact] void should_nest_the_tree_directly_under_the_arrangement() => _column.Kind.ShouldEqual(ArrangementContainerKind.Column);
     [Fact] void should_parse_the_topbar_height() => ((ArrangementSlotSyntax)_column.Children.First()).Height.ShouldEqual(56);

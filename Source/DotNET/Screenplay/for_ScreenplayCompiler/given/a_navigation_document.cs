@@ -19,7 +19,8 @@ public class a_navigation_document : a_compiler
         layout AppShell
           category application
           topbar
-          navigation contributes Navigation
+          navigation
+          outlet Navigation of navigation in navigation
           content
           side
 
@@ -46,6 +47,12 @@ public class a_navigation_document : a_compiler
     /// <param name="support">Lines added right under <c>module Support</c>, indented as written.</param>
     protected void CompileWith(string shell, string sales = "", string support = "")
     {
+        // A module changes outlets the layout declares; a scenario about modules alone gets the layout's two.
+        if (shell.Length == 0 && (sales.Length > 0 || support.Length > 0))
+        {
+            shell = "  outlet topbar of navigation\n  outlet sidebar of navigation\n";
+        }
+
         var source = Foundation;
         if (shell.Length > 0)
         {

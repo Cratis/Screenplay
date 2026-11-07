@@ -34,6 +34,11 @@ public abstract partial class ScreenplaySyntaxWalker
                 VisitScreenDirective(directive);
             }
         }
+
+        foreach (var outlet in syntax.Outlets)
+        {
+            VisitOutlet(outlet);
+        }
     }
 
     /// <summary>
@@ -308,6 +313,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitToolbarButton(ToolbarButtonSyntax syntax)
     {
         VisitNode(syntax);
+        VisitOutletPosition(syntax);
         if (syntax.Authorize is not null)
         {
             VisitAuthorize(syntax.Authorize);

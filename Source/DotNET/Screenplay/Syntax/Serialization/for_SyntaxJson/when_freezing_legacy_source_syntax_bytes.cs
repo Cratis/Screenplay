@@ -137,6 +137,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             legacy = WithoutTemplateCategories(legacy);
 
             // Slot roles and modifiers (Screenplay 6) are new members the living samples demonstrate; the frozen bytes predate them.
+            // So do outlets: Screenplay 6 moved a slot's 'contributes <Point>' into an outlet, which has its own vectors.
             legacy = WithoutSlotRoles(legacy);
 
             // Report-only metadata has its own conformance vector. Keep existing event metadata
@@ -188,7 +189,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 File.WriteAllBytes(path, actual);
             }
 
-            var expected = File.ReadAllBytes(path);
+            // The frozen bytes carry the slot member Screenplay 6 removed; project it out of them, not into the compiler.
+            var expected = Encoding.UTF8.GetBytes(RemovedSlotContribution().Replace(File.ReadAllText(path), string.Empty));
             var difference = expected.Zip(actual).TakeWhile(pair => pair.First == pair.Second).Count();
             Assert.True(expected.SequenceEqual(actual), $"Legacy syntax bytes changed for '{name}' at byte {difference}. Expected: {Encoding.UTF8.GetString(expected.AsSpan(difference, Math.Min(200, expected.Length - difference)))}. Actual: {Encoding.UTF8.GetString(actual.AsSpan(difference, Math.Min(200, actual.Length - difference)))}.");
             count++;
@@ -241,6 +243,9 @@ public partial class when_freezing_legacy_source_syntax_bytes
         })
     };
 
+    [GeneratedRegex("\"contributes\":(?:null|\"\\w+\"),", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex RemovedSlotContribution();
+
     static ApplicationSyntax WithoutSlotRoles(ApplicationSyntax application)
     {
         static IEnumerable<SlotSyntax> Plain(IEnumerable<SlotSyntax> slots) =>
@@ -251,11 +256,21 @@ public partial class when_freezing_legacy_source_syntax_bytes
             Layouts = application.Layouts?.Select(layout => layout with { Slots = Plain(layout.Slots) }).ToArray(),
             Modules = application.Modules.Select(module => module with
             {
-                ScreenTemplates = module.ScreenTemplates.Select(template => template with { Slots = Plain(template.Slots) }).ToArray(),
-                DialogTemplates = module.DialogTemplates?.Select(template => template with { Slots = Plain(template.Slots) }).ToArray()
+                ScreenTemplates = module.ScreenTemplates.Select(template => template with { Slots = Plain(template.Slots), Outlets = [] }).ToArray(),
+                DialogTemplates = module.DialogTemplates?.Select(template => template with { Slots = Plain(template.Slots), Outlets = [] }).ToArray(),
+                Contributions = module.Contributions?.Where(contribution => !contribution.Items.Any()).ToArray(),
+                Features = module.Features.Select(WithoutOutlets).ToArray()
             }).ToArray()
         };
     }
+
+    static FeatureSyntax WithoutOutlets(FeatureSyntax feature) => feature with
+    {
+        Outlets = [],
+        Contributions = feature.Contributions?.Where(contribution => !contribution.Items.Any()).ToArray(),
+        Features = feature.Features.Select(WithoutOutlets).ToArray(),
+        Slices = feature.Slices.Select(slice => slice with { Screens = slice.Screens.Select(screen => screen with { Outlets = [] }).ToArray() }).ToArray()
+    };
 
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
@@ -272,10 +287,10 @@ public partial class when_freezing_legacy_source_syntax_bytes
             Attributes = concept.Attributes.Select(attribute => attribute with { Reason = LegacyReason(concept.Name, attribute.Name, attribute.Reason) })
         }),
         UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
-        Layouts = application.Layouts?.Select(layout => layout with { Navigation = [] }),
+        Layouts = application.Layouts?.Select(layout => layout with { Outlets = [] }),
         Modules = application.Modules.Select(module => module with
         {
-            Navigation = [],
+            Outlets = [],
             Documentation = null,
             Purposes = [],
             Forms = module.Forms?.Select(form => form with { Description = null }),

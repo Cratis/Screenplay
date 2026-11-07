@@ -14,7 +14,8 @@ public class when_moving_and_removing_screen_nodes : given.an_authoring_connecti
     const string Application = """
         layout Shell
           slot main
-          navigation contributes Navigation
+          navigation
+          outlet Navigation of navigation in navigation
           content
 
         ui profile Web

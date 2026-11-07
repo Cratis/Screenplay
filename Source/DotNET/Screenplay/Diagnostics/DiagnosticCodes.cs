@@ -1234,8 +1234,9 @@ public static class DiagnosticCodes
     public const string InvalidOrderDeclaration = "PLAY0223";
 
     /// <summary>
-    /// A contribution names a contribution point nothing in scope declares.
+    /// Retired: a contribution to an outlet nothing declares is PLAY0903 since Screenplay 6.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning, retired: true)]
     public const string UnknownContributionPoint = "PLAY0224";
 
     // theme - a named visual theme and the component packages it is compatible with.
@@ -3373,8 +3374,9 @@ public static class DiagnosticCodes
     // Navigation regions - topbar and sidebar of the application shell, with module level inherit, extend and override.
 
     /// <summary>
-    /// A <c>navigation</c> block header is not <c>navigation topbar|sidebar [inherits|extends|overrides]</c>.
+    /// Retired: navigation regions are outlets since Screenplay 6; a malformed outlet is PLAY0897.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string InvalidNavigationRegionDeclaration = "PLAY0740";
 
     /// <summary>
@@ -3383,8 +3385,9 @@ public static class DiagnosticCodes
     public const string InvalidNavigationItem = "PLAY0741";
 
     /// <summary>
-    /// A layout or module declares the same navigation region more than once.
+    /// Retired: navigation regions are outlets since Screenplay 6; an outlet declared twice is PLAY0904.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string DuplicateNavigationRegion = "PLAY0742";
 
     /// <summary>
@@ -3398,18 +3401,21 @@ public static class DiagnosticCodes
     public const string NavigationLogoNotAllowed = "PLAY0744";
 
     /// <summary>
-    /// A layout's region states <c>inherits</c>, <c>extends</c> or <c>overrides</c> - the application is the base and has no mode - or a region that <c>inherits</c> lists items of its own.
+    /// Retired: navigation regions are outlets since Screenplay 6; a misplaced mode is PLAY0897.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string NavigationRegionModeNotAllowed = "PLAY0745";
 
     /// <summary>
-    /// A topbar item has sub-items; only the sidebar nests items.
+    /// Retired: navigation regions are outlets since Screenplay 6, and any navigation outlet nests items.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string NavigationChildrenNotAllowed = "PLAY0746";
 
     /// <summary>
-    /// Two items of one navigation region share an id, within the region or between an extending module and the application (Scene <c>navDuplicateId</c>).
+    /// Retired: navigation regions are outlets since Screenplay 6; a repeated item id is PLAY0905.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string NavDuplicateId = "PLAY0747";
 
     /// <summary>
@@ -3470,8 +3476,9 @@ public static class DiagnosticCodes
     public const string DuplicateToolbarButton = "PLAY0765";
 
     /// <summary>
-    /// A toolbar item of a feature or module links a command that no slice of that feature or module declares.
+    /// Retired: feature and module toolbars are outlets since Screenplay 6, whose buttons name slices (PLAY0761).
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning, retired: true)]
     public const string FeatureToolbarCommandNotFound = "PLAY0808";
 
     /// <summary>
@@ -3914,7 +3921,71 @@ public static class DiagnosticCodes
     public const string RemovedNavigationOutlet = "PLAY0892";
 
     /// <summary>
-    /// A layout, screen template or dialog template declares <c>outlet &lt;name&gt;</c>, which Screenplay 6 writes <c>slot &lt;name&gt;</c>.
+    /// A layout, screen template or dialog template declares <c>outlet &lt;name&gt;</c> with no kind, which Screenplay 6 writes <c>slot &lt;name&gt;</c>.
+    /// An outlet with a kind - <c>outlet &lt;name&gt; of actions</c> - is an item list.
     /// </summary>
     public const string RemovedTemplateOutlet = "PLAY0893";
+
+    /// <summary>
+    /// A layout or module declares <c>navigation topbar|sidebar</c>, which Screenplay 6 writes <c>outlet &lt;name&gt; of navigation</c> on the layout
+    /// and <c>outlet &lt;name&gt; inherits|extends|overrides</c> on a module.
+    /// </summary>
+    public const string RemovedNavigationRegion = "PLAY0894";
+
+    /// <summary>
+    /// A slot declares <c>contributes &lt;Point&gt;</c>, which Screenplay 6 writes <c>outlet &lt;Point&gt; of navigation</c>.
+    /// </summary>
+    public const string RemovedSlotContribution = "PLAY0895";
+
+    /// <summary>
+    /// A feature or module declares <c>toolbar &lt;name&gt;</c>, which Screenplay 6 writes <c>outlet &lt;name&gt; extends</c>.
+    /// </summary>
+    public const string RemovedFeatureToolbar = "PLAY0896";
+
+    /// <summary>
+    /// An <c>outlet</c> line is malformed, names an unknown kind, declares a kind below a layout or template, states a mode on a layout or
+    /// template, or lists items under <c>inherits</c>.
+    /// </summary>
+    public const string InvalidOutletDeclaration = "PLAY0897";
+
+    /// <summary>
+    /// A line inside an outlet or a contribution is not an item form - <c>default</c>, <c>button</c>, <c>group</c>, <c>filter</c>, <c>tab</c>,
+    /// <c>stat</c>, <c>item</c>, <c>hide</c>, <c>before</c> or <c>after</c> - or one of those is malformed.
+    /// </summary>
+    public const string InvalidOutletItem = "PLAY0898";
+
+    /// <summary>
+    /// A <c>hide</c>, <c>before</c> or <c>after</c> names an item the inherited outlet does not have.
+    /// </summary>
+    public const string OutletItemNotInherited = "PLAY0899";
+
+    /// <summary>
+    /// An outlet item is of the wrong kind for its outlet - a tab in an actions outlet, a button in a filters outlet.
+    /// </summary>
+    public const string OutletItemWrongKind = "PLAY0900";
+
+    /// <summary>
+    /// A filter sets a parameter the query does not have.
+    /// </summary>
+    public const string OutletFilterParameterUnknown = "PLAY0901";
+
+    /// <summary>
+    /// A stat reads its value from a query that returns a list - a stat needs a single result.
+    /// </summary>
+    public const string OutletStatFromListQuery = "PLAY0902";
+
+    /// <summary>
+    /// A <c>contribute to</c>, or a lower level's <c>outlet &lt;name&gt; inherits|extends|overrides</c>, names an outlet no layout or template declares.
+    /// </summary>
+    public const string UnknownOutlet = "PLAY0903";
+
+    /// <summary>
+    /// A layout, template, module, feature or screen declares the same outlet twice.
+    /// </summary>
+    public const string DuplicateOutlet = "PLAY0904";
+
+    /// <summary>
+    /// Two items of one outlet share an id, or a lower level's item repeats the id of an inherited one.
+    /// </summary>
+    public const string DuplicateOutletItem = "PLAY0905";
 }

@@ -12,7 +12,8 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
         module Invoicing
           screen template AppShell
             category Test
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
 
           contribute to Navigation
@@ -32,6 +33,7 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
 
     CompilationResult<ApplicationSyntax> _result;
     SlotSyntax _slot;
+    OutletSyntax _outlet;
     ContributionSyntax _moduleContribution;
     ContributionSyntax _featureContribution;
 
@@ -40,6 +42,7 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
         _result = _compiler.Compile(Source);
         var module = _result.Value!.Modules.Single();
         _slot = module.ScreenTemplates.Single().Slots.First();
+        _outlet = module.ScreenTemplates.Single().Outlets.Single();
         _moduleContribution = module.Contributions!.Single();
         _featureContribution = module.Features.Single().Contributions!.Single();
     }
@@ -47,7 +50,7 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_parse_the_slot_name() => _slot.Name.ShouldEqual("navbar");
-    [Fact] void should_parse_the_slot_contribution_point() => _slot.Contributes.ShouldEqual("Navigation");
+    [Fact] void should_parse_the_outlet_the_template_declares() => _outlet.Name.ShouldEqual("Navigation");
     [Fact] void should_parse_the_module_contribution_point() => _moduleContribution.ContributionPoint.ShouldEqual("Navigation");
     [Fact] void should_parse_the_module_contribution_navigate_target() => _moduleContribution.Navigate!.Screen.ShouldEqual("InvoiceList");
     [Fact] void should_parse_the_module_contribution_label() => _moduleContribution.Label.ShouldEqual("Invoices");

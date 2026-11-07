@@ -23,7 +23,8 @@ public class when_authoring_screen_composition : given.an_authoring_connection
             slot detail
             display "Sales shell"
             scopes slice
-            header contributes Actions
+            header
+            outlet Actions of navigation in header
             body
 
             content header

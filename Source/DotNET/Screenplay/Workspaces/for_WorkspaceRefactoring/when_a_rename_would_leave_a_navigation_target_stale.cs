@@ -16,8 +16,8 @@ public class when_a_rename_would_leave_a_navigation_target_stale : given.a_refac
         [Document("model", "application.play", """
             layout Shell
               content
-              navigation sidebar
-                item shop title "Shop" target Shop
+              outlet sidebar of navigation
+                default shop title "Shop" target Shop
                   item orders title "Orders" target Shop.Orders
 
             module Shop

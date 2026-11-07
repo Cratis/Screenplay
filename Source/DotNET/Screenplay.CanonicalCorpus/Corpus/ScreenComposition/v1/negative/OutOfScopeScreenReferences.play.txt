@@ -1,7 +1,8 @@
 module Workspaces
   screen template Shell
     category Workspace
-    header contributes WorkspaceActions
+    header
+    outlet WorkspaceActions of navigation in header
     body
 
   feature Tracking

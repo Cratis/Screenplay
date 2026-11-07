@@ -43,7 +43,7 @@ internal static partial class ArrangementParser
         var exposes = new List<TemplateExposedValueSyntax>();
         var recursiveSlots = new List<TemplateSlotSyntax>();
         var metadata = new TemplateMetadata();
-        var navigation = new List<NavigationRegionSyntax>();
+        var outlets = new List<OutletSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -80,6 +80,20 @@ internal static partial class ArrangementParser
                 case "slot" when child.Content.Length > "slot".Length:
                     recursiveSlots.Add(new TemplateSlotSyntax(child.Content["slot".Length..].Trim(), child.Location));
                     break;
+                case "outlet" when OutletParser.IsDeclaration(child.Content) || OutletParser.IsOverride(child.Content):
+                    if (OutletParser.ParseDeclaration(context, child, keyword) is { } outlet)
+                    {
+                        if (outlets.Exists(existing => existing.Name == outlet.Name))
+                        {
+                            context.Error(DiagnosticCodes.DuplicateOutlet, $"The {keyword} '{name}' already declares outlet '{outlet.Name}' - an outlet is declared once", child.Location);
+                        }
+                        else
+                        {
+                            outlets.Add(outlet);
+                        }
+                    }
+
+                    break;
                 case "outlet":
                     var renamed = new TemplateSlotSyntax(child.Content["outlet".Length..].Trim(), child.Location);
                     context.Error(DiagnosticCodes.RemovedTemplateOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed.Name}' in a {keyword}", $"slot {renamed.Name}"), child.Location);
@@ -89,17 +103,8 @@ internal static partial class ArrangementParser
                     // A bare word is a slot declaration, so a slot may still be named 'content' or 'display'.
                     ParseMetadata(context, child, keyword, metadata);
                     break;
-                case "navigation" when NavigationParser.IsRegionHeader(child.Content) && !SlotDeclarationRegex().IsMatch(child.Content):
-                    var region = NavigationParser.ParseRegion(context, child);
-                    if (keyword == "layout")
-                    {
-                        navigation.Add(region);
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.UnknownLayoutDirective, $"A {keyword} cannot declare a 'navigation' region - the application's navigation belongs in the 'layout', and a module declares it beneath 'module'", child.Location);
-                    }
-
+                case "navigation" when NavigationParser.IsRegionHeader(child.Content):
+                    NavigationParser.ReportRegion(context, child, keyword);
                     break;
                 case "on":
                 case "uses":
@@ -123,7 +128,7 @@ internal static partial class ArrangementParser
             DisplayName = metadata.DisplayName,
             Description = metadata.Description,
             Content = metadata.Content,
-            Navigation = navigation
+            Outlets = outlets
         };
     }
 
@@ -175,7 +180,7 @@ internal static partial class ArrangementParser
         {
             context.Error(
                 DiagnosticCodes.InvalidLayoutSlotName,
-                $"Invalid slot declaration '{line.Content}' - expected an identifier, optionally followed by a role ('page', 'pane' or 'panel'), 'routed [by <param>]', 'primary', 'optional' and 'contributes <Point>', in that order",
+                $"Invalid slot declaration '{line.Content}' - expected an identifier, optionally followed by a role ('page', 'pane' or 'panel'), 'routed [by <param>]', 'primary' and 'optional', in that order",
                 line.Location);
             context.SkipBlock(line.Indent);
             return;
@@ -191,7 +196,15 @@ internal static partial class ArrangementParser
             return;
         }
 
-        AddSlot(slots, new(match.Groups[1].Value, match.Groups[7].Success ? match.Groups[7].Value : null, line.Location)
+        if (match.Groups[7].Success)
+        {
+            context.Error(
+                DiagnosticCodes.RemovedSlotContribution,
+                SlotsAndOutletsMigration.Replaced($"'contributes {match.Groups[7].Value}' on slot '{match.Groups[1].Value}'", $"outlet {match.Groups[7].Value} of navigation in {match.Groups[1].Value}"),
+                line.Location);
+        }
+
+        AddSlot(slots, new(match.Groups[1].Value, line.Location)
         {
             Role = match.Groups[2].Success ? Enum.Parse<SlotRole>(match.Groups[2].Value, ignoreCase: true) : null,
             Routed = match.Groups[3].Success,
@@ -447,7 +460,7 @@ internal static partial class ArrangementParser
             }
 
             places.Add(place);
-            AddSlot(slots, new(place.SlotName, null, place.Location));
+            AddSlot(slots, new(place.SlotName, place.Location));
         }
 
         return new(width, height, places, header.Location);
@@ -496,7 +509,7 @@ internal static partial class ArrangementParser
         switch (node)
         {
             case ArrangementSlotSyntax slot:
-                AddSlot(slots, new(slot.Name, null, slot.Location));
+                AddSlot(slots, new(slot.Name, slot.Location));
                 break;
             case ArrangementContainerSyntax container:
                 foreach (var child in container.Children)
@@ -582,7 +595,7 @@ internal static partial class ArrangementParser
         /// <summary>
         /// Gets the navigation regions a layout declares.
         /// </summary>
-        public IReadOnlyList<NavigationRegionSyntax> Navigation { get; init; } = [];
+        public IReadOnlyList<OutletSyntax> Outlets { get; init; } = [];
 
         /// <summary>
         /// Gets the template picker description, or <c>null</c>.

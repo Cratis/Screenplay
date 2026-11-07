@@ -15,7 +15,8 @@ public class when_expanding_a_multifile_modules_authored_members : given.an_auth
               contribute to Navigation
                 navigate to List
               screen template Shell
-                navbar contributes Navigation
+                navbar
+                outlet Navigation of navigation in navbar
                 main
               import "Feature.play"
             """);

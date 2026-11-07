@@ -48,7 +48,7 @@ internal static partial class LayoutParser
             RestrictsScopes = body.RestrictsScopes,
             Scopes = body.Scopes,
             SliceKinds = body.SliceKinds,
-            Navigation = body.Navigation
+            Outlets = body.Outlets
         };
     }
 
@@ -83,7 +83,8 @@ internal static partial class LayoutParser
             SliceKinds = body.SliceKinds,
             DisplayName = body.DisplayName,
             Description = body.Description,
-            Content = body.Content
+            Content = body.Content,
+            Outlets = body.Outlets
         };
     }
 
@@ -117,7 +118,8 @@ internal static partial class LayoutParser
             SliceKinds = body.SliceKinds,
             DisplayName = body.DisplayName,
             Description = body.Description,
-            Content = body.Content
+            Content = body.Content,
+            Outlets = body.Outlets
         };
     }
 

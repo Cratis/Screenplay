@@ -182,7 +182,7 @@ internal static class CompositionValidator
         {
             context.Error(
                 DiagnosticCodes.UnknownScreenContributionPoint,
-                $"Unknown contribution point '{contribution.ContributionPoint}' - no layout or template slot declares 'contributes {contribution.ContributionPoint}'",
+                $"Unknown outlet '{contribution.ContributionPoint}' - no layout or template declares 'outlet {contribution.ContributionPoint} of <kind>'",
                 contribution.Location);
         }
     }
@@ -434,8 +434,8 @@ internal static class CompositionValidator
                 case ScreenSyntax screen:
                     Screens.Add(screen.Name);
                     break;
-                case SlotSyntax { Contributes: { } point }:
-                    ContributionPoints.Add(point);
+                case OutletSyntax { Kind: not null } outlet:
+                    ContributionPoints.Add(outlet.Name);
                     break;
                 case ComponentSlotSyntax slot:
                     Slots.Add(slot.Name);

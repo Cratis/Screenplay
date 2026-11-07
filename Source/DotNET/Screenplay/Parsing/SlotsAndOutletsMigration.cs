@@ -25,4 +25,13 @@ internal static class SlotsAndOutletsMigration
     /// <returns>The diagnostic message.</returns>
     internal static string Renamed(string old, string replacement) =>
         $"{old} is written '{replacement}' since Screenplay 6 - a region content is placed in is a slot; run '{Command}' to rewrite the model (slots and outlets)";
+
+    /// <summary>
+    /// Words the message for a form Screenplay 6 replaced with an outlet.
+    /// </summary>
+    /// <param name="old">The old form, described where it was written - for example <c>'toolbar actions' in a feature</c>.</param>
+    /// <param name="replacement">The form that replaces it.</param>
+    /// <returns>The diagnostic message.</returns>
+    internal static string Replaced(string old, string replacement) =>
+        $"{old} is written '{replacement}' since Screenplay 6 - an item list a template offers is an outlet; run '{Command}' to rewrite the model (slots and outlets)";
 }

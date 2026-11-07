@@ -30,6 +30,7 @@ public partial class ScreenplayPrinter
             }
 
             WriteScreenContributions(writer, screen.Contributions);
+            WriteOutlets(writer, screen.Outlets);
         }
     }
 
@@ -360,8 +361,9 @@ public partial class ScreenplayPrinter
         if (button.Slice is not null) line += $" slice {button.Slice}";
         if (button.Emphasis is { } emphasis) line += $" emphasis {emphasis.ToString().ToLowerInvariant()}";
         if (button.Icon is not null) line += $" icon {WriteItemValue(button.Icon)}";
-        writer.Line(line, button);
-        if (button.Authorize is not null || button.Confirm is not null)
+        if (button.Runs is not null) line += $" runs {button.Runs}";
+        writer.Line(ItemHead(button, line), button);
+        if (button.Authorize is not null || button.Confirm is not null || button.Position is not null)
         {
             using (writer.Indent())
             {
@@ -374,6 +376,8 @@ public partial class ScreenplayPrinter
                 {
                     WriteAuthorize(writer, button.Authorize);
                 }
+
+                WriteOutletPosition(writer, button);
             }
         }
     }

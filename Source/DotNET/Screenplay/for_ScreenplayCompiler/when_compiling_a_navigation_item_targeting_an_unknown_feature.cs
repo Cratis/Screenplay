@@ -10,8 +10,8 @@ public class when_compiling_a_navigation_item_targeting_an_unknown_feature : giv
 {
     const string Shell =
         """
-          navigation sidebar
-            item a title "A" target Sales.Ghost
+          outlet sidebar of navigation
+            default a title "A" target Sales.Ghost
         """;
 
     void Because() => CompileWith(Shell);

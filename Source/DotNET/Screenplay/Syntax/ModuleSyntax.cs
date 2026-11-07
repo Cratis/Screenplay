@@ -81,14 +81,10 @@ public record ModuleSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
-    /// Gets the navigation regions this module changes. A region it does not declare inherits the application's.
+    /// Gets the outlets this module changes for the screens beneath it - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
+    /// An outlet it does not mention keeps the items it inherits.
     /// </summary>
-    public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
-
-    /// <summary>
-    /// Gets the toolbars this module adds to the <c>toolbar</c> slot of the screens beneath it, each button linked to a command or a State Change slice.
-    /// </summary>
-    public IEnumerable<ScreenToolbarSyntax> Toolbars { get; init; } = [];
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -162,7 +158,7 @@ public record FeatureSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
-    /// Gets the toolbars this feature adds to the <c>toolbar</c> slot of its screens - and of its sub features' - each button linked to a command of the feature.
+    /// Gets the outlets this feature changes for its screens - and its sub features' - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
     /// </summary>
-    public IEnumerable<ScreenToolbarSyntax> Toolbars { get; init; } = [];
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
 }

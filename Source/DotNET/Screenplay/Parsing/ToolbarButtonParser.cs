@@ -20,15 +20,18 @@ internal static partial class ToolbarButtonParser
     /// <summary>
     /// What a toolbar button line may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "button <id> title \"<text>\" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>]";
+    public const string Expected = "button <id> title \"<text>\" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>] [runs close|submit|refresh]";
+
+    static readonly HashSet<string> _builtIns = new(StringComparer.Ordinal) { "close", "submit", "refresh" };
 
     /// <summary>
     /// Parses a toolbar button from its already consumed line.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>button</c> line.</param>
+    /// <param name="allowPosition">Whether the button may say <c>before &lt;id&gt;</c> or <c>after &lt;id&gt;</c> - in an outlet a lower level changes.</param>
     /// <returns>The parsed <see cref="ToolbarButtonSyntax"/>, or <c>null</c> when the line has no usable id.</returns>
-    public static ToolbarButtonSyntax? Parse(ParserContext context, SourceLine line)
+    public static ToolbarButtonSyntax? Parse(ParserContext context, SourceLine line, bool allowPosition = false)
     {
         var head = ButtonRegex().Match(line.Content);
         if (!head.Success)
@@ -42,6 +45,7 @@ internal static partial class ToolbarButtonParser
         string? title = null;
         string? slice = null;
         string? icon = null;
+        string? runs = null;
         ToolbarEmphasis? emphasis = null;
         var rest = head.Groups[3].Value;
         var position = 0;
@@ -62,7 +66,7 @@ internal static partial class ToolbarButtonParser
             var quoted = part.Groups[2].Success;
             var localized = part.Groups[3].Success;
             var value = Value(part);
-            if (IsRepeated(key, title, slice, icon, emphasis))
+            if (key == "runs" ? runs is not null : IsRepeated(key, title, slice, icon, emphasis))
             {
                 context.Error(DiagnosticCodes.InvalidToolbarButton, $"Toolbar button '{id}' states '{key}' more than once", line.Location);
                 continue;
@@ -106,6 +110,18 @@ internal static partial class ToolbarButtonParser
                     }
 
                     break;
+                case "runs":
+                    if (!quoted && !localized && _builtIns.Contains(value))
+                    {
+                        runs = value;
+                    }
+                    else
+                    {
+                        context.Error(DiagnosticCodes.InvalidToolbarButton, $"Invalid runs '{value}' on toolbar button '{id}' - a button runs one of the built-ins 'close', 'submit' or 'refresh'", line.Location);
+                        valid = false;
+                    }
+
+                    break;
                 default:
                     icon = value;
                     break;
@@ -119,9 +135,21 @@ internal static partial class ToolbarButtonParser
 
         AuthorizeSyntax? authorize = null;
         string? confirm = null;
+        OutletPositionSyntax? placement = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (allowPosition && OutletParser.TryParsePosition(child, out var parsed))
+            {
+                if (placement is not null)
+                {
+                    OutletParser.ReportRepeatedPosition(context, child, id);
+                }
+
+                placement ??= parsed;
+                continue;
+            }
+
             if (LineText.FirstWord(child.Content) == "authorize" && authorize is null)
             {
                 authorize = AuthorizeParser.Parse(context, child);
@@ -138,7 +166,7 @@ internal static partial class ToolbarButtonParser
             context.SkipBlock(child.Indent);
         }
 
-        return new(id, title ?? string.Empty, line.Location) { Slice = slice, Emphasis = emphasis, Icon = icon, Authorize = authorize, Confirm = confirm };
+        return new(id, title ?? string.Empty, line.Location) { Slice = slice, Emphasis = emphasis, Icon = icon, Runs = runs, Position = placement, Authorize = authorize, Confirm = confirm };
     }
 
     static ToolbarEmphasis? ParseEmphasis(string value) => value switch
@@ -170,7 +198,7 @@ internal static partial class ToolbarButtonParser
     [GeneratedRegex("^button\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ButtonRegex();
 
-    [GeneratedRegex("\\s*(title|slice|emphasis|icon)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?<end>\\s|$)", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("\\s*(title|slice|emphasis|icon|runs)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?<end>\\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex PartRegex();
 
     [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.NonBacktracking)]

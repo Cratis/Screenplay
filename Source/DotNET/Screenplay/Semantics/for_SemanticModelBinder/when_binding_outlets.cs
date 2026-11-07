@@ -6,7 +6,7 @@ using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
-public class when_binding_navigation_regions : given.a_semantic_binder
+public class when_binding_outlets : given.a_semantic_binder
 {
     const string Source =
         """
@@ -23,14 +23,14 @@ public class when_binding_navigation_regions : given.a_semantic_binder
         """
         layout Shell
           content
-          navigation sidebar
-            item work title "Work" target Work
+          outlet sidebar of navigation
+            default work title "Work" target Work
 
         """;
 
     const string ModuleNavigation =
         """
-          navigation sidebar extends
+          outlet sidebar extends
             item items title "Items" target Work.Items
         """;
 
@@ -45,7 +45,7 @@ public class when_binding_navigation_regions : given.a_semantic_binder
 
     [Fact] void should_bind_both_models() => (_baseline.Success && _navigated.Success).ShouldBeTrue();
     [Fact] void should_preserve_canonical_bytes() => SemanticModelSerializer.Serialize(_baseline.Value!.Model).SequenceEqual(SemanticModelSerializer.Serialize(_navigated.Value!.Model)).ShouldBeTrue();
-    [Fact] void should_defer_the_layout_and_the_module_region() => _navigated.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.DeferredSemanticSyntax, DiagnosticCodes.DeferredSemanticSyntax);
+    [Fact] void should_defer_the_layout_and_the_module_outlet() => _navigated.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.DeferredSemanticSyntax, DiagnosticCodes.DeferredSemanticSyntax);
     [Fact] void should_keep_the_diagnostics_informational() => _navigated.Diagnostics.All(diagnostic => diagnostic.Severity == DiagnosticSeverity.Information).ShouldBeTrue();
-    [Fact] void should_name_the_module_region() => _navigated.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("Navigation sidebar of module 'Work'", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_name_the_module_outlet() => _navigated.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("Outlet 'sidebar' of module 'Work'", StringComparison.Ordinal)).ShouldBeTrue();
 }

@@ -31,8 +31,8 @@ designers and renderers need to know what kind of content a region holds.
    `screenplay migrate --from 5 --to 6`. The parser still reads the old form as the slot it means, so one rename does not
    cascade into reference errors.
 3. **A slot line may carry a role and modifiers**, after the name and in this order, each optional:
-   `<name> [page|pane|panel] [routed [by <param>]] [primary] [optional] [contributes <Point>]`. They are syntax and
-   printer facts for renderers and designers; this decision adds no check on them.
+   `<name> [page|pane|panel] [routed [by <param>]] [primary] [optional]`. They are syntax and printer facts for
+   renderers and designers; this decision adds no check on them. (`contributes <Point>` became an outlet - decision 0143.)
 4. **No executable-model version.** Layouts, templates and screens are deferred from the ESM (`PLAY0269` information), so
    slots never reach its bytes; a new language/semantic version would select nothing. The release is the product major,
    Screenplay 6.

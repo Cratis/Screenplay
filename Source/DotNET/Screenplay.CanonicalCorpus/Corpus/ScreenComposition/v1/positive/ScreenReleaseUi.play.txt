@@ -8,7 +8,8 @@ layout ApplicationShell
   type masterDetail
   exposes selectedWorkItem WorkItemId
   slot details
-  navigation contributes Navigation
+  navigation
+  outlet Navigation of navigation in navigation
   content
 
 ui profile Web
@@ -67,7 +68,8 @@ module Workspaces
     display "Workspace feature shell"
     description "A list with the selected item beside it"
     scopes module, feature, subfeature, slice
-    header contributes WorkspaceActions
+    header
+    outlet WorkspaceActions of navigation in header
     list
     detail
 

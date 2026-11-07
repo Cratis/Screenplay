@@ -9,105 +9,51 @@ using Cratis.Screenplay.Text;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses the <c>navigation topbar</c> and <c>navigation sidebar</c> blocks of a <c>layout</c> (the application's
-/// regions) and of a <c>module</c> (what the module inherits, extends or overrides).
+/// Parses the items of a navigation outlet - <c>item</c> lines, which may nest further <c>item</c> lines - and the
+/// application's <c>logo</c>.
 /// </summary>
 /// <remarks>
-/// A region holds an optional <c>logo</c> and <c>item</c> lines; an item may nest further <c>item</c> lines. The parser
-/// only reads the grammar. Whether the combination makes sense - modes at application level, logos in modules,
-/// targets that exist - is checked by <see cref="NavigationValidator"/> over the whole document.
+/// The parser only reads the grammar. Whether the combination makes sense - logos in modules, targets that exist - is
+/// checked by <see cref="OutletValidator"/> over the whole document.
 /// </remarks>
 internal static partial class NavigationParser
 {
     /// <summary>
-    /// What a navigation region body may hold, as it reads in a diagnostic.
+    /// What a navigation item line holds, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "logo image \"<path>\" title \"<text>\" or item <id> title \"<text>\" [icon <name>] [target <Module>[.<Feature>]] [slot <name>], or (topbar) button <id> title \"<text>\" slice <Slice>";
+    public const string Expected = "item <id> title \"<text>\" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]";
 
     /// <summary>
-    /// Determines whether a line inside a layout opens a navigation region rather than declaring a slot named <c>navigation</c>.
+    /// Determines whether a line inside a layout or module is a Screenplay 5 navigation region rather than a slot named <c>navigation</c>.
     /// </summary>
     /// <param name="content">The content of the line.</param>
-    /// <returns><c>true</c> when the line is <c>navigation</c> followed by something other than <c>contributes</c>.</returns>
-    public static bool IsRegionHeader(string content) => RegionStartRegex().IsMatch(content) && !ContributionStartRegex().IsMatch(content);
+    /// <returns><c>true</c> when the line is <c>navigation topbar</c> or <c>navigation sidebar</c>, with or without a mode.</returns>
+    public static bool IsRegionHeader(string content) => RegionHeaderRegex().IsMatch(content);
 
     /// <summary>
-    /// Parses a navigation region from its already consumed header line.
+    /// Reports a Screenplay 5 navigation region and skips its block.
     /// </summary>
-    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
-    /// <param name="header">The consumed <see cref="SourceLine"/> holding the <c>navigation</c> header.</param>
-    /// <returns>The parsed <see cref="NavigationRegionSyntax"/>.</returns>
-    public static NavigationRegionSyntax ParseRegion(ParserContext context, SourceLine header)
+    /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
+    /// <param name="header">The consumed <c>navigation topbar|sidebar</c> line.</param>
+    /// <param name="owner">What declares it - <c>layout</c> or <c>module</c>.</param>
+    public static void ReportRegion(ParserContext context, SourceLine header, string owner)
     {
         var match = RegionHeaderRegex().Match(header.Content);
-        var region = NavigationRegionKind.Topbar;
-        var mode = NavigationRegionMode.Unspecified;
-        if (match.Success)
-        {
-            region = match.Groups[1].Value == "sidebar" ? NavigationRegionKind.Sidebar : NavigationRegionKind.Topbar;
-            mode = match.Groups[2].Value switch
-            {
-                "inherits" => NavigationRegionMode.Inherit,
-                "extends" => NavigationRegionMode.Extend,
-                "overrides" => NavigationRegionMode.Override,
-                _ => NavigationRegionMode.Unspecified
-            };
-        }
-        else
-        {
-            context.Error(DiagnosticCodes.InvalidNavigationRegionDeclaration, $"Invalid navigation declaration '{header.Content}' - expected 'navigation topbar' or 'navigation sidebar', optionally followed by 'inherits', 'extends' or 'overrides'", header.Location);
-        }
-
-        var items = new List<NavigationItemSyntax>();
-        var buttons = new List<ToolbarButtonSyntax>();
-        NavigationLogoSyntax? logo = null;
-        while (context.TryPeekChild(header.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(child.Content))
-            {
-                case "logo":
-                    var parsed = ParseLogo(context, child);
-                    if (logo is not null)
-                    {
-                        context.Error(DiagnosticCodes.NavigationLogoNotAllowed, "This navigation region already declares a 'logo' - the application has one logo", child.Location);
-                    }
-                    else
-                    {
-                        logo = parsed;
-                    }
-
-                    break;
-                case "item":
-                    if (ParseItem(context, child) is { } item)
-                    {
-                        items.Add(item);
-                    }
-
-                    break;
-                case "button":
-                    if (region == NavigationRegionKind.Sidebar)
-                    {
-                        context.Error(DiagnosticCodes.InvalidNavigationItem, "A 'button' belongs in the 'navigation topbar' region - the sidebar holds items", child.Location);
-                        context.SkipBlock(child.Indent);
-                    }
-                    else if (ToolbarButtonParser.Parse(context, child) is { } button)
-                    {
-                        buttons.Add(button);
-                    }
-
-                    break;
-                default:
-                    context.Error(DiagnosticCodes.InvalidNavigationItem, $"Unexpected '{child.Content}' in a navigation region - expected {Expected}", child.Location);
-                    context.SkipBlock(child.Indent);
-                    break;
-            }
-        }
-
-        return new(region, mode, items, header.Location) { Logo = logo, Buttons = buttons };
+        var region = match.Success ? match.Groups[1].Value : "<name>";
+        var replacement = owner == "layout"
+            ? $"outlet {region} of navigation"
+            : $"outlet {region} {(match.Groups[2].Success ? match.Groups[2].Value : "extends")}";
+        context.Error(DiagnosticCodes.RemovedNavigationRegion, SlotsAndOutletsMigration.Replaced($"'{header.Content}' in a {owner}", replacement), header.Location);
+        context.SkipBlock(header.Indent);
     }
 
-    static NavigationLogoSyntax? ParseLogo(ParserContext context, SourceLine line)
+    /// <summary>
+    /// Parses a <c>logo image "…" title "…"</c> line.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The consumed logo line.</param>
+    /// <returns>The <see cref="NavigationLogoSyntax"/>, or <c>null</c> when the line is malformed.</returns>
+    public static NavigationLogoSyntax? ParseLogo(ParserContext context, SourceLine line)
     {
         var match = LogoRegex().Match(line.Content);
         if (!match.Success)
@@ -120,7 +66,14 @@ internal static partial class NavigationParser
         return new(StringLiteral.Unescape(match.Groups[1].Value), Text(match, 2), line.Location);
     }
 
-    static NavigationItemSyntax? ParseItem(ParserContext context, SourceLine line)
+    /// <summary>
+    /// Parses an <c>item</c> line and its nested sub-items.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The consumed item line.</param>
+    /// <param name="allowPosition">Whether the item may say <c>before &lt;id&gt;</c> or <c>after &lt;id&gt;</c>.</param>
+    /// <returns>The <see cref="NavigationItemSyntax"/>, or <c>null</c> when the line is malformed.</returns>
+    public static NavigationItemSyntax? ParseItem(ParserContext context, SourceLine line, bool allowPosition = false)
     {
         var head = ItemRegex().Match(line.Content);
         if (!head.Success)
@@ -212,6 +165,7 @@ internal static partial class NavigationParser
         }
 
         var children = new List<NavigationItemSyntax>();
+        OutletPositionSyntax? placement = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -225,11 +179,22 @@ internal static partial class NavigationParser
                 continue;
             }
 
+            if (allowPosition && OutletParser.TryParsePosition(child, out var parsed))
+            {
+                if (placement is not null)
+                {
+                    OutletParser.ReportRepeatedPosition(context, child, id);
+                }
+
+                placement ??= parsed;
+                continue;
+            }
+
             context.Error(DiagnosticCodes.InvalidNavigationItem, $"Unexpected '{child.Content}' under navigation item '{id}' - only sub-items are allowed: item <id> title \"<text>\" ...", child.Location);
             context.SkipBlock(child.Indent);
         }
 
-        return new(id, title ?? string.Empty, line.Location) { Icon = icon, Target = target, Slot = slot, Children = children };
+        return new(id, title ?? string.Empty, line.Location) { Icon = icon, Target = target, Slot = slot, Children = children, Position = placement };
     }
 
     static string Text(Match match, int quotedGroup) => Text(match, quotedGroup, quotedGroup + 1, quotedGroup + 1);
@@ -243,12 +208,6 @@ internal static partial class NavigationParser
 
         return match.Groups[localizedGroup].Success ? match.Groups[localizedGroup].Value : match.Groups[bareGroup].Value;
     }
-
-    [GeneratedRegex(@"^navigation\s+\S", RegexOptions.NonBacktracking)]
-    private static partial Regex RegionStartRegex();
-
-    [GeneratedRegex(@"^navigation\s+contributes\b", RegexOptions.NonBacktracking)]
-    private static partial Regex ContributionStartRegex();
 
     [GeneratedRegex(@"^navigation\s+(topbar|sidebar)(?:\s+(inherits|extends|overrides))?$", RegexOptions.NonBacktracking)]
     private static partial Regex RegionHeaderRegex();

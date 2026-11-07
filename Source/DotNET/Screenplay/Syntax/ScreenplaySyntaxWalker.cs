@@ -268,14 +268,9 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitContribution(contribution);
         }
 
-        foreach (var region in syntax.Navigation)
+        foreach (var outlet in syntax.Outlets)
         {
-            VisitNavigationRegion(region);
-        }
-
-        foreach (var toolbar in syntax.Toolbars)
-        {
-            VisitScreenToolbar(toolbar);
+            VisitOutlet(outlet);
         }
 
         foreach (var feature in syntax.Features)
@@ -306,9 +301,9 @@ public abstract partial class ScreenplaySyntaxWalker
 
         VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
 
-        foreach (var region in syntax.Navigation)
+        foreach (var outlet in syntax.Outlets)
         {
-            VisitNavigationRegion(region);
+            VisitOutlet(outlet);
         }
     }
 
@@ -336,6 +331,11 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitTemplateSlotContent(content);
         }
+
+        foreach (var outlet in syntax.Outlets)
+        {
+            VisitOutlet(outlet);
+        }
     }
 
     /// <summary>
@@ -361,6 +361,11 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var content in syntax.Content)
         {
             VisitTemplateSlotContent(content);
+        }
+
+        foreach (var outlet in syntax.Outlets)
+        {
+            VisitOutlet(outlet);
         }
     }
 
@@ -620,6 +625,11 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitScreenNavigate(syntax.Navigate);
         }
+
+        foreach (var item in syntax.Items)
+        {
+            VisitOutletItem(item);
+        }
     }
 
     /// <summary>
@@ -658,9 +668,9 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitContribution(contribution);
         }
 
-        foreach (var toolbar in syntax.Toolbars)
+        foreach (var outlet in syntax.Outlets)
         {
-            VisitScreenToolbar(toolbar);
+            VisitOutlet(outlet);
         }
 
         VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);

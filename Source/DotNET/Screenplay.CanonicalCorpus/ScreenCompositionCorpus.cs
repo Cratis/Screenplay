@@ -133,7 +133,7 @@ public static class ScreenCompositionCorpus
                     PendingReason = null,
                     ExpectedSyntaxKinds =
                     [
-                        "NavigationRegionSyntax",
+                        "OutletSyntax",
                         "NavigationItemSyntax",
                         "NavigationTargetSyntax",
                         "NavigationLogoSyntax",
@@ -158,7 +158,7 @@ public static class ScreenCompositionCorpus
                     PendingReason = null,
                     ExpectedSyntaxKinds =
                     [
-                        "NavigationRegionSyntax",
+                        "OutletSyntax",
                         "NavigationItemSyntax",
                         "NavigationTargetSyntax",
                         "NavigationLogoSyntax",
@@ -279,7 +279,7 @@ public static class ScreenCompositionCorpus
                     "out-of-scope-screen-references",
                     "OutOfScopeScreenReferences",
                     Diagnostic("PLAY0197", "Unknown screen 'Billing.Invoices.InvoiceList' - nothing in scope declares it"),
-                    Diagnostic("PLAY0655", "Unknown contribution point 'BillingActions' - no layout or template slot declares 'contributes BillingActions'")),
+                    Diagnostic("PLAY0655", "Unknown outlet 'BillingActions' - no layout or template declares 'outlet BillingActions of <kind>'")),
                 Rejection(
                     "unknown-navigation-destination",
                     "UnknownNavigationDestination",
@@ -288,19 +288,19 @@ public static class ScreenCompositionCorpus
                 Rejection(
                     "navigation-target-missing",
                     "NavigationTargetMissing",
-                    Diagnostic("PLAY0748", "Navigation item 'ghost' in layout 'AppShell' targets module 'Ghost', which does not exist")),
+                    Diagnostic("PLAY0748", "Navigation item 'ghost' in the layout outlet 'sidebar' targets module 'Ghost', which does not exist")),
                 Rejection(
                     "navigation-slot-unknown",
                     "NavigationSlotUnknown",
-                    Diagnostic("PLAY0749", "Navigation item 'sales' in layout 'AppShell' renders into slot 'missing', which no layout declares")),
+                    Diagnostic("PLAY0749", "Navigation item 'sales' in the layout outlet 'sidebar' renders into slot 'missing', which no layout declares")),
                 Rejection(
                     "navigation-duplicate-id",
                     "NavigationDuplicateId",
-                    Diagnostic("PLAY0747", "Navigation item 'support' in module 'Sales' navigation sidebar is also used by an application item, and the region extends the application")),
+                    Diagnostic("PLAY0905", "Item 'support' of the outlet 'sidebar' of module 'Sales' repeats the id of an inherited item - choose another id, or hide the inherited one")),
                 Rejection(
                     "navigation-logo-in-module",
                     "NavigationLogoInModule",
-                    Diagnostic("PLAY0744", "The module 'Sales' declares a logo - the logo is the application's and belongs in the layout")),
+                    Diagnostic("PLAY0744", "The module's outlet 'topbar' declares a logo - the logo is the application's, declared once in a layout's navigation outlet")),
                 Rejection(
                     "toolbar-button-not-state-change",
                     "ToolbarButtonNotStateChange",
@@ -510,8 +510,8 @@ public static class ScreenCompositionCorpus
                     FolderSourceCase),
                 Mcp(
                     "mcp-edit-navigation-region-mode",
-                    "replace NavigationRegionSyntax sidebar of module Support: switch overrides to extends, copying the application items when switching from inherits to overrides",
-                    "module Support navigation sidebar",
+                    "replace OutletSyntax sidebar of module Support: switch overrides to extends, copying the application items when switching from inherits to overrides",
+                    "module Support outlet sidebar",
                     [
                         Assertion("source.case", "equals", ShellSourceCase),
                         Assertion("proposal.validation", "equals", "Authoring"),

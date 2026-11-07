@@ -44,7 +44,8 @@ public class when_printing_scalar_directive_comments : given.a_printer
 
         module Shop
           screen template Shell
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
           feature Ordering
             slice StateView Orders

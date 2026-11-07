@@ -31,10 +31,12 @@ public class when_printing_screen_composition : given.a_printer
             display "Sales shell"
             description "A list beside its details"
             scopes slice
-            header contributes Actions
+            header
+            outlet Actions of navigation in header
             list
             detail
-            navigation contributes Navigation
+            navigation
+            outlet Navigation of navigation in navigation
 
             content header
               component scene.web.Header shellHeader

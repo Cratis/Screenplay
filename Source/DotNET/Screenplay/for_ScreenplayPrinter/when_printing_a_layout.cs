@@ -12,7 +12,8 @@ public class when_printing_a_layout : given.a_printer
         layout AppShell
           category Test
           topbar
-          navigation contributes Navigation
+          navigation
+          outlet Navigation of navigation in navigation
           content
           footer
 
@@ -37,12 +38,12 @@ public class when_printing_a_layout : given.a_printer
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_the_layout_header() => _roundtrip.Printed.ShouldContain("layout AppShell");
-    [Fact] void should_print_the_slots_it_declares() => _roundtrip.Printed.ShouldContain("layout AppShell\n  category Test\n  topbar\n  navigation contributes Navigation\n  content\n  footer");
+    [Fact] void should_print_the_slots_it_declares() => _roundtrip.Printed.ShouldContain("layout AppShell\n  category Test\n  topbar\n  navigation\n  content\n  footer\n  outlet Navigation of navigation in navigation\n");
     [Fact] void should_print_the_arrangement() => _roundtrip.Printed.ShouldContain("arrangement flow");
     [Fact] void should_print_the_nested_tree() => _roundtrip.Printed.ShouldContain("navigation width 240");
     [Fact] void should_print_the_layout_the_profile_selects() => _roundtrip.Printed.ShouldContain("ui profile Desktop\n  target platform web\n\n  root template AppShell");
     [Fact] void should_preserve_the_layout_slots() => Layout.Slots.Select(slot => slot.Name).ShouldContainOnly("topbar", "navigation", "content", "footer");
-    [Fact] void should_preserve_the_contribution_point() => Layout.Slots.Single(slot => slot.Name == "navigation").Contributes.ShouldEqual("Navigation");
+    [Fact] void should_preserve_the_outlet() => Layout.Outlets.Single().Name.ShouldEqual("Navigation");
     [Fact] void should_preserve_the_profile_layout_selection() => _roundtrip.Reparsed.Value!.UiProfiles!.Single().Root!.Name.ShouldEqual("AppShell");
 
     LayoutSyntax Layout => _roundtrip.Reparsed.Value!.Layouts!.Single();

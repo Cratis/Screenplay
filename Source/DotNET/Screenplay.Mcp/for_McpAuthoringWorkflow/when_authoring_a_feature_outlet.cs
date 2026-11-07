@@ -7,12 +7,12 @@ using System.Text.Json.Nodes;
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
 /// <summary>
-/// An agent adds a toolbar to a feature, a button linked to a command of the feature and the confirmation it asks (Cratis/Screenplay#1012), through the
-/// typed nodes: the toolbar is a member of the feature, the button a member of the toolbar. Each change is revision-checked, applied and read back from the file.
+/// An agent extends an outlet for a feature - a button linked to a command of the feature and the confirmation it asks (Cratis/Screenplay#1012) - through the
+/// typed nodes: the outlet is a member of the feature, the button an item of the outlet. Each change is revision-checked, applied and read back from the file.
 /// </summary>
-public class when_authoring_a_feature_toolbar : given.an_authoring_connection
+public class when_authoring_a_feature_outlet : given.an_authoring_connection
 {
-    const string Document = "module Shop\n  feature Orders\n    slice StateChange PlaceOrder\n      command PlaceOrder\n        orderId Uuid identifier\n        produces OrderPlaced\n          orderId = orderId\n      event OrderPlaced\n        orderId Uuid\n";
+    const string Document = "module Shop\n  screen template Page\n    category Page\n    header\n    outlet actions of actions in header\n  feature Orders\n    slice StateChange PlaceOrder\n      command PlaceOrder\n        orderId Uuid identifier\n        produces OrderPlaced\n          orderId = orderId\n      event OrderPlaced\n        orderId Uuid\n";
 
     string _toolbarAdded = string.Empty;
     string _confirmationAdded = string.Empty;
@@ -34,14 +34,14 @@ public class when_authoring_a_feature_toolbar : given.an_authoring_connection
 
         var opened = Open();
         var feature = Nodes("FeatureSyntax", opened).Single();
-        var toolbar = new JsonObject
+        var outlet = new JsonObject
         {
-            ["kind"] = "ScreenToolbarSyntax",
+            ["kind"] = "OutletSyntax",
             ["name"] = "actions",
-            ["items"] = new JsonArray(),
-            ["buttons"] = new JsonArray(new JsonObject { ["kind"] = "ToolbarButtonSyntax", ["id"] = "place", ["title"] = "Place order", ["slice"] = "Shop.Orders.PlaceOrder", ["emphasis"] = "Primary", ["icon"] = "plus" })
+            ["mode"] = "Extend",
+            ["items"] = new JsonArray(new JsonObject { ["kind"] = "ToolbarButtonSyntax", ["id"] = "place", ["title"] = "Place order", ["slice"] = "Shop.Orders.PlaceOrder", ["emphasis"] = "Primary", ["icon"] = "plus" })
         };
-        _toolbarAdded = ApplyChange(new { operation = "add", parent = feature.GetProperty("handle"), member = "toolbars", node = toolbar });
+        _toolbarAdded = ApplyChange(new { operation = "add", parent = feature.GetProperty("handle"), member = "outlets", node = outlet });
 
         opened = Open();
         var place = Nodes("ToolbarButtonSyntax", opened).Single();
@@ -51,8 +51,8 @@ public class when_authoring_a_feature_toolbar : given.an_authoring_connection
         _buttonRemoved = ApplyChange(new { operation = "remove", target = Nodes("ToolbarButtonSyntax", opened).Single().GetProperty("handle") });
     }
 
-    [Fact] void should_expose_the_toolbars_of_a_feature_as_a_member() => _schemaMembers.ShouldContain("toolbars");
-    [Fact] void should_add_the_toolbar_to_the_feature() => _toolbarAdded.ShouldContain("toolbar actions\n      button place title \"Place order\" slice Shop.Orders.PlaceOrder emphasis primary icon plus");
+    [Fact] void should_expose_the_outlets_of_a_feature_as_a_member() => _schemaMembers.ShouldContain("outlets");
+    [Fact] void should_add_the_outlet_to_the_feature() => _toolbarAdded.ShouldContain("outlet actions extends\n      button place title \"Place order\" slice Shop.Orders.PlaceOrder emphasis primary icon plus");
     [Fact] void should_add_the_confirmation_under_the_button() => _confirmationAdded.ShouldContain("icon plus\n        confirm \"Place it?\"");
     [Fact] void should_remove_the_button() => _buttonRemoved.ShouldNotContain("button place");
 

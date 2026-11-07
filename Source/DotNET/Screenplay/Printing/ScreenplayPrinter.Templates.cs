@@ -23,10 +23,7 @@ public sealed partial class ScreenplayPrinter
             WriteTemplateMetadata(writer, new(layout.Category, layout.TemplateType, layout.Exposes, layout.RecursiveSlots), layout);
             WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes, layout.SliceKinds);
             WriteSlots(writer, layout.Slots);
-            foreach (var region in layout.Navigation)
-            {
-                WriteNavigationRegion(writer, region);
-            }
+            WriteOutlets(writer, layout.Outlets);
 
             WriteArrangement(writer, layout.Arrangement);
             WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
@@ -49,6 +46,7 @@ public sealed partial class ScreenplayPrinter
             WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes, template.SliceKinds);
             WriteSlots(writer, template.Slots);
             WriteTemplateContent(writer, template.Content);
+            WriteOutlets(writer, template.Outlets);
             WriteArrangement(writer, template.Arrangement);
             WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
         }
@@ -64,6 +62,7 @@ public sealed partial class ScreenplayPrinter
             WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes, template.SliceKinds);
             WriteSlots(writer, template.Slots);
             WriteTemplateContent(writer, template.Content);
+            WriteOutlets(writer, template.Outlets);
             WriteArrangement(writer, template.Arrangement);
             WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
         }
@@ -119,7 +118,6 @@ public sealed partial class ScreenplayPrinter
             if (slot.Routed) parts.Add(slot.RoutedBy is null ? "routed" : $"routed by {slot.RoutedBy}");
             if (slot.Primary) parts.Add("primary");
             if (slot.Optional) parts.Add("optional");
-            if (slot.Contributes is not null) parts.Add($"contributes {slot.Contributes}");
             return string.Join(' ', parts);
         }
     }

@@ -163,7 +163,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case ScreenTemplateSyntax value: Declare("ScreenTemplate", value.Name, value); break;
             case DialogTemplateSyntax value: Declare("DialogTemplate", value.Name, value); break;
             case FormSyntax value: Declare("Form", value.Name, value, value.Description); break;
-            case SlotSyntax { Contributes: not null } value: Declare("ContributionPoint", value.Contributes, value); break;
+            case OutletSyntax { Kind: not null } value: Declare("ContributionPoint", value.Name, value); break;
             case UiProfileSyntax value: Declare("UiProfile", value.Name, value); break;
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
             case SampleDataPackSyntax value: Declare("SampleDataPack", value.Name, value); break;

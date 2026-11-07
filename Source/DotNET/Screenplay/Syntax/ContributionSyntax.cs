@@ -27,8 +27,8 @@ public enum ContributionDestinationKind
 }
 
 /// <summary>
-/// Represents a <c>contribute to &lt;ContributionPoint&gt;</c> declaration - one item contributed into a
-/// named contribution point a <c>layout</c> template's slot accepts.
+/// Represents a <c>contribute to &lt;outlet&gt;</c> declaration - items a module or feature adds to an outlet
+/// a layout or template declares, without overriding the whole list.
 /// </summary>
 /// <param name="ContributionPoint">The name of the contribution point this contributes to.</param>
 /// <param name="Navigate">The optional <see cref="ScreenNavigateSyntax"/> the contribution carries.</param>
@@ -38,8 +38,7 @@ public enum ContributionDestinationKind
 /// <remarks>
 /// A contribution may sit anywhere in the module/feature tree - directly on a <see cref="ModuleSyntax"/> or
 /// on a <see cref="FeatureSyntax"/> at any nesting depth. It resolves to the nearest enclosing
-/// <see cref="LayoutSyntax"/> or <see cref="ScreenTemplateSyntax"/> slot whose <see cref="SlotSyntax.Contributes"/> names the same contribution
-/// point: the module the contribution sits in first, then every other module in the document.
+/// <see cref="LayoutSyntax"/>, <see cref="ScreenTemplateSyntax"/> or <see cref="DialogTemplateSyntax"/> outlet with the same name: the module the contribution sits in first, then every other module in the document.
 /// </remarks>
 public record ContributionSyntax(
     string ContributionPoint,
@@ -72,6 +71,12 @@ public record ContributionSyntax(
     /// Gets where the item opens, or <c>null</c> for the default slot. Maps to Scene's <c>NavigationItem.Destination</c>.
     /// </summary>
     public ContributionDestinationSyntax? Destination { get; init; }
+
+    /// <summary>
+    /// Gets the outlet items the contribution adds - <c>button</c>, <c>group</c>, <c>filter</c>, <c>tab</c>, <c>stat</c> or
+    /// <c>item</c> lines of the outlet's kind - after the items the outlet already has.
+    /// </summary>
+    public IEnumerable<OutletItemSyntax> Items { get; init; } = [];
 }
 
 /// <summary>

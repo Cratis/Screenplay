@@ -157,7 +157,8 @@ theme Nordic
 layout AppShell
   category Shell
   topbar
-  navigation contributes Navigation
+  navigation
+  outlet Navigation of navigation in navigation
   content
   footer
 

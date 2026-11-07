@@ -88,10 +88,10 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_locate_the_action_subject_advisories_for_the_screen_actions() =>
         ActionSubjectAdvisories.DescribeLocations(_diagnostics).ShouldEqual(
-            "PLAY0818@229 CreateWorkItem",
-            "PLAY0818@276 RenameWorkItem",
-            "PLAY0818@290 AddComment",
-            "PLAY0819@290 AddComment");
+            "PLAY0818@230 CreateWorkItem",
+            "PLAY0818@277 RenameWorkItem",
+            "PLAY0818@291 AddComment",
+            "PLAY0819@291 AddComment");
 
     [Fact]
     void should_point_every_action_subject_advisory_at_its_action_in_every_source_form()

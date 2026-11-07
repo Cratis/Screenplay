@@ -33,6 +33,7 @@ internal static partial class ScreenParser
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var directives = new List<ScreenDirectiveSyntax>();
         var contributions = new List<ScreenContributionSyntax>();
+        var outlets = new List<OutletSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -41,6 +42,10 @@ internal static partial class ScreenParser
             if (LineText.FirstWord(line.Content) == "contribute")
             {
                 if (ParseContribution(context, line) is { } contribution) contributions.Add(contribution);
+            }
+            else if (LineText.FirstWord(line.Content) == "outlet")
+            {
+                OutletParser.AddOverride(context, line, "screen", outlets);
             }
             else if (FileReferenceParser.IsDirective(line))
             {
@@ -52,7 +57,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets };
     }
 
     /// <summary>
@@ -148,6 +153,20 @@ internal static partial class ScreenParser
         }
 
         return new(name, items, line.Location) { Buttons = buttons };
+    }
+
+    /// <summary>
+    /// Reports a Screenplay 5 feature or module toolbar, which Screenplay 6 writes as an extending outlet, and skips its block.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
+    /// <param name="line">The consumed <c>toolbar</c> line.</param>
+    /// <param name="owner">What declares it - <c>feature</c> or <c>module</c>.</param>
+    internal static void ReportFeatureToolbar(ParserContext context, SourceLine line, string owner)
+    {
+        var name = line.Content["toolbar".Length..].Trim();
+        var outlet = name.Length == 0 ? "<name>" : name;
+        context.Error(DiagnosticCodes.RemovedFeatureToolbar, SlotsAndOutletsMigration.Replaced($"'{line.Content}' in a {owner}", $"outlet {outlet} extends"), line.Location);
+        context.SkipBlock(line.Indent);
     }
 
     static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)

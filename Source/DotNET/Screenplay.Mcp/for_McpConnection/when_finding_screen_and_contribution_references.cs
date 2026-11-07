@@ -15,7 +15,8 @@ public class when_finding_screen_and_contribution_references : given.a_connectio
         File.WriteAllText(Path.Combine(RootPath, "application.play"), """
             module Sales
               screen template Shell
-                navbar contributes Navigation
+                navbar
+                outlet Navigation of navigation in navbar
                 main
               contribute to Navigation
                 navigate to OrdersList

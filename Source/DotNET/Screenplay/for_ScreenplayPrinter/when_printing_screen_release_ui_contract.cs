@@ -14,7 +14,8 @@ public class when_printing_screen_release_ui_contract : given.a_printer
           type masterDetail
           exposes selectedItem String
           slot details
-          navigation contributes Navigation
+          navigation
+          outlet Navigation of navigation in navigation
           content
 
         ui profile Web

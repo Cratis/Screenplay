@@ -21,7 +21,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <para>
 /// A layout's slots are the outermost thing a <see cref="ScreenTemplateSyntax"/> can fit into: a module's
 /// screen template names one of them with <c>fits slot</c>, and templates nest from there by that same rule.
-/// This is also where an application-wide contribution point such as <c>Navigation</c> belongs.
+/// This is also where an application-wide outlet such as the <c>sidebar</c> navigation belongs.
 /// </para>
 /// </remarks>
 public record LayoutSyntax(
@@ -79,9 +79,9 @@ public record LayoutSyntax(
     public IEnumerable<string> SliceKinds { get; init; } = [];
 
     /// <summary>
-    /// Gets the <c>navigation topbar</c> and <c>navigation sidebar</c> blocks - the application's base navigation.
+    /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the layout offers, with their defaults.
     /// </summary>
-    public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -173,6 +173,11 @@ public record ScreenTemplateSyntax(
     /// Gets the content the template itself provides for its slots - its own chrome.
     /// </summary>
     public IEnumerable<TemplateSlotContentSyntax> Content { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the template offers, with their defaults.
+    /// </summary>
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -255,15 +260,19 @@ public record DialogTemplateSyntax(
     /// Gets the content the template itself provides for its slots - its own chrome.
     /// </summary>
     public IEnumerable<TemplateSlotContentSyntax> Content { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the template offers, with their defaults.
+    /// </summary>
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
 /// Represents one named slot of a <see cref="LayoutSyntax"/>, <see cref="ScreenTemplateSyntax"/> or <see cref="DialogTemplateSyntax"/>.
 /// </summary>
 /// <param name="Name">The name of the slot.</param>
-/// <param name="Contributes">The name of the contribution point this slot accepts contributions for, or <c>null</c> if it does not accept any.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SlotSyntax(string Name, string? Contributes, SourceLocation Location) : SyntaxNode(Location)
+public record SlotSyntax(string Name, SourceLocation Location) : SyntaxNode(Location)
 {
     /// <summary>
     /// Gets the role of the slot - <c>page</c>, <c>pane</c> or <c>panel</c> - or <c>null</c> when the slot declares none.

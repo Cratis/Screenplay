@@ -1,7 +1,8 @@
 layout Shell
   category Shell
   slot main
-  navigation contributes Navigation
+  navigation
+  outlet Navigation of navigation in navigation
   content
 
 module Workspaces

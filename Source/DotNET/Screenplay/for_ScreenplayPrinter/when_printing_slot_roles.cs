@@ -13,7 +13,8 @@ public class when_printing_slot_roles : given.a_printer
           category Test
           topbar
           content page routed primary
-          navigation panel contributes Navigation
+          navigation panel
+          outlet Navigation of navigation in navigation
 
         module Catalog
           screen template ListPage
@@ -36,14 +37,14 @@ public class when_printing_slot_roles : given.a_printer
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_a_routed_primary_page() => _roundtrip.Printed.ShouldContain("  content page routed primary\n");
-    [Fact] void should_print_the_role_before_the_contribution_point() => _roundtrip.Printed.ShouldContain("  navigation panel contributes Navigation\n");
+    [Fact] void should_print_a_docked_panel() => _roundtrip.Printed.ShouldContain("  navigation panel\n");
     [Fact] void should_print_an_optional_pane_routed_by_a_parameter() => _roundtrip.Printed.ShouldContain("    detail pane routed by sku optional\n");
     [Fact] void should_keep_a_slot_without_a_role_plain() => _roundtrip.Printed.ShouldContain("  topbar\n");
     [Fact] void should_read_the_page_role() => Slot("content").Role.ShouldEqual(SlotRole.Page);
     [Fact] void should_read_routed() => Slot("content").Routed.ShouldBeTrue();
     [Fact] void should_read_primary() => Slot("content").Primary.ShouldBeTrue();
     [Fact] void should_not_read_a_routing_parameter_that_is_not_there() => Slot("content").RoutedBy.ShouldBeNull();
-    [Fact] void should_keep_the_contribution_point() => Slot("navigation").Contributes.ShouldEqual("Navigation");
+    [Fact] void should_read_the_panel_role() => Slot("navigation").Role.ShouldEqual(SlotRole.Panel);
     [Fact] void should_read_the_pane_role() => Detail.Role.ShouldEqual(SlotRole.Pane);
     [Fact] void should_read_the_routing_parameter() => Detail.RoutedBy.ShouldEqual("sku");
     [Fact] void should_read_optional() => Detail.Optional.ShouldBeTrue();

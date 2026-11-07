@@ -24,7 +24,7 @@ internal static partial class ContributionParser
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidContributionDeclaration, $"Invalid contribute declaration '{header.Content}' - expected 'contribute to <ContributionPoint>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidContributionDeclaration, $"Invalid contribute declaration '{header.Content}' - expected 'contribute to <outlet>'", header.Location);
             context.SkipBlock(header.Indent);
             return new(LineText.FirstWord(header.Content), null, null, null, header.Location);
         }
@@ -38,10 +38,21 @@ internal static partial class ContributionParser
         var hasOrder = false;
         var item = new NavigationItem();
         var directiveLocations = new Dictionary<string, SourceLocation>();
+        var items = new List<OutletItemSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (OutletParser.IsItem(line.Content))
+            {
+                if (OutletParser.ParseItem(context, line, allowPosition: false) is { } outletItem)
+                {
+                    items.Add(outletItem);
+                }
+
+                continue;
+            }
+
             switch (LineText.FirstWord(line.Content))
             {
                 case "navigate":
@@ -86,7 +97,7 @@ internal static partial class ContributionParser
                     }
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label, order, id, icon, presentation, group or destination", line.Location);
+                    context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label, order, id, icon, presentation, group, destination or an outlet item ({OutletParser.ItemsExpected})", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -99,7 +110,8 @@ internal static partial class ContributionParser
             Icon = item.Icon,
             Presentation = item.Presentation,
             Group = item.Group,
-            Destination = item.Destination
+            Destination = item.Destination,
+            Items = items
         };
     }
 

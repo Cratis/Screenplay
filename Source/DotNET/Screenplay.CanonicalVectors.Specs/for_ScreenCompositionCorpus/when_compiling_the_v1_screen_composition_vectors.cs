@@ -45,12 +45,12 @@ public class when_compiling_the_v1_screen_composition_vectors : Specification
     [Fact]
     void should_locate_the_action_subject_advisories_for_the_positive_composition() =>
         ActionSubjectAdvisories.DescribeLocations(_positive.Diagnostics).ShouldEqual(
-            "PLAY0818@210 CreateWorkItem",
-            "PLAY0818@239 CreateWorkItem",
-            "PLAY0818@262 RenameWorkItem",
-            "PLAY0818@266 CloseWorkItem",
-            "PLAY0818@296 RenameWorkItem",
-            "PLAY0819@210 CreateWorkItem");
+            "PLAY0818@212 CreateWorkItem",
+            "PLAY0818@241 CreateWorkItem",
+            "PLAY0818@264 RenameWorkItem",
+            "PLAY0818@268 CloseWorkItem",
+            "PLAY0818@298 RenameWorkItem",
+            "PLAY0819@212 CreateWorkItem");
 
     [Fact] void should_carry_screen_contributions() => Screens(_positive.Value!).SelectMany(screen => screen.Contributions).Count().ShouldEqual(2);
     [Fact] void should_carry_document_level_exposures() => _positive.Value!.Exposures.Select(exposure => exposure.Owner).ShouldEqual(["WorkspaceFeatureShell", "EditWorkItemDialog"]);

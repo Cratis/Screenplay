@@ -24,7 +24,7 @@ public class when_compiling_the_runnable_screen_shell_vector : Specification
 
     [Fact] void should_compile_without_an_error_or_warning() => _shell.Diagnostics.Where(diagnostic => diagnostic.Severity != Diagnostics.DiagnosticSeverity.Information).ShouldBeEmpty();
     [Fact] void should_not_be_pending() => _case.PendingReason.ShouldBeNull();
-    [Fact] void should_extend_the_sidebar_in_one_module_and_override_it_in_another() => _shell.Value!.Modules.SelectMany(module => module.Navigation).Select(region => region.Mode).Distinct().ShouldContain(NavigationRegionMode.Extend, NavigationRegionMode.Override);
+    [Fact] void should_extend_the_sidebar_in_one_module_and_override_it_in_another() => _shell.Value!.Modules.SelectMany(module => module.Outlets).Select(outlet => outlet.Mode).Distinct().ShouldContain(OutletMode.Extend, OutletMode.Override);
     [Fact] void should_declare_a_toolbar_button_on_a_state_change_slice() => _case.Document.Text.ShouldContain("button new title \"New order\" slice Sales.Orders.PlaceOrder");
     [Fact] void should_declare_sample_data_that_must_not_ship() => _shell.Value!.SampleDataPacks.Single().Name.ShouldEqual("Demo");
 }

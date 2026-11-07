@@ -53,6 +53,11 @@ public record ScreenSyntax(
     /// Gets what this screen contributes to contribution points elsewhere in the tree.
     /// </summary>
     public IEnumerable<ScreenContributionSyntax> Contributions { get; init; } = [];
+
+    /// <summary>
+    /// Gets the outlets this screen changes - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
+    /// </summary>
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -344,7 +349,7 @@ public record ScreenToolbarSyntax(string Name, IEnumerable<ToolbarItemSyntax> It
 /// The slice form of <c>item &lt;name&gt; action &lt;Command&gt;</c>: the slice names the command and the dialog template, so the
 /// button needs no command of its own. A button without a slice is legal while designing and is reported as a warning.
 /// </remarks>
-public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Location) : SyntaxNode(Location)
+public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Location) : OutletItemSyntax(Id, Title, Location)
 {
     /// <summary>
     /// Gets the dotted slice reference - <c>Module.Feature.Slice</c>, or any unambiguous suffix of it - or <c>null</c> when none is chosen yet.
@@ -370,6 +375,11 @@ public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Locati
     /// Gets the text the user confirms before the button opens its slice, or <c>null</c> when it opens at once.
     /// </summary>
     public string? Confirm { get; init; }
+
+    /// <summary>
+    /// Gets the built-in the button runs - <c>runs close</c>, <c>runs submit</c> or <c>runs refresh</c> - or <c>null</c> when it opens its slice.
+    /// </summary>
+    public string? Runs { get; init; }
 }
 
 /// <summary>

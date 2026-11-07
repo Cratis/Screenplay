@@ -13,10 +13,12 @@ namespace Cratis.Screenplay.Parsing;
 /// <param name="offers">The slots that offer a contribution point, with where they are declared.</param>
 /// <param name="screens">The screens the document declares, scoped to where they are declared.</param>
 /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+/// <param name="usesBlueprints">Whether the document uses a blueprint, whose templates may declare outlets the document does not.</param>
 internal sealed class ContributionValidator(
     IReadOnlyList<(string Module, string Structure, string Slot, string ContributionPoint)> offers,
     IReadOnlyList<Declaration> screens,
-    ParserContext context)
+    ParserContext context,
+    bool usesBlueprints)
 {
     /// <summary>
     /// Validates one contribution.
@@ -32,7 +34,7 @@ internal sealed class ContributionValidator(
             var where = string.Join(", ", ownModuleMatches.Select(offer => $"{offer.Structure}.{offer.Slot}"));
             context.Warning(
                 DiagnosticCodes.AmbiguousReference,
-                $"Ambiguous contribution point '{contribution.ContributionPoint}' - {ownModuleMatches.Count} slots in module '{ownModule}' declare it ({where})",
+                $"Ambiguous outlet '{contribution.ContributionPoint}' - {ownModuleMatches.Count} templates in module '{ownModule}' declare it ({where})",
                 contribution.Location);
         }
         else if (ownModuleMatches.Count == 0)
@@ -57,14 +59,14 @@ internal sealed class ContributionValidator(
         {
             context.Warning(
                 DiagnosticCodes.AmbiguousReference,
-                $"Ambiguous contribution point '{contribution.ContributionPoint}' - {elsewhereMatches.Count} modules declare it ({string.Join(", ", elsewhereMatches)})",
+                $"Ambiguous outlet '{contribution.ContributionPoint}' - {elsewhereMatches.Count} modules declare it ({string.Join(", ", elsewhereMatches)})",
                 contribution.Location);
         }
-        else if (elsewhereMatches.Count == 0)
+        else if (elsewhereMatches.Count == 0 && !usesBlueprints)
         {
-            context.Warning(
-                DiagnosticCodes.UnknownContributionPoint,
-                $"Unknown contribution point '{contribution.ContributionPoint}' - no layout or template slot declares 'contributes {contribution.ContributionPoint}'",
+            context.Error(
+                DiagnosticCodes.UnknownOutlet,
+                $"Contribution to unknown outlet '{contribution.ContributionPoint}' - no layout or template declares 'outlet {contribution.ContributionPoint} of <kind>'",
                 contribution.Location);
         }
     }
