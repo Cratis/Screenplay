@@ -19,24 +19,40 @@ internal static class ScreenBindingValidator
     /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
     public static void Validate(ApplicationSyntax application, ParserContext context)
     {
-        var screens = ToolbarButtonValidator.AllSlices(application).SelectMany(entry => entry.Slice.Screens).ToList();
-        foreach (var screen in screens)
+        var slices = ToolbarButtonValidator.AllSlices(application).ConvertAll(entry => entry.Slice);
+        var screens = slices.SelectMany(slice => slice.Screens).ToList();
+        foreach (var slice in slices)
         {
-            var elements = All(screen.Directives).ToList();
-            foreach (var show in elements.OfType<ScreenShowSyntax>())
+            foreach (var screen in slice.Screens)
             {
-                CheckShow(show, screen, elements, screens, context);
-            }
+                var elements = All(screen.Directives).ToList();
+                foreach (var show in elements.OfType<ScreenShowSyntax>())
+                {
+                    CheckShow(show, screen, elements, screens, context);
+                }
 
-            foreach (var component in elements.OfType<ScreenComponentSyntax>().Where(IsUnbound))
-            {
-                context.Warning(
-                    DiagnosticCodes.UnboundScreenText,
-                    $"Component '{component.Name}' on screen '{screen.Name}' is bound to nothing and given no value, so it can only show sample text - bind it with 'context' or 'property <path> from <binding>', or give it static text with 'property <path> = \"...\"'",
-                    component.Location);
+                if (!DisplaysData(slice, elements))
+                {
+                    continue;
+                }
+
+                // A component a slot shows the selection of is something the user picks from, not text.
+                var selectionSources = elements.OfType<ScreenShowSyntax>().Select(show => show.Element).ToHashSet(StringComparer.Ordinal);
+                foreach (var component in elements.OfType<ScreenComponentSyntax>().Where(component => IsUnbound(component) && !selectionSources.Contains(component.Name)))
+                {
+                    context.Warning(
+                        DiagnosticCodes.UnboundScreenText,
+                        $"Component '{component.Name}' on screen '{screen.Name}' shows data but is bound to nothing and given no value, so it can only show sample text - bind it with 'context' or 'property <path> from <binding>', or give it static text with 'property <path> = \"...\"'",
+                        component.Location);
+                }
             }
         }
     }
+
+    // A screen displays bound data when its slice reads state or the screen binds data. A screen of a State Change slice
+    // with no data is a form: a component on it without a binding is an input or decoration, not text left unbound.
+    static bool DisplaysData(SliceSyntax slice, List<ScreenDirectiveSyntax> elements) =>
+        slice.Type == SliceType.StateView || elements.Exists(element => element is ScreenDataSyntax or ScreenTableSyntax or ScreenSummarySyntax);
 
     static bool IsUnbound(ScreenComponentSyntax component) =>
         component.Context is null && !component.Properties.Any() && !component.Exposes.Any() && !component.Slots.Any() && !component.Behaviors.Any() && !component.UsedBehaviors.Any();

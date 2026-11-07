@@ -323,7 +323,7 @@ A malformed `fits` line - an unknown place, one listed twice, a second `fits` li
 
 ### Text bound to nothing
 
-A component on a slice screen with no `context`, no `property`, no `exposes`, no slot content and no behavior can only show sample text, so it warns (`PLAY0912`). Bind it, or give it static text with `property <path> = "..."`.
+A component with no `context`, no `property`, no `exposes`, no slot content and no behavior can only show sample text. On a screen that shows data - a State View slice's screen, or any screen with a `data` line, a table or a summary - it warns (`PLAY0912`). Bind it, or give it static text with `property <path> = "..."`. A form's screen with no data is not checked, because a component there is an input or decoration, and neither is a component a slot shows the selection of (`show <Screen> by <param> from <component>.selection`).
 
 ## Package components and typed bindings
 
