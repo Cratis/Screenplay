@@ -22,6 +22,8 @@ public class when_a_rename_would_leave_a_toolbar_button_slice_stale : given.a_re
                       orderId = orderId
                   event OrderPlaced
                     orderId Uuid
+                  screen PlaceOrder
+                    action PlaceOrder
                 slice StateChange CancelOrder
                   command CancelOrder
                     orderId Uuid identifier

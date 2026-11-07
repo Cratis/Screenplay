@@ -17,6 +17,7 @@ static class CommandLineInformation
           {CliCommandCatalog.Mcp.Usage}
           {CliCommandCatalog.Contract.Usage}
           {CliCommandCatalog.EnvironmentKeys.Usage}
+          {CliCommandCatalog.Migrate.Usage}
           screenplay {CliCommandCatalog.Help.Aliases[0]}
           screenplay {CliCommandCatalog.Version.Aliases[0]}
 
@@ -37,6 +38,8 @@ static class CommandLineInformation
         test exit codes: 0 all selected specifications passed, 1 failed, 2 could not run, 3 unsupported or unbound.
         environment lists the keys a model needs from the environment it runs in, and marks which are secrets.
         environment exit codes: 0 listed, 1 the model has errors, 2 could not run.
+        migrate rewrites files written for an earlier Screenplay version; --to defaults to the compiler's version and --dry-run writes nothing.
+        migrate exit codes: 0 all migrated, 2 a file needs review, 1 could not migrate.
         The MCP server uses stdio; a supplied root must exist unless --create-root is used.
         Open an empty model folder through MCP to create its first typed document.
         MCP proposals do not write files; review them before invoking apply.

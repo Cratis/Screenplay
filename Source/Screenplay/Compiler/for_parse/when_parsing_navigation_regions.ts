@@ -4,9 +4,10 @@
 import { describe, beforeEach, it } from 'vitest';
 import { CompilationResult, parse } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 
-// The TypeScript compiler recognizes the navigation regions of a layout and of a module and skips them whole,
-// like every other layout and screen composition member. The reference checks (PLAY0740-PLAY0752) are C# only.
+// Screenplay 6 writes navigation regions as outlets. A module's Screenplay 5 'navigation sidebar|topbar' is an error
+// naming the migration; the layout stays opaque here, so the C# compiler alone reports the layout's region.
 describe('when parsing navigation regions', () => {
     let result: CompilationResult<ApplicationSyntax>;
 
@@ -15,14 +16,12 @@ describe('when parsing navigation regions', () => {
             'layout Shell',
             '  content',
             '  navigation sidebar',
-            '    logo image "/acme.svg" title "Acme"',
             '    item sales title "Sales" target Sales',
-            '      item orders title "Orders" target Sales.Orders',
             '',
             'module Sales',
             '  navigation sidebar extends',
             '    item customers title "Customers" target Sales.Customers',
-            '  navigation topbar overrides',
+            '  navigation topbar',
             '    item orders title "Orders" target Sales.Orders',
             '  feature Orders',
             '    slice StateView OrderList',
@@ -30,8 +29,16 @@ describe('when parsing navigation regions', () => {
         ].join('\n'));
     });
 
-    it('should report nothing', () => {
-        result.diagnostics.should.deep.equal([]);
+    it('should report each module region as removed', () => {
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal([`${DiagnosticCodes.RemovedNavigationRegion}@7`, `${DiagnosticCodes.RemovedNavigationRegion}@9`]);
+    });
+
+    it('should name the outlet that replaces the region', () => {
+        result.diagnostics[0].message.should.contain("'outlet sidebar extends'");
+    });
+
+    it('should name the migration', () => {
+        result.diagnostics[1].message.should.contain('screenplay migrate --from 5 --to 6');
     });
 
     it('should keep the module and its features', () => {

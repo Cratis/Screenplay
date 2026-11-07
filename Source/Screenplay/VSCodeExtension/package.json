@@ -225,6 +225,11 @@
                 "category": "Screenplay"
             },
             {
+                "command": "screenplay.migrate",
+                "title": "Migrate document",
+                "category": "Screenplay"
+            },
+            {
                 "command": "screenplay.repair.inspectState",
                 "title": "Inspect C# Repair Identity and Recovery State",
                 "category": "Screenplay"
@@ -290,6 +295,10 @@
                 },
                 {
                     "command": "screenplay.showBoard",
+                    "when": "editorLangId == screenplay"
+                },
+                {
+                    "command": "screenplay.migrate",
                     "when": "editorLangId == screenplay"
                 }
             ]

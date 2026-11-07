@@ -9,7 +9,8 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Completeness;
 
 /// <summary>
-/// Reports selected structural completeness findings independently of compilation.
+/// Reports structural completeness findings independently of compilation: the selected checks, and the checks that
+/// are on by default - a State Change command nothing issues (<see cref="DiagnosticCodes.CommandWithoutInputSurface"/>).
 /// </summary>
 public static class ModelCompleteness
 {
@@ -18,7 +19,7 @@ public static class ModelCompleteness
     /// </summary>
     /// <param name="compilation">The complete application's source compilation.</param>
     /// <param name="checks">The selected checks.</param>
-    /// <returns>Opt-in warnings and information, or no findings when source compilation failed.</returns>
+    /// <returns>The default and opt-in warnings and information, or no findings when source compilation failed.</returns>
     public static ImmutableArray<Diagnostic> Check(CompilationResult<ApplicationSyntax> compilation, CompletenessChecks checks) =>
         compilation.Success ? Check(compilation.Value!, checks) : [];
 
@@ -27,16 +28,12 @@ public static class ModelCompleteness
     /// </summary>
     /// <param name="application">The complete application. The caller must first verify that source compilation has no errors.</param>
     /// <param name="checks">The selected checks.</param>
-    /// <returns>The selected structural warnings and information. These do not prove runtime completeness.</returns>
+    /// <returns>The default and selected structural warnings and information. These do not prove runtime completeness.</returns>
     public static ImmutableArray<Diagnostic> Check(ApplicationSyntax application, CompletenessChecks checks)
     {
-        if (checks.Selected.Count == 0)
-        {
-            return [];
-        }
-
         var declarations = new ConsistencyDeclarations(application, [.. ScreenplayValidator.ScopedSlices(application)]);
         var findings = ImmutableArray.CreateBuilder<Diagnostic>();
+        findings.AddRange(InputSurfaceCompleteness.Unissued(application, declarations));
         if (checks.Selected.Contains(CompletenessCheck.DataBindings)) findings.AddRange(DataBindingCompleteness.Check(declarations));
         if (checks.Selected.Contains(CompletenessCheck.InputSurfaces)) findings.AddRange(InputSurfaceCompleteness.Check(application, declarations));
         if (checks.Selected.Contains(CompletenessCheck.FieldOrigins)) findings.AddRange(FieldOriginCompleteness.Check(declarations));

@@ -1,0 +1,21 @@
+module Shop
+  screen template ProductPage
+    fits slot content
+    category Detail
+    // A product page nests the quick view of a related product.
+    outlet quickView
+    main
+
+    arrangement flow
+      column
+        main grow
+
+  feature Products
+    slice StateView ProductList
+      readmodel ProductRow
+        productId Uuid
+
+      query AllProducts => ProductRow[]
+
+      screen ProductList
+        data ProductRow[] via query AllProducts

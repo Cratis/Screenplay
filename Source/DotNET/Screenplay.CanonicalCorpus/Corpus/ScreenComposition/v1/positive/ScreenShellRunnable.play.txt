@@ -6,7 +6,8 @@ concept CustomerId : Uuid
 layout AppShell
   category application
   topbar
-  navigation contributes Navigation
+  navigation
+  outlet Navigation of navigation in navigation
   content
   side
 
@@ -18,14 +19,14 @@ layout AppShell
         content grow
         side width 320
 
-  navigation topbar
+  outlet topbar of navigation
     logo image "" title "Acme"
-    item home title "Home" target Home
-    item sales title "Sales" target Sales
-    item support title "Support" target Support
+    default home title "Home" target Home
+    default sales title "Sales" target Sales
+    default support title "Support" target Support
 
-  navigation sidebar
-    item overview title "Overview" target Home
+  outlet sidebar of navigation
+    default overview title "Overview" target Home
 
 ui profile Desktop
   target platform web
@@ -74,7 +75,7 @@ module Home
         text String
 
 module Sales
-  navigation sidebar overrides
+  outlet sidebar overrides
     item orders title "Orders" target Sales.Orders
     item customers title "Customers" target Sales.Customers
 
@@ -91,6 +92,8 @@ module Sales
       event OrderPlaced
         customer String
         quantity Int
+      screen PlaceOrder
+        action PlaceOrder
     slice StateView OrderList
       readmodel OrderRow
         orderId OrderId
@@ -136,7 +139,7 @@ module Sales
         name String
 
 module Support
-  navigation sidebar extends
+  outlet sidebar extends
     item tickets title "Tickets" target Support.Tickets
     item kb title "Knowledge base" target Support.KnowledgeBase slot side
 

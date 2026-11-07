@@ -13,7 +13,7 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// </summary>
 static class CompositionDefaults
 {
-    static readonly HashSet<string> _optionalBooleans = new(StringComparer.Ordinal) { nameof(LayoutSyntax.RestrictsScopes), nameof(Captures.CaptureSyntax.KeyIsEventSource) };
+    static readonly HashSet<string> _optionalBooleans = new(StringComparer.Ordinal) { nameof(LayoutSyntax.RestrictsScopes), nameof(Captures.CaptureSyntax.KeyIsEventSource), nameof(OutletItemSyntax.IsDefault), nameof(SlotSyntax.Routed), nameof(SlotSyntax.Primary), nameof(SlotSyntax.Optional) };
 
     static readonly Dictionary<string, Default> _templateMembers = new(StringComparer.Ordinal)
     {
@@ -22,8 +22,11 @@ static class CompositionDefaults
         ["sliceKinds"] = Default.Empty,
         ["content"] = Default.Empty,
         ["displayName"] = Default.Null,
-        ["description"] = Default.Null
+        ["description"] = Default.Null,
+        ["outlets"] = Default.Empty
     };
+
+    static readonly Dictionary<string, Default> _outletItemMembers = new(StringComparer.Ordinal) { ["isDefault"] = Default.False, ["position"] = Default.Null };
 
     static readonly Dictionary<Type, Dictionary<string, Default>> _omittable = new()
     {
@@ -31,23 +34,29 @@ static class CompositionDefaults
         [typeof(PersonaSyntax)] = new(StringComparer.Ordinal) { ["goals"] = Default.Empty, ["x"] = Default.Null, ["y"] = Default.Null, ["width"] = Default.Null, ["height"] = Default.Null },
         [typeof(SeedSyntax)] = new(StringComparer.Ordinal) { ["name"] = Default.Null, ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(EventSourceSyntax)] = new(StringComparer.Ordinal) { ["x"] = Default.Null, ["y"] = Default.Null },
-        [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty },
-        [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["outlet"] = Default.Null },
-        [typeof(ContributionSyntax)] = new(StringComparer.Ordinal) { ["id"] = Default.Null, ["icon"] = Default.Null, ["presentation"] = Default.Null, ["group"] = Default.Null, ["destination"] = Default.Null },
-        [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty, ["sliceKinds"] = Default.Empty, ["navigation"] = Default.Empty },
+        [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty, ["outlets"] = Default.Empty, ["fits"] = Default.Empty },
+        [typeof(FormFieldSyntax)] = new(StringComparer.Ordinal) { ["choices"] = Default.Null },
+        [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["slot"] = Default.Null },
+        [typeof(SlotSyntax)] = new(StringComparer.Ordinal) { ["role"] = Default.Null, ["routed"] = Default.False, ["routedBy"] = Default.Null, ["primary"] = Default.False, ["optional"] = Default.False },
+        [typeof(ContributionSyntax)] = new(StringComparer.Ordinal) { ["id"] = Default.Null, ["icon"] = Default.Null, ["presentation"] = Default.Null, ["group"] = Default.Null, ["items"] = Default.Empty, ["destination"] = Default.Null },
+        [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty, ["sliceKinds"] = Default.Empty, ["outlets"] = Default.Empty },
         [typeof(TemplateAssignmentSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
         [typeof(ScreenTemplateReferenceSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
-        [typeof(ModuleSyntax)] = new(StringComparer.Ordinal) { ["navigation"] = Default.Empty, ["toolbars"] = Default.Empty },
-        [typeof(FeatureSyntax)] = new(StringComparer.Ordinal) { ["toolbars"] = Default.Empty },
-        [typeof(ToolbarItemSyntax)] = new(StringComparer.Ordinal) { ["confirm"] = Default.Null },
+        [typeof(ModuleSyntax)] = new(StringComparer.Ordinal) { ["outlets"] = Default.Empty },
+        [typeof(FeatureSyntax)] = new(StringComparer.Ordinal) { ["outlets"] = Default.Empty },
+        [typeof(ToolbarItemSyntax)] = new(StringComparer.Ordinal) { ["confirm"] = Default.Null, ["enabledWhen"] = Default.Null },
         [typeof(ScreenToolbarSyntax)] = new(StringComparer.Ordinal) { ["buttons"] = Default.Empty },
-        [typeof(ToolbarButtonSyntax)] = new(StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null, ["authorize"] = Default.Null, ["confirm"] = Default.Null },
-        [typeof(NavigationRegionSyntax)] = new(StringComparer.Ordinal) { ["logo"] = Default.Null, ["buttons"] = Default.Empty },
+        [typeof(ToolbarButtonSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null, ["authorize"] = Default.Null, ["confirm"] = Default.Null, ["runs"] = Default.Null, ["subject"] = Default.Null, ["opens"] = Default.Null, ["opensSlot"] = Default.Null, ["enabledWhen"] = Default.Null },
+        [typeof(OutletSyntax)] = new(StringComparer.Ordinal) { ["subject"] = Default.Null, ["slot"] = Default.Null, ["hides"] = Default.Empty, ["logo"] = Default.Null },
+        [typeof(OutletGroupSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["icon"] = Default.Null },
+        [typeof(OutletFilterSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["query"] = Default.Null, ["parameter"] = Default.Null },
+        [typeof(OutletTabSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["shows"] = Default.Null },
+        [typeof(OutletStatSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["query"] = Default.Null, ["field"] = Default.Null },
         [typeof(Specifications.SpecificationSyntax)] = new(StringComparer.Ordinal) { ["givenGenerated"] = Default.Empty, ["thenInvocations"] = Default.Empty },
         [typeof(Captures.CaptureSyntax)] = new(StringComparer.Ordinal) { ["keyIsEventSource"] = Default.False },
         [typeof(AddMappingSyntax)] = new(StringComparer.Ordinal) { ["factor"] = Default.Null },
         [typeof(SubtractMappingSyntax)] = new(StringComparer.Ordinal) { ["factor"] = Default.Null },
-        [typeof(NavigationItemSyntax)] = new(StringComparer.Ordinal) { ["icon"] = Default.Null, ["target"] = Default.Null, ["slot"] = Default.Null, ["children"] = Default.Empty },
+        [typeof(NavigationItemSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["icon"] = Default.Null, ["target"] = Default.Null, ["slot"] = Default.Null, ["children"] = Default.Empty },
         [typeof(ScreenTemplateSyntax)] = _templateMembers,
         [typeof(DialogTemplateSyntax)] = _templateMembers,
         [typeof(ArrangementContainerSyntax)] = new(StringComparer.Ordinal) { ["columns"] = Default.Null, ["rows"] = Default.Null, ["grow"] = Default.Null, ["span"] = Default.Null },
@@ -90,7 +99,7 @@ static class CompositionDefaults
     /// <returns><see langword="true"/> when an absent member reads as its default.</returns>
     internal static bool IsOptional(PropertyInfo property) =>
         _optionalBooleans.Contains(property.Name) &&
-        (property.DeclaringType == typeof(LayoutSyntax) || property.DeclaringType == typeof(ScreenTemplateSyntax) || property.DeclaringType == typeof(DialogTemplateSyntax) || property.DeclaringType == typeof(Captures.CaptureSyntax));
+        (property.DeclaringType == typeof(LayoutSyntax) || property.DeclaringType == typeof(ScreenTemplateSyntax) || property.DeclaringType == typeof(DialogTemplateSyntax) || property.DeclaringType == typeof(Captures.CaptureSyntax) || property.DeclaringType == typeof(SlotSyntax) || property.DeclaringType == typeof(OutletItemSyntax));
 
     static bool IsEmpty(object? value) => value is null || (value is IEnumerable items && !items.Cast<object>().Any());
 }

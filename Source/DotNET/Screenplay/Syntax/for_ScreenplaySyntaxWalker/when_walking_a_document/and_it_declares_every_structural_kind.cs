@@ -13,7 +13,8 @@ public class and_it_declares_every_structural_kind : Specification
     const string Source =
         """
         layout AppShell
-          navigation contributes Navigation
+          navigation
+          outlet Navigation of navigation in navigation
           content
 
           arrangement freeform

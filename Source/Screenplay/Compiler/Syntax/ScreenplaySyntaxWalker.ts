@@ -4,6 +4,7 @@
 import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
+import type { OutletItemSyntax, OutletSyntax } from './Outlets';
 import { IdentitySyntax } from './IdentitySyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
@@ -214,7 +215,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
-        syntax.toolbars?.forEach(node => this.visitScreenDirective(node));
+        syntax.outlets?.forEach(node => this.visitOutlet(node));
         syntax.features.forEach(node => this.visitFeature(node));
     }
 
@@ -227,7 +228,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
         syntax.slices.forEach(node => this.visitSlice(node));
-        syntax.toolbars?.forEach(node => this.visitScreenDirective(node));
+        syntax.outlets?.forEach(node => this.visitOutlet(node));
     }
 
     visitSlice(syntax: SliceSyntax): void {
@@ -762,6 +763,25 @@ export abstract class ScreenplaySyntaxWalker {
             this.visitNode(contribution);
             contribution.directives.forEach(node => this.visitScreenDirective(node));
         });
+        syntax.outlets?.forEach(node => this.visitOutlet(node));
+    }
+
+    visitOutlet(syntax: OutletSyntax): void {
+        this.visitNode(syntax);
+        syntax.items.forEach(item => this.visitOutletItem(item));
+        syntax.hides?.forEach(node => this.visitNode(node));
+    }
+
+    visitOutletItem(syntax: OutletItemSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'ToolbarButtonSyntax' && syntax.authorize) this.visitAuthorize(syntax.authorize);
+        if (syntax.kind === 'ToolbarButtonSyntax' && syntax.enabledWhen) this.visitCondition(syntax.enabledWhen);
+        if (syntax.kind === 'OutletGroupSyntax') syntax.buttons.forEach(button => this.visitOutletItem(button));
+        if (syntax.kind === 'NavigationItemSyntax') {
+            if (syntax.target) this.visitNode(syntax.target);
+            syntax.children?.forEach(child => this.visitOutletItem(child));
+        }
+        if (syntax.position) this.visitNode(syntax.position);
     }
 
     visitScreenDirective(syntax: ScreenDirectiveSyntax): void {
@@ -812,9 +832,9 @@ export abstract class ScreenplaySyntaxWalker {
                     this.visitUiBinding(exposed.binding);
                 });
                 syntax.presentation.forEach(node => this.visitNode(node));
-                syntax.outlets.forEach(outlet => {
-                    this.visitNode(outlet);
-                    outlet.directives.forEach(node => this.visitScreenDirective(node));
+                syntax.slots.forEach(slot => {
+                    this.visitNode(slot);
+                    slot.directives.forEach(node => this.visitScreenDirective(node));
                 });
                 break;
             case 'ScreenToolbarSyntax':
@@ -825,8 +845,12 @@ export abstract class ScreenplaySyntaxWalker {
                         this.visitUiBinding(parameter.binding);
                     });
                     item.presentation.forEach(node => this.visitNode(node));
+                    if (item.enabledWhen) this.visitCondition(item.enabledWhen);
                 });
-                (syntax.buttons ?? []).forEach(button => this.visitNode(button));
+                (syntax.buttons ?? []).forEach(button => {
+                    this.visitNode(button);
+                    if (button.enabledWhen) this.visitCondition(button.enabledWhen);
+                });
                 break;
             case 'ScreenCodeSyntax':
                 this.visitNode(syntax.code);

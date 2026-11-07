@@ -13,6 +13,13 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
+    static string DestinationLine(ContributionDestinationSyntax destination) => destination.Kind switch
+    {
+        ContributionDestinationKind.Slot => $"destination slot {destination.Target}",
+        ContributionDestinationKind.Dialog => $"destination dialog {destination.Target}",
+        _ => $"destination external {StringLiteral.Quote(destination.Target)}"
+    };
+
     void WriteExposure(ScreenplayWriter writer, ExposureSyntax exposure)
     {
         using var anchor = writer.Anchor(exposure);
@@ -153,14 +160,7 @@ public partial class ScreenplayPrinter
         if (contribution.Group is not null) writer.Line($"group {WriteItemValue(contribution.Group)}", contribution);
         if (contribution.Destination is { } destination)
         {
-            writer.Line(
-                destination.Kind switch
-                {
-                    ContributionDestinationKind.Outlet => $"destination outlet {destination.Target}",
-                    ContributionDestinationKind.Dialog => $"destination dialog {destination.Target}",
-                    _ => $"destination external {StringLiteral.Quote(destination.Target)}"
-                },
-                destination);
+            writer.Line(DestinationLine(destination), destination);
         }
     }
 

@@ -26,6 +26,10 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["givenCallerPersona"] = null, ["purpose"] = null, ["queryResult"] = null,
         ["identitySource"] = null, ["identityDetailType"] = null,
         ["dataReadModel"] = null, ["type"] = null, ["exampleType"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
+
+        // Placement is screen composition, like contributions and templates: what a hook, an outlet change, a picker or a
+        // slot's 'show' names is found by find-references, not drawn as a slice dependency.
+        ["hook"] = null, ["changesOutlet"] = null, ["pickerQuery"] = null, ["show"] = null,
         ["thenAbsentReadModel"] = null, ["thenReadModel"] = null, ["givenReadModel"] = null, ["thenQuery"] = null,
         ["compositeKeyType"] = null, ["builds"] = null, ["buildsVariant"] = null, ["appends"] = null, ["seed"] = null,
 

@@ -1,0 +1,32 @@
+slice Automation NotifyCustomerOfDispatch
+  description "Tells the customer their parcel is on its way"
+
+  event DispatchNotificationSent
+    trackingNumber TrackingNumber
+    carrier        Carrier
+
+  // The reaction states what it does and what it records; how the email is
+  // sent is realization detail, attached once it is built.
+  reaction DispatchNotifier
+    description "Emails the customer the carrier and tracking number when their order ships"
+    when ShipmentDispatched
+      orderId
+      carrier
+      trackingNumber
+      produces DispatchNotificationSent
+        for orderId
+        trackingNumber = trackingNumber
+        carrier        = carrier
+
+  specification NotifyingTheCustomerOfADispatch
+    given ShipmentRequested
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amountPaid = 25.0
+    when append ShipmentDispatched
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      carrier        = "postNord"
+      trackingNumber = "PN00012345NO"
+    then DispatchNotificationSent
+      trackingNumber = "PN00012345NO"
+      carrier        = "postNord"

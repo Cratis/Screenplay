@@ -144,6 +144,8 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.layoutItems;
         case 'navigation':
             return scope.navigationItems;
+        case 'outlet':
+            return /^outlet\s+\S+\s+of\b/.test(header ?? '') ? scope.outletDeclarationItems : scope.outletChangeItems;
         case 'toolbar':
             return scope.toolbarItems;
         case 'statemachine':

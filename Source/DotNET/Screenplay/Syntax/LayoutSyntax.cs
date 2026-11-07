@@ -21,7 +21,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <para>
 /// A layout's slots are the outermost thing a <see cref="ScreenTemplateSyntax"/> can fit into: a module's
 /// screen template names one of them with <c>fits slot</c>, and templates nest from there by that same rule.
-/// This is also where an application-wide contribution point such as <c>Navigation</c> belongs.
+/// This is also where an application-wide outlet such as the <c>sidebar</c> navigation belongs.
 /// </para>
 /// </remarks>
 public record LayoutSyntax(
@@ -57,9 +57,9 @@ public record LayoutSyntax(
     public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
 
     /// <summary>
-    /// Gets recursively fillable outlets declared by the template.
+    /// Gets the recursively fillable slots the template declares with <c>slot &lt;name&gt;</c>.
     /// </summary>
-    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<TemplateSlotSyntax> RecursiveSlots { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
@@ -79,9 +79,15 @@ public record LayoutSyntax(
     public IEnumerable<string> SliceKinds { get; init; } = [];
 
     /// <summary>
-    /// Gets the <c>navigation topbar</c> and <c>navigation sidebar</c> blocks - the application's base navigation.
+    /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the layout offers, with their defaults.
     /// </summary>
-    public IEnumerable<NavigationRegionSyntax> Navigation { get; init; } = [];
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this layout, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>
@@ -138,9 +144,9 @@ public record ScreenTemplateSyntax(
     public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
 
     /// <summary>
-    /// Gets recursively fillable outlets declared by the template.
+    /// Gets the recursively fillable slots the template declares with <c>slot &lt;name&gt;</c>.
     /// </summary>
-    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<TemplateSlotSyntax> RecursiveSlots { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
@@ -173,6 +179,17 @@ public record ScreenTemplateSyntax(
     /// Gets the content the template itself provides for its slots - its own chrome.
     /// </summary>
     public IEnumerable<TemplateSlotContentSyntax> Content { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the template offers, with their defaults.
+    /// </summary>
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this template, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>
@@ -220,9 +237,9 @@ public record DialogTemplateSyntax(
     public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
 
     /// <summary>
-    /// Gets recursively fillable outlets declared by the template.
+    /// Gets the recursively fillable slots the template declares with <c>slot &lt;name&gt;</c>.
     /// </summary>
-    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<TemplateSlotSyntax> RecursiveSlots { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
@@ -255,15 +272,51 @@ public record DialogTemplateSyntax(
     /// Gets the content the template itself provides for its slots - its own chrome.
     /// </summary>
     public IEnumerable<TemplateSlotContentSyntax> Content { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>outlet &lt;name&gt; of &lt;kind&gt;</c> declarations - the item lists the template offers, with their defaults.
+    /// </summary>
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets the forms an earlier Screenplay version wrote in this template, kept for a migration.
+    /// </summary>
+    [SourceSpanMetadata]
+    public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 }
 
 /// <summary>
 /// Represents one named slot of a <see cref="LayoutSyntax"/>, <see cref="ScreenTemplateSyntax"/> or <see cref="DialogTemplateSyntax"/>.
 /// </summary>
 /// <param name="Name">The name of the slot.</param>
-/// <param name="Contributes">The name of the contribution point this slot accepts contributions for, or <c>null</c> if it does not accept any.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SlotSyntax(string Name, string? Contributes, SourceLocation Location) : SyntaxNode(Location);
+public record SlotSyntax(string Name, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the role of the slot - <c>page</c>, <c>pane</c> or <c>panel</c> - or <c>null</c> when the slot declares none.
+    /// </summary>
+    public SlotRole? Role { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the slot is <c>routed</c>: what it shows is part of the address.
+    /// </summary>
+    public bool Routed { get; init; }
+
+    /// <summary>
+    /// Gets the route parameter a <c>routed by &lt;param&gt;</c> slot is addressed by, or <c>null</c> when it names none.
+    /// </summary>
+    public string? RoutedBy { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the slot is the <c>primary</c> one of its structure.
+    /// </summary>
+    public bool Primary { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the slot is <c>optional</c> and may be left empty.
+    /// </summary>
+    public bool Optional { get; init; }
+}
 
 /// <summary>
 /// Represents a template value exposed to descendants or package consumers.
@@ -274,8 +327,8 @@ public record SlotSyntax(string Name, string? Contributes, SourceLocation Locati
 public record TemplateExposedValueSyntax(string Name, TypeRefSyntax? Type, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents a recursive outlet declared by a template.
+/// Represents a recursively fillable slot a template declares with <c>slot &lt;name&gt;</c>.
 /// </summary>
-/// <param name="Name">The outlet name.</param>
+/// <param name="Name">The slot name.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record TemplateOutletSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);
+public record TemplateSlotSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);

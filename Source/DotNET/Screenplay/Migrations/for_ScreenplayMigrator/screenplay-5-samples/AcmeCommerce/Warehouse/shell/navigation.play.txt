@@ -1,0 +1,26 @@
+// ============================================================
+// Warehouse: the application's navigation and logo
+//
+// The floor console: stock, adjustments, reservations, picking, receiving and shipments, with registering a SKU at hand.
+// The logo is the SVG in assets/logos/warehouse.svg, inlined as a data URI (tools/embed-logos.py regenerates the line): Studio and Stage take
+// a Screenplay document only, never a file beside it, and a data URI cannot 404.
+// ============================================================
+
+layout WarehouseNavigation
+  category Shell
+  content
+
+  navigation topbar
+    logo image "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMxNEI4QTYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwRjc2NkUiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSI2IiBmaWxsPSJ1cmwoI2cpIi8+PHBhdGggZD0iTTMyIDExbDIwIDcuNXY2SDEydi02eiIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjEyIiB5PSIyNyIgd2lkdGg9IjE2IiBoZWlnaHQ9IjEzIiByeD0iMS41IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMzYiIHk9IjI3IiB3aWR0aD0iMTYiIGhlaWdodD0iMTMiIHJ4PSIxLjUiIGZpbGw9IiNmZmYiLz48cmVjdCB4PSIyNCIgeT0iNDIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxMiIgcng9IjEuNSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xNSAzMy41aDEwTTM5IDMzLjVoMTBNMjcgNDhoMTAiIHN0cm9rZT0iIzBGNzY2RSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iLjYiLz48L3N2Zz4K" title "Acme Warehouse"
+    button registerSku title "Register SKU" slice Stock.Levels.RegisterSku emphasis secondary icon box
+      authorize IsWarehouseClerk
+
+  navigation sidebar
+    item warehouse title "Warehouse" icon box target Stock
+      item levels title "Stock levels" target Stock.Levels
+      item adjustments title "Adjustments" target Stock.Adjustments
+      item reservations title "Reservations" target Stock.Reservations
+      item picking title "Picking" target Stock.Picking
+      item receiving title "Receiving" target Stock.Receiving
+      item shipments title "Shipments" target Stock.Dispatch
+      item stockoverview title "Dashboard" target Stock.Overview

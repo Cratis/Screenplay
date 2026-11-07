@@ -156,7 +156,23 @@ internal static partial class FormParser
         var from = match.Groups[2].Success ? match.Groups[2].Value : null;
         var composeUsing = match.Groups[3].Success ? match.Groups[3].Value : null;
         var label = match.Groups[4].Success || match.Groups[5].Success ? OperandText(match, 4) : null;
-        return new(match.Groups[1].Value, label, from, composeUsing, line.Location);
+        FormFieldChoicesSyntax? choices = null;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var chosen = ChooseRegex().Match(child.Content);
+            if (chosen.Success && choices is null)
+            {
+                choices = new(chosen.Groups[1].Value, chosen.Groups[2].Value, child.Location);
+                continue;
+            }
+
+            var reason = chosen.Success ? "states 'choose from query' more than once" : $"has '{child.Content}' under it - expected 'choose from query <Query> show <field>'";
+            context.Error(DiagnosticCodes.InvalidFormFieldChoices, $"Field '{match.Groups[1].Value}' {reason}", child.Location);
+            context.SkipBlock(child.Indent);
+        }
+
+        return new(match.Groups[1].Value, label, from, composeUsing, line.Location) { Choices = choices };
     }
 
     static FormGenerationMode? ParseGeneration(ParserContext context, SourceLine line)
@@ -383,6 +399,9 @@ internal static partial class FormParser
         "^field\\s+([\\w.]+)(?:\\s+(?:from\\s+([\\w.]+)|compose\\s+using\\s+([A-Za-z_]\\w*)))?(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$",
         RegexOptions.NonBacktracking)]
     private static partial Regex FieldRegex();
+
+    [GeneratedRegex(@"^choose\s+from\s+query\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s+show\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ChooseRegex();
 
     [GeneratedRegex(@"^on\s+submit\s+(navigate\s+to\s+.+)$", RegexOptions.NonBacktracking)]
     private static partial Regex SubmitRegex();

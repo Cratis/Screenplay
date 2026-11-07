@@ -41,9 +41,10 @@ internal static partial class ArrangementParser
         var directiveLocations = new Dictionary<string, SourceLocation>();
         string? templateType = null;
         var exposes = new List<TemplateExposedValueSyntax>();
-        var outlets = new List<TemplateOutletSyntax>();
+        var recursiveSlots = new List<TemplateSlotSyntax>();
         var metadata = new TemplateMetadata();
-        var navigation = new List<NavigationRegionSyntax>();
+        var outlets = new List<OutletSyntax>();
+        var retired = new List<RetiredForm>();
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -77,24 +78,35 @@ internal static partial class ArrangementParser
                     }
 
                     break;
+                case "slot" when child.Content.Length > "slot".Length:
+                    recursiveSlots.Add(new TemplateSlotSyntax(child.Content["slot".Length..].Trim(), child.Location));
+                    break;
+                case "outlet" when OutletParser.IsDeclaration(child.Content) || OutletParser.IsOverride(child.Content):
+                    if (OutletParser.ParseDeclaration(context, child, keyword) is { } outlet)
+                    {
+                        if (outlets.Exists(existing => existing.Name == outlet.Name))
+                        {
+                            context.Error(DiagnosticCodes.DuplicateOutlet, $"The {keyword} '{name}' already declares outlet '{outlet.Name}' - an outlet is declared once", child.Location);
+                        }
+                        else
+                        {
+                            outlets.Add(outlet);
+                        }
+                    }
+
+                    break;
                 case "outlet":
-                    outlets.Add(new TemplateOutletSyntax(child.Content["outlet".Length..].Trim(), child.Location));
+                    var renamed = new TemplateSlotSyntax(child.Content["outlet".Length..].Trim(), child.Location);
+                    context.Error(DiagnosticCodes.RemovedTemplateOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed.Name}' in a {keyword}", $"slot {renamed.Name}"), child.Location);
+                    context.Retire(new RetiredOutlet(RetiredOutletPlace.Template, renamed.Name, renamed, child.Location));
+                    recursiveSlots.Add(renamed);
                     break;
                 case "scopes" or "display" or "description" or "content" when !SlotDeclarationRegex().IsMatch(child.Content):
                     // A bare word is a slot declaration, so a slot may still be named 'content' or 'display'.
                     ParseMetadata(context, child, keyword, metadata);
                     break;
                 case "navigation" when NavigationParser.IsRegionHeader(child.Content):
-                    var region = NavigationParser.ParseRegion(context, child);
-                    if (keyword == "layout")
-                    {
-                        navigation.Add(region);
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.UnknownLayoutDirective, $"A {keyword} cannot declare a 'navigation' region - the application's navigation belongs in the 'layout', and a module declares it beneath 'module'", child.Location);
-                    }
-
+                    retired.Add(NavigationParser.ReportRegion(context, child, keyword));
                     break;
                 case "on":
                 case "uses":
@@ -103,13 +115,13 @@ internal static partial class ArrangementParser
                     InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 default:
-                    AddSlot(context, child, slots);
+                    AddSlot(context, child, slots, retired);
                     break;
             }
         }
 
         ValidateContentSlots(context, keyword, name, slots, metadata.Content);
-        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, outlets)
+        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, recursiveSlots)
         {
             DirectiveLocations = directiveLocations,
             RestrictsScopes = metadata.Scopes is not null,
@@ -118,7 +130,8 @@ internal static partial class ArrangementParser
             DisplayName = metadata.DisplayName,
             Description = metadata.Description,
             Content = metadata.Content,
-            Navigation = navigation
+            Outlets = outlets,
+            RetiredForms = retired.Count == 0 ? [] : [.. retired]
         };
     }
 
@@ -163,30 +176,76 @@ internal static partial class ArrangementParser
         fitsSlotLocation = line.Location;
     }
 
-    static void AddSlot(ParserContext context, SourceLine line, List<SlotSyntax> slots)
+    static void AddSlot(ParserContext context, SourceLine line, List<SlotSyntax> slots, List<RetiredForm> retired)
     {
         var match = SlotDeclarationRegex().Match(line.Content);
         if (!match.Success)
         {
             context.Error(
                 DiagnosticCodes.InvalidLayoutSlotName,
-                $"Invalid slot declaration '{line.Content}' - expected an identifier, optionally followed by 'contributes <Point>'",
+                $"Invalid slot declaration '{line.Content}' - expected an identifier, optionally followed by a role ('page', 'pane' or 'panel'), 'routed [by <param>]', 'primary' and 'optional', in that order",
                 line.Location);
             context.SkipBlock(line.Indent);
             return;
         }
 
+        var slot = new SlotSyntax(match.Groups[1].Value, line.Location)
+        {
+            Role = match.Groups[2].Success ? Enum.Parse<SlotRole>(match.Groups[2].Value, ignoreCase: true) : null,
+            Routed = match.Groups[3].Success,
+            RoutedBy = match.Groups[4].Success ? match.Groups[4].Value : null,
+            Primary = match.Groups[5].Success,
+            Optional = match.Groups[6].Success
+        };
         if (context.TryPeekChild(line.Indent, out _))
         {
             context.Error(
                 DiagnosticCodes.UnknownLayoutDirective,
                 $"Unexpected block under '{line.Content}' - a slot declaration names a slot and nothing more; arrange slots in the 'arrangement' block",
                 line.Location);
-            context.SkipBlock(line.Indent);
+            retired.Add(ReadSlotItems(context, line, slot));
             return;
         }
 
-        AddSlot(slots, new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location));
+        if (match.Groups[7].Success)
+        {
+            context.Error(
+                DiagnosticCodes.RemovedSlotContribution,
+                SlotsAndOutletsMigration.Replaced($"'contributes {match.Groups[7].Value}' on slot '{match.Groups[1].Value}'", $"outlet {match.Groups[7].Value} of navigation in {match.Groups[1].Value}"),
+                line.Location);
+            retired.Add(new RetiredSlotContribution(slot, match.Groups[7].Value, line.Location));
+        }
+
+        AddSlot(slots, slot);
+    }
+
+    // A slot holding items is not a slot declaration. The block is read quietly so a migration can turn the items into
+    // an outlet: a toolbar line with its buttons and items, and bare buttons, count as items; anything else is left for review.
+    static RetiredSlotItems ReadSlotItems(ParserContext context, SourceLine line, SlotSyntax slot)
+    {
+        var quiet = context.Quiet();
+        ScreenToolbarSyntax? toolbar = null;
+        var buttons = new List<ToolbarButtonSyntax>();
+        var others = new List<SourceLocation>();
+        while (quiet.TryPeekChild(line.Indent, out var child))
+        {
+            quiet.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "toolbar" when toolbar is null:
+                    toolbar = ScreenParser.ParseToolbar(quiet, child);
+                    break;
+                case "button" when ToolbarButtonParser.Parse(quiet, child) is { } button:
+                    buttons.Add(button);
+                    break;
+                default:
+                    others.Add(child.Location);
+                    quiet.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(slot, toolbar, buttons, others, line.Location);
     }
 
     static void AddSlot(List<SlotSyntax> slots, SlotSyntax slot)
@@ -435,7 +494,7 @@ internal static partial class ArrangementParser
             }
 
             places.Add(place);
-            AddSlot(slots, new(place.SlotName, null, place.Location));
+            AddSlot(slots, new(place.SlotName, place.Location));
         }
 
         return new(width, height, places, header.Location);
@@ -484,7 +543,7 @@ internal static partial class ArrangementParser
         switch (node)
         {
             case ArrangementSlotSyntax slot:
-                AddSlot(slots, new(slot.Name, null, slot.Location));
+                AddSlot(slots, new(slot.Name, slot.Location));
                 break;
             case ArrangementContainerSyntax container:
                 foreach (var child in container.Children)
@@ -505,7 +564,7 @@ internal static partial class ArrangementParser
     [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.NonBacktracking)]
     private static partial Regex TemplateExposesRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+(page|pane|panel))?(?:\s+(routed)(?:\s+by\s+([A-Za-z_]\w*))?)?(?:\s+(primary))?(?:\s+(optional))?(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex SlotDeclarationRegex();
 
     [GeneratedRegex(@"^(row|column|grid)(?:\s+gap\s+(\d+))?(?:\s+columns\s+(\d+))?(?:\s+rows\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.NonBacktracking)]
@@ -540,7 +599,7 @@ internal static partial class ArrangementParser
         string? Category,
         string? TemplateType,
         IReadOnlyList<TemplateExposedValueSyntax> Exposes,
-        IReadOnlyList<TemplateOutletSyntax> Outlets)
+        IReadOnlyList<TemplateSlotSyntax> RecursiveSlots)
     {
         /// <summary>
         /// Gets the source position of the directives whose printed line a comment can follow, keyed by directive.
@@ -570,7 +629,12 @@ internal static partial class ArrangementParser
         /// <summary>
         /// Gets the navigation regions a layout declares.
         /// </summary>
-        public IReadOnlyList<NavigationRegionSyntax> Navigation { get; init; } = [];
+        public IReadOnlyList<OutletSyntax> Outlets { get; init; } = [];
+
+        /// <summary>
+        /// Gets the forms an earlier Screenplay version wrote in the body, kept for a migration.
+        /// </summary>
+        public IReadOnlyList<RetiredForm> RetiredForms { get; init; } = [];
 
         /// <summary>
         /// Gets the template picker description, or <c>null</c>.

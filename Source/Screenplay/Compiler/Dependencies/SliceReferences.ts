@@ -25,6 +25,9 @@ export const referenceClassifications: Readonly<Record<string, DependencyKind | 
     declares: null, uses: null, commandEventSource: null, commandStream: null, specificationEventSource: null, specificationStream: null, thenOperation: null,
     givenOperationFailure: null, thenCompensated: null, produces: null, authorizes: null, queryResult: null,
     dataReadModel: null, type: null, exampleType: null, contributes: null, template: null, specificationReadModel: null,
+    // Placement is screen composition, like contributions and templates: what a hook, an outlet change, a picker or a
+    // slot's 'show' names is found by find-references, not drawn as a slice dependency.
+    hook: null, changesOutlet: null, pickerQuery: null, show: null,
     thenAbsentReadModel: null, thenReadModel: null, givenReadModel: null, thenQuery: null,
     compositeKeyType: null, builds: null, buildsVariant: null, appends: null, seed: null,
     // State machines and workflows are top-level declarations owned by no slice, so what they name adds no slice dependency.

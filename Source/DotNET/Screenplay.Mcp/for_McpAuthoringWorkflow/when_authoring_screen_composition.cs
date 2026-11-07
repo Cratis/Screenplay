@@ -20,10 +20,11 @@ public class when_authoring_screen_composition : given.an_authoring_connection
 
         module Sales
           screen template Shell
-            outlet detail
+            slot detail
             display "Sales shell"
             scopes slice
-            header contributes Actions
+            header
+            outlet Actions of navigation in header
             body
 
             content header
@@ -43,7 +44,7 @@ public class when_authoring_screen_composition : given.an_authoring_connection
               screen Browse
                 template Shell
                 navigate to Browse
-                  outlet detail
+                  slot detail
                 contribute to Actions order 10
                   action Register
         """;
@@ -68,7 +69,7 @@ public class when_authoring_screen_composition : given.an_authoring_connection
         _applied = Open();
         _documentId = Page("documents", _applied.GetProperty("revision").GetString())
             .EnumerateArray().Single(document => document.GetProperty("path").GetString() == "application.play").GetProperty("documentId").GetString()!;
-        var broken = File.ReadAllText(Path.Combine(RootPath, "application.play")).Replace("    outlet detail\n    display", "    display", StringComparison.Ordinal);
+        var broken = File.ReadAllText(Path.Combine(RootPath, "application.play")).Replace("    slot detail\n    display", "    display", StringComparison.Ordinal);
         _broken = Result("propose-source", Arguments(_applied, new { operation = "replace-document", documentId = _documentId, source = broken }));
     }
 
@@ -81,8 +82,8 @@ public class when_authoring_screen_composition : given.an_authoring_connection
     [Fact] void should_read_the_exposure_ast() => Node("ExposedPropertySyntax").GetProperty("component").GetString().ShouldEqual("shell:header");
     [Fact] void should_read_the_instance_ast() => Node("ContributedItemSyntax").GetProperty("id").GetString().ShouldEqual("export:csv");
     [Fact] void should_read_the_screen_contribution_ast() => Node("ScreenContributionSyntax").GetProperty("order").GetInt32().ShouldEqual(10);
-    [Fact] void should_report_a_navigation_to_a_removed_outlet() => _broken.GetRawText().ShouldContain("PLAY0630");
-    [Fact] void should_refuse_to_propose_a_composition_with_a_missing_outlet() => _broken.GetProperty("success").GetBoolean().ShouldBeFalse();
+    [Fact] void should_report_a_navigation_to_a_removed_slot() => _broken.GetRawText().ShouldContain("PLAY0630");
+    [Fact] void should_refuse_to_propose_a_composition_with_a_missing_slot() => _broken.GetProperty("success").GetBoolean().ShouldBeFalse();
 
     JsonElement Node(string kind) => Result("read-ast", new { expectedRevision = _applied.GetProperty("revision").GetString(), documentId = _documentId, kind, includeContent = true })
         .GetProperty("page").GetProperty("items").EnumerateArray().First().GetProperty("node");

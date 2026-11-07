@@ -36,7 +36,7 @@ public class when_reading_shared_vectors : Specification
                     finding.Location.ShouldEqual(new SourceLocation(diagnostic.GetProperty("location").GetProperty("line").GetInt32(), diagnostic.GetProperty("location").GetProperty("column").GetInt32()));
                 }
             }
-            ModelCompleteness.Check(compilation, CompletenessChecks.None).ShouldBeEmpty();
+            ModelCompleteness.Check(compilation, CompletenessChecks.None).Where(finding => finding.Code != DiagnosticCodes.CommandWithoutInputSurface).ShouldBeEmpty();
         }
     }
 

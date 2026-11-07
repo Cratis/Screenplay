@@ -586,8 +586,9 @@ Module         = "module", Ident, NL,
                    | DialogTemplateDecl
                    | FormDecl
                    | ContributionDecl
-                   | NavigationRegionDecl
-                   | ToolbarDecl                      (* added to its screens' toolbar slot *)
+                   | OutletChangeDecl                 (* changes an outlet for its screens *)
+                   | NavigationRegionDecl             (* Screenplay 5; an error since 6 *)
+                   | ToolbarDecl                      (* Screenplay 5; an error since 6 *)
                    | InteractionBinding
                    | UsesBehaviorDecl
                    | ExampleDecl
@@ -682,31 +683,59 @@ ContributionDecl = "contribute", "to", Ident, NL,
                  [ INDENT, { ContributionDirective }, DEDENT ] ;
 
 ContributionDirective = NavigateDecl
+                      | OutletItem
                       | "label", LocalizableString, NL
                       | "order", Integer, NL
                       | ( "id" | "icon" | "presentation" | "group" ), ( Ident | String ), NL
-                      | "destination", ( "outlet", Ident | "dialog", Ident | "external", String ), NL ;
+                      | "destination", ( "slot", Ident | "dialog", Ident | "external", String ), NL ;
 
-(* A navigation region is one part of the application shell's navigation:
-   "topbar" or "sidebar". A layout declares the application's regions and has
-   no mode; a module declares only what it changes - "inherits" (the default
-   when absent), "extends" (the application's items, then its own) or
-   "overrides" (its own only). The logo is the application's and is declared
-   once, in a layout. Items nest only under the sidebar. "target" names a
-   module, or a module and a feature path; "slot" names a layout slot.        *)
+(* An outlet is a named list of items a layout or template offers. The
+   declaration names its kind, what the items act on and the slot that shows
+   it, and lists its default items - each in its kind's item form without the
+   item's keyword. A module, feature or slice screen changes an outlet for the
+   screens beneath it: "inherits" (the default when absent; lists nothing),
+   "extends" (the inherited items, then its own) or "overrides" (its own only).
+   "hide" drops an inherited item; "before"/"after" under an item places it
+   next to an inherited one. The logo is the application's and is declared
+   once, in a layout's navigation outlet. "target" names a module, or a module
+   and a feature path; "slot" names a layout slot. See outlets.md.            *)
 
-NavigationRegionDecl = "navigation", ( "topbar" | "sidebar" ), [ "inherits" | "extends" | "overrides" ], NL,
-                 [ INDENT, { NavigationLogoDecl | NavigationItemDecl }, DEDENT ] ;
+OutletDecl     = "outlet", Ident, "of", OutletKind, [ "for", ( "item" | "screen" ) ], [ "in", Ident ], NL,
+                 [ INDENT, { NavigationLogoDecl | "default", OutletItemBody }, DEDENT ] ;
+
+OutletKind     = "actions" | "filters" | "tabs" | "stats" | "navigation" ;
+
+OutletChangeDecl = "outlet", Ident, ( "inherits" | "extends" | "overrides" ), NL,
+                 [ INDENT, { "hide", Ident, NL | OutletItem }, DEDENT ] ;
+
+OutletItem     = ToolbarButton
+               | "group", Ident, "title", LocalizableString, [ "icon", ( Ident | String ) ], NL,
+                 INDENT, { ToolbarButton | OutletPosition }, DEDENT
+               | "filter", Ident, "title", LocalizableString, [ "sets", QualifiedName ], NL, [ INDENT, OutletPosition, DEDENT ]
+               | "tab", Ident, "title", LocalizableString, [ "shows", Ident ], NL, [ INDENT, OutletPosition, DEDENT ]
+               | "stat", Ident, "title", LocalizableString, [ "value", "from", QualifiedName ], NL, [ INDENT, OutletPosition, DEDENT ]
+               | NavigationItemDecl ;
+
+(* An OutletItemBody is an OutletItem without its leading keyword. *)
+
+OutletPosition = ( "before" | "after" ), Ident, NL ;
 
 NavigationLogoDecl = "logo", "image", String, "title", LocalizableString, NL ;
 
 NavigationItemDecl = "item", ( Ident | String ), "title", LocalizableString,
                  [ "icon", ( Ident | String ) ], [ "target", QualifiedName ], [ "slot", Ident ], NL,
-                 [ INDENT, { NavigationItemDecl }, DEDENT ] ;
+                 [ INDENT, { NavigationItemDecl | OutletPosition }, DEDENT ] ;
+
+(* Screenplay 5 navigation regions. Since Screenplay 6 the form is an error
+   (PLAY0894) whose message names "screenplay migrate --from 5 --to 6".       *)
+
+NavigationRegionDecl = "navigation", ( "topbar" | "sidebar" ), [ "inherits" | "extends" | "overrides" ], NL,
+                 [ INDENT, { (* skipped *) }, DEDENT ] ;
 
 (* Forms describe command input and optional query-backed population. A
-   contribution adds one navigable item to a named contribution point. Forms
-   are module-scoped; contributions may be declared on modules or features. *)
+   contribution adds a navigable entry, or items of the outlet's kind, to an
+   outlet. Forms are module-scoped; contributions may be declared on modules or
+   features and may target any outlet.                                       *)
 
 (* -------------------------------------------------------------- *)
 (* Layout, screen template and dialog template                     *)
@@ -721,11 +750,11 @@ LayoutDecl     = "layout", Ident, NL,
                  INDENT, StructureBody, DEDENT ;
 
 ScreenTemplateDecl = "screen", "template", Ident, NL,
-                 INDENT, { FitsSlotDecl | SlotDecl | ArrangementDecl | TemplatePicker | SlotContentDecl
+                 INDENT, { FitsSlotDecl | SlotDecl | OutletDecl | ArrangementDecl | TemplatePicker | SlotContentDecl
                          | InteractionBinding | UsesBehaviorDecl }, DEDENT ;
 
 DialogTemplateDecl = "dialog", "template", Ident, NL,
-                 INDENT, { SlotDecl | ArrangementDecl | TemplatePicker | SlotContentDecl
+                 INDENT, { SlotDecl | OutletDecl | ArrangementDecl | TemplatePicker | SlotContentDecl
                          | InteractionBinding | UsesBehaviorDecl }, DEDENT ;
 
 (* Template picker metadata and the content a template provides for its own
@@ -756,10 +785,18 @@ SlotContentDecl = "content", Ident, NL,
 
 FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-StructureBody  = { SlotDecl | NavigationRegionDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
+StructureBody  = { SlotDecl | OutletDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
 (* At most one arrangement; a screen template has at most one fits slot. *)
 
-SlotDecl       = Ident, [ "contributes", Ident ], NL ;
+SlotDecl       = Ident, [ SlotRole ], [ "routed", [ "by", Ident ] ], [ "primary" ], [ "optional" ], NL ;
+(* Screenplay 5's "<slot> contributes <Point>" is an error since Screenplay 6
+   (PLAY0895): write "outlet <Point> of navigation in <slot>".                *)
+SlotRole       = "page" | "pane" | "panel" ;
+(* A slot is a region content is placed in. The role and modifiers follow the
+   name in this order and each is optional. Screenplay 5's "outlet" forms -
+   "outlet <name>" in a structure (PLAY0893) or component (PLAY0890), under
+   "navigate to" (PLAY0892) and "destination outlet" (PLAY0891) - are errors
+   naming "screenplay migrate --from 5 --to 6"; write "slot <name>". *)
 
 ArrangementDecl = "arrangement", "flow", NL,
                  INDENT, { ArrangementNode }, { WhenDecl }, DEDENT
@@ -845,7 +882,8 @@ Feature        = "feature", Ident, NL,
                    | SliceDecl
                    | ExampleDecl
                    | ContributionDecl
-                   | ToolbarDecl                      (* added to its screens' toolbar slot *)
+                   | OutletChangeDecl                 (* changes an outlet for its screens *)
+                   | ToolbarDecl                      (* Screenplay 5; an error since 6 *)
                    | InteractionBinding
                    | UsesBehaviorDecl },
                  DEDENT ;
@@ -1717,9 +1755,9 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, [ DescriptionDecl ], ScreenBody, { ScreenContributionDecl }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
 
-(* Content a screen contributes to a contribution point elsewhere in the tree -
+(* Content a screen contributes to an outlet elsewhere in the tree -
    Scene's Screen.Contributions.                                             *)
 
 ScreenContributionDecl = "contribute", "to", Ident, [ "order", Integer ], NL,
@@ -1740,8 +1778,9 @@ ScreenDirective = DataDecl
 (* A screen, a section and a filled slot attach interactions the same way a
    module or feature does - see interactions.md.                              *)
 
-(* A toolbar holds items - an action, a navigation or a dialog entry - and
-   buttons. A button invokes a State Change slice: the slice names the command
+(* A screen toolbar holds items - an action, a navigation or a dialog entry - and
+   buttons. A feature or module "toolbar" is a Screenplay 5 form and an error
+   since Screenplay 6 (PLAY0896): write "outlet <name> extends". A button invokes a State Change slice: the slice names the command
    and the dialog it opens over the page. "slice" is a dotted path
    Module.Feature.Slice or any unambiguous suffix of it; without one the button
    invokes nothing and warns. Item and button ids are unique in the toolbar.   *)
@@ -1763,8 +1802,8 @@ ToolbarItem    = "item", Ident, "action", QualifiedName, [ ActionSubject ], [ "l
 ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
                  [ "slice", QualifiedName ],
                  [ "emphasis", ( "primary" | "secondary" | "quiet" ) ],
-                 [ "icon", ( Ident | String ) ], NL,
-                 [ INDENT, { AuthorizeDecl | ToolbarConfirm }, DEDENT ] ;
+                 [ "icon", ( Ident | String ) ], [ "runs", ( "close" | "submit" | "refresh" ) ], NL,
+                 [ INDENT, { AuthorizeDecl | ToolbarConfirm | OutletPosition }, DEDENT ] ;
 
 ToolbarConfirm = "confirm", LocalizableString, NL ;   (* asked before the command runs or the dialog opens *)
 
@@ -1796,7 +1835,7 @@ NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL,
                  [ INDENT, { NavigateOption }, DEDENT ] ;
 
 NavigateOption = "route", LocalizableString, NL
-               | "outlet", Ident, NL
+               | "slot", Ident, NL
                | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL
                | "parameter", Ident, "from", "literal", (* modifiers *) StructuredBlock ;
 

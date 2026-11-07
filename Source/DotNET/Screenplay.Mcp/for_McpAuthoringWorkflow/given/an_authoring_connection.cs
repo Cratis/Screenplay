@@ -14,7 +14,8 @@ public class an_authoring_connection : for_McpConnection.given.a_connection
         concept ProjectName : String
         module Projects
           screen template Shell
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
           contribute to Navigation
             navigate to ProjectList

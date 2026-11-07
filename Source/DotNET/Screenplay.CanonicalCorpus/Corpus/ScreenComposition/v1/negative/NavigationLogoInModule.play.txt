@@ -2,12 +2,12 @@ layout AppShell
   category application
   content
 
-  navigation topbar
+  outlet topbar of navigation
     logo image "/assets/acme.svg" title "Acme"
-    item sales title "Sales" target Sales
+    default sales title "Sales" target Sales
 
 module Sales
-  navigation topbar extends
+  outlet topbar extends
     logo image "/assets/sales.svg" title "Sales"
     item orders title "Orders" target Sales.Orders
 

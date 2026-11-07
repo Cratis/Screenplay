@@ -31,6 +31,7 @@ internal sealed partial class WorkspacePropertyLinks
             if (path is not null) Add(entry, "condition", new(path, SourceMembers(entry, path), Incomplete: NestedSource(entry, path)));
             IndexTypedReader(entry);
             IndexBinding(entry);
+            IndexPicker(entry);
             IndexOpaque(entry);
         }
     }
@@ -58,6 +59,14 @@ internal sealed partial class WorkspacePropertyLinks
         {
             Add(entry, "screen-binding", new(from, sources, targets is [var target] ? target : null, targets.Length != 1 || from.Contains('.')));
         }
+    }
+
+    // A picker shows a property of the rows its query returns: 'choose from query <Query> show <property>'.
+    void IndexPicker(WorkspaceSyntaxEntry entry)
+    {
+        if (entry.Node is not FormFieldChoicesSyntax choices || string.IsNullOrEmpty(choices.Show)) return;
+        var view = QueryView(choices.Query, entry);
+        Add(entry, "screen-binding", new(choices.Show, Members(view, choices.Show), Incomplete: view.Length != 1 || choices.Show.Contains('.')));
     }
 
     AuthoredDeclaration[] BindingSources(WorkspaceSyntaxEntry entry, FormSyntax? form, string? from) =>

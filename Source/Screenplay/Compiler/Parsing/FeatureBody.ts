@@ -6,7 +6,6 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, SliceSyntax } from '../Syntax/Structure';
-import { ScreenToolbarSyntax } from '../Syntax/Screens';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize, recordAuthorizationRefusal } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
@@ -20,7 +19,9 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { parseExample } from './SpecificationExampleParser';
-import { parseToolbar } from './ScreenParser';
+import { reportFeatureToolbar } from './ScreenParser';
+import { addOutletOverride } from './OutletParser';
+import type { OutletSyntax } from '../Syntax/Outlets';
 import { parseSlice } from './SliceParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -30,7 +31,7 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute', 'template']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, toolbar, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, outlet, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.
@@ -41,7 +42,7 @@ export class FeatureBody {
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
-    readonly #toolbars: ScreenToolbarSyntax[] = [];
+    readonly #outlets: OutletSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -88,7 +89,10 @@ export class FeatureBody {
                 parseFileImport(context, line, this.#fileImports);
                 return true;
             case 'toolbar':
-                this.#toolbars.push(parseToolbar(context, line));
+                reportFeatureToolbar(context, line, 'feature');
+                return true;
+            case 'outlet':
+                addOutletOverride(context, line, 'feature', this.#outlets);
                 return true;
             case 'feature':
                 this.#features.push(parseFeature(context, line));
@@ -118,7 +122,7 @@ export class FeatureBody {
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
             purposes: this.#purposes,
-            ...(this.#toolbars.length > 0 ? { toolbars: this.#toolbars } : {}),
+            ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             features: this.#features,
             slices: this.#slices,
             examples: this.#examples,

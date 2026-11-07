@@ -8,7 +8,7 @@ module Merchandising
     description "Which products the shop may sell"
 
     // The feature adds these to the toolbar of every screen it has: each runs one of its commands. Withdrawing asks first.
-    toolbar actions
+    outlet actions extends
       button approve title "Approve product" slice Merchandising.Publication.ApproveProductForSale emphasis primary icon check
       button withdraw title "Withdraw product" slice Merchandising.Publication.WithdrawProduct emphasis quiet icon ban
         confirm "Take this product off sale?"

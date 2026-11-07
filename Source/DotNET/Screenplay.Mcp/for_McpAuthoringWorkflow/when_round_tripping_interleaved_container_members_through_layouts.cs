@@ -14,7 +14,8 @@ public class when_round_tripping_interleaved_container_members_through_layouts :
             navigate to List
           // Template stays after navigation.
           screen template Shell
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
           // Feature lead
           feature View // Feature header

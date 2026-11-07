@@ -1,0 +1,36 @@
+module Shop
+  screen template Board
+    fits slot content
+    category Workspace
+    toolbar contributes BoardActions
+    lanes
+    slot detail
+
+    arrangement flow
+      column
+        toolbar height 48
+        lanes grow
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders
+        contribute to BoardActions order 10
+          action OpenOrder
+            navigate to OrderDetails
+              // The order opens beside the board.
+              outlet detail
+
+    slice StateView OrderDetails
+      readmodel OrderDetail
+        orderId Uuid
+
+      query OneOrder => OrderDetail
+
+      screen OrderDetails
+        data OrderDetail via query OneOrder

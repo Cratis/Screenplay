@@ -10,8 +10,8 @@ public class when_compiling_a_navigation_item_targeting_a_module_without_feature
 {
     const string Shell =
         """
-          navigation sidebar
-            item a title "A" target Empty
+          outlet sidebar of navigation
+            default a title "A" target Empty
         """;
 
     void Because() => CompileWith(Shell);

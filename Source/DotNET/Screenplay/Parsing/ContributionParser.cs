@@ -24,7 +24,7 @@ internal static partial class ContributionParser
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidContributionDeclaration, $"Invalid contribute declaration '{header.Content}' - expected 'contribute to <ContributionPoint>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidContributionDeclaration, $"Invalid contribute declaration '{header.Content}' - expected 'contribute to <outlet>'", header.Location);
             context.SkipBlock(header.Indent);
             return new(LineText.FirstWord(header.Content), null, null, null, header.Location);
         }
@@ -38,10 +38,21 @@ internal static partial class ContributionParser
         var hasOrder = false;
         var item = new NavigationItem();
         var directiveLocations = new Dictionary<string, SourceLocation>();
+        var items = new List<OutletItemSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (OutletParser.IsItem(line.Content))
+            {
+                if (OutletParser.ParseItem(context, line, allowPosition: false) is { } outletItem)
+                {
+                    items.Add(outletItem);
+                }
+
+                continue;
+            }
+
             switch (LineText.FirstWord(line.Content))
             {
                 case "navigate":
@@ -86,7 +97,7 @@ internal static partial class ContributionParser
                     }
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label, order, id, icon, presentation, group or destination", line.Location);
+                    context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label, order, id, icon, presentation, group, destination or an outlet item ({OutletParser.ItemsExpected})", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -99,7 +110,8 @@ internal static partial class ContributionParser
             Icon = item.Icon,
             Presentation = item.Presentation,
             Group = item.Group,
-            Destination = item.Destination
+            Destination = item.Destination,
+            Items = items
         };
     }
 
@@ -120,18 +132,27 @@ internal static partial class ContributionParser
             var destination = DestinationRegex().Match(line.Content);
             if (!destination.Success)
             {
-                context.Error(DiagnosticCodes.UnknownContributionDirective, $"Invalid destination '{line.Content}' - expected 'destination outlet <name>', 'destination dialog <Name>' or 'destination external \"<route>\"'", line.Location);
+                context.Error(DiagnosticCodes.UnknownContributionDirective, $"Invalid destination '{line.Content}' - expected 'destination slot <name>', 'destination dialog <Name>' or 'destination external \"<route>\"'", line.Location);
                 return;
             }
 
             var kind = destination.Groups[1].Value switch
             {
-                "outlet" => ContributionDestinationKind.Outlet,
+                "slot" or "outlet" => ContributionDestinationKind.Slot,
                 "dialog" => ContributionDestinationKind.Dialog,
                 _ => ContributionDestinationKind.External
             };
             var target = destination.Groups[2].Success ? destination.Groups[2].Value : StringLiteral.Unescape(destination.Groups[3].Value);
+            if (destination.Groups[1].Value == "outlet")
+            {
+                context.Error(DiagnosticCodes.RemovedDestinationOutlet, SlotsAndOutletsMigration.Renamed($"'destination outlet {target}'", $"destination slot {target}"), line.Location);
+            }
+
             item.Destination = new(kind, target, line.Location);
+            if (destination.Groups[1].Value == "outlet")
+            {
+                context.Retire(new RetiredOutlet(RetiredOutletPlace.Destination, target, item.Destination, line.Location));
+            }
             return;
         }
 
@@ -179,7 +200,7 @@ internal static partial class ContributionParser
     [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("^destination\\s+(?:(outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("^destination\\s+(?:(slot|outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]
     private static partial Regex DestinationRegex();
 
     [GeneratedRegex("^(?:([A-Za-z_][\\w.-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.NonBacktracking)]

@@ -10,8 +10,8 @@ public class when_compiling_a_navigation_item_targeting_an_unknown_module : give
 {
     const string Shell =
         """
-          navigation sidebar
-            item a title "A" target Ghost
+          outlet sidebar of navigation
+            default a title "A" target Ghost
         """;
 
     void Because() => CompileWith(Shell);

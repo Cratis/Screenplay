@@ -24,70 +24,64 @@ internal static class ToolbarButtonValidator
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     public static void Validate(ApplicationSyntax application, ParserContext context)
     {
-        foreach (var module in application.Modules)
-        {
-            ValidateScope(module.Toolbars, SlicesIn(module.Features, [module.Name]).Select(entry => entry.Slice), "module", module.Name, context);
-            ValidateFeatures(module.Features, context);
-        }
-
         var collector = new ToolbarCollector();
         collector.VisitApplication(application);
-        if (collector.Toolbars.Count == 0 && collector.RegionButtons.Count == 0)
+        if (collector.Toolbars.Count == 0)
         {
             return;
         }
 
-        var slices = application.Modules.SelectMany(module => SlicesIn(module.Features, [module.Name])).ToList();
+        var slices = AllSlices(application);
         foreach (var toolbar in collector.Toolbars)
         {
             ValidateToolbar(toolbar, slices, context);
         }
-
-        foreach (var (region, buttons) in collector.RegionButtons)
-        {
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var button in buttons)
-            {
-                if (!ids.Add(button.Id))
-                {
-                    context.Error(DiagnosticCodes.DuplicateToolbarButton, $"The navigation topbar already has a button with the id '{button.Id}'", button.Location);
-                }
-
-                ValidateButtonSlice(button, $"the navigation {RegionName(region)}", slices, context);
-            }
-        }
-    }
-
-    static void ValidateFeatures(IEnumerable<FeatureSyntax> features, ParserContext context)
-    {
-        foreach (var feature in features)
-        {
-            ValidateScope(feature.Toolbars, feature.Slices.Concat(SlicesIn(feature.Features, [feature.Name]).Select(entry => entry.Slice)), "feature", feature.Name, context);
-            ValidateFeatures(feature.Features, context);
-        }
     }
 
     /// <summary>
-    /// A toolbar of a feature or a module links commands of that feature or module: an item that names another is reported.
+    /// Lists every slice of the application with its path - <c>Module.Feature[.SubFeature].Slice</c>.
     /// </summary>
-    static void ValidateScope(IEnumerable<ScreenToolbarSyntax> toolbars, IEnumerable<SliceSyntax> slices, string scope, string scopeName, ParserContext context)
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to read.</param>
+    /// <returns>The slices and their paths.</returns>
+    internal static List<(string[] Path, SliceSyntax Slice)> AllSlices(ApplicationSyntax application) =>
+        [.. application.Modules.SelectMany(module => SlicesIn(module.Features, [module.Name]))];
+
+    /// <summary>
+    /// Checks the slice a button invokes: one the document declares, unambiguous, and a State Change slice.
+    /// </summary>
+    /// <param name="button">The <see cref="ToolbarButtonSyntax"/> to check.</param>
+    /// <param name="owner">Where the button is, as it reads in a diagnostic.</param>
+    /// <param name="slices">Every slice of the application with its path.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report to.</param>
+    internal static void ValidateButtonSlice(ToolbarButtonSyntax button, string owner, List<(string[] Path, SliceSyntax Slice)> slices, ParserContext context)
     {
-        var commands = default(HashSet<string>);
-        foreach (var toolbar in toolbars)
+        if (button.Slice is null)
         {
-            foreach (var item in toolbar.Items.Where(item => item.Kind == ToolbarItemKind.Action))
+            // A built-in needs no slice, and a template's default is a placeholder a lower level gives its hook.
+            if (button.Runs is not null || button.IsDefault)
             {
-                commands ??= [.. slices.SelectMany(slice => slice.Commands).Select(command => command.Name)];
-                var name = item.Target.Split('.')[^1];
-                if (!commands.Contains(name))
-                {
-                    context.Warning(DiagnosticCodes.FeatureToolbarCommandNotFound, $"Toolbar item '{item.Name}' of {scope} '{scopeName}' links command '{item.Target}', which no slice of the {scope} declares", item.Location);
-                }
+                return;
             }
+
+            context.Warning(DiagnosticCodes.ToolbarButtonWithoutSlice, $"Toolbar button '{button.Id}' in {owner} names no slice - add 'slice <Module>.<Feature>.<Slice>' so it invokes something", button.Location);
+            return;
+        }
+
+        var wanted = button.Slice.Split('.');
+        var matches = slices.Where(entry => entry.Path.Length >= wanted.Length && entry.Path.TakeLast(wanted.Length).SequenceEqual(wanted)).ToList();
+        if (matches.Count == 0)
+        {
+            context.Error(DiagnosticCodes.ToolbarButtonSliceNotFound, $"Toolbar button '{button.Id}' invokes slice '{button.Slice}', which the document does not declare", button.Location);
+        }
+        else if (matches.Count > 1)
+        {
+            context.Error(DiagnosticCodes.ToolbarButtonSliceAmbiguous, $"Toolbar button '{button.Id}' invokes slice '{button.Slice}', which matches {matches.Count} slices ({string.Join(", ", matches.Select(entry => string.Join('.', entry.Path)))}) - qualify it with the feature or module", button.Location);
+        }
+        else if (matches[0].Slice.Type != SliceType.StateChange)
+        {
+            context.Error(DiagnosticCodes.ToolbarButtonSliceNotStateChange, $"Toolbar button '{button.Id}' invokes slice '{button.Slice}', a {matches[0].Slice.Type} slice - a button invokes State Change slices only", button.Location);
         }
     }
-
-    static string RegionName(NavigationRegionSyntax region) => region.Region == NavigationRegionKind.Sidebar ? "sidebar" : "topbar";
 
     static IEnumerable<(string[] Path, SliceSyntax Slice)> SlicesIn(IEnumerable<FeatureSyntax> features, IEnumerable<string> prefix)
     {
@@ -120,45 +114,9 @@ internal static class ToolbarButtonValidator
         }
     }
 
-    static void ValidateButtonSlice(ToolbarButtonSyntax button, string owner, List<(string[] Path, SliceSyntax Slice)> slices, ParserContext context)
-    {
-        if (button.Slice is null)
-        {
-            context.Warning(DiagnosticCodes.ToolbarButtonWithoutSlice, $"Toolbar button '{button.Id}' in {owner} names no slice - add 'slice <Module>.<Feature>.<Slice>' so it invokes something", button.Location);
-            return;
-        }
-
-        var wanted = button.Slice.Split('.');
-        var matches = slices.Where(entry => entry.Path.Length >= wanted.Length && entry.Path.TakeLast(wanted.Length).SequenceEqual(wanted)).ToList();
-        if (matches.Count == 0)
-        {
-            context.Error(DiagnosticCodes.ToolbarButtonSliceNotFound, $"Toolbar button '{button.Id}' invokes slice '{button.Slice}', which the document does not declare", button.Location);
-        }
-        else if (matches.Count > 1)
-        {
-            context.Error(DiagnosticCodes.ToolbarButtonSliceAmbiguous, $"Toolbar button '{button.Id}' invokes slice '{button.Slice}', which matches {matches.Count} slices ({string.Join(", ", matches.Select(entry => string.Join('.', entry.Path)))}) - qualify it with the feature or module", button.Location);
-        }
-        else if (matches[0].Slice.Type != SliceType.StateChange)
-        {
-            context.Error(DiagnosticCodes.ToolbarButtonSliceNotStateChange, $"Toolbar button '{button.Id}' invokes slice '{button.Slice}', a {matches[0].Slice.Type} slice - a button invokes State Change slices only", button.Location);
-        }
-    }
-
     sealed class ToolbarCollector : ScreenplaySyntaxWalker
     {
         public List<ScreenToolbarSyntax> Toolbars { get; } = [];
-
-        public List<(NavigationRegionSyntax Region, IEnumerable<ToolbarButtonSyntax> Buttons)> RegionButtons { get; } = [];
-
-        public override void VisitNavigationRegion(NavigationRegionSyntax syntax)
-        {
-            if (syntax.Buttons.Any())
-            {
-                RegionButtons.Add((syntax, syntax.Buttons));
-            }
-
-            base.VisitNavigationRegion(syntax);
-        }
 
         public override void VisitScreenToolbar(ScreenToolbarSyntax syntax)
         {

@@ -93,7 +93,8 @@ Choose the declaration you need to add or understand. Each page explains its syn
 | UI declarations at three abstraction levels | [Screens](screens.md) |
 | Reusable screen structure | [Layouts and templates](templates.md) |
 | Command input forms | [Forms](forms.md) |
-| Navigation structure | [Navigation regions](navigation.md) |
+| Navigation structure | [Navigation](navigation.md) |
+| Item lists a template offers | [Outlets](outlets.md) |
 | Built-in sub-languages and extensible inline language tags | [Sub-languages and inline code](sub-languages.md) |
 | The symbols Screenplay keeps on purpose, and why | [Notation conventions](notation.md) |
 | The full EBNF grammar | [Grammar](grammar.md) |

@@ -10,9 +10,9 @@ public class when_compiling_two_logos_in_one_layout : given.a_navigation_documen
 {
     const string Shell =
         """
-          navigation topbar
+          outlet topbar of navigation
             logo image "/a.svg" title "A"
-          navigation sidebar
+          outlet sidebar of navigation
             logo image "/b.svg" title "B"
         """;
 

@@ -19,6 +19,7 @@ public class when_collapsing_a_glob_among_interleaved_members : given.an_authori
               import "features/*.play"
               screen template Shell
                 main
+                outlet Navigation of navigation in main
               feature Last
                 slice StateView End
             """);

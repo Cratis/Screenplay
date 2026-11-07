@@ -1,0 +1,57 @@
+layout AppShell
+  category Shell
+  topbar
+  content
+
+  navigation topbar
+    item orders title "Orders" icon receipt target Shop
+    button register title "Register customer" slice Shop.Customers.RegisterCustomer emphasis primary
+
+  arrangement flow
+    column
+      topbar height 56
+      content grow
+
+module Shop
+  // The module adds a destination and an action of its own.
+  navigation topbar extends
+    item open title "Open orders" target Shop.Orders
+    // Exporting is an action, not a destination.
+    button export title "Export orders" slice Shop.Orders.ExportOrders icon download
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders
+
+    slice StateChange ExportOrders
+      command ExportOrders
+        exportId Uuid identifier
+        format String
+        produces OrdersExported
+          format = format
+
+      event OrdersExported
+        format String
+
+      screen ExportOrders
+        title "Export orders"
+
+  feature Customers
+    slice StateChange RegisterCustomer
+      command RegisterCustomer
+        customerId Uuid identifier
+        name String
+        produces CustomerRegistered
+          name = name
+
+      event CustomerRegistered
+        name String
+
+      screen RegisterCustomer
+        title "Register a customer"

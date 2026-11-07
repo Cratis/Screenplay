@@ -1,0 +1,13 @@
+// Interaction wiring shared across modules. Declared once, attached with
+// 'uses' wherever a command cannot be undone - the attachment supplies the
+// command and the message.
+
+behavior ConfirmDestructive
+  description "Asks the user to confirm before running a command that cannot be undone"
+  parameter command
+  parameter message
+
+  on click
+    confirm message
+      on success
+        execute command

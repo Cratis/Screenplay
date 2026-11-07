@@ -65,7 +65,7 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
                 case 'ScreenToolbarSyntax': return { ...node, items: node.items.map(item => toolbar(item, { ...context, location: item.location })) };
                 case 'ScreenSectionSyntax': return { ...node, directives: body(node.directives, scope) };
                 case 'ScreenTemplateReferenceSyntax': return { ...node, slots: node.slots.map(slot => ({ ...slot, directives: body(slot.directives, scope) })) };
-                case 'ScreenComponentSyntax': return { ...node, outlets: node.outlets.map(outlet => ({ ...outlet, directives: body(outlet.directives, scope) })) };
+                case 'ScreenComponentSyntax': return { ...node, slots: node.slots.map(slot => ({ ...slot, directives: body(slot.directives, scope) })) };
                 default: return node;
             }
         });

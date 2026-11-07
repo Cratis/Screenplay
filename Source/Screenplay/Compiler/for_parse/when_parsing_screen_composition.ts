@@ -31,7 +31,7 @@ describe('when parsing screen composition', () => {
             '    slice StateView Browse',
             '      screen Browse',
             '        navigate to Browse',
-            '          outlet detail',
+            '          slot detail',
             '        contribute to Actions order 10',
             '          title "Register"',
             '        contribute to Navigation',
@@ -57,7 +57,7 @@ describe('when parsing screen composition', () => {
     it('should read contribution order', () => screen.contributions![0].order!.should.equal(10));
     it('should read contributions without order', () => (screen.contributions![1].order === null).should.be.true);
     it('should read contributed content', () => screen.contributions![0].directives[0].kind.should.equal('ScreenTitleSyntax'));
-    it('should read navigation outlets', () => (screen.directives[0] as ScreenNavigateSyntax).outlet!.should.equal('detail'));
+    it('should read navigation slots', () => (screen.directives[0] as ScreenNavigateSyntax).slot!.should.equal('detail'));
 });
 
 describe('when parsing malformed screen composition', () => {
@@ -83,7 +83,7 @@ describe('when parsing malformed screen composition', () => {
             '        contribute Actions',
             '          title "Lost"',
             '        navigate to Browse',
-            '          outlet',
+            '          slot',
         );
     });
 

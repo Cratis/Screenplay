@@ -1,0 +1,23 @@
+// ============================================================
+// Purchasing: the application's navigation and logo
+//
+// The buyer's desk: purchase orders, suppliers, replenishment and demand.
+// The logo is the SVG in assets/logos/purchasing.svg, inlined as a data URI (tools/embed-logos.py regenerates the line): Studio and Stage take
+// a Screenplay document only, never a file beside it, and a data URI cannot 404.
+// ============================================================
+
+layout PurchasingNavigation
+  category Shell
+  content
+
+  navigation topbar
+    logo image "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGNTlFMEIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNCNDUzMDkiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMCIgZmlsbD0idXJsKCNnKSIvPjxwYXRoIGQ9Ik0xMCAyMGEyIDIgMCAwIDEgMi0yaDI0YTIgMiAwIDAgMSAyIDJ2MjJIMTB6IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTM4IDI2aDguNmEyIDIgMCAwIDEgMS42LjhsNS4yIDYuOWEyIDIgMCAwIDEgLjQgMS4yVjQySDM4eiIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjIxIiBjeT0iNDUiIHI9IjUuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjQjQ1MzA5IiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSI0NCIgY3k9IjQ1IiByPSI1LjIiIGZpbGw9IiNmZmYiIHN0cm9rZT0iI0I0NTMwOSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHBhdGggZD0iTTQyIDI5LjVoNC40bDMuNCA0LjVINDJ6IiBmaWxsPSIjQjQ1MzA5IiBvcGFjaXR5PSIuNiIvPjxwYXRoIGQ9Ik0xNiAyNmgxNE0xNiAzMWg5IiBzdHJva2U9IiNCNDUzMDkiIHN0cm9rZS13aWR0aD0iMi42IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9Ii41NSIvPjwvc3ZnPgo=" title "Acme Purchasing"
+
+  navigation sidebar
+    item purchasing title "Purchasing" icon truck target Buying
+      item purchaseorders title "Purchase orders" target Buying.PurchaseOrders
+      item suppliers title "Suppliers" target Buying.Suppliers
+      item replenishment title "Replenishment" target Buying.Replenishment
+      item preferred title "Preferred suppliers" target Buying.Sourcing
+      item demand title "Demand" target Buying.Demand
+      item overview title "Dashboard" target Buying.Overview

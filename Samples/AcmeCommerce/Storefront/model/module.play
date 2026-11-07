@@ -4,7 +4,7 @@ module Shop
   description "Browse, basket and checkout"
   authorize IsShopper
 
-  navigation topbar overrides
+  outlet topbar overrides
     item browse title "Browse" target Shop.Browse
     item basket title "Basket" target Shop.Basket
     item myorders title "My orders" target Shop.MyOrders

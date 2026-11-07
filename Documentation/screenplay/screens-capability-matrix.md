@@ -43,15 +43,15 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Exposures | `exposure for <Owner>`, `property <component>.<path>` with `label`, `operations`, `fields`, `reexposes` | Scene `ExposureDeclaration` | `PLAY0621`–`PLAY0624` | None |
 | Instance values | `instance <X>` with `set` and `items` | Scene `InstanceContribution` | `PLAY0625`–`PLAY0628` | None |
 | Screen contributions | `contribute to <Point> [order <n>]` inside a screen | Scene `Screen.Contributions` | `PLAY0655` unknown point | None |
-| Recursive outlets (536.3) | `outlet <name>` on layouts, templates and components | Authoring | `PLAY0630` unknown outlet | None |
+| Recursive slots (536.3) | `slot <name>` on layouts, templates and components (Screenplay 5 `outlet <name>`: `PLAY0890`, `PLAY0893`) | Authoring | `PLAY0630` unknown slot | None |
 
 ## Navigation
 
 | Criterion | Syntax | Semantics | Diagnostics | Not expressible |
 | --- | --- | --- | --- | --- |
-| Navigation targets and URL overrides (536.3) | `navigate to <Screen> [by <param>]`, `route`, `outlet`, `parameter` | Scene `DestinationReference` | `PLAY0107`, `PLAY0197` unknown screen, `PLAY0630` | None |
-| Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination outlet\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0224`, `PLAY0654` unknown destination | None |
-| Application navigation regions (spec NAV1-NAV12) | `navigation topbar\|sidebar [inherits\|extends\|overrides]` with `logo`, `item <id> title target slot`, nested sidebar items, in a `layout` and a `module` | Scene `NavigationModel`: `ApplicationNavigation`, `ModuleNavigation`, `NavigationRegion` and `NavItem`; the module mode is Scene's `NavigationRegionMode` | `PLAY0740`-`PLAY0752` | None. The TypeScript compiler skips the blocks; the checks are C#-only |
+| Navigation targets and URL overrides (536.3) | `navigate to <Screen> [by <param>]`, `route`, `slot`, `parameter` | Scene `DestinationReference` | `PLAY0107`, `PLAY0197` unknown screen, `PLAY0630` | None |
+| Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination slot\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0223`, `PLAY0654` unknown destination, `PLAY0903` unknown outlet | None |
+| Application navigation outlets (spec NAV1-NAV12) | `outlet <name> of navigation` with `logo` and `default` items on a `layout`; `outlet <name> inherits\|extends\|overrides` with `item <id> title target slot`, `hide` and `before\|after` on a module, feature or screen | Scene `NavigationModel`: `ApplicationNavigation`, `ModuleNavigation`, `NavigationRegion` and `NavItem`; the module mode is Scene's `NavigationRegionMode` | `PLAY0741`-`PLAY0752`, `PLAY0894`-`PLAY0905` | None. The TypeScript compiler reads a module's, feature's or screen's outlets and reports their form; the reference checks are C#-only |
 | Toolbar buttons invoking State Change slices (spec TB1-TB6) | `button <id> title "…" [slice <Slice>] [emphasis primary\|secondary\|quiet] [icon <name>]` in a screen `toolbar` | Scene `ToolbarButton` (`Slice`, `Emphasis`, `Icon`) | `PLAY0760` syntax checks in C# and TypeScript; `PLAY0761`-`PLAY0765` slice-reference and duplicate-id checks in C# | None |
 | Dialog placement (536.3) | `open dialog <DialogTemplate>`, `destination dialog <DialogTemplate>` | Authoring | `PLAY0654` | None |
 
@@ -67,13 +67,13 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Criterion | Proof |
 | --- | --- |
 | Parser-printer-parser preservation (536.4) | `when_printing_screen_composition`, `when_printing_screen_release_ui_contract` |
-| References and cycles (536.4) | Corpus rejection vectors for template nesting cycles, re-exposure cycles, out-of-scope screen references, missing outlets and destinations |
+| References and cycles (536.4) | Corpus rejection vectors for template nesting cycles, re-exposure cycles, out-of-scope screen references, missing slots and destinations |
 | .NET and TypeScript parity (536.5) | Shared transport schema, golden syntax vectors and `Conformance/diagnostics.json` |
 | Language service (536.5) | `when_surfacing_screen_composition_diagnostics` (validation, keywords, highlighting, native diagnostic markers) |
 | Authoring separate from executable readiness (536.5) | UI constructs are authored and validated; the ESM reports them as `PLAY0269` deferred |
 | MCP remove and move (537.1) | `when_moving_and_removing_screen_nodes` |
 | MCP missing package (537.3) | `when_moving_and_removing_screen_nodes`: removing a package a component still uses is refused with `PLAY0632` |
-| MCP navigation regions (765) | `when_authoring_the_screen_shell`: add, switch mode with copy, extend an inheriting region, add and remove sub-items; a copy that targets another module is refused with `PLAY0750`, a missing target with `PLAY0748`; stale revision refused |
+| MCP navigation outlets (765) | `when_authoring_the_screen_shell`: add, switch mode with copy, extend an inheriting region, add and remove sub-items; a copy that targets another module is refused with `PLAY0750`, a missing target with `PLAY0748`; stale revision refused |
 | MCP toolbar buttons (765) | `when_authoring_the_screen_shell`: add a button, point it at a State Change slice, remove it; a State View slice is refused with `PLAY0762`; stale revision refused |
 | MCP template references (765) | `when_authoring_the_screen_shell`: change the version range of a module and a screen reference; an unreadable range is `PLAY0721`, an unlisted blueprint `PLAY0722`; stale revision refused |
 | MCP sample data (762, 765) | `when_authoring_sample_data`: replace a row value, change the active pack the `ui profile` selects, remove a pack; an undeclared pack is `PLAY0714` |
@@ -83,5 +83,5 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 TypeScript parsing and preservation do not cover every construct above: application navigation blocks are skipped,
 not preserved. Toolbar buttons are parsed and preserved, with syntax checks (`PLAY0760`); slice-reference and
 duplicate-id checks (`PLAY0761`–`PLAY0765`) run in C#. The other reference checks (owners, instances, cycles,
-outlets, destinations, scopes, contribution points, packages) also run in the C# compiler; the language service shows
+slots, destinations, scopes, outlets, packages) also run in the C# compiler; the language service shows
 the native checks when a Monaco host supplies the native compiler's diagnostics.

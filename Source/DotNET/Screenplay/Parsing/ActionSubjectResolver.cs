@@ -55,7 +55,7 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
         ScreenSectionSyntax section => section with { Directives = Container(section.Directives, subjects, scope) },
         ScreenSlotSyntax slot => slot with { Directives = Container(slot.Directives, subjects, scope) },
         ScreenTemplateReferenceSyntax template => template with { Slots = [.. template.Slots.Select(slot => slot with { Directives = Container(slot.Directives, subjects, scope) })] },
-        ScreenComponentSyntax component => component with { Outlets = [.. component.Outlets.Select(outlet => outlet with { Directives = Container(outlet.Directives, subjects, scope) })] },
+        ScreenComponentSyntax component => component with { Slots = [.. component.Slots.Select(slot => slot with { Directives = Container(slot.Directives, subjects, scope) })] },
         _ => node
     };
 

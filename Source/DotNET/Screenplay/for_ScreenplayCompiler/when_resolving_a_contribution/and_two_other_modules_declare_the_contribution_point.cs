@@ -15,7 +15,8 @@ public class and_two_other_modules_declare_the_contribution_point : given.a_comp
         module Invoicing
           screen template AppShell
             category Test
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
 
           feature InvoiceManagement
@@ -25,7 +26,8 @@ public class and_two_other_modules_declare_the_contribution_point : given.a_comp
         module Reporting
           screen template ReportShell
             category Test
-            navbar contributes Navigation
+            navbar
+            outlet Navigation of navigation in navbar
             main
 
         module Payments

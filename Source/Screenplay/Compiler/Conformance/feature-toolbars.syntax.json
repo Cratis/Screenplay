@@ -19,6 +19,57 @@
           "fileImports": [],
           "isPlacement": false,
           "name": "Orders",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "hides": [
+                {
+                  "kind": "OutletHideSyntax",
+                  "id": "export"
+                }
+              ],
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "confirm": "Cancel this order?",
+                  "icon": "trash",
+                  "id": "cancel",
+                  "position": {
+                    "kind": "OutletPositionSyntax",
+                    "id": "place",
+                    "placement": "Before"
+                  },
+                  "slice": "CancelOrder",
+                  "title": "Cancel order"
+                },
+                {
+                  "kind": "OutletGroupSyntax",
+                  "buttons": [
+                    {
+                      "kind": "ToolbarButtonSyntax",
+                      "id": "archive",
+                      "slice": "CancelOrder",
+                      "title": "Archive"
+                    }
+                  ],
+                  "icon": "dots",
+                  "id": "more",
+                  "title": "More"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "confirm": "$strings.orders.confirmPlace",
+                  "emphasis": "Primary",
+                  "icon": "plus",
+                  "id": "place",
+                  "slice": "Shop.Orders.PlaceOrder",
+                  "title": "Place order"
+                }
+              ],
+              "mode": "Extend",
+              "name": "actions"
+            }
+          ],
           "slices": [
             {
               "kind": "SliceSyntax",
@@ -34,7 +85,10 @@
                     {
                       "kind": "ProducesSyntax",
                       "event": "OrderPlaced",
-                      "for": null,
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "orderId"
+                      },
                       "inlineEvent": null,
                       "inlineOperation": null,
                       "mappings": [
@@ -122,7 +176,10 @@
                     {
                       "kind": "ProducesSyntax",
                       "event": "OrderCancelled",
-                      "for": null,
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "orderId"
+                      },
                       "inlineEvent": null,
                       "inlineOperation": null,
                       "mappings": [
@@ -195,36 +252,164 @@
               "screens": [],
               "specifications": [],
               "type": "StateChange"
-            }
-          ],
-          "toolbars": [
+            },
             {
-              "kind": "ScreenToolbarSyntax",
-              "buttons": [
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "OrderList",
+              "operations": [],
+              "projections": [],
+              "queries": [
                 {
-                  "kind": "ToolbarButtonSyntax",
-                  "confirm": "$strings.orders.confirmPlace",
-                  "emphasis": "Primary",
-                  "icon": "plus",
-                  "id": "place",
-                  "slice": "Shop.Orders.PlaceOrder",
-                  "title": "Place order"
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "isObservable": false,
+                  "name": "AllOrders",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "OrderRow"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "OrderTotals",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "OrderRow"
+                  },
+                  "scope": null
                 }
               ],
-              "items": [
+              "reactions": [],
+              "readModels": [
                 {
-                  "kind": "ToolbarItemSyntax",
-                  "confirm": "Cancel this order?",
-                  "icon": "trash",
-                  "label": "Cancel order",
-                  "name": "cancel",
-                  "parameters": [],
-                  "presentation": [],
-                  "syntaxKind": "Action",
-                  "target": "CancelOrder"
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "OrderRow",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ]
                 }
               ],
-              "name": "actions"
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Page",
+                      "slots": []
+                    }
+                  ],
+                  "name": "OrderList",
+                  "outlets": [
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [
+                        {
+                          "kind": "OutletFilterSyntax",
+                          "id": "status",
+                          "parameter": "status",
+                          "query": "AllOrders",
+                          "title": "Status"
+                        }
+                      ],
+                      "mode": "Extend",
+                      "name": "filters"
+                    },
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [
+                        {
+                          "kind": "OutletStatSyntax",
+                          "field": "orderId",
+                          "id": "total",
+                          "query": "OrderTotals",
+                          "title": "Total"
+                        }
+                      ],
+                      "mode": "Override",
+                      "name": "stats"
+                    },
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [
+                        {
+                          "kind": "OutletTabSyntax",
+                          "id": "details",
+                          "shows": "OrderList",
+                          "title": "Details"
+                        }
+                      ],
+                      "mode": "Extend",
+                      "name": "tabs"
+                    },
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [
+                        {
+                          "kind": "NavigationItemSyntax",
+                          "id": "orders",
+                          "position": {
+                            "kind": "OutletPositionSyntax",
+                            "id": "home",
+                            "placement": "After"
+                          },
+                          "target": {
+                            "kind": "NavigationTargetSyntax",
+                            "feature": "Orders",
+                            "module": "Shop"
+                          },
+                          "title": "Orders"
+                        }
+                      ],
+                      "mode": "Extend",
+                      "name": "sidebar"
+                    }
+                  ]
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
             }
           ]
         }
@@ -232,10 +417,10 @@
       "fileImports": [],
       "isPlacement": false,
       "name": "Shop",
-      "toolbars": [
+      "outlets": [
         {
-          "kind": "ScreenToolbarSyntax",
-          "buttons": [
+          "kind": "OutletSyntax",
+          "items": [
             {
               "kind": "ToolbarButtonSyntax",
               "emphasis": "Quiet",
@@ -244,7 +429,7 @@
               "title": "Help"
             }
           ],
-          "items": [],
+          "mode": "Extend",
           "name": "shell"
         }
       ]

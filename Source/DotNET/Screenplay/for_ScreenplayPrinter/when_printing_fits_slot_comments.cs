@@ -15,7 +15,8 @@ public class when_printing_fits_slot_comments : given.a_printer
             // shell goes in the content region
             fits slot content // target slot
             category Test
-            main contributes Navigation
+            main
+            outlet Navigation of navigation in main
           feature Ordering
             slice StateView Landing
               screen Home

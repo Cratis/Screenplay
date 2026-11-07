@@ -1,0 +1,27 @@
+layout AppShell
+  category Shell
+  navigation
+  content
+
+  outlet sidebar of navigation
+    default orders title "Orders" icon receipt target Shop
+
+  arrangement flow
+    row
+      navigation width 240
+      content grow
+
+module Shop
+  // The module keeps the application's items and adds its own.
+  navigation sidebar extends
+    item open title "Open orders" icon folder target Shop.Orders
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders

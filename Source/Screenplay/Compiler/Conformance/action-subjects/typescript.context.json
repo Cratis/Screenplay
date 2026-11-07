@@ -954,9 +954,11 @@
                         "exposes": [],
                         "icon": null,
                         "name": "panel",
-                        "outlets": [
+                        "presentation": [],
+                        "properties": [],
+                        "slots": [
                           {
-                            "kind": "ComponentOutletSyntax",
+                            "kind": "ComponentSlotSyntax",
                             "directives": [
                               {
                                 "kind": "ScreenActionSyntax",
@@ -979,8 +981,6 @@
                             "name": "detail"
                           }
                         ],
-                        "presentation": [],
-                        "properties": [],
                         "stableId": null
                       }
                     ],
@@ -1650,11 +1650,11 @@
       ]
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[0]",
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].slots[0].directives[0]",
       "screen": "$.modules[0].features[0].slices[0].screens[16]",
       "slice": "$.modules[0].features[0].slices[0]",
       "data": [
-        "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[1]"
+        "$.modules[0].features[0].slices[0].screens[16].directives[1].slots[0].directives[1]"
       ]
     },
     {
@@ -2620,15 +2620,15 @@
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0]",
-      "kind": "ComponentOutletSyntax",
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].slots[0]",
+      "kind": "ComponentSlotSyntax",
       "location": {
         "line": 102,
         "column": 11
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[0]",
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].slots[0].directives[0]",
       "kind": "ScreenActionSyntax",
       "location": {
         "line": 103,
@@ -2636,7 +2636,7 @@
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[1]",
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].slots[0].directives[1]",
       "kind": "ScreenDataSyntax",
       "location": {
         "line": 104,
@@ -2644,7 +2644,7 @@
       }
     },
     {
-      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].outlets[0].directives[1].type",
+      "path": "$.modules[0].features[0].slices[0].screens[16].directives[1].slots[0].directives[1].type",
       "kind": "TypeRefSyntax",
       "location": {
         "line": 104,

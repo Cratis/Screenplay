@@ -10,8 +10,8 @@ public class when_compiling_a_navigation_item_without_a_title : given.a_navigati
 {
     const string Shell =
         """
-          navigation sidebar
-            item a target Sales
+          outlet sidebar of navigation
+            default a target Sales
         """;
 
     void Because() => CompileWith(Shell);

@@ -1,0 +1,36 @@
+slice Translate TrackCarrierDeliveries
+  description "Translates the carriers' delivery scans into a fact in the carrier's vocabulary"
+  direction inbound
+
+  // The carriers' tracking API is polled; a parcel moving from in transit to
+  // delivered becomes a fact in the carrier's vocabulary.
+  capture CarrierTrackingFeed
+    source api
+      api CarrierTrackingApi
+      route /parcels
+      poll 10m
+    key trackingNumber
+    append ParcelDeliveryScanned
+      when status from "in_transit" to "delivered"
+        orderId        = $.orderReference
+        trackingNumber = $.trackingNumber
+
+  event ParcelDeliveryScanned
+    orderId        OrderId
+    trackingNumber TrackingNumber
+
+  // The capture sees the parcel twice. The earlier record gives the status
+  // something to move from, so the in_transit -> delivered transition fires and
+  // the carrier's fact is captured. MarkShipmentDelivered reacts to it.
+  specification ADeliveryScanIsCaptured
+    given capture CarrierTrackingFeed
+      trackingNumber = "PN00012345NO"
+      orderReference = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      status         = "in_transit"
+    when capture CarrierTrackingFeed
+      trackingNumber = "PN00012345NO"
+      orderReference = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      status         = "delivered"
+    then ParcelDeliveryScanned
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      trackingNumber = "PN00012345NO"

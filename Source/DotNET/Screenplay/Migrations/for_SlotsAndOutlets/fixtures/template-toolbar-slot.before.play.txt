@@ -1,0 +1,26 @@
+module Shop
+  screen template ListPage
+    fits slot content
+    category List
+    // The toolbar holds the buttons every list offers.
+    toolbar
+      toolbar actions
+        button refresh title "Refresh" icon refresh runs refresh
+        // Exporting has no command of its own yet.
+        button export title "Export" icon download
+    main
+
+    arrangement flow
+      column
+        toolbar height 48
+        main grow
+
+  feature Orders
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+
+      query AllOrders => OrderRow[]
+
+      screen OrderList
+        data OrderRow[] via query AllOrders

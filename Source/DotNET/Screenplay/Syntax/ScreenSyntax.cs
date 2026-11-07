@@ -53,6 +53,16 @@ public record ScreenSyntax(
     /// Gets what this screen contributes to contribution points elsewhere in the tree.
     /// </summary>
     public IEnumerable<ScreenContributionSyntax> Contributions { get; init; } = [];
+
+    /// <summary>
+    /// Gets the outlets this screen changes - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
+    /// </summary>
+    public IEnumerable<OutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets where the screen fits, in order of preference - <c>fits dialog, drawer, pane</c>. Empty when the screen does not say.
+    /// </summary>
+    public IEnumerable<ScreenFit> Fits { get; init; } = [];
 }
 
 /// <summary>
@@ -104,9 +114,9 @@ public record ScreenNavigateSyntax(string Screen, string? By, SourceLocation Loc
     public string? Route { get; init; }
 
     /// <summary>
-    /// Gets the named outlet the destination opens in, or <c>null</c> for the default outlet.
+    /// Gets the named slot the destination opens in, or <c>null</c> for the default slot.
     /// </summary>
-    public string? Outlet { get; init; }
+    public string? Slot { get; init; }
 
     /// <summary>
     /// Gets the route or navigation parameters supplied by the author.
@@ -161,6 +171,16 @@ public record ScreenSectionSyntax(string Name, IEnumerable<ScreenDirectiveSyntax
 /// <param name="Text">The title text.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record ScreenTitleSyntax(string Text, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+
+/// <summary>
+/// Represents a <c>show &lt;Screen&gt; by &lt;param&gt; from &lt;element&gt;.selection</c> directive in a template slot - the slot
+/// shows another screen, keyed by what an element on this screen has selected.
+/// </summary>
+/// <param name="Screen">The name of the screen the slot shows.</param>
+/// <param name="By">The parameter of the shown screen the selection supplies.</param>
+/// <param name="Element">The table or component on this screen whose selection feeds the parameter.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record ScreenShowSyntax(string Screen, string By, string Element, SourceLocation Location) : ScreenDirectiveSyntax(Location);
 
 /// <summary>
 /// Represents a <c>table</c> widget.
@@ -271,9 +291,9 @@ public record ScreenComponentSyntax(string Component, string Name, SourceLocatio
     public string? Icon { get; init; }
 
     /// <summary>
-    /// Gets recursive outlets authored inside the component.
+    /// Gets the slots authored inside the component, each filled with its own directives.
     /// </summary>
-    public IEnumerable<ComponentOutletSyntax> Outlets { get; init; } = [];
+    public IEnumerable<ComponentSlotSyntax> Slots { get; init; } = [];
 
     /// <summary>
     /// Gets interactions attached to the component instance.
@@ -312,12 +332,12 @@ public record ComponentExposedValueSyntax(string Name, UiBindingSyntax Binding, 
 public record PresentationValueSyntax(string Name, string Value, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents a recursive outlet nested inside a component.
+/// Represents a slot nested inside a component - a region the component offers, filled with its own directives.
 /// </summary>
-/// <param name="Name">The outlet name.</param>
-/// <param name="Directives">The screen directives rendered inside the outlet.</param>
+/// <param name="Name">The slot name.</param>
+/// <param name="Directives">The screen directives rendered inside the slot.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ComponentOutletSyntax(string Name, IEnumerable<ScreenDirectiveSyntax> Directives, SourceLocation Location) : SyntaxNode(Location);
+public record ComponentSlotSyntax(string Name, IEnumerable<ScreenDirectiveSyntax> Directives, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a <c>toolbar</c> directive.
@@ -344,7 +364,7 @@ public record ScreenToolbarSyntax(string Name, IEnumerable<ToolbarItemSyntax> It
 /// The slice form of <c>item &lt;name&gt; action &lt;Command&gt;</c>: the slice names the command and the dialog template, so the
 /// button needs no command of its own. A button without a slice is legal while designing and is reported as a warning.
 /// </remarks>
-public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Location) : SyntaxNode(Location)
+public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Location) : OutletItemSyntax(Id, Title, Location)
 {
     /// <summary>
     /// Gets the dotted slice reference - <c>Module.Feature.Slice</c>, or any unambiguous suffix of it - or <c>null</c> when none is chosen yet.
@@ -370,6 +390,32 @@ public record ToolbarButtonSyntax(string Id, string Title, SourceLocation Locati
     /// Gets the text the user confirms before the button opens its slice, or <c>null</c> when it opens at once.
     /// </summary>
     public string? Confirm { get; init; }
+
+    /// <summary>
+    /// Gets the built-in the button runs - <c>runs close</c>, <c>runs submit</c> or <c>runs refresh</c> - or <c>null</c> when it opens its slice.
+    /// </summary>
+    public string? Runs { get; init; }
+
+    /// <summary>
+    /// Gets what the button acts on - <c>for item</c> or <c>for screen</c> - or <c>null</c> when the outlet decides.
+    /// </summary>
+    public ScreenActionSubjectKind? Subject { get; init; }
+
+    /// <summary>
+    /// Gets how the button opens its slice - <c>runs</c>, <c>opens dialog</c>, <c>opens drawer</c> or <c>opens in slot &lt;name&gt;</c> -
+    /// or <c>null</c> when it opens automatically, in the slice's first fit the page has free.
+    /// </summary>
+    public HookOpening? Opens { get; init; }
+
+    /// <summary>
+    /// Gets the slot <c>opens in slot &lt;name&gt;</c> names, or <c>null</c> when the button does not open in a slot.
+    /// </summary>
+    public string? OpensSlot { get; init; }
+
+    /// <summary>
+    /// Gets the <c>enabled when &lt;condition&gt;</c> condition, in the guarded-action condition grammar, or <c>null</c> when the button is always enabled.
+    /// </summary>
+    public ConditionSyntax? EnabledWhen { get; init; }
 }
 
 /// <summary>
@@ -410,6 +456,11 @@ public record ToolbarItemSyntax(string Name, ToolbarItemKind Kind, string Target
     /// Gets package-specific presentation hints.
     /// </summary>
     public IEnumerable<PresentationValueSyntax> Presentation { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>enabled when &lt;condition&gt;</c> condition, in the guarded-action condition grammar, or <c>null</c> when the item is always enabled.
+    /// </summary>
+    public ConditionSyntax? EnabledWhen { get; init; }
 }
 
 /// <summary>

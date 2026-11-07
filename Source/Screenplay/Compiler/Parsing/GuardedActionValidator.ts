@@ -51,7 +51,7 @@ function validateContainer(directives: readonly ScreenDirectiveSyntax[], inherit
                 break;
             case 'ScreenComponentSyntax':
                 interactions.at(directive.location, subjects, slice, true);
-                for (const outlet of directive.outlets) validateContainer(outlet.directives, subjects, slice, declarations, context, interactions);
+                for (const slot of directive.slots) validateContainer(slot.directives, subjects, slice, declarations, context, interactions);
                 break;
             case 'ScreenSectionSyntax':
                 validateContainer(directive.directives, subjects, slice, declarations, context, interactions);

@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Indexing;
 
 static class ReferenceKinds
 {
-    internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, identity query sources, policies, processing purposes, commands, queries, screen data, forms, contribution points, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Property queries cover command, current-generation event and read-model mapping paths, AutoMap, conditions, screen/form bindings and specification/example assignments and assertions, and seed event values. Opaque code naming a property is reported as opaque, not resolved. Not code, imports, profile settings, external host registrations, arbitrary expression identifiers or external code contents; nested composite paths are incomplete evidence. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
+    internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, identity query sources, policies, processing purposes, commands, queries, screen data, forms, contribution points, outlet changes, hook slices, picker queries, screens a slot shows, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Property queries cover command, current-generation event and read-model mapping paths, AutoMap, conditions, screen/form bindings and specification/example assignments and assertions, and seed event values. Opaque code naming a property is reported as opaque, not resolved. Not code, imports, slot names and outlet item ids (hide, before, after), which are local to the template that declares them, profile settings, external host registrations, arbitrary expression identifiers or external code contents; nested composite paths are incomplete evidence. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
     static readonly string[] _eventKinds = ["Event"];
 
     internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
@@ -49,6 +49,10 @@ static class ReferenceKinds
         ScreenActionAlternativeSyntax value => [(value.Command, ["Command"], "actionAlternative")],
         ScreenActionOtherwiseSyntax { Command: { } command } => [(command, ["Command"], "actionOtherwise")],
         ScreenNavigateSyntax value => [(value.Screen, ["Screen"], "navigate")],
+        ScreenShowSyntax value => [(value.Screen, ["Screen"], "show")],
+        OutletSyntax { Kind: null } value => [(value.Name, ["ContributionPoint"], "changesOutlet")],
+        ToolbarButtonSyntax { Slice: { } slice } => [(slice, ["Slice"], "hook")],
+        FormFieldChoicesSyntax value => [(value.Query, ["Query"], "pickerQuery")],
         ScreenTemplateReferenceSyntax { Blueprint: null } value => [(value.Name, ["ScreenTemplate", "DialogTemplate"], "template")],
         FormSyntax value => [(value.For, ["Command"], "formCommand")],
         FormPopulateViaQuerySyntax value => [(value.Query, ["Query"], "populate")],

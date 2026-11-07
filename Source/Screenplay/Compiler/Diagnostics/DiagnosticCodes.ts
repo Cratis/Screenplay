@@ -74,7 +74,7 @@ export const DiagnosticCodes = {
     ContributionNotExposed: 'PLAY0627',
     ContributionTypeMismatch: 'PLAY0628',
     UnknownTemplateContentSlot: 'PLAY0629',
-    UnknownNavigationOutlet: 'PLAY0630',
+    UnknownNavigationSlot: 'PLAY0630',
     TemplateScopeMismatch: 'PLAY0631',
     IncompatibleComponentPackage: 'PLAY0632',
     UnknownNavigationDestination: 'PLAY0654',
@@ -476,6 +476,8 @@ export const DiagnosticCodes = {
     ResponseNameUsedOnFailure: 'PLAY0685',
     // Retired by ESM v16; preserved for compatibility with earlier native compiler diagnostics.
     EventIdPinNotCarriedToRenderers: 'PLAY0686',
+    InvalidNavigationItem: 'PLAY0741',
+    NavigationLogoNotAllowed: 'PLAY0744',
     InvalidToolbarButton: 'PLAY0760',
     InvalidPossibleEventsDeclaration: 'PLAY0822',
     InvalidPossibleEventSet: 'PLAY0823',
@@ -545,4 +547,19 @@ export const DiagnosticCodes = {
     InvalidUserDeclaration: 'PLAY0887',
     UnknownUserPersona: 'PLAY0888',
     DuplicateUser: 'PLAY0889',
+    // Screenplay 6 renamed these forms; the old forms are errors whose message names the migration.
+    // The layout, template and contribution forms (PLAY0891, PLAY0893) are C#-only: those declarations are opaque here.
+    RemovedComponentOutlet: 'PLAY0890',
+    RemovedNavigationOutlet: 'PLAY0892',
+    // Outlets (Screenplay 6). Layouts, templates and contributions stay opaque here, so the forms and checks that need
+    // them - PLAY0893, PLAY0895, PLAY0899, PLAY0900 and PLAY0903 - are C#-only, as are the checks of what an item names.
+    RemovedNavigationRegion: 'PLAY0894',
+    RemovedFeatureToolbar: 'PLAY0896',
+    InvalidOutletDeclaration: 'PLAY0897',
+    InvalidOutletItem: 'PLAY0898',
+    DuplicateOutlet: 'PLAY0904',
+    // Placement, hooks and bindings (Screenplay 6). This compiler reads the forms on screens and buttons; forms are opaque
+    // here, and the checks of what a line names (PLAY0907-PLAY0913, PLAY0915 and the reference half of PLAY0914) are C#-only.
+    InvalidScreenFits: 'PLAY0906',
+    InvalidScreenShow: 'PLAY0914',
 } as const;

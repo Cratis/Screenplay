@@ -4,15 +4,15 @@ layout AppShell
   side
   content
 
-  navigation topbar
+  outlet topbar of navigation
     logo image "/assets/acme.svg" title "Acme"
-    item sales title "Sales" icon receipt target Sales
-    item support title "Support" target Support slot content
-  navigation sidebar
-    item sales title "Sales" icon receipt target Sales
+    default sales title "Sales" icon receipt target Sales
+    default support title "Support" target Support slot content
+  outlet sidebar of navigation
+    default sales title "Sales" icon receipt target Sales
       item orders title "Orders" target Sales.Orders
       item returns title "Returns" target Sales.Orders.Returns slot side
-    item support title "Support" target Support
+    default support title "Support" target Support
 
 ui profile Desktop
   target platform web
@@ -38,9 +38,9 @@ sample data NordicDemo
       revenue = 98000
 
 module Sales
-  navigation sidebar extends
+  outlet sidebar extends
     item customers title "Customers" icon people target Sales.Customers
-  navigation topbar inherits
+  outlet topbar inherits
 
   template blueprint Crm Workspace version "^1.4"
 
@@ -56,6 +56,8 @@ module Sales
           reason = reason
       event OrderPlaced
         reason String
+      screen PlaceOrder
+        title "Place order"
 
     slice StateChange CancelOrder
       command CancelOrder
@@ -66,6 +68,8 @@ module Sales
           reason = reason
       event OrderCancelled
         reason String
+      screen CancelOrder
+        title "Cancel order"
 
     slice StateView OrderList
       readmodel OrderRow
@@ -87,9 +91,9 @@ module Sales
         revenue Decimal
 
 module Support
-  navigation sidebar overrides
+  outlet sidebar overrides
     item tickets title "Tickets" target Support.Tickets
-  navigation topbar inherits
+  outlet topbar inherits
 
   feature Tickets
     slice StateView TicketList

@@ -5,7 +5,7 @@
 module Stock
   feature Receiving
     // Goods arrive: the clerk books them from the receiving log.
-    toolbar actions
+    outlet actions extends
       button receive title "Receive shipment" slice Stock.Receiving.ReceiveStock emphasis primary icon download
 
     slice StateChange ReceiveStock

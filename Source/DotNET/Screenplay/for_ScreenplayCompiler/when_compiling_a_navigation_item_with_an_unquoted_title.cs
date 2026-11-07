@@ -10,8 +10,8 @@ public class when_compiling_a_navigation_item_with_an_unquoted_title : given.a_n
 {
     const string Shell =
         """
-          navigation sidebar
-            item a title Sales target Sales
+          outlet sidebar of navigation
+            default a title Sales target Sales
         """;
 
     void Because() => CompileWith(Shell);

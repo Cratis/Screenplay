@@ -106,6 +106,11 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
                 throw new InvalidWorkspaceAuthoring($"'{request.ExpectedName}' is named by the slice of a toolbar button at '{Position(documents, entry)}'. Rename it and the button's 'slice' with explicit coordinated typed edits; renaming does not rewrite toolbar button slices.");
             }
 
+            if (entry.Node is FormFieldChoicesSyntax choices && target.Node is QuerySyntax && choices.Query.Split('.')[^1] == request.ExpectedName)
+            {
+                throw new InvalidWorkspaceAuthoring($"Query '{request.ExpectedName}' is the query a picker reads ('choose from query {choices.Query}') at '{Position(documents, entry)}'. Rename it and the picker's query with explicit coordinated typed edits; renaming does not rewrite picker queries.");
+            }
+
             if (target.Node is EventSyntax && EventTarget(entry.Node) is { } targeted && targeted.Split('.')[^1] == request.ExpectedName)
             {
                 throw new InvalidWorkspaceAuthoring($"Event '{request.ExpectedName}' is the target of a projection or reducer ('=> {targeted}') at '{Position(documents, entry)}'. Rename the event and its '=>' target with explicit coordinated typed edits; event-target continuity is not proven by this rename operation.");

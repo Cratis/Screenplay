@@ -1,0 +1,31 @@
+module Shop
+  screen template OrderPage
+    fits slot content
+    category Detail
+    toolbar
+      toolbar actions
+        item cancel action CancelOrder
+          label "Cancel order"
+      component Cratis.Components.SearchBox search
+    outlet actions of actions in toolbar
+      default refresh title "Refresh" icon refresh runs refresh
+      default print title "Print" icon printer
+    main
+
+    arrangement flow
+      column
+        toolbar height 48
+        main grow
+
+  feature Orders
+    slice StateChange CancelOrder
+      command CancelOrder
+        orderId Uuid identifier
+        produces OrderCancelled
+          orderId = orderId
+
+      event OrderCancelled
+        orderId Uuid
+
+      screen CancelOrder
+        title "Cancel an order"

@@ -31,14 +31,14 @@ public class when_compiling_the_screen_shell_vectors : Specification
 
     [Fact] void should_compile_without_any_diagnostic() => _shell.Diagnostics.ShouldBeEmpty();
     [Fact] void should_not_be_pending() => _case.PendingReason.ShouldBeNull();
-    [Fact] void should_declare_the_application_regions_without_a_mode() => Layout.Navigation.Select(region => (region.Region, region.Mode)).ShouldEqual((NavigationRegionKind.Topbar, NavigationRegionMode.Unspecified), (NavigationRegionKind.Sidebar, NavigationRegionMode.Unspecified));
-    [Fact] void should_declare_the_logo_on_the_application_topbar() => Layout.Navigation.First().Logo!.Title.ShouldEqual("Acme");
-    [Fact] void should_nest_hierarchical_sidebar_items() => Layout.Navigation.Last().Items.First().Children.Select(item => item.Id).ShouldEqual("orders", "returns");
-    [Fact] void should_target_a_nested_feature_with_a_slot() => Layout.Navigation.Last().Items.First().Children.Last().Slot.ShouldEqual("side");
-    [Fact] void should_extend_the_sidebar_in_the_first_module() => Module("Sales").Navigation.Single(region => region.Region == NavigationRegionKind.Sidebar).Mode.ShouldEqual(NavigationRegionMode.Extend);
-    [Fact] void should_inherit_the_topbar_explicitly_in_the_first_module() => Module("Sales").Navigation.Single(region => region.Region == NavigationRegionKind.Topbar).Mode.ShouldEqual(NavigationRegionMode.Inherit);
-    [Fact] void should_override_the_sidebar_in_the_second_module() => Module("Support").Navigation.Single(region => region.Region == NavigationRegionKind.Sidebar).Mode.ShouldEqual(NavigationRegionMode.Override);
-    [Fact] void should_inherit_by_default_in_a_module_without_navigation() => Module("Reports").Navigation.ShouldBeEmpty();
+    [Fact] void should_declare_the_application_outlets_without_a_mode() => Layout.Outlets.Select(outlet => (outlet.Name, outlet.Kind, outlet.Mode)).ShouldEqual(("topbar", (OutletKind?)OutletKind.Navigation, OutletMode.Unspecified), ("sidebar", (OutletKind?)OutletKind.Navigation, OutletMode.Unspecified));
+    [Fact] void should_declare_the_logo_on_the_application_topbar() => Layout.Outlets.First().Logo!.Title.ShouldEqual("Acme");
+    [Fact] void should_nest_hierarchical_sidebar_items() => ((NavigationItemSyntax)Layout.Outlets.Last().Items.First()).Children.Select(item => item.Id).ShouldEqual("orders", "returns");
+    [Fact] void should_target_a_nested_feature_with_a_slot() => ((NavigationItemSyntax)Layout.Outlets.Last().Items.First()).Children.Last().Slot.ShouldEqual("side");
+    [Fact] void should_extend_the_sidebar_in_the_first_module() => Module("Sales").Outlets.Single(outlet => outlet.Name == "sidebar").Mode.ShouldEqual(OutletMode.Extend);
+    [Fact] void should_inherit_the_topbar_explicitly_in_the_first_module() => Module("Sales").Outlets.Single(outlet => outlet.Name == "topbar").Mode.ShouldEqual(OutletMode.Inherit);
+    [Fact] void should_override_the_sidebar_in_the_second_module() => Module("Support").Outlets.Single(outlet => outlet.Name == "sidebar").Mode.ShouldEqual(OutletMode.Override);
+    [Fact] void should_inherit_by_default_in_a_module_without_navigation() => Module("Reports").Outlets.ShouldBeEmpty();
     [Fact] void should_carry_toolbar_buttons_that_name_state_change_slices() => Buttons.Select(button => (button.Id, button.Slice)).ShouldEqual(("place", "Sales.Orders.PlaceOrder"), ("cancel", "CancelOrder"));
     [Fact] void should_carry_button_emphasis_and_icon() => (Buttons.First().Emphasis, Buttons.First().Icon).ShouldEqual((ToolbarEmphasis.Primary, "plus"));
     [Fact] void should_carry_a_module_template_reference_to_a_blueprint() => (Module("Sales").Templates.Single().Blueprint, Module("Sales").Templates.Single().Name, Module("Sales").Templates.Single().Version).ShouldEqual(("Crm", "Workspace", "^1.4"));

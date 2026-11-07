@@ -14,7 +14,8 @@ public class when_compiling_a_screen_template_with_a_flow_arrangement : given.a_
             category Test
             fits slot content
 
-            sidebar contributes Navigation
+            sidebar
+            outlet Navigation of navigation in sidebar
             main
 
             arrangement flow
@@ -54,7 +55,7 @@ public class when_compiling_a_screen_template_with_a_flow_arrangement : given.a_
     [Fact] void should_have_flow_arrangement() => _template.Arrangement!.Mode.ShouldEqual(ArrangementMode.Flow);
     [Fact] void should_parse_the_slot_it_fits_into() => _template.FitsSlot.ShouldEqual("content");
     [Fact] void should_keep_the_declared_slots() => _template.Slots.Select(slot => slot.Name).ShouldContainOnly("sidebar", "main");
-    [Fact] void should_keep_the_contribution_point_on_the_declared_slot() => _template.Slots.First().Contributes.ShouldEqual("Navigation");
+    [Fact] void should_keep_the_outlet_in_the_declared_slot() => _template.Outlets.Single().Slot.ShouldEqual(_template.Slots.First().Name);
     [Fact] void should_wrap_the_row_in_the_implicit_root() => _root.Kind.ShouldEqual(ArrangementContainerKind.Flat);
     [Fact] void should_parse_the_row_container() => _row.Kind.ShouldEqual(ArrangementContainerKind.Row);
     [Fact] void should_parse_the_sidebar_width() => _sidebar.Width.ShouldEqual(280);
