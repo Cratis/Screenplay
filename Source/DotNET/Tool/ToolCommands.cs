@@ -16,6 +16,7 @@ static class ToolCommands
         [CliCommandCatalog.Contract] = (args, output, error) => ContractCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Report] = (args, output, error) => ProcessingReportCommand.Run(args[1..], output, error),
         [CliCommandCatalog.EnvironmentKeys] = (args, output, error) => EnvironmentCommand.Run(args[1..], output, error),
+        [CliCommandCatalog.Migrate] = (args, output, error) => MigrateCommand.Run(args[1..], output, error),
         [CliCommandCatalog.BaselineAdmit] = BaselineCommand.Run,
         [CliCommandCatalog.BaselineCheck] = BaselineCommand.Run,
         [CliCommandCatalog.Help] = (args, output, error) => ModelCheck.Run(args, output, error, !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null),

@@ -58883,6 +58883,37 @@
       }
     },
     {
+      "name": "migrate",
+      "requiredParameters": [
+        "from"
+      ],
+      "optionalParameters": [
+        "document",
+        "to"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "The Screenplay version the documents are written in, as a major such as \u00225\u0022."
+          },
+          "to": {
+            "type": "string",
+            "description": "The Screenplay version to end at; defaults to the compiler\u0027s version."
+          },
+          "document": {
+            "type": "string",
+            "description": "A root-relative .play path to migrate alone; the other documents give it its placement and are compiled as they are. With it, the result carries the migrated source."
+          }
+        },
+        "required": [
+          "from"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "open-workspace",
       "requiredParameters": [],
       "optionalParameters": [
@@ -63636,6 +63667,17 @@
       "usage": "screenplay environment [\u003Cfile.play|folder\u003E] [--format text|json]",
       "options": [
         "--format"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "migrate",
+      "usage": "screenplay migrate \u003Cfile.play|folder\u003E --from \u003Cversion\u003E [--to \u003Cversion\u003E] [--dry-run] [--report \u003Cfile\u003E]",
+      "options": [
+        "--dry-run",
+        "--from",
+        "--report",
+        "--to"
       ],
       "aliases": []
     },

@@ -108,6 +108,21 @@ public static class CliCommandCatalog
     /// </summary>
     public static CliCommand EnvironmentKeys { get; } = new("environment", "[<file.play|folder>]", [Format]);
 
+    /// <summary>Gets the version a migration reads.</summary>
+    public static CliOption MigrateFrom { get; } = new("--from", "<version>", Required: true);
+
+    /// <summary>Gets the version a migration ends at.</summary>
+    public static CliOption MigrateTo { get; } = new("--to", "<version>");
+
+    /// <summary>Gets the option that prints what a migration would change and writes nothing.</summary>
+    public static CliOption DryRun { get; } = new("--dry-run");
+
+    /// <summary>Gets the machine-readable migration report option.</summary>
+    public static CliOption MigrationReport { get; } = new("--report", "<file>");
+
+    /// <summary>Gets the command that migrates a model from one Screenplay version to another.</summary>
+    public static CliCommand Migrate { get; } = new("migrate", "<file.play|folder>", [MigrateFrom, MigrateTo, DryRun, MigrationReport]);
+
     /// <summary>Gets the release admission label option.</summary>
     public static CliOption Release { get; } = new("--release", "<label>");
 
@@ -133,7 +148,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, BaselineAdmit, BaselineCheck, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.
@@ -160,7 +175,14 @@ public sealed record CliCommand(string Name, string Arguments, IReadOnlyList<Cli
     /// <summary>
     /// Gets usage generated from this same command definition.
     /// </summary>
-    public string Usage => string.Join(' ', new[] { "screenplay", Name, Arguments }.Where(value => value.Length > 0).Concat(Options.Select(option => option.ExcludesPositionalArguments ? $"| {option.Name} {option.Value}" : $"[{option.Name}{(option.Value is null ? string.Empty : " " + option.Value)}]")));
+    public string Usage => string.Join(' ', new[] { "screenplay", Name, Arguments }.Where(value => value.Length > 0).Concat(Options.Select(Format)));
+
+    static string Format(CliOption option)
+    {
+        if (option.ExcludesPositionalArguments) return $"| {option.Name} {option.Value}";
+        var text = $"{option.Name}{(option.Value is null ? string.Empty : " " + option.Value)}";
+        return option.Required ? text : $"[{text}]";
+    }
 }
 
 /// <summary>
@@ -169,4 +191,5 @@ public sealed record CliCommand(string Name, string Arguments, IReadOnlyList<Cli
 /// <param name="Name">The option token.</param>
 /// <param name="Value">The optional value syntax.</param>
 /// <param name="ExcludesPositionalArguments">Whether this option is an alternative to positional arguments.</param>
-public sealed record CliOption(string Name, string? Value = null, bool ExcludesPositionalArguments = false);
+/// <param name="Required">Whether the command needs the option.</param>
+public sealed record CliOption(string Name, string? Value = null, bool ExcludesPositionalArguments = false, bool Required = false);
