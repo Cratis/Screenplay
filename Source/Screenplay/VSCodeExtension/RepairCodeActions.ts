@@ -13,6 +13,7 @@ import { RepairConnectionOwner } from './RepairConnectionOwner';
 import { RepairRootWatch, assertRootIdentity } from './RepairRootWatch';
 import { observationFilename } from './RepairObservation';
 import { registerVerdicts } from './RegisterVerdicts';
+import { registerMigration } from './RegisterMigration';
 export { contains } from './RepairDocuments';
 
 const previewCommand = 'screenplay.repair.preview';
@@ -109,6 +110,11 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     const verdicts = registerVerdicts(context, { connect: async () => {
         const owner = await connect(false, true);
         return { root: owner.session.launch.root, call: (tool, args, signal) => { authorize(owner); return owner.session.readTool(tool, args, signal); } };
+    } });
+    // 'Migrate document' borrows the same bridge: the migration runs in the C# compiler, read-only, against saved files.
+    registerMigration(context, { connect: async () => {
+        const owner = await connect(false, true);
+        return { root: owner.session.launch.root, call: (tool, args) => { authorize(owner); return owner.session.readTool(tool, args); } };
     } });
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
     const authorize = (owner: RepairConnectionOwner) => {
