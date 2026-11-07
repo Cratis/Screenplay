@@ -44,6 +44,11 @@ A file does not say which version it was written for, so `--from` is required. M
 | `2` | A file needs review: the migration left something for you to decide, or the result still has compiler errors. Every change it could make is written. |
 | `1` | The migration could not run: an invalid argument, no `.play` files, no chain of steps between the versions, or a file a step could not rewrite. A file that could not be rewritten is left as it was. |
 
+A rewritten file keeps its encoding, a byte order mark included, and its line endings, so the diff shows only the
+lines the migration changed. Each file is written beside itself first and then replaces the original, so a failed
+write never leaves half a file. If a file cannot be written, the command stops there, exits `1` and says which files it
+had already written and which it did not write.
+
 Run it on a clean working tree and read the diff before committing, as with any generated change.
 
 ## How the rewrite works

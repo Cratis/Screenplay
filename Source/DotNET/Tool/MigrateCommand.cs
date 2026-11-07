@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using System.Text.Json;
 using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Diagnostics;
@@ -21,7 +22,17 @@ static class MigrateCommand
     const int NeedsReview = 2;
     static readonly JsonSerializerOptions _json = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-    internal static int Run(string[] arguments, TextWriter output, TextWriter error)
+    internal static int Run(string[] arguments, TextWriter output, TextWriter error) => Run(arguments, output, error, WriteFile);
+
+    /// <summary>
+    /// Runs the command, writing each migrated file with the given writer.
+    /// </summary>
+    /// <param name="arguments">The command-line arguments after <c>migrate</c>.</param>
+    /// <param name="output">Where the report goes.</param>
+    /// <param name="error">Where errors go.</param>
+    /// <param name="writeFile">Writes a migrated text to a file, keeping the file's encoding.</param>
+    /// <returns>The exit code.</returns>
+    internal static int Run(string[] arguments, TextWriter output, TextWriter error, Action<string, string> writeFile)
     {
         if (!TryRead(arguments, error, out var options))
         {
@@ -49,11 +60,21 @@ static class MigrateCommand
                 return Failure;
             }
 
-            var written = options.DryRun ? new HashSet<string>(StringComparer.Ordinal) : Write(options.Target, report);
+            var (written, failure) = options.DryRun ? ([], null) : Write(options.Target, report, writeFile);
             Print(report, options, output);
             if (options.Report is not null)
             {
                 File.WriteAllText(options.Report, JsonSerializer.Serialize(McpMigration.Describe(report, includeSource: false, written), _json));
+            }
+
+            if (failure is not null)
+            {
+                // Say exactly what is on disk now, so the author knows which files to check or restore.
+                var done = written.Count == 0 ? "No file was written." : $"Written before the failure: {string.Join(", ", written.Order(StringComparer.Ordinal))}.";
+                var left = report.Files.Where(file => file.Changed && file.Failure is null && !written.Contains(file.Path) && file.Path != failure.Value.Path).Select(file => file.Path).ToArray();
+                var rest = left.Length == 0 ? string.Empty : $" Not written: {string.Join(", ", left)}.";
+                error.WriteLine($"Could not write '{failure.Value.Path}': {failure.Value.Message} {done}{rest}");
+                return Failure;
             }
 
             return report.Outcome switch
@@ -72,17 +93,66 @@ static class MigrateCommand
 
     // A document that does not compile after the migration is still written, so the rest can be fixed by hand; a
     // document a step could not rewrite is left as it was.
-    static HashSet<string> Write(string target, MigrationReport report)
+    // Writing stops at the first file that cannot be written; the files before it are written and reported.
+    static (HashSet<string> Written, (string Path, string Message)? Failure) Write(string target, MigrationReport report, Action<string, string> writeFile)
     {
         var root = File.Exists(target) ? Path.GetDirectoryName(Path.GetFullPath(target))! : target;
         var written = new HashSet<string>(StringComparer.Ordinal);
         foreach (var file in report.Files.Where(file => file.Changed && file.Failure is null))
         {
-            File.WriteAllText(Path.Combine(root, file.Path), file.Migrated);
+            try
+            {
+                writeFile(Path.Combine(root, file.Path), file.Migrated);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                return (written, (file.Path, exception.Message));
+            }
+
             written.Add(file.Path);
         }
 
-        return written;
+        return (written, null);
+    }
+
+    // Keeps the encoding the file was read with - a byte order mark included - so only the migrated lines change. The
+    // text goes to a file beside it first and then replaces it, so a failed write never leaves half a file.
+    static void WriteFile(string path, string text)
+    {
+        var encoding = EncodingOf(path);
+        var temporary = $"{path}.migrating";
+        try
+        {
+            File.WriteAllText(temporary, text, encoding);
+            File.Move(temporary, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporary))
+            {
+                File.Delete(temporary);
+            }
+        }
+    }
+
+    static Encoding EncodingOf(string path)
+    {
+        Span<byte> start = stackalloc byte[4];
+        int read;
+        using (var stream = File.OpenRead(path))
+        {
+            read = stream.ReadAtLeast(start, start.Length, throwOnEndOfStream: false);
+        }
+
+        var bytes = start[..read];
+        return bytes switch
+        {
+            [0xEF, 0xBB, 0xBF, ..] => new UTF8Encoding(encoderShouldEmitUTF8Identifier: true),
+            [0xFF, 0xFE, 0x00, 0x00] => new UTF32Encoding(bigEndian: false, byteOrderMark: true),
+            [0xFF, 0xFE, ..] => new UnicodeEncoding(bigEndian: false, byteOrderMark: true),
+            [0xFE, 0xFF, ..] => new UnicodeEncoding(bigEndian: true, byteOrderMark: true),
+            _ => new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)
+        };
     }
 
     static void Print(MigrationReport report, Options options, TextWriter output)
