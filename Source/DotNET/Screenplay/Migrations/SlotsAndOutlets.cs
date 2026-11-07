@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Migrations;
 /// <item><term><c>outlet &lt;name&gt;</c> (component, template, navigation)</term><description><c>slot &lt;name&gt;</c></description></item>
 /// <item><term><c>destination outlet &lt;name&gt;</c></term><description><c>destination slot &lt;name&gt;</c></description></item>
 /// <item><term><c>navigation topbar|sidebar</c> on a layout or template</term><description><c>outlet topbar|sidebar of navigation</c> with <c>default</c> items; buttons move to <c>outlet &lt;region&gt;Actions of actions</c></description></item>
-/// <item><term><c>navigation topbar|sidebar [mode]</c> on a module</term><description><c>outlet topbar|sidebar extends</c>, or the mode it wrote</description></item>
+/// <item><term><c>navigation topbar|sidebar [mode]</c> on a module</term><description><c>outlet topbar|sidebar extends</c>, or the mode it wrote; buttons move to <c>outlet &lt;region&gt;Actions</c> with the same mode</description></item>
 /// <item><term><c>&lt;slot&gt; contributes &lt;Point&gt;</c></term><description><c>&lt;slot&gt;</c> and <c>outlet &lt;Point&gt; of navigation in &lt;slot&gt;</c></description></item>
 /// <item><term><c>toolbar &lt;name&gt;</c> on a feature or module</term><description><c>outlet &lt;name&gt; extends</c></description></item>
 /// <item><term>a template's <c>toolbar</c> slot holding items</term><description><c>outlet &lt;name&gt; of actions in &lt;slot&gt;</c> with <c>default</c> items</description></item>
@@ -48,19 +48,24 @@ public class SlotsAndOutlets : IScreenplayMigration
             rewrite.Rename(form);
         }
 
+        var layouts = application.Layouts?.Select(layout => RewriteLayout(rewrite, layout)).ToArray();
+        var offered = (layouts ?? []).SelectMany(layout => layout.Outlets)
+            .Where(outlet => outlet.Kind == OutletKind.Actions)
+            .Select(outlet => outlet.Name)
+            .ToHashSet(StringComparer.Ordinal);
         var rewritten = application with
         {
             RetiredForms = [],
-            Layouts = application.Layouts?.Select(layout => RewriteLayout(rewrite, layout)).ToArray(),
-            Modules = [.. application.Modules.Select(module => RewriteModule(rewrite, module))]
+            Layouts = layouts,
+            Modules = [.. application.Modules.Select(module => RewriteModule(rewrite, module, offered))]
         };
 
         return rewrite.Result(document with { Syntax = rewritten });
     }
 
-    static ModuleSyntax RewriteModule(Rewrite rewrite, ModuleSyntax module) => module with
+    static ModuleSyntax RewriteModule(Rewrite rewrite, ModuleSyntax module, IReadOnlySet<string> offeredActions) => module with
     {
-        Outlets = [.. module.Outlets, .. rewrite.Changes(module.RetiredForms, "module")],
+        Outlets = [.. module.Outlets, .. rewrite.Changes(module.RetiredForms, "module", offeredActions)],
         RetiredForms = [],
         ScreenTemplates = [.. module.ScreenTemplates.Select(template => RewriteScreenTemplate(rewrite, template))],
         DialogTemplates = module.DialogTemplates?.Select(template => RewriteDialogTemplate(rewrite, template)).ToArray(),
@@ -69,7 +74,7 @@ public class SlotsAndOutlets : IScreenplayMigration
 
     static FeatureSyntax RewriteFeature(Rewrite rewrite, FeatureSyntax feature) => feature with
     {
-        Outlets = [.. feature.Outlets, .. rewrite.Changes(feature.RetiredForms, "feature")],
+        Outlets = [.. feature.Outlets, .. rewrite.Changes(feature.RetiredForms, "feature", new HashSet<string>(StringComparer.Ordinal))],
         RetiredForms = [],
         Features = [.. feature.Features.Select(child => RewriteFeature(rewrite, child))]
     };
@@ -146,8 +151,9 @@ public class SlotsAndOutlets : IScreenplayMigration
             Change(outlet.Location, [outlet.Replacement], new ReplaceLine(outlet.Location.Line, [outlet.Replacement]));
         }
 
-        // A module or feature changes the outlets its template offers.
-        public IEnumerable<OutletSyntax> Changes(IReadOnlyList<RetiredForm> forms, string owner)
+        // A module or feature changes the outlets its template offers. The layouts of the document name the actions
+        // outlets they offer, so a module's region buttons can follow the layout's buttons.
+        public IEnumerable<OutletSyntax> Changes(IReadOnlyList<RetiredForm> forms, string owner, IReadOnlySet<string> offeredActions)
         {
             foreach (var form in forms)
             {
@@ -164,15 +170,11 @@ public class SlotsAndOutlets : IScreenplayMigration
                         yield return extends;
                         break;
                     case RetiredNavigationRegion region:
-                        var outlet = new OutletSyntax(region.Region, null, region.Mode ?? OutletMode.Extend, region.Items, region.Location);
-                        Change(region.Location, [outlet], new ReplaceLine(region.Location.Line, [outlet]));
-                        if (region.Logo is { } logo)
+                        foreach (var changed in ChangeRegion(region, owner, offeredActions))
                         {
-                            Review(logo.Location, $"a {owner} cannot declare the logo - move it to the layout's 'outlet {region.Region} of navigation'");
+                            yield return changed;
                         }
 
-                        ReviewUnrecognized(region.Unrecognized, region.Region);
-                        yield return outlet;
                         break;
                     default:
                         Review(form.Location, $"a {owner} cannot hold this retired form - rewrite it by hand");
@@ -180,6 +182,53 @@ public class SlotsAndOutlets : IScreenplayMigration
                 }
             }
         }
+
+        // A module's region changes the layout's navigation outlet; its buttons are actions, so they change the layout's
+        // actions outlet for that region - the one the layout's own region buttons moved to.
+        IEnumerable<OutletSyntax> ChangeRegion(RetiredNavigationRegion region, string owner, IReadOnlySet<string> offeredActions)
+        {
+            var mode = region.Mode ?? OutletMode.Extend;
+            var buttons = region.Items.OfType<ToolbarButtonSyntax>().ToArray();
+            var outlet = new OutletSyntax(region.Region, null, mode, [.. region.Items.Where(item => item is not ToolbarButtonSyntax)], region.Location);
+            var edits = new List<MigrationEdit> { new ReplaceLine(region.Location.Line, [outlet]) };
+            var name = $"{region.Region}Actions";
+            var actions = new OutletSyntax(name, null, mode, buttons, region.Location);
+            if (buttons.Length == 0)
+            {
+                Change(region.Location, [outlet], [.. edits]);
+            }
+            else
+            {
+                edits.Add(new InsertAfterBlock(region.Location.Line, actions with { Items = [] }));
+                edits.AddRange(buttons.Select(button => new MoveBlock(button.Location.Line, region.Location.Line, button)));
+                Change(region.Location, [outlet, actions], [.. edits]);
+                if (!offeredActions.Contains(name))
+                {
+                    Review(
+                        region.Location,
+                        $"moved the {region.Region} region's buttons to 'outlet {name} {Keyword(mode)}', but no layout in this document offers 'outlet {name} of actions' - check that the layout offers it, or move the buttons to the actions outlet it does offer");
+                }
+            }
+
+            if (region.Logo is { } logo)
+            {
+                Review(logo.Location, $"a {owner} cannot declare the logo - move it to the layout's 'outlet {region.Region} of navigation'");
+            }
+
+            ReviewUnrecognized(region.Unrecognized, region.Region);
+            yield return outlet;
+            if (buttons.Length > 0)
+            {
+                yield return actions;
+            }
+        }
+
+        static string Keyword(OutletMode mode) => mode switch
+        {
+            OutletMode.Override => "overrides",
+            OutletMode.Inherit => "inherits",
+            _ => "extends"
+        };
 
         // A layout or template declares the outlets it offers, with their defaults.
         public void Declare(RetiredForm form, string owner, List<SlotSyntax> slots, List<OutletSyntax> outlets)

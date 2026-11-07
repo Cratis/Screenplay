@@ -8,7 +8,8 @@ namespace Cratis.Screenplay.Migrations.for_SlotsAndOutlets.given;
 
 /// <summary>
 /// Migrates a Screenplay 5 fixture from <c>fixtures/&lt;name&gt;.before.play.txt</c> and reads the Screenplay 6 text it
-/// should become from <c>fixtures/&lt;name&gt;.after.play.txt</c>.
+/// should become from <c>fixtures/&lt;name&gt;.after.play.txt</c> - a fixture without one is a document the step only
+/// reviews.
 /// </summary>
 public class a_fixture : Specification
 {
@@ -18,7 +19,8 @@ public class a_fixture : Specification
     protected void Migrate(string fixture)
     {
         var before = File.ReadAllText(FixturePath($"{fixture}.before.play.txt"));
-        _expected = File.ReadAllText(FixturePath($"{fixture}.after.play.txt"));
+        var after = FixturePath($"{fixture}.after.play.txt");
+        _expected = File.Exists(after) ? File.ReadAllText(after) : before;
         var migrator = new ScreenplayMigrator();
         _result = migrator.Migrate([new PlayFileContent("document.play", before)], migrator.Plan(5, 6)).Files.Single();
     }

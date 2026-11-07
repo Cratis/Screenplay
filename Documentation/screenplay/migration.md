@@ -95,7 +95,7 @@ The `slots-and-outlets` step rewrites:
 | `outlet <name>` under a `navigate to` | `slot <name>` | `PLAY0892` |
 | `outlet <name>` on a layout or template | `slot <name>` | `PLAY0893` |
 | `navigation topbar\|sidebar` on a layout or template | `outlet topbar\|sidebar of navigation`, its items as `default` items and its logo kept; its buttons move to a new `outlet topbarActions\|sidebarActions of actions` | `PLAY0894` |
-| `navigation topbar\|sidebar extends\|inherits\|overrides` on a module | `outlet topbar\|sidebar extends\|inherits\|overrides`, with its items | `PLAY0894` |
+| `navigation topbar\|sidebar extends\|inherits\|overrides` on a module | `outlet topbar\|sidebar extends\|inherits\|overrides`, with its items; its buttons move to `outlet topbarActions\|sidebarActions` with the same mode, the actions outlet the layout's own region buttons moved to | `PLAY0894` |
 | `<slot> contributes <Point>` | `<slot>` and `outlet <Point> of navigation in <slot>` | `PLAY0895` |
 | `toolbar <name>` on a feature or module | `outlet <name> extends`, with its buttons | `PLAY0896` |
 | a template `toolbar` slot holding a `toolbar <name>` or buttons | the `toolbar` slot and `outlet <name> of actions in toolbar`, its buttons as `default` items | `PLAY0026` |
@@ -107,6 +107,9 @@ It leaves for review, with the file and line:
 - A toolbar `item <name> action|navigate|dialog <Target>`. An outlet holds buttons that name a slice; write it as
   `button <name> title "…" slice <Slice>` (or `default` in a template) or remove it.
 - A `logo` in a module's navigation region. Only a layout declares the logo.
+- Buttons in a module's navigation region when no layout in the same file offers `outlet topbarActions|sidebarActions of actions`.
+  The buttons still move to that outlet, out of the navigation outlet; check that the layout offers it, or move them to
+  the actions outlet it does offer.
 - A mode on a layout's navigation region, and an outlet the template already declares under the same name.
 - A line in a navigation region that is neither an item, a button nor a logo.
 
