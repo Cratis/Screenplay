@@ -685,7 +685,7 @@ ContributionDirective = NavigateDecl
                       | "label", LocalizableString, NL
                       | "order", Integer, NL
                       | ( "id" | "icon" | "presentation" | "group" ), ( Ident | String ), NL
-                      | "destination", ( "outlet", Ident | "dialog", Ident | "external", String ), NL ;
+                      | "destination", ( "slot", Ident | "dialog", Ident | "external", String ), NL ;
 
 (* A navigation region is one part of the application shell's navigation:
    "topbar" or "sidebar". A layout declares the application's regions and has
@@ -759,7 +759,14 @@ FitsSlotDecl   = "fits", "slot", Ident, NL ;
 StructureBody  = { SlotDecl | NavigationRegionDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
 (* At most one arrangement; a screen template has at most one fits slot. *)
 
-SlotDecl       = Ident, [ "contributes", Ident ], NL ;
+SlotDecl       = Ident, [ SlotRole ], [ "routed", [ "by", Ident ] ], [ "primary" ], [ "optional" ],
+                 [ "contributes", Ident ], NL ;
+SlotRole       = "page" | "pane" | "panel" ;
+(* A slot is a region content is placed in. The role and modifiers follow the
+   name in this order and each is optional. Screenplay 5's "outlet" forms -
+   "outlet <name>" in a structure (PLAY0893) or component (PLAY0890), under
+   "navigate to" (PLAY0892) and "destination outlet" (PLAY0891) - are errors
+   naming "screenplay migrate --from 5 --to 6"; write "slot <name>". *)
 
 ArrangementDecl = "arrangement", "flow", NL,
                  INDENT, { ArrangementNode }, { WhenDecl }, DEDENT
@@ -1796,7 +1803,7 @@ NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL,
                  [ INDENT, { NavigateOption }, DEDENT ] ;
 
 NavigateOption = "route", LocalizableString, NL
-               | "outlet", Ident, NL
+               | "slot", Ident, NL
                | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL
                | "parameter", Ident, "from", "literal", (* modifiers *) StructuredBlock ;
 

@@ -37,9 +37,10 @@ layout AppShell
 ```
 
 - Each plain line in the body **declares a slot**. `contributes <ContributionPoint>` opens it up to contributors declared anywhere in the document — see [Contributions](contributions.md). The application shell is where an application-wide contribution point such as `Navigation` belongs.
+- A slot line can say what the slot is for, after its name and in this order: a role (`page`, `pane` or `panel`), `routed` or `routed by <param>`, `primary` and `optional`. See [Slot roles](#slot-roles).
 - `category <name>` and `type <name>` provide catalog metadata for designers and renderers. Every layout and template needs a `category` (`PLAY0720`).
 - `exposes <name> [<Type>]` names a value the structure makes available to descendants or package tooling.
-- `outlet <name>` declares a recursive fill point for package components and design-time tools.
+- `slot <name>` declares a recursive fill point for package components and design-time tools. Screenplay 5 wrote it `outlet <name>`; that form is now an error (`PLAY0893`) - run `screenplay migrate --from 5 --to 6`.
 - `navigation topbar` and `navigation sidebar` blocks hold the application's own navigation: a logo and items with targets, slots and sub-items. A module inherits, extends or overrides them - see [Navigation regions](navigation.md).
 - `arrangement` says how those slots share the space. It is optional: a layout that only names its slots is a complete declaration.
 
@@ -50,13 +51,44 @@ layout AppShell
   category application
   type masterDetail
   exposes selectedItem String
-  outlet details
+  slot details
   content
 
 ui profile Desktop
   target platform web
   root template AppShell
 ```
+
+### Slot roles
+
+A slot's role tells a renderer and a designer what kind of content goes in it. The words follow the slot's name, and each is optional:
+
+| Word | Meaning |
+| --- | --- |
+| `page` | The slot holds a whole page. |
+| `pane` | The slot holds a pane beside the page, such as a detail view. |
+| `panel` | The slot holds a panel within the page. |
+| `routed` | What the slot shows is part of the address. |
+| `routed by <param>` | The slot is addressed by a route parameter, such as the key of the selected row. |
+| `primary` | The slot is the main one of its structure. |
+| `optional` | The slot may be left empty. |
+
+```screenplay
+layout AppShell
+  category application
+  topbar
+  content page routed primary
+
+module Catalog
+  screen template ListPage
+    category Catalog
+    fits slot content
+    header
+    main
+    detail pane routed by sku optional
+```
+
+A slot without a role is still a slot; the role only adds meaning. Screenplay 6 calls every region content is placed in a slot: the Screenplay 5 forms `outlet <name>` and `destination outlet <name>` are errors whose message names `screenplay migrate --from 5 --to 6`.
 
 A document may declare more than one layout, so that different profiles can select different shells — but each profile selects exactly one, and a profile naming a layout the document does not declare is reported.
 

@@ -73,13 +73,14 @@ contribute to Navigation
   icon receipt
   presentation primary
   group "Billing"
-  destination outlet main
+  destination slot main
 ```
 
 - `id`, `icon`, `presentation` and `group` take an identifier or a quoted string, kept exactly as written.
-- `destination outlet <name>` opens the item in a named outlet, `destination dialog <DialogTemplate>` opens a dialog, and `destination external "<route>"` leaves the application. These map to Scene's `DestinationKind` `Outlet`, `Dialog` and `External`.
-- An outlet or dialog template nothing declares is reported as `PLAY0654`.
-- A `navigate to` inside a contribution accepts the same `route`, `outlet` and `parameter` lines as a screen's navigation.
+- `destination slot <name>` opens the item in a named slot, `destination dialog <DialogTemplate>` opens a dialog, and `destination external "<route>"` leaves the application. These map to Scene's `DestinationKind` `Slot`, `Dialog` and `External`.
+- A slot or dialog template nothing declares is reported as `PLAY0654`.
+- Screenplay 5 wrote `destination outlet <name>`; that form is now an error (`PLAY0891`) whose message names `screenplay migrate --from 5 --to 6`.
+- A `navigate to` inside a contribution accepts the same `route`, `slot` and `parameter` lines as a screen's navigation.
 
 ## How a contribution resolves
 

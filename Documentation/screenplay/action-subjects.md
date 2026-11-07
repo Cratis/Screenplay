@@ -27,7 +27,7 @@ The `with` lines explicitly supply the retry command's inputs. Plain actions kee
 
 ## Inference and inputs
 
-`for item` needs one nearest `data` declaration: a record, or a collection from which the user selects an item. Local sibling data takes precedence over inherited data, including in sections, filled slots and outlets. Source order does not break a tie between equally near declarations; missing or ambiguous data needs to be resolved explicitly.
+`for item` needs one nearest `data` declaration: a record, or a collection from which the user selects an item. Local sibling data takes precedence over inherited data, including in sections, filled slots and component slots. Source order does not break a tie between equally near declarations; missing or ambiguous data needs to be resolved explicitly.
 
 Once the subject is known, inputs are supplied in this order:
 

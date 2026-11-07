@@ -522,7 +522,7 @@ screen template ProductGrid
   category Shop
   scopes slice stateview
   fits slot content
-  outlet quickView
+  slot quickView
 
   header
   filters
@@ -568,7 +568,7 @@ feature Publication
 | Purchasing | PurchaseOrders | `ListScreen` | the purchase orders list |
 | Purchasing | Overview | `DashboardScreen` | the purchasing dashboard |
 
-Check `fits slot` when nesting templates: the child must fit an outlet the parent exposes. The sample assigns foundation
+Check `fits slot` when nesting templates: the child must fit a slot the parent exposes. The sample assigns foundation
 templates to these features and supplies screen content bound to its own queries and commands. When choosing a different
 blueprint, check its required slots and data contracts too. A template's appearance alone does not establish that its queries
 can be answered by Acme Commerce's read models.

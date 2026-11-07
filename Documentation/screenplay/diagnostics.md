@@ -258,9 +258,9 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0794` | `template` | text | no | The template that cannot be the application's shell. | — |
 | `PLAY0794` | `blueprint` | text | yes | The blueprint the template comes from. | — |
 | `PLAY0795` | `profile` | text | no | The ui profile that names the root template. | — |
-| `PLAY0795` | `template` | text | no | The root template that has no content outlet. | — |
+| `PLAY0795` | `template` | text | no | The root template that has no content slot. | — |
 | `PLAY0795` | `blueprint` | text | yes | The blueprint the template comes from. | — |
-| `PLAY0795` | `outlet` | text | no | The outlet the screens' content is placed in. | — |
+| `PLAY0795` | `slot` | text | no | The slot the screens' content is placed in. | — |
 | `PLAY0796` | `profile` | text | no | The ui profile that sets the option. | — |
 | `PLAY0796` | `template` | text | no | The root template that does not expose the option. | — |
 | `PLAY0796` | `blueprint` | text | yes | The blueprint the template comes from. | — |
@@ -1054,10 +1054,10 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0627` | Error | An instance stores a value for a component property no exposure exposes. |
 | `PLAY0628` | Error | An instance uses `set` on a collection exposure, or `items` on a single-value exposure. |
 | `PLAY0629` | Error | A template's `content <slot>` names a slot the template does not declare. |
-| `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
+| `PLAY0630` | Error | A navigation's `slot <name>` names a slot no layout, template or component declares. |
 | `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope, or - at `slice` scope - whose slice kinds (`scopes slice statechange`) exclude the slice's kind. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
-| `PLAY0654` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
+| `PLAY0654` | Error | A navigation contribution's `destination slot` or `destination dialog` names a slot or dialog template nothing declares. |
 | `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
 | `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
 | `PLAY0720` | Warning | A `layout`, `screen template` or `dialog template` declares no `category`. A template picker groups by category, so every template needs one. A blueprint package build runs with warnings as errors, so there a missing category fails the build; an own template only warns. See [Layouts and templates](templates.md#category-and-picker-metadata). |
@@ -1697,6 +1697,17 @@ The `navigation topbar` and `navigation sidebar` blocks of a layout and a module
 | `PLAY0750` | Error | A module's own item targets another module. Mirrors Scene `navTargetOutOfScope`. |
 | `PLAY0751` | Warning | An item targets a module that has no feature to go to. Mirrors Scene `navModuleWithoutFeatures`. |
 | `PLAY0752` | Warning | A module region that `overrides` the application's declares no items, so the region is empty in that module. |
+
+## Slots
+
+Screenplay 6 calls every region content is placed in a slot; see [Slot roles](templates.md#slot-roles). The Screenplay 5 forms that wrote a slot as `outlet` are errors, with no deprecation period. Each message names the replacement and the migration that rewrites the model: `screenplay migrate --from 5 --to 6` (slots and outlets). The TypeScript compiler reports the component and navigation forms; layouts, templates and contributions are opaque to it, so the C# compiler reports the other two.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0890` | Error | A component declares `outlet <name>`. Write `slot <name>`. |
+| `PLAY0891` | Error | A navigation contribution declares `destination outlet <name>`. Write `destination slot <name>`. |
+| `PLAY0892` | Error | A `navigate to` declares `outlet <name>`. Write `slot <name>`. |
+| `PLAY0893` | Error | A layout, screen template or dialog template declares `outlet <name>`. Write `slot <name>`. |
 
 ## Toolbar buttons
 

@@ -417,11 +417,11 @@ add the package to the profile in the same proposal.
 `ui-profiles` reads every `ui profile` (or the one named by `name`) as one answer: the root template with its version pin and shell
 options, the appearance, the `new screens use template` default, the legacy `layout` line and, for each profile, the shell
 diagnostics `PLAY0790` to `PLAY0799` the compiler reports. It also lists the own templates that could be the root template
-(`applicableRootTemplates`: a layout or an application-scope screen template with its primary outlet) or the new screens default
+(`applicableRootTemplates`: a layout or an application-scope screen template with its primary slot, reported as `primarySlot`) or the new screens default
 (`applicableNewScreenTemplates`) and the values an appearance accepts, so an edit can be chosen from valid candidates. The edits
 themselves are the typed nodes above; the compiler refuses what is invalid with its own code and message - an unknown template
 `PLAY0790`, a blueprint the profile does not list `PLAY0792`, a template that cannot be the shell `PLAY0794`, a shell without a
-`content` outlet `PLAY0795`, an invalid colour scheme or accent `PLAY0797`, a second root template `PLAY0798`, a new screens default
+`content` slot `PLAY0795`, an invalid colour scheme or accent `PLAY0797`, a second root template `PLAY0798`, a new screens default
 that cannot start a screen in a feature `PLAY0799`. An option the shell does not expose (`PLAY0796`) and a legacy `layout` line
 (`PLAY0791`) are warnings: they are accepted and show up in `ui-profiles`. A blueprint's own templates are only known where the blueprint
 is installed; the host checks them with `UiProfileShellBinder`. `when_authoring_the_ui_profile_shell` is the executed transcript, on

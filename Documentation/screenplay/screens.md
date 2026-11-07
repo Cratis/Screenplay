@@ -137,7 +137,7 @@ Widgets:
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
 | `toolbar <name>` | `item` actions, navigation entries and dialog entries with labels, icons, parameters and presentation hints, and `button` lines that invoke a State Change slice - see [Toolbar buttons](#toolbar-buttons) |
-| `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive outlets |
+| `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive slots (`slot <name>`) |
 
 ## Toolbar buttons
 
@@ -249,7 +249,7 @@ screen BrowseInvoices
     icon table
     presentation density "compact"
     exposes selectedInvoice from component "invoices:list".selectedItem
-    outlet detail
+    slot detail
       summary selectedInvoice
         field invoiceId label "Invoice"
 ```
