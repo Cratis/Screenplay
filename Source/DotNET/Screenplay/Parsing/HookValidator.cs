@@ -61,6 +61,20 @@ internal sealed class HookValidator
     internal static PropertySyntax? UnresolvedInput(CommandSyntax command, ScreenActionSubjectKind? subject) =>
         command.Properties.FirstOrDefault(property => !property.IsGenerated && !(property.IsIdentifier && subject is not null));
 
+    /// <summary>
+    /// Resolves the slice a hook names - by its name alone or by any trailing part of its path, up to
+    /// <c>Module.Feature[.SubFeature].Slice</c>.
+    /// </summary>
+    /// <param name="slices">Every slice of the application with its path, from <see cref="ToolbarButtonValidator.AllSlices"/>.</param>
+    /// <param name="slice">The slice the hook names.</param>
+    /// <returns>The one slice it names, or <c>null</c> when it names none or more than one.</returns>
+    internal static SliceSyntax? ResolveSlice(IReadOnlyList<(string[] Path, SliceSyntax Slice)> slices, string slice)
+    {
+        var wanted = slice.Split('.');
+        var matches = slices.Where(entry => entry.Path.Length >= wanted.Length && entry.Path.TakeLast(wanted.Length).SequenceEqual(wanted, StringComparer.Ordinal)).ToList();
+        return matches.Count == 1 ? matches[0].Slice : null;
+    }
+
     static IEnumerable<ToolbarButtonSyntax> Buttons(IEnumerable<OutletItemSyntax> items) =>
         items.SelectMany<OutletItemSyntax, ToolbarButtonSyntax>(item => item switch
         {
@@ -270,10 +284,5 @@ internal sealed class HookValidator
         }
     }
 
-    SliceSyntax? Resolve(string slice)
-    {
-        var wanted = slice.Split('.');
-        var matches = _slices.Where(entry => entry.Path.Length >= wanted.Length && entry.Path.TakeLast(wanted.Length).SequenceEqual(wanted)).ToList();
-        return matches.Count == 1 ? matches[0].Slice : null;
-    }
+    SliceSyntax? Resolve(string slice) => ResolveSlice(_slices, slice);
 }

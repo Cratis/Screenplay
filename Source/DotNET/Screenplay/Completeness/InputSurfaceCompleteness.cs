@@ -53,7 +53,7 @@ static class InputSurfaceCompleteness
                 .Concat(action.Otherwise?.Command is { } fallback ? [fallback] : []))
             .Select(name => Command(name, entry.Scope, declarations))).OfType<CommandSyntax>());
         issued.UnionWith(executed);
-        issued.UnionWith(Hooked(application, declarations));
+        issued.UnionWith(Hooked(application));
         foreach (var command in declarations.Slices.Where(entry => entry.Slice.Type == SliceType.StateChange).SelectMany(entry => entry.Slice.Commands)
             .Where(command => !issued.Contains(command) && !invoked.Contains(command)))
         {
@@ -65,22 +65,18 @@ static class InputSurfaceCompleteness
     }
 
     // A hook issues its slice's commands: directly when it runs, or through the slice's own screen when it opens one.
-    static IEnumerable<CommandSyntax> Hooked(ApplicationSyntax application, ConsistencyDeclarations declarations)
+    static IEnumerable<CommandSyntax> Hooked(ApplicationSyntax application)
     {
         var collector = new HookCollector();
         collector.VisitApplication(application);
+        var slices = ToolbarButtonValidator.AllSlices(application);
         foreach (var button in collector.Hooks)
         {
-            var wanted = button.Slice!.Split('.');
-            var matches = declarations.Slices.Where(entry =>
+            // The same resolution the hook checks use, so a hook naming its slice by its full path counts as an issuer.
+            if (HookValidator.ResolveSlice(slices, button.Slice!) is { } slice && (button.Opens == HookOpening.Runs || slice.Screens.Any()
+                || (button.Opens is null && slice.Commands.All(command => HookValidator.UnresolvedInput(command, button.Subject) is null))))
             {
-                string[] path = [.. entry.Scope.Segments, entry.Slice.Name];
-                return path.Length >= wanted.Length && path.TakeLast(wanted.Length).SequenceEqual(wanted, StringComparer.Ordinal);
-            }).ToList();
-            if (matches.Count == 1 && (button.Opens == HookOpening.Runs || matches[0].Slice.Screens.Any()
-                || (button.Opens is null && matches[0].Slice.Commands.All(command => HookValidator.UnresolvedInput(command, button.Subject) is null))))
-            {
-                foreach (var command in matches[0].Slice.Commands)
+                foreach (var command in slice.Commands)
                 {
                     yield return command;
                 }
