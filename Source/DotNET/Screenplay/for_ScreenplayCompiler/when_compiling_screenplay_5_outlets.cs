@@ -47,9 +47,12 @@ public class when_compiling_screenplay_5_outlets : given.a_compiler
     [Fact] void should_still_read_the_template_slot() => _result.Value!.Layouts!.Single().RecursiveSlots.Single().Name.ShouldEqual("details");
     [Fact] void should_still_read_the_component_slot() => _result.Value!.Modules.Single().Features.Single().Slices.Single().Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Slots.Single().Name.ShouldEqual("detail");
     [Fact] void should_still_read_the_navigation_slot() => _result.Value!.Modules.Single().Features.Single().Slices.Single().Screens.Single().Directives.OfType<ScreenNavigateSyntax>().Single().Slot.ShouldEqual("details");
-    [Fact] void should_not_report_the_slots_as_unknown() => _result.Diagnostics.Where(diagnostic => diagnostic.Code is DiagnosticCodes.UnknownNavigationSlot or DiagnosticCodes.UnknownNavigationDestination).ShouldBeEmpty();
+    [Fact] void should_not_report_the_slots_as_unknown() => _result.Diagnostics.Where(diagnostic => _unknownSlots.Contains(diagnostic.Code)).ShouldBeEmpty();
 
-    IEnumerable<Diagnostic> Renamed => _result.Diagnostics.Where(diagnostic => diagnostic.Code is DiagnosticCodes.RemovedTemplateOutlet or DiagnosticCodes.RemovedComponentOutlet or DiagnosticCodes.RemovedNavigationOutlet or DiagnosticCodes.RemovedDestinationOutlet);
+    static readonly HashSet<string> _unknownSlots = new([DiagnosticCodes.UnknownNavigationSlot, DiagnosticCodes.UnknownNavigationDestination], StringComparer.Ordinal);
+    static readonly HashSet<string> _renamedCodes = new([DiagnosticCodes.RemovedTemplateOutlet, DiagnosticCodes.RemovedComponentOutlet, DiagnosticCodes.RemovedNavigationOutlet, DiagnosticCodes.RemovedDestinationOutlet], StringComparer.Ordinal);
+
+    IEnumerable<Diagnostic> Renamed => _result.Diagnostics.Where(diagnostic => _renamedCodes.Contains(diagnostic.Code));
 
     IEnumerable<int> Lines(string code) => _result.Diagnostics.Where(diagnostic => diagnostic.Code == code).Select(diagnostic => diagnostic.Location.Line);
 
