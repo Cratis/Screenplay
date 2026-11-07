@@ -94,7 +94,7 @@
         },
         {
             "name": "screen contributions are not binding containers",
-            "source": ["layout Shell", "  category Test", "  content contributes body", "module M", "  feature F", "    slice StateView View", "      readmodel R", "        value String", "      query Q => R[]", "      query Q2 => R[]", "      screen S", "        data R[] via query Q", "        contribute to body", "          data R[] via query Q2"],
+            "source": ["layout Shell", "  category Test", "  content", "  outlet body of navigation in content", "module M", "  feature F", "    slice StateView View", "      readmodel R", "        value String", "      query Q => R[]", "      query Q2 => R[]", "      screen S", "        data R[] via query Q", "        contribute to body", "          data R[] via query Q2"],
             "diagnostics": []
         },
         {

@@ -6,6 +6,7 @@ import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
 import type { ScreenContributionSyntax } from './CompositionSyntax';
+import type { OutletPositionSyntax, OutletSyntax } from './Outlets';
 import { SyntaxNode } from './SyntaxNode';
 
 export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty' | 'Literal';
@@ -34,6 +35,7 @@ export interface ScreenSyntax extends SyntaxNode {
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
     readonly contributions?: readonly ScreenContributionSyntax[];
+    readonly outlets?: readonly OutletSyntax[];
 }
 
 // 'data <ReadModel>[[]] via query <Query> [by <param>]'.
@@ -229,6 +231,9 @@ export interface ToolbarButtonSyntax extends SyntaxNode {
     readonly icon?: string | null;
     readonly authorize?: AuthorizeSyntax | null;
     readonly confirm?: string | null;
+    readonly runs?: string | null;
+    readonly isDefault?: boolean;
+    readonly position?: OutletPositionSyntax | null;
 }
 
 export interface ScreenToolbarSyntax extends SyntaxNode {

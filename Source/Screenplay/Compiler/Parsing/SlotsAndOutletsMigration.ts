@@ -9,6 +9,16 @@
 export const slotsAndOutletsMigrationCommand = 'screenplay migrate --from 5 --to 6';
 
 /**
+ * Words the message for a form Screenplay 6 replaced with an outlet.
+ * @param old The old form, described where it was written - for example `'toolbar actions' in a feature`.
+ * @param replacement The form that replaces it.
+ * @returns The diagnostic message.
+ */
+export function replacedForSlotsAndOutlets(old: string, replacement: string): string {
+    return `${old} is written '${replacement}' since Screenplay 6 - an item list a template offers is an outlet; run '${slotsAndOutletsMigrationCommand}' to rewrite the model (slots and outlets)`;
+}
+
+/**
  * Words the message for a renamed form.
  * @param old The old form, described where it was written - for example `'outlet detail' in a component`.
  * @param replacement The form that replaces it.

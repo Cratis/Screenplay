@@ -476,6 +476,8 @@ export const DiagnosticCodes = {
     ResponseNameUsedOnFailure: 'PLAY0685',
     // Retired by ESM v16; preserved for compatibility with earlier native compiler diagnostics.
     EventIdPinNotCarriedToRenderers: 'PLAY0686',
+    InvalidNavigationItem: 'PLAY0741',
+    NavigationLogoNotAllowed: 'PLAY0744',
     InvalidToolbarButton: 'PLAY0760',
     InvalidPossibleEventsDeclaration: 'PLAY0822',
     InvalidPossibleEventSet: 'PLAY0823',
@@ -549,4 +551,11 @@ export const DiagnosticCodes = {
     // The layout, template and contribution forms (PLAY0891, PLAY0893) are C#-only: those declarations are opaque here.
     RemovedComponentOutlet: 'PLAY0890',
     RemovedNavigationOutlet: 'PLAY0892',
+    // Outlets (Screenplay 6). Layouts, templates and contributions stay opaque here, so the forms and checks that need
+    // them - PLAY0893, PLAY0895, PLAY0899, PLAY0900 and PLAY0903 - are C#-only, as are the checks of what an item names.
+    RemovedNavigationRegion: 'PLAY0894',
+    RemovedFeatureToolbar: 'PLAY0896',
+    InvalidOutletDeclaration: 'PLAY0897',
+    InvalidOutletItem: 'PLAY0898',
+    DuplicateOutlet: 'PLAY0904',
 } as const;

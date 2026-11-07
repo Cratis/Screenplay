@@ -28,7 +28,9 @@ import { parseFromClause, parseFromClauseOn } from './UiBindingParser';
 import { ScreenContributionSyntax } from '../Syntax/CompositionSyntax';
 import { locationOf, SourceLine } from './SourceLine';
 import { parseStructuredValue, StructuredMarker } from './StructuredBlockParser';
-import { renamedForSlotsAndOutlets } from './SlotsAndOutletsMigration';
+import { renamedForSlotsAndOutlets, replacedForSlotsAndOutlets } from './SlotsAndOutletsMigration';
+import type { OutletPositionSyntax, OutletSyntax } from '../Syntax/Outlets';
+import { addOutletOverride, parseOutletPosition, reportRepeatedPosition } from './OutletParser';
 
 // Parses 'screen' declarations the way the C# ScreenParser does - intent level directives, the template
 // whose slots they fill, and inline code. Interaction bodies remain opaque in the AST, but 'on' alternatives
@@ -56,7 +58,7 @@ const presentation = pattern(`^presentation\\s+([A-Za-z_]\\w*)\\s+${operand}$`);
 const confirmPattern = pattern(`^confirm\\s+${operand}$`);
 const toolbarItem = pattern('^item\\s+([A-Za-z_]\\w*)\\s+(action|navigate|dialog)(?:\\s+to)?\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const toolbarButton = pattern(`^button\\s+(?:"(${stringBodyPattern})"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$`);
-const toolbarButtonPart = new RegExp(pattern(`\\s*(title|slice|emphasis|icon)\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?=\\s|$)`).source, 'uy');
+const toolbarButtonPart = new RegExp(pattern(`\\s*(title|slice|emphasis|icon|runs)\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?=\\s|$)`).source, 'uy');
 const toolbarSlicePath = pattern('^[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*$');
 const slot = pattern('^[a-z_]\\w*$');
 const title = pattern(`^title\\s+${operand}$`);
@@ -78,19 +80,22 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
     }
     const directives: ScreenDirectiveSyntax[] = [];
     const contributions: ScreenContributionSyntax[] = [];
+    const outlets: OutletSyntax[] = [];
     let description: string | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (firstWord(child.content) === 'contribute') {
             const parsed = parseScreenContribution(context, child);
             if (parsed !== undefined) contributions.push(parsed);
+        } else if (firstWord(child.content) === 'outlet') {
+            addOutletOverride(context, child, 'screen', outlets);
         } else if (firstWord(child.content) === 'description') {
             description = parseDescription(context, child, description, `Screen '${match?.[1] ?? ''}'`);
         } else if (!isFileDirective(child)) {
             pushDirective(context, child, directives);
         }
     }
-    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), location: locationOf(line) };
+    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), location: locationOf(line) };
 }
 
 function parseScreenContribution(context: ParserContext, line: SourceLine): ScreenContributionSyntax | undefined {
@@ -443,6 +448,13 @@ function parsePresentationValue(context: ParserContext, line: SourceLine, values
     values.push({ kind: 'PresentationValueSyntax', name: match[1], value: operandText(match, 2), location: locationOf(line) });
 }
 
+// A feature or module 'toolbar <name>' is an extending outlet since Screenplay 6.
+export function reportFeatureToolbar(context: ParserContext, line: SourceLine, owner: string): void {
+    const name = line.content.substring('toolbar'.length).trim();
+    context.error(DiagnosticCodes.RemovedFeatureToolbar, replacedForSlotsAndOutlets(`'${line.content}' in a ${owner}`, `outlet ${name.length === 0 ? '<name>' : name} extends`), locationOf(line));
+    context.skipBlock(line.indent);
+}
+
 export function parseToolbar(context: ParserContext, line: SourceLine): ScreenToolbarSyntax {
     const name = line.content.substring('toolbar'.length).trim();
     const items: ToolbarItemSyntax[] = [];
@@ -460,10 +472,11 @@ export function parseToolbar(context: ParserContext, line: SourceLine): ScreenTo
     return { kind: 'ScreenToolbarSyntax', name, items, ...(buttons.length > 0 ? { buttons } : {}), location: locationOf(line) };
 }
 
-const toolbarButtonExpected = 'button <id> title "<text>" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>]';
+const toolbarButtonExpected = 'button <id> title "<text>" [slice <Module>.<Feature>.<Slice>] [emphasis primary|secondary|quiet] [icon <name>] [runs close|submit|refresh]';
+const builtInRuns = new Set(['close', 'submit', 'refresh']);
 
 // A button is one line; the C# compiler checks what it names (PLAY0761-PLAY0765), this one reads its grammar.
-function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarButtonSyntax | undefined {
+export function parseToolbarButton(context: ParserContext, line: SourceLine, allowPosition = false): ToolbarButtonSyntax | undefined {
     const head = toolbarButton.exec(line.content);
     if (head === null) {
         context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid toolbar button '${line.content}' - expected ${toolbarButtonExpected}`, locationOf(line));
@@ -476,6 +489,7 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
     let slice: string | undefined;
     let icon: string | undefined;
     let emphasis: ToolbarEmphasis | undefined;
+    let runs: string | undefined;
     let valid = true;
     let position = 0;
     while (position < rest.length) {
@@ -491,7 +505,7 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
         const quoted = part[2] !== undefined;
         const localized = part[3] !== undefined;
         const value = quoted ? unescapeString(part[2]) : localized ? part[3] : part[4];
-        const repeated = key === 'title' ? buttonTitle !== undefined : key === 'slice' ? slice !== undefined : key === 'icon' ? icon !== undefined : emphasis !== undefined;
+        const repeated = key === 'title' ? buttonTitle !== undefined : key === 'slice' ? slice !== undefined : key === 'icon' ? icon !== undefined : key === 'runs' ? runs !== undefined : emphasis !== undefined;
         if (repeated) {
             context.error(DiagnosticCodes.InvalidToolbarButton, `Toolbar button '${id}' states '${key}' more than once`, locationOf(line));
             continue;
@@ -514,6 +528,12 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
                 context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid emphasis '${value}' on toolbar button '${id}' - expected primary, secondary or quiet`, locationOf(line));
                 valid = false;
             }
+        } else if (key === 'runs') {
+            if (!quoted && !localized && builtInRuns.has(value)) runs = value;
+            else {
+                context.error(DiagnosticCodes.InvalidToolbarButton, `Invalid runs '${value}' on toolbar button '${id}' - a button runs one of the built-ins 'close', 'submit' or 'refresh'`, locationOf(line));
+                valid = false;
+            }
         } else {
             icon = value;
         }
@@ -523,8 +543,15 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
     }
     let authorize: AuthorizeSyntax | null = null;
     let buttonConfirm: string | undefined;
+    let placement: OutletPositionSyntax | undefined;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        const position = allowPosition ? parseOutletPosition(child) : undefined;
+        if (position !== undefined) {
+            if (placement !== undefined) reportRepeatedPosition(context, child, id);
+            placement ??= position;
+            continue;
+        }
         if (firstWord(child.content) === 'authorize' && authorize === null) {
             authorize = parseAuthorize(context, child);
             continue;
@@ -540,6 +567,7 @@ function parseToolbarButton(context: ParserContext, line: SourceLine): ToolbarBu
     return {
         kind: 'ToolbarButtonSyntax', id, title: buttonTitle ?? '',
         ...(slice !== undefined ? { slice } : {}), ...(emphasis !== undefined ? { emphasis } : {}), ...(icon !== undefined ? { icon } : {}), ...(authorize !== null ? { authorize } : {}), ...(buttonConfirm !== undefined ? { confirm: buttonConfirm } : {}),
+        ...(runs !== undefined ? { runs } : {}), ...(placement !== undefined ? { position: placement } : {}),
         location: locationOf(line),
     };
 }

@@ -1,20 +1,42 @@
-// Feature and module toolbars: buttons added to the toolbar slot of the feature's screens, each linked to a command of the feature.
-// The C# and TypeScript compilers read them the same way.
+// Feature and module outlets: buttons a feature or module adds to the actions outlets of its screens' template.
+// The C# and TypeScript compilers read them the same way; the layout and template stay opaque to the TypeScript one.
+layout Shell
+  category Test
+  content page routed primary
+  side panel
+  outlet sidebar of navigation in side
+    default home title "Home" target Shop
+
 module Shop
-  toolbar shell
+  screen template Page
+    category Test
+    fits slot content
+    header
+    main
+    detail pane optional
+    outlet shell of actions in header
+    outlet actions of actions in header
+      default export title "Export" runs refresh
+    outlet filters of filters in header
+    outlet stats of stats in header
+    outlet tabs of tabs in detail
+  outlet shell extends
     button help title "Help" slice Shop.Orders.PlaceOrder emphasis quiet
   feature Orders
-    toolbar actions
-      item cancel action CancelOrder
-        label "Cancel order"
-        icon trash
+    outlet actions extends
+      hide export
+      button cancel title "Cancel order" slice CancelOrder icon trash
         confirm "Cancel this order?"
+        before place
+      group more title "More" icon dots
+        button archive title "Archive" slice CancelOrder
       button place title "Place order" slice Shop.Orders.PlaceOrder emphasis primary icon plus
         confirm $strings.orders.confirmPlace
     slice StateChange PlaceOrder
       command PlaceOrder
         orderId Uuid identifier
         produces OrderPlaced
+          for orderId
           orderId = orderId
       event OrderPlaced
         orderId Uuid
@@ -22,6 +44,24 @@ module Shop
       command CancelOrder
         orderId Uuid identifier
         produces OrderCancelled
+          for orderId
           orderId = orderId
       event OrderCancelled
         orderId Uuid
+    slice StateView OrderList
+      readmodel OrderRow
+        orderId Uuid
+      query AllOrders => OrderRow[]
+        filter status String
+      query OrderTotals => OrderRow
+      screen OrderList
+        template Page
+        outlet filters extends
+          filter status title "Status" sets AllOrders.status
+        outlet stats overrides
+          stat total title "Total" value from OrderTotals.orderId
+        outlet tabs extends
+          tab details title "Details" shows OrderList
+        outlet sidebar extends
+          item orders title "Orders" target Shop.Orders
+            after home

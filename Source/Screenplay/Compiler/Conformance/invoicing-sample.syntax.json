@@ -1811,6 +1811,97 @@
           "fileImports": [],
           "isPlacement": false,
           "name": "InvoiceManagement",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "hides": [
+                {
+                  "kind": "OutletHideSyntax",
+                  "id": "export"
+                }
+              ],
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "emphasis": "Primary",
+                  "icon": "plus",
+                  "id": "register",
+                  "position": {
+                    "kind": "OutletPositionSyntax",
+                    "id": "refresh",
+                    "placement": "Before"
+                  },
+                  "slice": "RegisterInvoice",
+                  "title": "Register invoice"
+                },
+                {
+                  "kind": "OutletGroupSyntax",
+                  "buttons": [
+                    {
+                      "kind": "ToolbarButtonSyntax",
+                      "id": "batch",
+                      "slice": "ProcessInvoiceBatch",
+                      "title": "Process a batch"
+                    },
+                    {
+                      "kind": "ToolbarButtonSyntax",
+                      "confirm": "Archive every invoice older than the retention period?",
+                      "id": "archive",
+                      "slice": "ArchiveOldInvoices",
+                      "title": "Archive old invoices"
+                    }
+                  ],
+                  "icon": "layers",
+                  "id": "bulk",
+                  "title": "Bulk"
+                }
+              ],
+              "mode": "Extend",
+              "name": "actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "OutletFilterSyntax",
+                  "id": "status",
+                  "parameter": "status",
+                  "query": "ListInvoices",
+                  "title": "Status"
+                },
+                {
+                  "kind": "OutletFilterSyntax",
+                  "id": "customer",
+                  "parameter": "customerId",
+                  "query": "ListInvoices",
+                  "title": "Customer"
+                }
+              ],
+              "mode": "Extend",
+              "name": "filters"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "OutletStatSyntax",
+                  "field": "totalCount",
+                  "id": "total",
+                  "query": "GetInvoiceSummary",
+                  "title": "Invoices"
+                },
+                {
+                  "kind": "OutletStatSyntax",
+                  "field": "draftCount",
+                  "id": "drafts",
+                  "query": "GetInvoiceSummary",
+                  "title": "Drafts"
+                }
+              ],
+              "mode": "Extend",
+              "name": "stats"
+            }
+          ],
           "slices": [
             {
               "kind": "SliceSyntax",
@@ -7924,7 +8015,33 @@
                       }
                     }
                   ],
-                  "name": "InvoiceList"
+                  "name": "InvoiceList",
+                  "outlets": [
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [],
+                      "mode": "Inherit",
+                      "name": "actions"
+                    },
+                    {
+                      "kind": "OutletSyntax",
+                      "items": [
+                        {
+                          "kind": "OutletTabSyntax",
+                          "id": "overview",
+                          "position": {
+                            "kind": "OutletPositionSyntax",
+                            "id": "collections",
+                            "placement": "Before"
+                          },
+                          "shows": "InvoiceList",
+                          "title": "Overview"
+                        }
+                      ],
+                      "mode": "Extend",
+                      "name": "views"
+                    }
+                  ]
                 }
               ],
               "specifications": [
@@ -18365,6 +18482,26 @@
       "fileImports": [],
       "isPlacement": false,
       "name": "Invoicing",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "shield",
+              "id": "auditing",
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Auditing",
+                "module": "Invoicing"
+              },
+              "title": "Auditing"
+            }
+          ],
+          "mode": "Extend",
+          "name": "sidebar"
+        }
+      ],
       "purposes": [
         {
           "kind": "PurposeReferenceSyntax",
