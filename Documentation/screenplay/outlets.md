@@ -228,8 +228,8 @@ Screenplay 6 turned three Screenplay 5 forms into outlets. Each old form is an e
 
 | Screenplay 5 | Screenplay 6 | Code |
 | --- | --- | --- |
-| `navigation topbar\|sidebar` on a layout | `outlet topbar\|sidebar of navigation` with `default` items | `PLAY0894` |
-| `navigation sidebar extends` on a module | `outlet sidebar extends` | `PLAY0894` |
+| `navigation topbar\|sidebar` on a layout | `outlet topbar\|sidebar of navigation` with `default` items; its buttons move to `outlet topbarActions\|sidebarActions of actions` | `PLAY0894` |
+| `navigation sidebar extends` on a module | `outlet sidebar extends`; its buttons move to `outlet sidebarActions extends` | `PLAY0894` |
 | `<slot> contributes <Point>` | `outlet <Point> of navigation in <slot>` | `PLAY0895` |
 | `toolbar <name>` on a feature or module | `outlet <name> extends` | `PLAY0896` |
 

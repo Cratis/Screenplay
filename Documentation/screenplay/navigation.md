@@ -98,7 +98,7 @@ Parser, printer and parser again keep every item, id, icon, slot, target, mode, 
 
 ## From Screenplay 5
 
-Screenplay 5 wrote these lists as `navigation topbar|sidebar` blocks and a slot's `contributes <Point>`. Both are errors since Screenplay 6 (`PLAY0894`, `PLAY0895`); run `screenplay migrate --from 5 --to 6` to rewrite a model.
+Screenplay 5 wrote these lists as `navigation topbar|sidebar` blocks and a slot's `contributes <Point>`. Both are errors since Screenplay 6 (`PLAY0894`, `PLAY0895`); run `screenplay migrate --from 5 --to 6` to rewrite a model. A Screenplay 5 region could also hold buttons; a navigation outlet lists destinations only, so the migration moves a region's buttons to an actions outlet, `topbarActions` or `sidebarActions`. See [Migrating from 5](migration.md#migrating-from-5).
 
 ## Rename and move
 
