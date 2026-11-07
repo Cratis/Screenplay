@@ -187,6 +187,19 @@ Review revision-bound proposals before applying them. Stable identities persist 
 and interrupted writes require explicit recovery. Source validity and executable backend
 readiness remain separate verdicts.
 
+### Migrating from 5
+
+Screenplay 6 split what Screenplay 5 called outlets into slots (regions content is placed in) and
+outlets (item lists a template offers). The old forms are errors that name the fix. Rewrite a model
+in place and read what, if anything, needs review:
+
+```shell
+screenplay migrate path/to/screenplays --from 5 --dry-run   # see what changes
+screenplay migrate path/to/screenplays --from 5             # write it; exit 2 means review needed
+```
+
+See [Migrate a model to a new version](Documentation/screenplay/migration.md#migrating-from-5).
+
 ## 🚀 Quick start
 
 ```shell

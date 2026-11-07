@@ -224,7 +224,7 @@ Outlets are authoring syntax and are not part of the executable model, like ever
 
 ## From Screenplay 5
 
-Screenplay 6 turned three Screenplay 5 forms into outlets. Each old form is an error whose message names the replacement and `screenplay migrate --from 5 --to 6`:
+Screenplay 6 turned three Screenplay 5 forms into outlets. Each old form is an error whose message names the replacement and `screenplay migrate --from 5 --to 6`, which [rewrites them for you](migration.md#migrating-from-5):
 
 | Screenplay 5 | Screenplay 6 | Code |
 | --- | --- | --- |

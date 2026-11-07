@@ -115,6 +115,8 @@
   href: grammar.md
 - name: Compiler and CLI
   href: tool.md
+- name: Migrate to a new version
+  href: migration.md
 - name: VS Code extension
   href: vscode.md
 - name: TypeScript compiler
