@@ -33,7 +33,16 @@
             it is reset, because validating a deliberate break against the line it deliberately leaves has
             no answer to give.
         -->
-        <EnablePackageValidation>true</EnablePackageValidation>
+        <!--
+            Off for the 6.0.0 major only. Every break in it is deliberate - what used to be called an outlet
+            became a slot, outlets became item lists a template offers, and the syntax records that carried the
+            old shape (SlotSyntax.Contributes among them) changed with it, so that surface leaves the 5.x line
+            on purpose.
+
+            Turn back on with the baseline at 6.0.0 once it is published, exactly as 3.0.0 and 4.0.0 did -
+            leaving it off past the major is what let eight versions tag and release with nothing on NuGet.
+        -->
+        <EnablePackageValidation>false</EnablePackageValidation>
         <PackageValidationBaselineVersion>4.0.0</PackageValidationBaselineVersion>
 
         <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
