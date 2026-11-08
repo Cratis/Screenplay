@@ -3,6 +3,7 @@
 
 #if DEBUG
 using Cratis.Screenplay.Semantics.Serialization.for_EsmJsonSchema.given;
+using Cratis.Screenplay.Semantics.Serialization.given;
 using Xunit;
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_EsmJsonSchema;
@@ -39,7 +40,7 @@ public class when_publishing_the_schemas(ITestOutputHelper output) : Specificati
         }
     }
 
-    [Fact] void should_publish_the_current_version() => EsmJsonSchema.Versions[^1].ShouldEqual(EsmSchemaV41Support.SemanticVersions.Max(version => (version.Major, version.Minor)) is var (major, minor) ? new SemanticVersion(major, minor) : default);
+    [Fact] void should_publish_the_newest_declared_version() => EsmJsonSchema.Versions[^1].ShouldEqual(frozen_esm_goldens.CurrentVersion);
     [Fact] void should_publish_the_released_minor() => EsmJsonSchema.Versions.ShouldContain(SemanticVersion.V37_1);
     [Fact] void should_name_minors_with_their_minor() => EsmJsonSchema.FileName(SemanticVersion.V37_1).ShouldEqual("esm-v37.1.schema.json");
     [Fact] void should_identify_each_schema_by_its_download_address() => EsmJsonSchema.For(SemanticVersion.V41).ShouldContain($"\"$id\": \"{EsmJsonSchema.BaseUrl}esm-v41.schema.json\"");
