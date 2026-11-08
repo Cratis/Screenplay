@@ -10,43 +10,14 @@ import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { ProjectionBlockSyntax } from '../Syntax/Projections';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
-import { uniqueByName } from './ResponseValidator';
+import { projectionShapes } from './ProjectionShapes';
 
 export function validateProjectionTargets(application: ApplicationSyntax, context: ParserContext): void {
     const resolver = new AuthoringProductionResolver(application);
     const slices = resolver.slices;
     const imported = new Set(application.imports.map(entry => entry.qualifiedName));
     const events = new Set([...slices.flatMap(({ slice }) => eventDeclarations(slice).map(event => event.name)), ...application.imports.map(entry => entry.qualifiedName.split('.').at(-1)!)]);
-    const types = uniqueByName(application.types);
-    const scalar = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime', ...application.concepts.map(concept => concept.name)].filter(name => !types.has(name)));
-    const property = (properties: readonly PropertySyntax[] | null, path: string): { value: PropertySyntax | null; missing: boolean } => {
-        const [name, ...rest] = path.split('.');
-        if (properties === null) return { value: null, missing: false };
-        const matches = properties.filter(entry => entry.name === name);
-        if (matches.length !== 1) return { value: null, missing: matches.length === 0 };
-        const value = matches[0];
-        if (rest.length === 0) return { value, missing: false };
-        if (scalar.has(value.type.name)) return { value: null, missing: true };
-        return property(types.get(value.type.name)?.properties ?? null, rest.join('.'));
-    };
-    const views = slices.flatMap(({ slice, scope }) => slice.readModels.map(node => ({ node, scope })));
-    const viewProperties = (reference: string, scope: readonly string[]): readonly PropertySyntax[] | null => {
-        const candidates = (name: string) => {
-            const segments = name.split('.');
-            const named = views.filter(entry => entry.node.name === segments.at(-1));
-            const qualifiers = segments.slice(0, -1);
-            if (qualifiers.length > 0) return named.filter(entry => qualifiers.length <= entry.scope.length && qualifiers.every((value, index) => entry.scope[entry.scope.length - qualifiers.length + index] === value));
-            for (let depth = scope.length; depth >= 0; depth--) {
-                const visible = named.filter(entry => depth <= entry.scope.length && scope.slice(0, depth).every((value, index) => entry.scope[index] === value));
-                if (visible.length > 0) return visible;
-            }
-            return [];
-        };
-        let matches = candidates(reference);
-        const imports = application.imports.filter(entry => entry.qualifiedName.split('.').at(-1) === reference);
-        if (matches.length === 0 && imports.length === 1) matches = candidates(imports[0].qualifiedName);
-        return matches.length === 1 ? matches[0].node.properties : null;
-    };
+    const { types, property, viewProperties } = projectionShapes(application, slices);
     const unknownEvent = (name: string, location: SourceLocation, slice: SliceSyntax): void => {
         const resolution = resolver.resolve(name, slice);
         const declared = events.has(name) || imported.has(name) || resolution.declaration?.kind === AuthoringProductionKind.Event || resolution.candidates.some(candidate => candidate.kind === AuthoringProductionKind.Event);

@@ -15,6 +15,7 @@ import { validateEventSources } from '../Parsing/EventSourceValidator';
 import { validateProjectionTargets } from '../Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceValidator';
 import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
+import { validateSecretProjections } from '../Parsing/SecretProjectionValidator';
 import { validateReadModelKeys } from '../Parsing/ReadModelKeyValidator';
 import { validateGraphs } from '../Parsing/GraphValidator';
 import { resolveSinks, validateSinks } from '../Parsing/Sinks';
@@ -108,6 +109,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(effective, context);
     validateEventSubjects(merged.value, context);
+    validateSecretProjections(merged.value, context);
     validateReadModelKeys(merged.value, context);
     validateReadModelMemberTypes(merged.value, context);
     validateGraphs(merged.value, context);

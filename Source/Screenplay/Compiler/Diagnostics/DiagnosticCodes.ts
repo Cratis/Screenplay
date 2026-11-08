@@ -593,4 +593,5 @@ export const DiagnosticCodes = {
     RepeatedSinkDirective: 'PLAY0937',
     UnusedSink: 'PLAY0938',
     SinkNameCaseMismatch: 'PLAY0939',
+    SecretConceptProjected: 'PLAY0940',
 } as const;
