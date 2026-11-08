@@ -1,5 +1,5 @@
 ---
-id: 0147
+id: 0148
 title: Name ordered paths through a model with `storyline`, and trace a value's lineage both ways from any property or screen field
 status: accepted
 stage: none

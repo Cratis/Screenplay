@@ -135,10 +135,10 @@ public static class CliCommandCatalog
     /// <summary>Gets the stored contract equality gate.</summary>
     public static CliCommand BaselineCheck { get; } = new("baseline check", "<root>", []);
 
-    /// <summary>Gets the executable model export format option.</summary>
-    public static CliOption ExportFormat { get; } = new("--format", "esm");
+    /// <summary>Gets the export format option: the executable model, its OpenAPI description or its UI contract.</summary>
+    public static CliOption ExportFormat { get; } = new("--format", "esm|openapi|ui");
 
-    /// <summary>Gets the executable model export command.</summary>
+    /// <summary>Gets the export command for the executable model, its HTTP API description and its UI contract.</summary>
     public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output]);
 
     /// <summary>Gets the model comparison command.</summary>

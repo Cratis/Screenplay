@@ -2,20 +2,25 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using Cratis.Screenplay.Api;
 using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
+using Cratis.Screenplay.Ui;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Tool;
 
-// Writes the canonical executable semantic model bytes, the same bytes SemanticModelSerializer produces.
 static class ExportCommand
 {
+    static readonly string[] _formats = ["esm", "openapi", "ui"];
+
     internal static int Run(string[] args, TextWriter output, TextWriter error)
     {
         var arguments = CommandArguments.Parse(args, CliCommandCatalog.Export);
-        if (arguments is null || arguments.Positional.Count > 1 || (arguments.Option(CliCommandCatalog.ExportFormat) ?? "esm") != "esm")
+        var format = arguments?.Option(CliCommandCatalog.ExportFormat) ?? "esm";
+        if (arguments is null || arguments.Positional.Count > 1 || !_formats.Contains(format, StringComparer.Ordinal))
         {
             error.WriteLine($"Usage: {CliCommandCatalog.Export.Usage}");
             return 2;
@@ -31,6 +36,9 @@ static class ExportCommand
         try
         {
             var workspace = ModelSource.Load(target).Workspace;
+            var scope = arguments.Option(CliCommandCatalog.Scope);
+            if (format == "ui") return ExportUi(workspace, target, scope, arguments.Option(CliCommandCatalog.Output), output, error);
+
             var model = workspace.Compilation.Success ? workspace.Compilation.Value?.Model : null;
             if (model is null)
             {
@@ -40,12 +48,9 @@ static class ExportCommand
                 return 1;
             }
 
-            if (arguments.Option(CliCommandCatalog.Scope) is { } scope)
-            {
-                model = ExecutableSemanticModelScope.Select(model, scope);
-            }
-
-            Write(SemanticModelSerializer.Serialize(model), arguments.Option(CliCommandCatalog.Output), output);
+            if (scope is not null) model = ExecutableSemanticModelScope.Select(model, scope);
+            var bytes = format == "openapi" ? OpenApiDocument.Write(ApiDescription.For(model)) : SemanticModelSerializer.Serialize(model);
+            Write(bytes, arguments.Option(CliCommandCatalog.Output), output);
             return 0;
         }
         catch (InvalidSemanticModelScope exception)
@@ -58,6 +63,20 @@ static class ExportCommand
             error.WriteLine($"Could not export '{target}': {exception.Message}");
             return 2;
         }
+    }
+
+    // Screens need only the sources; identities and routes are added when the model also has an executable model.
+    static int ExportUi(ScreenplayWorkspace workspace, string target, string? scope, string? path, TextWriter output, TextWriter error)
+    {
+        var contract = UiContractBuilder.For(workspace);
+        if (scope is not null) contract = UiContractBuilder.Select(contract, scope);
+        if (contract.ModelRevision is null)
+        {
+            error.WriteLine($"'{target}' has no executable model ({workspace.Compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)} error(s)); the UI contract carries no identities or routes.");
+        }
+
+        Write(UiContractJson.Write(contract), path, output);
+        return 0;
     }
 
     // A file gets the exact canonical bytes; an identical file is left untouched for incremental builds.
