@@ -162,6 +162,7 @@ internal static partial class ScreenplayValidator
         ProjectionTargetValidator.Validate(declarations, context);
         IdentifierComplianceValidator.Validate(application, declarations, context);
         EventSubjectValidator.Validate(application, declarations, context);
+        SecretProjectionValidator.Validate(application, declarations, context);
         ReadModelKeyValidator.Validate(application, declarations, context);
         PassiveReadModelValidator.Validate(application, declarations, context);
         ReducerIdentityValidator.Validate(application, declarations, context);

@@ -58703,6 +58703,17 @@
       "title": "A read model\u0027s line sink \u003CType\u003E stays a property named sink, but its type differs only in case from a declared sink, so the author probably meant the sink directive.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0940",
+      "name": "SecretConceptProjected",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked secret into a read-model property, so the value becomes part of the read model and its query results.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

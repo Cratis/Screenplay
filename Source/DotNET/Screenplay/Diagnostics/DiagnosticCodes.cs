@@ -4160,4 +4160,10 @@ public static class DiagnosticCodes
     /// from a declared sink, so the author probably meant the sink directive.
     /// </summary>
     public const string SinkNameCaseMismatch = "PLAY0939";
+
+    /// <summary>
+    /// A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked <c>secret</c>
+    /// into a read-model property, so the value becomes part of the read model and its query results.
+    /// </summary>
+    public const string SecretConceptProjected = "PLAY0940";
 }

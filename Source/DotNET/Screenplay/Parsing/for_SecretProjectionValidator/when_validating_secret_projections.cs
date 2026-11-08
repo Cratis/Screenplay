@@ -1,0 +1,81 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Cratis.Screenplay.Diagnostics;
+
+namespace Cratis.Screenplay.Parsing.for_SecretProjectionValidator;
+
+public class when_validating_secret_projections : Specification
+{
+    const string Concepts = "concept ApiKey : String secret\nconcept BankAccount : String pii secret\nconcept Email : String pii\nconcept Label : String\n";
+    const string Slice = "module M\n  feature F\n    slice StateView S\n";
+
+    [Fact]
+    void should_warn_for_an_explicit_mapping_into_a_secret_property()
+    {
+        var finding = Findings(Model("ApiKey", "ApiKey", "          token = token\n")).Single();
+        finding.Message.ShouldEqual("Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.token' - the value becomes part of the read model and its query results");
+        finding.Severity.ShouldEqual(DiagnosticSeverity.Warning);
+        finding.Location.Line.ShouldEqual(15);
+    }
+
+    [Fact]
+    void should_warn_for_an_explicit_mapping_from_a_secret_event_property_into_a_plain_property() =>
+        Findings(Model("ApiKey", "String", "          token = token\n")).Single().Message.ShouldContain("secret concept 'ApiKey' into read model property 'Row.token'");
+
+    [Fact]
+    void should_warn_when_automap_copies_a_secret_property()
+    {
+        var finding = Findings(Model("ApiKey", "ApiKey", string.Empty)).Single();
+        finding.Message.ShouldContain("Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.token'");
+        finding.Location.Line.ShouldEqual(14);
+    }
+
+    [Fact]
+    void should_count_a_personal_secret_as_secret() => Findings(Model("BankAccount", "BankAccount", string.Empty)).Single().Message.ShouldContain("'BankAccount'");
+
+    [Fact]
+    void should_warn_when_a_reducer_builds_a_secret_property()
+    {
+        var finding = Findings(Concepts + Slice + "      readmodel Row\n        id String\n        token ApiKey\n      event Recorded\n        token ApiKey\n      reducer Fold => Row\n        on Recorded\n").Single();
+        finding.Message.ShouldEqual("Reducer 'Fold' copies secret concept 'ApiKey' into read model property 'Row.token' - the value becomes part of the read model and its query results");
+        finding.Location.Line.ShouldEqual(13);
+    }
+
+    [Fact]
+    void should_warn_for_a_secret_copied_into_a_child_element() =>
+        Findings(Concepts + "type Entry\n  id String\n  token ApiKey\n" + Slice + "      readmodel Row\n        id String\n        entries Entry[]\n      event Recorded\n        id String\n        token ApiKey\n      projection Keys => Row\n        children entries identified by id\n          from Recorded\n")
+            .Single().Message.ShouldContain("into read model property 'Row.entries.token'");
+
+    [Fact]
+    void should_not_warn_for_a_plain_concept() => Findings(Model("Label", "Label", "          token = token\n")).ShouldBeEmpty();
+
+    [Fact]
+    void should_not_warn_for_a_personal_concept_that_is_not_secret() => Findings(Model("Email", "Email", "          token = token\n")).ShouldBeEmpty();
+
+    [Fact]
+    void should_not_warn_when_automap_is_off_and_nothing_maps_the_secret() =>
+        Findings(Model("ApiKey", "ApiKey", string.Empty).Replace("      projection Keys => Row\n", "      projection Keys => Row\n        no automap\n", StringComparison.Ordinal)).ShouldBeEmpty();
+
+    [Theory]
+    [InlineData("$eventSourceId")]
+    [InlineData("\"redacted\"")]
+    void should_not_warn_for_metadata_or_a_literal(string source) =>
+        Findings(Model("ApiKey", "ApiKey", $"          token = {source}\n").Replace("        token ApiKey\n      projection", "        other ApiKey\n      projection", StringComparison.Ordinal)).ShouldBeEmpty();
+
+    [Fact]
+    void should_not_warn_without_a_projection_or_reducer() =>
+        Findings(Concepts + Slice + "      readmodel Row\n        id String\n        token ApiKey\n").ShouldBeEmpty();
+
+    static string Model(string eventType, string modelType, string mappings) =>
+        Concepts + Slice +
+        $"      readmodel Row\n        id String\n        token {modelType}\n      event Recorded\n        token {eventType}\n" +
+        "      projection Keys => Row\n        from Recorded\n" + mappings;
+
+    static Diagnostic[] Findings(string source)
+    {
+        var compiler = new ScreenplayCompiler();
+        compiler.Parse(source).Success.ShouldBeTrue();
+        return [.. compiler.Compile(source).Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.SecretConceptProjected)];
+    }
+}
