@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, it } from 'vitest';
+import { compileApplication } from '../Files/PlayApplicationAssembly';
 import { parse } from '../ScreenplayCompiler';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
 
@@ -37,21 +38,32 @@ describe('when parsing sinks', () => {
         parse('sink People for graphs\n' + graph + '        sink People\n        node A\n          id PersonId key').value.modules[0].features[0].slices[0].graphs![0].sink!.should.equal('People');
     });
 
-    it.each([['sink String', 'String'], ['sink Money[]', 'Money'], ['sink Money optional', 'Money'], ['@sink Money', 'Money']])('should keep a property named sink for %s', (line, type) => {
-        const parsed = model(prefix + `        ${line}`);
+    it.each([['', 'sink Customer', 'Customer'], ['sink Reporting for readmodels\n', 'sink Customer', 'Customer'], ['sink Reporting for readmodels\n', 'sink String', 'String'],
+        ['sink Reporting for readmodels\n', 'sink Reporting[]', 'Reporting'], ['sink Reporting for readmodels\n', 'sink Reporting optional', 'Reporting'], ['sink Reporting for readmodels\n', '@sink Reporting', 'Reporting']])('should keep a property named sink that names no declared sink (%s%s)', (declarations, line, type) => {
+        const parsed = model(declarations + prefix + `        ${line}`);
         Object.hasOwn(parsed, 'sink').should.equal(false);
         parsed.properties[0].name.should.equal('sink');
         parsed.properties[0].type.name.should.equal(type);
     });
 
+    it('should resolve a directive against a sink another file declares', () => {
+        const compilation = compileApplication(new Map([['application.play', 'sink Reporting for readmodels\nimport "module.play"\n'], ['module.play', prefix + '        sink Reporting\n        id String']]), ['application.play']);
+        const readModel = compilation.value.modules[0].features[0].slices[0].readModels[0];
+        readModel.sink!.should.equal('Reporting');
+        readModel.properties.map(property => property.name).should.deep.equal(['id']);
+        compilation.diagnostics.filter(diagnostic => diagnostic.severity !== 'information').should.deep.equal([]);
+    });
+
     it('should report each sink diagnostic', () => {
         codes('sink Reporting').should.deep.equal(['PLAY0916@1']);
         codes('sink A for readmodels\nsink a for readmodels\n' + prefix + '        sink A').should.deep.equal(['PLAY0917@2']);
-        codes(prefix + '        sink Reporting').should.deep.equal(['PLAY0918@5']);
+        codes(graph + '        sink People\n        node A\n          id PersonId key').should.deep.equal(['PLAY0918@6']);
+        codes('sink Reporting for readmodels\n' + prefix + '        sink reporting').should.deep.equal(['PLAY0924@6', 'PLAY0923@1']);
         codes('sink People for graphs\n' + prefix + '        sink People').should.deep.equal(['PLAY0919@6']);
         codes('sink Reporting for readmodels\n' + graph.replace('graph G\n', 'graph G\n        sink Reporting\n') + '        node A\n          id PersonId key').should.deep.equal(['PLAY0919@7']);
         codes('sink Reporting for readmodels\n' + prefix + '        passive\n        sink Reporting').should.deep.equal(['PLAY0920@7']);
-        codes('sink Reporting for readmodels\n' + prefix + '        sink Reporting\n        sink Archive').should.deep.equal(['PLAY0921@7']);
+        codes('sink Reporting for readmodels\nsink Archive for readmodels\n' + prefix + '        sink Reporting\n        sink Archive').should.deep.equal(['PLAY0921@8', 'PLAY0923@2']);
+        codes('sink Reporting for readmodels\n' + prefix + '        sink Reporting\n        sink Customer').should.deep.equal([]);
         codes('sink Reporting for readmodels\n' + prefix + '        sink Reporting\n        sink Reporting').should.deep.equal(['PLAY0922@7']);
         codes('sink Reporting for readmodels\n' + prefix + '        id String').should.deep.equal(['PLAY0923@1']);
     });

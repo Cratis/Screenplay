@@ -571,4 +571,5 @@ export const DiagnosticCodes = {
     ConflictingSinkDirective: 'PLAY0921',
     RepeatedSinkDirective: 'PLAY0922',
     UnusedSink: 'PLAY0923',
+    SinkNameCaseMismatch: 'PLAY0924',
 } as const;

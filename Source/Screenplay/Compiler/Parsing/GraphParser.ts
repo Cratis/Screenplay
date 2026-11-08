@@ -11,7 +11,7 @@ import { isFileDirective } from './FileReferences';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProperty } from './PropertyLineParser';
-import { parseSinkDirective, SinkDirectiveState, sinkKeyword } from './SinkParser';
+import { parseSinkDirective, SinkDirectiveState, sinkKeyword } from './Sinks';
 import { locationOf, SourceLine } from './SourceLine';
 
 const graphHeader = pattern('^graph\\s+(@?[A-Za-z_]\\w*)$');

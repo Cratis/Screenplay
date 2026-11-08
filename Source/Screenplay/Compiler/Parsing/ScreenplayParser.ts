@@ -17,7 +17,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
 import { PersonaSyntax, StickyNoteSyntax, UserSyntax } from '../Syntax/Authorization';
 import { SinkSyntax } from '../Syntax/Sinks';
-import { parseSinkDeclaration, sinkKeyword } from './SinkParser';
+import { parseSinkDeclaration, resolveSinks, sinkKeyword } from './Sinks';
 import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { TimeZoneSyntax } from '../Syntax/Calendar';
@@ -317,7 +317,7 @@ function buildApplication(context: ParserContext, state: RootState): Application
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
     const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, sinks, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
+    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start }, context);
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
