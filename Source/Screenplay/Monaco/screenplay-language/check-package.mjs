@@ -47,7 +47,9 @@ export function checkRuntimeBudget(files) {
     // Raised from 1_100_000 after reviewing the breakdown: the design system construct and the extended
     // theme added about 15 KB (compiler parsing and validation, design completions, keyword docs); no
     // dependency was bundled and no module is duplicated.
-    if (runtimeBytes > 1_150_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
+    // Raised from 1_150_000 after reviewing the breakdown: screen visuals and slice placements added about
+    // 4 KB (compiler parsing and validation, completion items, keyword docs); no dependency was bundled.
+    if (runtimeBytes > 1_175_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
     return { modules, runtimeBytes };
 }
 

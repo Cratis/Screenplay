@@ -172,6 +172,8 @@ export const typeItems: CompletionEntry[] = [
 export const sliceItems: CompletionEntry[] = [
     purposeReferenceItem,
     documentationItem,
+    { label: 'shows event', insertText: 'shows event ${1:EventName}', documentation: 'A linked copy of an event declared in another slice.' },
+    { label: 'shows readmodel', insertText: 'shows readmodel ${1:ReadModelName}', documentation: 'A linked copy of a read model declared in another slice.' },
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
@@ -435,6 +437,9 @@ export const screenItems: CompletionEntry[] = [
     { label: 'table', insertText: 'table ${1:name}\n    column ${2:property} label "${3:text}"', documentation: 'A table widget over a read model or collection.' },
     { label: 'summary', insertText: 'summary ${1:ReadModel}\n    field ${2:property} label "${3:text}"', documentation: 'A summary widget showing labeled fields.' },
     { label: 'title', insertText: 'title "${1:text}"', documentation: 'The title of the screen or section.' },
+    { label: 'sketch', insertText: 'sketch ${1:Screens/name.sketch.json}', documentation: 'A sketch file beside the model.' },
+    { label: 'mockup', insertText: 'mockup ${1:Screens/name.html}', documentation: 'An HTML mockup page beside the model.' },
+    { label: 'image', insertText: 'image ${1:Screens/name.png}', documentation: 'An image beside the model.' },
     { label: 'fits', insertText: 'fits ${1|dialog,drawer,pane,panel,page|}', documentation: 'Where the slice\'s screen fits, in order of preference — `fits dialog, drawer, pane`.' },
     { label: 'show', insertText: 'show ${1:Screen} by ${2:param} from ${3:table}.selection', documentation: 'In a template slot: shows another screen for the row a table or component has selected.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Full external implementation — Stage uses the referenced file.' },
@@ -536,5 +541,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label.startsWith('shows ') || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
 }

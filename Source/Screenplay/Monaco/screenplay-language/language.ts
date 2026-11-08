@@ -254,6 +254,8 @@ export const clauseKeywords = [
     'stat',
     'sets',
     'shows',
+    'sketch', // Screen visuals: 'sketch|mockup|image <path>' beside the model; 'image' is also a logo kind.
+    'mockup',
     'fits', // Placement (Screenplay 6): 'fits dialog, drawer, pane', 'opens dialog|drawer|in slot <name>', 'enabled when', 'show … from <element>.selection', 'choose from query'.
     'drawer',
     'opens',

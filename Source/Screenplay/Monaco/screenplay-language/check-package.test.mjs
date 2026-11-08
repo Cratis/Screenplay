@@ -31,8 +31,8 @@ test('preserves the total runtime ceiling even when individual files fit', () =>
     assert.throws(() => checkRuntimeBudget([
         { path: 'dist/bundles/index.js', size: 500_000 },
         { path: 'dist/bundles/compiler/first.js', size: 500_000 },
-        { path: 'dist/bundles/compiler/second.js', size: 150_001 },
-    ]), /Monaco runtime bundle budget exceeded: 1150001 bytes/);
+        { path: 'dist/bundles/compiler/second.js', size: 175_001 },
+    ]), /Monaco runtime bundle budget exceeded: 1175001 bytes/);
 });
 
 test('reports modules largest first at the total runtime boundary', () => {
@@ -40,9 +40,9 @@ test('reports modules largest first at the total runtime boundary', () => {
         { path: 'dist/bundles/small.js', size: 100_000 },
         { path: 'dist/bundles/large.js', size: 500_000 },
         { path: 'dist/bundles/medium.js', size: 500_000 },
-        { path: 'dist/bundles/extra.js', size: 50_000 },
+        { path: 'dist/bundles/extra.js', size: 75_000 },
     ]);
-    assert.equal(result.runtimeBytes, 1_150_000);
+    assert.equal(result.runtimeBytes, 1_175_000);
     assert.equal(result.modules[0].path, 'dist/bundles/large.js');
 });
 

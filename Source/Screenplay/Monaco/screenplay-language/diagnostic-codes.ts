@@ -341,6 +341,11 @@ export const diagnosticCodes = {
     repeatedSinkDirective: 'PLAY0937',
     unusedSink: 'PLAY0938',
     sinkNameCaseMismatch: 'PLAY0939',
+    invalidScreenVisual: 'PLAY0950',
+    unexpectedScreenVisualFile: 'PLAY0951',
+    invalidSlicePlacement: 'PLAY0953',
+    unknownPlacedElement: 'PLAY0954',
+    redundantSlicePlacement: 'PLAY0955',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
