@@ -135,6 +135,21 @@ public static class CliCommandCatalog
     /// <summary>Gets the stored contract equality gate.</summary>
     public static CliCommand BaselineCheck { get; } = new("baseline check", "<root>", []);
 
+    /// <summary>Gets the executable model export format option.</summary>
+    public static CliOption ExportFormat { get; } = new("--format", "esm");
+
+    /// <summary>Gets the executable model export command.</summary>
+    public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output]);
+
+    /// <summary>Gets the model comparison command.</summary>
+    public static CliCommand Diff { get; } = new("diff", "<before> <after>", [Format]);
+
+    /// <summary>Gets the declaration kind option that disambiguates a rename.</summary>
+    public static CliOption Kind { get; } = new("--kind", "<kind>");
+
+    /// <summary>Gets the identity-preserving rename command.</summary>
+    public static CliCommand Rename { get; } = new("rename", "<address> <new-name> [<folder>]", [Kind]);
+
     /// <summary>
     /// Gets the help command.
     /// </summary>
@@ -148,7 +163,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

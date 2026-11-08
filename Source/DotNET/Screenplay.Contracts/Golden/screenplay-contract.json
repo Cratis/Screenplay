@@ -64305,6 +64305,32 @@
       "aliases": []
     },
     {
+      "name": "export",
+      "usage": "screenplay export [\u003Cfile.play|folder\u003E] [--format esm] [--scope \u003CModule\u003E[.\u003CFeature\u003E[.\u003CSlice\u003E]]] [--output \u003Cpath\u003E]",
+      "options": [
+        "--format",
+        "--output",
+        "--scope"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "diff",
+      "usage": "screenplay diff \u003Cbefore\u003E \u003Cafter\u003E [--format text|json]",
+      "options": [
+        "--format"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "rename",
+      "usage": "screenplay rename \u003Caddress\u003E \u003Cnew-name\u003E [\u003Cfolder\u003E] [--kind \u003Ckind\u003E]",
+      "options": [
+        "--kind"
+      ],
+      "aliases": []
+    },
+    {
       "name": "help",
       "usage": "screenplay help",
       "options": [],

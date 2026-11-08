@@ -73,16 +73,7 @@ static class ModelTest
 
         try
         {
-            var snapshot = McpSnapshot.Compile(target, isFile);
-
-            // The compiler owns file/import discovery. Only its selected source set enters execution.
-            var directory = isFile ? Path.GetDirectoryName(Path.GetFullPath(target))! : Path.GetFullPath(target);
-            var documents = McpTestDocuments.From(snapshot, directory, out var rootDirectory);
-            var name = new DirectoryInfo(rootDirectory).Name;
-            var identity = ApplicationIdentity.Create(name);
-            var workspace = documents.Length == 0
-                ? ScreenplayWorkspace.CreateEmpty(identity, name)
-                : ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity));
+            var workspace = ModelSource.Load(target, tolerateStaleIdentities: true).Workspace;
             var report = McpSpecificationExecution.Run(workspace, filter);
             if (format == "json")
             {
@@ -100,7 +91,7 @@ static class ModelTest
             error.WriteLine(failure.Message);
             return 2;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidWorkspaceDocument or InvalidScreenplayWorkspace or InvalidSemanticContract or InvalidPortablePlayPath)
+        catch (Exception exception) when (ModelSource.IsReadFailure(exception))
         {
             error.WriteLine($"Could not test '{target}': {exception.Message}");
             return 2;
