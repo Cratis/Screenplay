@@ -65,7 +65,7 @@ Run `screenplay environment ./specifications` to list the keys a model needs fro
 ## Export, compare and rename from scripts
 
 - `screenplay export ./specifications --output model.esm.json` writes the canonical executable model; `--scope Billing.Invoices` keeps one module, feature or slice.
-- `screenplay diff ./before ./after --format json` compares two model versions: added, removed, renamed and moved declarations, member, event contract and specification changes.
+- `screenplay diff ./before ./after --format json` compares two model versions: added, removed, renamed and moved declarations, member, event contract and specification changes, grouped by slice with the slices that depend on each change.
 - `screenplay rename Billing.Invoices.Send.InvoiceSent InvoiceDispatched ./specifications` renames a declaration and keeps its semantic identity.
 
 These commands, and `screenplay test`, use `.screenplay/identities.json` when the folder has one, so they report the same identities as the MCP server.
