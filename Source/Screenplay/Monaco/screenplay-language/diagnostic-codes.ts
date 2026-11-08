@@ -325,6 +325,7 @@ export const diagnosticCodes = {
     conflictingSinkDirective: 'PLAY0921',
     repeatedSinkDirective: 'PLAY0922',
     unusedSink: 'PLAY0923',
+    sinkNameCaseMismatch: 'PLAY0924',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
