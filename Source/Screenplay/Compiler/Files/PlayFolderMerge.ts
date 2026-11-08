@@ -3,6 +3,7 @@
 
 import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
+import { validateDesignSystem } from '../Parsing/DesignSystemValidator';
 import { validateApplicationHandlers } from '../Parsing/CommandHandlerValidator';
 import { ParserContext } from '../Parsing/ParserContext';
 import { LineReader } from '../Parsing/LineReader';
@@ -52,6 +53,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const contexts = applications.flatMap(application => application.context == null ? [] : [application.context]);
     for (const extra of contexts.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
         `The folder already declares a context block in '${describe(contexts[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
+    const designSystems = applications.flatMap(application => application.designSystems ?? []);
+    for (const extra of designSystems.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
+        `The folder already declares a design system in '${describe(designSystems[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
     const readModes = applications.filter(application => application.commandReadMode != null);
     for (const extra of readModes.slice(1)) diagnostics.push(error(DiagnosticCodes.InvalidCommandReadsDeclaration,
         "Declare 'command reads protected' once at the application root.", extra.location));
@@ -101,6 +105,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         fileImports: applications.flatMap(application => application.fileImports),
         ...presentOnly('stickyNotes', applications.flatMap(application => application.stickyNotes ?? [])),
         ...presentOnly('exposures', applications.flatMap(application => application.exposures ?? [])),
+        ...presentOnly('themes', declaredInOneFile(applications.flatMap(application => application.themes ?? []), 'theme', diagnostics)),
+        ...presentOnly('designSystems', designSystems.slice(0, 1)),
+        ...presentOnly('designProfiles', applications.flatMap(application => application.designProfiles ?? [])),
         ...presentOnly('instanceContributions', applications.flatMap(application => application.instanceContributions ?? [])),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
@@ -108,6 +115,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const identityContext = new ParserContext(new LineReader([]));
     validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
+    validateDesignSystem(value, identityContext);
     diagnostics.push(...identityContext.diagnostics);
     const documentDiagnostics = documents.flatMap(document => document.diagnostics).filter(diagnostic =>
         diagnostic.code !== DiagnosticCodes.DuplicateDeclaration || !droppedPolicies.some(location => sameLocation(location, diagnostic.location)));

@@ -16,7 +16,7 @@ export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 const isObject = (value: unknown): value is object => typeof value === 'object' && value !== null;
-const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped', 'declaredTriggers', 'directiveLocations']);
+const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped', 'declaredTriggers', 'designProfiles', 'directiveLocations']);
 const skippedNumberMembers = new Set(['location', 'targetLocation', 'usesLocation']);
 const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
 

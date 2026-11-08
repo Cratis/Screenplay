@@ -5631,6 +5631,15 @@
     }
   ],
   "systems": [],
+  "themes": [
+    {
+      "kind": "ThemeSyntax",
+      "compatibleWith": [
+        "Cratis.Components"
+      ],
+      "name": "Nordic"
+    }
+  ],
   "types": [
     {
       "kind": "TypeSyntax",
