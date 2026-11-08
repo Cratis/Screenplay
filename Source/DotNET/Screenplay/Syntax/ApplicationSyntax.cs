@@ -116,6 +116,11 @@ public record ApplicationSyntax(
     public IEnumerable<UserSyntax> Users { get; init; } = [];
 
     /// <summary>
+    /// Gets the storylines: named, ordered paths through the model, such as user journeys. Authoring metadata, never part of the executable model.
+    /// </summary>
+    public IEnumerable<StorylineSyntax> Storylines { get; init; } = [];
+
+    /// <summary>
     /// Gets the named sinks read models and graphs may choose with a <c>sink</c> directive. Realization metadata, never part
     /// of the executable model; a read model or graph that names no sink uses its kind's implicit default sink.
     /// </summary>

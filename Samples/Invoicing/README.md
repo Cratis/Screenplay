@@ -20,6 +20,10 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 `sink Reporting for readmodels` declares a logical place to store read models, and `InvoiceLineReportReadModel` chooses it with `sink Reporting`. Its projection writes there and its query reads from there. Every other read model names no sink, so it uses the default sink. The deployment maps `Reporting` to real storage; the model never names a database. Like `passive`, the choice is realization metadata outside portable ESM.
 
+## A storyline
+
+`storyline GetPaid` names the path an invoice takes from draft to payment: the module and feature it starts in, then a screen, commands, a slice, events, a query, a read model and a reaction, in the order a reader should walk them. Each step names one element by kind, so renaming or moving that element rewrites the step. A storyline is authoring metadata for review and boards; it never changes what the model executes. See [Storylines](../../Documentation/screenplay/storylines.md).
+
 ## Sketches, mockups and linked copies
 
 The `InvoiceList` screen carries the material it was designed from: `sketch Screens/invoice-list.sketch.svg`, the HTML page `mockup Screens/invoice-list.html` and the screenshot `image Screens/invoice-list.png`, all kept in [`Screens`](Screens) beside the model. `CancelInvoice` shows `InvoiceRegistered` and `InvoiceListReadModel` with `shows event` and `shows readmodel`, so the timeline draws them again where cancellation reads them, as linked copies of their one declaration.
@@ -137,6 +141,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Construct | Where |
 | --- | --- |
 | `domain` with a qualified name, `import` | top of the file |
+| `storyline` with a title, a description, step notes and every step kind | GetPaid, at the end of the file |
 | `identity` with claim, keyed query, inline code and file sources | Caller metadata next to authentication; the details are not used in executable clauses pending #600 |
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |

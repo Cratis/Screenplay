@@ -1755,6 +1755,17 @@ Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers re
 | `PLAY0938` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
 | `PLAY0939` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
 
+## Storylines
+
+A `storyline` names an ordered path through the model. See [Storylines](storylines.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0940` | Error | A `storyline` declaration is not `storyline <Name> ["<title>"]`. |
+| `PLAY0941` | Error | A line in a storyline is not `<kind> <reference> ["<note>"]` with kind `module`, `feature`, `slice`, `command`, `event`, `readmodel`, `query`, `screen` or `reaction`, nor `description "<text>"`; or a step has a line nested under it. |
+| `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
+| `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
+
 ## Screen visuals and slice placements
 
 Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#sketches-mockups-and-images), and the linked copies a slice shows, see [Slices](slices.md#show-an-element-in-more-than-one-slice). Both compilers report `PLAY0950`, `PLAY0951` and `PLAY0953` to `PLAY0955`. `PLAY0952` needs the files beside the model, so it is reported where a model root is opened: the MCP server, `open-workspace` and the tools built on them.

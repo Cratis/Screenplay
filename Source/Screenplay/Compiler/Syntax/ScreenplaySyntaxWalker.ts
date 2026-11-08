@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
 import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
@@ -70,6 +71,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
         (syntax.users ?? []).forEach(node => this.visitUser(node));
+        (syntax.storylines ?? []).forEach(node => this.visitStoryline(node));
         (syntax.sinks ?? []).forEach(node => this.visitSink(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
         syntax.stickyNotes?.forEach(node => this.visitStickyNote(node));
@@ -196,6 +198,15 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitUser(syntax: UserSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitStoryline(syntax: StorylineSyntax): void {
+        this.visitNode(syntax);
+        syntax.steps.forEach(step => this.visitStorylineStep(step));
+    }
+
+    visitStorylineStep(syntax: StorylineStepSyntax): void {
         this.visitNode(syntax);
     }
 

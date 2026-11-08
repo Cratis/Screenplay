@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineSyntax } from '../Syntax/Storylines';
 import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
 import { validateDesignSystem } from '../Parsing/DesignSystemValidator';
@@ -74,6 +75,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const modules = mergeModules(applications.flatMap(application => application.modules), diagnostics);
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
     const users = declaredInOneFile<UserSyntax>(applications.flatMap(application => application.users ?? []), 'user', diagnostics);
+    const storylines = declaredInOneFile<StorylineSyntax>(applications.flatMap(application => application.storylines ?? []), 'storyline', diagnostics);
     const declaredPolicies = applications.flatMap(application => application.policies ?? []);
     const policies = declaredInOneFile(declaredPolicies, 'policy', diagnostics);
     // Like the C# merge, a policy dropped as repeated across files is not also reported as repeated within its file.
@@ -100,6 +102,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         modules,
         personas,
         ...presentOnly('users', users),
+        ...presentOnly('storylines', storylines),
         ...presentOnly('sinks', applications.flatMap(application => application.sinks ?? [])),
         policies,
         seeds: applications.flatMap(application => application.seeds ?? []),
@@ -126,7 +129,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.storylines?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

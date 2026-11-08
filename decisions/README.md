@@ -136,3 +136,5 @@
 | [0144](0144-placement-hooks-and-bindings-screenplay-6.md) | A slice's screen says where it fits, and a hook opens or runs it (Screenplay 6) | proposed | none | — | — |
 | [0145](0145-design-system-and-themes-screenplay-6.md) | One design system per application, implemented by themes (Screenplay 6) | proposed | none | — | — |
 | [0146](0146-sinks-are-realization-metadata.md) | Named sinks for read models and graphs are realization metadata outside portable ESM | accepted | none | 2026-11-08 | Accepted Screenplay#1182 design (delegated) |
+| [0147](0147-stack-neutral-api-and-ui-contracts.md) | The HTTP API and the screens are stack-neutral contracts derived beside the executable model | proposed | none | — | — |
+| [0148](0148-storylines-and-two-way-value-lineage.md) | Name ordered paths through a model with `storyline`, and trace a value's lineage both ways from any property or screen field | accepted | none | 2026-11-09 | Accepted Screenplay#1189 and Screenplay#1190 (delegated) |

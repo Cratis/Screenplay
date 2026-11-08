@@ -192,6 +192,8 @@ internal static class SyntaxKinds
         typeof(PerformerSyntax),
         typeof(PersonaSyntax),
         typeof(UserSyntax),
+        typeof(StorylineSyntax),
+        typeof(StorylineStepSyntax),
         typeof(SinkSyntax),
         typeof(StickyNoteSyntax),
         typeof(PlaceSyntax),

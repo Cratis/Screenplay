@@ -9,6 +9,8 @@ A Screenplay screen connects the data a user needs to see with the actions they 
 
 Start with a query and the commands the user needs. Add a template when you need to place that content in named regions; use [forms](forms.md) for command input rather than redeclaring command properties on the screen.
 
+To build the user interface on a stack that does not read Scene, export the [UI contract](ui-contract.md): every screen's data, actions, navigation and layout as stack-neutral JSON.
+
 ## The structure a screen fills
 
 A template gives screens a shared structure. It declares named slots, such as `sidebar` and `main`, and each screen supplies the content for those slots. Declare the [screen template or dialog template](templates.md) on the module:

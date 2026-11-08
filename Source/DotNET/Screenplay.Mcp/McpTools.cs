@@ -159,6 +159,7 @@ sealed class McpTools
             "find-references" => McpDependencyQueries.Legacy(snapshot, arguments),
             "recommend-layout" => McpLayoutRecommendation.Describe(snapshot, documents),
             "ui-profiles" => McpUiProfiles.Read(snapshot, arguments),
+            "list-storylines" => McpStorylines.Read(snapshot, arguments),
             "find-fixtures" => McpFixtureQueries.Values(
                 snapshot,
                 McpJson.OptionalString(arguments, "specification"),

@@ -19596,6 +19596,82 @@
       "y": 150
     }
   ],
+  "storylines": [
+    {
+      "kind": "StorylineSyntax",
+      "description": "The path a manager and an accountant walk to turn a draft into money in the bank",
+      "name": "GetPaid",
+      "steps": [
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Module",
+          "note": null,
+          "target": "Invoicing"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Feature",
+          "note": null,
+          "target": "InvoiceManagement"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Screen",
+          "note": "The manager starts a draft",
+          "target": "StartInvoiceDraftScreen"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Command",
+          "note": null,
+          "target": "StartInvoiceDraft"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Slice",
+          "note": "The draft becomes an invoice",
+          "target": "RegisterInvoice"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Event",
+          "note": null,
+          "target": "InvoiceRegistered"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Query",
+          "note": null,
+          "target": "GetInvoiceBalance"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "ReadModel",
+          "note": null,
+          "target": "InvoiceBalanceReadModel"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Reaction",
+          "note": "A late invoice gets chased",
+          "target": "OverdueChaser"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Command",
+          "note": "The customer pays",
+          "target": "RecordPayment"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Event",
+          "note": null,
+          "target": "PaymentRecorded"
+        }
+      ],
+      "title": "An invoice from draft to payment"
+    }
+  ],
   "systems": [],
   "themes": [
     {

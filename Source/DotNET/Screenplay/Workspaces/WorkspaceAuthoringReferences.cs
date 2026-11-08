@@ -321,6 +321,15 @@ static class WorkspaceAuthoringReferences
 
     static ReferenceOccurrence Occurrence(WorkspaceReferenceMember reference, WorkspaceSyntaxIndex index, Dictionary<SemanticAddress, SemanticAddress> migrations)
     {
+        // A storyline step resolves from the application root wherever it stands, so its position carries no meaning:
+        // steps correspond by kind and text, which lets a storyline be reordered, renamed or removed without rebinding.
+        if (reference.Entry.Node is StorylineStepSyntax step)
+        {
+            var ordinal = index.Entries.TakeWhile(entry => !ReferenceEquals(entry, reference.Entry))
+                .Count(entry => entry.Node is StorylineStepSyntax other && other.ElementKind == step.ElementKind && other.Target == step.Target);
+            return new(null, default, $"storyline-step/{step.ElementKind}/{step.Target}/{ordinal}");
+        }
+
         var owner = reference.Entry;
         while (owner.Address is null && owner.Parent is { } parent)
         {

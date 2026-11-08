@@ -135,10 +135,10 @@ public static class CliCommandCatalog
     /// <summary>Gets the stored contract equality gate.</summary>
     public static CliCommand BaselineCheck { get; } = new("baseline check", "<root>", []);
 
-    /// <summary>Gets the executable model export format option.</summary>
-    public static CliOption ExportFormat { get; } = new("--format", "esm");
+    /// <summary>Gets the export format option: the executable model, its OpenAPI description or its UI contract.</summary>
+    public static CliOption ExportFormat { get; } = new("--format", "esm|openapi|ui");
 
-    /// <summary>Gets the executable model export command.</summary>
+    /// <summary>Gets the export command for the executable model, its HTTP API description and its UI contract.</summary>
     public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output]);
 
     /// <summary>Gets the model comparison command.</summary>
@@ -149,6 +149,12 @@ public static class CliCommandCatalog
 
     /// <summary>Gets the identity-preserving rename command.</summary>
     public static CliCommand Rename { get; } = new("rename", "<address> <new-name> [<folder>]", [Kind]);
+
+    /// <summary>Gets the lineage direction option.</summary>
+    public static CliOption LineageDirection { get; } = new("--direction", "upstream|downstream|both");
+
+    /// <summary>Gets the value lineage trace command.</summary>
+    public static CliCommand Lineage { get; } = new("lineage", "<address> [<file.play|folder>]", [LineageDirection, Format]);
 
     /// <summary>
     /// Gets the help command.
@@ -163,7 +169,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Lineage, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

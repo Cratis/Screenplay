@@ -4474,6 +4474,37 @@
             ]
         },
         {
+            "name": "invalid storyline declaration",
+            "source": [
+                "storyline 9Bad"
+            ],
+            "diagnostics": [
+                "PLAY0940@1"
+            ]
+        },
+        {
+            "name": "invalid storyline step",
+            "source": [
+                "storyline Journey",
+                "  aggregate Returns"
+            ],
+            "diagnostics": [
+                "PLAY0941@2"
+            ]
+        },
+        {
+            "name": "storyline step with a nested line",
+            "source": [
+                "module Returns",
+                "storyline Journey",
+                "  module Returns",
+                "    feature Requests"
+            ],
+            "diagnostics": [
+                "PLAY0941@4"
+            ]
+        },
+        {
             "name": "invalid user declaration",
             "source": [
                 "persona Clerk",

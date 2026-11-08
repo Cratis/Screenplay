@@ -494,7 +494,7 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
 
-## Export the executable model
+## Export the executable model, its HTTP API and its UI contract
 
 Write the canonical executable semantic model (ESM) of a model, for a builder, a script or a CI step:
 
@@ -503,9 +503,18 @@ screenplay export path/to/screenplays --output model.esm.json
 screenplay export path/to/screenplays --scope Billing.Invoices.Send
 ```
 
-The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory, and `--format esm` is the only format. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
+The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory and `--format` to `esm`. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
 
 `--scope <Module>[.<Feature>...][.<Slice>]` keeps one module, feature or slice and drops every other module, feature and slice. Application-wide declarations (concepts, types, policies, triggers, event sources, lifecycles and graphs) stay, so references from the selected slices still resolve. The excerpt's `revision` identifies the excerpt, not the whole model. From .NET, use `ExecutableSemanticModelScope.Select(model, scope)`.
+
+Two more formats describe the same model for builders on any stack:
+
+```bash
+screenplay export path/to/screenplays --format openapi --output api.json
+screenplay export path/to/screenplays --format ui --output screens.json
+```
+
+`--format openapi` writes the [OpenAPI 3.1 description](api-description.md) of every command and query: route, method, request and response shapes, authorization and observable queries. It needs the executable model, like `esm`, and `--scope` narrows it the same way. `--format ui` writes the [UI contract](ui-contract.md) of every screen: data, actions, navigation, layout and the optional Scene layer. It needs only the sources; when the model has no executable model the contract carries no identities or routes, and standard error says so while the exit code stays `0`. With `--scope`, the UI contract keeps the screens of that module, feature or slice.
 
 | Exit code | Meaning |
 |---|---|
@@ -527,6 +536,30 @@ The command runs `ModelComparison.Compare`, the comparison the library offers, a
 Declarations are matched by persisted identity when both folders hold `.screenplay/identities.json` for the same application, so a rename or a move reads as one. Otherwise they are matched by address, and a rename reads as a removal plus an addition; the report says which matching it used and lists what it could not compare.
 
 `--format json` writes one object: `before` and `after` (path, source revision, whether persisted identities were used, model revision) and `difference`, the `ModelDifference` with camelCase names and enumerations as strings; `difference.slices` holds the per-slice summary. The command exits `0` when it compared the versions and `2` when it could not run, including when the two folders hold identities for different applications.
+
+## Trace a value's lineage
+
+`screenplay lineage` prints where one value comes from and where it goes: the same hop tree the MCP `trace-lineage` tool pages, all at once. The address names a command, event or read-model property (the owner's address and the member name) or a screen field (the screen's or form's address and the property it binds).
+
+```bash
+screenplay lineage Lending.Catalog.AddBook.AddBook.title Samples/Library
+```
+
+```text
+Lineage of Lending.Catalog.AddBook.AddBook.title (Property), both
+command-property Lending.Catalog.AddBook.AddBook.title 'title BookTitle' (library.play:78:9)
+  -> production-mapping Lending.Catalog.AddBook.AddBook 'title = title' (library.play:90:11)
+    -> event-property Lending.Catalog.AddBook.BookAdded.title 'title BookTitle' (library.play:95:9)
+      -> projection-mapping Lending.Catalog.BookCatalog.BookCatalog 'title = title' (library.play:164:11)
+        -> read-model-property Lending.Catalog.BookCatalog.CatalogEntry.title 'title BookTitle' (library.play:150:9)
+          -> query Lending.Catalog.BookCatalog.AllBooks 'query AllBooks' (library.play:158:36)
+          -> query Lending.Catalog.BookCatalog.BookById 'query BookById' (library.play:154:25)
+          -> screen-display Lending.Catalog.BookCatalog.BookCatalog 'column title' (library.play:176:11)
+  <- screen-input Lending.AddBookInput 'field title' (library.play:57:5)
+9 hop(s), complete.
+```
+
+`->` is where the value goes and `<-` is where it comes from. A break (a missing mapping, an ambiguous name, code the trace cannot read) is shown in brackets with its reason. `--direction upstream|downstream|both` narrows the trace and `--format json` prints every hop with the fields described in [field lineage](mcp/reference.md#field-lineage). The command exits 0 for a complete trace, 1 when it has breaks and 2 when it cannot run, for example when the address names nothing.
 
 ## Rename a declaration and keep its identity
 
