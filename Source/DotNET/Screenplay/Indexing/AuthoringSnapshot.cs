@@ -7,6 +7,7 @@ using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -156,6 +157,10 @@ sealed class AuthoringSnapshot : IPlayFiles
         index.SourceConfidence = new(physical.SelectMany(document => (document.Result.Value?.EventSources ?? []).Select(source => (source, document.Resolved))), complete);
         var applications = _compiler.Documents.Where(document => document.Path is not null && resolvedPaths.Contains(document.Path))
             .Select(document => document.Result.Value).OfType<ApplicationSyntax>().ToArray();
+
+        // A read model's 'sink <Name>' line in one file may name a sink another file declares.
+        var sinks = applications.SelectMany(application => application.Sinks).Select(sink => sink.Name).ToHashSet(StringComparer.Ordinal);
+        applications = [.. applications.Select(application => SinkResolution.Resolve(application, sinks, new ParserContext(new([]))))];
 
         // Preserve physical slice ownership and all candidates, including declarations that a failed
         // merge cannot select. Do not initialize readiness from just the first file or merged owners.

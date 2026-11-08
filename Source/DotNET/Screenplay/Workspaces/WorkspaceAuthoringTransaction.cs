@@ -270,9 +270,11 @@ sealed class WorkspaceAuthoringTransaction(
         // Printing uses the original placement to identify authored tokens. Structural validation waits
         // until all source edits and document moves have settled the final import placements.
         var intendedDocuments = new Dictionary<DocumentId, ApplicationSyntax>();
+        var applied = edits.Apply().ToList();
+        var sinks = WorkspaceSinks.For(index, applied.Select(edit => ((DocumentId?)edit.Key, edit.Value)).Concat(replacements.Select(replacement => ((DocumentId?)replacement.Document, replacement.Syntax))).Concat(creations.Select(creation => ((DocumentId?)null, creation.Syntax))));
 
         // Every handle, expectation, typed slot, overlap and original anchor has now been validated.
-        foreach (var (id, syntax) in edits.Apply())
+        foreach (var (id, syntax) in applied)
         {
             if (replacements.Exists(replacement => replacement.Document == id))
             {
@@ -281,14 +283,14 @@ sealed class WorkspaceAuthoringTransaction(
 
             var document = candidates[id];
             intendedDocuments[id] = syntax;
-            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false, candidates: index.StreamCandidates);
+            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false, candidates: index.StreamCandidates, sinks: sinks);
         }
 
         foreach (var replacement in replacements)
         {
             var document = candidates[replacement.Document];
             intendedDocuments[document.Id] = replacement.Syntax;
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false, candidates: index.StreamCandidates, sourceWitness: replacement.SourceWitness);
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false, candidates: index.StreamCandidates, sourceWitness: replacement.SourceWitness, sinks: sinks);
         }
 
         foreach (var creation in creations)
@@ -324,7 +326,7 @@ sealed class WorkspaceAuthoringTransaction(
         var streamCandidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         foreach (var document in ordered.Where(document => intendedDocuments.ContainsKey(document.Id)))
         {
-            WorkspaceAuthoringPrinter.Validate(document.Text, document.Path, intendedDocuments[document.Id], placements[document.Path.Value], _diagnostics, request.Formatting, streamCandidates);
+            WorkspaceAuthoringPrinter.Validate(document.Text, document.Path, intendedDocuments[document.Id], placements[document.Path.Value], _diagnostics, request.Formatting, streamCandidates, sinks.Intended);
         }
 
         var (_, merged) = PlayApplicationAssembly.Compile(compiler, texts.Keys, new InMemoryPlayDocumentSource(texts), draftAuthoring);

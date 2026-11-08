@@ -27,12 +27,13 @@ static class WorkspaceAuthoringPrinter
         PlayPlacement? placement = null,
         bool validatePlacement = true,
         CommandStreamCandidates? candidates = null,
-        string? sourceWitness = null)
+        string? sourceWitness = null,
+        WorkspaceSinks? sinks = null)
     {
         ImplementationInvariants.ValidateAuthoring(intended);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia && original is not null)
         {
-            return WorkspaceTriviaPrinter.Print(original, intended, placement, validatePlacement, candidates);
+            return WorkspaceTriviaPrinter.Print(original, intended, placement, validatePlacement, candidates, sinks);
         }
 
         if (formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments && !(formatting == WorkspaceAuthoringFormatting.PreserveExactSource && sourceWitness is not null))
@@ -77,10 +78,11 @@ static class WorkspaceAuthoringPrinter
         return printed;
     }
 
-    internal static void Validate(string text, PortablePlayPath path, ApplicationSyntax intended, PlayPlacement placement, ImmutableArray<Diagnostic>.Builder diagnostics, WorkspaceAuthoringFormatting formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, CommandStreamCandidates? candidates = null)
+    internal static void Validate(string text, PortablePlayPath path, ApplicationSyntax intended, PlayPlacement placement, ImmutableArray<Diagnostic>.Builder diagnostics, WorkspaceAuthoringFormatting formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, CommandStreamCandidates? candidates = null, IReadOnlySet<string>? sinks = null)
     {
         var compiler = new ScreenplayCompiler();
-        var parsed = candidates is null ? compiler.Parse(text, path.Value, placement) : compiler.ParseWithCandidates(text, path.Value, placement, candidates);
+        var parsed = WorkspaceSinks.Resolve(candidates is null ? compiler.Parse(text, path.Value, placement) : compiler.ParseWithCandidates(text, path.Value, placement, candidates), sinks);
+        intended = WorkspaceSinks.Resolve(intended, sinks);
         diagnostics.AddRange(parsed.Diagnostics);
         if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(intended, parsed.Value))
         {

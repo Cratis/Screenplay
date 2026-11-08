@@ -24,9 +24,20 @@ internal static class SinkResolution
     /// <param name="application">The <see cref="ApplicationSyntax"/> to resolve.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <returns>The application with each read model's directives taken out of its properties.</returns>
-    internal static ApplicationSyntax Resolve(ApplicationSyntax application, ParserContext context)
+    internal static ApplicationSyntax Resolve(ApplicationSyntax application, ParserContext context) =>
+        Resolve(application, application.Sinks.Select(sink => sink.Name).ToHashSet(StringComparer.Ordinal), context);
+
+    /// <summary>
+    /// Resolves the sink directives of every read model against sinks declared anywhere in the application, such as
+    /// the other documents of a folder a single document belongs to.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> of one document or of the whole application.</param>
+    /// <param name="declared">The names of every declared sink.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <returns>The application with each read model's directives taken out of its properties.</returns>
+    internal static ApplicationSyntax Resolve(ApplicationSyntax application, IReadOnlySet<string> declared, ParserContext context)
     {
-        var exact = application.Sinks.Select(sink => sink.Name).ToHashSet(StringComparer.Ordinal);
+        var exact = declared;
         if (exact.Count == 0) return application;
         var changed = false;
         var modules = application.Modules.Select(module =>
@@ -47,7 +58,7 @@ internal static class SinkResolution
         property.Name == SinkParser.Keyword && !property.NameWasEscaped && !property.IsIdentifier && !property.IsGenerated &&
         !property.IsSubject && !property.IsKey && !property.Type.IsCollection && !property.Type.IsOptional;
 
-    static FeatureSyntax[] Features(IEnumerable<FeatureSyntax> features, HashSet<string> exact, ParserContext context, out bool changed)
+    static FeatureSyntax[] Features(IEnumerable<FeatureSyntax> features, IReadOnlySet<string> exact, ParserContext context, out bool changed)
     {
         changed = false;
         var result = new List<FeatureSyntax>();
@@ -76,7 +87,7 @@ internal static class SinkResolution
         return [.. result];
     }
 
-    static ReadModelSyntax ReadModel(ReadModelSyntax readModel, HashSet<string> exact, ParserContext context)
+    static ReadModelSyntax ReadModel(ReadModelSyntax readModel, IReadOnlySet<string> exact, ParserContext context)
     {
         var sink = readModel.Sink;
         var properties = new List<PropertySyntax>();

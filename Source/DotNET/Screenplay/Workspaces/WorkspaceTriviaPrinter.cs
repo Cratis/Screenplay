@@ -15,11 +15,12 @@ namespace Cratis.Screenplay.Workspaces;
 
 static class WorkspaceTriviaPrinter
 {
-    internal static WorkspaceDocument Print(WorkspaceDocument original, ApplicationSyntax intended, PlayPlacement? placement = null, bool validatePlacement = true, CommandStreamCandidates? candidates = null)
+    internal static WorkspaceDocument Print(WorkspaceDocument original, ApplicationSyntax intended, PlayPlacement? placement = null, bool validatePlacement = true, CommandStreamCandidates? candidates = null, WorkspaceSinks? sinks = null)
     {
         var compiler = new ScreenplayCompiler();
-        var parsed = candidates is null ? compiler.Parse(original.Text, original.Path.Value, placement ?? PlayPlacement.Document)
-            : compiler.ParseWithCandidates(original.Text, original.Path.Value, placement ?? PlayPlacement.Document, candidates);
+        intended = WorkspaceSinks.Resolve(intended, sinks?.Intended);
+        var parsed = WorkspaceSinks.Resolve(candidates is null ? compiler.Parse(original.Text, original.Path.Value, placement ?? PlayPlacement.Document)
+            : compiler.ParseWithCandidates(original.Text, original.Path.Value, placement ?? PlayPlacement.Document, candidates), sinks?.Original);
         if (!parsed.Success || parsed.Value is null)
         {
             throw new InvalidWorkspaceAuthoring($"Cannot preserve trivia in unparseable document '{original.Path}'.");
@@ -66,8 +67,8 @@ static class WorkspaceTriviaPrinter
         var candidate = WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, bytes.ToArray());
         if (validatePlacement)
         {
-            var reparsed = candidates is null ? compiler.Parse(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document)
-                : compiler.ParseWithCandidates(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document, candidates);
+            var reparsed = WorkspaceSinks.Resolve(candidates is null ? compiler.Parse(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document)
+                : compiler.ParseWithCandidates(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document, candidates), sinks?.Intended);
             if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(intended, reparsed.Value))
             {
                 throw new InvalidWorkspaceAuthoring($"Trivia-preserving patches in '{original.Path}' did not reparse to the intended AST. Use explicit CanonicalizeTouchedDocuments or coordinated typed edits.");
