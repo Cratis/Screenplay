@@ -30,7 +30,7 @@ static class CompositionDefaults
 
     static readonly Dictionary<Type, Dictionary<string, Default>> _omittable = new()
     {
-        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["sinks"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
+        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["storylines"] = Default.Empty, ["sinks"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
         [typeof(ThemeSyntax)] = new(StringComparer.Ordinal) { ["implements"] = Default.Null, ["palette"] = Default.Empty, ["values"] = Default.Empty, ["modeValues"] = Default.Empty },
         [typeof(ReadModelSyntax)] = new(StringComparer.Ordinal) { ["sink"] = Default.Null },
         [typeof(GraphSyntax)] = new(StringComparer.Ordinal) { ["sink"] = Default.Null },

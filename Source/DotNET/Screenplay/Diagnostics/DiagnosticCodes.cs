@@ -4160,4 +4160,24 @@ public static class DiagnosticCodes
     /// from a declared sink, so the author probably meant the sink directive.
     /// </summary>
     public const string SinkNameCaseMismatch = "PLAY0939";
+
+    /// <summary>
+    /// A <c>storyline</c> declaration is not <c>storyline &lt;Name&gt; ["&lt;title&gt;"]</c>.
+    /// </summary>
+    public const string InvalidStorylineDeclaration = "PLAY0940";
+
+    /// <summary>
+    /// A line in a storyline body is not <c>&lt;kind&gt; &lt;reference&gt; ["&lt;note&gt;"]</c> or <c>description</c>, or a step has a nested line.
+    /// </summary>
+    public const string InvalidStorylineStep = "PLAY0941";
+
+    /// <summary>
+    /// A storyline step names an element no declaration of that kind matches.
+    /// </summary>
+    public const string UnknownStorylineElement = "PLAY0942";
+
+    /// <summary>
+    /// Two <c>storyline</c> declarations carry the same name.
+    /// </summary>
+    public const string DuplicateStoryline = "PLAY0943";
 }
