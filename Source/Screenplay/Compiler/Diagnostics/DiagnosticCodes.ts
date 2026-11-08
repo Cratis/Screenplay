@@ -593,4 +593,10 @@ export const DiagnosticCodes = {
     RepeatedSinkDirective: 'PLAY0937',
     UnusedSink: 'PLAY0938',
     SinkNameCaseMismatch: 'PLAY0939',
+    InvalidScreenVisual: 'PLAY0950',
+    UnexpectedScreenVisualFile: 'PLAY0951',
+    ScreenVisualMissing: 'PLAY0952', // C# only - the files are checked where a model root is opened
+    InvalidSlicePlacement: 'PLAY0953',
+    UnknownPlacedElement: 'PLAY0954',
+    RedundantSlicePlacement: 'PLAY0955',
 } as const;

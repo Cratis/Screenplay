@@ -255,6 +255,67 @@
                 }
               ],
               "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "ReviewInvoices",
+              "operations": [],
+              "placements": [
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceIssued",
+                  "syntaxKind": "Event"
+                },
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceStatus",
+                  "syntaxKind": "ReadModel"
+                }
+              ],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [],
+                  "name": "ReviewInvoices",
+                  "visuals": [
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/review-invoices.sketch.json"
+                      },
+                      "syntaxKind": "Sketch"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/review-invoices.html"
+                      },
+                      "syntaxKind": "Mockup"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/review-invoices.png"
+                      },
+                      "syntaxKind": "Image"
+                    }
+                  ]
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
             }
           ]
         }

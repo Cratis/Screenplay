@@ -4795,6 +4795,18 @@
               ],
               "name": "CancelInvoice",
               "operations": [],
+              "placements": [
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceRegistered",
+                  "syntaxKind": "Event"
+                },
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceListReadModel",
+                  "syntaxKind": "ReadModel"
+                }
+              ],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -8402,6 +8414,32 @@
                       ],
                       "mode": "Extend",
                       "name": "views"
+                    }
+                  ],
+                  "visuals": [
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.sketch.svg"
+                      },
+                      "syntaxKind": "Sketch"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.html"
+                      },
+                      "syntaxKind": "Mockup"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.png"
+                      },
+                      "syntaxKind": "Image"
                     }
                   ]
                 }
