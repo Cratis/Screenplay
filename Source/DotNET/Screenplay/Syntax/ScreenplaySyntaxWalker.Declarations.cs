@@ -356,14 +356,6 @@ public abstract partial class ScreenplaySyntaxWalker
         }
     }
 
-    void VisitAssignments(IEnumerable<DesignAssignmentSyntax> assignments)
-    {
-        foreach (var assignment in assignments)
-        {
-            VisitNode(assignment);
-        }
-    }
-
     /// <summary>
     /// Visits a <see cref="TriggerSyntax"/> node and its children.
     /// </summary>
@@ -468,6 +460,14 @@ public abstract partial class ScreenplaySyntaxWalker
             {
                 VisitSampleDataRow(row);
             }
+        }
+    }
+
+    void VisitAssignments(IEnumerable<DesignAssignmentSyntax> assignments)
+    {
+        foreach (var assignment in assignments)
+        {
+            VisitNode(assignment);
         }
     }
 }

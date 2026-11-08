@@ -65,7 +65,7 @@ static class McpDesignSystem
     /// <returns>An object to serialize, or <see langword="null"/> when the application has no design system.</returns>
     internal static object? ForProfile(ApplicationSyntax? application, UiProfileSyntax profile)
     {
-        if (application is null || !application.DesignSystems.Any())
+        if (application?.DesignSystems.Any() != true)
         {
             return null;
         }

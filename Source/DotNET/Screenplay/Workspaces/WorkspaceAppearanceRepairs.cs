@@ -40,7 +40,7 @@ internal static class WorkspaceAppearanceRepairs
     /// <returns><see langword="true"/> when the location is the first deprecated line.</returns>
     internal static bool IsFirstDeprecatedLine(ProfileAppearanceSyntax appearance, SourceLocation location)
     {
-        SourceLocation? first = appearance.Accent is not null ? appearance.AccentLocation : appearance.Corners is not null ? appearance.CornersLocation : appearance.Font is not null ? appearance.FontLocation : null;
+        var first = FirstDeprecatedLocation(appearance);
         return first == location;
     }
 
@@ -139,4 +139,19 @@ internal static class WorkspaceAppearanceRepairs
         "round" => "12px",
         _ => null
     };
+
+    static SourceLocation? FirstDeprecatedLocation(ProfileAppearanceSyntax appearance)
+    {
+        if (appearance.Accent is not null)
+        {
+            return appearance.AccentLocation;
+        }
+
+        if (appearance.Corners is not null)
+        {
+            return appearance.CornersLocation;
+        }
+
+        return appearance.Font is not null ? appearance.FontLocation : null;
+    }
 }
