@@ -283,7 +283,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
-| `ui-profiles` | Optional profile `name` | Each ui profile's root template, shell options, appearance, new screens default and shell diagnostics (PLAY0790-PLAY0799), the own templates applicable as root or new screens default, and the accepted appearance values |
+| `ui-profiles` | Optional profile `name` | Each ui profile's root template, shell options, appearance, selected theme and the theme and mode it resolves to, new screens default and shell diagnostics (PLAY0790-PLAY0799), the own templates applicable as root or new screens default, and the accepted appearance values; also the application's [design system](../design-system.md), every theme with its values and its resolved tokens and components per mode, and the design diagnostics (PLAY0916-PLAY0930) |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
 | `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison without rebinding the workspace |
@@ -1314,7 +1314,7 @@ and apply only to the corresponding record.
 `kind` uses one vocabulary across assigned declarations, authoring fallback,
 event contracts, identities and dependant records. Allowed values are:
 `Application`, `Capture`, `Command`, `Concept`, `Constraint`, `ContributionPoint`,
-`DialogTemplate`, `Event`, `EventSource`, `EventStream`, `Feature`, `Form`,
+`DesignSystem`, `DialogTemplate`, `Event`, `EventSource`, `EventStream`, `Feature`, `Form`,
 `Layout`, `Module`, `Operation`, `Persona`, `Policy`, `Projection`, `Property`,
 `Query`, `QueryArgument`, `Reaction`, `ReadModel`, `Reducer`, `SampleDataPack`,
 `Screen`, `ScreenTemplate`, `Slice`, `Specification`, `StateMachine`, `System`, `Theme`, `Trigger`, `Type`,

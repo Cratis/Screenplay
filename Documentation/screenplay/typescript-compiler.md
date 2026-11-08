@@ -154,11 +154,13 @@ Some constructs are recognized but skipped or represented only by limited eviden
 
 - reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, module and feature template assignments (`template <Name>`, `template blueprint <Blueprint> <Name>`), behaviors and screen templates
 - the interaction a screen binds with `on` and `uses`, which it keeps only as a marker in the screen's directives
-- authentication, onboarding, themes, UI profiles and sample data packs
+- authentication, onboarding, UI profiles and sample data packs (of a UI profile it reads only the legacy `layout` line, the `theme` it selects and the deprecated `accent`, `corners` and `font` of its `appearance`, for the design system checks)
 - command handler execution; handler implementation intent retains its typed hints and selected file/code
 - trigger implementation code
 
 For the syntax and authoring checks it supports, it uses the C# diagnostic codes, lines and order. [Editor diagnostic support](editor-diagnostics.md) lists the shared checks, C#-only scoped/semantic/completeness checks and the deliberate legacy absence-assertion exception.
+
+The top-level `design system` block and the `theme` blocks that implement it are modeled, with the C# diagnostics `PLAY0916`-`PLAY0930`, the contrast-ratio warning and the same resolution of a theme's values (`resolveDesignTheme`). The walker visits their children, which the C# walker does not yet do. The checks that need a theme and the design system run on the assembled application, so a folder is held to them once.
 
 Public-event metadata uses the C# AST members: `EventSyntax.visibility` and `ImportSyntax.visibility` (`Private` by default), nullable `origin`, and nullable `SliceSyntax.direction` (`Inbound` or `Outbound`, only on Translate slices). Origins are nonblank opaque strings, never filesystem imports or declaration references. An origin requires public visibility; a public contract import requires an origin. Default metadata is omitted from structural JSON so legacy bytes stay unchanged. Typed authoring rejects inconsistent metadata before writing it. The board document retains nondefault metadata on declared events and slices; it does not infer delivery behavior. Native binding owns public-event admission, including ESM v9 semantics and `PLAY0268` refusals for unsupported forms. TypeScript has no executable binder or canonical `.play` printer.
 
