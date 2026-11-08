@@ -94,7 +94,7 @@ In the syntax tree, `ApplicationSyntax.Sinks` holds the declarations (`SinkSynta
 
 ## Rename a sink
 
-Renaming a sink with `propose-rename` renames its declaration and every `sink` line that names it. A new name that matches another sink ignoring case is refused.
+Renaming a sink with `propose-rename` renames its declaration and every `sink` line that names it, in every file of the model, including read models in other files than the declaration. A `sink <Type>` line that names no declared sink is a property and is left alone. `find-references` finds the same lines. A new name that matches another sink ignoring case is refused.
 
 ## Diagnostics
 
