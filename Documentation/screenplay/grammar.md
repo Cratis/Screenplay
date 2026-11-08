@@ -989,7 +989,12 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | SlicePlacementDecl | FileDirective | SliceBody }, DEDENT ;
+
+(* A linked copy of an event or read model declared in another slice, drawn again on this slice of the
+   timeline. Presentation only: the executable model never sees it. PLAY0953 malformed, PLAY0954 unknown
+   element (warning), PLAY0955 the slice declares it itself or shows it twice (warning). *)
+SlicePlacementDecl = "shows", ( "event" | "readmodel" ), Path, NL ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -1863,7 +1868,13 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, [ DescriptionDecl ], ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { ScreenVisualDecl }, ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
+
+(* A sketch, an HTML/CSS mockup page or an image the screen carries, stored beside the model and named by a
+   path relative to the model root. Authoring metadata: kept, printed and exported, never executable.
+   PLAY0950 no path, PLAY0951 an image that is not PNG/JPG/GIF/SVG/WebP or a mockup that is not .html/.htm
+   (warning), PLAY0952 the file is not there when the model is opened (warning). *)
+ScreenVisualDecl = ( "sketch" | "mockup" | "image" ), FilePath, NL ;
 
 (* Content a screen contributes to an outlet elsewhere in the tree -
    Scene's Screen.Contributions.                                             *)

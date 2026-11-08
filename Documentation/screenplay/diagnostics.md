@@ -1755,6 +1755,19 @@ Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers re
 | `PLAY0938` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
 | `PLAY0939` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
 
+## Screen visuals and slice placements
+
+Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#sketches-mockups-and-images), and the linked copies a slice shows, see [Slices](slices.md#show-an-element-in-more-than-one-slice). Both compilers report `PLAY0950`, `PLAY0951` and `PLAY0953` to `PLAY0955`. `PLAY0952` needs the files beside the model, so it is reported where a model root is opened: the MCP server, `open-workspace` and the tools built on them.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0950` | Error | A screen's `sketch`, `mockup` or `image` line names no file. Write the path after the keyword, relative to the model root. |
+| `PLAY0951` | Warning | A screen's `image` is not a PNG, JPG, GIF, SVG or WebP file, or its `mockup` is not an HTML page ending in `.html` or `.htm`. |
+| `PLAY0952` | Warning | A screen's sketch, mockup or image file is not beside the model: it does not exist, or its path leaves the model root. |
+| `PLAY0953` | Error | A slice's `shows` line is not `shows event <Name>` or `shows readmodel <Name>`. |
+| `PLAY0954` | Warning | A slice shows an event or read model the application does not declare. |
+| `PLAY0955` | Warning | A slice shows an element it already declares itself, or shows the same element twice. Remove the extra line. |
+
 ## Toolbar buttons
 
 The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.
