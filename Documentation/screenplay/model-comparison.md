@@ -144,6 +144,54 @@ This report classifies differences between two models; it does not enforce the [
 The release baseline freezes resolved schemas by equality, so even an appended member or an explicit rename can
 violate a baselined event revision despite no breaking numeric identity change here.
 
+## Group changes by slice
+
+A tool that builds code slice by slice needs to know which slices to rebuild,
+not every declaration that changed. `ModelDifference.Slices` is a
+`SliceChangeSummary` that attributes every change to the slice that owns it:
+
+```csharp
+foreach (var slice in difference.Slices.Slices)
+{
+    Console.WriteLine($"{slice.Address}: {slice.Change}, dependents: {string.Join(", ", slice.DependentSlices)}");
+}
+```
+
+For the example above the output is
+`Projects.Registration.Register: Changed, dependents: `.
+
+| Property | Meaning |
+| --- | --- |
+| `Slices` | One `SliceChange` per added, removed, renamed, moved or changed slice, ordered by address |
+| `ModelWide` | Changed declarations no slice owns: modules, features, concepts, types, policies, personas and the like |
+| `AffectedSlices` | Unchanged slices that depend on a changed slice or a changed model-wide declaration |
+
+Each `SliceChange` carries:
+
+- `Changes`, every `SliceChangeKind` that applies, and `Change`, the most
+  significant of them in the order `Added`, `Removed`, `Renamed`, `Moved`,
+  `Changed`. An added or removed slice reports only that. A renamed slice whose
+  content also changed reports `Renamed` and `Changed`.
+- `BeforeAddress` and `AfterAddress`, and `Address`, which is the address after
+  the comparison when the slice still exists.
+- `SemanticId`, the slice's persisted identity in Identity matching.
+- `Declarations`, the changed declarations the slice owns, including the slice
+  itself.
+- `DependentSlices`, the other slices that consume something the slice
+  declares, such as a projection from its event, on the side where the slice
+  exists.
+
+Renames and moves are only reported as such in Identity matching, where
+persisted identities connect the two versions. Address matching reports a
+renamed or moved slice as one removed and one added slice. A declaration that
+only follows its renamed or moved slice does not count as a content change.
+
+Model-wide changes can reach any slice. `AffectedSlices` lists the slices with
+a direct reference to the changed declaration; a builder that needs certainty
+rebuilds everything when `ModelWide` is not empty. Dependencies are direct,
+not transitive: a slice that reads a view built from a changed event is not
+listed unless it also references the changed slice.
+
 ## Coverage and limits
 
 Inspect every `ComparisonSection` in `Sections`, not only the change lists.
@@ -161,6 +209,7 @@ Properties use owner references; containers aggregate external references to
 contained declarations while excluding references inside the container.
 
 The MCP [semantic-diff views](mcp/reference.md#semantic-proposal-difference)
-use the same structural comparison implementation. Their existing revision
+use the same structural comparison implementation and return the same per-slice
+summary as `slices`. Their existing revision
 checks, JSON layout and paging remain transport concerns; the library result
 is typed and unpaged.

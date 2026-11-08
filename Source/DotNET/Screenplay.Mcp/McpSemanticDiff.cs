@@ -49,6 +49,7 @@ static class McpSemanticDiff
                 unavailable = section.Gaps.Select(gap => gap.Statement).ToArray()
             }).ToArray(),
             limits = revisions ? difference.Limits : [.. difference.Limits, "No revision-to-revision comparison."],
+            slices = McpSliceChanges.Project(difference, before.Source.Authoring, after.Source.Authoring, matchByAddress),
             page = McpPaging.BoundedSourcePage(difference.Changes.Select(Project), arguments, revision)
         };
     }

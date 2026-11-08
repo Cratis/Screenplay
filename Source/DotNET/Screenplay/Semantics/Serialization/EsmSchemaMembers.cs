@@ -1,0 +1,172 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Immutable;
+
+namespace Cratis.Screenplay.Semantics.Serialization;
+
+/// <summary>
+/// The JSON value kind of every member in the frozen ESM vocabulary, in the vocabulary's own member order.
+/// <see cref="EsmBaselineShapes"/> decides which members a version has and which shape a nested member holds;
+/// this table only adds what the vocabulary leaves implicit: whether a value is a string, number, boolean,
+/// array or object, and whether it may be null. Codes: s string, b boolean, i integer, s[] and i[] arrays,
+/// scalar any string, number or boolean, path a string or string array, null always null, 1 one nested object,
+/// [] an array of nested objects; a trailing ? also admits null. Members promoted by a minor are listed with their
+/// shape. The published JSON Schemas are generated from both tables and checked against every golden.
+/// </summary>
+internal static class EsmSchemaMembers
+{
+    static readonly ImmutableDictionary<EsmBaselineShape, ImmutableArray<(string Member, string Kind)>> _members = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Envelope"] = "schema:s schemaVersion:i languageVersion:s semanticVersion:s revision:s application:1",
+        ["Application"] = "id:s name:s concepts:[] types:[] modules:[] policies:[] triggers:[] stateMachines:[] workflows:[] graphs:[] graphProjections:[] graphSpecifications:[] graphQueries:[] eventSources:[] reactionProductionMode:s commandReadMode:s timeZone:1 contextMembers:[]",
+        ["Concept"] = "id:s name:s primitive:s values:s[] validations:[] numbers:i[] compliance:1 generation:1",
+        ["Generation"] = "kind:s pattern:s checksum:s min:i max:i requirement:s size:i count:i encoding:s alphabet:s prefix:s case:s",
+        ["Compliance"] = "personal:1 secret:1",
+        ["Personal"] = "special:s criminal:b",
+        ["Secret"] = "scope:s",
+        ["Type"] = "id:s name:s properties:[]",
+        ["Property"] = "id:s name:s type:1 identifier:b generated:b",
+        ["TypeReference"] = "kind:s primitive:s? target:s? collection:b optional:b",
+        ["Module"] = "id:s name:s features:[]",
+        ["Feature"] = "id:s name:s features:[] slices:[]",
+        ["Slice"] = "id:s name:s kind:s events:[] commands:[] readModels:[] projections:[] reducers:[] queries:[] specifications:[] constraints:[] reactions:[] captures:[] direction:s",
+        ["EventContract"] = "id:s contractId:s contractRevision:i name:s storedName:s properties:[] tags:s[] visibility:s origin:s predecessor:i priorRevisions:[]",
+        ["PriorRevision"] = "contractRevision:i predecessor:i? properties:[] tags:s[]",
+        ["Command"] = "id:s name:s properties:[] validations:[] codeValidations:[] produces:[] requirements:[] authorization:1 destination:1 response:1 route:1 handler:1 reads:[] calendar:1",
+        ["CodeValidation"] = "requirementId:s",
+        ["Handler"] = "requirementId:s resultVersion:i possibleEvents:[]",
+        ["DecisionRead"] = "name:s readModel:s key:s presence:s",
+        ["ProducedEvent"] = "eventContract:s condition:1? destination:1? mappings:[] when:1 tags:s[] destinationType:1 route:1",
+        ["Destination"] = "type:1 value:1",
+        ["Mapping"] = "targetProperty:s source:1",
+        ["ReadModel"] = "id:s name:s properties:[] propertyOrder:s[]",
+        ["Projection"] = "id:s name:s event:s readModel:s transitions:[] scope:1",
+        ["Transition"] = "eventContract:s affectedInstance:1 mappings:[]",
+        ["AffectedInstance"] = "cardinality:s key:1",
+        ["Scope"] = "from:[] join:[] children:[] nested:[] every:1? removedWith:[] removedWithJoin:[]",
+        ["From"] = "eventContract:s key:1 parentKey:1? mappings:[]",
+        ["Join"] = "eventContract:s on:s mappings:[] key:1",
+        ["Children"] = "property:s identifiedBy:s scope:1",
+        ["Nested"] = "property:s scope:1",
+        ["Every"] = "includeChildren:b subscribesToAllEvents:b mappings:[]",
+        ["Removal"] = "eventContract:s key:1 parentKey:1?",
+        ["JoinRemoval"] = "eventContract:s key:1",
+        ["ProjectionKey"] = "kind:s value:1 parts:[] type:s",
+        ["KeyPart"] = "property:s value:1",
+        ["ProjectionMapping"] = "target:s[] operation:s source:1? factor:1",
+        ["ProjectionValue"] = "kind:s value:1 path:path",
+        ["Reducer"] = "name:s event:s readModel:s key:s initialState:null result:s transitions:[] from:1",
+        ["ReducerTransition"] = "eventContract:s requirementId:s",
+        ["Query"] = "id:s name:s readModel:s argument:1 keyProperty:s keyParts:[] filters:[] cardinality:s delivery:s authorization:1",
+        ["QueryArgument"] = "id:s name:s type:1",
+        ["QueryKeyPart"] = "id:s name:s type:1 keyProperty:s",
+        ["QueryFilter"] = "id:s name:s type:1 property:s",
+        ["QueryFilterValue"] = "filter:s value:1",
+        ["Specification"] = "id:s name:s givenEvents:[] givenReadModels:[] givenCaller:1 when:1 whenAppended:1 whenRedelivered:1 thenEvents:[] thenNoEvents:b thenEventsInAnyOrder:b thenReadModels:[] thenAbsentReadModels:[] thenQueries:[] thenErrors:[] thenDenied:b thenReturns:1 givenClock:s givenCaptures:[] givenGenerated:[] whenClock:s whenTrigger:1 whenCapture:1 thenInvocations:[] givenTimeZone:s",
+        ["SpecificationEvent"] = "eventContract:s values:[] eventSource:1 route:1 unrouted:b",
+        ["SpecificationCommand"] = "command:s values:[] generatedValues:[] eventSource:1",
+        ["SpecificationReadModel"] = "readModel:s key:1 values:[] exactly:b",
+        ["AbsentReadModel"] = "readModel:s key:1",
+        ["SpecificationQuery"] = "query:s key:1 filters:[] results:[] exactly:b",
+        ["SpecificationError"] = "code:s? message:s?",
+        ["Redelivered"] = "reaction:s given:i",
+        ["EventSource"] = "type:1 value:1",
+        ["Validation"] = "property:s? kind:s operand:1? message:s? severity:s name:s requirementId:s clock:1",
+        ["Constraint"] = "name:s kind:s scope:s targets:[] releasedBy:s[] ignoreCasing:b message:s?",
+        ["ConstraintTarget"] = "eventContract:s properties:s[]",
+        ["Expression"] = "kind:s value:1 contextValue:s type:1 member:s read:s property:s root:s source:s target:s",
+        ["Value"] = "kind:s value:scalar properties:[] values:[]",
+        ["PropertyValue"] = "targetProperty:s value:1",
+        ["Requirement"] = "condition:1 message:s? severity:s",
+        ["Condition"] = "kind:s left:1 operator:s right:1",
+        ["ConditionOperand"] = "clock:1 read:s property:s dateOf:b value:1",
+        ["ClockOperand"] = "kind:s offset:1 dateOf:b",
+        ["ClockOffset"] = "amount:i unit:s",
+        ["CommandCalendar"] = "timeZone:s contextMember:s",
+        ["ApplicationTimeZone"] = "id:s configurable:b",
+        ["ContextMember"] = "name:s type:s",
+        ["Response"] = "kind:s source:s type:1 fields:[]",
+        ["ResponseField"] = "name:s source:s type:1",
+        ["ThenReturns"] = "kind:s value:1 fields:[]",
+        ["ReturnField"] = "name:s value:1",
+        ["Policy"] = "name:s condition:1 requirementId:s",
+        ["PolicyCondition"] = "kind:s role:s claim:s targetKind:s value:s operand:1 operator:s left:1 right:1",
+        ["Authorization"] = "kind:s name:s operator:s left:1 right:1",
+        ["Caller"] = "authenticated:b roles:s[] claims:[]",
+        ["CallerClaim"] = "type:s value:s",
+        ["EventSourceDeclaration"] = "id:s name:s sourceKind:s identifierType:1 streams:[]",
+        ["EventStream"] = "id:s name:s streamKind:s streamIdType:1 streamIdParts:[]",
+        ["StreamIdPart"] = "name:s type:1",
+        ["CommandRoute"] = "source:s stream:s streamId:1 streamIdParts:[]",
+        ["RoutePart"] = "part:s value:1",
+        ["FixtureRoute"] = "source:s stream:s streamId:1 streamIdParts:[]",
+        ["FixturePart"] = "part:s value:1",
+        ["ObserverFilter"] = "source:s stream:s",
+        ["Trigger"] = "id:s name:s properties:[]",
+        ["Graph"] = "name:s nodes:[] edges:[]",
+        ["GraphNode"] = "label:s properties:[]",
+        ["GraphEdge"] = "type:s sourceLabel:s targetLabel:s identityProperty:s properties:[]",
+        ["GraphProperty"] = "name:s type:1 key:b",
+        ["GraphProjection"] = "name:s graph:s nodes:[] edges:[]",
+        ["GraphElementHandlers"] = "name:s handlers:[]",
+        ["GraphHandler"] = "event:s key:1 source:1 target:1 identity:1 forEach:s removes:b detach:b mappings:[]",
+        ["GraphMapping"] = "name:s operation:s source:1 factor:1",
+        ["GraphSpecification"] = "owner:s name:s given:[] givenGraphs:[] whenAppended:1 thenGraphs:[] thenQueries:[] clock:s",
+        ["GraphQueryExpectation"] = "graphQuery:s exactly:b arguments:[] rows:[]",
+        ["GraphRow"] = "values:[]",
+        ["GraphStep"] = "graph:s elements:[]",
+        ["GraphElementStep"] = "node:b absent:b name:s key:1 target:1 identity:1 values:[]",
+        ["GraphPropertyValue"] = "name:s value:1",
+        ["GraphQuery"] = "name:s graph:s readModel:s cardinality:s delivery:s arguments:[] matches:[] conditions:[] returns:[] authorization:1",
+        ["GraphQueryArgument"] = "name:s type:1 key:b",
+        ["GraphMatch"] = "optional:b start:1 hops:[]",
+        ["GraphPatternNode"] = "alias:s label:s",
+        ["GraphHop"] = "alias:s type:s outgoing:b node:1",
+        ["GraphCondition"] = "alias:s name:s argument:s literal:1",
+        ["GraphReturn"] = "property:s alias:s source:s",
+        ["StateMachine"] = "name:s readModel:s states:[] transitions:[] specifications:[]",
+        ["State"] = "name:s initial:b final:b entering:[]",
+        ["StateEntry"] = "kind:s command:s workflow:s",
+        ["StateTransition"] = "from:s event:s guard:1 to:s",
+        ["Workflow"] = "name:s subject:s nodes:[] edges:[] specifications:[]",
+        ["LifecycleSpecification"] = "name:s given:[] whenAppended:1 whenStarted:1 outcomes:[] then:[]",
+        ["LifecycleOutcome"] = "node:s outlet:s",
+        ["LifecycleExpectation"] = "kind:s target:s command:s",
+        ["WorkflowNode"] = "name:s kind:s trigger:s event:s stateMachine:s state:s every:i at:i onDayOfWeek:i onDayOfMonth:i command:s maxAttempts:i attemptTimeout:i retryDelay:i condition:1 whenTrue:s whenFalse:s duration:i expiresAfter:i approverKind:s approver:s items:s maxParallel:i joinMode:s joinCount:i",
+        ["WorkflowEdge"] = "from:s outlet:s to:s",
+        ["Reaction"] = "id:s name:s triggers:[] runsAs:1 from:1",
+        ["ReactionIdentity"] = "kind:s roles:s[]",
+        ["ReactionTrigger"] = "kind:s source:s? every:i at:i onDayOfWeek:i onDayOfMonth:i where:1 produces:[] invokes:[] requirementId:s",
+        ["Invocation"] = "command:s mappings:[] onRefused:[]",
+        ["RefusalBranch"] = "selector:s constraint:s produces:[]",
+        ["Capture"] = "id:s name:s key:s map:[] appends:[] children:[] nested:[] sourceEvents:s[] keyIsEventSource:b",
+        ["CaptureChildren"] = "field:s identifiedBy:s map:[] appends:[]",
+        ["CaptureNested"] = "field:s map:[] appends:[]",
+        ["CaptureMap"] = "kind:s targets:s[] source:s template:[] separator:s translations:[]",
+        ["TemplatePart"] = "text:s field:s",
+        ["Translation"] = "from:s to:s",
+        ["CaptureAppend"] = "eventContract:s eventSourceType:1 when:1? mappings:[] tags:s[]",
+        ["CaptureCondition"] = "kind:s fields:s[] from:s to:s expression:s",
+        ["CaptureMapping"] = "targetProperty:s field:s value:1",
+        ["SpecificationCapture"] = "capture:s record:1",
+        ["CaptureRecord"] = "fields:[]",
+        ["CaptureField"] = "name:s kind:s value:1 record:1 records:[]",
+        ["PinnedValue"] = "command:s targetProperty:s value:1",
+        ["WhenTrigger"] = "kind:s trigger:s? values:[]"
+    }.ToImmutableDictionary(
+        pair => Enum.Parse<EsmBaselineShape>(pair.Key),
+        pair => pair.Value.Split(' ').Select(member => member.Split(':')).Select(parts => (parts[0], parts[1])).ToImmutableArray());
+
+    /// <summary>
+    /// Gets the shapes the table describes.
+    /// </summary>
+    internal static IEnumerable<EsmBaselineShape> Shapes => _members.Keys;
+
+    /// <summary>
+    /// Gets the members of a shape with their value kinds, in vocabulary order.
+    /// </summary>
+    /// <param name="shape">The shape.</param>
+    /// <returns>The members and their kind codes.</returns>
+    internal static ImmutableArray<(string Member, string Kind)> For(EsmBaselineShape shape) => _members[shape];
+}

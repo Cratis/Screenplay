@@ -33,5 +33,8 @@ public class when_comparing_as_json : given.two_model_versions
         JsonNamingPolicy.CamelCase.ConvertName(change.Change.ToString()) + " " + (change.Declaration.AfterAddress ?? change.Declaration.BeforeAddress)));
     [Fact] void should_report_the_library_member_changes() => Difference.GetProperty("members").GetArrayLength().ShouldEqual(_library.Members.Count);
     [Fact] void should_report_the_library_dependants() => Difference.GetProperty("dependants").GetArrayLength().ShouldEqual(_library.Dependants.Count);
+    [Fact] void should_report_the_library_slice_changes() => Difference.GetProperty("slices").GetProperty("slices").EnumerateArray().Select(slice => slice.GetProperty("change").GetString() + " " + slice.GetProperty("address").GetString())
+        .ShouldContainOnly(_library.Slices.Slices.Select(slice => JsonNamingPolicy.CamelCase.ConvertName(slice.Change.ToString()) + " " + slice.Address));
+    [Fact] void should_report_slice_changes() => Difference.GetProperty("slices").GetProperty("slices").GetArrayLength().ShouldBeGreaterThan(0);
     [Fact] void should_report_the_semantic_change() => Difference.GetProperty("hasSemanticChange").GetBoolean().ShouldBeTrue();
 }
