@@ -151,7 +151,10 @@ export const seedItems: CompletionEntry[] = [
 ];
 
 export const themeItems: CompletionEntry[] = [
+    { label: 'implements', insertText: 'implements ${1:DesignSystem}', documentation: 'The design system whose tokens this theme supplies values for.' },
     { label: 'compatible with', insertText: 'compatible with ${1:Package}', documentation: 'A component package the theme is compatible with.' },
+    { label: 'palette', insertText: 'palette\n    ${1:name} = "${2:#000000}"', documentation: 'Named raw values that token values refer to as palette.<name>.' },
+    { label: 'values', insertText: 'values\n    ${1:color.token} = "${2:value}"', documentation: 'A value for each token that does not vary by mode: a quoted value, palette.<name> or another token.' },
 ];
 
 export const uiProfileItems: CompletionEntry[] = [
@@ -159,12 +162,12 @@ export const uiProfileItems: CompletionEntry[] = [
     { label: 'target size', insertText: 'target size ${1|compact,regular|}', documentation: 'The screen sizes the profile is for.' },
     { label: 'packages', insertText: 'packages\n    ${1:Package}', documentation: 'The component packages the profile uses.' },
     { label: 'layout', insertText: 'layout ${1:Layout}', documentation: 'The layout of the profile. Older form of `root template`; prefer `root template`.' },
-    { label: 'theme', insertText: 'theme ${1:Theme}', documentation: 'The theme of the profile, named by a declared theme\'s identifier.' },
+    { label: 'theme', insertText: 'theme ${1:Theme}', documentation: 'The theme of the profile, named by a declared theme\'s identifier. It overrides the design system\'s default theme and must implement the design system.' },
     { label: 'theme (package-provided)', insertText: 'theme "${1:Scene Default Light}"', documentation: 'The theme of the profile, named by the quoted display name of a theme a component package provides.' },
     { label: 'root template', insertText: 'root template ${1:Template}\n    option ${2:navigationMode} ${3:slim}', documentation: 'The template the whole application is drawn in: an own template, or `blueprint <Blueprint> <Name> [version "<range>"]`, with the options the shell exposes.' },
     { label: 'root template blueprint', insertText: 'root template blueprint ${1:Blueprint} ${2:Template} version "${3:^1.0}"', documentation: 'A root template a blueprint package ships, pinned to a semver range.' },
     { label: 'identity', insertText: 'identity\n    name "${1:Name}"\n    logo ${2|initials "AB",icon box,image "data:image/svg+xml;base64,..."|}\n    show name ${3|true,false|}', documentation: 'What the application calls itself and the mark it wears: `name`, `logo initials|icon|image` and `show name`.' },
-    { label: 'appearance', insertText: 'appearance\n    color scheme ${1|light,dark,system|}\n    accent "${2:#4f46e5}"\n    corners ${3|sharp,default,round|}\n    font ${4:inter}', documentation: 'How the application looks regardless of the shell: colour scheme, accent colour, corners and font.' },
+    { label: 'appearance', insertText: 'appearance\n    color scheme ${1|light,dark,system|}', documentation: 'How the application looks regardless of the shell: colour scheme. The theme supplies accent, corners and font.' },
     { label: 'new screens use template', insertText: 'new screens use template ${1:Template}', documentation: 'The template a new screen starts from in the designer.' },
     { label: 'sample data', insertText: 'sample data\n    active ${1:Pack}', documentation: 'The sample data the whole application previews with, chosen once here.' },
 ];
@@ -175,9 +178,6 @@ export const profileRootTemplateItems: CompletionEntry[] = [
 
 export const profileAppearanceItems: CompletionEntry[] = [
     { label: 'color scheme', insertText: 'color scheme ${1|light,dark,system|}', documentation: 'The colour scheme of the application: light, dark or follow the system.' },
-    { label: 'accent', insertText: 'accent "${1:#4f46e5}"', documentation: 'The accent colour of the application.' },
-    { label: 'corners', insertText: 'corners ${1|sharp,default,round|}', documentation: 'How rounded the application\'s corners are: sharp, default or round.' },
-    { label: 'font', insertText: 'font ${1|inter,ibm-plex-sans,source-serif-4,system-ui|}', documentation: 'The font of the application, an id from Scene\'s font catalog.' },
 ];
 
 export const profileIdentityItems: CompletionEntry[] = [

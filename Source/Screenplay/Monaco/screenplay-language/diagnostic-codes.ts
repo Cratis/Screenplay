@@ -317,6 +317,21 @@ export const diagnosticCodes = {
     invalidFormFieldChoices: 'PLAY0913',
     invalidScreenShow: 'PLAY0914',
     enabledWhenWithoutItem: 'PLAY0915',
+    invalidDesignSystemDeclaration: 'PLAY0916',
+    duplicateDesignSystem: 'PLAY0917',
+    unknownDesignMode: 'PLAY0918',
+    duplicateDesignToken: 'PLAY0919',
+    themeValueForUndeclaredToken: 'PLAY0920',
+    colorTokenMissingModeValue: 'PLAY0921',
+    unresolvedDesignReference: 'PLAY0922',
+    designReferenceCycle: 'PLAY0923',
+    designPartCategoryMismatch: 'PLAY0924',
+    themeImplementsUnknownDesignSystem: 'PLAY0925',
+    profileThemeDoesNotImplementDesignSystem: 'PLAY0926',
+    invalidDefaultTheme: 'PLAY0927',
+    contrastBelowRule: 'PLAY0928',
+    deprecatedAppearanceMember: 'PLAY0929',
+    invalidThemeBlock: 'PLAY0930',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
