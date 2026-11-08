@@ -4050,7 +4050,8 @@ public static class DiagnosticCodes
     public const string DuplicateSink = "PLAY0917";
 
     /// <summary>
-    /// A read model or graph names a sink the application does not declare.
+    /// A graph names a sink the application does not declare. A read model's <c>sink &lt;Name&gt;</c> line naming no declared
+    /// sink is a property named <c>sink</c>, not this diagnostic.
     /// </summary>
     public const string UnknownSink = "PLAY0918";
 
@@ -4078,4 +4079,10 @@ public static class DiagnosticCodes
     /// A declared sink is named by no read model or graph.
     /// </summary>
     public const string UnusedSink = "PLAY0923";
+
+    /// <summary>
+    /// A read model's line <c>sink &lt;Type&gt;</c> stays a property named <c>sink</c>, but its type differs only in case
+    /// from a declared sink, so the author probably meant the sink directive.
+    /// </summary>
+    public const string SinkNameCaseMismatch = "PLAY0924";
 }

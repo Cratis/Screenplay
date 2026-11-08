@@ -12,9 +12,8 @@ namespace Cratis.Screenplay.Parsing;
 /// body directive of a read model or graph.
 /// </summary>
 /// <remarks>
-/// <c>sink</c> stays contextual inside a read model: a line is the directive only when it is exactly <c>sink</c> followed
-/// by one identifier that is not a primitive type. <c>sink String</c>, <c>sink Money[]</c> or <c>sink Money optional</c>
-/// remain properties named <c>sink</c>, and <c>@sink Money</c> declares one of any type.
+/// In a graph every <c>sink</c> line is the directive. In a read model the parser reads <c>sink &lt;Name&gt;</c> as the
+/// property it always was, and <see cref="SinkResolution"/> turns it into the directive when the name is a declared sink.
 /// </remarks>
 internal static partial class SinkParser
 {
@@ -34,13 +33,13 @@ internal static partial class SinkParser
         var match = DeclarationRegex().Match(line.Content);
         if (context.TryPeekChild(line.Indent, out var child))
         {
-            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"A sink is declared on one line; '{child.Content}' has no place under it", child.Location);
+            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"A sink is declared on one line", child.Location);
             context.SkipBlock(line.Indent);
         }
 
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"Invalid sink declaration '{line.Content}' - expected 'sink <Name> for readmodels' or 'sink <Name> for graphs'", line.Location);
+            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"Invalid sink declaration '{line.Content}' - expected 'sink <Name> for readmodels|graphs'", line.Location);
             return null;
         }
 
@@ -49,20 +48,7 @@ internal static partial class SinkParser
     }
 
     /// <summary>
-    /// Determines whether a read-model body line is the <c>sink</c> directive rather than a property named <c>sink</c>.
-    /// </summary>
-    /// <param name="content">The line content.</param>
-    /// <returns><see langword="true"/> when the line is the directive or a malformed attempt at it.</returns>
-    public static bool IsReadModelDirective(string content)
-    {
-        if (LineText.FirstWord(content) != Keyword) return false;
-        if (content == Keyword) return true;
-        var match = DirectiveRegex().Match(content);
-        return match.Success && !ConceptSyntax.PrimitiveTypes.Contains(match.Groups[1].Value, StringComparer.Ordinal);
-    }
-
-    /// <summary>
-    /// Parses a <c>sink &lt;Name&gt;</c> directive into an owner's current choice, reporting repeats.
+    /// Parses a graph's <c>sink &lt;Name&gt;</c> directive into its current choice, reporting repeats.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The directive line.</param>
@@ -75,7 +61,7 @@ internal static partial class SinkParser
         var match = DirectiveRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"Invalid sink directive '{line.Content}' - expected 'sink <Name>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"Invalid sink directive '{line.Content}'", line.Location);
             return current;
         }
 
@@ -92,7 +78,7 @@ internal static partial class SinkParser
         }
         else
         {
-            context.Error(DiagnosticCodes.ConflictingSinkDirective, $"{owner} names sink '{current}' and sink '{name}'; it is stored in one sink.", line.Location);
+            context.Error(DiagnosticCodes.ConflictingSinkDirective, $"{owner} names sink '{current}' and sink '{name}'", line.Location);
         }
 
         return current;

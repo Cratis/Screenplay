@@ -53,6 +53,21 @@ public class when_round_tripping_sinks : Specification
     }
 
     [Fact]
+    void should_print_a_property_named_sink_unchanged_when_no_sink_has_its_name() =>
+        new ScreenplayPrinter().Print(_compiler.Parse("module M\n  feature F\n    slice StateView S\n      readmodel Row\n        sink Customer").Value!).ShouldContain("        sink Customer");
+
+    [Fact]
+    void should_escape_a_property_named_sink_whose_type_is_a_declared_sink()
+    {
+        var parsed = _compiler.Parse("sink Reporting for readmodels\nmodule M\n  feature F\n    slice StateView S\n      readmodel Row\n        sink Reporting\n        sink Reporting[]");
+        var printed = new ScreenplayPrinter().Print((ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed.Value!)));
+        printed.ShouldContain("@sink Reporting[]");
+        var model = _compiler.Parse(printed).Value!.Modules.Single().Features.Single().Slices.Single().ReadModels!.Single();
+        model.Sink.ShouldEqual("Reporting");
+        model.Properties.Single().Type.IsCollection.ShouldBeTrue();
+    }
+
+    [Fact]
     void should_not_emit_a_directive_without_a_sink() =>
         new ScreenplayPrinter().Print(_compiler.Parse("module M\n  feature F\n    slice StateView S\n      readmodel Row\n        id String").Value!).Contains("sink", StringComparison.Ordinal).ShouldBeFalse();
 

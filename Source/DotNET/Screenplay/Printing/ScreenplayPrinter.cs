@@ -26,10 +26,13 @@ public sealed partial class ScreenplayPrinter :
     ISpecificationSyntaxVisitor<string>,
     ICaptureSyntaxVisitor<string>
 {
+    static readonly IReadOnlySet<string> _readModelBodyWithSink = new HashSet<string>(ReservedWords.ReadModelBody, StringComparer.Ordinal) { "sink" };
+    HashSet<string> _sinks = new(StringComparer.Ordinal);
     /// <inheritdoc/>
     /// <exception cref="Syntax.Serialization.InvalidSyntaxJson">A command contains ambiguous or duplicate stream headers, or an invalid stream candidate structure.</exception>
     public string Print(ApplicationSyntax application)
     {
+        _sinks = application.Sinks.Select(sink => sink.Name).ToHashSet(StringComparer.Ordinal);
         ValidateEventSourceExport(application);
         var writer = DocumentWriter(application);
         WriteApplication(writer, application);
@@ -515,9 +518,14 @@ public sealed partial class ScreenplayPrinter :
             WriteFile(writer, readModel.File);
             if (readModel.IsPassive) writer.Line("passive");
             if (readModel.Sink is { } sink) writer.Line($"sink {sink}");
-            WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
+            WriteProperties(writer, readModel.Properties, readModel.Properties.Any(NeedsSinkEscape) ? _readModelBodyWithSink : ReservedWords.ReadModelBody);
         }
     }
+
+    // A property named 'sink' is escaped when it was authored escaped, or when its type names a declared sink and the
+    // unescaped line would read back as the sink directive.
+    bool NeedsSinkEscape(PropertySyntax property) =>
+        property.Name == "sink" && (property.NameWasEscaped || _sinks.Contains(property.Type.Name));
 
     void WriteReducer(ScreenplayWriter writer, ReducerSyntax reducer)
     {

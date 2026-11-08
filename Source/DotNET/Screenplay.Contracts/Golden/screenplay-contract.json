@@ -57950,7 +57950,7 @@
       "severities": [
         "error"
       ],
-      "title": "A read model or graph names a sink the application does not declare.",
+      "title": "A graph names a sink the application does not declare. A read model\u0027s sink \u003CName\u003E line naming no declared sink is a property named sink, not this diagnostic.",
       "reserved": false,
       "retired": false
     },
@@ -58006,6 +58006,17 @@
         "warning"
       ],
       "title": "A declared sink is named by no read model or graph.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0924",
+      "name": "SinkNameCaseMismatch",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A read model\u0027s line sink \u003CType\u003E stays a property named sink, but its type differs only in case from a declared sink, so the author probably meant the sink directive.",
       "reserved": false,
       "retired": false
     }

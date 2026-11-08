@@ -16,7 +16,6 @@ import { isFileDirectiveAmongProperties } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProperty, tryParseProperty } from './PropertyLineParser';
-import { isReadModelSinkDirective, parseSinkDirective, SinkDirectiveState } from './SinkParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const typeHeader = pattern('^type\\s+([A-Za-z_]\\w*)$');
@@ -143,7 +142,6 @@ export function parseTag(context: ParserContext, line: SourceLine, eventDeclarat
 export function parseReadModel(context: ParserContext, header: SourceLine): ReadModelSyntax {
     let bodyIndent: number | undefined;
     let passive = false;
-    const sink: SinkDirectiveState = {};
     const name = readModelHeader.exec(header.content)?.[1] ?? '';
     if (name === '') {
         context.error(DiagnosticCodes.InvalidReadModelDeclaration, `Invalid read model declaration '${header.content}' - expected 'readmodel <Name>'`, locationOf(header));
@@ -163,8 +161,6 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
                 context.warning(DiagnosticCodes.RepeatedPassiveDirective, "A read model repeats 'passive'; the directive is idempotent.", locationOf(line));
             }
             passive = true;
-        } else if (isReadModelSinkDirective(line.content)) {
-            parseSinkDirective(context, line, sink, `Read model '${name}'`);
         } else if (firstWord(line.content) === 'passive' && ['true', 'false'].includes(line.content.slice('passive'.length).trim())) {
             context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
         } else if (isFileDirectiveAmongProperties(line)) {
@@ -182,10 +178,6 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
                 `Property '${property.name}' of read model '${name}' cannot be marked identifier - only a command property can be`));
         }
     }
-    if (passive && sink.sink !== undefined && sink.location !== undefined) {
-        context.error(DiagnosticCodes.PassiveReadModelSink, `Passive read model '${name}' names sink '${sink.sink}'; a passive read model has no sink.`, sink.location);
-    }
     const model: ReadModelSyntax = { kind: 'ReadModelSyntax', name, properties, description, documentation, location: locationOf(header) };
-    const withSink: ReadModelSyntax = sink.sink === undefined || sink.location === undefined ? model : { ...model, sink: sink.sink, directiveLocations: { sink: sink.location } };
-    return passive ? { ...withSink, isPassive: true } : withSink;
+    return passive ? { ...model, isPassive: true } : model;
 }

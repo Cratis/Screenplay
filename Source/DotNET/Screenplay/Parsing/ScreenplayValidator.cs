@@ -29,6 +29,7 @@ internal static partial class ScreenplayValidator
     /// <returns>The application with repeated dependency targets kept once.</returns>
     public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false, bool deferImportedExampleTypes = false)
     {
+        application = SinkResolution.Resolve(application, context);
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
         new PublicEventMetadataValidator(context).VisitApplication(application);
         PurposeValidator.Validate(application, context);

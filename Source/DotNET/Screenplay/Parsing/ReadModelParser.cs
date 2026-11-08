@@ -32,7 +32,6 @@ internal static partial class ReadModelParser
         var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
         var passive = false;
-        string? sink = null;
         int? bodyIndent = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -64,10 +63,6 @@ internal static partial class ReadModelParser
                     directiveLocations["passive"] = line.Location;
                 }
             }
-            else if (SinkParser.IsReadModelDirective(line.Content))
-            {
-                sink = SinkParser.ParseDirective(context, line, sink, $"Read model '{name.Groups[1].Value}'", directiveLocations);
-            }
             else if (LineText.FirstWord(line.Content) == "passive" && IsBooleanLiteral(line.Content["passive".Length..].Trim()))
             {
                 context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
@@ -96,12 +91,7 @@ internal static partial class ReadModelParser
             }
         }
 
-        if (passive && sink is not null)
-        {
-            context.Error(DiagnosticCodes.PassiveReadModelSink, $"Passive read model '{name.Groups[1].Value}' names sink '{sink}'; a passive read model has no sink.", directiveLocations[SinkParser.Keyword]);
-        }
-
-        return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, IsPassive = passive, Sink = sink, DirectiveLocations = directiveLocations };
+        return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, IsPassive = passive, DirectiveLocations = directiveLocations };
     }
 
     static bool IsBooleanLiteral(string value) =>

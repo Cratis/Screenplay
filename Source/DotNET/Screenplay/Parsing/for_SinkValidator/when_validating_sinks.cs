@@ -25,14 +25,14 @@ public class when_validating_sinks : Specification
         Codes("sink Reporting for readmodels\nsink reporting for readmodels\n" + ReadModel("Reporting")).ShouldContainOnly(DiagnosticCodes.DuplicateSink);
 
     [Fact]
-    void should_refuse_an_unknown_sink_on_a_read_model() => Codes(ReadModel("Reporting")).ShouldContainOnly(DiagnosticCodes.UnknownSink);
+    void should_read_an_undeclared_read_model_sink_as_a_property() => Codes(ReadModel("Reporting")).ShouldNotContain(DiagnosticCodes.UnknownSink);
 
     [Fact]
     void should_refuse_an_unknown_sink_on_a_graph() => Codes(GraphInSink("People")).ShouldContainOnly(DiagnosticCodes.UnknownSink);
 
     [Fact]
     void should_match_a_directive_exactly() =>
-        Codes("sink Reporting for readmodels\n" + ReadModel("reporting")).ShouldContainOnly(DiagnosticCodes.UnknownSink, DiagnosticCodes.UnusedSink);
+        SinkCodes("sink Reporting for readmodels\n" + ReadModel("reporting")).ShouldContainOnly(DiagnosticCodes.SinkNameCaseMismatch, DiagnosticCodes.UnusedSink);
 
     [Fact]
     void should_refuse_a_graph_sink_on_a_read_model() =>
@@ -53,7 +53,24 @@ public class when_validating_sinks : Specification
 
     [Fact]
     void should_report_unknown_sinks_at_the_directive() =>
-        _compiler.Compile(ReadModel("Reporting")).Diagnostics.Single().Location.Line.ShouldEqual(5);
+        _compiler.Compile(GraphInSink("People")).Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownSink).Location.Line.ShouldEqual(10);
+
+    [Fact]
+    void should_resolve_a_directive_against_a_sink_another_file_declares()
+    {
+        var sources = new Files.InMemoryPlayDocumentSource(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["application.play"] = "sink Reporting for readmodels\nimport \"module.play\"\n",
+            ["module.play"] = ReadModel("Reporting")
+        });
+        var (_, compilation) = Files.PlayApplicationAssembly.Compile(new ScreenplayCompiler(), ["application.play"], sources);
+        compilation.Diagnostics.Where(diagnostic => diagnostic.Severity != DiagnosticSeverity.Information).ShouldBeEmpty();
+        var readModel = compilation.Value!.Modules.Single().Features.Single().Slices.Single().ReadModels!.Single();
+        readModel.Sink.ShouldEqual("Reporting");
+        readModel.Properties.Select(property => property.Name).ShouldContainOnly("id");
+    }
+
+    string[] SinkCodes(string source) => [.. Codes(source).Where(code => code.CompareTo(DiagnosticCodes.InvalidSinkDeclaration) >= 0)];
 
     string[] Codes(string source) => [.. _compiler.Compile(source).Diagnostics.Where(diagnostic => diagnostic.Severity != DiagnosticSeverity.Information).Select(diagnostic => diagnostic.Code)];
 

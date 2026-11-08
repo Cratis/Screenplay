@@ -23,7 +23,7 @@ internal static class SinkValidator
         {
             if (seen.TryGetValue(sink.Name, out var first))
             {
-                context.Error(DiagnosticCodes.DuplicateSink, $"Sink '{sink.Name}' is declared more than once; sink names are unique ignoring case", sink.Location);
+                context.Error(DiagnosticCodes.DuplicateSink, $"Sink '{sink.Name}' is declared more than once", sink.Location);
                 continue;
             }
 
@@ -40,6 +40,14 @@ internal static class SinkValidator
                 {
                     Check(name, SinkKind.ReadModels, $"Read model '{readModel.Name}'", readModel.DirectiveLocations.GetValueOrDefault(SinkParser.Keyword, readModel.Location), sinks, used, context);
                 }
+
+                foreach (var property in readModel.Properties.Where(SinkResolution.HasDirectiveShape))
+                {
+                    if (seen.TryGetValue(property.Type.Name, out var nearMiss) && nearMiss.Name != property.Type.Name)
+                    {
+                        context.Warning(DiagnosticCodes.SinkNameCaseMismatch, $"Read model '{readModel.Name}' property 'sink' type '{property.Type.Name}' differs only in case from sink '{nearMiss.Name}'", property.Location);
+                    }
+                }
             }
 
             foreach (var graph in slice.Graphs)
@@ -53,7 +61,7 @@ internal static class SinkValidator
 
         foreach (var sink in sinks.Values.Where(sink => !used.Contains(sink.Name)))
         {
-            context.Warning(DiagnosticCodes.UnusedSink, $"Sink '{sink.Name}' is not named by any {Describe(sink.Stores)}", sink.Location);
+            context.Warning(DiagnosticCodes.UnusedSink, $"Sink '{sink.Name}' is not used", sink.Location);
         }
     }
 
@@ -73,6 +81,4 @@ internal static class SinkValidator
     }
 
     static string Keyword(SinkKind kind) => kind == SinkKind.Graphs ? "graphs" : "readmodels";
-
-    static string Describe(SinkKind kind) => kind == SinkKind.Graphs ? "graph" : "read model";
 }
