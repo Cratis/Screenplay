@@ -39,6 +39,10 @@ flowchart LR
     Walker -. inspect or export .-> SyntaxTool[Syntax tool]
 ```
 
+Builders outside .NET read the executable semantic model through its published
+[JSON Schema](executable-model-schema.md) and rebuild only what changed by using the
+[per-slice change summary](model-comparison.md#group-changes-by-slice).
+
 Recovery and rendering are not inverses:
 
 - A source adapter explains what authored source proves and reports what it cannot recover.

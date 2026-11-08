@@ -14,6 +14,8 @@ public class when_comparing_as_text : given.two_model_versions
     [Fact] void should_list_the_added_slice() => Output.ToString().ShouldContain("Added Slice Administration.Settings.Themes");
     [Fact] void should_list_the_removed_event() => Output.ToString().ShouldContain("Removed Event Projects.Registration.RegisterProject.ProjectRegistered");
     [Fact] void should_list_the_added_event() => Output.ToString().ShouldContain("Added Event Projects.Registration.RegisterProject.ProjectEnrolled");
+    [Fact] void should_summarize_the_added_slice() => Output.ToString().ShouldContain("  Added Administration.Settings.Themes (");
+    [Fact] void should_summarize_the_changed_slice() => Output.ToString().ShouldContain("  Changed Projects.Registration.RegisterProject (");
     [Fact] void should_report_a_semantic_change() => Output.ToString().ShouldContain("Semantic change: yes.");
     [Fact] void should_report_nothing_on_the_error_stream() => Error.ToString().ShouldBeEmpty();
 }

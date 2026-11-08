@@ -503,7 +503,7 @@ screenplay export path/to/screenplays --output model.esm.json
 screenplay export path/to/screenplays --scope Billing.Invoices.Send
 ```
 
-The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. `PATH` defaults to the current directory, and `--format esm` is the only format. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
+The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory, and `--format esm` is the only format. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
 
 `--scope <Module>[.<Feature>...][.<Slice>]` keeps one module, feature or slice and drops every other module, feature and slice. Application-wide declarations (concepts, types, policies, triggers, event sources, lifecycles and graphs) stay, so references from the selected slices still resolve. The excerpt's `revision` identifies the excerpt, not the whole model. From .NET, use `ExecutableSemanticModelScope.Select(model, scope)`.
 
@@ -522,11 +522,11 @@ screenplay diff before/screenplays after/screenplays
 screenplay diff before/screenplays after/screenplays --format json
 ```
 
-The command runs `ModelComparison.Compare`, the comparison the library offers, and prints added, removed, renamed and moved declarations, member changes, event contract changes (marked `[contract-breaking]` where stored events would no longer read), enumeration changes, specification outcome changes, identity changes and the direct dependants of each change. To compare two commits, check each out into its own folder with `git worktree add`.
+The command runs `ModelComparison.Compare`, the comparison the library offers, and prints added, removed, renamed and moved declarations, member changes, event contract changes (marked `[contract-breaking]` where stored events would no longer read), enumeration changes, specification outcome changes, identity changes and the direct dependants of each change. It ends with the [changes grouped by slice](model-comparison.md#group-changes-by-slice): each added, removed, renamed, moved or changed slice with its dependent slices, the model-wide changes and the unchanged slices they affect, so a builder knows which slices to rebuild. To compare two commits, check each out into its own folder with `git worktree add`.
 
 Declarations are matched by persisted identity when both folders hold `.screenplay/identities.json` for the same application, so a rename or a move reads as one. Otherwise they are matched by address, and a rename reads as a removal plus an addition; the report says which matching it used and lists what it could not compare.
 
-`--format json` writes one object: `before` and `after` (path, source revision, whether persisted identities were used, model revision) and `difference`, the `ModelDifference` with camelCase names and enumerations as strings. The command exits `0` when it compared the versions and `2` when it could not run, including when the two folders hold identities for different applications.
+`--format json` writes one object: `before` and `after` (path, source revision, whether persisted identities were used, model revision) and `difference`, the `ModelDifference` with camelCase names and enumerations as strings; `difference.slices` holds the per-slice summary. The command exits `0` when it compared the versions and `2` when it could not run, including when the two folders hold identities for different applications.
 
 ## Rename a declaration and keep its identity
 
