@@ -479,7 +479,7 @@ screenplay test path/to/invoicing.play --filter Billing.Invoices.Send.SendingAnI
 
 `PATH` defaults to the current directory. The run includes the specifications written inside [state machines](statemachines.md) and [workflows](workflows.md), addressed `<Name>.<Specification>`, and the [graph](graphs.md) specifications of a slice, addressed `<Slice>.<Specification>`. A folder is one application; a file includes only that file and its imports, not unimported siblings. `--filter` takes one exact, case-sensitive dotted specification address (module, nested features, slice, specification). A table address selects every named case; a derived `<Specification>_<Case>` address selects one case. Unknown selections are usage errors, not empty passes. Without a filter, every discovered specification is selected. `--format` defaults to `text`; `json` writes one camel-case JSON report to stdout.
 
-The CLI does not read MCP workspace state from `.screenplay/identities.json`. Its printed semantic ids are derived from addresses and may differ from MCP's persisted identities after renames. A CLI-derived semantic id is also accepted by `--filter`; use MCP `run-specifications` for identity-stable selection.
+When `PATH` is a folder holding `.screenplay/identities.json`, the printed semantic ids are the persisted identities the MCP server uses, so they survive renames made through MCP or `screenplay rename`. A single file, a folder without identities, and a folder whose sources no longer match its identity file (a hand edit or file rename) run with ids derived from addresses instead; a specification run never refuses because of identity state. Any printed semantic id is also accepted by `--filter`.
 
 The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass. Failures include expected and actual facts, read models, command responses and query results; example-based failures also include effective fixture provenance.
 
@@ -493,6 +493,53 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `1` | At least one selected specification failed, even if others were unsupported |
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
+
+## Export the executable model
+
+Write the canonical executable semantic model (ESM) of a model, for a builder, a script or a CI step:
+
+```bash
+screenplay export path/to/screenplays --output model.esm.json
+screenplay export path/to/screenplays --scope Billing.Invoices.Send
+```
+
+The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory, and `--format esm` is the only format. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
+
+`--scope <Module>[.<Feature>...][.<Slice>]` keeps one module, feature or slice and drops every other module, feature and slice. Application-wide declarations (concepts, types, policies, triggers, event sources, lifecycles and graphs) stay, so references from the selected slices still resolve. The excerpt's `revision` identifies the excerpt, not the whole model. From .NET, use `ExecutableSemanticModelScope.Select(model, scope)`.
+
+| Exit code | Meaning |
+|---|---|
+| `0` | The model was written |
+| `1` | The model has no executable model; its errors are listed on standard error |
+| `2` | Invalid arguments or scope, or the model could not be read |
+
+## Compare two model versions
+
+Compare two versions of a model, each a `.play` file or a model folder, to see what changed between them:
+
+```bash
+screenplay diff before/screenplays after/screenplays
+screenplay diff before/screenplays after/screenplays --format json
+```
+
+The command runs `ModelComparison.Compare`, the comparison the library offers, and prints added, removed, renamed and moved declarations, member changes, event contract changes (marked `[contract-breaking]` where stored events would no longer read), enumeration changes, specification outcome changes, identity changes and the direct dependants of each change. It ends with the [changes grouped by slice](model-comparison.md#group-changes-by-slice): each added, removed, renamed, moved or changed slice with its dependent slices, the model-wide changes and the unchanged slices they affect, so a builder knows which slices to rebuild. To compare two commits, check each out into its own folder with `git worktree add`.
+
+Declarations are matched by persisted identity when both folders hold `.screenplay/identities.json` for the same application, so a rename or a move reads as one. Otherwise they are matched by address, and a rename reads as a removal plus an addition; the report says which matching it used and lists what it could not compare.
+
+`--format json` writes one object: `before` and `after` (path, source revision, whether persisted identities were used, model revision) and `difference`, the `ModelDifference` with camelCase names and enumerations as strings; `difference.slices` holds the per-slice summary. The command exits `0` when it compared the versions and `2` when it could not run, including when the two folders hold identities for different applications.
+
+## Rename a declaration and keep its identity
+
+Rename a module, feature, slice or declaration through the same proposal and apply the MCP server uses:
+
+```bash
+screenplay rename Billing.Invoices.Send.InvoiceSent InvoiceDispatched path/to/screenplays
+screenplay rename Billing.Invoices.Send.Invoice Bill --kind Command
+```
+
+The address is the dotted path to the declaration, and the folder defaults to the current directory. Pass `--kind` (`Command`, `EventContract`, `ReadModel`, ...) when the address names more than one declaration. The rename repairs references across files, keeps the declaration's semantic identity, pins a renamed event's stored type name with `id`, and writes `.screenplay/identities.json` exactly as an MCP apply does, creating it on the first rename. It exits `0` when renamed, `1` when the rename was refused and `2` when it could not run.
+
+`test`, `export`, `diff` and `rename` open a folder the way the MCP server does: with `.screenplay/identities.json` when it is present, so the CLI and MCP report the same identities for the same model. `export` and `diff` refuse a folder whose sources no longer match its identity file (`IdentityReconciliationRequired`, `IdentityMappingConflict`) rather than inventing new identities; restore the previous names, then rename through `screenplay rename` or MCP.
 
 ## Export the language and tool contract
 

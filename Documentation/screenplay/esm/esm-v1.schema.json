@@ -1,0 +1,1341 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/esm/esm-v1.schema.json",
+  "title": "Cratis Screenplay executable semantic model 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schemaVersion",
+    "languageVersion",
+    "semanticVersion",
+    "revision",
+    "application"
+  ],
+  "properties": {
+    "schema": {
+      "const": "cratis.screenplay.esm"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "languageVersion": {
+      "type": "string"
+    },
+    "semanticVersion": {
+      "const": "1.0"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "application": {
+      "$ref": "#/$defs/Application"
+    }
+  },
+  "$defs": {
+    "AffectedInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cardinality": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "Application": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "concepts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Concept"
+          }
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Type"
+          }
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Module"
+          }
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Policy"
+          }
+        }
+      }
+    },
+    "Authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/Authorization"
+        },
+        "right": {
+          "$ref": "#/$defs/Authorization"
+        }
+      }
+    },
+    "Caller": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authenticated": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallerClaim"
+          }
+        }
+      }
+    },
+    "CallerClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "Children": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "identifiedBy": {
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        }
+      }
+    },
+    "CodeValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requirementId": {
+          "type": "string"
+        }
+      }
+    },
+    "Command": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Property"
+          }
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Validation"
+          }
+        },
+        "codeValidations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CodeValidation"
+          }
+        },
+        "produces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProducedEvent"
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          }
+        },
+        "authorization": {
+          "$ref": "#/$defs/Authorization"
+        },
+        "destination": {
+          "$ref": "#/$defs/Destination"
+        }
+      }
+    },
+    "Concept": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "primitive": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Validation"
+          }
+        }
+      }
+    },
+    "Condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "left": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConditionOperand"
+            },
+            {
+              "$ref": "#/$defs/Condition"
+            }
+          ]
+        },
+        "operator": {
+          "type": "string"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConditionOperand"
+            },
+            {
+              "$ref": "#/$defs/Condition"
+            }
+          ]
+        }
+      }
+    },
+    "ConditionOperand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Value"
+        }
+      }
+    },
+    "Constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConstraintTarget"
+          }
+        },
+        "releasedBy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ignoreCasing": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ConstraintTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/TypeReference"
+        },
+        "value": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "EventContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "contractId": {
+          "type": "string"
+        },
+        "contractRevision": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Property"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "EventSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/TypeReference"
+        },
+        "value": {
+          "$ref": "#/$defs/Value"
+        }
+      }
+    },
+    "Every": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "includeChildren": {
+          "type": "boolean"
+        },
+        "subscribesToAllEvents": {
+          "type": "boolean"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProjectionMapping"
+          }
+        }
+      }
+    },
+    "Expression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Value"
+        },
+        "contextValue": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/TypeReference"
+        },
+        "member": {
+          "type": "string"
+        },
+        "root": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      }
+    },
+    "Feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Feature"
+          }
+        },
+        "slices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Slice"
+          }
+        }
+      }
+    },
+    "From": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/ProjectionKey"
+        },
+        "parentKey": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProjectionKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProjectionMapping"
+          }
+        }
+      }
+    },
+    "Join": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "on": {
+          "type": "string"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProjectionMapping"
+          }
+        },
+        "key": {
+          "$ref": "#/$defs/ProjectionKey"
+        }
+      }
+    },
+    "JoinRemoval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/ProjectionKey"
+        }
+      }
+    },
+    "KeyPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/ProjectionValue"
+        }
+      }
+    },
+    "Mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetProperty": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/Expression"
+        }
+      }
+    },
+    "Module": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Feature"
+          }
+        }
+      }
+    },
+    "Nested": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        }
+      }
+    },
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/$defs/PolicyCondition"
+        },
+        "requirementId": {
+          "type": "string"
+        }
+      }
+    },
+    "PolicyCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "claim": {
+          "type": "string"
+        },
+        "targetKind": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "operand": {
+          "$ref": "#/$defs/PolicyCondition"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/PolicyCondition"
+        },
+        "right": {
+          "$ref": "#/$defs/PolicyCondition"
+        }
+      }
+    },
+    "ProducedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Expression"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Expression"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Mapping"
+          }
+        },
+        "when": {
+          "$ref": "#/$defs/Condition"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "readModel": {
+          "type": "string"
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Transition"
+          }
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        }
+      }
+    },
+    "ProjectionKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/ProjectionValue"
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/KeyPart"
+          }
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "ProjectionMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "operation": {
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProjectionValue"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "factor": {
+          "$ref": "#/$defs/ProjectionValue"
+        }
+      }
+    },
+    "ProjectionValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Value"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "Property": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/TypeReference"
+        },
+        "identifier": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PropertyValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetProperty": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Value"
+        }
+      }
+    },
+    "Query": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "readModel": {
+          "type": "string"
+        },
+        "argument": {
+          "$ref": "#/$defs/QueryArgument"
+        },
+        "keyProperty": {
+          "type": "string"
+        },
+        "cardinality": {
+          "type": "string"
+        },
+        "delivery": {
+          "type": "string"
+        },
+        "authorization": {
+          "$ref": "#/$defs/Authorization"
+        }
+      }
+    },
+    "QueryArgument": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/TypeReference"
+        }
+      }
+    },
+    "ReadModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Property"
+          }
+        }
+      }
+    },
+    "Reducer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "readModel": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "initialState": {
+          "type": "null"
+        },
+        "result": {
+          "type": "string"
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReducerTransition"
+          }
+        }
+      }
+    },
+    "ReducerTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "requirementId": {
+          "type": "string"
+        }
+      }
+    },
+    "Removal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/ProjectionKey"
+        },
+        "parentKey": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProjectionKey"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "Requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/Condition"
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "type": "string"
+        }
+      }
+    },
+    "Scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/From"
+          }
+        },
+        "join": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Join"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Children"
+          }
+        },
+        "nested": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Nested"
+          }
+        },
+        "every": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Every"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "removedWith": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Removal"
+          }
+        },
+        "removedWithJoin": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JoinRemoval"
+          }
+        }
+      }
+    },
+    "Slice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventContract"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Command"
+          }
+        },
+        "readModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReadModel"
+          }
+        },
+        "projections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Projection"
+          }
+        },
+        "reducers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reducer"
+          }
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Query"
+          }
+        },
+        "specifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Specification"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Constraint"
+          }
+        }
+      }
+    },
+    "Specification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "givenEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationEvent"
+          }
+        },
+        "givenReadModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationReadModel"
+          }
+        },
+        "givenCaller": {
+          "$ref": "#/$defs/Caller"
+        },
+        "when": {
+          "$ref": "#/$defs/SpecificationCommand"
+        },
+        "whenAppended": {
+          "$ref": "#/$defs/SpecificationEvent"
+        },
+        "thenEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationEvent"
+          }
+        },
+        "thenEventsInAnyOrder": {
+          "type": "boolean"
+        },
+        "thenReadModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationReadModel"
+          }
+        },
+        "thenQueries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationQuery"
+          }
+        },
+        "thenErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationError"
+          }
+        },
+        "thenDenied": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SpecificationCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyValue"
+          }
+        },
+        "eventSource": {
+          "$ref": "#/$defs/EventSource"
+        }
+      }
+    },
+    "SpecificationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "SpecificationEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyValue"
+          }
+        },
+        "eventSource": {
+          "$ref": "#/$defs/EventSource"
+        }
+      }
+    },
+    "SpecificationQuery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/Value"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SpecificationReadModel"
+          }
+        },
+        "exactly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "SpecificationReadModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readModel": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/Value"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyValue"
+          }
+        },
+        "exactly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventContract": {
+          "type": "string"
+        },
+        "affectedInstance": {
+          "$ref": "#/$defs/AffectedInstance"
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Mapping"
+          }
+        }
+      }
+    },
+    "Type": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Property"
+          }
+        }
+      }
+    },
+    "TypeReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "primitive": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "collection": {
+          "type": "boolean"
+        },
+        "optional": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "type": "string"
+        },
+        "operand": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Value"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "requirementId": {
+          "type": "string"
+        }
+      }
+    },
+    "Value": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyValue"
+          }
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Value"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1304,6 +1304,7 @@ The `result` contains:
 | `hasSemanticChange` | `true` for a known structural change (including owner moves and opaque-content changes), `false` for a complete comparison with only document moves or no changes, or `null` when incomplete data cannot establish no change. |
 | `sections` | Each section's `complete` flag and `unavailable` reasons. An empty incomplete section never means no change. |
 | `limits` | Comparison exclusions and fallback rules. |
+| `slices` | The unpaged [per-slice summary](../model-comparison.md#group-changes-by-slice): `slices` (each with `change`, `changes`, `beforeAddress`, `afterAddress`, `semanticId`, `declarations` and `dependentSlices`), `modelWide` declarations and `affectedSlices`. Change kinds are `added`, `removed`, `renamed`, `moved` and `changed`. |
 | `page` | `revision`, `totalCount`, `offset`, `items`, `nextOffset`. |
 
 Items are ordered by section, semantic ID, kind, addresses, change kind, member,

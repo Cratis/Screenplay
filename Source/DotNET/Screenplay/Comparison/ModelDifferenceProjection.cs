@@ -28,7 +28,7 @@ static class ModelDifferenceProjection
             Declaration(change, matching), EnumerationKind(change.ChangeKind), change.Member!, change.AfterMember, change.BeforeNumber!.Value, change.AfterNumber, Numbering(change.BeforeNumbering!), Numbering(change.AfterNumbering!), change.ContractBreaking == true, change.Stored == true))]
     };
 
-    static ComparedDeclaration Declaration(StructuralComparison.Change change, DeclarationMatching matching) => new(
+    internal static ComparedDeclaration Declaration(StructuralComparison.Change change, DeclarationMatching matching) => new(
         change.Kind,
         change.BeforeAddress,
         change.AfterAddress,

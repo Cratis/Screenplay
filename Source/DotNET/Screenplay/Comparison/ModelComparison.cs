@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Indexing;
+
 namespace Cratis.Screenplay.Comparison;
 
 /// <summary>
@@ -25,6 +27,12 @@ public static class ModelComparison
 
         var difference = StructuralComparison.Compare(before.Workspace, after.Workspace, matchByAddress: matching == DeclarationMatching.Address);
 
-        return ModelDifferenceProjection.Project(difference, matching, before.Workspace.Compilation.Success, after.Workspace.Compilation.Success);
+        var slices = SliceChanges.Summarize(
+            difference,
+            WorkspaceAuthoringAnalysis.For(before.Workspace).Source,
+            WorkspaceAuthoringAnalysis.For(after.Workspace).Source,
+            change => ModelDifferenceProjection.Declaration(change, matching));
+
+        return ModelDifferenceProjection.Project(difference, matching, before.Workspace.Compilation.Success, after.Workspace.Compilation.Success) with { Slices = slices };
     }
 }
