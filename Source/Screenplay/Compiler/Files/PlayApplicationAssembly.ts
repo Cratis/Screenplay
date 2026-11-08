@@ -17,6 +17,7 @@ import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceVal
 import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
 import { validateReadModelKeys } from '../Parsing/ReadModelKeyValidator';
 import { validateGraphs } from '../Parsing/GraphValidator';
+import { resolveSinks, validateSinks } from '../Parsing/Sinks';
 import { validateReadModelMemberTypes } from '../Parsing/ReadModelMemberTypeValidator';
 import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
@@ -85,9 +86,11 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const physicalEventSources = physical.flatMap((result, index) => (result.value.eventSources ?? []).map(source => ({ source, placementResolved: documents[index].isPlacementResolved !== false })));
     const sourceInventoryComplete = documents.every(document => document.isPlacementResolved !== false) && physical.every(result => !EventSourceReadConfidence.hasUnknownExtent(result.diagnostics));
     const parsed = physical.map((result, index) => documents[index].isPlacementResolved === false ? { ...result, value: { ...result.value, eventSources: [] } } : result);
-    const merged = mergeDocuments(parsed);
+    const unresolved = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]), undefined, languages);
-    if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
+    if (unresolved.value.sourceOptions !== undefined) context.sourceOptions = unresolved.value.sourceOptions;
+    // A read model's 'sink <Name>' becomes the directive once the sinks of every file are known.
+    const merged = { ...unresolved, value: resolveSinks(unresolved.value, context) };
     context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
     context.interactionBehaviors.push(...parsed.flatMap(document => document.interactionBehaviors));
     context.interactionUses.push(...effectiveStructuralInteractions(merged.value).filter(site => 'behavior' in site),
@@ -108,6 +111,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateReadModelKeys(merged.value, context);
     validateReadModelMemberTypes(merged.value, context);
     validateGraphs(merged.value, context);
+    validateSinks(merged.value, context);
     validateReactionRefusals(merged.value, context);
     validateSpecificationRedelivery(merged.value, context);
     validateGuardedActions(merged.value, context);

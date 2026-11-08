@@ -135,3 +135,4 @@
 | [0143](0143-outlets-are-item-lists-screenplay-6.md) | An item list a template offers is an outlet that lower levels inherit, extend or override (Screenplay 6) | proposed | none | — | — |
 | [0144](0144-placement-hooks-and-bindings-screenplay-6.md) | A slice's screen says where it fits, and a hook opens or runs it (Screenplay 6) | proposed | none | — | — |
 | [0145](0145-design-system-and-themes-screenplay-6.md) | One design system per application, implemented by themes (Screenplay 6) | proposed | none | — | — |
+| [0146](0146-sinks-are-realization-metadata.md) | Named sinks for read models and graphs are realization metadata outside portable ESM | accepted | none | 2026-11-08 | Accepted Screenplay#1182 design (delegated) |

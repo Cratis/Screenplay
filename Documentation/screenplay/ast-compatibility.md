@@ -105,6 +105,10 @@ Screenplay 6 replaced `LayoutSyntax.Navigation`, `ModuleSyntax.Navigation`, `Mod
 
 `ReadModelSyntax.IsPassive` is an additive default-false init property, preserving constructor and Deconstruct signatures. Syntax JSON omits false and restores a missing member as false. Preserve it when replacing read-model nodes. It is realization metadata: the binder reports `PLAY0270` and carries canonical identities in `SemanticCompilation.PassiveReadModels`, outside portable ESM. Toggling it changes neither executable bytes nor revision; renderers must hash the sidecar separately. See [Passive decision state](readmodels.md#passive-decision-state).
 
+## Sinks
+
+`ReadModelSyntax.Sink`, `GraphSyntax.Sink` and `ApplicationSyntax.Sinks` are additive init properties, preserving constructor and Deconstruct signatures. Syntax JSON omits them when absent or empty and restores a missing member as absent. `SinkSyntax` is a new node kind whose kind of storage is the `stores` member. They are realization metadata: the binder reports `PLAY0270` and carries the choices in `SemanticCompilation.Sinks`, `ReadModelSinks` and `GraphSinks`, outside portable ESM. Changing a sink changes neither executable bytes nor revision; renderers must hash these members separately. See [Sinks](sinks.md).
+
 ## Key and routing members
 
 `PropertySyntax.IsKey`, `QuerySyntax.ByParts`, `ReadsSyntax.ByParts`, `ProducesSyntax.Stream`, `ReactionSyntax.From` and `ReducerSyntax.From` are additive init-only properties. Constructors and Deconstruct signatures stay unchanged. Missing members default to false, empty collections or null. Writers omit those defaults. Preserve authored key-part and mapping order when rewriting nodes.

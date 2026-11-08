@@ -26,6 +26,11 @@ domain Acme.Invoicing
 reaction batches atomic
 command reads protected
 
+// Reports are stored apart from the operational read models. 'Reporting' is a
+// logical sink the deployment maps to real storage; every read model that names
+// no sink stays in the default one.
+sink Reporting for readmodels
+
 // Facts other bounded contexts own. An import names a contract this application
 // consumes; it never resolves against another file of the same application.
 import Customers.CustomerRegistered
@@ -2371,6 +2376,7 @@ module Invoicing
     slice StateView InvoiceLineReport
 
       readmodel InvoiceLineReportReadModel
+        sink Reporting
         invoiceId  InvoiceId
         lineNumber Int
         quantity   Quantity

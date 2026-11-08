@@ -109,6 +109,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUser(user);
         }
 
+        foreach (var sink in syntax.Sinks)
+        {
+            VisitSink(sink);
+        }
+
         if (syntax.Identity is not null) VisitIdentity(syntax.Identity);
 
         if (syntax.Authentication is not null)

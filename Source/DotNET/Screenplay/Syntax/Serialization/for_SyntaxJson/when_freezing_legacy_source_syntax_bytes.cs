@@ -174,6 +174,10 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 text = text.Replace(",\"thenNoEvents\":true", string.Empty, StringComparison.Ordinal)
                     .Replace(",\"isSubject\":true", string.Empty, StringComparison.Ordinal)
 
+                    // The named sink is additive realization metadata with its own conformance vector and specs.
+                    .Replace(",\"sink\":\"Reporting\"", string.Empty, StringComparison.Ordinal)
+                    .Replace("\"sinks\":[{\"kind\":\"SinkSyntax\",\"name\":\"Reporting\",\"stores\":\"ReadModels\"}],", string.Empty, StringComparison.Ordinal)
+
                     // The samples now spell the caller as $identity, which has its own parser and printer specs;
                     // project it back to the $context.identity node it means so the pre-root bytes stay frozen.
                     .Replace("{\"kind\":\"IdentityExpressionSyntax\",\"path\":\"userName\"}", "{\"kind\":\"ContextExpressionSyntax\",\"path\":\"identity.userName\"}", StringComparison.Ordinal);

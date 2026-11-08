@@ -25,6 +25,11 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' passive is realization metadata.", readModel.Location);
             }
 
+            if (readModel.Sink is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' sink '{readModel.Sink}' is realization metadata.", readModel.DirectiveLocations.GetValueOrDefault("sink", readModel.Location));
+            }
+
             if (readModel.Documentation is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' documentation is authoring metadata.", readModel.Location);

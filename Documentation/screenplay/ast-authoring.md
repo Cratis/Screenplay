@@ -21,6 +21,10 @@ Preserve concept attributes and their typed `scope`, `specialCategory` and `crim
 
 Preserve optional Boolean `ReadModelSyntax.isPassive` when replacing a read model. The bare body directive opts into replay on demand for command decisions; absence/false means active and writers omit false. It is never inferred. Queries or screen data over the model fail native validation (`PLAY0859`); no command read warns (`PLAY0860`); repetition warns in both parsers (`PLAY0858`). Passivity is realization metadata, not portable ESM. Native consumers use `SemanticCompilation.PassiveReadModels` and must include it in hashed render input, since executable bytes and revision stay unchanged.
 
+## Sinks
+
+Preserve optional `ReadModelSyntax.sink` and `GraphSyntax.sink` when replacing a read model or graph, and `ApplicationSyntax.sinks` (`SinkSyntax` with `name` and `stores`, `ReadModels` or `Graphs`) when editing the application root. Absent means the default sink, and writers omit absent members. A read model's `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly; otherwise it stays a property named `sink`. A directive's sink must be of the matching kind (`PLAY0934`), and names are unique ignoring case (`PLAY0932`). Sinks are realization metadata, not portable ESM: native consumers read `SemanticCompilation.Sinks`, `ReadModelSinks` and `GraphSinks` and must include them in hashed render input. See [Sinks](sinks.md).
+
 ## Keys, production routes and observer filters
 
 `PropertySyntax.isKey` is an optional Boolean. It defaults to false and is omitted when false. `QuerySyntax.byParts` holds ordered query parameters. `ReadsSyntax.byParts` holds ordered property mappings. Each defaults to an empty collection and is mutually exclusive with `by`.

@@ -54,6 +54,26 @@ public sealed class SemanticCompilation
     public ImmutableHashSet<SemanticId> PassiveReadModels { get; private init; } = [];
 
     /// <summary>
+    /// Gets the named sinks the application declares, in declaration order, or an empty array when it declares none.
+    /// Every application also has an implicit default sink per kind, which is never listed. This realization sidecar is
+    /// not part of ESM bytes or its revision; renderers must include it in hashed render input.
+    /// </summary>
+    public ImmutableArray<SemanticSink> Sinks { get; private init; } = [];
+
+    /// <summary>
+    /// Gets the sink name of every read model that names one, keyed by the read model's canonical identity. A read model
+    /// that is absent uses the default read-model sink; its projection or reducer writes there and its queries read
+    /// from there. This realization sidecar is not part of ESM bytes or its revision.
+    /// </summary>
+    public ImmutableDictionary<SemanticId, string> ReadModelSinks { get; private init; } = ImmutableDictionary.Create<SemanticId, string>();
+
+    /// <summary>
+    /// Gets the sink name of every graph that names one, keyed by the graph's canonical identity, its name. A graph that
+    /// is absent uses the default graph sink. This realization sidecar is not part of ESM bytes or its revision.
+    /// </summary>
+    public ImmutableDictionary<string, string> GraphSinks { get; private init; } = ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.Ordinal);
+
+    /// <summary>
     /// Creates a compilation after cross-checking the model, identity catalog, documents, and source map.
     /// </summary>
     /// <param name="model">The validated executable semantic model.</param>
@@ -112,14 +132,37 @@ public sealed class SemanticCompilation
         return new(model, documents, validatedSourceMap);
     }
 
-    internal SemanticCompilation WithSpecificationOrigins(ImmutableDictionary<SemanticId, EffectiveSpecification> origins) =>
-        new(Model, Documents, SourceMap) { SpecificationOrigins = origins, Environment = Environment, PassiveReadModels = PassiveReadModels };
+    internal SemanticCompilation WithSpecificationOrigins(ImmutableDictionary<SemanticId, EffectiveSpecification> origins) => Copy(origins: origins);
 
-    internal SemanticCompilation WithEnvironment(EnvironmentRequirements environment) =>
-        new(Model, Documents, SourceMap) { SpecificationOrigins = SpecificationOrigins, Environment = environment, PassiveReadModels = PassiveReadModels };
+    internal SemanticCompilation WithEnvironment(EnvironmentRequirements environment) => Copy(environment: environment);
 
-    internal SemanticCompilation WithPassiveReadModels(ImmutableHashSet<SemanticId> passiveReadModels) =>
-        new(Model, Documents, SourceMap) { SpecificationOrigins = SpecificationOrigins, Environment = Environment, PassiveReadModels = passiveReadModels };
+    internal SemanticCompilation WithPassiveReadModels(ImmutableHashSet<SemanticId> passiveReadModels) => Copy(passiveReadModels: passiveReadModels);
+
+    internal SemanticCompilation WithSinks(ImmutableArray<SemanticSink> sinks, ImmutableDictionary<SemanticId, string> readModelSinks, ImmutableDictionary<string, string> graphSinks) =>
+        Copy(sinks: sinks, readModelSinks: readModelSinks, graphSinks: graphSinks);
+
+    /// <summary>
+    /// Copies every realization sidecar onto a new compilation, replacing only the ones given.
+    /// </summary>
+    internal SemanticCompilation WithSidecarsOf(SemanticCompilation other) =>
+        Copy(other.SpecificationOrigins, other.Environment, other.PassiveReadModels, other.Sinks, other.ReadModelSinks, other.GraphSinks);
+
+    SemanticCompilation Copy(
+        ImmutableDictionary<SemanticId, EffectiveSpecification>? origins = null,
+        EnvironmentRequirements? environment = null,
+        ImmutableHashSet<SemanticId>? passiveReadModels = null,
+        ImmutableArray<SemanticSink>? sinks = null,
+        ImmutableDictionary<SemanticId, string>? readModelSinks = null,
+        ImmutableDictionary<string, string>? graphSinks = null) =>
+        new(Model, Documents, SourceMap)
+        {
+            SpecificationOrigins = origins ?? SpecificationOrigins,
+            Environment = environment ?? Environment,
+            PassiveReadModels = passiveReadModels ?? PassiveReadModels,
+            Sinks = sinks ?? Sinks,
+            ReadModelSinks = readModelSinks ?? ReadModelSinks,
+            GraphSinks = graphSinks ?? GraphSinks
+        };
 }
 
 sealed class SemanticCompilationIndex

@@ -33,6 +33,7 @@ internal static partial class GraphParser
         string? documentation = null;
         FileReferenceSyntax? file = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
+        string? sink = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -53,6 +54,10 @@ internal static partial class GraphParser
                 case "edge":
                     edges.Add(ParseEdge(context, line));
                     break;
+                case "sink":
+                    sink = SinkParser.ParseDirective(context, line, sink, $"Graph '{name}'", directiveLocations);
+                    context.SkipBlock(line.Indent);
+                    break;
                 default:
                     if (FileReferenceParser.IsDirective(line))
                     {
@@ -71,7 +76,7 @@ internal static partial class GraphParser
             context.Error(DiagnosticCodes.InvalidGraphDeclaration, $"Graph '{name}' must declare at least one node", header.Location);
         }
 
-        return new(name, nodes, edges, header.Location, description) { Documentation = documentation, File = file, DirectiveLocations = directiveLocations };
+        return new(name, nodes, edges, header.Location, description) { Documentation = documentation, File = file, Sink = sink, DirectiveLocations = directiveLocations };
     }
 
     static GraphNodeSyntax ParseNode(ParserContext context, SourceLine line)

@@ -51,6 +51,7 @@ export const featureScopeItems: CompletionEntry[] = [
 
 export const readModelItems: CompletionEntry[] = [
     documentationItem,
+    { label: 'sink', insertText: 'sink ${1:Sink}', documentation: 'Stores it in a named sink.' },
     { label: 'passive', insertText: 'passive', documentation: 'Opts into replay on demand for command decisions, not materialization. Default active, never inferred; queries and screens cannot observe this model.' },
     { label: 'description', insertText: 'description "${1:what one instance holds}"', documentation: 'A human-readable description.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the file this read model is realized by.' },

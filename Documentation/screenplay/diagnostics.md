@@ -1739,6 +1739,22 @@ Where a slice's screen fits, how a hook opens its slice and what a screen's elem
 | `PLAY0914` | Error | A `show <Screen> by <param> from <element>.selection` line is malformed, stands outside a template slot, names a screen the document does not declare or an element the screen does not have, or keys the shown screen by a parameter its data is not keyed by. |
 | `PLAY0915` | Error | A button or toolbar item's `enabled when` reads `item`, but it acts `for screen`, so there is no item to read. |
 
+## Sinks
+
+Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers report every code in this section.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0931` | Error | A `sink <Name> for readmodels` or `sink <Name> for graphs` declaration is malformed or has lines under it, or a `sink` line in a graph is not `sink <Name>`. |
+| `PLAY0932` | Error | Two sinks share a name. Sink names are unique application-wide, compared ignoring case, so `Reporting` and `reporting` collide. |
+| `PLAY0933` | Error | A graph names a sink the application does not declare. A read model never reports it: its `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly, and otherwise stays a property named `sink`. |
+| `PLAY0934` | Error | A read model names a sink declared `for graphs`, or a graph names a sink declared `for readmodels`. |
+| `PLAY0935` | Error | A `passive` read model names a sink. A passive read model is never materialized, so it has no sink; remove one of the two lines. |
+| `PLAY0936` | Error | A read model or graph names two different sinks. It is stored in one sink. |
+| `PLAY0937` | Warning | A read model or graph repeats the same `sink` line. Keep one. |
+| `PLAY0938` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
+| `PLAY0939` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
+
 ## Toolbar buttons
 
 The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.

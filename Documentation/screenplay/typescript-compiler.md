@@ -109,6 +109,8 @@ Date comparisons retain the existing comparison and validation syntax nodes. Typ
 
 The bare `passive` read-model directive is retained as optional `isPassive: true` (false is omitted). Repeats report `PLAY0858` in both parsers. `PLAY0859` (query/screen observation) and `PLAY0860` (no command read) are C#-only usage diagnostics, not editor heuristics. Passivity is realization metadata and does not enter portable ESM. See [Read models](readmodels.md#passive-decision-state).
 
+Sinks are read like the C# compiler reads them: `ApplicationSyntax.sinks` holds the `sink <Name> for readmodels|graphs` declarations, and `ReadModelSyntax.sink` and `GraphSyntax.sink` the bare `sink <Name>` directives; each is omitted when absent. Both compilers settle a read model's `sink <Name>` line the same way, once the declared sinks are known, and report every sink diagnostic, `PLAY0931` to `PLAY0939`. See [Sinks](sinks.md).
+
 ## Keys and routed observers
 
 Both source parsers retain trailing read-model `key` marks, query and reads `by` blocks, production `stream` overrides and reaction/reducer `from` filters. Structural JSON uses `isKey`, `byParts`, `stream` and `from`. The narrow parser exposes reducer evidence through `dependencySourcesOf(slice).reducers` and command/trigger reads through `dependencySourcesOf(node).reads`. Full typed AST transport carries `ReducerSyntax` and `ReadsSyntax`.

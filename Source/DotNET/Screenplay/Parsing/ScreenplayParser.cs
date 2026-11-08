@@ -39,7 +39,7 @@ internal static partial class ScreenplayParser
             DispatchRoot(context, line, state);
         }
 
-        return state.Build(context);
+        return SinkResolution.Resolve(state.Build(context), context);
     }
 
     /// <summary>

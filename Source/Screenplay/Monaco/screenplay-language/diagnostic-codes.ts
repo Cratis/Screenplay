@@ -332,6 +332,15 @@ export const diagnosticCodes = {
     contrastBelowRule: 'PLAY0928',
     deprecatedAppearanceMember: 'PLAY0929',
     invalidThemeBlock: 'PLAY0930',
+    invalidSinkDeclaration: 'PLAY0931',
+    duplicateSink: 'PLAY0932',
+    unknownSink: 'PLAY0933',
+    sinkKindMismatch: 'PLAY0934',
+    passiveReadModelSink: 'PLAY0935',
+    conflictingSinkDirective: 'PLAY0936',
+    repeatedSinkDirective: 'PLAY0937',
+    unusedSink: 'PLAY0938',
+    sinkNameCaseMismatch: 'PLAY0939',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

@@ -69,6 +69,8 @@
   href: readmodels.md
 - name: Graphs
   href: graphs.md
+- name: Sinks
+  href: sinks.md
 - name: Contexts
   href: context.md
 - name: Projections

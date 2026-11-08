@@ -15,6 +15,10 @@ reaction batches atomic
 
 time zone configurable default "Europe/Oslo"
 
+// The organization graph is kept in its own store. 'People' is a logical sink;
+// the deployment decides which graph database it is.
+sink People for graphs
+
 concept PersonId     : Uuid
 concept GroupId      : Uuid
 concept AssignmentId : Uuid
@@ -381,6 +385,7 @@ module Organization
 
       graph Organization
         description "Who belongs to which group, how groups nest, and the roles people hold"
+        sink People
         node Person
           personId PersonId key
           name     PersonName

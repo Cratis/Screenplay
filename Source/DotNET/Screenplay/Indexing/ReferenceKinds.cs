@@ -63,6 +63,8 @@ static class ReferenceKinds
         SpecificationInvocationSyntax value => [(value.Command, ["Command"], "thenInvokes")],
         SpecificationReadModelSyntax value => [(value.Name, ["ReadModel", "Example"], "specificationReadModel")],
         SpecificationAbsentReadModelSyntax value => [(value.Name, ["ReadModel"], "thenAbsentReadModel")],
+        ReadModelSyntax { Sink: { } sink } => [(sink, ["Sink"], "sink")],
+        GraphSyntax { Sink: { } sink } => [(sink, ["Sink"], "sink")],
         SpecificationQuerySyntax value => [(value.Query, ["Query"], "thenQuery")],
         CompositeKeySyntax value => [(value.Type, ["Type", "Concept"], "compositeKeyType")],
         EventSpecSyntax value => [(value.Event, ["Event"], "from")],

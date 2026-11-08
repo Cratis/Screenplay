@@ -107,6 +107,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitUser(UserSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="SinkSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SinkSyntax"/> to visit.</param>
+    public virtual void VisitSink(SinkSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="StickyNoteSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="StickyNoteSyntax"/> to visit.</param>

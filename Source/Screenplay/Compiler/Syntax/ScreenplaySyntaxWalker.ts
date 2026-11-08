@@ -15,6 +15,7 @@ import { QueryIdentitySourceSyntax } from './QueryIdentitySourceSyntax';
 import { CodeIdentitySourceSyntax } from './CodeIdentitySourceSyntax';
 import { FileIdentitySourceSyntax } from './FileIdentitySourceSyntax';
 import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax, StickyNoteSyntax, UserSyntax } from './Authorization';
+import { SinkSyntax } from './Sinks';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -69,6 +70,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
         (syntax.users ?? []).forEach(node => this.visitUser(node));
+        (syntax.sinks ?? []).forEach(node => this.visitSink(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
         syntax.stickyNotes?.forEach(node => this.visitStickyNote(node));
         syntax.exposures?.forEach(node => {
@@ -194,6 +196,10 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitUser(syntax: UserSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitSink(syntax: SinkSyntax): void {
         this.visitNode(syntax);
     }
 

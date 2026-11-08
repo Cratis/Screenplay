@@ -118,6 +118,7 @@ sealed class WorkspaceReferenceBindings
                 DialogTemplateSyntax => WorkspaceReferenceDomain.DialogTemplate,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 PersonaSyntax => WorkspaceReferenceDomain.Persona,
+                SinkSyntax => WorkspaceReferenceDomain.Sink,
                 SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 StateMachineSyntax => WorkspaceReferenceDomain.StateMachine,

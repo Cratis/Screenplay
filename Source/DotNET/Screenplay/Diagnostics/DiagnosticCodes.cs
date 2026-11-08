@@ -4113,4 +4113,51 @@ public static class DiagnosticCodes
     /// A theme's <c>implements</c>, <c>palette</c>, <c>values</c> or mode block is malformed or repeated.
     /// </summary>
     public const string InvalidThemeBlock = "PLAY0930";
+
+    /// <summary>
+    /// A <c>sink &lt;Name&gt; for readmodels|graphs</c> declaration, or a <c>sink &lt;Name&gt;</c> directive in a read model or graph, is malformed.
+    /// </summary>
+    public const string InvalidSinkDeclaration = "PLAY0931";
+
+    /// <summary>
+    /// Two sinks share a name. Sink names are unique application-wide, compared ordinally and ignoring case.
+    /// </summary>
+    public const string DuplicateSink = "PLAY0932";
+
+    /// <summary>
+    /// A graph names a sink the application does not declare. A read model's <c>sink &lt;Name&gt;</c> line naming no declared
+    /// sink is a property named <c>sink</c>, not this diagnostic.
+    /// </summary>
+    public const string UnknownSink = "PLAY0933";
+
+    /// <summary>
+    /// A read model names a <c>for graphs</c> sink, or a graph names a <c>for readmodels</c> sink.
+    /// </summary>
+    public const string SinkKindMismatch = "PLAY0934";
+
+    /// <summary>
+    /// A passive read model names a sink; a passive read model is never materialized, so it has no sink.
+    /// </summary>
+    public const string PassiveReadModelSink = "PLAY0935";
+
+    /// <summary>
+    /// A read model or graph names two different sinks.
+    /// </summary>
+    public const string ConflictingSinkDirective = "PLAY0936";
+
+    /// <summary>
+    /// A read model or graph repeats the same <c>sink</c> directive; the repeat changes nothing.
+    /// </summary>
+    public const string RepeatedSinkDirective = "PLAY0937";
+
+    /// <summary>
+    /// A declared sink is named by no read model or graph.
+    /// </summary>
+    public const string UnusedSink = "PLAY0938";
+
+    /// <summary>
+    /// A read model's line <c>sink &lt;Type&gt;</c> stays a property named <c>sink</c>, but its type differs only in case
+    /// from a declared sink, so the author probably meant the sink directive.
+    /// </summary>
+    public const string SinkNameCaseMismatch = "PLAY0939";
 }

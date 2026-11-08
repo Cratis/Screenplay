@@ -166,11 +166,20 @@ public sealed class WorkspaceSyntaxIndex
         diagnostics.AddRange(importDiagnostics);
         var candidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Where(document => document.IsPlacementResolved)
             .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
+        var parsedDocuments = new List<(WorkspaceDocument Document, CompilationResult<ApplicationSyntax> Parsed)>();
         foreach (var document in workspace.Documents)
         {
             var placement = placements[document.Path.Value];
             if (!placement.IsPlacementResolved) continue;
-            var parsed = compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates);
+            parsedDocuments.Add((document, compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates)));
+        }
+
+        // A read model's 'sink <Name>' line names a sink that may be declared in another document, so each document is
+        // resolved against the sinks of the whole workspace, as the merged compilation resolves it.
+        var sinks = parsedDocuments.SelectMany(entry => entry.Parsed.Value?.Sinks ?? []).Select(sink => sink.Name).ToHashSet(StringComparer.Ordinal);
+        foreach (var (document, original) in parsedDocuments)
+        {
+            var parsed = WorkspaceSinks.Resolve(original, sinks);
             diagnostics.AddRange(parsed.Diagnostics);
             if (!parsed.Success) unparsed.Add(document);
             if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative || diagnostic.Code == DiagnosticCodes.CaptureEventsRecordFixture || diagnostic.Code == DiagnosticCodes.ExplicitProducesTargetsRequired)))

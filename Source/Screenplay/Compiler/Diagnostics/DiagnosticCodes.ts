@@ -583,4 +583,14 @@ export const DiagnosticCodes = {
     ContrastBelowRule: 'PLAY0928',
     DeprecatedAppearanceMember: 'PLAY0929',
     InvalidThemeBlock: 'PLAY0930',
+    // Sinks: both compilers read the declarations and directives and report every sink code.
+    InvalidSinkDeclaration: 'PLAY0931',
+    DuplicateSink: 'PLAY0932',
+    UnknownSink: 'PLAY0933',
+    SinkKindMismatch: 'PLAY0934',
+    PassiveReadModelSink: 'PLAY0935',
+    ConflictingSinkDirective: 'PLAY0936',
+    RepeatedSinkDirective: 'PLAY0937',
+    UnusedSink: 'PLAY0938',
+    SinkNameCaseMismatch: 'PLAY0939',
 } as const;
