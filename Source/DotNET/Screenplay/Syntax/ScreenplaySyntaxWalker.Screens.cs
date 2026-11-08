@@ -21,6 +21,12 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileReference(syntax.File);
         }
 
+        foreach (var visual in syntax.Visuals)
+        {
+            VisitNode(visual);
+            VisitFileReference(visual.File);
+        }
+
         foreach (var directive in syntax.Directives)
         {
             VisitScreenDirective(directive);

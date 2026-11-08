@@ -30,6 +30,11 @@ public partial class ScreenplayPrinter
                 writer.Line($"fits {string.Join(", ", screen.Fits.Select(ScreenFitsParser.Keyword))}");
             }
 
+            foreach (var visual in screen.Visuals)
+            {
+                writer.Line($"{ScreenVisualParser.Keyword(visual.Kind)} {visual.File.Path}", visual);
+            }
+
             foreach (var directive in screen.Directives)
             {
                 WriteScreenDirective(writer, directive);

@@ -46,6 +46,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["operation"] = ("OperationDecl", "grammar.md"),
             ["persona"] = ("PersonaDecl", "personas.md"),
             ["policy"] = ("PolicyDecl", "policies.md"),
+            ["shows"] = ("SlicePlacementDecl", "slices.md"),
             ["purpose"] = ("PurposeDecl", "purposes.md"),
             ["projection"] = ("ProjectionDecl", "projections/index.md"),
             ["public"] = ("EventDecl", "events.md"),

@@ -156,4 +156,9 @@ public record SliceSyntax(
     /// Gets the queries that read a graph, declared <c language="screenplay">query &lt;Name&gt; =&gt; &lt;ReadModel&gt;[] graph &lt;Graph&gt;</c>.
     /// </summary>
     public IEnumerable<GraphQuerySyntax> GraphQueries { get; init; } = [];
+
+    /// <summary>
+    /// Gets the linked copies of elements declared elsewhere that the slice shows - <c>shows event &lt;Name&gt;</c>.
+    /// </summary>
+    public IEnumerable<SlicePlacementSyntax> Placements { get; init; } = [];
 }

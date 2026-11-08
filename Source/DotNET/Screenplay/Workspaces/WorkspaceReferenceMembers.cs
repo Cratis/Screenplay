@@ -189,6 +189,7 @@ static class WorkspaceReferenceMembers
         SpecificationRedeliverySyntax => [("eventType", WorkspaceReferenceDomain.Event)],
         EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
+        SlicePlacementSyntax { Kind: SlicePlacementKind.Event } => [("name", WorkspaceReferenceDomain.Event)],
         NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
         StateTransitionSyntax => [("event", WorkspaceReferenceDomain.Event)],
         StateMachineSyntax => [("follows", WorkspaceReferenceDomain.View)],
@@ -266,6 +267,7 @@ static class WorkspaceReferenceMembers
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
         SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
+        SlicePlacementSyntax { Kind: SlicePlacementKind.ReadModel } => [("name", WorkspaceReferenceDomain.View)],
         ReadModelSyntax or GraphSyntax => [("sink", WorkspaceReferenceDomain.Sink)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         _ => null

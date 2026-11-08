@@ -27,8 +27,17 @@ static class McpAttachmentContents
         return workspace.WithAttachmentContents(loaded.Contents, loaded.Diagnostics);
     }
 
-    internal static AttachmentFileResult Load(McpRoot root, ImmutableArray<WorkspaceDocument> source, Request? request = null) =>
-        AttachmentFiles.LoadReferences(root.DirectoryPath, request?.References(source) ?? Discover(source, ScreenplayLanguageRegistry.Default));
+    internal static AttachmentFileResult Load(McpRoot root, ImmutableArray<WorkspaceDocument> source, Request? request = null)
+    {
+        var loaded = AttachmentFiles.LoadReferences(root.DirectoryPath, request?.References(source) ?? Discover(source, ScreenplayLanguageRegistry.Default));
+        var visuals = ScreenVisualFiles.Check(root.DirectoryPath, request?.Visuals(source) ?? DiscoverVisuals(source, ScreenplayLanguageRegistry.Default));
+        return visuals.IsEmpty ? loaded : loaded with { Diagnostics = [.. loaded.Diagnostics, .. visuals] };
+    }
+
+    static ImmutableArray<ScreenVisualSyntax> DiscoverVisuals(ImmutableArray<WorkspaceDocument> source, IScreenplayLanguageRegistry languages) =>
+        ScreenVisualFiles.In(
+            [.. source.Select(document => SemanticSourceDocument.Create(document.Id, document.StableKey, document.Path.Value, document.Text))],
+            languages);
 
     static ImmutableArray<FileReferenceSyntax> Discover(ImmutableArray<WorkspaceDocument> source, IScreenplayLanguageRegistry languages) =>
         AttachmentFiles.References(
@@ -44,18 +53,22 @@ static class McpAttachmentContents
         readonly Lock _lock = new();
         readonly List<Snapshot> _snapshots = [];
 
-        internal ImmutableArray<FileReferenceSyntax> References(ImmutableArray<WorkspaceDocument> source)
+        internal ImmutableArray<FileReferenceSyntax> References(ImmutableArray<WorkspaceDocument> source) => SnapshotOf(source).References;
+
+        internal ImmutableArray<ScreenVisualSyntax> Visuals(ImmutableArray<WorkspaceDocument> source) => SnapshotOf(source).Visuals;
+
+        Snapshot SnapshotOf(ImmutableArray<WorkspaceDocument> source)
         {
             lock (_lock)
             {
                 var configuration = ParsingConfiguration();
                 var existing = _snapshots.Find(snapshot => snapshot.Configuration == configuration && snapshot.Documents.SequenceEqual(source));
-                if (existing is not null) return existing.References;
+                if (existing is not null) return existing;
 
-                var references = Discover(source, _languages);
+                var snapshot = new Snapshot(source, configuration, Discover(source, _languages), DiscoverVisuals(source, _languages));
                 if (_snapshots.Count == MaximumSnapshots) _snapshots.RemoveAt(0);
-                _snapshots.Add(new(source, configuration, references));
-                return references;
+                _snapshots.Add(snapshot);
+                return snapshot;
             }
         }
 
@@ -67,6 +80,6 @@ static class McpAttachmentContents
 
         // WorkspaceDocument is sealed and immutable: identity equality conservatively covers exact
         // bytes, text, paths and import placement across the complete ordered document set.
-        sealed record Snapshot(ImmutableArray<WorkspaceDocument> Documents, string Configuration, ImmutableArray<FileReferenceSyntax> References);
+        sealed record Snapshot(ImmutableArray<WorkspaceDocument> Documents, string Configuration, ImmutableArray<FileReferenceSyntax> References, ImmutableArray<ScreenVisualSyntax> Visuals);
     }
 }
