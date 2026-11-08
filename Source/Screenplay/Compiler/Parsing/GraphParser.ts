@@ -11,6 +11,7 @@ import { isFileDirective } from './FileReferences';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProperty } from './PropertyLineParser';
+import { parseSinkDirective, SinkDirectiveState, sinkKeyword } from './SinkParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const graphHeader = pattern('^graph\\s+(@?[A-Za-z_]\\w*)$');
@@ -29,6 +30,7 @@ export function parseGraph(context: ParserContext, header: SourceLine): GraphSyn
     const edges: GraphEdgeSyntax[] = [];
     let description: string | null = null;
     let documentation: string | null = null;
+    const sink: SinkDirectiveState = {};
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         const word = firstWord(line.content);
@@ -40,6 +42,9 @@ export function parseGraph(context: ParserContext, header: SourceLine): GraphSyn
             nodes.push(parseNode(context, line));
         } else if (word === 'edge') {
             edges.push(parseEdge(context, line));
+        } else if (word === sinkKeyword) {
+            parseSinkDirective(context, line, sink, `Graph '${name}'`);
+            context.skipBlock(line.indent);
         } else if (isFileDirective(line)) {
             continue;
         } else {
@@ -50,7 +55,8 @@ export function parseGraph(context: ParserContext, header: SourceLine): GraphSyn
     if (nodes.length === 0 && match !== null) {
         context.error(DiagnosticCodes.InvalidGraphDeclaration, `Graph '${name}' must declare at least one node`, locationOf(header));
     }
-    return { kind: 'GraphSyntax', name, description, documentation, nodes, edges, location: locationOf(header) };
+    const graph: GraphSyntax = { kind: 'GraphSyntax', name, description, documentation, nodes, edges, location: locationOf(header) };
+    return sink.sink === undefined || sink.location === undefined ? graph : { ...graph, sink: sink.sink, directiveLocations: { sink: sink.location } };
 }
 
 function parseNode(context: ParserContext, line: SourceLine): GraphNodeSyntax {

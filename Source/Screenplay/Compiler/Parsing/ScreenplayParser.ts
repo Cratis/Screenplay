@@ -16,6 +16,8 @@ import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
 import { PersonaSyntax, StickyNoteSyntax, UserSyntax } from '../Syntax/Authorization';
+import { SinkSyntax } from '../Syntax/Sinks';
+import { parseSinkDeclaration, sinkKeyword } from './SinkParser';
 import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { TimeZoneSyntax } from '../Syntax/Calendar';
@@ -118,6 +120,7 @@ interface RootState {
     readonly modules: ModuleSyntax[];
     readonly personas: PersonaSyntax[];
     readonly users: UserSyntax[];
+    readonly sinks: SinkSyntax[];
     readonly stickyNotes: StickyNoteSyntax[];
     readonly policies: PolicySyntax[];
     readonly purposes: PurposeSyntax[];
@@ -141,7 +144,7 @@ function createRootState(placement: PlayPlacement): RootState {
         identity: null, applicationContext: null, reactionProductionMode: null, sawReactionBatches: false, commandReadMode: null,
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
         imports: [], fileImports: [], concepts: [], types: [], systems: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
-        personas: [], users: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: []
+        personas: [], users: [], sinks: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: []
     };
 }
 
@@ -170,6 +173,7 @@ const bodyRules: readonly RootRule[] = [
     { matches: (keyword, _, state) => keyword === 'module' && !isDocumentPlacement(state.placement), parse: (context, line, state) => parseModuleInPlacedFile(context, line, state.placement, state.moduleBody) },
     { matches: isKeyword('module'), parse: (context, line, state) => { state.modules.push(parseModule(context, line)); } },
     { matches: isKeyword('user'), parse: (context, line, state) => { state.users.push(parseUser(context, line)); } },
+    { matches: isKeyword(sinkKeyword), parse: (context, line, state) => { const sink = parseSinkDeclaration(context, line); if (sink !== undefined) state.sinks.push(sink); } },
     { matches: isKeyword('persona'), parse: (context, line, state) => { state.personas.push(parsePersona(context, line)); } },
     { matches: isKeyword('sticky'), parse: parseRootStickyNote },
     { matches: isKeyword('seed'), parse: (context, line, state) => { state.seeds.push(parseSeed(context.valueContext, line)); } },
@@ -312,8 +316,8 @@ function buildApplication(context: ParserContext, state: RootState): Application
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
+    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, sinks, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

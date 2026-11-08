@@ -17,6 +17,7 @@ import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceVal
 import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
 import { validateReadModelKeys } from '../Parsing/ReadModelKeyValidator';
 import { validateGraphs } from '../Parsing/GraphValidator';
+import { validateSinks } from '../Parsing/SinkValidator';
 import { validateReadModelMemberTypes } from '../Parsing/ReadModelMemberTypeValidator';
 import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
@@ -108,6 +109,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateReadModelKeys(merged.value, context);
     validateReadModelMemberTypes(merged.value, context);
     validateGraphs(merged.value, context);
+    validateSinks(merged.value, context);
     validateReactionRefusals(merged.value, context);
     validateSpecificationRedelivery(merged.value, context);
     validateGuardedActions(merged.value, context);

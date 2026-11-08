@@ -30,6 +30,8 @@ export interface GraphEdgeSyntax extends SyntaxNode {
 export interface GraphSyntax extends SyntaxNode {
     readonly kind: 'GraphSyntax';
     readonly name: string;
+    // 'sink <Name>' - the named sink the graph is stored in; absent means the default graph sink.
+    readonly sink?: string;
     readonly description: string | null;
     readonly documentation?: string | null;
     readonly nodes: readonly GraphNodeSyntax[];

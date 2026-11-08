@@ -90,6 +90,8 @@ export interface EventSyntax extends SyntaxNode {
 export interface ReadModelSyntax extends SyntaxNode {
     readonly kind: 'ReadModelSyntax';
     readonly isPassive?: boolean;
+    // 'sink <Name>' - the named sink the read model is stored in; absent means the default read-model sink.
+    readonly sink?: string;
     readonly documentation?: string | null;
     readonly name: string;
     readonly properties: readonly PropertySyntax[];

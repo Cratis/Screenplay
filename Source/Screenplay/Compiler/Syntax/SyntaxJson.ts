@@ -107,6 +107,8 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     ReactionSyntax: ['from'],
     ReducerSyntax: ['from'],
     RemoveWithSyntax: ['partsKey'],
+    ReadModelSyntax: ['sink'],
+    GraphSyntax: ['sink'],
     GraphFromSyntax: ['forEach'],
     GraphRemoveSyntax: ['forEach'],
     ProducesSyntax: ['stream'],
@@ -136,7 +138,8 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     FeatureSyntax: ['dependsOn'],
     SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs'],
     SliceSyntax: ['graphs', 'graphProjections', 'graphQueries'],
-    InvokesSyntax: ['onRefused']
+    InvokesSyntax: ['onRefused'],
+    ApplicationSyntax: ['sinks']
 };
 
 // Members omitted when they hold their default value, by node kind.

@@ -7,6 +7,7 @@ import { ReactionProductionMode } from './ReactionProductionMode';
 import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
 import { AuthorizeSyntax, PersonaSyntax, StickyNoteSyntax, UserSyntax } from './Authorization';
+import { SinkSyntax } from './Sinks';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -154,6 +155,9 @@ export interface ApplicationSyntax extends SyntaxNode {
 
     // The development and test users - written only when present.
     readonly users?: readonly UserSyntax[];
+
+    // The named sinks read models and graphs may choose - written only when present.
+    readonly sinks?: readonly SinkSyntax[];
 
     // The sticky notes on the personas canvas - written only when present.
     readonly stickyNotes?: readonly StickyNoteSyntax[];

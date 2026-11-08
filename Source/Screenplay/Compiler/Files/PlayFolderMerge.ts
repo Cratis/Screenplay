@@ -96,6 +96,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         modules,
         personas,
         ...presentOnly('users', users),
+        ...presentOnly('sinks', applications.flatMap(application => application.sinks ?? [])),
         policies,
         seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
@@ -117,7 +118,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

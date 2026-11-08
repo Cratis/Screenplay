@@ -562,4 +562,13 @@ export const DiagnosticCodes = {
     // here, and the checks of what a line names (PLAY0907-PLAY0913, PLAY0915 and the reference half of PLAY0914) are C#-only.
     InvalidScreenFits: 'PLAY0906',
     InvalidScreenShow: 'PLAY0914',
+    // Sinks: both compilers read the declarations and directives and report every sink code.
+    InvalidSinkDeclaration: 'PLAY0916',
+    DuplicateSink: 'PLAY0917',
+    UnknownSink: 'PLAY0918',
+    SinkKindMismatch: 'PLAY0919',
+    PassiveReadModelSink: 'PLAY0920',
+    ConflictingSinkDirective: 'PLAY0921',
+    RepeatedSinkDirective: 'PLAY0922',
+    UnusedSink: 'PLAY0923',
 } as const;

@@ -10093,7 +10093,8 @@
                         "name": "Money"
                       }
                     }
-                  ]
+                  ],
+                  "sink": "Reporting"
                 }
               ],
               "screens": [
@@ -19103,6 +19104,13 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "sinks": [
+    {
+      "kind": "SinkSyntax",
+      "name": "Reporting",
+      "stores": "ReadModels"
+    }
+  ],
   "stateMachines": [
     {
       "kind": "StateMachineSyntax",
