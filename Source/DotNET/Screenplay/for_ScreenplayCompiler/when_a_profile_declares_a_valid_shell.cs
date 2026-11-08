@@ -65,5 +65,5 @@ public class when_a_profile_declares_a_valid_shell : given.a_compiler
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_report_nothing() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_report_only_the_appearance_deprecations() => _result.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.DeprecatedAppearanceMember).ShouldBeEmpty();
 }

@@ -562,4 +562,25 @@ export const DiagnosticCodes = {
     // here, and the checks of what a line names (PLAY0907-PLAY0913, PLAY0915 and the reference half of PLAY0914) are C#-only.
     InvalidScreenFits: 'PLAY0906',
     InvalidScreenShow: 'PLAY0914',
+    // Themes and the design system (Screenplay 6). Themes are modeled here with the design system they implement; the ui profile is
+    // not, so this compiler reads only the 'theme' and 'appearance' lines of a profile that PLAY0926 and PLAY0929 need.
+    InvalidThemeDeclaration: 'PLAY0225',
+    DuplicateTheme: 'PLAY0226',
+    InvalidCompatibleWithDeclaration: 'PLAY0227',
+    DuplicateCompatibleWith: 'PLAY0228',
+    InvalidDesignSystemDeclaration: 'PLAY0916',
+    DuplicateDesignSystem: 'PLAY0917',
+    UnknownDesignMode: 'PLAY0918',
+    DuplicateDesignToken: 'PLAY0919',
+    ThemeValueForUndeclaredToken: 'PLAY0920',
+    ColorTokenMissingModeValue: 'PLAY0921',
+    UnresolvedDesignReference: 'PLAY0922',
+    DesignReferenceCycle: 'PLAY0923',
+    DesignPartCategoryMismatch: 'PLAY0924',
+    ThemeImplementsUnknownDesignSystem: 'PLAY0925',
+    ProfileThemeDoesNotImplementDesignSystem: 'PLAY0926',
+    InvalidDefaultTheme: 'PLAY0927',
+    ContrastBelowRule: 'PLAY0928',
+    DeprecatedAppearanceMember: 'PLAY0929',
+    InvalidThemeBlock: 'PLAY0930',
 } as const;

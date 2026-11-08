@@ -4038,4 +4038,79 @@ public static class DiagnosticCodes
     /// A button or item's <c>enabled when</c> reads <c>item</c>, but it acts <c>for screen</c>, so there is no item to read.
     /// </summary>
     public const string EnabledWhenWithoutItem = "PLAY0915";
+
+    /// <summary>
+    /// A <c>design system</c> line or block is malformed: an unknown section, an unknown token category, a bad line shape, or a repeated section.
+    /// </summary>
+    public const string InvalidDesignSystemDeclaration = "PLAY0916";
+
+    /// <summary>
+    /// The application declares a second <c>design system</c>; an application has exactly one.
+    /// </summary>
+    public const string DuplicateDesignSystem = "PLAY0917";
+
+    /// <summary>
+    /// A theme block or a design system names a mode the design system's <c>modes</c> does not declare.
+    /// </summary>
+    public const string UnknownDesignMode = "PLAY0918";
+
+    /// <summary>
+    /// The same token, component, variant, state, palette entry or value is declared twice.
+    /// </summary>
+    public const string DuplicateDesignToken = "PLAY0919";
+
+    /// <summary>
+    /// A theme assigns a value to a token the design system does not declare.
+    /// </summary>
+    public const string ThemeValueForUndeclaredToken = "PLAY0920";
+
+    /// <summary>
+    /// A theme implementing a design system gives a color token no value in a declared mode.
+    /// </summary>
+    public const string ColorTokenMissingModeValue = "PLAY0921";
+
+    /// <summary>
+    /// A design reference (<c>palette.&lt;name&gt;</c>, <c>&lt;category&gt;.&lt;name&gt;</c>) names nothing that is declared.
+    /// </summary>
+    public const string UnresolvedDesignReference = "PLAY0922";
+
+    /// <summary>
+    /// Design references refer to each other in a loop, so no value can be resolved.
+    /// </summary>
+    public const string DesignReferenceCycle = "PLAY0923";
+
+    /// <summary>
+    /// A component part references a token of a category it cannot take, for example <c>background = space.sm</c>.
+    /// </summary>
+    public const string DesignPartCategoryMismatch = "PLAY0924";
+
+    /// <summary>
+    /// A theme <c>implements</c> a design system the application does not declare.
+    /// </summary>
+    public const string ThemeImplementsUnknownDesignSystem = "PLAY0925";
+
+    /// <summary>
+    /// A ui profile's theme does not implement the application's design system.
+    /// </summary>
+    public const string ProfileThemeDoesNotImplementDesignSystem = "PLAY0926";
+
+    /// <summary>
+    /// The design system's <c>default theme</c> is missing, names no theme, or names a theme that does not implement the design system.
+    /// </summary>
+    public const string InvalidDefaultTheme = "PLAY0927";
+
+    /// <summary>
+    /// A component's text and background resolve, in some theme and mode, to a pair below the design system's contrast rule.
+    /// </summary>
+    public const string ContrastBelowRule = "PLAY0928";
+
+    /// <summary>
+    /// The <c>accent</c>, <c>corners</c> or <c>font</c> line of a ui profile's <c>appearance</c> is deprecated; the value belongs in the selected theme.
+    /// </summary>
+    public const string DeprecatedAppearanceMember = "PLAY0929";
+
+    /// <summary>
+    /// A theme's <c>implements</c>, <c>palette</c>, <c>values</c> or mode block is malformed or repeated.
+    /// </summary>
+    public const string InvalidThemeBlock = "PLAY0930";
 }

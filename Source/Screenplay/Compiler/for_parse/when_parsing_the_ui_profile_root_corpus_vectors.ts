@@ -13,7 +13,8 @@ const read = (path: string): string => readFileSync(resolve(corpus, path), 'utf8
 // vector without trouble and report what it shares with the editors: the legacy layout line.
 describe('when parsing the ui profile root corpus vectors', () => {
     it.each(['positive/UiProfileRoot.play.txt', 'negative/UiProfileRootUnknown.play.txt', 'negative/UiProfileRootNotAShell.play.txt', 'negative/UiProfileRootInvalid.play.txt', 'positive/UiProfileQuotedTheme.play.txt'])('should read %s without a diagnostic', path => {
-        expect(parse(read(path)).diagnostics).toEqual([]);
+        // The deprecated appearance members (PLAY0929) belong to the design system checks and these vectors predate them.
+        expect(parse(read(path)).diagnostics.filter(diagnostic => diagnostic.code !== 'PLAY0929')).toEqual([]);
     });
 
     it('should report the legacy layout line of each profile as PLAY0791 on the profile line', () => {

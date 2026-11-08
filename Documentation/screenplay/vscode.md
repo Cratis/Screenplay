@@ -159,7 +159,7 @@ Completion in the text editor offers only what the block under the cursor can ho
 - A `slice` offers the members of its type: a `StateChange` slice, a `StateView` slice, an `Automation` slice and a `Translate` slice each get their own list.
 - A module offers, among others, `feature`, `screen`, `form`, `contribute`, `import` and `depends on`; a feature offers its slices, nested features, `contribute` and `depends on`.
 - After `depends on `, completion offers sibling features first, then the siblings of enclosing features, root modules and qualified paths to features elsewhere. It excludes self, ancestors, descendants and targets already declared by that container, including declarations in other workspace files. After a qualifier such as `Timesheets.`, it inserts only the feature name. Each suggestion describes the target's full address and its relation to the current container.
-- `readmodel`, `reducer`, `form`, `contribute`, `behavior`, `persona`, `authentication`, `onboarding`, `seed`, `theme`, `ui profile`, `sample data`, `layout`, and screen and dialog templates offer their own members.
+- `readmodel`, `reducer`, `form`, `contribute`, `behavior`, `persona`, `authentication`, `onboarding`, `seed`, `design system`, `theme`, `ui profile`, `sample data`, `layout`, and screen and dialog templates offer their own members.
 - At the top level, `domain`, `authentication` and `onboarding` are not offered again once the document declares them.
 
 ### Expand an empty command
@@ -328,6 +328,16 @@ It reparses the edited buffer and verifies that only the intended syntax changes
 and the diagnostic disappears. Analysis is cached for the current document version;
 range requests return every eligible intersecting occurrence, verifying the
 independent recipes together rather than reparsing per marker. Stale edits are refused.
+
+## Appearance quick fix
+
+The lightbulb in VS Code and Monaco offers **Move the appearance values into theme '&lt;Name&gt;'** on each deprecated `accent`, `corners` or `font` line (`PLAY0929`). One action covers the whole `appearance` block, as the C# workspace repair does:
+
+- The theme is the profile's own `theme`, or the design system's default theme, and it must implement the design system.
+- `accent` becomes an `accent` palette entry (an identical entry is kept; a different one refuses the action). `corners` becomes `radius.control` (`sharp` is `2px`, `default` is `6px`, `round` is `12px`) and `font` becomes `font.sans`. A value the theme already sets wins, and the design system must declare the token.
+- The three lines are removed, and the `appearance` block goes with them unless it still holds a color scheme.
+
+Monaco edits the theme in whichever open model declares it. VS Code offers the action only when the application is a single file; in a multi-file application use the C# repair.
 
 ## When the model has errors
 

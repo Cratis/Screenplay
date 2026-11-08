@@ -107,6 +107,9 @@ sealed class ReadOwnership : ScreenplaySyntaxWalker
     public override void VisitTheme(ThemeSyntax syntax) => Owned(syntax, () => base.VisitTheme(syntax));
 
     /// <inheritdoc/>
+    public override void VisitDesignSystem(DesignSystemSyntax syntax) => Owned(syntax, () => base.VisitDesignSystem(syntax));
+
+    /// <inheritdoc/>
     public override void VisitTrigger(TriggerSyntax syntax) => Owned(syntax, () => base.VisitTrigger(syntax));
 
     /// <inheritdoc/>

@@ -91,6 +91,11 @@ public record ApplicationSyntax(
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
 
     /// <summary>
+    /// Gets the <see cref="DesignSystemSyntax">design systems</see> the document declares; an application has at most one.
+    /// </summary>
+    public IEnumerable<DesignSystemSyntax> DesignSystems { get; init; } = [];
+
+    /// <summary>
     /// Gets the sample data packs the document declares: design and preview time demo rows, never part of the executable model.
     /// </summary>
     public IEnumerable<SampleDataPackSyntax> SampleDataPacks { get; init; } = [];

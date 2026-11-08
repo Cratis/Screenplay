@@ -6,6 +6,7 @@ import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import type { OutletItemSyntax, OutletSyntax } from './Outlets';
 import { IdentitySyntax } from './IdentitySyntax';
+import { DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
 import { IdentitySourceSyntax } from './IdentitySourceSyntax';
@@ -91,8 +92,45 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.identity != null) this.visitIdentity(syntax.identity);
         syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
+        syntax.designSystems?.forEach(node => this.visitDesignSystem(node));
+        syntax.themes?.forEach(node => this.visitTheme(node));
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
+    }
+
+    visitDesignSystem(syntax: DesignSystemSyntax): void {
+        this.visitNode(syntax);
+        syntax.tokens.forEach(category => {
+            this.visitNode(category);
+            category.tokens.forEach(token => this.visitNode(token));
+        });
+        syntax.components.forEach(component => {
+            this.visitNode(component);
+            component.variants.forEach(variant => {
+                this.visitNode(variant);
+                variant.parts.forEach(part => this.visitNode(part));
+                variant.states.forEach(state => {
+                    this.visitNode(state);
+                    state.parts.forEach(part => this.visitNode(part));
+                });
+            });
+        });
+        if (syntax.words !== null) {
+            this.visitNode(syntax.words);
+            syntax.words.voice.forEach(entry => this.visitNode(entry));
+            syntax.words.naming.forEach(entry => this.visitNode(entry));
+        }
+        syntax.rules.forEach(rule => this.visitNode(rule));
+    }
+
+    visitTheme(syntax: ThemeSyntax): void {
+        this.visitNode(syntax);
+        (syntax.palette ?? []).forEach(entry => this.visitNode(entry));
+        (syntax.values ?? []).forEach(entry => this.visitNode(entry));
+        (syntax.modeValues ?? []).forEach(block => {
+            this.visitNode(block);
+            block.values.forEach(entry => this.visitNode(entry));
+        });
     }
 
     visitIdentity(syntax: IdentitySyntax): void {

@@ -53,6 +53,8 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Contribution point** — a named many-to-one extension point declared on a slot. `Navigation` is the first user of the mechanism.
 - **Contribution** — items or an entry added to an outlet, declared with `contribute to`. It attaches to the nearest enclosing structure declaring a matching outlet.
 - **UI profile** — a build's selections: `target platform`, `target size`, `layout`, `theme` and `packages`. Names artifacts; does not contain them.
+- **Design system** — the one design contract of an application: modes, tokens, components, words and contrast rules, with no values. See [Design system](design-system.md).
+- **Theme** — an implementation of the design system: a palette and the values of its tokens per mode. A profile selects one; the design system names the default. See [Theme](theme.md).
 - **Package** — a named set of components a profile draws from, in override-priority order. `core` is the final fallback.
 - **Size class** — `compact`, `regular` or `expanded`, on the width and height axes. A class, not a pixel breakpoint.
 

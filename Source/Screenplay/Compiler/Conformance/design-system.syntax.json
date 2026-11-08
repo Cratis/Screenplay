@@ -1,0 +1,540 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "designSystems": [
+    {
+      "kind": "DesignSystemSyntax",
+      "components": [
+        {
+          "kind": "DesignComponentSyntax",
+          "name": "Button",
+          "parts": [
+            "text",
+            "background",
+            "border",
+            "radius",
+            "height",
+            "padding",
+            "shadow",
+            "font"
+          ],
+          "variants": [
+            {
+              "kind": "DesignVariantSyntax",
+              "name": "primary",
+              "parts": [
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "text",
+                  "value": "color.on-primary"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "background",
+                  "value": "color.primary"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "border",
+                  "value": "color.outline"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "radius",
+                  "value": "radius.control"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "height",
+                  "value": "size.control"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "padding",
+                  "value": "space.md"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "shadow",
+                  "value": "shadow.raised"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "font",
+                  "value": "font.sans"
+                }
+              ],
+              "states": [
+                {
+                  "kind": "DesignStateSyntax",
+                  "name": "hover",
+                  "parts": [
+                    {
+                      "kind": "DesignAssignmentSyntax",
+                      "isLiteral": false,
+                      "name": "border",
+                      "value": "color.text"
+                    }
+                  ]
+                },
+                {
+                  "kind": "DesignStateSyntax",
+                  "name": "disabled",
+                  "parts": [
+                    {
+                      "kind": "DesignAssignmentSyntax",
+                      "isLiteral": false,
+                      "name": "text",
+                      "value": "color.text"
+                    },
+                    {
+                      "kind": "DesignAssignmentSyntax",
+                      "isLiteral": false,
+                      "name": "background",
+                      "value": "color.surface"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "DesignVariantSyntax",
+              "name": "quiet",
+              "parts": [
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "text",
+                  "value": "color.text"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "background",
+                  "value": "color.surface"
+                }
+              ],
+              "states": []
+            }
+          ]
+        },
+        {
+          "kind": "DesignComponentSyntax",
+          "name": "Card",
+          "parts": [
+            "background",
+            "border"
+          ],
+          "variants": [
+            {
+              "kind": "DesignVariantSyntax",
+              "name": "plain",
+              "parts": [
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "background",
+                  "value": "color.surface"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "border",
+                  "value": "border.thin"
+                }
+              ],
+              "states": []
+            }
+          ]
+        }
+      ],
+      "defaultTheme": "Daylight",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "name": "StorefrontDesign",
+      "rules": [
+        {
+          "kind": "DesignContrastRuleSyntax",
+          "background": "background",
+          "foreground": "text",
+          "minimum": "4.5"
+        },
+        {
+          "kind": "DesignContrastRuleSyntax",
+          "background": "background",
+          "foreground": "text",
+          "minimum": "3"
+        }
+      ],
+      "tokens": [
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "color",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "page background",
+              "name": "surface"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "body text",
+              "name": "text"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "primary action",
+              "name": "primary"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "text on a primary action",
+              "name": "on-primary"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "outline"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "space",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "default gap between elements",
+              "name": "md"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "size",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "height of an input or a button",
+              "name": "control"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "radius",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "inputs and buttons",
+              "name": "control"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "border",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "thin"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "shadow",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "raised"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "font",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "interface text",
+              "name": "sans"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "type",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "body"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "motion",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "quick"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "opacity",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "muted"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "z",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": null,
+              "name": "overlay"
+            }
+          ]
+        }
+      ],
+      "words": {
+        "kind": "DesignWordsSyntax",
+        "naming": [
+          {
+            "kind": "DesignAssignmentSyntax",
+            "isLiteral": true,
+            "name": "customer",
+            "value": "Shopper"
+          }
+        ],
+        "voice": [
+          {
+            "kind": "DesignAssignmentSyntax",
+            "isLiteral": true,
+            "name": "tone",
+            "value": "Plain and exact"
+          },
+          {
+            "kind": "DesignAssignmentSyntax",
+            "isLiteral": true,
+            "name": "address",
+            "value": "You"
+          }
+        ]
+      }
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Storefront"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [],
+  "themes": [
+    {
+      "kind": "ThemeSyntax",
+      "compatibleWith": [
+        "Cratis.Components",
+        "Cratis.Components.Charts"
+      ],
+      "implements": "StorefrontDesign",
+      "modeValues": [
+        {
+          "kind": "ThemeModeValuesSyntax",
+          "mode": "light",
+          "values": [
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.surface",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.text",
+              "value": "palette.ink"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.primary",
+              "value": "palette.indigo"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.on-primary",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.outline",
+              "value": "palette.line"
+            }
+          ]
+        },
+        {
+          "kind": "ThemeModeValuesSyntax",
+          "mode": "dark",
+          "values": [
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.surface",
+              "value": "palette.ink"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.text",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.primary",
+              "value": "palette.indigo"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.on-primary",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.outline",
+              "value": "palette.line"
+            }
+          ]
+        }
+      ],
+      "name": "Daylight",
+      "palette": [
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "indigo",
+          "value": "#4F46E5"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "white",
+          "value": "#FFFFFF"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "ink",
+          "value": "#111827"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "line",
+          "value": "rgb(209, 213, 219)"
+        }
+      ],
+      "values": [
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "space.md",
+          "value": "12px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "size.control",
+          "value": "40px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "radius.control",
+          "value": "12px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "border.thin",
+          "value": "1px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "shadow.raised",
+          "value": "0 1px 2px rgba(0, 0, 0, 0.2)"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "font.sans",
+          "value": "inter"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "type.body",
+          "value": "16px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "motion.quick",
+          "value": "120ms"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "opacity.muted",
+          "value": "0.6"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "z.overlay",
+          "value": "100"
+        }
+      ]
+    },
+    {
+      "kind": "ThemeSyntax",
+      "compatibleWith": [
+        "Cratis.Components"
+      ],
+      "name": "Plain"
+    }
+  ],
+  "types": []
+}

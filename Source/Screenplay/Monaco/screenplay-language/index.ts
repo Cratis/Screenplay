@@ -108,6 +108,7 @@ export { reactionReferenceAt } from './reaction-authoring';
 export {
     causedByProperties,
     clauseKeywords,
+    designKeywords,
     codeBlockTags,
     conceptAttributes,
     constructKeywords,

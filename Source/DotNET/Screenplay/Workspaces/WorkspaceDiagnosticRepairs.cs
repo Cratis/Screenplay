@@ -250,6 +250,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceTranslationRepairs.Find(index, revision, diagnostic);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.DeprecatedAppearanceMember)
+        {
+            return WorkspaceAppearanceRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
         {
             return [];
@@ -341,6 +346,7 @@ public static class WorkspaceDiagnosticRepairs
             (code == DiagnosticCodes.RedundantEventId && entry.Node.DirectiveLocations.GetValueOrDefault("id") == diagnostic.Location) ||
             (code == DiagnosticCodes.LegacyComplianceMarker && entry.Node.DirectiveLocations.Values.Contains(diagnostic.Location)) ||
             (code == DiagnosticCodes.LegacyInteractionWhere && entry.Node.DirectiveLocations.GetValueOrDefault("where") == diagnostic.Location) ||
+            (code == DiagnosticCodes.DeprecatedAppearanceMember && entry.Node is ProfileAppearanceSyntax appearance && WorkspaceAppearanceRepairs.IsFirstDeprecatedLine(appearance, diagnostic.Location)) ||
             (code == DiagnosticCodes.ImplicitAuthorizationConjunction && entry.Node is AuthorizeSyntax authorize && WorkspaceRedundantSpellingRepairs.Owns(authorize, diagnostic.Location))))
             .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
             .Where(repair => repair.Subject == subject);

@@ -1,0 +1,86 @@
+design system Contoso
+  modes light, dark
+  default theme Missing
+
+  tokens
+    color
+      surface "page background"
+      text    "body text"
+      primary "primary action"
+      primary
+    space
+      sm
+
+  components
+    Button
+      parts text, background
+      variant primary
+        text       = color.text
+        background = space.sm
+        state hover
+          background = color.nothing
+      variant secondary
+        text       = color.text
+        background = color.surface
+    Chip
+      parts glow
+
+  rules
+    contrast text on background at least 4.5
+
+design system Second
+
+theme Nordic
+  implements Contoso
+
+  palette
+    white = "#FFFFFF"
+    grey  = "#EEEEEE"
+
+  values
+    space.sm      = "8px"
+    space.xx      = "8px"
+    color.primary = color.surface
+    color.surface = color.primary
+
+  light
+    color.text    = palette.grey
+    color.surface = palette.nope
+
+  dim
+    color.text = palette.white
+
+theme Faint
+  implements Contoso
+
+  palette
+    pale  = "#EEEEEE"
+    white = "#FFFFFF"
+
+  values
+    space.sm = "8px"
+
+  light
+    color.surface = palette.white
+    color.text    = palette.pale
+    color.primary = palette.pale
+
+  dark
+    color.surface = palette.white
+    color.text    = palette.pale
+    color.primary = palette.pale
+
+theme Stranger
+  implements Nothing
+
+theme Plain
+  compatible with Cratis.Components
+
+theme Broken
+  implements Contoso
+  implements Contoso
+  palette
+    odd line
+
+ui profile Desktop
+  theme Plain

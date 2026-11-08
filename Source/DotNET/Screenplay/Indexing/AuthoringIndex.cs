@@ -166,6 +166,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case OutletSyntax { Kind: not null } value: Declare("ContributionPoint", value.Name, value); break;
             case UiProfileSyntax value: Declare("UiProfile", value.Name, value); break;
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
+            case DesignSystemSyntax value: Declare("DesignSystem", value.Name, value); break;
             case SampleDataPackSyntax value: Declare("SampleDataPack", value.Name, value); break;
             case TriggerSyntax value: Declare("Trigger", value.Name, value); break;
             case StateMachineSyntax value: Declare("StateMachine", value.Name, value, value.Description); break;

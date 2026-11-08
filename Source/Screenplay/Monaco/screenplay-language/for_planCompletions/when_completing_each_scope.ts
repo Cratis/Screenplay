@@ -13,8 +13,8 @@ const offered = (text: string): string[] => {
 };
 
 const scopes: Record<string, [string, string[]]> = {
-    'the root': ['', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
-    'a domain': ['domain Catalog\n  ', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
+    'the root': ['', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
+    'a domain': ['domain Catalog\n  ', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
     'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'outlet extends', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'outlet extends', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
     'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
@@ -34,10 +34,10 @@ const scopes: Record<string, [string, string[]]> = {
     'legal terms': ['onboarding\n  legal terms\n    ', ['file']],
     'emails': ['onboarding\n  emails\n    ', ['invitation', 'welcome', 'signupDeclined', 'images']],
     'a seed': ['seed\n  ', ['for', 'position']],
-    'a theme': ['theme T\n  ', ['compatible with']],
+    'a theme': ['theme T\n  ', ['compatible with', 'implements', 'palette', 'values']],
     'a ui profile': ['ui profile P\n  ', ['appearance', 'identity', 'layout', 'new screens use template', 'packages', 'root template', 'root template blueprint', 'sample data', 'target platform', 'target size', 'theme', 'theme (package-provided)']],
     'a ui profile root template': ['ui profile P\n  root template T\n    ', ['option']],
-    'a ui profile appearance block': ['ui profile P\n  appearance\n    ', ['accent', 'color scheme', 'corners', 'font']],
+    'a ui profile appearance block': ['ui profile P\n  appearance\n    ', ['color scheme']],
     'a ui profile identity block': ['ui profile P\n  identity\n    ', ['logo icon', 'logo image', 'logo initials', 'name', 'show name']],
     'a sample data pack': ['sample data P\n  ', ['locale', 'shape', 'title']],
     'a sample data shape': ['sample data P\n  shape S\n    ', ['row']],

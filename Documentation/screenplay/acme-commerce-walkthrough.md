@@ -86,7 +86,7 @@ commands. The helper scripts package individual domains or adapt a copy for rend
 ```text
 application.play                the ONLY `domain AcmeCommerce` line; `reaction batches atomic`, `command reads protected`
 Shared/                         the shared kernel
-<Domain>/shell/                 the domain's own theme, ui profile, navigation + logo, sample-data pack
+<Domain>/shell/                 the domain's own theme (of the shared design system), ui profile, navigation + logo, sample-data pack
 assets/logos/                   the five logo SVGs
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications
 <Domain>/translation/           Translate slices: outbound publication, inbound anti-corruption
@@ -142,8 +142,9 @@ policy CanCurateCatalog
 The modules also name why they handle personal data through a [`purpose`](purposes.md): `ShopOrderProcessing` in Storefront,
 `OrderFulfilmentProcessing` in Sales and `SupplierRelations` in Purchasing.
 
-For the shared visual declarations, open `Shared/theme.play`. It declares the `Acme` theme and the packages it is compatible
-with, including the custom package `Acme.Commerce`.
+For the shared visual declarations, open `Shared/design-system.play`. It declares `AcmeDesign`, the one [design system](design-system.md)
+of the whole application: light and dark modes, the tokens and what each is for, the `Button` and `Card` components, Acme's words and a
+contrast rule. It holds no values. Each domain supplies those in its own theme, in `<Domain>/shell/shell.play`.
 
 ## The public events (P1 to P12)
 
@@ -382,7 +383,10 @@ settings let the shopper's storefront and the warehouse work area present the ta
 
 ### The UI profile
 
-`<Domain>/shell/shell.play` declares the theme and `ui profile`: the target, packages, root template and appearance. Catalog,
+`<Domain>/shell/shell.play` declares the domain's theme and its `ui profile`: the target, packages, root template and color scheme. The theme
+is one of several implementations of the shared `AcmeDesign`: it gives each token a value (the accent, the corner radius, the typeface) and never
+redefines a component, so every domain draws the same buttons and cards in its own look. The profile selects its theme; the
+design system's default theme applies to a profile that names none. Catalog,
 Sales, Purchasing and Warehouse reference the blueprint's `AppShell` directly, pinned at `^1`. Storefront names
 `StorefrontShell`, declared in `Storefront/model/shell.play`, as its root template. Its topbar includes a basket indicator
 bound to `AllBasketSizes.0.lineCount`, so you can trace a shell element back to the basket read model.
@@ -392,10 +396,25 @@ files when compiling the sample:
 
 ```text
 theme AcmeStorefront
+  implements AcmeDesign
   compatible with Cratis.Components
   compatible with Cratis.Blueprint.Default
   compatible with PrimeReact
   compatible with Acme.Commerce
+
+  palette
+    accent = "#C2410C"
+    white  = "#FFFFFF"
+    ink    = "#111827"
+
+  values
+    radius.control = "12px"
+    font.sans      = "source-serif-4"
+
+  light
+    color.primary    = palette.accent
+    color.on-primary = palette.white
+    ...
 
 ui profile Storefront
   target platform web
@@ -412,13 +431,12 @@ ui profile Storefront
 
   appearance
     color scheme light
-    accent "#C2410C"
 
   sample data
     active AcmeStorefront
 ```
 
-| Domain | Accent | Menu mode | Menu theme | Scheme |
+| Domain | Accent (theme palette) | Menu mode | Menu theme | Scheme |
 | --- | --- | --- | --- | --- |
 | Storefront | `#C2410C` | own shell | own shell | light |
 | Catalog | `#4338CA` | `static` | light | light |
@@ -426,8 +444,9 @@ ui profile Storefront
 | Purchasing | `#B45309` | `slimPlus` | light | light |
 | Warehouse | `#0F766E` | `compact` | dark | dark |
 
-The profile also carries `identity` and `appearance` declarations. For example, Storefront names the application "Acme Shop"
-and sets round corners and `source-serif-4`. Read those alongside `navigation.play`, where the topbar supplies its logo.
+The profile also carries `identity` and `appearance` declarations. For example, Storefront names the application "Acme Shop" and
+selects the light scheme, while its theme sets round corners (`radius.control`) and `source-serif-4` (`font.sans`). Read those alongside
+`navigation.play`, where the topbar supplies its logo.
 
 ### Sample data
 

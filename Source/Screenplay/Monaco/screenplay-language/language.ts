@@ -36,6 +36,7 @@ export const constructKeywords = [
     'module',
     'layout',
     'theme',
+    'design',
     'ui',
     'sample',
     'feature',
@@ -71,6 +72,25 @@ export const constructKeywords = [
     'behavior',
     'exposure',
     'instance',
+];
+
+// The words of a `design system` body and an extended `theme` body. They are read only inside those blocks,
+// so they highlight but never leave a property name or a declaration name unusable elsewhere.
+export const designKeywords = [
+    'modes',
+    'tokens',
+    'components',
+    'words',
+    'rules',
+    'palette',
+    'values',
+    'implements',
+    'parts',
+    'variant',
+    'voice',
+    'naming',
+    'contrast',
+    'compatible',
 ];
 
 // Type modifiers are contextual, never excluded from property or declaration names.

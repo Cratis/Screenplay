@@ -47,7 +47,7 @@ static class McpUiProfiles
         {
             snapshot.Compilation.Success,
             snapshot.SourceRevision,
-            profiles = selected.Select(profile => Describe(profile, diagnostics)).ToArray(),
+            profiles = selected.Select(profile => Describe(profile, application, diagnostics)).ToArray(),
             applicableRootTemplates = own.Where(template => ProfileShellValidator.Applicability(template, ProfileShellValidator.ApplicationScope, asShell: true).Count == 0 && template.Slots.Contains(template.PrimarySlot, StringComparer.Ordinal))
                 .Select(Template).ToArray(),
             applicableNewScreenTemplates = own.Where(template => ProfileShellValidator.Applicability(template, ProfileShellValidator.FeatureScope, asShell: false).Count == 0)
@@ -55,13 +55,14 @@ static class McpUiProfiles
             appearance = new
             {
                 colorSchemes = new[] { "light", "dark", "system" },
-                accent = "#RGB, #RRGGBB or #RRGGBBAA"
+                deprecated = "accent, corners and font are deprecated (PLAY0929): set the value in the selected theme"
             },
+            designSystem = McpDesignSystem.Describe(application, snapshot.Compilation.Diagnostics),
             basis = "Own templates only; a blueprint ships its own - name it with 'root template blueprint <Blueprint> <Name>' for a blueprint the profile lists in packages and let the diagnostics decide."
         };
     }
 
-    static object Describe(UiProfileSyntax profile, Diagnostic[] diagnostics) => new
+    static object Describe(UiProfileSyntax profile, ApplicationSyntax? application, Diagnostic[] diagnostics) => new
     {
         profile.Name,
         packages = profile.Packages.ToArray(),
@@ -75,7 +76,9 @@ static class McpUiProfiles
                 options = root.Options.Select(option => new { option.Name, option.Value, syntaxKind = option.Kind.ToString() }).ToArray()
             }
             : null,
-        appearance = profile.Appearance is { } appearance ? new { appearance.ColorScheme, appearance.Accent } : null,
+        appearance = profile.Appearance is { } appearance ? new { appearance.ColorScheme, appearance.Accent, appearance.Corners, appearance.Font } : null,
+        theme = profile.Theme,
+        resolvedTheme = McpDesignSystem.ForProfile(application, profile),
         newScreenTemplate = profile.NewScreenTemplate is { } newScreens ? new { newScreens.Name, newScreens.Blueprint, newScreens.Version } : null,
         line = profile.Location.Line,
         path = profile.Location.Path,

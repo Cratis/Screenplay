@@ -55,6 +55,9 @@ import { parseExposure, parseInstance } from './CompositionParser';
 import { ExposureSyntax, InstanceContributionsSyntax } from '../Syntax/CompositionSyntax';
 import { parseExample } from './SpecificationExampleParser';
 import { parseUiProfile } from './UiProfileLegacyLayout';
+import { parseDesignSystem } from './DesignSystemParser';
+import { parseTheme } from './ThemeParser';
+import type { DesignProfileFacts, DesignSystemSyntax, ThemeSyntax } from '../Syntax/DesignSystemSyntax';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
@@ -73,7 +76,7 @@ const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'Dat
 
 // Top-level, module and feature constructs the C# compiler knows that this compiler does not model. They
 // are skipped whole, not reported.
-const opaqueTopLevel = new Set(['policy', 'authentication', 'onboarding', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior', 'sample']);
+const opaqueTopLevel = new Set(['policy', 'authentication', 'onboarding', 'seed', 'ui', 'trigger', 'layout', 'behavior', 'sample']);
 
 // What belongs in a module or feature body; at the top level of a whole document it gets a hint saying so.
 const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation', 'authorize', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
@@ -126,6 +129,9 @@ interface RootState {
     readonly declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][];
     readonly exposures: ExposureSyntax[];
     readonly instanceContributions: InstanceContributionsSyntax[];
+    readonly themes: ThemeSyntax[];
+    readonly designSystems: DesignSystemSyntax[];
+    readonly designProfiles: DesignProfileFacts[];
 }
 
 interface RootRule {
@@ -141,7 +147,8 @@ function createRootState(placement: PlayPlacement): RootState {
         identity: null, applicationContext: null, reactionProductionMode: null, sawReactionBatches: false, commandReadMode: null,
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
         imports: [], fileImports: [], concepts: [], types: [], systems: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
-        personas: [], users: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: []
+        personas: [], users: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
+        themes: [], designSystems: [], designProfiles: []
     };
 }
 
@@ -181,6 +188,8 @@ const bodyRules: readonly RootRule[] = [
     { matches: isKeyword('exposure'), parse: (context, line, state) => { state.exposures.push(parseExposure(context, line)); } },
     { matches: isKeyword('instance'), parse: (context, line, state) => { state.instanceContributions.push(parseInstance(context, line)); } },
     { matches: isKeyword('trigger'), parse: parseRootTrigger },
+    { matches: isKeyword('design'), parse: (context, line, state) => { addDesignSystem(context, parseDesignSystem(context, line), state.designSystems); } },
+    { matches: isKeyword('theme'), parse: (context, line, state) => { addTheme(context, parseTheme(context, line), state.themes); } },
     { matches: keyword => opaqueTopLevel.has(keyword), parse: parseRootOpaque }
 ];
 
@@ -282,16 +291,36 @@ function parseRootPolicy(context: ParserContext, line: SourceLine, state: RootSt
     state.policies.push(policy);
 }
 
+function addDesignSystem(context: ParserContext, designSystem: DesignSystemSyntax, designSystems: DesignSystemSyntax[]): void {
+    if (designSystems.length > 0) {
+        context.error(DiagnosticCodes.DuplicateDesignSystem,
+            `The design system '${designSystem.name}' is a second one - an application has exactly one design system, '${designSystems[0].name}'`, designSystem.location);
+        return;
+    }
+    designSystems.push(designSystem);
+}
+
+function addTheme(context: ParserContext, theme: ThemeSyntax, themes: ThemeSyntax[]): void {
+    if (themes.some(existing => existing.name === theme.name)) {
+        context.error(DiagnosticCodes.DuplicateTheme, `A theme named '${theme.name}' is already declared - theme names must be unique`, theme.location);
+        return;
+    }
+    themes.push(theme);
+}
+
 function parseRootTrigger(context: ParserContext, line: SourceLine, state: RootState): void {
     const data = parseTriggerDeclaration(context, line);
     const name = /^trigger\s+([A-Za-z_]\w*)$/.exec(line.content)?.[1];
     if (name !== undefined) state.declaredTriggers.push({ name, data });
 }
 
-function parseRootOpaque(context: ParserContext, line: SourceLine): void {
+function parseRootOpaque(context: ParserContext, line: SourceLine, state: RootState): void {
     const keyword = firstWord(line.content);
     if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
-    else if (keyword === 'ui') parseUiProfile(context, line);
+    else if (keyword === 'ui') {
+        const profile = parseUiProfile(context, line);
+        if (profile !== undefined) state.designProfiles.push(profile);
+    }
     else context.skipOpaqueBlock(line.indent);
 }
 
@@ -312,8 +341,8 @@ function buildApplication(context: ParserContext, state: RootState): Application
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions } = state;
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), location: context.start };
+    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions, themes, designSystems, designProfiles } = state;
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -327,7 +356,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     }
     if (keyword === 'identity') return line.content === 'identity';
     if (keyword === 'context') return line.content === 'context';
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'user' || keyword === 'sticky' || opaqueTopLevel.has(keyword);
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'user' || keyword === 'sticky' || opaqueTopLevel.has(keyword) || keyword === 'design' || keyword === 'theme';
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -353,7 +382,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data or layout';
+            : ' - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);

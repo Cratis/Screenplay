@@ -19,6 +19,7 @@ import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
 import { prepareTimelineQuickFixes } from './TimelineQuickFixes';
 import { prepareActionSubjectQuickFixes } from './ActionSubjectQuickFixes';
+import { prepareAppearanceQuickFixes } from './AppearanceQuickFixes';
 import { rewriteInlineJson } from './StructuredValueQuickFix';
 
 export interface QuickFixEdit {
@@ -60,6 +61,7 @@ const quickFixDiagnosticCodes: ReadonlySet<unknown> = new Set([
     DiagnosticCodes.RedundantCompositeKeyBraces,
     DiagnosticCodes.ImplicitAuthorizationConjunction,
     DiagnosticCodes.InlineJsonValue,
+    DiagnosticCodes.DeprecatedAppearanceMember,
 ]);
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
@@ -83,6 +85,8 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     const local = prepareLocalQuickFixes(source, options);
     let timeline: ReturnType<typeof prepareTimelineQuickFixes> | undefined;
     let subjects: ReturnType<typeof prepareActionSubjectQuickFixes> | undefined;
+    let appearance: ReturnType<typeof prepareAppearanceQuickFixes> | undefined;
+    const appearanceFixes = (line?: number, code?: string) => (appearance ??= prepareAppearanceQuickFixes(source, options))(line, code);
     const subjectFixes = (line?: number, code?: string) => (subjects ??= prepareActionSubjectQuickFixes(source, options))(line, code);
     return (line, diagnosticCode) => {
         const requests = typeof line === 'number' ? [{ line, diagnosticCode }] : line ?? [];
@@ -91,7 +95,11 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         const fixes = selected.length === 0 ? [] : [...new Set(selected.map(request => request.line))].flatMap(line => (timeline ??= prepareTimelineQuickFixes(source, options))(line));
         const subjectRequests = requests.filter(request => request.diagnosticCode === undefined || request.diagnosticCode === DiagnosticCodes.InferredActionSubject || request.diagnosticCode === DiagnosticCodes.ChangedActionSubject);
         const actions = requests.length === 0 ? subjectFixes(undefined, diagnosticCode) : subjectRequests.flatMap(request => subjectFixes(request.line, request.diagnosticCode));
-        return [...localFixes, ...fixes, ...actions];
+        // One repair covers the whole appearance block, so the markers of several deprecated lines select the same fix.
+        const appearanceRequests = requests.filter(request => request.diagnosticCode === undefined || request.diagnosticCode === DiagnosticCodes.DeprecatedAppearanceMember);
+        const appearanceAll = requests.length === 0 ? appearanceFixes(undefined, diagnosticCode) : appearanceRequests.flatMap(request => appearanceFixes(request.line, request.diagnosticCode));
+        const appearanceActions = appearanceAll.filter((fix, index) => appearanceAll.findIndex(other => JSON.stringify(other.edits) === JSON.stringify(fix.edits)) === index);
+        return [...localFixes, ...fixes, ...actions, ...appearanceActions];
     };
 }
 

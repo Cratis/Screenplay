@@ -199,7 +199,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data, layout, statemachine or workflow";
+                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 
@@ -248,6 +248,17 @@ internal static partial class ScreenplayParser
         }
 
         packs.Add(pack);
+    }
+
+    static void AddDesignSystem(ParserContext context, DesignSystemSyntax designSystem, List<DesignSystemSyntax> designSystems)
+    {
+        if (designSystems.Count > 0)
+        {
+            context.Error(DiagnosticCodes.DuplicateDesignSystem, $"The design system '{designSystem.Name}' is a second one - an application has exactly one design system, '{designSystems[0].Name}'", designSystem.Location);
+            return;
+        }
+
+        designSystems.Add(designSystem);
     }
 
     static void AddTheme(ParserContext context, ThemeSyntax theme, List<ThemeSyntax> themes)

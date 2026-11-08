@@ -215,6 +215,7 @@ internal static partial class ScreenplayValidator
     static void ValidatePresentation(ApplicationSyntax application, ParserContext context)
     {
         ValidateThemes(application, context);
+        DesignSystemValidator.Validate(application, context);
         ValidateProfileLayouts(application, context);
         ProfileShellValidator.Validate(application, context);
         ValidateArrangements(application, context);
