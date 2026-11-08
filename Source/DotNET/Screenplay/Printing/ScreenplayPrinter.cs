@@ -28,6 +28,7 @@ public sealed partial class ScreenplayPrinter :
 {
     static readonly IReadOnlySet<string> _readModelBodyWithSink = new HashSet<string>(ReservedWords.ReadModelBody, StringComparer.Ordinal) { "sink" };
     HashSet<string> _sinks = new(StringComparer.Ordinal);
+
     /// <inheritdoc/>
     /// <exception cref="Syntax.Serialization.InvalidSyntaxJson">A command contains ambiguous or duplicate stream headers, or an invalid stream candidate structure.</exception>
     public string Print(ApplicationSyntax application)

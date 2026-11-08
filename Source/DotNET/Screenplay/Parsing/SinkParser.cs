@@ -33,7 +33,7 @@ internal static partial class SinkParser
         var match = DeclarationRegex().Match(line.Content);
         if (context.TryPeekChild(line.Indent, out var child))
         {
-            context.Error(DiagnosticCodes.InvalidSinkDeclaration, $"A sink is declared on one line", child.Location);
+            context.Error(DiagnosticCodes.InvalidSinkDeclaration, "A sink is declared on one line", child.Location);
             context.SkipBlock(line.Indent);
         }
 
