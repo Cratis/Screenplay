@@ -151,6 +151,10 @@
   href: executable-model-schema.md
 - name: Model comparison API
   href: model-comparison.md
+- name: HTTP API description
+  href: api-description.md
+- name: UI contract
+  href: ui-contract.md
 - name: Observation comparison API
   href: observation-comparison.md
 - name: Value rule checks

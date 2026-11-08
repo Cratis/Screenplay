@@ -64295,7 +64295,9 @@
               "source-map",
               "repairs",
               "repair-intents",
-              "executable-model"
+              "executable-model",
+              "api-description",
+              "ui-contract"
             ],
             "description": "Source detail views return compact-header-v1, not full syntax: header metadata sizes and AST/source read pointers, then actual-parent child pages. Source pages enforce item and serialized-byte bounds; continue from nextOffset."
           },
@@ -64360,7 +64362,11 @@
         "if": {
           "properties": {
             "view": {
-              "const": "executable-model"
+              "enum": [
+                "executable-model",
+                "api-description",
+                "ui-contract"
+              ]
             }
           },
           "required": [
@@ -64990,7 +64996,7 @@
     },
     {
       "name": "export",
-      "usage": "screenplay export [\u003Cfile.play|folder\u003E] [--format esm] [--scope \u003CModule\u003E[.\u003CFeature\u003E[.\u003CSlice\u003E]]] [--output \u003Cpath\u003E]",
+      "usage": "screenplay export [\u003Cfile.play|folder\u003E] [--format esm|openapi|ui] [--scope \u003CModule\u003E[.\u003CFeature\u003E[.\u003CSlice\u003E]]] [--output \u003Cpath\u003E]",
       "options": [
         "--format",
         "--output",

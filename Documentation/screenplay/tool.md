@@ -494,7 +494,7 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
 
-## Export the executable model
+## Export the executable model, its HTTP API and its UI contract
 
 Write the canonical executable semantic model (ESM) of a model, for a builder, a script or a CI step:
 
@@ -503,9 +503,18 @@ screenplay export path/to/screenplays --output model.esm.json
 screenplay export path/to/screenplays --scope Billing.Invoices.Send
 ```
 
-The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory, and `--format esm` is the only format. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
+The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory and `--format` to `esm`. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
 
 `--scope <Module>[.<Feature>...][.<Slice>]` keeps one module, feature or slice and drops every other module, feature and slice. Application-wide declarations (concepts, types, policies, triggers, event sources, lifecycles and graphs) stay, so references from the selected slices still resolve. The excerpt's `revision` identifies the excerpt, not the whole model. From .NET, use `ExecutableSemanticModelScope.Select(model, scope)`.
+
+Two more formats describe the same model for builders on any stack:
+
+```bash
+screenplay export path/to/screenplays --format openapi --output api.json
+screenplay export path/to/screenplays --format ui --output screens.json
+```
+
+`--format openapi` writes the [OpenAPI 3.1 description](api-description.md) of every command and query: route, method, request and response shapes, authorization and observable queries. It needs the executable model, like `esm`, and `--scope` narrows it the same way. `--format ui` writes the [UI contract](ui-contract.md) of every screen: data, actions, navigation, layout and the optional Scene layer. It needs only the sources; when the model has no executable model the contract carries no identities or routes, and standard error says so while the exit code stays `0`. With `--scope`, the UI contract keeps the screens of that module, feature or slice.
 
 | Exit code | Meaning |
 |---|---|

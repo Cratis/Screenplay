@@ -799,7 +799,7 @@ executable errors, before `apply`. See [whole-source authoring](authoring-tools.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, named-rule-intents, named-rule-intent-details, typed-contexts and executable-model. The `source-map`
+executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, named-rule-intents, named-rule-intent-details, typed-contexts, executable-model, api-description and ui-contract. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -963,6 +963,27 @@ equivalence proof under [decision 0013](https://github.com/Cratis/Screenplay/blo
 (which also compares attachment hashes) nor a runnable attachment bundle: attachment
 bodies are absent. The view is read-only, not a way to edit the ESM; use typed
 workspace proposals for changes.
+
+## HTTP API description and UI contract
+
+`read-workspace` with `view: "api-description"` pages the OpenAPI 3.1 document of
+the executable model's HTTP API: every command and query with its route, method,
+payload, authorization and observable delivery. It is exactly what
+`OpenApiDocument.Write(ApiDescription.For(model))` and
+`screenplay export --format openapi` write. Without an executable model the
+response has `available: false` and no bytes, as for `executable-model`.
+
+`view: "ui-contract"` pages the stack-neutral `screenplay-ui/1` JSON of every
+screen, exactly what `UiContractJson.Write(UiContractBuilder.For(workspace))` and
+`screenplay export --format ui` write. It needs only the sources: without an
+executable model it is still available, with `modelRevision: null` and no
+identities or routes inside.
+
+Both views page decoded bytes like `executable-model`: `limit` is 1–196608 bytes,
+the response carries `format` (`openapi-3.1.0` or `screenplay-ui/1`),
+`modelRevision`, `totalBytes` and `page`, and every later page passes
+`expectedRevision` and, when the first response had one, `expectedModelRevision`.
+See [Describe the HTTP API](../api-description.md) and [UI contract](../ui-contract.md).
 
 ## Repair contract v1 and pinned evidence
 
