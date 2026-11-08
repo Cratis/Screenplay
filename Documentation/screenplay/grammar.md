@@ -949,12 +949,16 @@ PassiveDirective = "passive", NL ;
    (PLAY0860). This is realization metadata, not portable ESM. *)
 
 SinkDirective  = "sink", Ident, NL ;
-(* A bare readmodel or graph body directive naming a declared sink exactly
-   (PLAY0918) of the matching kind (PLAY0919). In a readmodel, "sink" followed by
-   a primitive type or a type with modifiers stays a property named sink, and
-   "@sink Type" declares one of any type. A repeated identical directive warns
-   (PLAY0922); two different sinks error (PLAY0921); a passive read model has no
-   sink (PLAY0920). Realization metadata, not portable ESM. *)
+(* A bare readmodel or graph body directive of the matching kind (PLAY0919).
+   In a graph every sink line is the directive, and an undeclared name is
+   PLAY0918. In a readmodel the line has the shape of a property, so it is the
+   directive only when Ident is a sink the application declares, matched exactly;
+   otherwise it stays the property named sink it always was. An escaped name
+   ("@sink Type"), a collection, optional or modifier is always a property. A
+   property whose type differs only in case from a declared sink warns
+   (PLAY0924). A repeated identical directive warns (PLAY0922); two different
+   sinks error (PLAY0921); a passive read model has no sink (PLAY0920).
+   Realization metadata, not portable ESM. *)
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
                  INDENT, { DescriptionDecl | ObserverFilter | ReducerRule }, DEDENT ;

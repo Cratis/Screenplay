@@ -120,7 +120,7 @@ Older tools reject syntax JSON that uses `passive`, because their syntax JSON re
 
 ## Where a read model is stored
 
-A read model is stored in the default read-model sink unless it names another with a bare `sink <Name>` line, naming a sink the application declares with `sink <Name> for readmodels`. Its projection or reducer writes there and its queries read from there. See [Sinks](sinks.md).
+A read model is stored in the default read-model sink unless it names another with a bare `sink <Name>` line, naming a sink the application declares with `sink <Name> for readmodels`. A `sink <Name>` line naming no declared sink is a property called `sink`, as it always was. Its projection or reducer writes there and its queries read from there. See [Sinks](sinks.md).
 
 ## The arrow always points the same way
 

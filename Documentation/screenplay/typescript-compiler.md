@@ -109,7 +109,7 @@ Date comparisons retain the existing comparison and validation syntax nodes. Typ
 
 The bare `passive` read-model directive is retained as optional `isPassive: true` (false is omitted). Repeats report `PLAY0858` in both parsers. `PLAY0859` (query/screen observation) and `PLAY0860` (no command read) are C#-only usage diagnostics, not editor heuristics. Passivity is realization metadata and does not enter portable ESM. See [Read models](readmodels.md#passive-decision-state).
 
-Sinks are read like the C# compiler reads them: `ApplicationSyntax.sinks` holds the `sink <Name> for readmodels|graphs` declarations, and `ReadModelSyntax.sink` and `GraphSyntax.sink` the bare `sink <Name>` directives; each is omitted when absent. Both compilers report every sink diagnostic, `PLAY0916` to `PLAY0923`. See [Sinks](sinks.md).
+Sinks are read like the C# compiler reads them: `ApplicationSyntax.sinks` holds the `sink <Name> for readmodels|graphs` declarations, and `ReadModelSyntax.sink` and `GraphSyntax.sink` the bare `sink <Name>` directives; each is omitted when absent. Both compilers settle a read model's `sink <Name>` line the same way, once the declared sinks are known, and report every sink diagnostic, `PLAY0916` to `PLAY0924`. See [Sinks](sinks.md).
 
 ## Keys and routed observers
 

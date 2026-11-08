@@ -1745,14 +1745,15 @@ Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers re
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0916` | Error | A `sink <Name> for readmodels` or `sink <Name> for graphs` declaration is malformed or has lines under it, or a `sink` line in a read model or graph is not `sink <Name>`. |
+| `PLAY0916` | Error | A `sink <Name> for readmodels` or `sink <Name> for graphs` declaration is malformed or has lines under it, or a `sink` line in a graph is not `sink <Name>`. |
 | `PLAY0917` | Error | Two sinks share a name. Sink names are unique application-wide, compared ignoring case, so `Reporting` and `reporting` collide. |
-| `PLAY0918` | Error | A read model or graph names a sink the application does not declare. A directive names its sink exactly as declared. To declare a property called `sink` of a concept type, write `@sink <Type>`. |
+| `PLAY0918` | Error | A graph names a sink the application does not declare. A read model never reports it: its `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly, and otherwise stays a property named `sink`. |
 | `PLAY0919` | Error | A read model names a sink declared `for graphs`, or a graph names a sink declared `for readmodels`. |
 | `PLAY0920` | Error | A `passive` read model names a sink. A passive read model is never materialized, so it has no sink; remove one of the two lines. |
 | `PLAY0921` | Error | A read model or graph names two different sinks. It is stored in one sink. |
 | `PLAY0922` | Warning | A read model or graph repeats the same `sink` line. Keep one. |
 | `PLAY0923` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
+| `PLAY0924` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
 
 ## Toolbar buttons
 
