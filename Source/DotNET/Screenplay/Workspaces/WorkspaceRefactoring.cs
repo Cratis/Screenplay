@@ -239,10 +239,10 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax)))
+        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or SinkSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SinkSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, stream, or stream id part declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, stream, stream id part or sink declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -279,6 +279,12 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         if (eventSource is not null && index.Entries.Count(entry => entry.Node is EventSourceSyntax source && source.Name == eventSource.Name) > 1)
         {
             throw new InvalidWorkspaceAuthoring($"Event source '{eventSource.Name}' has more than one physical declaration. Rename requires one physical source and stream.");
+        }
+
+        if (target.Node is SinkSyntax && index.Entries.Any(entry =>
+            entry.Handle != target.Handle && entry.Node is SinkSyntax sink && string.Equals(sink.Name, request.NewName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidWorkspaceAuthoring($"The application already declares sink '{request.NewName}'; sink names are unique ignoring case.");
         }
 
         if (target.Node is EventSourceSyntax && index.Entries.Any(entry =>

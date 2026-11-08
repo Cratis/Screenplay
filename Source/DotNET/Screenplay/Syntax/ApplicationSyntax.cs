@@ -111,6 +111,12 @@ public record ApplicationSyntax(
     public IEnumerable<UserSyntax> Users { get; init; } = [];
 
     /// <summary>
+    /// Gets the named sinks read models and graphs may choose with a <c>sink</c> directive. Realization metadata, never part
+    /// of the executable model; a read model or graph that names no sink uses its kind's implicit default sink.
+    /// </summary>
+    public IEnumerable<SinkSyntax> Sinks { get; init; } = [];
+
+    /// <summary>
     /// Gets the sticky notes placed on the personas canvas: authoring metadata around the personas, never part of the executable model.
     /// </summary>
     public IEnumerable<StickyNoteSyntax> StickyNotes { get; init; } = [];

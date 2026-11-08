@@ -92,6 +92,12 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Graph '{graph.Name}' description and documentation are authoring metadata.", graph.Location);
             }
 
+            if (graph.Sink is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Graph '{graph.Name}' sink '{graph.Sink}' is realization metadata.", graph.DirectiveLocations.GetValueOrDefault("sink", graph.Location));
+                _graphSinks.TryAdd(graph.Name, graph.Sink);
+            }
+
             if (graph.File is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Graph '{graph.Name}' file reference is realization provenance.", graph.File.Location);

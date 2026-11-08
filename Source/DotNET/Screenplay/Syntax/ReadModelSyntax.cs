@@ -54,6 +54,16 @@ public record ReadModelSyntax(
     public bool IsPassive { get; init; }
 
     /// <summary>
+    /// Gets the name of the sink this read model is stored in, or <c>null</c> when it uses the implicit default sink for
+    /// read models. Written as a bare <c>sink &lt;Name&gt;</c> body directive.
+    /// </summary>
+    /// <remarks>
+    /// An init property for the same binary compatibility reason as <see cref="IsPassive"/>. The sink is realization
+    /// metadata, not part of the executable semantic model.
+    /// </remarks>
+    public string? Sink { get; init; }
+
+    /// <summary>
     /// Gets the authoring-only markdown explaining this read model.
     /// </summary>
     public string? Documentation { get; init; }

@@ -306,7 +306,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels);
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -356,6 +356,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly Dictionary<QuerySyntax, SemanticKeyedQuery> _queryDeclarations = [];
         readonly Dictionary<ReadModelSyntax, BoundReadModel> _readModelDeclarations = [];
         readonly HashSet<SemanticId> _passiveReadModels = [];
+        readonly Dictionary<SemanticId, string> _readModelSinks = [];
+        readonly Dictionary<string, string> _graphSinks = new(StringComparer.Ordinal);
         readonly Dictionary<string, BoundReadModel> _readModels = new(StringComparer.Ordinal);
         readonly Dictionary<string, string[]> _readModelPaths = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
@@ -366,6 +368,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
 
         internal ImmutableHashSet<SemanticId> PassiveReadModels => [.. _passiveReadModels];
+
+        internal ImmutableArray<SemanticSink> Sinks => [.. syntax.Sinks.Select(sink => new SemanticSink(sink.Name, sink.Stores == SinkKind.Graphs ? SemanticSinkKind.Graphs : SemanticSinkKind.ReadModels))];
+
+        internal ImmutableDictionary<SemanticId, string> ReadModelSinks => _readModelSinks.ToImmutableDictionary();
+
+        internal ImmutableDictionary<string, string> GraphSinks => _graphSinks.ToImmutableDictionary(StringComparer.Ordinal);
 
         internal int UtcAssessmentYear => utcAssessmentYear;
 
@@ -518,6 +526,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Persona '{persona.Name}' is authoring metadata and is not part of ESM v1 behavior.", persona.Location);
             }
 
+            foreach (var sink in syntax.Sinks)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Sink '{sink.Name}' is realization metadata and is not part of ESM behavior.", sink.Location);
+            }
+
             if (syntax.Authentication is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Authentication providers are realization metadata and are not part of ESM v1 behavior.", syntax.Authentication.Location);
@@ -614,6 +627,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                     var bound = BindReadModel(sliceAddress, slice, readModel);
                     _readModelDeclarations.Add(readModel, bound);
                     if (readModel.IsPassive) _passiveReadModels.Add(bound.Model.Id);
+                    if (readModel.Sink is { } sink) _readModelSinks.TryAdd(bound.Model.Id, sink);
                     _readModelPaths.TryAdd(readModel.Name, [.. sliceAddress.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key), readModel.Name]);
                     if (!_readModels.TryAdd(readModel.Name, bound))
                     {

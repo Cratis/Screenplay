@@ -145,6 +145,10 @@ static class WorkspaceTriviaPrinter
         }
 
         var location = occurrence ?? owner.Location;
+        if (owner is ReadModelSyntax or GraphSyntax && member == "sink" && !owner.DirectiveLocations.TryGetValue("sink", out location))
+        {
+            throw Unsupported(original, change.Path);
+        }
         if (owner is ConstraintSyntax namedConstraint && member == "name")
         {
             // Additional rules repeat their declaration's name without another authored token.

@@ -214,6 +214,7 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Policies, WritePolicy);
         WriteSection(writer, application.Personas ?? [], WritePersona);
         WriteSection(writer, application.Users, WriteUser);
+        WriteSection(writer, application.Sinks, WriteSink);
         WriteSection(writer, application.StickyNotes, WriteStickyNote);
         WriteSection(writer, application.StateMachines, WriteStateMachine);
         WriteSection(writer, application.Workflows, WriteWorkflow);
@@ -513,6 +514,7 @@ public sealed partial class ScreenplayPrinter :
             WriteDocumentation(writer, readModel.Documentation, readModel);
             WriteFile(writer, readModel.File);
             if (readModel.IsPassive) writer.Line("passive");
+            if (readModel.Sink is { } sink) writer.Line($"sink {sink}");
             WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
         }
     }
@@ -711,6 +713,9 @@ public sealed partial class ScreenplayPrinter :
         if (personas.Count > 0) line += $" as {string.Join(", ", personas)}";
         writer.Line(line);
     }
+
+    void WriteSink(ScreenplayWriter writer, SinkSyntax sink) =>
+        writer.Line($"sink {sink.Name} for {(sink.Stores == SinkKind.Graphs ? "graphs" : "readmodels")}", sink);
 
     void WriteStickyNote(ScreenplayWriter writer, StickyNoteSyntax note)
     {

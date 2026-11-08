@@ -85,6 +85,9 @@ internal static partial class PlayFolderMerge
             SampleDataPacks = DeclaredInOneFile(applications.SelectMany(application => application.SampleDataPacks), pack => pack.Name, pack => pack.Location, "sample data pack", context),
             Purposes = DeclaredInOneFile(applications.SelectMany(application => application.Purposes), purpose => purpose.Name, purpose => purpose.Location, "purpose", context),
 
+            // Sink names are compared ignoring case across the whole application, so the validator reports duplicates.
+            Sinks = [.. applications.SelectMany(application => application.Sinks)],
+
             // Preserve physical parents; a duplicate source makes every child scope ambiguous.
             EventSources = [.. applications.SelectMany(application => application.EventSources)],
             Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),

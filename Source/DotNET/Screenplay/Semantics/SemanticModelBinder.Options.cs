@@ -30,7 +30,7 @@ public sealed partial class SemanticModelBinder
             return new(result with { Value = null }, new(compilation.Model.SemanticVersion));
         }
         var model = ExecutableSemanticModel.Create(LanguageVersion.V37_1, SemanticVersion.V37_1, application, assessmentYear);
-        var updated = SemanticCompilation.Create(model, compilation.Documents, compilation.SourceMap).WithSpecificationOrigins(compilation.SpecificationOrigins).WithEnvironment(compilation.Environment).WithPassiveReadModels(compilation.PassiveReadModels);
+        var updated = SemanticCompilation.Create(model, compilation.Documents, compilation.SourceMap).WithSidecarsOf(compilation);
         return new(result with { Value = updated });
     }
 }

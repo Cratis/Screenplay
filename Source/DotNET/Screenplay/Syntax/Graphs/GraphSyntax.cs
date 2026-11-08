@@ -29,6 +29,12 @@ public record GraphSyntax(
     /// Gets the optional Markdown documentation of the graph.
     /// </summary>
     public string? Documentation { get; init; }
+
+    /// <summary>
+    /// Gets the name of the sink this graph is stored in, or <c>null</c> when it uses the implicit default sink for graphs.
+    /// Written as a bare <c>sink &lt;Name&gt;</c> body directive; realization metadata, not part of the executable semantic model.
+    /// </summary>
+    public string? Sink { get; init; }
 }
 
 /// <summary>

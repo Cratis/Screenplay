@@ -33,7 +33,8 @@ enum WorkspaceReferenceDomain
     Container,
     SpecificationParameter,
     StateMachine,
-    Workflow
+    Workflow,
+    Sink
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -265,6 +266,7 @@ static class WorkspaceReferenceMembers
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
         SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
+        ReadModelSyntax or GraphSyntax => [("sink", WorkspaceReferenceDomain.Sink)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         _ => null
     };

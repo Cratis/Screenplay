@@ -25,6 +25,8 @@ internal static partial class WorkspaceIdentifierSpans
             (PropertyMappingSyntax, "property") => line.Contains('='),
             (SpecificationCallerPersonaSyntax, "name") => line.StartsWith("given caller as ", StringComparison.Ordinal),
             (PersonaSyntax, "name") => keyword == "persona",
+            (SinkSyntax, "name") => keyword == "sink",
+            (ReadModelSyntax or GraphSyntax, "sink") => keyword == "sink",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",

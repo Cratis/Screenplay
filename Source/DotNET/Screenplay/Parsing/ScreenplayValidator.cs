@@ -47,6 +47,7 @@ internal static partial class ScreenplayValidator
         LifecycleValidator.Validate(application, slices, names, context);
         ReadModelMemberTypeValidator.Validate(application, context);
         GraphValidator.Validate(application, slices, names, context);
+        SinkValidator.Validate(application, slices, context);
         ValidateScopedReferences(application, expansion, names, context);
         ValidatePresentation(application, context);
         foreach (var diagnostic in ScreenActionSubjects.Resolve(application).Diagnostics) context.Add(diagnostic);

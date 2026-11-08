@@ -67,6 +67,7 @@ public partial class ScreenplayPrinter
             WriteDescription(writer, graph.Description, graph);
             WriteDocumentation(writer, graph.Documentation, graph);
             WriteFile(writer, graph.File);
+            if (graph.Sink is { } sink) writer.Line($"sink {sink}");
             foreach (var node in graph.Nodes)
             {
                 using var nodeAnchor = writer.Anchor(node);

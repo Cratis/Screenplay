@@ -4038,4 +4038,44 @@ public static class DiagnosticCodes
     /// A button or item's <c>enabled when</c> reads <c>item</c>, but it acts <c>for screen</c>, so there is no item to read.
     /// </summary>
     public const string EnabledWhenWithoutItem = "PLAY0915";
+
+    /// <summary>
+    /// A <c>sink &lt;Name&gt; for readmodels|graphs</c> declaration, or a <c>sink &lt;Name&gt;</c> directive in a read model or graph, is malformed.
+    /// </summary>
+    public const string InvalidSinkDeclaration = "PLAY0916";
+
+    /// <summary>
+    /// Two sinks share a name. Sink names are unique application-wide, compared ordinally and ignoring case.
+    /// </summary>
+    public const string DuplicateSink = "PLAY0917";
+
+    /// <summary>
+    /// A read model or graph names a sink the application does not declare.
+    /// </summary>
+    public const string UnknownSink = "PLAY0918";
+
+    /// <summary>
+    /// A read model names a <c>for graphs</c> sink, or a graph names a <c>for readmodels</c> sink.
+    /// </summary>
+    public const string SinkKindMismatch = "PLAY0919";
+
+    /// <summary>
+    /// A passive read model names a sink; a passive read model is never materialized, so it has no sink.
+    /// </summary>
+    public const string PassiveReadModelSink = "PLAY0920";
+
+    /// <summary>
+    /// A read model or graph names two different sinks.
+    /// </summary>
+    public const string ConflictingSinkDirective = "PLAY0921";
+
+    /// <summary>
+    /// A read model or graph repeats the same <c>sink</c> directive; the repeat changes nothing.
+    /// </summary>
+    public const string RepeatedSinkDirective = "PLAY0922";
+
+    /// <summary>
+    /// A declared sink is named by no read model or graph.
+    /// </summary>
+    public const string UnusedSink = "PLAY0923";
 }
