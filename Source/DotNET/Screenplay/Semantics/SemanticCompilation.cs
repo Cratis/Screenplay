@@ -65,7 +65,7 @@ public sealed class SemanticCompilation
     /// that is absent uses the default read-model sink; its projection or reducer writes there and its queries read
     /// from there. This realization sidecar is not part of ESM bytes or its revision.
     /// </summary>
-    public ImmutableDictionary<SemanticId, string> ReadModelSinks { get; private init; } = [];
+    public ImmutableDictionary<SemanticId, string> ReadModelSinks { get; private init; } = ImmutableDictionary.Create<SemanticId, string>();
 
     /// <summary>
     /// Gets the sink name of every graph that names one, keyed by the graph's canonical identity, its name. A graph that
