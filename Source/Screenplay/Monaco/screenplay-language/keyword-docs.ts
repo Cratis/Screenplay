@@ -73,6 +73,7 @@ export const keywordDocs: Record<string, string> = {
     id: 'Preserves the previous persisted event name after a rename. Leave absent on new events; repeating the current name is redundant.',
     command: 'An imperative intent. Declares authorization, validation, and what events it produces — declaratively, or via a full handler.',
     query: 'A read-side entry point mapping to a return type, with an optional description, parameters and performer. The by key and every supplied filter value satisfy their concept rules after authorization; violations reject with Validation, not an empty result.',
+    sink: 'A logical store for read models or graphs, mapped to storage by the deployment: `sink <Name> for readmodels|graphs` at the root, `sink <Name>` in a read model or graph. Realization metadata.',
     passive: 'Opts a read model into replay on demand for command decisions instead of materialization. Bare readmodel body directive, default active and never inferred. Only commands may read a passive model; queries and screens are rejected (PLAY0859), and an unused passive model warns (PLAY0860). Realization metadata, not portable ESM.',
     observable: 'Qualifies a query return type as a live read — `query <Name> => observable <ReadModel>` keeps pushing as the read model changes, instead of answering once.',
     performer: 'The code that performs a query — a `file <Path>` reference or an inline `csharp`/`sql` block. The query\'s counterpart to a command handler.',

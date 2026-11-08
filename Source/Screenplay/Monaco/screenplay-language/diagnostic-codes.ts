@@ -317,6 +317,14 @@ export const diagnosticCodes = {
     invalidFormFieldChoices: 'PLAY0913',
     invalidScreenShow: 'PLAY0914',
     enabledWhenWithoutItem: 'PLAY0915',
+    invalidSinkDeclaration: 'PLAY0916',
+    duplicateSink: 'PLAY0917',
+    unknownSink: 'PLAY0918',
+    sinkKindMismatch: 'PLAY0919',
+    passiveReadModelSink: 'PLAY0920',
+    conflictingSinkDirective: 'PLAY0921',
+    repeatedSinkDirective: 'PLAY0922',
+    unusedSink: 'PLAY0923',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

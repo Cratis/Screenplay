@@ -184,6 +184,10 @@ describe('when validating a document with a problem of every coded kind', () => 
 
         const repeatedPassive = ['module Billing', '  feature Invoices', '    slice StateChange Reserve', '      readmodel Reservation', '        passive', '        passive', '        number String'];
         issues.push(...validateLines(repeatedPassive, { compilerDiagnostics: parse(repeatedPassive.join('\n')).diagnostics }));
+        const sinks = ['sink Reporting', 'sink Reports for readmodels', 'sink reports for readmodels', 'sink People for graphs', 'sink Unused for readmodels', 'module M', '  feature F', '    slice StateView S',
+            '      readmodel A', '        sink Missing', '      readmodel B', '        sink People', '      readmodel C', '        passive', '        sink Reports',
+            '      readmodel D', '        sink Reports', '        sink Other', '      readmodel E', '        sink Reports', '        sink Reports'];
+        issues.push(...validateLines(sinks, { compilerDiagnostics: parse(sinks.join('\n')).diagnostics }));
     });
 
     beforeEach(() => {
