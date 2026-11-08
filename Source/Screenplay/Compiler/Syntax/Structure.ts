@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineSyntax } from './Storylines';
 import type { TimeZoneSyntax } from './Calendar';
 import { CommandReadMode } from './CommandReadMode';
 import type { DesignProfileFacts, DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
@@ -156,6 +157,9 @@ export interface ApplicationSyntax extends SyntaxNode {
 
     // The development and test users - written only when present.
     readonly users?: readonly UserSyntax[];
+
+    // The storylines: named, ordered paths through the model - written only when present.
+    readonly storylines?: readonly StorylineSyntax[];
 
     // The named sinks read models and graphs may choose - written only when present.
     readonly sinks?: readonly SinkSyntax[];

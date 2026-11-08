@@ -1,0 +1,183 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ItemId",
+      "type": "Uuid",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Requests",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "RequestReturn",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ReturnRequested",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "itemId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "itemId"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ReturnRequested",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "itemId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ItemId"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RequestReturn",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Returns"
+    }
+  ],
+  "personas": [],
+  "storylines": [
+    {
+      "kind": "StorylineSyntax",
+      "description": "From the request to the event that records it",
+      "name": "ReturnAnItem",
+      "steps": [
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Module",
+          "note": null,
+          "target": "Returns"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Feature",
+          "note": null,
+          "target": "Returns.Requests"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Slice",
+          "note": "The customer starts here",
+          "target": "Requests.RequestReturn"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Command",
+          "note": "The customer asks to return \"the\" item",
+          "target": "RequestReturn"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Event",
+          "note": null,
+          "target": "ReturnRequested"
+        }
+      ],
+      "title": "A customer returns an item"
+    },
+    {
+      "kind": "StorylineSyntax",
+      "name": "Bare",
+      "steps": [
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Command",
+          "note": null,
+          "target": "RequestReturn"
+        }
+      ],
+      "title": null
+    }
+  ],
+  "systems": [],
+  "types": []
+}

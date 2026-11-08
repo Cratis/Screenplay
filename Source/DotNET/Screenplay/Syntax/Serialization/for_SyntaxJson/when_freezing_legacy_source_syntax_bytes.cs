@@ -35,6 +35,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "persona-callers",
         "personas-canvas",
         "users",
+        "storylines",
         "specification-tables",
         "guarded-actions",
         "guarded-interactions",
@@ -532,6 +533,9 @@ public partial class when_freezing_legacy_source_syntax_bytes
     {
         // Sample data has its own parser, printer and compiler specs; the frozen bytes predate it.
         SampleDataPacks = [],
+
+        // Storylines have their own parser, printer, compiler and conformance specs; the frozen bytes predate them.
+        Storylines = [],
 
         // The root template, appearance and new screen default have their own parser, printer and compiler specs;
         // the frozen bytes predate them and spell the shell the legacy way, as a layout.

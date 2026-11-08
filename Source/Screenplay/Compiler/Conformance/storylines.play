@@ -1,0 +1,24 @@
+// Storylines: named, ordered paths through the model, each step naming an element by kind.
+concept ItemId : Uuid
+
+module Returns
+  feature Requests
+    slice StateChange RequestReturn
+      command RequestReturn
+        itemId ItemId
+        produces ReturnRequested
+          itemId = itemId
+
+      event ReturnRequested
+        itemId ItemId
+
+storyline ReturnAnItem "A customer returns an item"
+  description "From the request to the event that records it"
+  module Returns
+  feature Returns.Requests
+  slice Requests.RequestReturn "The customer starts here"
+  command RequestReturn "The customer asks to return \"the\" item"
+  event ReturnRequested
+
+storyline Bare
+  command RequestReturn

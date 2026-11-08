@@ -34,7 +34,8 @@ enum WorkspaceReferenceDomain
     SpecificationParameter,
     StateMachine,
     Workflow,
-    Sink
+    Sink,
+    Slice
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -287,12 +288,25 @@ static class WorkspaceReferenceMembers
         _ => AuthorizationMembers(node)
     };
 
+    static WorkspaceReferenceDomain StorylineDomain(StorylineElementKind kind) => kind switch
+    {
+        StorylineElementKind.Module or StorylineElementKind.Feature => WorkspaceReferenceDomain.Container,
+        StorylineElementKind.Slice => WorkspaceReferenceDomain.Slice,
+        StorylineElementKind.Command => WorkspaceReferenceDomain.Command,
+        StorylineElementKind.Event => WorkspaceReferenceDomain.Event,
+        StorylineElementKind.ReadModel => WorkspaceReferenceDomain.View,
+        StorylineElementKind.Query => WorkspaceReferenceDomain.Query,
+        StorylineElementKind.Screen => WorkspaceReferenceDomain.Screen,
+        _ => WorkspaceReferenceDomain.Reaction
+    };
+
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? AuthorizationMembers(SyntaxNode node) => node switch
     {
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
         UserSyntax => [("personas", WorkspaceReferenceDomain.Persona)],
+        StorylineStepSyntax step => [("target", StorylineDomain(step.ElementKind))],
         SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
         _ => null
     };

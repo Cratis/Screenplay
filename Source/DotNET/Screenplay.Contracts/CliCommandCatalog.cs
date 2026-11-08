@@ -150,6 +150,12 @@ public static class CliCommandCatalog
     /// <summary>Gets the identity-preserving rename command.</summary>
     public static CliCommand Rename { get; } = new("rename", "<address> <new-name> [<folder>]", [Kind]);
 
+    /// <summary>Gets the lineage direction option.</summary>
+    public static CliOption LineageDirection { get; } = new("--direction", "upstream|downstream|both");
+
+    /// <summary>Gets the value lineage trace command.</summary>
+    public static CliCommand Lineage { get; } = new("lineage", "<address> [<file.play|folder>]", [LineageDirection, Format]);
+
     /// <summary>
     /// Gets the help command.
     /// </summary>
@@ -163,7 +169,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Lineage, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

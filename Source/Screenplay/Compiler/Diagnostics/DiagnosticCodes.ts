@@ -593,4 +593,8 @@ export const DiagnosticCodes = {
     RepeatedSinkDirective: 'PLAY0937',
     UnusedSink: 'PLAY0938',
     SinkNameCaseMismatch: 'PLAY0939',
+    InvalidStorylineDeclaration: 'PLAY0940',
+    InvalidStorylineStep: 'PLAY0941',
+    UnknownStorylineElement: 'PLAY0942',
+    DuplicateStoryline: 'PLAY0943',
 } as const;

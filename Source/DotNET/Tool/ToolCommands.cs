@@ -22,6 +22,7 @@ static class ToolCommands
         [CliCommandCatalog.Export] = (args, output, error) => ExportCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Diff] = (args, output, error) => DiffCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Rename] = (args, output, error) => RenameCommand.Run(args[1..], output, error),
+        [CliCommandCatalog.Lineage] = (args, output, error) => LineageCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Help] = (args, output, error) => ModelCheck.Run(args, output, error, !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null),
         [CliCommandCatalog.Version] = (args, output, error) => ModelCheck.Run(args, output, error, !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null)
     };

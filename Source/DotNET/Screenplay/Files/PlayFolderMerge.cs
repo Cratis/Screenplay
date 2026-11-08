@@ -71,6 +71,7 @@ internal static partial class PlayFolderMerge
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
             Users = DeclaredInOneFile(applications.SelectMany(application => application.Users), user => user.Name, user => user.Location, "user", context),
+            Storylines = DeclaredInOneFile(applications.SelectMany(application => application.Storylines), storyline => storyline.Name, storyline => storyline.Location, "storyline", context),
             ReactionProductionMode = MergeReactionProductionMode(applications, context),
             CommandReadMode = MergeCommandReadMode(applications, context),
             TimeZone = MergeTimeZone(applications, context),

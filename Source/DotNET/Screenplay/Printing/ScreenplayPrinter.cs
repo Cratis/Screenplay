@@ -246,6 +246,7 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Examples, WriteSpecificationExample);
         WriteSection(writer, application.Modules, WriteModule);
         WriteSection(writer, application.Seeds ?? [], WriteSeed);
+        WriteSection(writer, application.Storylines, WriteStoryline);
     }
 
     void WriteAuthentication(ScreenplayWriter writer, AuthenticationSyntax authentication)

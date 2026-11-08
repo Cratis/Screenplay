@@ -109,6 +109,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUser(user);
         }
 
+        foreach (var storyline in syntax.Storylines)
+        {
+            VisitStoryline(storyline);
+        }
+
         foreach (var sink in syntax.Sinks)
         {
             VisitSink(sink);

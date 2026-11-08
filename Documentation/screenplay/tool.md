@@ -537,6 +537,30 @@ Declarations are matched by persisted identity when both folders hold `.screenpl
 
 `--format json` writes one object: `before` and `after` (path, source revision, whether persisted identities were used, model revision) and `difference`, the `ModelDifference` with camelCase names and enumerations as strings; `difference.slices` holds the per-slice summary. The command exits `0` when it compared the versions and `2` when it could not run, including when the two folders hold identities for different applications.
 
+## Trace a value's lineage
+
+`screenplay lineage` prints where one value comes from and where it goes: the same hop tree the MCP `trace-lineage` tool pages, all at once. The address names a command, event or read-model property (the owner's address and the member name) or a screen field (the screen's or form's address and the property it binds).
+
+```bash
+screenplay lineage Lending.Catalog.AddBook.AddBook.title Samples/Library
+```
+
+```text
+Lineage of Lending.Catalog.AddBook.AddBook.title (Property), both
+command-property Lending.Catalog.AddBook.AddBook.title 'title BookTitle' (library.play:78:9)
+  -> production-mapping Lending.Catalog.AddBook.AddBook 'title = title' (library.play:90:11)
+    -> event-property Lending.Catalog.AddBook.BookAdded.title 'title BookTitle' (library.play:95:9)
+      -> projection-mapping Lending.Catalog.BookCatalog.BookCatalog 'title = title' (library.play:164:11)
+        -> read-model-property Lending.Catalog.BookCatalog.CatalogEntry.title 'title BookTitle' (library.play:150:9)
+          -> query Lending.Catalog.BookCatalog.AllBooks 'query AllBooks' (library.play:158:36)
+          -> query Lending.Catalog.BookCatalog.BookById 'query BookById' (library.play:154:25)
+          -> screen-display Lending.Catalog.BookCatalog.BookCatalog 'column title' (library.play:176:11)
+  <- screen-input Lending.AddBookInput 'field title' (library.play:57:5)
+9 hop(s), complete.
+```
+
+`->` is where the value goes and `<-` is where it comes from. A break (a missing mapping, an ambiguous name, code the trace cannot read) is shown in brackets with its reason. `--direction upstream|downstream|both` narrows the trace and `--format json` prints every hop with the fields described in [field lineage](mcp/reference.md#field-lineage). The command exits 0 for a complete trace, 1 when it has breaks and 2 when it cannot run, for example when the address names nothing.
+
 ## Rename a declaration and keep its identity
 
 Rename a module, feature, slice or declaration through the same proposal and apply the MCP server uses:

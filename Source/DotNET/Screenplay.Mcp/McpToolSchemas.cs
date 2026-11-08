@@ -166,6 +166,7 @@ static class McpToolSchemas
         "view" when tool == "workspace-state" => McpAstSchemas.Choice("status", "persisted", "before", "after"),
         "layout" => McpAstSchemas.Choice("single", "module", "feature", "slice"),
         "match" => McpAstSchemas.Choice("exact", "prefix", "contains"),
+        "direction" when tool == "trace-lineage" => McpAstSchemas.Choice(McpLineageDirections.Names),
         "direction" => McpAstSchemas.Choice("incoming", "outgoing"),
         "view" when tool == "describe-application" => McpAstSchemas.Choice("summary", "children", "declarations"),
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "cases", "streams", "route", "dependencies", "syntax"),
