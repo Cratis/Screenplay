@@ -13,6 +13,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
 {
     static readonly HashSet<string> _featureVectors =
     [
+        "design-system",
         "command-reads",
         "graph-queries",
         "graph-foreach",
@@ -533,6 +534,11 @@ public partial class when_freezing_legacy_source_syntax_bytes
         UiProfiles = application.UiProfiles?.Select(profile => profile with { SampleData = null, Layout = profile.Layout ?? profile.Root?.Name, Root = null, Identity = null, Appearance = null, NewScreenTemplate = null }),
         Exposures = [],
         InstanceContributions = [],
+
+        // The design system and the themes that implement it have their own parser, printer, compiler and conformance specs;
+        // the frozen bytes predate them and carry themes that only declare the packages they are compatible with.
+        DesignSystems = [],
+        Themes = application.Themes?.Select(theme => theme with { Implements = null, Palette = [], Values = [], ModeValues = [] }),
 
         // Query validation has a current shared vector; preserve CurrencyCode's pre-rule baseline here.
         Concepts = application.Concepts.Where(concept => concept.Name is not ("InvoiceReceiptId" or "InvoiceRef" or "TicketNumber" or "TenantOrderId"))

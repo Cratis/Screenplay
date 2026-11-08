@@ -30,7 +30,6 @@ ui profile Desktop
 
   appearance
     color scheme dark
-    accent "#4F46E5"
 
   new screens use template Sheet
 
@@ -46,6 +45,5 @@ ui profile FromBlueprint
 
   appearance
     color scheme system
-    accent "#4F46E5CC"
 
   new screens use template blueprint Cratis.Blueprint.Default Sheet

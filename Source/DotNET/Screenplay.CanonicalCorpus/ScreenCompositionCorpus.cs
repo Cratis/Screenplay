@@ -19,6 +19,8 @@ public static class ScreenCompositionCorpus
     const string UiProfileRootSourceCase = "ui-profile-root-positive";
     const string UiProfileRootLegacySourceCase = "ui-profile-root-legacy-layout";
     const string UiProfileQuotedThemeSourceCase = "ui-profile-quoted-theme";
+    const string DesignSystemSourceCase = "design-system-positive";
+    const string UiProfileAppearanceDeprecatedSourceCase = "ui-profile-appearance-deprecated";
 
     /// <summary>
     /// Gets the canonical screen composition corpus.
@@ -192,6 +194,42 @@ public static class ScreenCompositionCorpus
                 },
                 new CanonicalTypedScreenSourceCase
                 {
+                    Name = DesignSystemSourceCase,
+                    Document = Document("design-system-positive", "positive/DesignSystem.play", $"{Prefix}.positive.DesignSystem.play.txt"),
+                    Requires = "Screenplay design system: one design system with modes, categorized tokens, components with variants, parts and states, words and contrast rules; two themes implementing it with a palette, values and per-mode values; a profile on the default theme and a profile selecting another",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "DesignSystemSyntax",
+                        "DesignTokenCategorySyntax",
+                        "DesignTokenSyntax",
+                        "DesignComponentSyntax",
+                        "DesignVariantSyntax",
+                        "DesignStateSyntax",
+                        "DesignAssignmentSyntax",
+                        "DesignWordsSyntax",
+                        "DesignContrastRuleSyntax",
+                        "ThemeSyntax",
+                        "ThemeModeValuesSyntax",
+                        "UiProfileSyntax",
+                        "ProfileAppearanceSyntax"
+                    ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = UiProfileAppearanceDeprecatedSourceCase,
+                    Document = Document("ui-profile-appearance-deprecated", "positive/UiProfileAppearanceDeprecated.play", $"{Prefix}.positive.UiProfileAppearanceDeprecated.play.txt"),
+                    Requires = "Screenplay design system: appearance accent, corners and font still read but are reported as PLAY0929; the values belong in the selected theme",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "UiProfileSyntax",
+                        "ProfileAppearanceSyntax",
+                        "ThemeSyntax"
+                    ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
                     Name = UiProfileRootLegacySourceCase,
                     Document = Document("ui-profile-root-legacy-layout", "positive/UiProfileRootLegacyLayout.play", $"{Prefix}.positive.UiProfileRootLegacyLayout.play.txt"),
                     Requires = "Screenplay v4.197.0 reads the legacy ui profile layout line; v4.200.0 reports it as PLAY0791 with a root template fix-it",
@@ -332,7 +370,34 @@ public static class ScreenCompositionCorpus
                     "UiProfileRootInvalid",
                     Diagnostic("PLAY0796", "The root template 'AppShell' of ui profile 'Desktop' has no option 'sparkle' - it exposes 'showFooter', 'topbar.showFooter', 'Footer'"),
                     Diagnostic("PLAY0797", "The color scheme 'sepia' of ui profile 'Desktop' is not one of light, dark or system"),
+                    Diagnostic("PLAY0929", "'accent' in a ui profile's appearance is deprecated - set a palette entry or color token in the selected theme; appearance keeps only 'color scheme'"),
                     Diagnostic("PLAY0797", "The accent 'indigo' of ui profile 'Desktop' is not a hex colour - write \"#RGB\", \"#RRGGBB\" or \"#RRGGBBAA\"")),
+                Rejection(
+                    "design-system-invalid",
+                    "DesignSystemInvalid",
+                    Diagnostic("PLAY0927", "The default theme 'Missing' of design system 'Contoso' is not declared"),
+                    Diagnostic("PLAY0919", "The token 'color.primary' is already declared"),
+                    Diagnostic("PLAY0924", "The part 'background' of 'Button' takes a color token, not 'space.sm'"),
+                    Diagnostic("PLAY0922", "'background = color.nothing' on 'Button' names no token of the design system"),
+                    Diagnostic("PLAY0916", "Unknown part 'glow' on component 'Chip' - expected one of text, background, border, radius, height, padding, shadow, font"),
+                    Diagnostic("PLAY0917", "The design system 'Second' is a second one - an application has exactly one design system, 'Contoso'"),
+                    Diagnostic("PLAY0921", "Theme 'Nordic' gives 'color.text' no value in the mode 'dark'"),
+                    Diagnostic("PLAY0920", "Theme 'Nordic' assigns 'space.xx', which design system 'Contoso' does not declare"),
+                    Diagnostic("PLAY0923", "Theme 'Nordic' resolves 'color.primary' through itself (color.primary -> color.surface -> color.primary)"),
+                    Diagnostic("PLAY0922", "'color.surface = palette.nope' cannot be resolved: palette entry 'palette.nope' is not declared in theme 'Nordic'"),
+                    Diagnostic("PLAY0918", "Theme 'Nordic' has a block for the mode 'dim', which design system 'Contoso' does not declare (modes: light, dark)"),
+                    Diagnostic("PLAY0928", "In theme 'Faint' (light), Button secondary: text #EEEEEE on background #FFFFFF has contrast 1.16, below the required 4.5"),
+                    Diagnostic("PLAY0928", "In theme 'Faint' (dark), Button secondary: text #EEEEEE on background #FFFFFF has contrast 1.16, below the required 4.5"),
+                    Diagnostic("PLAY0925", "Theme 'Stranger' implements 'Nothing', but the application's design system is 'Contoso'"),
+                    Diagnostic("PLAY0921", "Theme 'Broken' gives 'color.surface' no value in the mode 'light'"),
+                    Diagnostic("PLAY0921", "Theme 'Broken' gives 'color.text' no value in the mode 'light'"),
+                    Diagnostic("PLAY0921", "Theme 'Broken' gives 'color.primary' no value in the mode 'light'"),
+                    Diagnostic("PLAY0921", "Theme 'Broken' gives 'color.surface' no value in the mode 'dark'"),
+                    Diagnostic("PLAY0921", "Theme 'Broken' gives 'color.text' no value in the mode 'dark'"),
+                    Diagnostic("PLAY0921", "Theme 'Broken' gives 'color.primary' no value in the mode 'dark'"),
+                    Diagnostic("PLAY0930", "Theme 'Broken' already declares which design system it implements"),
+                    Diagnostic("PLAY0930", "Invalid palette line 'odd line' - expected '<name> = \"<value>\"' or '<name> = <reference>'"),
+                    Diagnostic("PLAY0926", "The ui profile 'Desktop' selects theme 'Plain', which does not implement the design system 'Contoso'")),
                 Rejection(
                     "sample-data-unknown-pack",
                     "SampleDataUnknownPack",

@@ -43,7 +43,7 @@ public class when_compiling_the_ui_profile_root_vectors : Specification
     [Fact] void should_carry_an_own_layout_root_with_an_option() => (Profile("Desktop").Root!.Name, Profile("Desktop").Root!.Blueprint, Profile("Desktop").Root!.Options.Single().Name, Profile("Desktop").Root!.Options.Single().Value).ShouldEqual(("AppShell", null, "showFooter", "true"));
     [Fact] void should_carry_an_own_application_scope_screen_template_root() => Profile("Docked").Root!.Name.ShouldEqual("Docked");
     [Fact] void should_carry_a_blueprint_root_with_its_pin() => (Profile("FromBlueprint").Root!.Blueprint, Profile("FromBlueprint").Root!.Name, Profile("FromBlueprint").Root!.Version).ShouldEqual(("Cratis.Blueprint.Default", "Frame", "^4.5"));
-    [Fact] void should_carry_the_appearance() => (Profile("Desktop").Appearance!.ColorScheme, Profile("Desktop").Appearance!.Accent).ShouldEqual(("dark", "#4F46E5"));
+    [Fact] void should_carry_the_appearance() => (Profile("Desktop").Appearance!.ColorScheme, Profile("Desktop").Appearance!.Accent).ShouldEqual(("dark", null));
     [Fact] void should_carry_the_new_screens_default() => (Profile("Desktop").NewScreenTemplate!.Name, Profile("FromBlueprint").NewScreenTemplate!.Blueprint).ShouldEqual(("Sheet", "Cratis.Blueprint.Default"));
     [Fact] void should_print_canonically_and_compile_the_print_without_diagnostics() => _reprinted.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_the_second_pass() => new ScreenplayPrinter().Print(_reprinted.Value!).ShouldEqual(_printed);

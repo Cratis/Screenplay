@@ -1,0 +1,63 @@
+// ============================================================
+// Acme Commerce design system - one for the whole application.
+//
+// The design system is the contract: the modes, what every token is for, how a component is made of them,
+// how Acme speaks, and the rules every theme is held to. Each domain's shell/shell.play declares a theme that
+// implements it - the values: its accent, corner radius and typeface - and its ui profile selects that
+// theme. A theme assigns token values only; it never redefines a component.
+// ============================================================
+
+design system AcmeDesign
+  modes light, dark
+  default theme AcmeCatalog
+
+  tokens
+    color
+      surface        "page background"
+      surface-card   "card and panel background"
+      text           "body text"
+      primary        "primary action"
+      primary-strong "primary action, hovered or pressed"
+      on-primary     "text on a primary action"
+    space
+      sm             "tight gap between related elements"
+      md             "default gap between elements"
+    radius
+      control        "inputs and buttons"
+    font
+      sans           "interface text"
+
+  components
+    Button
+      parts text, background, radius, padding
+      variant primary
+        text       = color.on-primary
+        background = color.primary
+        radius     = radius.control
+        padding    = space.md
+        state hover
+          background = color.primary-strong
+        state disabled
+          text       = color.text
+          background = color.surface-card
+      variant secondary
+        text       = color.text
+        background = color.surface-card
+        radius     = radius.control
+        padding    = space.md
+    Card
+      parts background, radius, padding
+      variant default
+        background = color.surface-card
+        radius     = radius.control
+        padding    = space.md
+
+  words
+    voice
+      tone = "Direct, calm and specific"
+    naming
+      order    = "Order"
+      supplier = "Supplier"
+
+  rules
+    contrast text on background at least 4.5

@@ -1,0 +1,15 @@
+theme Nordic
+  compatible with Cratis.Components
+
+ui profile Desktop
+  target platform web
+  theme Nordic
+
+  packages
+    Cratis.Components
+
+  appearance
+    color scheme dark
+    accent "#4F46E5"
+    corners round
+    font inter

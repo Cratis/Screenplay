@@ -76,6 +76,7 @@ internal static partial class PlayFolderMerge
             TimeZone = MergeTimeZone(applications, context),
             Context = OnlyOne(applications.Select(application => application.Context), value => value.Location, "context block", context),
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
+            DesignSystems = OnlyOne(applications.SelectMany(application => application.DesignSystems), designSystem => designSystem.Location, "design system", context) is { } designSystem ? [designSystem] : [],
             Onboarding = OnlyOne(applications.Select(application => application.Onboarding), onboarding => onboarding.Location, "onboarding block", context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],

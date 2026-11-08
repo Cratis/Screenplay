@@ -7,7 +7,7 @@ what it receives into its own language (anti-corruption), so a change in one lan
 The full story - how it was built, domain by domain, and what each Studio feature shows - is in the
 [walkthrough](../../Documentation/screenplay/acme-commerce-walkthrough.md). The Studio project is the permanent keeper project
 **Acme Commerce** in the Cratis tenant of Cratis Studio - **one application per domain** (Acme Shop, Acme Catalog, Acme Sales,
-Acme Purchasing, Acme Warehouse), each with its own logo, theme, accent and shell - filled by the loader in
+Acme Purchasing, Acme Warehouse), each with its own logo, theme of the shared design system and shell - filled by the loader in
 `scripts/samples/acme-commerce` of the `Cratis/Studio` repository.
 
 It is the epic sample for Studio, Screenplay, Scene and Stage: everything the language says about concepts, constraints,
@@ -24,9 +24,11 @@ screenplay test Samples/AcmeCommerce               # every specification
 ```
 application.play                the ONLY `domain AcmeCommerce` line; `reaction batches atomic`, `command reads protected`
 Shared/                         the shared kernel: concepts with their validation rules, enums with pinned numbers,
-                                composite types, ALL event sources, policies and personas
-<Domain>/shell/                 the domain's OWN look and chrome: shell.play (theme, ui profile: blueprint AppShell root pinned ^1,
-                                menu mode and theme, colour scheme, accent, packages), navigation.play (the domain's logo as an
+                                composite types, ALL event sources, policies and personas, and design-system.play: the ONE design system
+                                (modes, tokens, components, words, contrast rule) every domain's theme implements
+<Domain>/shell/                 the domain's OWN look and chrome: shell.play (theme implementing AcmeDesign: palette accent, corner
+                                radius, typeface; ui profile: blueprint AppShell root pinned ^1, menu mode and theme,
+                                colour scheme, packages), navigation.play (the domain's logo as an
                                 inlined SVG data URI, topbar, sidebar) and sampledata.play (the domain's sample-data pack)
 assets/logos/                   the five logo SVGs; tools/embed-logos.py inlines them into each navigation.play
 <Domain>/model/                 state changes, state views, automations, forms, screens, specifications;
@@ -54,7 +56,7 @@ Scene keeps the logo and the UI profile at **application level only** (rule NAV8
 that has its own logo, theme and shell is its own application. The five share the platform (`Cratis.Components` and the Default blueprint's
 `AppShell`, pinned `^1`; Stage ships only those, so no profile lists a domain blueprint) and differ in what an application may choose:
 
-| Domain | Application | Accent | Menu | Look |
+| Domain | Application | Accent (theme palette) | Menu | Look |
 | --- | --- | --- | --- | --- |
 | Storefront | Acme Shop | `#C2410C` warm orange | horizontal, light | customer-facing: warm, spacious, round corners, serif |
 | Catalog | Acme Catalog | `#4338CA` indigo | static sidebar, light | a calm back office |

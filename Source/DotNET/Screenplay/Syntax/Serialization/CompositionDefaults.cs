@@ -30,7 +30,8 @@ static class CompositionDefaults
 
     static readonly Dictionary<Type, Dictionary<string, Default>> _omittable = new()
     {
-        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty },
+        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
+        [typeof(ThemeSyntax)] = new(StringComparer.Ordinal) { ["implements"] = Default.Null, ["palette"] = Default.Empty, ["values"] = Default.Empty, ["modeValues"] = Default.Empty },
         [typeof(PersonaSyntax)] = new(StringComparer.Ordinal) { ["goals"] = Default.Empty, ["x"] = Default.Null, ["y"] = Default.Null, ["width"] = Default.Null, ["height"] = Default.Null },
         [typeof(SeedSyntax)] = new(StringComparer.Ordinal) { ["name"] = Default.Null, ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(EventSourceSyntax)] = new(StringComparer.Ordinal) { ["x"] = Default.Null, ["y"] = Default.Null },

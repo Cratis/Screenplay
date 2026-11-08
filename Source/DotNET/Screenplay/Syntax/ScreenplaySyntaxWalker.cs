@@ -121,6 +121,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitOnboarding(syntax.Onboarding);
         }
 
+        foreach (var designSystem in syntax.DesignSystems)
+        {
+            VisitDesignSystem(designSystem);
+        }
+
         foreach (var theme in syntax.Themes ?? [])
         {
             VisitTheme(theme);

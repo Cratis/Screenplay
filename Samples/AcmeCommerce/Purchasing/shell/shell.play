@@ -1,16 +1,47 @@
 // ============================================================
 // Purchasing: the application shell and look - a dense buyer desk with a labelled icon rail.
 //
-// Each Acme domain is its own application: its own logo (see navigation.play), theme, accent, colour scheme and menu, on the shared
+// Each Acme domain is its own application: its own logo (see navigation.play), a theme of the shared design system, colour scheme and menu, on the shared
 // platform (Cratis.Components + the Default blueprint's AppShell, ^1). The profile lists only the packages every Stage ships, so a screen
 // built from stock components plays everywhere, Studio's Play included.
 // ============================================================
 
 theme AcmePurchasing
+  implements AcmeDesign
   compatible with Cratis.Components
   compatible with Cratis.Blueprint.Default
   compatible with PrimeReact
   compatible with Acme.Commerce
+
+  palette
+    accent        = "#B45309"
+    accent-strong = "#92400E"
+    white         = "#FFFFFF"
+    paper         = "#F8FAFC"
+    ink           = "#111827"
+    slate         = "#1F2937"
+
+  values
+    space.sm       = "8px"
+    space.md       = "12px"
+    radius.control = "6px"
+    font.sans      = "ibm-plex-sans"
+
+  light
+    color.surface        = palette.white
+    color.surface-card   = palette.paper
+    color.text           = palette.ink
+    color.primary        = palette.accent
+    color.primary-strong = palette.accent-strong
+    color.on-primary     = palette.white
+
+  dark
+    color.surface        = palette.ink
+    color.surface-card   = palette.slate
+    color.text           = palette.white
+    color.primary        = palette.accent
+    color.primary-strong = palette.accent-strong
+    color.on-primary     = palette.white
 
 ui profile Purchasing
   target platform web
@@ -32,9 +63,6 @@ ui profile Purchasing
 
   appearance
     color scheme light
-    accent "#B45309"
-    corners default
-    font ibm-plex-sans
 
   sample data
     active AcmePurchasing
