@@ -192,6 +192,8 @@ describe('when validating a document with a problem of every coded kind', () => 
             '      readmodel D', '        sink Reports', '        sink Other', '      readmodel E', '        sink Reports', '        sink Reports',
             '      graph G', '        sink Missing', '        node N', '          id PersonId key'];
         issues.push(...validateLines(sinks, { compilerDiagnostics: parse(sinks.join('\n')).diagnostics }));
+        const secretProjection = ['concept ApiKey : String secret', 'module M', '  feature F', '    slice StateView S', '      readmodel Row', '        id String', '        token ApiKey', '      event Recorded', '        token ApiKey', '      projection Keys => Row', '        from Recorded'];
+        issues.push(...validateLines(secretProjection, { compilerDiagnostics: parse(secretProjection.join('\n')).diagnostics }));
     });
 
     beforeEach(() => {

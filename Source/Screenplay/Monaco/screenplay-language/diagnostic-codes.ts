@@ -341,6 +341,7 @@ export const diagnosticCodes = {
     repeatedSinkDirective: 'PLAY0937',
     unusedSink: 'PLAY0938',
     sinkNameCaseMismatch: 'PLAY0939',
+    secretConceptProjected: 'PLAY0940',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
