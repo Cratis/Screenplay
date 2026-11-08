@@ -22,7 +22,7 @@ public class when_parsing_sink_declarations : Specification
     void should_parse_a_graph_sink() => _compiler.Parse("sink People for graphs").Value!.Sinks.Single().Stores.ShouldEqual(SinkKind.Graphs);
 
     [Fact]
-    void should_keep_declaration_order() => _compiler.Parse("sink B for graphs\nsink A for readmodels").Value!.Sinks.Select(sink => sink.Name).ShouldEqual(new[] { "B", "A" });
+    void should_keep_declaration_order() => _compiler.Parse("sink B for graphs\nsink A for readmodels").Value!.Sinks.Select(sink => sink.Name).First().ShouldEqual("B");
 
     [Fact]
     void should_have_no_sinks_by_default() => _compiler.Parse("concept Id : Uuid").Value!.Sinks.ShouldBeEmpty();

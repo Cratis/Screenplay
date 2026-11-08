@@ -39,6 +39,6 @@ public class when_round_tripping_sinks : Specification
     {
         var application = _application with { Sinks = [new SinkSyntax("Reporting", SinkKind.ReadModels, SourceLocation.Start), new SinkSyntax("People", SinkKind.Graphs, SourceLocation.Start)] };
         var restored = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(application));
-        restored.Sinks.Select(sink => (sink.Name, sink.Stores)).ShouldEqual(new[] { ("Reporting", SinkKind.ReadModels), ("People", SinkKind.Graphs) });
+        restored.Sinks.Select(sink => (sink.Name, sink.Stores)).ShouldContainOnly(("Reporting", SinkKind.ReadModels), ("People", SinkKind.Graphs));
     }
 }

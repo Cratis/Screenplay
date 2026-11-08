@@ -19,15 +19,15 @@ public class when_parsing_the_sink_directive : Specification
 
     [Fact]
     void should_warn_on_a_repeated_identical_directive() =>
-        Codes(GraphDocuments.Graph.Replace("graph Organization\n", "graph Organization\n  sink People\n  sink People\n", StringComparison.Ordinal)).ShouldEqual(new[] { DiagnosticCodes.RepeatedSinkDirective });
+        Codes(GraphDocuments.Graph.Replace("graph Organization\n", "graph Organization\n  sink People\n  sink People\n", StringComparison.Ordinal)).ShouldContainOnly(DiagnosticCodes.RepeatedSinkDirective);
 
     [Fact]
     void should_refuse_two_different_sinks() =>
-        Codes(GraphDocuments.Graph.Replace("graph Organization\n", "graph Organization\n  sink People\n  sink Other\n", StringComparison.Ordinal)).ShouldEqual(new[] { DiagnosticCodes.ConflictingSinkDirective });
+        Codes(GraphDocuments.Graph.Replace("graph Organization\n", "graph Organization\n  sink People\n  sink Other\n", StringComparison.Ordinal)).ShouldContainOnly(DiagnosticCodes.ConflictingSinkDirective);
 
     [Fact]
     void should_report_a_malformed_directive() =>
-        Codes(GraphDocuments.Graph.Replace("graph Organization\n", "graph Organization\n  sink People Other\n", StringComparison.Ordinal)).ShouldEqual(new[] { DiagnosticCodes.InvalidSinkDeclaration });
+        Codes(GraphDocuments.Graph.Replace("graph Organization\n", "graph Organization\n  sink People Other\n", StringComparison.Ordinal)).ShouldContainOnly(DiagnosticCodes.InvalidSinkDeclaration);
 
     string[] Codes(string graph) => [.. _compiler.Parse(GraphDocuments.Document(graph)).Diagnostics.Select(diagnostic => diagnostic.Code)];
 
