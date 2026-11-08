@@ -1755,6 +1755,17 @@ Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers re
 | `PLAY0938` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
 | `PLAY0939` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
 
+## Storylines
+
+A `storyline` names an ordered path through the model. See [Storylines](storylines.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0940` | Error | A `storyline` declaration is not `storyline <Name> ["<title>"]`. |
+| `PLAY0941` | Error | A line in a storyline is not `<kind> <reference> ["<note>"]` with kind `module`, `feature`, `slice`, `command`, `event`, `readmodel`, `query`, `screen` or `reaction`, nor `description "<text>"`; or a step has a line nested under it. |
+| `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
+| `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
+
 ## Toolbar buttons
 
 The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.

@@ -279,10 +279,11 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `run-specifications` | Optional proposalId, exact specification address or semantic id, scope, offset, limit, expectedSourceRevision | Deterministic reference execution with passed, failed and unsupported results |
 | `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
 | `find-modeling-smells` | Optional scope/document, eventFanOutThreshold/propertyFanInThreshold | Information-level modeling questions; no compiler diagnostics |
-| `trace-lineage` | Required read-model property `address`; optional offset, limit, expectedSourceRevision | Paged hop tree from the property to its readers and sources, with closed roles and break statuses |
+| `trace-lineage` | Required property or screen field `address`; optional `direction` (`upstream`, `downstream`, `both`), offset, limit, expectedSourceRevision | Paged hop tree from the subject to where its value goes and where it comes from, with closed roles and break statuses |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
+| `list-storylines` | Optional storyline `name` | Every storyline with its title, description and steps in order; each step has its kind, reference, note and status `resolved` (with the element's kind, address and location), `ambiguous` (with candidates) or `missing`. See [storylines](../storylines.md). |
 | `ui-profiles` | Optional profile `name` | Each ui profile's root template, shell options, appearance, selected theme and the theme and mode it resolves to, new screens default and shell diagnostics (PLAY0790-PLAY0799), the own templates applicable as root or new screens default, and the accepted appearance values; also the application's [design system](../design-system.md), every theme with its values and its resolved tokens and components per mode, and the design diagnostics (PLAY0916-PLAY0930) |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
@@ -373,12 +374,18 @@ Names are case-sensitive. Property sets compare declared names, type names, coll
 
 ### Field lineage
 
-`trace-lineage` answers "where does this field come from?" in one call, using the same property-link index as `dependencies` and `find-references`. Pass a read-model property `address`: the read model's address followed by the member name, for example `Lending.Catalog.BookCatalog.CatalogEntry.title`. An address that names no read-model property, or several, is refused.
+`trace-lineage` answers "where does this value come from, and where does it go?" in one call, using the same property-link index as `dependencies` and `find-references`. Pass an `address` that names one of:
 
-The result is a flat page of **hops**. A hop is a declaration member or the authored clause that connects two members. Each hop carries `id`, `parent` (null for the subject), `depth`, `direction` (`subject`, `downstream` or `upstream`), `role`, `status`, `kind` and `address` (resolvable through `declaration-details`; null only for literal, context and operation values) and `location`. Projection mappings add `mode` (`explicit` or `automap`) and `block` (`from`, `join` or `all`). The order is deterministic: the subject, its downstream readers, then the upstream sources depth-first, siblings sorted by address and location. Several children under one hop are **branches**: real sources that all apply, such as two events feeding one property.
+- a command, event or read-model property: the owner's address followed by the member name, for example `Lending.Catalog.BookCatalog.CatalogEntry.title` or `Lending.Catalog.AddBook.AddBook.title`;
+- a screen field: the address of the screen or form followed by the property the field, column or binding names, for example `Lending.AddBookInput.title` or `Lending.Catalog.BookCatalog.BookCatalog.title`.
+
+An address that names nothing, or several, is refused. `direction` is `upstream` (where the value comes from), `downstream` (where it goes) or `both`, the default. Downstream follows the same mappings forward: a command property to the event properties its productions set, an event property to the read-model properties its projections set and the command properties a reaction's `invokes` sets, then a read-model property to the queries and screens that show it. A screen field that feeds a command (a form input) has only a downstream; a field that shows a read-model property has only an upstream. The subject of a screen field trace has role `screen-field`. Downstream through a command with a `handler` stops at an `opaque` break, because the handler owns what is produced. The CLI prints the same trace with `screenplay lineage` (see [the tool](../tool.md#trace-a-values-lineage)).
+
+The result is a flat page of **hops**. A hop is a declaration member or the authored clause that connects two members. Each hop carries `id`, `parent` (null for the subject), `depth`, `direction` (`subject`, `downstream` or `upstream`), `role`, `status`, `kind` and `address` (resolvable through `declaration-details`; null only for literal, context and operation values) and `location`. Projection mappings add `mode` (`explicit` or `automap`) and `block` (`from`, `join` or `all`). The order is deterministic: the subject, then everything downstream depth-first, then everything upstream depth-first, siblings sorted by address and location. Several children under one hop are **branches**: real sources that all apply, such as two events feeding one property.
 
 | Role | Meaning |
 | --- | --- |
+| `screen-field` | The subject when the trace starts at a screen or form field |
 | `query`, `screen-display` | Downstream: a query returning the read model; a screen or form binding showing the property |
 | `read-model-property`, `event-property`, `command-property` | Members along the trace; a command property is the model's input boundary |
 | `projection-mapping` | Projection clause, explicit or AutoMap, in a `from`, `join` or `all` block |

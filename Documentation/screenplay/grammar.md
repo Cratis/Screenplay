@@ -25,7 +25,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | UserDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
+               | PersonaDecl | UserDecl | StorylineDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -379,6 +379,14 @@ PersonaDecl    = "persona", Ident, NL,
 (* A person a development or test session can act as. One line; authoring *)
 (* metadata for tooling, never part of the executable model.             *)
 UserDecl       = "user", Ident, [ String ], [ "as", Ident, { ",", Ident } ], NL ;
+
+(* A named, ordered path through the model, such as a user journey. Each step *)
+(* names one element by kind (PLAY0941); a step naming nothing warns          *)
+(* (PLAY0942). Authoring metadata, never part of the executable model.        *)
+StorylineDecl  = "storyline", Ident, [ String ], NL,
+                 INDENT, { DescriptionDecl | StorylineStep }, DEDENT ;
+StorylineStep  = ( "module" | "feature" | "slice" | "command" | "event" | "readmodel" | "query" | "screen" | "reaction" ),
+                 QualifiedName, [ String ], NL ;
 
 (* A named sink: a logical place read models or graphs are stored, which the  *)
 (* deployment maps to real storage. One line (PLAY0931); names are unique      *)
