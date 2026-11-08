@@ -18,6 +18,9 @@ static class CommandLineInformation
           {CliCommandCatalog.Contract.Usage}
           {CliCommandCatalog.EnvironmentKeys.Usage}
           {CliCommandCatalog.Migrate.Usage}
+          {CliCommandCatalog.Export.Usage}
+          {CliCommandCatalog.Diff.Usage}
+          {CliCommandCatalog.Rename.Usage}
           screenplay {CliCommandCatalog.Help.Aliases[0]}
           screenplay {CliCommandCatalog.Version.Aliases[0]}
 
@@ -40,6 +43,13 @@ static class CommandLineInformation
         environment exit codes: 0 listed, 1 the model has errors, 2 could not run.
         migrate rewrites files written for an earlier Screenplay version; --to defaults to the compiler's version and --dry-run writes nothing.
         migrate exit codes: 0 all migrated, 2 a file needs review, 1 could not migrate.
+        A folder is a model root: test, export, diff and rename use its .screenplay/identities.json when present, as MCP does.
+        export writes the canonical executable model (ESM) bytes; --scope keeps one module, feature or slice and the application-wide declarations.
+        export exit codes: 0 written, 1 the model has no executable model, 2 could not run.
+        diff compares two model versions (files or folders) and prints declaration, member, event contract and specification changes.
+        diff exit codes: 0 compared, 2 could not run.
+        rename renames a declaration through the same proposal and apply as MCP, keeping its semantic identity.
+        rename exit codes: 0 renamed, 1 the rename was refused, 2 could not run.
         The MCP server uses stdio; a supplied root must exist unless --create-root is used.
         Open an empty model folder through MCP to create its first typed document.
         MCP proposals do not write files; review them before invoking apply.

@@ -62,6 +62,14 @@ Run `screenplay report processing ./specifications --format json` for a controll
 
 Run `screenplay environment ./specifications` to list the keys a model needs from the environment it runs in - for example `authentication.providers.EntraId.clientId` and the `clientSecret` that goes with it - and which of them must be secrets. Choose `--format json` for tooling.
 
+## Export, compare and rename from scripts
+
+- `screenplay export ./specifications --output model.esm.json` writes the canonical executable model; `--scope Billing.Invoices` keeps one module, feature or slice.
+- `screenplay diff ./before ./after --format json` compares two model versions: added, removed, renamed and moved declarations, member, event contract and specification changes.
+- `screenplay rename Billing.Invoices.Send.InvoiceSent InvoiceDispatched ./specifications` renames a declaration and keeps its semantic identity.
+
+These commands, and `screenplay test`, use `.screenplay/identities.json` when the folder has one, so they report the same identities as the MCP server.
+
 ## CLI alternative
 
 CLI hosting shipped in 3.11.0 as `cratis screenplay mcp ./specifications`.
