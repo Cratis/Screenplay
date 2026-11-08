@@ -273,6 +273,7 @@ static class ContractAdmission
         new("time", "time zone \"Europe/Oslo\"\n", ["time zone configurable default \"Europe/Oslo\"\n"]),
         new("persona", "persona Person\n"),
         new("user", "persona Person\nuser ada \"Ada\" as Person\n", Baseline: "persona Person\n"),
+        new("storyline", "module M\nstoryline Journey \"A journey\"\n  module M \"Start here\"\n", Baseline: "module M\n"),
         new("sink", "sink Reporting for readmodels\n" + Slice + Event + ReadModel.Replace("      readmodel View\n", "      readmodel View\n        sink Reporting\n", StringComparison.Ordinal) + Projection + KeyedQuery, Baseline: Slice + Event + ReadModel + Projection + KeyedQuery),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("public", Slice + "      public event Recorded\n        value String\n"),

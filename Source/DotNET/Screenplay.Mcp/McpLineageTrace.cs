@@ -6,8 +6,8 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
-// Walks one read-model property's lineage over the property-link index into the hop tree of decision 0099:
-// the subject, its downstream readers, then its upstream sources depth-first.
+// Walks one property's or screen field's lineage over the property-link index into the hop tree of decision 0099:
+// the subject, then where its value goes (downstream) and where it comes from (upstream), each depth-first.
 internal sealed partial class McpLineageTrace
 {
     const int HopBudget = 500;
@@ -19,6 +19,7 @@ internal sealed partial class McpLineageTrace
     readonly Dictionary<McpDeclaration, int> _reached = new(ReferenceEqualityComparer.Instance);
     readonly List<McpLineageHop> _hops = [];
     readonly Lazy<ILookup<WorkspaceNodeHandle, WorkspacePropertyLink>> _mappingSources;
+    readonly Lazy<ILookup<WorkspaceNodeHandle, WorkspacePropertyLink>> _mappingTargets;
     bool _stopped;
 
     internal McpLineageTrace(McpSyntaxIndex index)
@@ -26,6 +27,7 @@ internal sealed partial class McpLineageTrace
         _index = index;
         _links = index.PropertyLinks;
         _mappingSources = new(() => _links.Links.Where(link => link.Reference.Role == "mapping-source").ToLookup(link => link.Occurrence));
+        _mappingTargets = new(() => _links.Links.Where(link => link.Reference.Role == "mapping-target").ToLookup(link => link.Occurrence));
         foreach (var owner in index.Declarations.Where(declaration => declaration.Syntax is CommandSyntax or EventSyntax or ReadModelSyntax))
         {
             foreach (var property in WorkspacePropertyLinks.Properties(owner.Syntax)) _owners.TryAdd(property, owner);
@@ -34,24 +36,17 @@ internal sealed partial class McpLineageTrace
 
     internal bool Truncated { get; private set; }
 
-    internal McpDeclaration Subject(string address)
+    internal IReadOnlyList<McpLineageHop> Run(McpLineageSubject subject, McpLineageDirection direction)
     {
-        var subjects = _links.Find(address).Where(property => OwnerOf(property)?.Syntax is ReadModelSyntax).ToArray();
-        return subjects switch
+        var root = Place(Root(subject), null, 0, "subject");
+        if (subject.Member is { } member) _reached[member] = root.Id;
+        if (direction.HasFlag(McpLineageDirection.Downstream)) Expand(root, Sorted(Downstream(subject)), "downstream");
+        if (direction.HasFlag(McpLineageDirection.Upstream)) Expand(root, Sorted(Upstream(subject)), "upstream");
+        foreach (var hop in _hops)
         {
-            [var subject] => subject,
-            [] => throw new McpFailure($"trace-lineage needs a read-model property address: the read model's address followed by the member name. '{address}' is not a read-model property."),
-            _ => throw new McpFailure($"'{address}' names {subjects.Length} read-model properties; trace-lineage needs exactly one read-model property.")
-        };
-    }
-
-    internal IReadOnlyList<McpLineageHop> Run(McpDeclaration subject)
-    {
-        var root = Place(Member(subject) with { Member = null }, null, 0, "subject");
-        _reached[subject] = root.Id;
-        Expand(root, Sorted(Readers(subject)), "downstream");
-        Expand(root, Sorted(Sources(subject)), "upstream");
-        foreach (var hop in _hops) hop.Branches = _hops.Count(child => child.Parent == hop.Id && child.Direction == "upstream");
+            var counted = hop.Direction == "subject" ? "upstream" : hop.Direction;
+            hop.Branches = _hops.Count(child => child.Parent == hop.Id && child.Direction == counted);
+        }
 
         return _hops;
     }
@@ -117,9 +112,16 @@ internal sealed partial class McpLineageTrace
             return;
         }
         var hop = Place(step, parent.Id, depth, direction);
-        if (step.Status != "resolved" || direction == "downstream") return;
+        if (step.Status != "resolved") return;
         if (step.Member is { } reached) _reached[reached] = hop.Id;
-        Expand(hop, Sorted(step.Member is { } next ? Sources(next) : step.Next?.Invoke() ?? []), direction);
+        Expand(hop, Sorted(Next(step, direction)), direction);
+    }
+
+    IEnumerable<McpLineageStep> Next(McpLineageStep step, string direction)
+    {
+        if (step.Member is not { } member) return step.Next?.Invoke() ?? [];
+
+        return direction == "downstream" ? Downstream(member) : Sources(member);
     }
 
     void Truncate(McpLineageStep step, McpLineageHop parent, int depth, string direction, string reason)
