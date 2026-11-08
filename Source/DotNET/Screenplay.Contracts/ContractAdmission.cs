@@ -284,6 +284,7 @@ static class ContractAdmission
         new("workflow", Workflows),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
         new("theme", "theme Theme\n  compatible with Cratis.Components\n"),
+        new("design", "design system Design\n  modes light\n  default theme Theme\n  tokens\n    color\n      surface\ntheme Theme\n  implements Design\n  light\n    color.surface = \"#FFFFFF\"\n"),
         new("sample", Slice + ReadModel + "sample data Demo\n  shape View\n    row\n      value = \"test\"\n"),
         new("trigger", "trigger Changed\n  value String\n"),
         new("type", "type Value\n  value String\n"),

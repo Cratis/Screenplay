@@ -25,7 +25,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | UserDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | UserDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -381,8 +381,8 @@ PersonaDecl    = "persona", Ident, NL,
 UserDecl       = "user", Ident, [ String ], [ "as", Ident, { ",", Ident } ], NL ;
 
 (* A named sink: a logical place read models or graphs are stored, which the  *)
-(* deployment maps to real storage. One line (PLAY0916); names are unique      *)
-(* ignoring case (PLAY0917); an unused sink warns (PLAY0923). Realization      *)
+(* deployment maps to real storage. One line (PLAY0931); names are unique      *)
+(* ignoring case (PLAY0932); an unused sink warns (PLAY0938). Realization      *)
 (* metadata, never part of the executable model. Without one, everything uses *)
 (* its kind's implicit default sink.                                           *)
 SinkDecl       = "sink", Ident, "for", ( "readmodels" | "graphs" ), NL ;
@@ -451,13 +451,99 @@ ImagesDecl     = "images", FilePath, NL ;
 (* Themes and ui profiles                                          *)
 (* -------------------------------------------------------------- *)
 
+DesignSystemDecl = "design", "system", Ident, NL,
+                 INDENT,
+                   { DesignModesDecl | DefaultThemeDecl | DesignTokensBlock | DesignComponentsBlock
+                   | DesignWordsBlock | DesignRulesBlock },
+                 DEDENT ;
+
+DesignModesDecl = "modes", DesignName, { ",", DesignName }, NL ;
+
+DefaultThemeDecl = "default", "theme", Ident, NL ;
+
+DesignName     = ( Letter | "_" ), { Letter | Digit | "_" | "-" } ;
+
+DesignTokensBlock = "tokens", NL,
+                 INDENT, { DesignTokenCategory }, DEDENT ;
+
+DesignTokenCategory = TokenCategory, NL,
+                 INDENT, { DesignTokenDecl }, DEDENT ;
+
+TokenCategory  = "color" | "space" | "size" | "radius" | "border" | "shadow"
+               | "font" | "type" | "motion" | "opacity" | "z" ;
+
+DesignTokenDecl = DesignName, [ StringLiteral ], NL ;
+
+DesignComponentsBlock = "components", NL,
+                 INDENT, { DesignComponentDecl }, DEDENT ;
+
+DesignComponentDecl = Ident, NL,
+                 INDENT, { DesignPartsDecl | DesignVariantDecl }, DEDENT ;
+
+DesignPartsDecl = "parts", ComponentPart, { ",", ComponentPart }, NL ;
+
+ComponentPart  = "text" | "background" | "border" | "radius" | "height"
+               | "padding" | "shadow" | "font" ;
+
+DesignVariantDecl = "variant", DesignName, NL,
+                 [ INDENT, { PartAssignment | DesignStateDecl }, DEDENT ] ;
+
+DesignStateDecl = "state", DesignState, NL,
+                 [ INDENT, { PartAssignment }, DEDENT ] ;
+
+DesignState    = "default" | "hover" | "focus" | "active" | "disabled" | "selected" ;
+
+PartAssignment = ComponentPart, "=", TokenAddress, NL ;
+
+TokenAddress   = TokenCategory, ".", DesignName ;
+
+DesignWordsBlock = "words", NL,
+                 INDENT, { ( "voice" | "naming" ), NL,
+                   INDENT, { DesignName, "=", StringLiteral, NL }, DEDENT }, DEDENT ;
+
+DesignRulesBlock = "rules", NL,
+                 INDENT, { ContrastRuleDecl }, DEDENT ;
+
+ContrastRuleDecl = "contrast", ComponentPart, "on", ComponentPart, "at", "least", Ratio, NL ;
+
+Ratio          = Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+
+(* A design system is the contract of an application's look: its modes, what each
+   token is for, how components are made of tokens, its words and its rules. There
+   is exactly one per application and it holds no concrete values. The categories,
+   parts and states are closed lists. A part takes only tokens of a category it
+   accepts: text and background take color; border takes color or border; radius
+   takes radius; height takes size or space; padding takes space or size; shadow
+   takes shadow; font takes font or type. Each section may appear once, in any
+   order, and "default theme" is required. A contrast rule is evaluated for every
+   theme, mode, variant and state except disabled.                            *)
+
 ThemeDecl      = "theme", Ident, NL,
-                 INDENT, { CompatibleWithDecl }, DEDENT ;
+                 INDENT, { CompatibleWithDecl | ImplementsDecl | ThemePaletteBlock | ThemeValuesBlock
+                         | ThemeModeBlock }, DEDENT ;
 
 CompatibleWithDecl = "compatible", "with", PackageName, NL ;
 
-(* A theme names a look, and which component packages it is built for. A package
-   may be declared compatible once; a second says nothing the first did not.  *)
+ImplementsDecl = "implements", Ident, NL ;
+
+ThemePaletteBlock = "palette", NL,
+                 INDENT, { ThemeAssignment }, DEDENT ;
+
+ThemeValuesBlock = "values", NL,
+                 INDENT, { ThemeAssignment }, DEDENT ;
+
+ThemeModeBlock = DesignName, NL,
+                 INDENT, { ThemeAssignment }, DEDENT ;
+
+ThemeAssignment = ( DesignName | TokenAddress ), "=", ( StringLiteral | ThemeReference ), NL ;
+
+ThemeReference = ( "palette" | TokenCategory ), ".", DesignName ;
+
+(* A theme that implements a design system gives its tokens values: a palette of
+   raw values, values that hold in every mode, and a block per mode of the design
+   system. Every color token needs a value in every mode. A theme never redefines
+   a component. A theme without "implements" only declares which component
+   packages it is built for; a package may be declared compatible once.       *)
 
 UiProfileDecl  = "ui", "profile", Ident, NL,
                  INDENT,
@@ -502,6 +588,9 @@ ShowNameDecl   = "show", "name", ( "true" | "false" ), NL ;
 ProfileAppearanceDecl = "appearance", NL,
                  INDENT, { ColorSchemeDecl | AccentDecl | CornersDecl | FontDecl }, DEDENT ;
 
+(* Accent, corners and font are deprecated (PLAY0929): the value belongs in the
+   selected theme as a color, radius or font token. Only "color scheme" stays. *)
+
 CornersDecl    = "corners", ( "sharp" | "default" | "round" ), NL ;
 
 FontDecl       = "font", FontId, NL ;
@@ -532,7 +621,7 @@ BlueprintPackId = Lower, { Lower | Digit | ".", "_", "-" } ;
    class rather than a pixel breakpoint, because a narrow browser window and a
    compact phone are the same class and a breakpoint means nothing natively.
    A profile's "theme" and "layout" each select one declared elsewhere in the
-   document - the layout being the navigational shell the build renders inside.
+   document; a profile with no "theme" uses the design system's default theme - the layout being the navigational shell the build renders inside.
    The width x height matrix an arrangement resolves against is a separate
    concern. The "root template" is the same reference a "template" assignment
    uses (an own template by name, or "blueprint <Blueprint> <Name> [version
@@ -949,15 +1038,15 @@ PassiveDirective = "passive", NL ;
    (PLAY0860). This is realization metadata, not portable ESM. *)
 
 SinkDirective  = "sink", Ident, NL ;
-(* A bare readmodel or graph body directive of the matching kind (PLAY0919).
+(* A bare readmodel or graph body directive of the matching kind (PLAY0934).
    In a graph every sink line is the directive, and an undeclared name is
-   PLAY0918. In a readmodel the line has the shape of a property, so it is the
+   PLAY0933. In a readmodel the line has the shape of a property, so it is the
    directive only when Ident is a sink the application declares, matched exactly;
    otherwise it stays the property named sink it always was. An escaped name
    ("@sink Type"), a collection, optional or modifier is always a property. A
    property whose type differs only in case from a declared sink warns
-   (PLAY0924). A repeated identical directive warns (PLAY0922); two different
-   sinks error (PLAY0921); a passive read model has no sink (PLAY0920).
+   (PLAY0939). A repeated identical directive warns (PLAY0937); two different
+   sinks error (PLAY0936); a passive read model has no sink (PLAY0935).
    Realization metadata, not portable ESM. *)
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,

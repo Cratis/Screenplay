@@ -40,7 +40,7 @@ export const rootDirectiveCases: readonly Case[] = [
         name: 'command named Submit at the root',
         scope: [],
         source: 'command Submit\n  value String',
-        expected: 'error PLAY0001 1:1 Unexpected \'command\' at the top level - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data or layout\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+        expected: 'error PLAY0001 1:1 Unexpected \'command\' at the top level - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
     },
     {
         name: 'time zone twice',
@@ -172,7 +172,7 @@ export const rootDirectiveCases: readonly Case[] = [
         name: 'unknown word',
         scope: [],
         source: 'frobnicate\n  nested 1',
-        expected: 'error PLAY0001 1:1 Unexpected \'frobnicate\' at the top level - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data or layout\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+        expected: 'error PLAY0001 1:1 Unexpected \'frobnicate\' at the top level - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
     },
     {
         name: 'concept',
@@ -292,7 +292,13 @@ export const rootDirectiveCases: readonly Case[] = [
         name: 'theme',
         scope: [],
         source: 'theme Nordic',
-        expected: 'commandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+        expected: 'commandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:1,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+    },
+    {
+        name: 'design system',
+        scope: [],
+        source: 'design system Nordic\n  default theme Nordic\ntheme Nordic\n  implements Nordic',
+        expected: 'commandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:1,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
     },
     {
         name: 'trigger',
@@ -310,7 +316,7 @@ export const rootDirectiveCases: readonly Case[] = [
         name: 'template',
         scope: [],
         source: 'template Card',
-        expected: 'error PLAY0001 1:1 Unexpected \'template\' at the top level - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, theme, sample data or layout\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+        expected: 'error PLAY0001 1:1 Unexpected \'template\' at the top level - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
     },
     {
         name: 'behavior',

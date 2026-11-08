@@ -90,6 +90,7 @@
         { "name": "template-references", "path": "Source/Screenplay/Compiler/Conformance/template-references.play" },
         { "name": "toolbar-buttons", "path": "Source/Screenplay/Compiler/Conformance/toolbar-buttons.play" },
         { "name": "clock-operands", "path": "Source/Screenplay/Compiler/Conformance/clock-operands.play" },
-        { "name": "feature-toolbars", "path": "Source/Screenplay/Compiler/Conformance/feature-toolbars.play" }
+        { "name": "feature-toolbars", "path": "Source/Screenplay/Compiler/Conformance/feature-toolbars.play" },
+        { "name": "design-system", "path": "Source/Screenplay/Compiler/Conformance/design-system.play" }
     ]
 }

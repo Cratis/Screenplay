@@ -3,6 +3,7 @@
 
 import type { TimeZoneSyntax } from './Calendar';
 import { CommandReadMode } from './CommandReadMode';
+import type { DesignProfileFacts, DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
 import { ReactionProductionMode } from './ReactionProductionMode';
 import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
@@ -161,4 +162,11 @@ export interface ApplicationSyntax extends SyntaxNode {
 
     // The sticky notes on the personas canvas - written only when present.
     readonly stickyNotes?: readonly StickyNoteSyntax[];
+
+    // The themes and the design system they implement - written only when present.
+    readonly themes?: readonly ThemeSyntax[];
+    readonly designSystems?: readonly DesignSystemSyntax[];
+
+    // Parser-owned: the theme each ui profile selects, for the design system checks. Not part of the syntax wire projection.
+    readonly designProfiles?: readonly DesignProfileFacts[];
 }

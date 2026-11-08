@@ -6,6 +6,7 @@ export * from './Completeness/ModelCompleteness';
 export * from './Diagnostics';
 export * from './Dependencies';
 export * from './Syntax';
+export * from './Design';
 export * from './ScreenplayCompiler';
 export { resolveActionSubjects } from './ScreenActionSubjects';
 export { checkPortableMatchPattern } from './Parsing/checkPortableMatchPattern';

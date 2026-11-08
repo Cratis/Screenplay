@@ -59,6 +59,7 @@ export * from './Responses';
 export * from './Screens';
 export * from './CompositionSyntax';
 export * from './Structure';
+export * from './DesignSystemSyntax';
 export { toSyntaxJson } from './SyntaxJson';
 export type { SyntaxJsonValue } from './SyntaxJson';
 export * from './StrictSyntaxJson';

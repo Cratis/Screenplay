@@ -417,7 +417,12 @@ add the package to the profile in the same proposal.
 
 `ui-profiles` reads every `ui profile` (or the one named by `name`) as one answer: the root template with its version pin and shell
 options, the appearance, the `new screens use template` default, the legacy `layout` line and, for each profile, the shell
-diagnostics `PLAY0790` to `PLAY0799` the compiler reports. It also lists the own templates that could be the root template
+diagnostics `PLAY0790` to `PLAY0799` the compiler reports. Each profile also names its `theme`, and `resolvedTheme` gives the theme and
+mode it resolves to (its `theme` line, else the design system's default theme; the mode its color scheme selects). The answer carries the
+application's [design system](../design-system.md) (modes, tokens, components, words and rules), every theme with its palette, values and
+per-mode values, the resolved token map and components of each theme in each mode, the design diagnostics `PLAY0916` to `PLAY0930`, and the
+closed vocabulary of categories, parts and states, so an edit can be chosen from valid values. `accent`, `corners` and `font` in the appearance
+are listed but deprecated (`PLAY0929`): set the value in the selected theme. It also lists the own templates that could be the root template
 (`applicableRootTemplates`: a layout or an application-scope screen template with its primary slot, reported as `primarySlot`) or the new screens default
 (`applicableNewScreenTemplates`) and the values an appearance accepts, so an edit can be chosen from valid candidates. The edits
 themselves are the typed nodes above; the compiler refuses what is invalid with its own code and message - an unknown template

@@ -23,7 +23,7 @@ Preserve optional Boolean `ReadModelSyntax.isPassive` when replacing a read mode
 
 ## Sinks
 
-Preserve optional `ReadModelSyntax.sink` and `GraphSyntax.sink` when replacing a read model or graph, and `ApplicationSyntax.sinks` (`SinkSyntax` with `name` and `stores`, `ReadModels` or `Graphs`) when editing the application root. Absent means the default sink, and writers omit absent members. A read model's `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly; otherwise it stays a property named `sink`. A directive's sink must be of the matching kind (`PLAY0919`), and names are unique ignoring case (`PLAY0917`). Sinks are realization metadata, not portable ESM: native consumers read `SemanticCompilation.Sinks`, `ReadModelSinks` and `GraphSinks` and must include them in hashed render input. See [Sinks](sinks.md).
+Preserve optional `ReadModelSyntax.sink` and `GraphSyntax.sink` when replacing a read model or graph, and `ApplicationSyntax.sinks` (`SinkSyntax` with `name` and `stores`, `ReadModels` or `Graphs`) when editing the application root. Absent means the default sink, and writers omit absent members. A read model's `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly; otherwise it stays a property named `sink`. A directive's sink must be of the matching kind (`PLAY0934`), and names are unique ignoring case (`PLAY0932`). Sinks are realization metadata, not portable ESM: native consumers read `SemanticCompilation.Sinks`, `ReadModelSinks` and `GraphSinks` and must include them in hashed render input. See [Sinks](sinks.md).
 
 ## Keys, production routes and observer filters
 

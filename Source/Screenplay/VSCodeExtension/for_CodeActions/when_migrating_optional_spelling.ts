@@ -94,6 +94,26 @@ describe('when migrating optional spelling in VS Code', () => {
         expect(editor.applied).toBe(0);
     });
 
+    const appearance = 'design system D\n  modes light\n  default theme T\n  tokens\n    color\n      surface\n    radius\n      control\n\ntheme T\n  implements D\n  light\n    color.surface = "#FFFFFF"\n\nui profile P\n  appearance\n    color scheme light\n    corners round\n';
+    const deprecated = { code: 'PLAY0929', range: new vscode.Range(17, 0, 17, 18) } as vscode.Diagnostic;
+
+    it('should offer and reverify the deprecated appearance repair in a single-file application', async () => {
+        await actions({ diagnostics: [] }, appearance);
+        const fixes = await request({ diagnostics: [deprecated], only: vscode.CodeActionKind.QuickFix }, 17);
+        expect(fixes.map(fix => fix.title)).toEqual(["Move the appearance values into theme 'T'"]);
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(true);
+        expect(editor.applied).toBe(1);
+    });
+
+    it('should leave the deprecated appearance repair to the workspace in a multi-file application', async () => {
+        await actions({ diagnostics: [] }, appearance);
+        const application = new WorkspaceApplication();
+        application.set('model.play', appearance);
+        application.set('sibling.play', 'trigger Tick');
+        registerCodeActions({ subscriptions: [] } as unknown as vscode.ExtensionContext, { fileOf: () => ({ application, path: 'model.play' }) } as unknown as ApplicationIndex);
+        expect(await request({ diagnostics: [deprecated] }, 17)).toEqual([]);
+    });
+
     it('should offer compliance line and document fixes with explicit version-checked apply', async () => {
         const text = 'concept Value : String @pii @sensitive\n  sensitive reason "Keep @pii in this note"';
         const legacy = { code: 'PLAY0565', range: new vscode.Range(1, 2, 1, 11) } as vscode.Diagnostic;

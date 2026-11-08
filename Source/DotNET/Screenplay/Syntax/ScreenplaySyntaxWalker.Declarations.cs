@@ -306,7 +306,61 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="ThemeSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="ThemeSyntax"/> to visit.</param>
-    public virtual void VisitTheme(ThemeSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitTheme(ThemeSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitAssignments(syntax.Palette);
+        VisitAssignments(syntax.Values);
+        foreach (var mode in syntax.ModeValues)
+        {
+            VisitNode(mode);
+            VisitAssignments(mode.Values);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="DesignSystemSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="DesignSystemSyntax"/> to visit.</param>
+    public virtual void VisitDesignSystem(DesignSystemSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var category in syntax.Tokens)
+        {
+            VisitNode(category);
+            foreach (var token in category.Tokens)
+            {
+                VisitNode(token);
+            }
+        }
+
+        foreach (var component in syntax.Components)
+        {
+            VisitNode(component);
+            foreach (var variant in component.Variants)
+            {
+                VisitNode(variant);
+                VisitAssignments(variant.Parts);
+                foreach (var state in variant.States)
+                {
+                    VisitNode(state);
+                    VisitAssignments(state.Parts);
+                }
+            }
+        }
+
+        if (syntax.Words is { } words)
+        {
+            VisitNode(words);
+            VisitAssignments(words.Voice);
+            VisitAssignments(words.Naming);
+        }
+
+        foreach (var rule in syntax.Rules)
+        {
+            VisitNode(rule);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="TriggerSyntax"/> node and its children.
@@ -412,6 +466,14 @@ public abstract partial class ScreenplaySyntaxWalker
             {
                 VisitSampleDataRow(row);
             }
+        }
+    }
+
+    void VisitAssignments(IEnumerable<DesignAssignmentSyntax> assignments)
+    {
+        foreach (var assignment in assignments)
+        {
+            VisitNode(assignment);
         }
     }
 }

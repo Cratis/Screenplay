@@ -1745,15 +1745,15 @@ Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers re
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0916` | Error | A `sink <Name> for readmodels` or `sink <Name> for graphs` declaration is malformed or has lines under it, or a `sink` line in a graph is not `sink <Name>`. |
-| `PLAY0917` | Error | Two sinks share a name. Sink names are unique application-wide, compared ignoring case, so `Reporting` and `reporting` collide. |
-| `PLAY0918` | Error | A graph names a sink the application does not declare. A read model never reports it: its `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly, and otherwise stays a property named `sink`. |
-| `PLAY0919` | Error | A read model names a sink declared `for graphs`, or a graph names a sink declared `for readmodels`. |
-| `PLAY0920` | Error | A `passive` read model names a sink. A passive read model is never materialized, so it has no sink; remove one of the two lines. |
-| `PLAY0921` | Error | A read model or graph names two different sinks. It is stored in one sink. |
-| `PLAY0922` | Warning | A read model or graph repeats the same `sink` line. Keep one. |
-| `PLAY0923` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
-| `PLAY0924` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
+| `PLAY0931` | Error | A `sink <Name> for readmodels` or `sink <Name> for graphs` declaration is malformed or has lines under it, or a `sink` line in a graph is not `sink <Name>`. |
+| `PLAY0932` | Error | Two sinks share a name. Sink names are unique application-wide, compared ignoring case, so `Reporting` and `reporting` collide. |
+| `PLAY0933` | Error | A graph names a sink the application does not declare. A read model never reports it: its `sink <Name>` line is the directive only when `<Name>` is a declared sink, matched exactly, and otherwise stays a property named `sink`. |
+| `PLAY0934` | Error | A read model names a sink declared `for graphs`, or a graph names a sink declared `for readmodels`. |
+| `PLAY0935` | Error | A `passive` read model names a sink. A passive read model is never materialized, so it has no sink; remove one of the two lines. |
+| `PLAY0936` | Error | A read model or graph names two different sinks. It is stored in one sink. |
+| `PLAY0937` | Warning | A read model or graph repeats the same `sink` line. Keep one. |
+| `PLAY0938` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
+| `PLAY0939` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
 
 ## Toolbar buttons
 
@@ -1809,6 +1809,28 @@ Decision 0132 adds the [application-root `context` block](context.md#application
 | `PLAY0589` | Error | Singular effective expansion cannot represent a table; use `ExpandAll`. |
 
 See [Named case tables](specifications.md#named-case-tables).
+
+## Design systems and themes
+
+The `design system` construct and the `theme` that implements it. See [Design system](design-system.md) and [Theme](theme.md).
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `PLAY0916` | Error | A `design system` line or block is malformed: an unknown section, an unknown token category, component part or state, a bad line shape, a part the component does not declare, or a section declared twice. |
+| `PLAY0917` | Error | The application declares a second `design system`; an application has exactly one. |
+| `PLAY0918` | Error | A theme has a block for a mode the design system's `modes` line does not declare. |
+| `PLAY0919` | Error | A mode, token, component, variant, part, palette entry, value or word is declared twice. |
+| `PLAY0920` | Error | A theme assigns a value to a token the design system does not declare. |
+| `PLAY0921` | Error | A theme that implements a design system gives a `color` token no value in a declared mode. |
+| `PLAY0922` | Error | A design reference (`palette.<name>`, `<category>.<token>`) names something that is not declared, or a token that has no value. |
+| `PLAY0923` | Error | Design references refer to each other in a loop, so no value can be resolved. |
+| `PLAY0924` | Error | A component part references a token of a category it cannot take, for example `background = space.sm`. |
+| `PLAY0925` | Error | A theme `implements` a design system the application does not declare. |
+| `PLAY0926` | Error | A `ui profile` selects a theme that does not implement the application's design system. |
+| `PLAY0927` | Error | The design system has no `default theme`, or its default theme is not declared or does not implement the design system. |
+| `PLAY0928` | Warning | In some theme and mode, a component's text and background resolve to a pair below a `contrast` rule. The `disabled` state is not checked. |
+| `PLAY0929` | Warning | `accent`, `corners` or `font` in a `ui profile`'s `appearance` is deprecated; the value belongs in the selected theme. `appearance` keeps only `color scheme`. |
+| `PLAY0930` | Error | A theme's `implements`, `palette`, `values` or mode block is malformed or repeated. |
 
 ## Retired codes
 

@@ -37,7 +37,7 @@ export interface SinkDirectiveState {
     location?: SourceLocation;
 }
 
-// Records one 'sink <Name>' line of an owner, reporting a repeat (PLAY0922) or a second sink (PLAY0921).
+// Records one 'sink <Name>' line of an owner, reporting a repeat (PLAY0937) or a second sink (PLAY0936).
 function nameSink(context: ParserContext, state: SinkDirectiveState, name: string, location: SourceLocation, owner: string): void {
     if (state.sink === undefined) {
         state.sink = name;
@@ -97,8 +97,8 @@ export function resolveSinks(application: ApplicationSyntax, context: ParserCont
     return modules.every((module, index) => module === application.modules[index]) ? application : { ...application, modules };
 }
 
-// Holds the declared sinks to what names them: duplicates ignoring case (PLAY0917), unknown (PLAY0918), kind
-// mismatch (PLAY0919), case-only near misses (PLAY0924) and unused sinks (PLAY0923).
+// Holds the declared sinks to what names them: duplicates ignoring case (PLAY0932), unknown (PLAY0933), kind
+// mismatch (PLAY0934), case-only near misses (PLAY0939) and unused sinks (PLAY0938).
 export function validateSinks(application: ApplicationSyntax, context: ParserContext): void {
     const sinks = new Map<string, SinkSyntax>();
     const seen = new Map<string, SinkSyntax>();

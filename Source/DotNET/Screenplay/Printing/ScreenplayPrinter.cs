@@ -229,6 +229,7 @@ public sealed partial class ScreenplayPrinter :
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
         WriteOptionalSection(writer, application.Onboarding, WriteOnboarding);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
+        WriteSection(writer, application.DesignSystems, WriteDesignSystem);
         WriteSection(writer, application.Themes ?? [], WriteTheme);
         WriteSection(writer, application.SampleDataPacks, WriteSampleDataPack);
         WriteSection(writer, application.Triggers ?? [], WriteTrigger);
@@ -473,20 +474,6 @@ public sealed partial class ScreenplayPrinter :
                 {
                     writer.Line($"{field.Name} = {SampleDataValue(field)}", field);
                 }
-            }
-        }
-    }
-
-    void WriteTheme(ScreenplayWriter writer, ThemeSyntax theme)
-    {
-        using var anchor = writer.Anchor(theme);
-        writer.Line($"theme {theme.Name}");
-        using (writer.Indent())
-        {
-            var packages = theme.CompatibleWith.ToList();
-            for (var index = 0; index < packages.Count; index++)
-            {
-                writer.DirectiveLine($"compatible with {packages[index]}", theme, DirectiveLocationKeys.ForValue("compatible", packages, index));
             }
         }
     }

@@ -38,6 +38,7 @@
         { "include": "#stream-id-parts" },
         { "include": "#declared-dependency" },
         { "include": "#action-subjects" },
+        { "include": "#design-blocks" },
         { "include": "#lifecycles" },
         { "include": "#keywords" },
         { "include": "#common" }
@@ -276,6 +277,268 @@
                 "2": { "name": "keyword.other.screenplay" },
                 "3": { "name": "entity.name.type.screenplay" }
             }
+        },
+        "design-blocks": {
+            "comment": "A design system and a theme. Their words are contextual: matched only inside the block (an indented body under the header), never as bare keywords elsewhere.",
+            "patterns": [
+                {
+                    "begin": "^(design)(\\s+)(system)(\\s+)([A-Za-z_]\\w*)\\s*$",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.control.screenplay"
+                        },
+                        "3": {
+                            "name": "keyword.control.screenplay"
+                        },
+                        "5": {
+                            "name": "entity.name.type.screenplay"
+                        }
+                    },
+                    "end": "^(?=\\S)",
+                    "patterns": [
+                        {
+                            "include": "#comment"
+                        },
+                        {
+                            "include": "#design-system-body"
+                        },
+                        {
+                            "include": "#design-addresses"
+                        },
+                        {
+                            "include": "#common"
+                        }
+                    ]
+                },
+                {
+                    "begin": "^(theme)(\\s+)([A-Za-z_]\\w*)\\s*$",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.control.screenplay"
+                        },
+                        "3": {
+                            "name": "entity.name.type.screenplay"
+                        }
+                    },
+                    "end": "^(?=\\S)",
+                    "patterns": [
+                        {
+                            "include": "#comment"
+                        },
+                        {
+                            "include": "#theme-body"
+                        },
+                        {
+                            "include": "#design-addresses"
+                        },
+                        {
+                            "include": "#common"
+                        }
+                    ]
+                }
+            ]
+        },
+        "design-system-body": {
+            "comment": "The words of a design system body, matched only in the shapes below.",
+            "patterns": [
+                {
+                    "match": "^\\s*(modes)\\s+(.+?)\\s*(?://.*)?$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "constant.language.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(default)\\s+(theme)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "3": {
+                            "name": "entity.name.type.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(tokens|components|words|rules|voice|naming)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(color|space|size|radius|border|shadow|font|type|motion|opacity|z)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(parts)\\s+(.+?)\\s*(?://.*)?$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "constant.language.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(variant)\\s+([A-Za-z_][\\w-]*)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "entity.name.function.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(state)\\s+(default|hover|focus|active|disabled|selected)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "constant.language.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(contrast)\\s+(text|background|border|radius|height|padding|shadow|font)\\s+(on)\\s+(text|background|border|radius|height|padding|shadow|font)\\s+(at)\\s+(least)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "constant.language.screenplay"
+                        },
+                        "3": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "4": {
+                            "name": "constant.language.screenplay"
+                        },
+                        "5": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "6": {
+                            "name": "keyword.other.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(text|background|border|radius|height|padding|shadow|font)\\s*(?==)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.other.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*([A-Za-z_][\\w-]*)(?=\\s+\\\"(?:[^\\\"\\\\]|\\\\.)*\\\"\\s*(?://.*)?$)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.other.property.screenplay"
+                        }
+                    }
+                }
+            ]
+        },
+        "theme-body": {
+            "comment": "The words of a theme body, matched only in the shapes below.",
+            "patterns": [
+                {
+                    "match": "^\\s*(implements)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "entity.name.type.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(compatible)\\s+(with)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "keyword.other.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*(palette|values)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*([a-z][\\w-]*)\\s*$",
+                    "captures": {
+                        "1": {
+                            "name": "constant.language.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "^\\s*([A-Za-z_][\\w-]*)\\s*(?==)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.other.property.screenplay"
+                        }
+                    }
+                }
+            ]
+        },
+        "design-addresses": {
+            "comment": "A token address - category.token - and a palette reference - palette.name.",
+            "patterns": [
+                {
+                    "match": "\\b(palette)(\\.)([A-Za-z_][\\w-]*)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.other.screenplay"
+                        },
+                        "2": {
+                            "name": "punctuation.separator.screenplay"
+                        },
+                        "3": {
+                            "name": "variable.other.property.screenplay"
+                        }
+                    }
+                },
+                {
+                    "match": "\\b(color|space|size|radius|border|shadow|font|type|motion|opacity|z)(\\.)([A-Za-z_][\\w-]*)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.screenplay"
+                        },
+                        "2": {
+                            "name": "punctuation.separator.screenplay"
+                        },
+                        "3": {
+                            "name": "variable.other.property.screenplay"
+                        }
+                    }
+                }
+            ]
         },
         "lifecycles": {
             "comment": "A statemachine or workflow block. Their words are contextual, so they are matched only inside the block (an indented body under the header), never as bare keywords elsewhere.",

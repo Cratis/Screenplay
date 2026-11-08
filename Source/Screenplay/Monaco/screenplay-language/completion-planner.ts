@@ -18,6 +18,7 @@ import { CompletionEntry } from './completion-items';
 import { purposeItems } from './purpose-items';
 import { readModelKeyCompletions } from './read-model-key-completions';
 import { commandReadCompletions } from './command-read-completions';
+import { designCompletions } from './design-completions';
 
 // Matches a validation rule line ending in "rule <Name>" (optionally followed by a
 // message clause) - both the command form ("<property> rule <Name>") and the
@@ -283,6 +284,8 @@ export function planCompletions(
     const effectiveIndent =
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
+    const designEntries = designCompletions(lines, textBefore, chain);
+    if (designEntries !== null) return { kind: 'entries', entries: designEntries };
     if (chain.includes('screen')) {
         const subjectHeader = /^\s*(?:action\s+(?:"(?:[^"\\]|\\.)*"|\$strings\.[\w.]+|[\w.]+)|item\s+\w+\s+action\s+[\w.]+)\s+/;
         if (subjectHeader.test(textBefore)) {

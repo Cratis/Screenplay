@@ -55,16 +55,16 @@ describe('when parsing sinks', () => {
     });
 
     it('should report each sink diagnostic', () => {
-        codes('sink Reporting').should.deep.equal(['PLAY0916@1']);
-        codes('sink A for readmodels\nsink a for readmodels\n' + prefix + '        sink A').should.deep.equal(['PLAY0917@2']);
-        codes(graph + '        sink People\n        node A\n          id PersonId key').should.deep.equal(['PLAY0918@6']);
-        codes('sink Reporting for readmodels\n' + prefix + '        sink reporting').should.deep.equal(['PLAY0924@6', 'PLAY0923@1']);
-        codes('sink People for graphs\n' + prefix + '        sink People').should.deep.equal(['PLAY0919@6']);
-        codes('sink Reporting for readmodels\n' + graph.replace('graph G\n', 'graph G\n        sink Reporting\n') + '        node A\n          id PersonId key').should.deep.equal(['PLAY0919@7']);
-        codes('sink Reporting for readmodels\n' + prefix + '        passive\n        sink Reporting').should.deep.equal(['PLAY0920@7']);
-        codes('sink Reporting for readmodels\nsink Archive for readmodels\n' + prefix + '        sink Reporting\n        sink Archive').should.deep.equal(['PLAY0921@8', 'PLAY0923@2']);
+        codes('sink Reporting').should.deep.equal(['PLAY0931@1']);
+        codes('sink A for readmodels\nsink a for readmodels\n' + prefix + '        sink A').should.deep.equal(['PLAY0932@2']);
+        codes(graph + '        sink People\n        node A\n          id PersonId key').should.deep.equal(['PLAY0933@6']);
+        codes('sink Reporting for readmodels\n' + prefix + '        sink reporting').should.deep.equal(['PLAY0939@6', 'PLAY0938@1']);
+        codes('sink People for graphs\n' + prefix + '        sink People').should.deep.equal(['PLAY0934@6']);
+        codes('sink Reporting for readmodels\n' + graph.replace('graph G\n', 'graph G\n        sink Reporting\n') + '        node A\n          id PersonId key').should.deep.equal(['PLAY0934@7']);
+        codes('sink Reporting for readmodels\n' + prefix + '        passive\n        sink Reporting').should.deep.equal(['PLAY0935@7']);
+        codes('sink Reporting for readmodels\nsink Archive for readmodels\n' + prefix + '        sink Reporting\n        sink Archive').should.deep.equal(['PLAY0936@8', 'PLAY0938@2']);
         codes('sink Reporting for readmodels\n' + prefix + '        sink Reporting\n        sink Customer').should.deep.equal([]);
-        codes('sink Reporting for readmodels\n' + prefix + '        sink Reporting\n        sink Reporting').should.deep.equal(['PLAY0922@7']);
-        codes('sink Reporting for readmodels\n' + prefix + '        id String').should.deep.equal(['PLAY0923@1']);
+        codes('sink Reporting for readmodels\n' + prefix + '        sink Reporting\n        sink Reporting').should.deep.equal(['PLAY0937@7']);
+        codes('sink Reporting for readmodels\n' + prefix + '        id String').should.deep.equal(['PLAY0938@1']);
     });
 });

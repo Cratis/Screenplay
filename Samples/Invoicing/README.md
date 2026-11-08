@@ -144,7 +144,8 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | `authentication` with named providers | Authorization |
 | `onboarding` with open self-signup, tenant and member invitations, legal terms, an offering and email templates; the sender and mail server are [environment values](../../Documentation/screenplay/environments.md) | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
-| `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
+| `design system` with `modes`, `default theme`, `tokens`, `components` (`parts`, `variant`, `state`), `words` and a `contrast` rule; two `theme`s that `implements` it with `palette`, `values` and per-mode blocks; a `ui profile` that selects a theme | `InvoicingDesign`, `Nordic`, `NordicDark` |
+| two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
 | `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
 | Outlets of every kind - `actions`, `filters`, `tabs`, `stats` and `navigation` - with `default` items, changed below the template with `extends`/`overrides`, `hide`, `before` and `group` | `List` template, `InvoiceManagement` |
 | Placement: `fits dialog, drawer, page` on a slice's screen; hooks that `opens dialog`, `opens drawer` and `opens in slot activity`, act `for item`, `runs` a screenless slice with `enabled when` and `confirm`; `show InvoiceDetails by invoiceId from … .selection` in the routed `detail` pane; a `choose from query` picker | `InvoiceManagement`, `SendInvoiceReminder`, `RegisterInvoiceForm` |

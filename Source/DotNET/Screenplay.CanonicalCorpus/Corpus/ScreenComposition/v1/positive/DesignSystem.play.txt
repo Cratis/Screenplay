@@ -1,0 +1,140 @@
+design system Contoso
+  modes light, dark
+  default theme Aurora
+
+  tokens
+    color
+      surface        "page background"
+      surface-card   "card background"
+      text           "body text"
+      primary        "primary action"
+      primary-strong "primary action, pressed"
+      on-primary     "text on a primary action"
+    space
+      sm             "tight gap"
+      md             "default gap"
+    radius
+      control        "inputs and buttons"
+    font
+      sans           "interface text"
+
+  components
+    Button
+      parts text, background, radius, padding
+      variant primary
+        text       = color.on-primary
+        background = color.primary
+        radius     = radius.control
+        padding    = space.md
+        state hover
+          background = color.primary-strong
+        state disabled
+          text       = color.text
+          background = color.surface-card
+      variant secondary
+        text       = color.text
+        background = color.surface-card
+        radius     = radius.control
+    Card
+      parts background, radius, padding
+      variant default
+        background = color.surface-card
+        radius     = radius.control
+        padding    = space.md
+
+  words
+    voice
+      tone = "Warm and direct"
+    naming
+      workspace = "Space"
+
+  rules
+    contrast text on background at least 4.5
+
+theme Aurora
+  implements Contoso
+  compatible with Cratis.Components
+
+  palette
+    indigo-600 = "#4F46E5"
+    indigo-700 = "#4338CA"
+    white      = "#FFFFFF"
+    paper      = "#F8FAFC"
+    ink        = "#111827"
+    slate      = "#1F2937"
+
+  values
+    space.sm       = "8px"
+    space.md       = "12px"
+    radius.control = "8px"
+    font.sans      = "inter"
+
+  light
+    color.surface        = palette.white
+    color.surface-card   = palette.paper
+    color.text           = palette.ink
+    color.primary        = palette.indigo-600
+    color.primary-strong = palette.indigo-700
+    color.on-primary     = palette.white
+
+  dark
+    color.surface        = palette.ink
+    color.surface-card   = palette.slate
+    color.text           = palette.white
+    color.primary        = palette.indigo-700
+    color.primary-strong = palette.indigo-600
+    color.on-primary     = palette.white
+
+theme AuroraSharp
+  implements Contoso
+  compatible with Cratis.Components
+
+  palette
+    teal-700 = "#0F766E"
+    teal-800 = "#115E59"
+    white    = "#FFFFFF"
+    paper    = "#F8FAFC"
+    ink      = "#111827"
+    slate    = "#1F2937"
+
+  values
+    space.sm       = "6px"
+    space.md       = "10px"
+    radius.control = "2px"
+    font.sans      = "inter"
+
+  light
+    color.surface        = palette.white
+    color.surface-card   = palette.paper
+    color.text           = palette.ink
+    color.primary        = palette.teal-700
+    color.primary-strong = palette.teal-800
+    color.on-primary     = palette.white
+
+  dark
+    color.surface        = palette.ink
+    color.surface-card   = palette.slate
+    color.text           = palette.white
+    color.primary        = palette.teal-700
+    color.primary-strong = palette.teal-800
+    color.on-primary     = palette.white
+
+ui profile Office
+  target platform web
+
+  packages
+    Cratis.Components
+
+  appearance
+    color scheme dark
+
+ui profile Floor
+  target platform web
+
+  packages
+    Cratis.Components
+
+  theme AuroraSharp
+
+  appearance
+    color scheme light

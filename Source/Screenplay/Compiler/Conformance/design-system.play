@@ -1,0 +1,121 @@
+domain Storefront
+
+// One design system per application: the contract its themes implement.
+design system StorefrontDesign
+  modes light, dark
+  default theme Daylight
+
+  tokens
+    color
+      surface    "page background"
+      text       "body text"
+      primary    "primary action"
+      on-primary "text on a primary action"
+      outline
+    space
+      md         "default gap between elements"
+    size
+      control    "height of an input or a button"
+    radius
+      control    "inputs and buttons"
+    border
+      thin
+    shadow
+      raised
+    font
+      sans       "interface text"
+    type
+      body
+    motion
+      quick
+    opacity
+      muted
+    z
+      overlay
+
+  components
+    Button
+      parts text, background, border, radius, height, padding, shadow, font
+      variant primary
+        text       = color.on-primary
+        background = color.primary
+        border     = color.outline
+        radius     = radius.control
+        height     = size.control
+        padding    = space.md
+        shadow     = shadow.raised
+        font       = font.sans
+        state hover
+          border     = color.text
+        state disabled
+          text       = color.text
+          background = color.surface
+      variant quiet
+        text       = color.text
+        background = color.surface
+    Card
+      parts background, border
+      variant plain
+        background = color.surface
+        border     = border.thin
+
+  words
+    voice
+      tone = "Plain and exact"
+      address = "You"
+    naming
+      customer = "Shopper"
+
+  rules
+    contrast text on background at least 4.5
+    contrast text on background at least 3
+
+theme Daylight
+  implements StorefrontDesign
+  compatible with Cratis.Components
+  compatible with Cratis.Components.Charts
+
+  palette
+    indigo = "#4F46E5"
+    white  = "#FFFFFF"
+    ink    = "#111827"
+    line   = "rgb(209, 213, 219)"
+
+  values
+    space.md       = "12px"
+    size.control   = "40px"
+    radius.control = "12px"
+    border.thin    = "1px"
+    shadow.raised  = "0 1px 2px rgba(0, 0, 0, 0.2)"
+    font.sans      = "inter"
+    type.body      = "16px"
+    motion.quick   = "120ms"
+    opacity.muted  = "0.6"
+    z.overlay      = "100"
+
+  light
+    color.surface    = palette.white
+    color.text       = palette.ink
+    color.primary    = palette.indigo
+    color.on-primary = palette.white
+    color.outline    = palette.line
+
+  dark
+    color.surface    = palette.ink
+    color.text       = palette.white
+    color.primary    = palette.indigo
+    color.on-primary = palette.white
+    color.outline    = palette.line
+
+// A theme can also be plain: it names no design system and only declares compatibility.
+theme Plain
+  compatible with Cratis.Components
+
+ui profile Web
+  target platform web
+  target size regular
+  packages
+    Cratis.Components
+  theme Daylight
+  appearance
+    color scheme dark

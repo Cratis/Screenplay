@@ -4,6 +4,7 @@
 import type { languages } from 'monaco-editor';
 import {
     clauseKeywords,
+    designKeywords,
     codeBlockTags,
     constructKeywords,
     primitiveTypes,
@@ -344,7 +345,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         defaultToken: '',
         tokenPostfix: '.play',
         ignoreCase: false,
-        keywords: [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...clauseKeywords.filter(keyword => keyword !== 'context'), ...codeBlockTags],
+        keywords: [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...clauseKeywords.filter(keyword => keyword !== 'context'), ...designKeywords, ...codeBlockTags],
         sliceTypes,
         primitiveTypes,
         tokenizer,

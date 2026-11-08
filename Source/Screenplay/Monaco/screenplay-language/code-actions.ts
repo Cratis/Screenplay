@@ -60,8 +60,8 @@ export function createCodeActionProvider(placement?: readonly string[], applicat
                             range: { startLineNumber: start.lineNumber, startColumn: start.column, endLineNumber: end.lineNumber, endColumn: end.column },
                             text: edit.text,
                         } };
-                    }).concat(fix.diagnosticCode !== DiagnosticCodes.EventFromLaterSlice || models === undefined ? [] : [...models].filter(([path]) => !fix.edits.some(edit => edit.path === path)).map(([, document]) => ({
-                        // A sibling change can invalidate the ordering proof. Empty edits pin every
+                    }).concat((fix.diagnosticCode !== DiagnosticCodes.EventFromLaterSlice && fix.diagnosticCode !== DiagnosticCodes.DeprecatedAppearanceMember) || models === undefined ? [] : [...models].filter(([path]) => !fix.edits.some(edit => edit.path === path)).map(([, document]) => ({
+                        // A sibling change can invalidate the ordering or design system proof. Empty edits pin every
                         // analyzed model, including those whose source is not changed by the repair.
                         resource: document.uri, versionId: versions.get(document)!, textEdit: { range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 }, text: '' },
                     }))) },

@@ -29,9 +29,6 @@ ui profile <Name>
 
   appearance
     color scheme light|dark|system
-    accent "<#hex>"
-    corners sharp|default|round
-    font <font id>
 
   new screens use template [blueprint <Blueprint>] <TemplateName> [version "<range>"]
 
@@ -59,7 +56,7 @@ Declare `ui profile <Name>` at the top level. A document can contain several pro
 | `target size` | The default size class: `compact`, `regular` or `expanded`. These are named classes, not pixel breakpoints. At most one per profile. A layout's width-by-height arrangement matrix is a separate, more specific choice. |
 | `packages` | Component packages, one per line, in override-priority order. Later component libraries can shadow earlier ones; see [Component name resolution](#component-name-resolution). `core` supplies the built-in vocabulary as a fallback. |
 | `icons` | Icon sets or packages for `icon <name>` references on components, toolbar items and actions. The compiler preserves the list; Stage checks icon resolution against the selected packages. |
-| `theme` | An optional theme name, once per profile. Use an identifier or a quoted display name such as `theme "Scene Default Light"`. See [Theme](theme.md) for declaration checks and package-provided names. |
+| `theme` | An optional theme name, once per profile. Without it the profile is drawn in the [design system's](design-system.md) default theme; with it, the named theme overrides the default. Use an identifier or a quoted display name such as `theme "Scene Default Light"`. See [Theme](theme.md) for declaration checks and package-provided names. |
 | `sample data` | An optional application-wide pack selection, shape mappings and per-read-model bindings. These apply only during design and UI previews, never in production builds. See [Sample data](sample-data.md). |
 
 A package that supplies reusable templates is a blueprint. Reference one with `template blueprint <Blueprint> <Name>`; a blueprint that no profile lists produces `PLAY0722`. See [Layouts and templates](templates.md#own-and-blueprint-templates).
@@ -76,7 +73,7 @@ Under the root, `option <name> <value>` configures an item the shell exposes. Va
 
 The older `layout <Name>` selection remains accepted, once per profile. It produces warning `PLAY0791` and a quick fix to `root template <Name>`. If both are present, `root template` takes precedence. An undeclared layout produces a warning. See [Layouts and templates](templates.md).
 
-### Identity and appearance
+### Identity
 
 Use `identity` for the application's displayed name and logo. The block is optional; each setting can appear once. Duplicate blocks or settings produce `PLAY0789`.
 
@@ -88,16 +85,63 @@ Use `identity` for the application's displayed name and logo. The block is optio
 | `logo image "<data URI>"` | PNG, JPG, SVG or WebP, as a base64 data URI of at most 400 KB. |
 | `show name true\|false` | Whether to show the name beside the logo; shown by default. |
 
-Use `appearance` for shell-independent visual choices. It is also optional, with one block and one line per setting (`PLAY0789` for duplicates).
+### Appearance and theme
+
+Use `appearance` for the shell-independent choice of color scheme. It is optional, with one block and one line (`PLAY0789` for duplicates).
 
 | Appearance setting | Accepted values |
 | --- | --- |
-| `color scheme` | `light`, `dark` or `system`. |
-| `accent "<#hex>"` | `#RGB`, `#RRGGBB` or `#RRGGBBAA`. |
-| `corners` | `sharp`, `default` or `round`. |
-| `font <font id>` | A Scene font catalog ID, such as `inter`, `ibm-plex-sans`, `source-serif-4` or `system-ui`. An unavailable font falls back to the system font. |
+| `color scheme` | `light`, `dark` or `system`. With a [design system](design-system.md), it selects the mode of that name; when the scheme is not one of the design system's modes, the first mode is used. |
 
 Identity and appearance values outside Scene's rules produce `PLAY0797`.
+
+How the application looks beyond the color scheme belongs in the theme. A profile with no `theme` line uses the design system's default theme. A `theme <Name>` line selects another theme, which must implement the design system (`PLAY0926`). See [Which theme and mode a profile gets](design-system.md#which-theme-and-mode-a-profile-gets).
+
+`accent`, `corners` and `font` in `appearance` are deprecated. They still read, but each produces warning `PLAY0929`. Move the value into the theme the profile uses: the accent becomes a `color` token value, the corners a `radius` token value and the font a `font` token value.
+
+Before:
+
+```text
+ui profile Desktop
+  appearance
+    color scheme dark
+    accent "#4f46e5"
+    corners round
+    font inter
+```
+
+After:
+
+```screenplay
+design system ShopDesign
+  modes light, dark
+  default theme Nordic
+
+  tokens
+    color
+      primary "primary action"
+    radius
+      control "inputs and buttons"
+    font
+      sans "interface text"
+
+theme Nordic
+  implements ShopDesign
+
+  values
+    radius.control = "12px"
+    font.sans      = "inter"
+
+  light
+    color.primary = "#4F46E5"
+
+  dark
+    color.primary = "#4F46E5"
+
+ui profile Desktop
+  appearance
+    color scheme dark
+```
 
 ## Example
 
@@ -131,9 +175,6 @@ ui profile Desktop
 
   appearance
     color scheme dark
-    accent "#4f46e5"
-    corners round
-    font inter
 
   packages
     core

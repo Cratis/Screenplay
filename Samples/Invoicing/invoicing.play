@@ -404,12 +404,97 @@ trigger BillingDirectorySyncRequested
 // Look and shell
 // ------------------------------------------------------------
 
+// The design system is the contract: what exists and what it is for. One per application. A theme
+// implements it - it gives every token a value - and a ui profile picks the theme it is drawn in.
+design system InvoicingDesign
+  modes light, dark
+  default theme Nordic
+
+  tokens
+    color
+      surface    "page background"
+      text       "body text"
+      primary    "primary action"
+      on-primary "text on a primary action"
+    space
+      md         "default gap between elements"
+    radius
+      control    "inputs and buttons"
+    font
+      sans       "interface text"
+
+  components
+    Button
+      parts text, background, radius
+      variant primary
+        text       = color.on-primary
+        background = color.primary
+        radius     = radius.control
+        state disabled
+          text       = color.text
+          background = color.surface
+
+  words
+    voice
+      tone = "Plain and exact"
+    naming
+      customer = "Client"
+
+  rules
+    contrast text on background at least 4.5
+
 theme Nordic
+  implements InvoicingDesign
   compatible with Cratis.Components
   compatible with Cratis.Components.Charts
 
+  palette
+    indigo-600 = "#4F46E5"
+    white      = "#FFFFFF"
+    ink        = "#111827"
+
+  values
+    space.md       = "12px"
+    radius.control = "12px"
+    font.sans      = "inter"
+
+  light
+    color.surface    = palette.white
+    color.text       = palette.ink
+    color.primary    = palette.indigo-600
+    color.on-primary = palette.white
+
+  dark
+    color.surface    = palette.ink
+    color.text       = palette.white
+    color.primary    = palette.indigo-600
+    color.on-primary = palette.white
+
 theme NordicDark
+  implements InvoicingDesign
   compatible with Cratis.Components
+
+  palette
+    indigo-700 = "#4338CA"
+    white      = "#FFFFFF"
+    night      = "#0B1020"
+
+  values
+    space.md       = "8px"
+    radius.control = "4px"
+    font.sans      = "inter"
+
+  light
+    color.surface    = palette.white
+    color.text       = palette.night
+    color.primary    = palette.indigo-700
+    color.on-primary = palette.white
+
+  dark
+    color.surface    = palette.night
+    color.text       = palette.white
+    color.primary    = palette.indigo-700
+    color.on-primary = palette.white
 
 layout AppShell
   category Shell
@@ -491,9 +576,6 @@ ui profile Desktop
 
   appearance
     color scheme dark
-    accent "#4f46e5"
-    corners round
-    font inter
 
   // The template a new screen starts from in the designer.
   new screens use template List

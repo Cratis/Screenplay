@@ -334,6 +334,162 @@
       ]
     }
   ],
+  "designSystems": [
+    {
+      "kind": "DesignSystemSyntax",
+      "components": [
+        {
+          "kind": "DesignComponentSyntax",
+          "name": "Button",
+          "parts": [
+            "text",
+            "background",
+            "radius"
+          ],
+          "variants": [
+            {
+              "kind": "DesignVariantSyntax",
+              "name": "primary",
+              "parts": [
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "text",
+                  "value": "color.on-primary"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "background",
+                  "value": "color.primary"
+                },
+                {
+                  "kind": "DesignAssignmentSyntax",
+                  "isLiteral": false,
+                  "name": "radius",
+                  "value": "radius.control"
+                }
+              ],
+              "states": [
+                {
+                  "kind": "DesignStateSyntax",
+                  "name": "disabled",
+                  "parts": [
+                    {
+                      "kind": "DesignAssignmentSyntax",
+                      "isLiteral": false,
+                      "name": "text",
+                      "value": "color.text"
+                    },
+                    {
+                      "kind": "DesignAssignmentSyntax",
+                      "isLiteral": false,
+                      "name": "background",
+                      "value": "color.surface"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "defaultTheme": "Nordic",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "name": "InvoicingDesign",
+      "rules": [
+        {
+          "kind": "DesignContrastRuleSyntax",
+          "background": "background",
+          "foreground": "text",
+          "minimum": "4.5"
+        }
+      ],
+      "tokens": [
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "color",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "page background",
+              "name": "surface"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "body text",
+              "name": "text"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "primary action",
+              "name": "primary"
+            },
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "text on a primary action",
+              "name": "on-primary"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "space",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "default gap between elements",
+              "name": "md"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "radius",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "inputs and buttons",
+              "name": "control"
+            }
+          ]
+        },
+        {
+          "kind": "DesignTokenCategorySyntax",
+          "category": "font",
+          "tokens": [
+            {
+              "kind": "DesignTokenSyntax",
+              "description": "interface text",
+              "name": "sans"
+            }
+          ]
+        }
+      ],
+      "words": {
+        "kind": "DesignWordsSyntax",
+        "naming": [
+          {
+            "kind": "DesignAssignmentSyntax",
+            "isLiteral": true,
+            "name": "customer",
+            "value": "Client"
+          }
+        ],
+        "voice": [
+          {
+            "kind": "DesignAssignmentSyntax",
+            "isLiteral": true,
+            "name": "tone",
+            "value": "Plain and exact"
+          }
+        ]
+      }
+    }
+  ],
   "domain": {
     "kind": "DomainSyntax",
     "name": "Acme.Invoicing"
@@ -19403,6 +19559,229 @@
     }
   ],
   "systems": [],
+  "themes": [
+    {
+      "kind": "ThemeSyntax",
+      "compatibleWith": [
+        "Cratis.Components",
+        "Cratis.Components.Charts"
+      ],
+      "implements": "InvoicingDesign",
+      "modeValues": [
+        {
+          "kind": "ThemeModeValuesSyntax",
+          "mode": "light",
+          "values": [
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.surface",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.text",
+              "value": "palette.ink"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.primary",
+              "value": "palette.indigo-600"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.on-primary",
+              "value": "palette.white"
+            }
+          ]
+        },
+        {
+          "kind": "ThemeModeValuesSyntax",
+          "mode": "dark",
+          "values": [
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.surface",
+              "value": "palette.ink"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.text",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.primary",
+              "value": "palette.indigo-600"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.on-primary",
+              "value": "palette.white"
+            }
+          ]
+        }
+      ],
+      "name": "Nordic",
+      "palette": [
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "indigo-600",
+          "value": "#4F46E5"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "white",
+          "value": "#FFFFFF"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "ink",
+          "value": "#111827"
+        }
+      ],
+      "values": [
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "space.md",
+          "value": "12px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "radius.control",
+          "value": "12px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "font.sans",
+          "value": "inter"
+        }
+      ]
+    },
+    {
+      "kind": "ThemeSyntax",
+      "compatibleWith": [
+        "Cratis.Components"
+      ],
+      "implements": "InvoicingDesign",
+      "modeValues": [
+        {
+          "kind": "ThemeModeValuesSyntax",
+          "mode": "light",
+          "values": [
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.surface",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.text",
+              "value": "palette.night"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.primary",
+              "value": "palette.indigo-700"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.on-primary",
+              "value": "palette.white"
+            }
+          ]
+        },
+        {
+          "kind": "ThemeModeValuesSyntax",
+          "mode": "dark",
+          "values": [
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.surface",
+              "value": "palette.night"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.text",
+              "value": "palette.white"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.primary",
+              "value": "palette.indigo-700"
+            },
+            {
+              "kind": "DesignAssignmentSyntax",
+              "isLiteral": false,
+              "name": "color.on-primary",
+              "value": "palette.white"
+            }
+          ]
+        }
+      ],
+      "name": "NordicDark",
+      "palette": [
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "indigo-700",
+          "value": "#4338CA"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "white",
+          "value": "#FFFFFF"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "night",
+          "value": "#0B1020"
+        }
+      ],
+      "values": [
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "space.md",
+          "value": "8px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "radius.control",
+          "value": "4px"
+        },
+        {
+          "kind": "DesignAssignmentSyntax",
+          "isLiteral": true,
+          "name": "font.sans",
+          "value": "inter"
+        }
+      ]
+    }
+  ],
   "types": [
     {
       "kind": "TypeSyntax",

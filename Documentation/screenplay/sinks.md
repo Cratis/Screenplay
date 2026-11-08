@@ -68,7 +68,7 @@ Nothing else in the language names a sink. Whatever builds or reads a read model
 
 A read model has always been able to declare a property called `sink`, and it still can. A `sink <Name>` line in a read model is the directive only when `<Name>` is a sink the application declares, spelled exactly as declared. Otherwise it is the property it always was: `sink Customer` declares a property `sink` of type `Customer` when no sink is called `Customer`. Where the sink is declared does not matter; a sink declared in another file of the folder counts once the files are merged.
 
-A line is always a property when it cannot be the directive: an escaped name (`@sink Reporting`), a collection (`sink Reporting[]`), an optional type or a modifier. Use `@sink <Type>` when you want a property whose type has the same name as a sink; the printer writes it that way too. A property whose type differs from a declared sink only in case, such as `sink reporting` beside `sink Reporting for readmodels`, keeps its meaning and warns (`PLAY0924`).
+A line is always a property when it cannot be the directive: an escaped name (`@sink Reporting`), a collection (`sink Reporting[]`), an optional type or a modifier. Use `@sink <Type>` when you want a property whose type has the same name as a sink; the printer writes it that way too. A property whose type differs from a declared sink only in case, such as `sink reporting` beside `sink Reporting for readmodels`, keeps its meaning and warns (`PLAY0939`).
 
 In a graph every `sink` line is the directive, since a graph body has no properties of its own, and naming a sink that is not declared is an error.
 
@@ -100,14 +100,14 @@ Renaming a sink with `propose-rename` renames its declaration and every `sink` l
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0916` | Error | A sink declaration or a graph's `sink` line is malformed, or a declaration has lines under it. |
-| `PLAY0917` | Error | Two sinks share a name, compared ignoring case. |
-| `PLAY0918` | Error | A graph names a sink that is not declared. A read model's line naming no declared sink is a property. |
-| `PLAY0919` | Error | A read model names a `for graphs` sink, or a graph names a `for readmodels` sink. |
-| `PLAY0920` | Error | A `passive` read model names a sink. |
-| `PLAY0921` | Error | A read model or graph names two different sinks. |
-| `PLAY0922` | Warning | A read model or graph repeats the same `sink` line. |
-| `PLAY0923` | Warning | No read model or graph names a declared sink. |
-| `PLAY0924` | Warning | A read model's property `sink` has a type that differs only in case from a declared sink. |
+| `PLAY0931` | Error | A sink declaration or a graph's `sink` line is malformed, or a declaration has lines under it. |
+| `PLAY0932` | Error | Two sinks share a name, compared ignoring case. |
+| `PLAY0933` | Error | A graph names a sink that is not declared. A read model's line naming no declared sink is a property. |
+| `PLAY0934` | Error | A read model names a `for graphs` sink, or a graph names a `for readmodels` sink. |
+| `PLAY0935` | Error | A `passive` read model names a sink. |
+| `PLAY0936` | Error | A read model or graph names two different sinks. |
+| `PLAY0937` | Warning | A read model or graph repeats the same `sink` line. |
+| `PLAY0938` | Warning | No read model or graph names a declared sink. |
+| `PLAY0939` | Warning | A read model's property `sink` has a type that differs only in case from a declared sink. |
 
 Both the C# and the TypeScript compiler report all of them. See the [diagnostics catalogue](diagnostics.md#sinks).
