@@ -42,4 +42,9 @@ public sealed record ModelDifference(
     /// Gets numeric identity changes within matched enumeration concepts.
     /// </summary>
     public IReadOnlyList<EnumerationMemberChange> Enumerations { get; init; } = [];
+
+    /// <summary>
+    /// Gets the changes grouped by the slice that owns them, with the slices that depend on each changed slice.
+    /// </summary>
+    public SliceChangeSummary Slices { get; init; } = SliceChangeSummary.Empty;
 }
