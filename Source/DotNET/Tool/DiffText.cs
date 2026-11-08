@@ -20,6 +20,9 @@ static class DiffText
         Section(output, "Specifications", difference.Specifications, change => $"{change.Change} {Name(change.Declaration)}{(change.Member is null ? string.Empty : " " + change.Member)}");
         Section(output, "Identities", difference.Identities, change => $"{change.Change} {Name(change.Declaration)}");
         Section(output, "Direct dependants", difference.Dependants, dependant => $"{dependant.DependantAddress} ({dependant.Role}) depends on {dependant.Changed.Kind} {Address(dependant.Changed)}");
+        Section(output, "Slices", difference.Slices.Slices, Slice);
+        Section(output, "Model-wide", difference.Slices.ModelWide, Name);
+        Section(output, "Affected slices", difference.Slices.AffectedSlices, slice => slice);
         foreach (var section in difference.Sections.Where(section => !section.Complete))
         {
             foreach (var gap in section.Gaps) output.WriteLine($"Incomplete {section.Section}: {gap.Statement}");
@@ -47,6 +50,15 @@ static class DiffText
         DeclarationChangeKind.Moved => $"Moved {change.Declaration.Kind} {Address(change.Declaration)} ({change.Move?.ToString().ToLowerInvariant() ?? "owner"}) {Location(change)}",
         _ => $"{change.Change} {Name(change.Declaration)}"
     };
+
+    static string Slice(SliceChange slice)
+    {
+        var address = slice.BeforeAddress is not null && slice.AfterAddress is not null && slice.BeforeAddress != slice.AfterAddress
+            ? $"{slice.BeforeAddress} -> {slice.AfterAddress}"
+            : slice.Address;
+        var dependents = slice.DependentSlices.Count == 0 ? string.Empty : $"; dependents: {string.Join(", ", slice.DependentSlices)}";
+        return $"{string.Join(", ", slice.Changes)} {address} ({slice.Declarations.Count} declarations){dependents}";
+    }
 
     static string Location(DeclarationChange change) => change.Move == DeclarationMove.Document
         ? $"{string.Join(", ", change.BeforeDocuments.Select(document => document.Path))} -> {string.Join(", ", change.AfterDocuments.Select(document => document.Path))}"
