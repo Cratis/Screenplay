@@ -16,6 +16,10 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+## A named sink
+
+`sink Reporting for readmodels` declares a logical place to store read models, and `InvoiceLineReportReadModel` chooses it with `sink Reporting`. Its projection writes there and its query reads from there. Every other read model names no sink, so it uses the default sink. The deployment maps `Reporting` to real storage; the model never names a database. Like `passive`, the choice is realization metadata outside portable ESM.
+
 ## Passive decision state
 
 In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from the invoice's real history (`InvoiceRegistered` starts it unreserved, `InvoiceNumberReserved` reserves it and `InvoiceNumberReservationReleased` resets it), with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).
@@ -159,6 +163,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | `produces` with `for`, `tag`, every mapping source (`$identity.*`, `$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
 | `reads … as … by` and `require` over read state | RecordPayment, ReserveInvoiceNumber |
 | `readmodel` with explicit `passive`, consumed only by a command `reads` | InvoiceReservations |
+| `sink Reporting for readmodels` at the root and `sink Reporting` in a read model | application root, InvoiceLineReport |
 | Pending `handler implementation` with hint and unconditional `produces`; attached inline/file handlers; `concurrency` | ApplyLateFee (ESM v23 result contract), ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |

@@ -15,6 +15,7 @@ The language describes the logical graph only. It never mentions Cypher, Gremlin
 graph <Name>
   [description "<text>"]
   [file <path>]
+  [sink <Sink>]
   node <Label>
     <property> <Type> [optional]
     <keyProperty> <Type> key
@@ -22,7 +23,7 @@ graph <Name>
     <property> <Type> [optional]
 ```
 
-A graph holds `node` and `edge` declarations. `description`, `documentation` and `file` behave as they do on a [read model](readmodels.md).
+A graph holds `node` and `edge` declarations. `description`, `documentation` and `file` behave as they do on a [read model](readmodels.md). A `sink <Name>` line stores the graph in a sink declared `for graphs` instead of the default graph sink; see [Sinks](sinks.md).
 
 ## An organization
 

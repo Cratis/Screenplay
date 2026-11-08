@@ -24,6 +24,9 @@ Organization/
   more edge, not a nested object.
 - **Several roles in one group.** `HAS_ROLE` is declared `identified by assignmentId`, so one person can hold
   two roles in the same group as two edges.
+- **A named sink.** `sink People for graphs` declares a logical place to store graphs, and `sink People` in the
+  graph puts the organization there. The deployment maps `People` to a real graph database; see
+  [Sinks](../../Documentation/screenplay/sinks.md).
 - **Specifications about a graph.** `then graph Organization` asserts `has node`, `has edge`, `no node` and
   `no edge`; `given graph` seeds a graph before the action.
 

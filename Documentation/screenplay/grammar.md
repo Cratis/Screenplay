@@ -25,7 +25,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | UserDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | UserDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -379,6 +379,13 @@ PersonaDecl    = "persona", Ident, NL,
 (* A person a development or test session can act as. One line; authoring *)
 (* metadata for tooling, never part of the executable model.             *)
 UserDecl       = "user", Ident, [ String ], [ "as", Ident, { ",", Ident } ], NL ;
+
+(* A named sink: a logical place read models or graphs are stored, which the  *)
+(* deployment maps to real storage. One line (PLAY0916); names are unique      *)
+(* ignoring case (PLAY0917); an unused sink warns (PLAY0923). Realization      *)
+(* metadata, never part of the executable model. Without one, everything uses *)
+(* its kind's implicit default sink.                                           *)
+SinkDecl       = "sink", Ident, "for", ( "readmodels" | "graphs" ), NL ;
 
 (* Authoring metadata for the domain canvases; never part of the executable model. *)
 StickyNoteDecl = "sticky", "note", "on", ( "personas" | "eventsources" | "givencontexts" | "seeddata" ), NL,
@@ -919,10 +926,10 @@ SliceBody      = TranslationDirectionDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PassiveDirective | PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PassiveDirective | SinkDirective | PropertyLine }, DEDENT ;
 
 GraphDecl      = "graph", Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | GraphNodeDecl | GraphEdgeDecl }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | SinkDirective | GraphNodeDecl | GraphEdgeDecl }, DEDENT ;
 
 (* A graph declares the shape of a property graph: node labels with typed properties,
    exactly one of them "key" (PLAY0864), and edge types between declared labels
@@ -940,6 +947,14 @@ PassiveDirective = "passive", NL ;
    never inferred. Repeated passive is idempotent (PLAY0858 Warning).
    Passive models are command-read-only (PLAY0859 Error); unused ones warn
    (PLAY0860). This is realization metadata, not portable ESM. *)
+
+SinkDirective  = "sink", Ident, NL ;
+(* A bare readmodel or graph body directive naming a declared sink exactly
+   (PLAY0918) of the matching kind (PLAY0919). In a readmodel, "sink" followed by
+   a primitive type or a type with modifiers stays a property named sink, and
+   "@sink Type" declares one of any type. A repeated identical directive warns
+   (PLAY0922); two different sinks error (PLAY0921); a passive read model has no
+   sink (PLAY0920). Realization metadata, not portable ESM. *)
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
                  INDENT, { DescriptionDecl | ObserverFilter | ReducerRule }, DEDENT ;

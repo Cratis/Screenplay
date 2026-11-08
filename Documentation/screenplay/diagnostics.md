@@ -1739,6 +1739,21 @@ Where a slice's screen fits, how a hook opens its slice and what a screen's elem
 | `PLAY0914` | Error | A `show <Screen> by <param> from <element>.selection` line is malformed, stands outside a template slot, names a screen the document does not declare or an element the screen does not have, or keys the shown screen by a parameter its data is not keyed by. |
 | `PLAY0915` | Error | A button or toolbar item's `enabled when` reads `item`, but it acts `for screen`, so there is no item to read. |
 
+## Sinks
+
+Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers report every code in this section.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0916` | Error | A `sink <Name> for readmodels` or `sink <Name> for graphs` declaration is malformed or has lines under it, or a `sink` line in a read model or graph is not `sink <Name>`. |
+| `PLAY0917` | Error | Two sinks share a name. Sink names are unique application-wide, compared ignoring case, so `Reporting` and `reporting` collide. |
+| `PLAY0918` | Error | A read model or graph names a sink the application does not declare. A directive names its sink exactly as declared. To declare a property called `sink` of a concept type, write `@sink <Type>`. |
+| `PLAY0919` | Error | A read model names a sink declared `for graphs`, or a graph names a sink declared `for readmodels`. |
+| `PLAY0920` | Error | A `passive` read model names a sink. A passive read model is never materialized, so it has no sink; remove one of the two lines. |
+| `PLAY0921` | Error | A read model or graph names two different sinks. It is stored in one sink. |
+| `PLAY0922` | Warning | A read model or graph repeats the same `sink` line. Keep one. |
+| `PLAY0923` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
+
 ## Toolbar buttons
 
 The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.

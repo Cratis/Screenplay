@@ -20,6 +20,7 @@ readmodel <Name>
   [description "<text>"]
   [file <path>]
   [passive]
+  [sink <Sink>]
   <property> <Type> [optional]
   ...
 ```
@@ -116,6 +117,10 @@ Only commands may read a passive model. A query returning it, including collecti
 This is realization metadata, not portable execution semantics. Syntax JSON carries `isPassive: true` and omits false; absent means active. The native binder reports Information `PLAY0270` and exposes canonical read-model identities through `SemanticCompilation.PassiveReadModels`, not `SemanticReadModel`. Toggling the directive changes neither ESM bytes, canonical JSON nor revision. Consumers must carry the sidecar in hashed render input (the `AuthoringMetadataInput` pattern) and runtime `ApplicationRealization`. A portable ESM alone does not preserve it. Stage maps it to Chronicle sink `None`, `IsActive=false` and `[Passive]`; Screenplay performs no Chronicle realization.
 
 Older tools reject syntax JSON that uses `passive`, because their syntax JSON reader refuses unknown members. Before downgrading, remove the `passive` directive or re-export the model with a version that omits it. ESM bytes are unchanged either way.
+
+## Where a read model is stored
+
+A read model is stored in the default read-model sink unless it names another with a bare `sink <Name>` line, naming a sink the application declares with `sink <Name> for readmodels`. Its projection or reducer writes there and its queries read from there. See [Sinks](sinks.md).
 
 ## The arrow always points the same way
 
