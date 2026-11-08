@@ -143,6 +143,8 @@
   href: workspace-transport.md
 - name: Model notes
   href: model-notes.md
+- name: Executable model JSON Schema
+  href: executable-model-schema.md
 - name: Model comparison API
   href: model-comparison.md
 - name: Observation comparison API

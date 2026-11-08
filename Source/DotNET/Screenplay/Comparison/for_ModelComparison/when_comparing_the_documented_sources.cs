@@ -22,5 +22,6 @@ public class when_comparing_the_documented_sources : Specification
 
     [Fact] void should_report_the_documented_addition() => _difference.Events.Single(change => change.Change == EventContractChangeKind.PropertyAdded).Property.ShouldEqual("extra");
     [Fact] void should_keep_the_contract_breaking_flag() => _difference.Events.Single(change => change.Change == EventContractChangeKind.PropertyAdded).ContractBreaking.ShouldBeTrue();
+    [Fact] void should_print_the_documented_slice_summary() => _difference.Slices.Slices.Select(slice => $"{slice.Address}: {slice.Change}, dependents: {string.Join(", ", slice.DependentSlices)}").ShouldContainOnly("Projects.Registration.Register: Changed, dependents: ");
     [Fact] void should_match_by_address() => _difference.Matching.ShouldEqual(DeclarationMatching.Address);
 }
