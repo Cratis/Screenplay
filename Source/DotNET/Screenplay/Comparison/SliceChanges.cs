@@ -53,7 +53,7 @@ internal static class SliceChanges
 
         affected.ExceptWith(entries.Keys);
         return new(
-            [.. entries.Values.Where(entry => entry.Kinds.Count > 0).Select(entry => entry.ToChange())],
+            [.. entries.Values.Where(entry => entry.Kinds.Count > 0).Select(entry => entry.ToChange()).OrderBy(change => change.Address, StringComparer.Ordinal)],
             [.. modelWide.Distinct()],
             [.. affected]);
     }
