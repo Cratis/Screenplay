@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -199,6 +200,10 @@ internal static partial class ProjectionParser
                 }
 
                 return ParseClearWith(context, line);
+            case "insert" or "sort":
+                context.Error(DiagnosticCodes.InvalidChildrenOrdering, $"'{line.Content}' orders a children collection and is only valid directly inside a 'children' block", line.Location);
+                context.SkipBlock(line.Indent);
+                return null;
             default:
                 context.Error(DiagnosticCodes.UnknownProjectionDirective, $"Unexpected '{FirstWord(line.Content)}' in projection body", line.Location);
                 context.SkipBlock(line.Indent);
@@ -337,8 +342,14 @@ internal static partial class ProjectionParser
         var identifiedBy = ExpressionParser.ParseProjectionExpression(context, match.Groups[2].Value, line.Location);
         var autoMap = AutoMapMode.Inherit;
         var directiveLocations = new Dictionary<string, SourceLocation>();
-        var blocks = ParseChildBlocks(context, line, ref autoMap, directiveLocations, nestedScope: true);
-        return new(Unescape(match.Groups[1].Value), identifiedBy, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap };
+        var orderings = new List<ChildrenOrderingSyntax>();
+        var blocks = ParseChildBlocks(context, line, ref autoMap, directiveLocations, nestedScope: true, orderings);
+        return new(Unescape(match.Groups[1].Value), identifiedBy, autoMap, blocks, line.Location)
+        {
+            DirectiveLocations = directiveLocations,
+            ParsedAutoMapMode = autoMap,
+            Ordering = orderings.FirstOrDefault()
+        };
     }
 
     static NestedSyntax ParseNested(ParserContext context, SourceLine line)
@@ -363,13 +374,35 @@ internal static partial class ProjectionParser
         return new(name, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap };
     }
 
-    static List<ProjectionBlockSyntax> ParseChildBlocks(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Dictionary<string, SourceLocation> directiveLocations, bool nestedScope)
+    static List<ProjectionBlockSyntax> ParseChildBlocks(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Dictionary<string, SourceLocation> directiveLocations, bool nestedScope, List<ChildrenOrderingSyntax>? orderings = null)
     {
         var blocks = new List<ProjectionBlockSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (child.Content == "automap")
+            if (orderings is not null && IsOrderingLine(child.Content))
+            {
+                if (ParseOrdering(context, child) is not { } ordering)
+                {
+                    continue;
+                }
+
+                if (orderings.Count > 0)
+                {
+                    var first = orderings[0];
+                    var conflict = first.Placement != ordering.Placement || first.SortBy != ordering.SortBy || first.Direction != ordering.Direction;
+                    context.Error(
+                        DiagnosticCodes.DuplicateChildrenOrdering,
+                        conflict
+                            ? $"Children '{line.Content}' declares conflicting orderings - a children block takes one 'insert first', 'insert last' or 'sort by' line"
+                            : $"Children '{line.Content}' declares its ordering twice - a children block takes one 'insert first', 'insert last' or 'sort by' line",
+                        child.Location);
+                    continue;
+                }
+
+                orderings.Add(ordering);
+            }
+            else if (child.Content == "automap")
             {
                 RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Enabled, child.Location);
             }
@@ -384,6 +417,31 @@ internal static partial class ProjectionParser
         }
 
         return blocks;
+    }
+
+    static ChildrenOrderingSyntax? ParseOrdering(ParserContext context, SourceLine line)
+    {
+        if (context.TryPeekChild(line.Indent, out _))
+        {
+            context.Error(DiagnosticCodes.InvalidChildrenOrdering, $"Children ordering '{line.Content}' takes no indented lines", line.Location);
+            context.SkipBlock(line.Indent);
+        }
+
+        var match = ChildrenOrderingRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidChildrenOrdering, $"Invalid children ordering '{line.Content}' - expected 'insert first', 'insert last' or 'sort by <property> [ascending|descending]'", line.Location);
+            return null;
+        }
+
+        if (match.Groups[1].Success)
+        {
+            var placement = match.Groups[1].Value == "first" ? ChildrenPlacement.Prepend : ChildrenPlacement.Append;
+            return new(placement, null, ChildrenSortDirection.Ascending, line.Location);
+        }
+
+        var direction = match.Groups[3].Value == "descending" ? ChildrenSortDirection.Descending : ChildrenSortDirection.Ascending;
+        return new(ChildrenPlacement.Sorted, Unescape(match.Groups[2].Value), direction, line.Location);
     }
 
     static ProjectionBlockSyntax? ParseRemove(ParserContext context, SourceLine line)
@@ -619,11 +677,27 @@ internal static partial class ProjectionParser
             EventContextPathValidator.ValidateDynamicKey(context, mapping.Property, line.Location);
         }
 
+        if (mapping is RemoveKeyMappingSyntax remove && !EventContextPathValidator.HasDynamicKey(remove.Property))
+        {
+            context.Error(
+                DiagnosticCodes.RemoveKeyWithoutDynamicKey,
+                $"'remove {remove.Property}' names no dictionary entry - the target must end in a dynamic key, such as '{remove.Property}.$eventContent.<event property>'; to clear the property, write 'clear {remove.Property}'",
+                line.Location);
+        }
+
         return mapping;
     }
 
     static MappingSyntax? ParseMappingLine(ParserContext context, SourceLine line)
     {
+        // 'remove with' and 'remove via join' are block directives of the projection body; inside a handler they would
+        // otherwise read as an invalid mapping with no hint about where they belong.
+        if (RemoveWithRegex().IsMatch(line.Content) || RemoveViaJoinRegex().IsMatch(line.Content))
+        {
+            context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - '{string.Join(' ', line.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2))}' is a block directive of the projection or children body, not a mapping line", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
+            return null;
+        }
+
         var keyword = KeywordMappingRegex().Match(line.Content);
         if (keyword.Success)
         {
@@ -631,10 +705,12 @@ internal static partial class ProjectionParser
 
             // 'clear with' in a mapping position is a block directive someone stopped typing, not a property named
             // 'with' - reading it as a clear would quietly do something other than what was meant. The escape gets
-            // the property back, so the guard costs nothing.
-            if (keyword.Groups[1].Value == "clear" && target == "with")
+            // the property back, so the guard costs nothing. 'remove with' and 'remove via' are guarded the same way.
+            if ((keyword.Groups[1].Value == "clear" && target == "with") ||
+                (keyword.Groups[1].Value == "remove" && ReservedWords.RemoveKeyMapping.Contains(target)))
             {
-                context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
+                var verb = keyword.Groups[1].Value;
+                context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - '{verb} {target}' is a block directive and needs an event type; to {verb} a property named '{target}', write '{verb} @{target}'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
                 return null;
             }
 
@@ -644,6 +720,7 @@ internal static partial class ProjectionParser
                 "increment" => new IncrementMappingSyntax(property, line.Location),
                 "decrement" => new DecrementMappingSyntax(property, line.Location),
                 "clear" => new ClearMappingSyntax(property, line.Location),
+                "remove" => new RemoveKeyMappingSyntax(property, line.Location),
                 _ => new CountMappingSyntax(property, line.Location)
             };
         }
@@ -657,6 +734,13 @@ internal static partial class ProjectionParser
             return arithmetic.Groups[1].Value == "add"
                 ? new AddMappingSyntax(property, value, line.Location) { Factor = factor }
                 : new SubtractMappingSyntax(property, value, line.Location) { Factor = factor };
+        }
+
+        var setOnce = SetOnceRegex().Match(line.Content);
+        if (setOnce.Success)
+        {
+            var source = ExpressionParser.ParseProjectionMappingSource(context, setOnce.Groups[2], line);
+            return new SetOnceMappingSyntax(Unescape(setOnce.Groups[1].Value), source, line.Location);
         }
 
         var set = SetRegex().Match(line.Content);
@@ -684,6 +768,12 @@ internal static partial class ProjectionParser
     }
 
     static string FirstWord(string content) => LineText.FirstWord(content);
+
+    static bool IsOrderingLine(string content)
+    {
+        var word = FirstWord(content);
+        return string.Equals(word, "insert", StringComparison.Ordinal) || string.Equals(word, "sort", StringComparison.Ordinal);
+    }
 
     static string Unescape(string identifier) => LineText.Unescape(identifier);
 
@@ -722,7 +812,13 @@ internal static partial class ProjectionParser
     [GeneratedRegex(@"^enters\s+on\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex EntersOnRegex();
 
-    [GeneratedRegex(@"^(increment|decrement|count|clear)\s+(@?[$\w.]+)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^(?:insert\s+(first|last)|sort\s+by\s+(@?[\w.]+)(?:\s+(ascending|descending))?)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ChildrenOrderingRegex();
+
+    [GeneratedRegex(@"^set\s+once\s+(@?[$\w.]+)\s+(?:=|to)\s+(.+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex SetOnceRegex();
+
+    [GeneratedRegex(@"^(increment|decrement|count|clear|remove)\s+(@?[$\w.]+)$", RegexOptions.NonBacktracking)]
     private static partial Regex KeywordMappingRegex();
 
     [GeneratedRegex(@"^(add|subtract)\s+(@?[$\w.]+)\s+by\s+(.+?)(?:\s+\*\s+(.+))?$", RegexOptions.NonBacktracking)]

@@ -1251,7 +1251,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0296` | Warning | An `$eventContext.<path>` continues into something the member before it does not have, such as `$eventContext.eventType.name`. The derived function `Week` is case-sensitive: `occurred.Week` resolves and `occurred.week` does not. |
 | `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
 | `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
-| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
+| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, `$eventContent` or `$causedBy`, such as `bySource.$eventSourceId`. Only `$eventContext.<path>`, `$eventContent.<path>` and `$causedBy.subject`, `.name` or `.userName` are resolved; any other source becomes the literal key. |
 
 ### Specification semantics
 
@@ -1778,6 +1778,19 @@ Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#ske
 | `PLAY0953` | Error | A slice's `shows` line is not `shows event <Name>` or `shows readmodel <Name>`. |
 | `PLAY0954` | Warning | A slice shows an event or read model the application does not declare. |
 | `PLAY0955` | Warning | A slice shows an element it already declares itself, or shows the same element twice. Remove the extra line. |
+
+## Projection dictionary keys, set once and children ordering
+
+Dynamic dictionary keys, the `remove` mapping line and the ordering of a `children` block, see [Property mapping](projections/property-mapping.md#dictionary-entries) and [Children](projections/children.mdx#ordering-the-children). Both compilers report `PLAY0956`, `PLAY0958`, `PLAY0959` and `PLAY0960`; `PLAY0957` and `PLAY0961` are reported by the C# compiler only, which knows the event context catalog and the handled event's properties.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0956` | Error | A `remove <target>` line names a target without a dynamic key, so there is no entry to remove. End the target in `.$eventContent.<property>`, `.$eventContext.<path>` or `.$causedBy.<member>`; to empty the whole property, write `clear <target>`. |
+| `PLAY0957` | Error | A dynamic key is malformed: `.$eventContent` names no event property, or `.$causedBy` names a member other than `subject`, `name` or `userName`. |
+| `PLAY0958` | Error | A children ordering line is not `insert first`, `insert last` or `sort by <property> [ascending\|descending]`, takes indented lines, or stands outside a `children` block. |
+| `PLAY0959` | Error | A `children` block declares more than one ordering line. Keep one. |
+| `PLAY0960` | Warning | A children `sort by` names a property the element type of the collection does not declare. |
+| `PLAY0961` | Warning | A `.$eventContent.<path>` key names a path the event the mapping handles does not have, so the entry is never written. |
 
 ## Toolbar buttons
 

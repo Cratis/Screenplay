@@ -97,7 +97,14 @@ public record ChildrenSyntax(
     ExpressionSyntax IdentifiedBy,
     AutoMapMode AutoMap,
     IEnumerable<ProjectionBlockSyntax> Blocks,
-    SourceLocation Location) : ProjectionBlockSyntax(Location);
+    SourceLocation Location) : ProjectionBlockSyntax(Location)
+{
+    /// <summary>
+    /// Gets the <see cref="ChildrenOrderingSyntax"/> the block declares - <c>insert first</c>, <c>insert last</c> or
+    /// <c>sort by &lt;property&gt;</c> - or <see langword="null"/> when it declares none and new children are appended.
+    /// </summary>
+    public ChildrenOrderingSyntax? Ordering { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>nested</c> block projecting events into a single nullable child object.

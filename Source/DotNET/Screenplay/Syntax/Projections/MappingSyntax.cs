@@ -21,6 +21,33 @@ public abstract record MappingSyntax(string Property, SourceLocation Location) :
 public record SetMappingSyntax(string Property, ExpressionSyntax Source, SourceLocation Location) : MappingSyntax(Property, Location);
 
 /// <summary>
+/// Represents a <c>set once</c> mapping, such as <c>set once createdAt = $eventContext.occurred</c> - assigns the value
+/// only when the property has no value yet (it is missing or null), and leaves it untouched otherwise.
+/// </summary>
+/// <param name="Property">The dotted target property path on the read model, optionally ending in a dynamic key.</param>
+/// <param name="Source">The <see cref="ExpressionSyntax"/> providing the value.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// Both <c>=</c> and <c>to</c> are accepted after the target; they mean the same. Set-once is deterministic on replay:
+/// the first event that finds the property empty writes it, and every later one leaves it as it is.
+/// </remarks>
+public record SetOnceMappingSyntax(string Property, ExpressionSyntax Source, SourceLocation Location) : MappingSyntax(Property, Location);
+
+/// <summary>
+/// Represents a <c>remove</c> mapping, such as <c>remove slots.$eventContent.slot</c> - removes the dictionary entry
+/// the target's dynamic key resolves to when the event occurs.
+/// </summary>
+/// <param name="Property">The dotted target property path on the read model, ending in a dynamic key.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// The target must end in a dynamic key (<c>.$eventContext.&lt;path&gt;</c>, <c>.$eventContent.&lt;path&gt;</c> or
+/// <c>.$causedBy.&lt;member&gt;</c>); a target without one is reported. Removing a key that is not present does nothing.
+/// The line is distinct from the <c>remove with</c> and <c>remove via join</c> blocks; a property named <c>with</c> or
+/// <c>via</c> is written <c>@with</c> or <c>@via</c>.
+/// </remarks>
+public record RemoveKeyMappingSyntax(string Property, SourceLocation Location) : MappingSyntax(Property, Location);
+
+/// <summary>
 /// Represents a <c>clear</c> mapping - removes the value the property holds when the event occurs.
 /// </summary>
 /// <param name="Property">The dotted target property path on the read model.</param>
