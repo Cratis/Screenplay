@@ -1,6 +1,6 @@
 ---
 title: "Cratis Screenplay theme"
-description: "Declare a Cratis Screenplay theme as an implementation of a design system - palette, token values and per-mode values - and optionally which component packages it supports."
+description: "Declare a Screenplay theme as an implementation of a design system, with its palette, token values and per-mode values, and the component packages it supports."
 ---
 
 # Theme

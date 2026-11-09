@@ -1,6 +1,6 @@
 ---
 title: HTTP API description
-description: Describe every command and query of a Cratis Screenplay model as an OpenAPI 3.1 document with routes, methods, payloads, authorization and observable queries, for a builder or client on any stack.
+description: Export a Cratis Screenplay model as an OpenAPI 3.1 document describing each command and query with its route, method, payload, authorization and live updates.
 ---
 
 ## Describe the HTTP API of a model

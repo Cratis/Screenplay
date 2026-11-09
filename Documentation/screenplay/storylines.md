@@ -1,6 +1,6 @@
 ---
 title: "Storylines"
-description: "Name an ordered path through a Screenplay model, such as a user journey that crosses modules, features and slices."
+description: "Name an ordered path through a Screenplay model, such as a user journey across modules, features and slices, to review it, show it on a board and walk it."
 ---
 
 # Storylines

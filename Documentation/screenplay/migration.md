@@ -1,6 +1,6 @@
 ---
 title: "Migrate a Screenplay model to a new version"
-description: "Rewrite .play files written for an earlier Screenplay version with screenplay migrate, the MCP migrate tool or the VS Code command, read what needs review, and migrate a Screenplay 5 model to Screenplay 6."
+description: "Rewrite .play files from an earlier Screenplay version with screenplay migrate, the MCP tool or VS Code, review what needs attention, and move 5 to 6."
 ---
 
 # Migrate a model to a new version
