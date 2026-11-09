@@ -9242,6 +9242,14 @@
                         {
                           "kind": "SetMappingSyntax",
                           "property": "sentAt"
+                        },
+                        {
+                          "kind": "SetOnceMappingSyntax",
+                          "property": "firstSentAt",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "sentAt"
+                          }
                         }
                       ]
                     },
@@ -9321,6 +9329,36 @@
                       "property": "customer"
                     },
                     {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceLineItemAdded"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "quantityByLine.$eventContent.lineNumber"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceLineItemRemoved"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "RemoveKeyMappingSyntax",
+                          "property": "quantityByLine.$eventContent.lineNumber"
+                        }
+                      ]
+                    },
+                    {
                       "kind": "ChildrenSyntax",
                       "autoMap": "Disabled",
                       "blocks": [
@@ -9356,6 +9394,12 @@
                           "event": "InvoiceLineItemRemoved"
                         }
                       ],
+                      "ordering": {
+                        "kind": "ChildrenOrderingSyntax",
+                        "direction": "Ascending",
+                        "placement": "Sorted",
+                        "sortBy": "lineNumber"
+                      },
                       "property": "lineItems"
                     },
                     {
@@ -9594,6 +9638,18 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
+                      "name": "firstSentAt",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "DateTime"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
                       "name": "paidAt",
                       "type": {
                         "kind": "TypeRefSyntax",
@@ -9636,6 +9692,18 @@
                         "isCollection": true,
                         "isOptional": false,
                         "name": "InvoiceLineItem"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "quantityByLine",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "Quantity"
                       }
                     },
                     {
@@ -10074,6 +10142,14 @@
                         {
                           "kind": "PropertyMappingSyntax",
                           "property": "sentAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T09:00:00Z"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "firstSentAt",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
                             "value": "2026-10-02T09:00:00Z"
