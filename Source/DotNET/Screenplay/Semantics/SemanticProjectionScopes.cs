@@ -96,7 +96,7 @@ public sealed record SemanticProjectionChildren(
     SemanticProjectionScope Scope)
 {
     /// <summary>
-    /// Gets where a new child goes, or <see langword="null"/> when it is appended (ESM v42).
+    /// Gets where a new child goes, or <see langword="null"/> when it is appended (ESM v43).
     /// </summary>
     public SemanticProjectionChildrenOrdering? Ordering { get; init; }
 }

@@ -25,12 +25,21 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _scopedIdentities = new(StringComparer.Ordinal)
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
-        "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "ordering/sortBy",
+        "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "navigation/screen", "actions/then",
+        "ordering/sortBy",
+    };
+
+    // Scoped literals whose property name is an identity name elsewhere.
+    static readonly HashSet<string> _literalsNamedLikeIdentities = new(StringComparer.Ordinal)
+    {
+        "then/target", "nodes/trigger", "timeZone/id", "navigation/trigger",
     };
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
         "then/target", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "screens/title", "screens/description", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
+        "layout/fits", "regions/shows", "regions/title", "regions/actions",
     };
 
     // All remaining string emissions from the nine canonical writer partials. Unknown strings fail closed;
@@ -92,7 +101,7 @@ internal static class SemanticStringClassification
     static bool IsIdentity(JsonElement container, string owner, string property) => IsIdentityScoped(container, owner, property, $"{owner}/{property}");
 
     static bool IsIdentityScoped(JsonElement container, string owner, string property, string scoped) =>
-        !(string.Equals(scoped, "then/target", StringComparison.Ordinal) || string.Equals(scoped, "nodes/trigger", StringComparison.Ordinal) || string.Equals(scoped, "timeZone/id", StringComparison.Ordinal)) && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
+        !_literalsNamedLikeIdentities.Contains(scoped) && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
 
     static bool VariantIdentity(JsonElement container, string owner, string property) => property switch
     {

@@ -109,7 +109,7 @@ public enum SemanticProjectionOperation
     Decrement = 5,
 
     /// <summary>
-    /// Assigns the source value only when the target has no value yet - it is missing or null (ESM v42).
+    /// Assigns the source value only when the target has no value yet - it is missing or null (ESM v43).
     /// </summary>
     SetOnce = 6
 }

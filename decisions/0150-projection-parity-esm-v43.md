@@ -1,6 +1,6 @@
 ---
-id: 0149
-title: Write once, key a dictionary by the event or its cause, remove a key and order children in projections (ESM v42)
+id: 0150
+title: Write once, key a dictionary by the event or its cause, remove a key and order children in projections (ESM v43)
 status: accepted
 stage: designed
 class: contract
@@ -36,7 +36,7 @@ projection Models => ModelReadModel
 - **`remove <target>`** removes the dictionary entry the target's dynamic key names; a target without a dynamic key is an error (`PLAY0956`). `remove with` and `remove via join` stay block directives; a property named `with` or `via` is written `remove @with...`, as `clear @with` already is.
 - **Children ordering.** A `children` block takes at most one `insert first`, `insert last` or `sort by <path> [ascending|descending]` line (`PLAY0958` malformed or misplaced, `PLAY0959` more than one). The sort path is checked against the element type (`PLAY0960`). The order is stored: a child is placed when it is added and never moved by an update; sorting is stable, a missing value first ascending and last descending. `insert last` is what a block without an ordering does.
 - **`$causedBy.<member>`** binds in the executable model to the same value as `$eventContext.causedBy.<member>`; Chronicle resolves it at runtime ([Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119), closed). A bare `$causedBy` is still refused as a value.
-- **ESM v42.** A set-once mapping (`"operation":"setOnce"`) or a children ordering (`"ordering":{"placement":"prepend"}` or `{"placement":"sorted","sortBy":[…],"direction":…}`) selects 42.0. A model that uses neither keeps its version and bytes, `insert last` binds to no ordering. Dynamic keys and `remove` stay outside the executable model, which has no dictionary-keyed property; the binder refuses them as before.
+- **ESM v43.** A set-once mapping (`"operation":"setOnce"`) or a children ordering (`"ordering":{"placement":"prepend"}` or `{"placement":"sorted","sortBy":[…],"direction":…}`) selects 43.0, the version after screens ([0149](0149-screens-in-the-executable-model.md)); a model that also admits screens stays at 43.0. A model that uses neither keeps its version and bytes, `insert last` binds to no ordering. Dynamic keys and `remove` stay outside the executable model, which has no dictionary-keyed property; the binder refuses them as before.
 
 ## Consequences
 

@@ -28,5 +28,5 @@ public class a_set_once_mapping : given.a_scoped_projection_plan
     [Fact] void should_project() => _failure.ShouldBeNull();
     [Fact] void should_keep_the_first_value() => SemanticValueRules.AreEqual(Value(FirstOrder, "label"), Text("first")).ShouldBeTrue();
     [Fact] void should_write_into_an_empty_target_whichever_event_comes_first() => SemanticValueRules.AreEqual(Value(SecondOrder, "label"), Text("courier")).ShouldBeTrue();
-    [Fact] void should_bind_the_model_to_esm_v42() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V42);
+    [Fact] void should_bind_the_model_to_esm_v43() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V43);
 }

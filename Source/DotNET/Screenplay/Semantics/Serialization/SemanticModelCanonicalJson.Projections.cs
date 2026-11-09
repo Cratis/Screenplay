@@ -91,7 +91,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    // ESM v42: only a sorted collection names its sort property and direction.
+    // ESM v43: only a sorted collection names its sort property and direction.
     static void WriteChildrenOrdering(Utf8JsonWriter writer, SemanticProjectionChildrenOrdering ordering)
     {
         writer.WriteStartObject();

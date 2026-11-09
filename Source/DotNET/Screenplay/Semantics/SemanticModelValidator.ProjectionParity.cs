@@ -4,11 +4,11 @@
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Version rules of the ESM v42 projection constructs: set-once mappings and the stored order of a children collection.
+/// Version rules of the ESM v43 projection constructs: set-once mappings and the stored order of a children collection.
 /// </summary>
 internal static partial class SemanticModelValidator
 {
-    // ESM v42 constructs: a set-once projection mapping, or a children collection with a declared placement.
+    // ESM v43 constructs: a set-once projection mapping, or a children collection with a declared placement.
     internal static bool UsesProjectionParity(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Projections).Any(projection =>
             ProjectionMappings(projection).Any(mapping => mapping.Operation == SemanticProjectionOperation.SetOnce) ||
@@ -23,9 +23,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesProjectionParity(application),
             version,
-            SemanticVersion.V42,
-            "An ESM v42 model must declare a set-once projection mapping or an ordered children collection.",
-            "Set-once projection mappings and ordered children collections require ESM v42.");
+            SemanticVersion.V43,
+            "An ESM v43 model must declare a set-once projection mapping or an ordered children collection.",
+            "Set-once projection mappings and ordered children collections require ESM v43.");
         ValidateChildrenOrderings(application);
     }
 

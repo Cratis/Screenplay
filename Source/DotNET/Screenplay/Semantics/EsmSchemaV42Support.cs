@@ -6,8 +6,7 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Declares the language and semantic version pairs of ESM schema v42, which adds set-once projection mappings and the
-/// stored order of a children collection.
+/// Declares the language and semantic version pairs of ESM schema v42, which adds screens as a stack-neutral UI contract.
 /// </summary>
 public static class EsmSchemaV42Support
 {

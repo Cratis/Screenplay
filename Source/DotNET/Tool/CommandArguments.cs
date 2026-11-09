@@ -5,10 +5,12 @@ using Cratis.Screenplay.Contracts;
 
 namespace Cratis.Screenplay.Tool;
 
-// Splits arguments into positional values and the valued options a command declares; each option at most once.
+// Splits arguments into positional values, the valued options and the flags a command declares; each option at most once.
 sealed record CommandArguments(IReadOnlyList<string> Positional, IReadOnlyDictionary<string, string> Options)
 {
     internal string? Option(CliOption option) => Options.TryGetValue(option.Name, out var value) ? value : null;
+
+    internal bool Flag(CliOption option) => Options.ContainsKey(option.Name);
 
     internal static CommandArguments? Parse(string[] args, CliCommand command)
     {
@@ -23,7 +25,14 @@ sealed record CommandArguments(IReadOnlyList<string> Positional, IReadOnlyDictio
                 continue;
             }
 
-            if (!command.Options.Any(option => option.Name == argument) || options.ContainsKey(argument) ||
+            var declared = command.Options.FirstOrDefault(option => option.Name == argument);
+            if (declared is { Value: null } && !options.ContainsKey(argument))
+            {
+                options[argument] = string.Empty;
+                continue;
+            }
+
+            if (declared is null || options.ContainsKey(argument) ||
                 ++index >= args.Length || args[index].StartsWith("--", StringComparison.Ordinal) || string.IsNullOrWhiteSpace(args[index]))
             {
                 return null;

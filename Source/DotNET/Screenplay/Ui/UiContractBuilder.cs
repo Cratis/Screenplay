@@ -21,13 +21,8 @@ public static class UiContractBuilder
     public static UiContract For(ScreenplayWorkspace workspace)
     {
         ArgumentNullException.ThrowIfNull(workspace);
-        var roots = WorkspaceSyntaxIndex.Create(workspace).Entries
-            .Where(entry => entry.Parent is null && entry.Node is ApplicationSyntax)
-            .Select(entry => new CompilationResult<ApplicationSyntax>((ApplicationSyntax)entry.Node, []))
-            .ToArray();
-        var syntax = PlayFolderMerge.Merge(roots).Value ?? throw new InvalidOperationException("The workspace sources do not merge into one application.");
         var model = workspace.Compilation.Success ? workspace.Compilation.Value?.Model : null;
-        return For(syntax, model, workspace.ApplicationName);
+        return For(MergedSyntax(workspace), model, workspace.ApplicationName);
     }
 
     /// <summary>
@@ -48,6 +43,17 @@ public static class UiContractBuilder
     }
 
     /// <summary>
+    /// Reads the UI contract from the screens an ESM v42 executable model holds, with no sources and no Scene layer.
+    /// </summary>
+    /// <param name="model">An executable model whose screens were admitted with <see cref="ExecutableScreens"/>.</param>
+    /// <returns>The contract of every screen the model holds.</returns>
+    public static UiContract For(ExecutableSemanticModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        return new UiExecutableReader(model).Read();
+    }
+
+    /// <summary>
     /// Keeps the screens of one module, feature or slice.
     /// </summary>
     /// <param name="contract">The contract.</param>
@@ -59,5 +65,14 @@ public static class UiContractBuilder
         var screens = contract.Screens.Where(screen => screen.Slice == scope || screen.Slice.StartsWith($"{scope}.", StringComparison.Ordinal)).ToArray();
         if (screens.Length == 0) throw new InvalidSemanticModelScope($"Scope '{scope}' names no module, feature or slice with a screen.");
         return contract with { Screens = screens };
+    }
+
+    internal static ApplicationSyntax MergedSyntax(ScreenplayWorkspace workspace)
+    {
+        var roots = WorkspaceSyntaxIndex.Create(workspace).Entries
+            .Where(entry => entry.Parent is null && entry.Node is ApplicationSyntax)
+            .Select(entry => new CompilationResult<ApplicationSyntax>((ApplicationSyntax)entry.Node, []))
+            .ToArray();
+        return PlayFolderMerge.Merge(roots).Value ?? throw new InvalidOperationException("The workspace sources do not merge into one application.");
     }
 }

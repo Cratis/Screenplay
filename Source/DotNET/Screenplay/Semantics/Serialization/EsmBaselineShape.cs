@@ -146,5 +146,13 @@ internal enum EsmBaselineShape
     CommandCalendar,
     ClockOperand,
     ClockOffset,
-    ContextMember
+    ContextMember,
+    Screen,
+    ScreenData,
+    ScreenField,
+    ScreenAction,
+    ScreenInput,
+    ScreenNavigation,
+    ScreenLayout,
+    ScreenRegion
 }

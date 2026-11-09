@@ -9,7 +9,7 @@ A Screenplay screen connects the data a user needs to see with the actions they 
 
 Start with a query and the commands the user needs. Add a template when you need to place that content in named regions; use [forms](forms.md) for command input rather than redeclaring command properties on the screen.
 
-To build the user interface on a stack that does not read Scene, export the [UI contract](ui-contract.md): every screen's data, actions, navigation and layout as stack-neutral JSON.
+To build the user interface on a stack that does not read Scene, export the [UI contract](ui-contract.md): every screen's data, actions, navigation and layout as stack-neutral JSON. The same members can be [admitted to the executable model](ui-contract.md#screens-in-the-executable-model) as ESM v42, keyed to the identities of the queries, commands and screens they reference.
 
 ## The structure a screen fills
 

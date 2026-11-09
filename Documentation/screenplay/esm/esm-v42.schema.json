@@ -464,29 +464,8 @@
         "identifiedBy": {
           "type": "string"
         },
-        "ordering": {
-          "$ref": "#/$defs/ChildrenOrdering"
-        },
         "scope": {
           "$ref": "#/$defs/Scope"
-        }
-      }
-    },
-    "ChildrenOrdering": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "placement": {
-          "type": "string"
-        },
-        "sortBy": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "direction": {
-          "type": "string"
         }
       }
     },
@@ -2476,6 +2455,180 @@
         }
       }
     },
+    "Screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenData"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenAction"
+          }
+        },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenNavigation"
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/ScreenLayout"
+        }
+      }
+    },
+    "ScreenAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenInput"
+          }
+        },
+        "when": {
+          "type": "string"
+        },
+        "then": {
+          "type": "string"
+        }
+      }
+    },
+    "ScreenData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "by": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenField"
+          }
+        }
+      }
+    },
+    "ScreenField": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "ScreenInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        }
+      }
+    },
+    "ScreenLayout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenRegion"
+          }
+        }
+      }
+    },
+    "ScreenNavigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "screen": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "by": {
+          "type": "string"
+        },
+        "opens": {
+          "type": "string"
+        }
+      }
+    },
+    "ScreenRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "shows": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScreenRegion"
+          }
+        }
+      }
+    },
     "Secret": {
       "type": "object",
       "additionalProperties": false,
@@ -2560,6 +2713,12 @@
         },
         "direction": {
           "type": "string"
+        },
+        "screens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Screen"
+          }
         }
       }
     },

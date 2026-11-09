@@ -517,7 +517,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
     // Screenplay 6 placement (Cratis/Screenplay#1178) - fits, pickers, slots that show a selection, the routed and docked slots of
     // the List template and the slice only a hook issues - has its own parser, printer and compiler specs; the frozen bytes predate it.
-    // Set once and the children sort (decision 0149) have their own parser, printer, conformance and
+    // Set once and the children sort (decision 0150) have their own parser, printer, conformance and
     // evaluator specs; the frozen bytes predate them, so the invoice details slice is restored to its pre-feature shape.
     static ApplicationSyntax WithoutSampleProjectionParity(ApplicationSyntax application) => application with
     {

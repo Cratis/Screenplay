@@ -19,8 +19,8 @@ In practice that means:
 - **The default key is the event source.** A `from` block without a key, and one with `key $eventSourceId`, are the same declaration. The key is resolved from the event's inline key, then the block's key, then the event source - never from a `key` written directly on the projection.
 - **`from A, B` is one transition per event**, and all of them share the block's mappings.
 - **`clear x` and `x = null` are one operation**, and **`count` is `increment`.**
-- **`set once x = v` writes only an empty target.** A target that is missing or null takes the value; one that holds a value keeps it (ESM v42, operation `setOnce`).
-- **A children ordering is stored.** `insert first` adds a new child at the start and `sort by` sorts the collection, stably, when a child is added; an update never moves a child (ESM v42, `ordering` on the children). `insert last` is what a block without an ordering does and binds to no ordering.
+- **`set once x = v` writes only an empty target.** A target that is missing or null takes the value; one that holds a value keeps it (ESM v43, operation `setOnce`).
+- **A children ordering is stored.** `insert first` adds a new child at the start and `sort by` sorts the collection, stably, when a child is added; an update never moves a child (ESM v43, `ordering` on the children). `insert last` is what a block without an ordering does and binds to no ordering.
 - **Arithmetic is typed by the read model.** `add` and `subtract` convert both operands to the target property's type before the operation - a whole-number target rounds half to even - and a target with no value yet starts at zero. There are no arithmetic operators; `add … by` and `subtract … by` are the whole arithmetic surface.
 - **A source with no value sets the target to null.**
 - **Nested paths create what is missing.** `quantity.amount = amount` creates `quantity` if it is absent; `basis = quantity.basis` reads through a composite event property.
