@@ -649,7 +649,7 @@ and `page` (`revision`, `totalCount`, `offset`, `items`, `nextOffset`). Filters 
 | --- | --- |
 | `anchor` | `{ semanticId }` (including an orphan's ID), `{ application: true }`, a dotted `{ address, kind }`, a typed `{ kind, parts }` address or a current source handle |
 | `scope` | Optional dotted module/feature/slice; descendants and ancestor notes |
-| `kind` | `question`, `task`, `note`; omitted selects all kinds |
+| `kind` | `question`, `task`, `note`, `issue`; omitted selects all kinds |
 | `state` | `open` (default), `resolved`, `orphaned`, `all` |
 | `ref` | Exact reference identifier in `refs` or `resolution.ref` |
 | `view` | `items` (default) or `findings` |

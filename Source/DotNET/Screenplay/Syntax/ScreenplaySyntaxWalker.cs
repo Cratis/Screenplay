@@ -706,6 +706,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var placement in syntax.Placements) VisitNode(placement);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
 
         if (syntax.File is not null)

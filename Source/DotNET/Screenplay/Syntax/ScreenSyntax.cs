@@ -63,6 +63,11 @@ public record ScreenSyntax(
     /// Gets where the screen fits, in order of preference - <c>fits dialog, drawer, pane</c>. Empty when the screen does not say.
     /// </summary>
     public IEnumerable<ScreenFit> Fits { get; init; } = [];
+
+    /// <summary>
+    /// Gets the sketches, HTML mockup pages and images the screen carries, in authored order.
+    /// </summary>
+    public IEnumerable<ScreenVisualSyntax> Visuals { get; init; } = [];
 }
 
 /// <summary>

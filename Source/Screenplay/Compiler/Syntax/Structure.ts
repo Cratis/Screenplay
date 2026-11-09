@@ -36,8 +36,18 @@ export type SliceType = 'StateChange' | 'StateView' | 'Automation' | 'Translate'
 
 export const sliceTypes: readonly SliceType[] = ['StateChange', 'StateView', 'Automation', 'Translate'];
 
+// 'shows event|readmodel <Name>' - a linked copy of an element declared in another slice.
+export type SlicePlacementKind = 'Event' | 'ReadModel';
+
+export interface SlicePlacementSyntax extends SyntaxNode {
+    readonly kind: 'SlicePlacementSyntax';
+    readonly syntaxKind: SlicePlacementKind;
+    readonly name: string;
+}
+
 export interface SliceSyntax extends SyntaxNode {
     readonly purposes?: readonly PurposeReferenceSyntax[];
+    readonly placements?: readonly SlicePlacementSyntax[];
     readonly kind: 'SliceSyntax';
     readonly direction?: TranslationDirection | null;
     readonly documentation?: string | null;

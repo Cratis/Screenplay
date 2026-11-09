@@ -278,6 +278,7 @@ static class ContractAdmission
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("public", Slice + "      public event Recorded\n        value String\n"),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
+        new("shows", Slice + Event + "    slice StateView V\n      shows event Recorded\n", Baseline: Slice + Event),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
         new("sticky", "persona Person\nsticky note on personas\n  description \"A note\"\n  position 10 20\n", Baseline: "persona Person\n"),
         new("system", "system External\n"),

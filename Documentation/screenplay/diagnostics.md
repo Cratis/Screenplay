@@ -1766,6 +1766,19 @@ A `storyline` names an ordered path through the model. See [Storylines](storylin
 | `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
 | `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
 
+## Screen visuals and slice placements
+
+Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#sketches-mockups-and-images), and the linked copies a slice shows, see [Slices](slices.md#show-an-element-in-more-than-one-slice). Both compilers report `PLAY0950`, `PLAY0951` and `PLAY0953` to `PLAY0955`. `PLAY0952` needs the files beside the model, so it is reported where a model root is opened: the MCP server, `open-workspace` and the tools built on them.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0950` | Error | A screen's `sketch`, `mockup` or `image` line names no file. Write the path after the keyword, relative to the model root. |
+| `PLAY0951` | Warning | A screen's `image` is not a PNG, JPG, GIF, SVG or WebP file, or its `mockup` is not an HTML page ending in `.html` or `.htm`. |
+| `PLAY0952` | Warning | A screen's sketch, mockup or image file is not beside the model: it does not exist, or its path leaves the model root. |
+| `PLAY0953` | Error | A slice's `shows` line is not `shows event <Name>` or `shows readmodel <Name>`. |
+| `PLAY0954` | Warning | A slice shows an event or read model the application does not declare. |
+| `PLAY0955` | Warning | A slice shows an element it already declares itself, or shows the same element twice. Remove the extra line. |
+
 ## Toolbar buttons
 
 The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.

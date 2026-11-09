@@ -16,8 +16,9 @@ element is renamed or moved through the authoring tools.
 ## Choose the right home
 
 Use a question for an unresolved modeling choice, a task for work to do,
-and a note for review context you want to retain. All three kinds can be open
-or resolved. They live in `.screenplay/notes.json`, a sidecar file kept alongside
+a note for review context you want to retain, and an issue to link an element to
+the work item that tracks it in GitHub, Jira, Linear or another tracker. All four
+kinds can be open or resolved. They live in `.screenplay/notes.json`, a sidecar file kept alongside
 the model rather than inside `.play` syntax.
 
 A `description` states what an element means. A `documentation` block explains
@@ -103,6 +104,32 @@ with that specification's ID. If the answer only clarifies terminology, update t
 description and resolve against that element. If D123 settles policy outside the
 model, resolve with `by: "external-decision"` and its reference. Reopen the note
 if the answer stops being adequate.
+
+## Link elements to issues
+
+An `issue` note links the element it is anchored to with one or more issues in an
+external tracker, so the work that builds or changes a slice, a command or a screen
+is one click away from the model. Every reference of an issue note names its tracker:
+
+```json
+{
+  "kind": "issue",
+  "text": "Build the cancellation flow",
+  "anchor": { "semanticId": "..." },
+  "refs": [
+    { "tracker": "github", "id": "Cratis/Shop#412", "url": "https://github.com/Cratis/Shop/issues/412" },
+    { "tracker": "jira", "id": "SHOP-77" }
+  ]
+}
+```
+
+`tracker` is `github`, `jira`, `linear` or `other`, `id` is the issue key as the
+tracker shows it, and `url` is optional. An issue note needs at least one reference,
+and a reference without a tracker is refused. Because the note is anchored by stable
+identity, the link survives renames and moves. `list-model-notes` with `kind: "issue"`
+lists every link and `ref: "SHOP-77"` finds the elements an issue covers. The server
+never calls the tracker: keeping the issue's own status current is the tracker's job,
+and resolving the note records that the link no longer needs attention.
 
 ## Review and commit notes
 

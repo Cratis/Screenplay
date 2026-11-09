@@ -279,6 +279,7 @@
     "min",
     "minute",
     "minutes",
+    "mockup",
     "mode",
     "modes",
     "module",
@@ -442,6 +443,7 @@
     "signup",
     "sink",
     "size",
+    "sketch",
     "slice",
     "slot",
     "source",
@@ -38712,6 +38714,502 @@
       ]
     },
     {
+      "name": "shows",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n    slice StateView V\n      shows event Recorded\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": null,
+          "diagnostics": [],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 11,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 12,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 13,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 14,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 15,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 16,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 17,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 18,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 19,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 20,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 21,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 22,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 23,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 24,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 25,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 26,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 27,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 28,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 29,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 30,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 31,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 32,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 33,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 34,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 35,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 36,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 37,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 38,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 40,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 41,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 11,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 12,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 13,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 14,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 15,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 16,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 17,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 18,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 19,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 20,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 21,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 22,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 23,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 24,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 25,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 26,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 27,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 28,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 29,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 30,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 31,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 32,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 33,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 34,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 35,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 36,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 37,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 38,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 40,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 41,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        }
+      ]
+    },
+    {
       "name": "sink",
       "parseStatus": "accepted",
       "probes": [
@@ -59245,6 +59743,72 @@
       "title": "Two storyline declarations carry the same name.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0950",
+      "name": "InvalidScreenVisual",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen\u0027s sketch, mockup or image line names no file.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0951",
+      "name": "UnexpectedScreenVisualFile",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A screen\u0027s image is not a PNG, JPG, GIF, SVG or WebP file, or its mockup is not an HTML page.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0952",
+      "name": "ScreenVisualMissing",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A screen\u0027s sketch, mockup or image file does not exist beside the model.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0953",
+      "name": "InvalidSlicePlacement",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A slice\u0027s shows line is not shows event \u003CName\u003E or shows readmodel \u003CName\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0954",
+      "name": "UnknownPlacedElement",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A slice shows an event or read model the application does not declare.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0955",
+      "name": "RedundantSlicePlacement",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A slice shows an element it already declares, or shows the same element twice.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
@@ -60612,7 +61176,8 @@
             "enum": [
               "question",
               "task",
-              "note"
+              "note",
+              "issue"
             ]
           },
           "state": {
@@ -62615,7 +63180,8 @@
                   "enum": [
                     "question",
                     "task",
-                    "note"
+                    "note",
+                    "issue"
                   ]
                 },
                 "text": {
@@ -62636,6 +63202,15 @@
                         "type": "string",
                         "format": "uri",
                         "pattern": "^https?://"
+                      },
+                      "tracker": {
+                        "type": "string",
+                        "enum": [
+                          "github",
+                          "jira",
+                          "linear",
+                          "other"
+                        ]
                       }
                     },
                     "required": [
@@ -62942,6 +63517,15 @@
                           "type": "string",
                           "format": "uri",
                           "pattern": "^https?://"
+                        },
+                        "tracker": {
+                          "type": "string",
+                          "enum": [
+                            "github",
+                            "jira",
+                            "linear",
+                            "other"
+                          ]
                         }
                       },
                       "required": [
@@ -62962,7 +63546,7 @@
                 "operation"
               ],
               "additionalProperties": false,
-              "description": "add requires kind/text/author and exactly anchor or target; other operations require id. resolve requires resolution (server supplies at); reanchor requires exactly anchor or target. IDs and createdAt are server generated. Text is nonempty, trimmed, at most 16384 characters. No authoring-key or document anchors."
+              "description": "add requires kind/text/author and exactly anchor or target; other operations require id. resolve requires resolution (server supplies at); reanchor requires exactly anchor or target. IDs and createdAt are server generated. Text is nonempty, trimmed, at most 16384 characters. No authoring-key or document anchors. An issue note links its anchor to issues in an external tracker: every ref names its tracker (github, jira, linear or other), id is the issue key and url its page."
             },
             "maxItems": 200,
             "minItems": 1

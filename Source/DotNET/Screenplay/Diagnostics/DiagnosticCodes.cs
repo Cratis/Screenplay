@@ -4180,4 +4180,34 @@ public static class DiagnosticCodes
     /// Two <c>storyline</c> declarations carry the same name.
     /// </summary>
     public const string DuplicateStoryline = "PLAY0943";
+
+    /// <summary>
+    /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
+    /// </summary>
+    public const string InvalidScreenVisual = "PLAY0950";
+
+    /// <summary>
+    /// A screen's <c>image</c> is not a PNG, JPG, GIF, SVG or WebP file, or its <c>mockup</c> is not an HTML page.
+    /// </summary>
+    public const string UnexpectedScreenVisualFile = "PLAY0951";
+
+    /// <summary>
+    /// A screen's sketch, mockup or image file does not exist beside the model.
+    /// </summary>
+    public const string ScreenVisualMissing = "PLAY0952";
+
+    /// <summary>
+    /// A slice's <c>shows</c> line is not <c>shows event &lt;Name&gt;</c> or <c>shows readmodel &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidSlicePlacement = "PLAY0953";
+
+    /// <summary>
+    /// A slice shows an event or read model the application does not declare.
+    /// </summary>
+    public const string UnknownPlacedElement = "PLAY0954";
+
+    /// <summary>
+    /// A slice shows an element it already declares, or shows the same element twice.
+    /// </summary>
+    public const string RedundantSlicePlacement = "PLAY0955";
 }

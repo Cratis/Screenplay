@@ -203,8 +203,27 @@ There is no automatic split because the new slice's name, placement and specific
 | `screen` | `StateView` | [Screens](screens.md) |
 | `reaction` | `Automation` | [Reactions](reactions.md) |
 | `capture` | `Translate` | [Captures](captures.md) |
+| `shows` | any | [Show an element in more than one slice](#show-an-element-in-more-than-one-slice) |
 
 Use as many of these constructs as the behavior needs. A slice may contain several commands or events, or [several projections](projections/index.md#several-projections-in-one-slice). Only `description` is limited to one; the boundary is the behavior, not a count of artifacts.
+
+### Show an element in more than one slice
+
+On an event model timeline the same event or read model often belongs in more than one place: where it is produced, and again where a later slice reads it. Declare it once and let the other slices show it:
+
+```screenplay
+slice StateChange PlaceOrder
+  event OrderPlaced
+    orderId OrderId
+
+slice StateView ShipOrder
+  shows event OrderPlaced
+  shows readmodel OpenOrders
+```
+
+`shows event <Name>` and `shows readmodel <Name>` place a linked copy of a declaration from elsewhere in the application on this slice. The copy refers to the declaration, so a board draws both occurrences as the same element, editing either edits the one declaration, and renaming the declaration renames every placement. A placement is presentation only: it adds nothing to the executable semantic model and changes no behavior.
+
+The compiler refuses a malformed line (`PLAY0953`), warns when no event or read model has the name (`PLAY0954`), and warns when the slice declares the element itself or shows it twice (`PLAY0955`).
 
 ## Example
 

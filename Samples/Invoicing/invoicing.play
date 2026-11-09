@@ -1430,6 +1430,8 @@ module Invoicing
 
     slice StateChange CancelInvoice
       description "Cancels an invoice that will not be paid, optionally refunding it"
+      shows event InvoiceRegistered
+      shows readmodel InvoiceListReadModel
 
       command CancelInvoice
         invoiceId     InvoiceId identifier
@@ -2004,6 +2006,9 @@ module Invoicing
         remove with InvoiceCancelled
 
       screen InvoiceList
+        sketch Screens/invoice-list.sketch.svg
+        mockup Screens/invoice-list.html
+        image Screens/invoice-list.png
         title $strings.invoices.title
         data InvoiceListReadModel[] via query ListInvoices
         on load

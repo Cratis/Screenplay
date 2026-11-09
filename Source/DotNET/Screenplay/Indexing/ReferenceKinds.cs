@@ -39,6 +39,8 @@ static class ReferenceKinds
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),
         PolicyReferenceSyntax value => [(value.Name, ["Policy"], "authorizes")],
         PurposeReferenceSyntax value => [(value.Name, ["Purpose"], "purpose")],
+        SlicePlacementSyntax { Kind: SlicePlacementKind.Event } value => [(value.Name, _eventKinds, "shows")],
+        SlicePlacementSyntax value => [(value.Name, ["ReadModel"], "shows")],
         TypeRefSyntax value when owner is IdentityDetailSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "identityDetailType")],
         TypeRefSyntax value when owner is QuerySyntax query && ReferenceEquals(query.ReturnType, value) && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "queryResult")],
         TypeRefSyntax value when owner is ScreenSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel"], "dataReadModel")],

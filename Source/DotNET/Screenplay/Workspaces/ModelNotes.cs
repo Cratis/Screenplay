@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Workspaces;
 /// A durable, unverified modeling note, outside the executable model.
 /// </summary>
 /// <param name="Id">The random note identity.</param>
-/// <param name="Kind">question, task or note.</param>
+/// <param name="Kind">question, task, note or issue - a link to an issue in an external tracker.</param>
 /// <param name="Text">Committed plain text.</param>
 /// <param name="Anchor">The stable model anchor.</param>
 /// <param name="LastAddress">The last known display address, never used for resolution.</param>
@@ -31,9 +31,15 @@ public sealed record ModelNotesAnchor(string? SemanticId = null, bool? Applicati
 /// <summary>
 /// An external identifier and optional HTTP(S) URL.
 /// </summary>
-/// <param name="Id">The identifier.</param>
+/// <param name="Id">The identifier - for an issue, its key in the tracker, such as <c>Cratis/Studio#12</c> or <c>SHOP-42</c>.</param>
 /// <param name="Url">The optional URL.</param>
-public sealed record ModelNotesReference(string Id, string? Url = null);
+public sealed record ModelNotesReference(string Id, string? Url = null)
+{
+    /// <summary>
+    /// Gets the issue tracker the identifier belongs to - github, jira, linear or other - or null when it is not an issue.
+    /// </summary>
+    public string? Tracker { get; init; }
+}
 
 /// <summary>
 /// The explicit reason a note is resolved.
