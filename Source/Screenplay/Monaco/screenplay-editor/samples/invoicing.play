@@ -2229,7 +2229,6 @@ module Invoicing
         overdueAt            DateTime optional
         customerName         String optional
         lineItems            InvoiceLineItem[]
-        quantityByLine       Quantity optional
         shipping             Shipment optional
         lastUpdatedAt        DateTime optional
 
@@ -2274,10 +2273,6 @@ module Invoicing
           with CustomerRegistered
             no automap
             customerName = name
-        from InvoiceLineItemAdded
-          quantityByLine.$eventContent.lineNumber = quantity
-        from InvoiceLineItemRemoved
-          remove quantityByLine.$eventContent.lineNumber
         children lineItems identified by lineNumber
           no automap
           sort by lineNumber

@@ -9329,36 +9329,6 @@
                       "property": "customer"
                     },
                     {
-                      "kind": "FromSyntax",
-                      "events": [
-                        {
-                          "kind": "EventSpecSyntax",
-                          "event": "InvoiceLineItemAdded"
-                        }
-                      ],
-                      "mappings": [
-                        {
-                          "kind": "SetMappingSyntax",
-                          "property": "quantityByLine.$eventContent.lineNumber"
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "FromSyntax",
-                      "events": [
-                        {
-                          "kind": "EventSpecSyntax",
-                          "event": "InvoiceLineItemRemoved"
-                        }
-                      ],
-                      "mappings": [
-                        {
-                          "kind": "RemoveKeyMappingSyntax",
-                          "property": "quantityByLine.$eventContent.lineNumber"
-                        }
-                      ]
-                    },
-                    {
                       "kind": "ChildrenSyntax",
                       "autoMap": "Disabled",
                       "blocks": [
@@ -9692,18 +9662,6 @@
                         "isCollection": true,
                         "isOptional": false,
                         "name": "InvoiceLineItem"
-                      }
-                    },
-                    {
-                      "kind": "PropertySyntax",
-                      "isGenerated": false,
-                      "isIdentifier": false,
-                      "name": "quantityByLine",
-                      "type": {
-                        "kind": "TypeRefSyntax",
-                        "isCollection": false,
-                        "isOptional": true,
-                        "name": "Quantity"
                       }
                     },
                     {

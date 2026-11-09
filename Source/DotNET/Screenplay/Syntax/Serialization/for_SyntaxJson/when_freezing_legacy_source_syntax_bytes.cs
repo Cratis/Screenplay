@@ -517,7 +517,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
     // Screenplay 6 placement (Cratis/Screenplay#1178) - fits, pickers, slots that show a selection, the routed and docked slots of
     // the List template and the slice only a hook issues - has its own parser, printer and compiler specs; the frozen bytes predate it.
-    // Set once, dictionary entries and the children sort (decision 0149) have their own parser, printer, conformance and
+    // Set once and the children sort (decision 0149) have their own parser, printer, conformance and
     // evaluator specs; the frozen bytes predate them, so the invoice details slice is restored to its pre-feature shape.
     static ApplicationSyntax WithoutSampleProjectionParity(ApplicationSyntax application) => application with
     {
@@ -531,12 +531,11 @@ public partial class when_freezing_legacy_source_syntax_bytes
         {
             ReadModels = slice.ReadModels.Select(readModel => readModel with
             {
-                Properties = readModel.Properties.Where(property => property.Name is not ("firstSentAt" or "quantityByLine")).ToArray()
+                Properties = readModel.Properties.Where(property => property.Name != "firstSentAt").ToArray()
             }).ToArray(),
             Projections = slice.Projections.Select(projection => projection with
             {
                 Blocks = projection.Blocks
-                    .Where(block => block is not Projections.FromSyntax handler || handler.Events.All(@event => @event.Event is not ("InvoiceLineItemAdded" or "InvoiceLineItemRemoved")))
                     .Select(block => block switch
                     {
                         Projections.FromSyntax handler => handler with { Mappings = handler.Mappings.Where(mapping => mapping is not Projections.SetOnceMappingSyntax).ToArray() },

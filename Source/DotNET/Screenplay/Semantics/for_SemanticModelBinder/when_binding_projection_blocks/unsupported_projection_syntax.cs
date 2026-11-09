@@ -18,6 +18,8 @@ public class unsupported_projection_syntax : given.a_projection_block_binder
     CompilationResult<SemanticCompilation> _numericLiteralKey;
     CompilationResult<SemanticCompilation> _twoEveryBlocks;
     CompilationResult<SemanticCompilation> _duplicateEvent;
+    CompilationResult<SemanticCompilation> _dictionaryEntry;
+    CompilationResult<SemanticCompilation> _removedEntry;
 
     void Because()
     {
@@ -29,6 +31,8 @@ public class unsupported_projection_syntax : given.a_projection_block_binder
         _numericLiteralKey = BindProjection("projection Orders => OrderView", "from OrderShipped key 5");
         _twoEveryBlocks = BindProjection("projection Orders => OrderView", "every\n  count events\nevery\n  lastSeen = $eventContext.occurred");
         _duplicateEvent = BindProjection("projection Orders => OrderView", "from OrderShipped\nremove with OrderShipped");
+        _dictionaryEntry = BindProjection("projection Orders => OrderView", "from OrderShipped\n  label.$eventContent.carrier = carrier");
+        _removedEntry = BindProjection("projection Orders => OrderView", "from OrderShipped\n  remove label.$eventContent.carrier");
     }
 
     [Fact] void should_admit_the_caused_by_event_context_path_and_a_text_literal_key() => _result.Success.ShouldBeTrue();
@@ -39,6 +43,10 @@ public class unsupported_projection_syntax : given.a_projection_block_binder
     [Fact] void should_reject_a_literal_key_that_is_not_text() => Message(_numericLiteralKey).ShouldContain("must be text");
     [Fact] void should_reject_a_second_every_block_on_one_level() => Message(_twoEveryBlocks).ShouldContain("more than one 'every' or 'all'");
     [Fact] void should_reject_an_event_used_twice_on_one_level() => Message(_duplicateEvent).ShouldContain("can only be used once at each level");
+
+    // The executable model has no dictionary-keyed read-model property, so a dictionary entry stays authoring-only.
+    [Fact] void should_refuse_a_dictionary_entry() => Message(_dictionaryEntry).ShouldContain("'label.$eventContent.carrier' uses a dynamic dictionary key");
+    [Fact] void should_refuse_removing_a_dictionary_entry() => Message(_removedEntry).ShouldContain("'remove label.$eventContent.carrier' removes a dictionary entry");
 
     static string Message(CompilationResult<SemanticCompilation> result) =>
         string.Join('\n', result.Diagnostics.Where(_ => _.Severity == DiagnosticSeverity.Error).Select(_ => _.Message));

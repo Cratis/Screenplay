@@ -139,13 +139,4 @@ public class when_binding_the_invoicing_sample : Specification
     void should_admit_set_once_and_the_children_sort() => _diagnostics.Any(diagnostic =>
         (diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding) &&
         (diagnostic.Message.Contains("firstSentAt", StringComparison.Ordinal) || diagnostic.Message.Contains("lineItems", StringComparison.Ordinal))).ShouldBeFalse();
-
-    // The executable model has no dictionary-keyed read-model property, so a dictionary entry stays authoring-only.
-    [Fact]
-    void should_refuse_the_dictionary_entry_once() => _diagnostics.Count(diagnostic =>
-        diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("'quantityByLine.$eventContent.lineNumber' uses a dynamic dictionary key", StringComparison.Ordinal)).ShouldEqual(1);
-
-    [Fact]
-    void should_refuse_removing_the_dictionary_entry_once() => _diagnostics.Count(diagnostic =>
-        diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("'remove quantityByLine.$eventContent.lineNumber' removes a dictionary entry", StringComparison.Ordinal)).ShouldEqual(1);
 }
