@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Parsing;
+
 namespace Cratis.Screenplay.Syntax.Projections;
 
 static class ProjectionAutoMap
@@ -17,7 +19,8 @@ static class ProjectionAutoMap
         var mappings = sourceMappings.ToArray();
         var aggregateOnly = mappings.Length > 0 && mappings.All(mapping => mapping is AddMappingSyntax or SubtractMappingSyntax or IncrementMappingSyntax or DecrementMappingSyntax or CountMappingSyntax);
         if (!isJoin && aggregateOnly) yield break;
-        var mapped = mappings.Select(mapping => mapping.Property.Split('.')[^1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // A dictionary-entry target ('slots.$eventContent.slot') writes into its base property; the key is not a property.
+        var mapped = mappings.Select(mapping => EventContextPathValidator.BaseProperty(mapping.Property).Split('.')[^1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var usedSources = isJoin ? JoinAutoMapSources.ExplicitlyMapped(mappings) : [];
         var targetProperties = targets.ToArray();
         foreach (var source in sources)
