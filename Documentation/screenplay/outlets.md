@@ -1,6 +1,6 @@
 ---
 title: "Screenplay outlets: item lists a template offers"
-description: "Declare actions, filters, tabs, stats and navigation as Screenplay outlets on a layout or template, then let modules, features and screens inherit, extend, override, hide and reorder their items."
+description: "Declare actions, filters, tabs, stats and navigation as outlets on a Screenplay layout or template, then inherit, extend, override, hide and reorder items."
 ---
 
 # Outlets

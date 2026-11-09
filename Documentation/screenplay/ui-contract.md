@@ -1,6 +1,6 @@
 ---
 title: UI contract
-description: Describe every screen of a Cratis Screenplay model in a stack-neutral JSON contract - its data, actions, navigation and layout - with Scene presentation as an optional layer.
+description: Export every screen of a Screenplay model as a stack-neutral JSON contract of its data, actions, navigation and layout, so any UI stack can build from it.
 ---
 
 ## Build a UI on any stack from the model
