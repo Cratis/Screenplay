@@ -28,9 +28,7 @@ public static class ReleaseBaselineStore
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         Converters = { new ReleaseBaselineComplianceJson() },
-#if NET9_0_OR_GREATER
         RespectRequiredConstructorParameters = true
-#endif
     };
 
     /// <summary>Reads without turning malformed release metadata into a model failure.</summary>
