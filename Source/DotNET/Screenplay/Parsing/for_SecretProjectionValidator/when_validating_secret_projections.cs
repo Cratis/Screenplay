@@ -67,6 +67,40 @@ public class when_validating_secret_projections : Specification
     void should_not_warn_without_a_projection_or_reducer() =>
         Findings(Concepts + Slice + "      readmodel Row\n        id String\n        token ApiKey\n").ShouldBeEmpty();
 
+    [Theory]
+    [InlineData("automap", "no automap", "", 1)]
+    [InlineData("no automap", "automap", "", 0)]
+    [InlineData("automap", "automap", "no automap", 0)]
+    [InlineData("no automap", "no automap", "automap", 1)]
+    void should_resolve_child_and_nested_automap_against_the_projection(string root, string parent, string inner, int count)
+    {
+        foreach (var parentKind in new[] { "children", "nested" })
+        {
+            foreach (var innerKind in new[] { "children", "nested" })
+            {
+                var findings = Findings(NestedModel(parentKind, innerKind, root, parent, inner));
+                findings.Length.ShouldEqual(count);
+                if (count > 0)
+                {
+                    findings.Single().Message.ShouldContain("into read model property 'Row.groups.entries.token'");
+                }
+            }
+        }
+    }
+
+    static string NestedModel(string parentKind, string innerKind, string root, string parent, string inner) =>
+        Concepts +
+        "type Entry\n  id String\n  token ApiKey\n" +
+        $"type Group\n  id String\n  entries Entry{(innerKind == "children" ? "[]" : string.Empty)}\n" +
+        Slice +
+        $"      readmodel Row\n        id String\n        groups Group{(parentKind == "children" ? "[]" : string.Empty)}\n" +
+        "      event Recorded\n        id String\n        token ApiKey\n      event GroupRecorded\n        id String\n" +
+        $"      projection Keys => Row\n        {root}\n" +
+        $"        {parentKind} groups{(parentKind == "children" ? " identified by id" : string.Empty)}\n          {parent}\n          from GroupRecorded\n" +
+        $"          {innerKind} entries{(innerKind == "children" ? " identified by id" : string.Empty)}\n" +
+        (inner.Length > 0 ? $"            {inner}\n" : string.Empty) +
+        "            from Recorded\n";
+
     static string Model(string eventType, string modelType, string mappings) =>
         Concepts + Slice +
         $"      readmodel Row\n        id String\n        token {modelType}\n      event Recorded\n        token {eventType}\n" +

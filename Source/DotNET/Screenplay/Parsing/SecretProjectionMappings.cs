@@ -43,7 +43,7 @@ internal sealed class SecretProjectionMappings(
         }
     }
 
-    // Inherit resolves to the projection's own setting, as the semantic binder resolves it.
+    // Joins inherit their current level; child and nested scopes inherit the projection's own setting.
     static bool Enabled(AutoMapMode mode, bool inherited) => mode switch
     {
         AutoMapMode.Enabled => true,
@@ -72,10 +72,10 @@ internal sealed class SecretProjectionMappings(
 
                     break;
                 case ChildrenSyntax children:
-                    Element(children.Property, children.Blocks, Enabled(children.AutoMap, autoMap), targets, owner);
+                    Element(children.Property, children.Blocks, Enabled(children.AutoMap, projection.AutoMap != AutoMapMode.Disabled), targets, owner);
                     break;
                 case NestedSyntax nested:
-                    Element(nested.Property, nested.Blocks, Enabled(nested.AutoMap, autoMap), targets, owner);
+                    Element(nested.Property, nested.Blocks, Enabled(nested.AutoMap, projection.AutoMap != AutoMapMode.Disabled), targets, owner);
                     break;
             }
         }

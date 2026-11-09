@@ -78,7 +78,8 @@ class SecretProjectionMappings {
                 for (const joined of block.events) this.copies(joined.mappings, this.event(joined.event), targets, owner, enabled(joined.autoMap, autoMap), true, joined.location);
             } else if (block.kind === 'ChildrenSyntax' || block.kind === 'NestedSyntax') {
                 const property = this.shapes.property(targets, block.property).value;
-                if (property !== null) this.walk(block.blocks, this.shapes.types.get(property.type.name)?.properties ?? null, `${owner}.${block.property}`, enabled(block.autoMap, autoMap));
+                // Child and nested scopes inherit the projection setting; joins above inherit their current level.
+                if (property !== null) this.walk(block.blocks, this.shapes.types.get(property.type.name)?.properties ?? null, `${owner}.${block.property}`, enabled(block.autoMap, this.projection.autoMap !== 'Disabled'));
             }
         }
     }

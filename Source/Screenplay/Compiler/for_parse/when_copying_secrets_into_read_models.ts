@@ -11,6 +11,18 @@ const model = (eventType: string, modelType: string, mappings: string) =>
     concepts + slice +
     `      readmodel Row\n        id String\n        token ${modelType}\n      event Recorded\n        token ${eventType}\n` +
     '      projection Keys => Row\n        from Recorded\n' + mappings;
+const nestedModel = (parentKind: string, innerKind: string, root: string, parent: string, inner: string) =>
+    concepts +
+    'type Entry\n  id String\n  token ApiKey\n' +
+    `type Group\n  id String\n  entries Entry${innerKind === 'children' ? '[]' : ''}\n` +
+    slice +
+    `      readmodel Row\n        id String\n        groups Group${parentKind === 'children' ? '[]' : ''}\n` +
+    '      event Recorded\n        id String\n        token ApiKey\n      event GroupRecorded\n        id String\n' +
+    `      projection Keys => Row\n        ${root}\n` +
+    `        ${parentKind} groups${parentKind === 'children' ? ' identified by id' : ''}\n          ${parent}\n          from GroupRecorded\n` +
+    `          ${innerKind} entries${innerKind === 'children' ? ' identified by id' : ''}\n` +
+    (inner.length > 0 ? `            ${inner}\n` : '') +
+    '            from Recorded\n';
 const findings = (source: string) => {
     const result = parse(source);
     result.success.should.be.true;
@@ -49,6 +61,23 @@ describe('when copying secrets into read models', () => {
     it('should warn for a secret copied into a child element', () =>
         findings(concepts + 'type Entry\n  id String\n  token ApiKey\n' + slice + '      readmodel Row\n        id String\n        entries Entry[]\n      event Recorded\n        id String\n        token ApiKey\n      projection Keys => Row\n        children entries identified by id\n          from Recorded\n')
             .map(finding => finding.message).should.deep.equal(["Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.entries.token' - the value becomes part of the read model and its query results"]));
+
+    for (const parentKind of ['children', 'nested']) {
+        for (const innerKind of ['children', 'nested']) {
+            for (const [root, parent, inner, count] of [
+                ['automap', 'no automap', '', 1],
+                ['no automap', 'automap', '', 0],
+                ['automap', 'automap', 'no automap', 0],
+                ['no automap', 'no automap', 'automap', 1],
+            ] as const) {
+                it(`should resolve ${parentKind}/${innerKind} with projection '${root}', parent '${parent}', inner '${inner || 'inherit'}'`, () => {
+                    const result = findings(nestedModel(parentKind, innerKind, root, parent, inner));
+                    result.length.should.equal(count);
+                    if (count > 0) result[0].message.should.contain("into read model property 'Row.groups.entries.token'");
+                });
+            }
+        }
+    }
 
     it('should not warn for a plain concept', () => findings(model('Label', 'Label', '          token = token\n')).should.deep.equal([]));
 
