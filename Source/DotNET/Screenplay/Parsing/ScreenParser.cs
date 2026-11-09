@@ -35,11 +35,13 @@ internal static partial class ScreenParser
         var contributions = new List<ScreenContributionSyntax>();
         var outlets = new List<OutletSyntax>();
         List<ScreenFit>? fits = null;
+        var visuals = new List<ScreenVisualSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Screen '{name.Groups[1].Value}'", directiveLocations)) continue;
+            if (ScreenVisualParser.TryParse(context, line, visuals)) continue;
             if (LineText.FirstWord(line.Content) == "fits")
             {
                 fits = ScreenFitsParser.Parse(context, line, name.Groups[1].Value, fits, directiveLocations);
@@ -62,7 +64,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets, Fits = fits ?? [] };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets, Visuals = visuals, Fits = fits ?? [] };
     }
 
     /// <summary>

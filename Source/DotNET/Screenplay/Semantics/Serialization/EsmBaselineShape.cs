@@ -42,6 +42,7 @@ internal enum EsmBaselineShape
     From,
     Join,
     Children,
+    ChildrenOrdering,
     Nested,
     Every,
     Removal,
@@ -147,5 +148,13 @@ internal enum EsmBaselineShape
     CommandCalendar,
     ClockOperand,
     ClockOffset,
-    ContextMember
+    ContextMember,
+    Screen,
+    ScreenData,
+    ScreenField,
+    ScreenAction,
+    ScreenInput,
+    ScreenNavigation,
+    ScreenLayout,
+    ScreenRegion
 }

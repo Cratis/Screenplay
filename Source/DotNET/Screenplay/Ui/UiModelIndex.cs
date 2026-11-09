@@ -80,6 +80,11 @@ sealed class UiModelIndex
     /// <param name="slice">The dotted path of the declaring slice.</param>
     /// <param name="name">The command or query name.</param>
     /// <returns>The operation, or null without an executable model.</returns>
+    internal string? ScreenOfSlice(string name) =>
+        _slices.Where(entry => entry.Path == name || entry.Path.EndsWith($".{name}", StringComparison.Ordinal))
+            .Select(entry => entry.Slice.Screens.ToArray())
+            .FirstOrDefault(screens => screens.Length == 1)?[0].Name;
+
     internal ApiOperation? Operation(string slice, string name) => _operations.GetValueOrDefault((slice, name));
 
     (string Slice, T Found)? Find<T>(string slice, Func<SliceSyntax, T?> find)

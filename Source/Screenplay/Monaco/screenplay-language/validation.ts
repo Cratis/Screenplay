@@ -191,7 +191,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         if (memberType) compilerMemberTypeLines.add(diagnostic.location.line - 1);
         const singletonDuplicate = diagnostic.code === DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles && (diagnostic.message.includes('identity block') || diagnostic.message.includes('context block'));
         const policyDuplicate = diagnostic.code === DiagnosticCodes.DuplicateDeclaration && diagnostic.message.startsWith('Duplicate declaration of policy ');
-        if (!policyDuplicate && !identityType && !memberType && !singletonDuplicate && !generationCodes.has(diagnostic.code) && !enumerationCodes.has(diagnostic.code) && !complianceCodes.has(diagnostic.code) && !optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && !dependencyCodes.has(diagnostic.code) && !authoringCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.ReducerIdentityMismatch && diagnostic.code !== DiagnosticCodes.InvalidSpecificationExampleBody && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY062[1-9]$|^PLAY063[0-9]$|^PLAY064[0-9]$|^PLAY065[0-2]$|^PLAY065[4-6]$|^PLAY066[0-6]$|^PLAY072[0-2]$|^PLAY089[0-9]$|^PLAY090[0-9]$|^PLAY091[0-9]$|^PLAY092[0-9]$|^PLAY093[0-9]$|^PLAY074[14]$/.test(diagnostic.code)) continue;
+        if (!policyDuplicate && !identityType && !memberType && !singletonDuplicate && !generationCodes.has(diagnostic.code) && !enumerationCodes.has(diagnostic.code) && !complianceCodes.has(diagnostic.code) && !optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && !dependencyCodes.has(diagnostic.code) && !authoringCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.ReducerIdentityMismatch && diagnostic.code !== DiagnosticCodes.InvalidSpecificationExampleBody && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY062[1-9]$|^PLAY063[0-9]$|^PLAY064[0-9]$|^PLAY065[0-2]$|^PLAY065[4-6]$|^PLAY066[0-6]$|^PLAY072[0-2]$|^PLAY089[0-9]$|^PLAY090[0-9]$|^PLAY091[0-9]$|^PLAY092[0-9]$|^PLAY093[0-9]$|^PLAY095[013-5]$|^PLAY074[14]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
         if (diagnostic.code === DiagnosticCodes.OmittedProductionDestination && issues.some(existing => existing.code === diagnostic.code && existing.line === line)) continue;
         if (diagnostic.code === DiagnosticCodes.UnknownEvent) {
@@ -458,7 +458,11 @@ function validateImport(lines: string[], fences: boolean[], index: number): Vali
 }
 
 // A mapping target: the first word of a mapping line, after the keyword that opens it if there is one.
-const mappingTarget = /^(?:(?:increment|decrement|count|clear|add|subtract|set)\s+)?@?([$\w.]+)(?=\s|=|$)/;
+const mappingTarget = /^(?:(?:increment|decrement|count|clear|remove|add|subtract|set\s+once|set)\s+)?@?([$\w.]+)(?=\s|=|$)/;
+
+// The dynamic key sources Chronicle resolves in a mapping target; any other is kept as the literal key text.
+const resolvedKeySources = new Set(['eventContext', 'eventContent', 'causedBy']);
+const causedByMembers = new Set(['subject', 'name', 'userName']);
 
 // Every $eventContext.<path> - in an expression or as the dynamic key of a mapping target - checked against the
 // event-context catalog the way the compiler checks it (Parsing/EventContextPathValidator.cs).
@@ -502,11 +506,22 @@ export function validateEventContextPaths(lines: string[], fences: boolean[]): V
             }
         }
 
-        // Only $eventContext resolves in a dynamic key; any other $ source is kept as the literal key text.
+        // $eventContext, $eventContent and $causedBy resolve in a dynamic key; any other $ source is kept as the literal key text.
         const target = line.trim().match(mappingTarget)?.[1];
-        const source = target?.match(/\.\$(\w+)/)?.[1];
-        if (target && source && source !== 'eventContext') {
-            issues.push(tokenIssue('warning', index, line, target, `Dynamic dictionary key '$${source}' in '${target}' is never resolved - only '$eventContext.<path>' is, so the literal text '$${source}' becomes the key.`, diagnosticCodes.unresolvedDynamicKeySource));
+        const key = target?.match(/\.\$(\w+)((?:\.[\w.]*)?)$/);
+        const source = key?.[1];
+        if (target && source && !resolvedKeySources.has(source)) {
+            issues.push(tokenIssue('warning', index, line, target, `Dynamic dictionary key '$${source}' in '${target}' is never resolved - only '$eventContext.<path>', '$eventContent.<path>' and '$causedBy.<member>' are, so the literal text '$${source}' becomes the key.`, diagnosticCodes.unresolvedDynamicKeySource));
+        } else if (target && source === 'eventContent' && (key![2].length < 2 || key![2].split('.').slice(1).some((segment) => segment.length === 0))) {
+            issues.push(tokenIssue('error', index, line, target, `'$eventContent' in '${target}' names no event property - write '<property>.$eventContent.<event property>'.`, diagnosticCodes.invalidDynamicKey));
+        } else if (target && source === 'causedBy' && !causedByMembers.has(key![2].substring(1))) {
+            issues.push(tokenIssue('error', index, line, target, `'$causedBy' in '${target}' must name one of subject, name, userName - write '<property>.$causedBy.subject'.`, diagnosticCodes.invalidDynamicKey));
+        }
+        if (target && /^remove\s/.test(line.trim()) && !/^remove\s+(?:with|via)\b/.test(line.trim()) && !target.includes('.$')) {
+            issues.push(tokenIssue('error', index, line, target, `'remove ${target}' names no dictionary entry - the target must end in a dynamic key, such as '${target}.$eventContent.<event property>'.`, diagnosticCodes.removeKeyWithoutDynamicKey));
+        }
+        if (target && /^clear\s/.test(line.trim()) && !/^clear\s+with\b/.test(line.trim()) && target.includes('.$')) {
+            issues.push(tokenIssue('error', index, line, target, `'clear ${target}' would keep the dictionary entry with no value - write 'remove ${target}' to delete the entry.`, diagnosticCodes.clearDynamicKey));
         }
     }
 

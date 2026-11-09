@@ -1,6 +1,6 @@
 ---
 title: UI contract
-description: Describe every screen of a Cratis Screenplay model in a stack-neutral JSON contract - its data, actions, navigation and layout - with Scene presentation as an optional layer.
+description: Export every screen of a Screenplay model as a stack-neutral JSON contract of its data, actions, navigation and layout, so any UI stack can build from it.
 ---
 
 ## Build a UI on any stack from the model
@@ -94,6 +94,47 @@ File.WriteAllBytes("screens.json", UiContractJson.Write(contract));
 `ApplicationSyntax` with an optional executable model, and
 `UiContractBuilder.Select(contract, scope)` keeps the screens of one module,
 feature or slice.
+
+## Screens in the executable model
+
+The neutral members of every screen can also live in the executable model
+itself, as ESM v42. Admission is on request, so a default compilation keeps its
+version, bytes and revision:
+
+```bash
+screenplay export path/to/screenplays --screens --output model.esm.json
+```
+
+Over MCP, `read-workspace` with `view: "executable-model"` and `screens: true`
+pages the same bytes. From .NET:
+
+```csharp
+using Cratis.Screenplay.Ui;
+
+var admitted = ExecutableScreens.Admit(workspace);
+if (!admitted.Success)
+{
+    foreach (var refusal in admitted.Refusals) Console.Error.WriteLine(refusal);
+    return;
+}
+
+var model = admitted.Compilation!.Model;
+var contract = UiContractBuilder.For(model);
+```
+
+Each slice then holds its `screens`: the data a screen shows keyed to query
+identities, its actions keyed to command identities with every input as a
+command property identity, and its navigation keyed to screen identities, with
+the layout regions as written. `UiContractBuilder.For(model)` reads the
+`screenplay-ui/1` contract from that model alone, without the sources and
+without the Scene layer; its neutral members equal the ones read from the
+sources.
+
+A reference the executable model does not hold refuses admission with a reason
+that names the screen and the reference; nothing is dropped. A model without
+an executable model has nothing to admit screens to. See the ESM
+[interoperability](interoperability.md#claimed-unreleased-version) notes for the
+exact members.
 
 Behavior wiring beyond navigation and command execution (refreshing a query,
 setting state, notifications, dialogs opened from a template) is not in

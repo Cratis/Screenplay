@@ -26,7 +26,11 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 ## Agents
 
-The root `agents` block lets personal-token callers discover `ListInvoices` with `scope read` and `RegisterInvoice` with `scope write`. These are the only exposed operations, and the caller must still satisfy the module, feature and operation authorization gates. A write token also satisfies the read scope. The block selects ESM v42; the showcase's other executable-admission refusals remain unchanged. See [Agents](../../Documentation/screenplay/agents.md).
+The root `agents` block lets personal-token callers discover `ListInvoices` with `scope read` and `RegisterInvoice` with `scope write`. These are the only exposed operations, and the caller must still satisfy the module, feature and operation authorization gates. A write token also satisfies the read scope. The block selects ESM v44; the showcase's other executable-admission refusals remain unchanged. See [Agents](../../Documentation/screenplay/agents.md).
+
+## Sketches, mockups and linked copies
+
+The `InvoiceList` screen carries the material it was designed from: `sketch Screens/invoice-list.sketch.svg`, the HTML page `mockup Screens/invoice-list.html` and the screenshot `image Screens/invoice-list.png`, all kept in [`Screens`](Screens) beside the model. `CancelInvoice` shows `InvoiceRegistered` and `InvoiceListReadModel` with `shows event` and `shows readmodel`, so the timeline draws them again where cancellation reads them, as linked copies of their one declaration.
 
 ## Passive decision state
 
@@ -157,6 +161,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
 | `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
 | Outlets of every kind - `actions`, `filters`, `tabs`, `stats` and `navigation` - with `default` items, changed below the template with `extends`/`overrides`, `hide`, `before` and `group` | `List` template, `InvoiceManagement` |
+| `sketch`, `mockup` and `image` on a screen; `shows event` and `shows readmodel` in a slice | `InvoiceList` screen; `CancelInvoice` |
 | Placement: `fits dialog, drawer, page` on a slice's screen; hooks that `opens dialog`, `opens drawer` and `opens in slot activity`, act `for item`, `runs` a screenless slice with `enabled when` and `confirm`; `show InvoiceDetails by invoiceId from … .selection` in the routed `detail` pane; a `choose from query` picker | `InvoiceManagement`, `SendInvoiceReminder`, `RegisterInvoiceForm` |
 | `outlet topbar of navigation` and `outlet sidebar of navigation` in the `AppShell` layout: `logo`, `item` with `title`, `icon`, `target`, `slot` and nested sidebar items | Application navigation |
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
@@ -178,7 +183,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |
 | `readmodel` with `description` and `file`; `query` with `observable`, `by`/`filter … from`, `scoped to identity`/`global`, `performer` in ```` ```sql ````, ```` ```csharp ```` and `file` | InvoiceList, InvoiceLineReport, ExchangeRates, MyInvoices, CreditStatus |
-| `projection` with `file`, `sequence`, `every`/`exclude children`, `all`, `from A, B`, inline and block keys, a composite `key`, `parent`, `join` with `automap`/`no automap`, `children`, `nested`, `clear with`, `remove with`, `remove via join`, `set … to`, `clear`, `increment`/`decrement`/`count`/`add`/`subtract`, templates, `$eventSourceId`, `$eventContext`, `$causedBy` | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard, InvoiceBalances, SystemActivity |
+| `projection` with `file`, `sequence`, `every`/`exclude children`, `all`, `from A, B`, inline and block keys, a composite `key`, `parent`, `join` with `automap`/`no automap`, `children` with `sort by`, `nested`, `clear with`, `remove with`, `remove via join`, `set … to`, `set once`, `clear`, `increment`/`decrement`/`count`/`add`/`subtract`, templates, `$eventSourceId`, `$eventContext`, `$causedBy` | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard, InvoiceBalances, SystemActivity |
 | projection `variant`s with `enters on` and a shared handler | CollectionsBoard |
 | `reducer` with inline and `file` rules | InvoiceAging |
 | `screen` at all three levels: intent (`data`, `action`, `label`, `navigate to`), structure (`template`, slots, `section`, `title`, `table`, `summary`, `on row-click`) and inline ```` ```react ````/```` ```html ````/```` ```typescript ````; a `file` screen | every state change and state view slice |

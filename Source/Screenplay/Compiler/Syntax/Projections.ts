@@ -31,6 +31,8 @@ export type AutoMapMode = 'Inherit' | 'Disabled' | 'Enabled';
 // Mapping values use the existing projection expression grammar.
 export type MappingKind =
     | 'SetMappingSyntax'
+    | 'SetOnceMappingSyntax'
+    | 'RemoveKeyMappingSyntax'
     | 'ClearMappingSyntax'
     | 'IncrementMappingSyntax'
     | 'DecrementMappingSyntax'
@@ -93,6 +95,20 @@ export interface ChildrenSyntax extends SyntaxNode {
     readonly identifiedBy?: ExpressionSyntax;
     readonly autoMap: AutoMapMode;
     readonly blocks: readonly ProjectionBlockSyntax[];
+    readonly ordering?: ChildrenOrderingSyntax | null;
+}
+
+// Where a children block puts a child it adds: 'insert last' (and no ordering) appends, 'insert first'
+// prepends and 'sort by <property> [ascending|descending]' sorts the collection after the child is added.
+export type ChildrenPlacement = 'Append' | 'Prepend' | 'Sorted';
+
+export type ChildrenSortDirection = 'Ascending' | 'Descending';
+
+export interface ChildrenOrderingSyntax extends SyntaxNode {
+    readonly kind: 'ChildrenOrderingSyntax';
+    readonly placement: ChildrenPlacement;
+    readonly sortBy: string | null;
+    readonly direction: ChildrenSortDirection;
 }
 
 export interface NestedSyntax extends SyntaxNode {

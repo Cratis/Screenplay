@@ -15,7 +15,7 @@ describe('when validating event context paths in the standalone projection edito
         '    badPath = $eventContext.eventType.unknown',
         '    badCollection = $eventContext.tags.value',
         '    missing = $eventContext.',
-        '    totals.$causedBy.subject = quantity',
+        '    totals.$eventSourceId = quantity',
         '    good = $eventContext.occurred.Week()',
     ].join('\n')));
 

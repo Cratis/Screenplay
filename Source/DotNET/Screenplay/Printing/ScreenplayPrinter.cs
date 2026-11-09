@@ -1031,6 +1031,7 @@ public sealed partial class ScreenplayPrinter :
             WriteDescription(writer, slice.Description, slice);
             WriteDocumentation(writer, slice.Documentation, slice);
             foreach (var purpose in slice.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
+            foreach (var placement in slice.Placements) writer.Line($"shows {Parsing.SlicePlacementParser.Keyword(placement.Kind)} {placement.Name}", placement);
             WriteFile(writer, slice.File);
 
             var members = new List<PrintableMember>();

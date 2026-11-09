@@ -334,6 +334,11 @@ sealed class SemanticCompilationIndex
         {
             Register(SemanticAddress.ForCapture(sliceAddress, capture.Name), capture.Id);
         }
+
+        foreach (var screen in slice.Screens)
+        {
+            Register(SemanticAddress.ForScreen(sliceAddress, screen.Name), screen.Id);
+        }
     }
 
     void RegisterEventProperties(SemanticAddress owner, EventContractRevision revision, ImmutableArray<SemanticProperty> properties)

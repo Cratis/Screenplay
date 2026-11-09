@@ -30,6 +30,7 @@ import { validateEventSubjects } from './Parsing/EventSubjectValidator';
 import { validateReadModelKeys } from './Parsing/ReadModelKeyValidator';
 import { validateGraphs } from './Parsing/GraphValidator';
 import { validateSinks } from './Parsing/Sinks';
+import { validateSlicePlacements } from './Parsing/SlicePlacementValidator';
 import { validateReadModelMemberTypes } from './Parsing/ReadModelMemberTypeValidator';
 import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
@@ -89,6 +90,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateIdentity(value, context);
         validateDesignSystem(value, context);
         validatePurposes(value, context);
+        validateSlicePlacements(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);

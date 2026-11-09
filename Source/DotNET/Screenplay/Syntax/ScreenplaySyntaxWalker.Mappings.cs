@@ -83,6 +83,12 @@ public abstract partial class ScreenplaySyntaxWalker
             case SetMappingSyntax set:
                 VisitSetMapping(set);
                 break;
+            case SetOnceMappingSyntax setOnce:
+                VisitSetOnceMapping(setOnce);
+                break;
+            case RemoveKeyMappingSyntax removeKey:
+                VisitRemoveKeyMapping(removeKey);
+                break;
             case ClearMappingSyntax clear:
                 VisitClearMapping(clear);
                 break;
@@ -116,6 +122,22 @@ public abstract partial class ScreenplaySyntaxWalker
         VisitNode(syntax);
         VisitExpression(syntax.Source);
     }
+
+    /// <summary>
+    /// Visits a <see cref="SetOnceMappingSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SetOnceMappingSyntax"/> to visit.</param>
+    public virtual void VisitSetOnceMapping(SetOnceMappingSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitExpression(syntax.Source);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="RemoveKeyMappingSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="RemoveKeyMappingSyntax"/> to visit.</param>
+    public virtual void VisitRemoveKeyMapping(RemoveKeyMappingSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="ClearMappingSyntax"/> node.

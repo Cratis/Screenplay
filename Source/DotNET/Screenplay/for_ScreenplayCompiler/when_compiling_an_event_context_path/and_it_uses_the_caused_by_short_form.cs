@@ -6,8 +6,8 @@ using Cratis.Screenplay.Syntax.Projections;
 namespace Cratis.Screenplay.for_ScreenplayCompiler.when_compiling_an_event_context_path;
 
 /// <summary>
-/// The short form stays admitted - Chronicle compiles and round-trips it - even though Chronicle cannot yet execute it
-/// (Cratis/Chronicle#4119); the documentation points to <c>$eventContext.causedBy.&lt;property&gt;</c> instead.
+/// The short form is admitted: Chronicle compiles, round-trips and resolves it at runtime (Cratis/Chronicle#4119), and it reads
+/// the same value as <c>$eventContext.causedBy.&lt;property&gt;</c>.
 /// </summary>
 public class and_it_uses_the_caused_by_short_form : given.a_projection_reading_the_event_context
 {

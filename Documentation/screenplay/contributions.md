@@ -1,6 +1,6 @@
 ---
 title: "Screenplay contributions: add items to any outlet"
-description: "Use contribute to in Screenplay when a module or feature adds items to an outlet a layout or template declares. Each feature declares its own entry near its screens."
+description: "Use contribute to in Screenplay when a module or feature adds items to an outlet that a layout or template declares, keeping each entry next to its own screens."
 ---
 
 # Contributions

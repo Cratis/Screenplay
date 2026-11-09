@@ -23,24 +23,24 @@ internal static class ProjectionTargetValidator
                 var reported = new HashSet<SourceLocation>();
                 if (variants.Count == 0)
                 {
-                    Walk(projection.Blocks, declarations.ViewProperties(projection.ReadModel ?? projection.Name, scope), declarations, context, reported);
+                    Walk(projection.Blocks, declarations.ViewProperties(projection.ReadModel ?? projection.Name, scope), declarations, scope, context, reported);
                 }
 
                 foreach (var variant in variants)
                 {
                     // Shared top-level mappings already have PLAY0383 validation for each variant.
                     var properties = declarations.ViewProperties(variant.Name, scope);
-                    Walk(projection.Blocks.Where(block => block is ChildrenSyntax or NestedSyntax), properties, declarations, context, reported);
+                    Walk(projection.Blocks.Where(block => block is ChildrenSyntax or NestedSyntax), properties, declarations, scope, context, reported);
 
                     // Lowering combines shared handlers with variant-local blocks and turns entering events into From handlers.
                     var ownsEvents = variant.EntersOn.Any() || projection.Blocks.Any(block => block is FromSyntax or JoinSyntax or AllSyntax);
-                    Walk(variant.Blocks, properties, declarations, context, reported, ownsEvents: ownsEvents);
+                    Walk(variant.Blocks, properties, declarations, scope, context, reported, ownsEvents: ownsEvents);
                 }
             }
         }
     }
 
-    static void Walk(IEnumerable<ProjectionBlockSyntax> blocks, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, ParserContext context, HashSet<SourceLocation> reported, bool element = false, bool ownsEvents = false)
+    static void Walk(IEnumerable<ProjectionBlockSyntax> blocks, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, DeclarationScope scope, ParserContext context, HashSet<SourceLocation> reported, bool element = false, bool ownsEvents = false)
     {
         // An 'every' with no effective handlers at this level only cascades into the element scopes.
         ownsEvents |= blocks.Any(block => block is FromSyntax or JoinSyntax or AllSyntax);
@@ -56,18 +56,45 @@ internal static class ProjectionTargetValidator
             };
             foreach (var mapping in mappings)
             {
-                Validate(mapping.Property, mapping.Location);
+                // A dynamic key names a dictionary entry, not a declared property: the property it writes into is what must exist.
+                var basePath = EventContextPathValidator.BaseProperty(mapping.Property);
+                var target = Validate(basePath, mapping.Location);
+
+                // Chronicle accepts a dictionary entry only in an untyped or empty object property, and every declared Screenplay
+                // type is a scalar, a collection or an object with properties.
+                if (target is not null && EventContextPathValidator.HasDynamicKey(mapping.Property) && reported.Add(mapping.Location))
+                {
+                    context.Warning(
+                        DiagnosticCodes.DynamicKeyOnNonDictionaryProperty,
+                        $"'{mapping.Property}' writes a dictionary entry into '{basePath}', declared as '{target.Type.Name}' - Screenplay has no dictionary type, so Chronicle refuses the projection when it registers it",
+                        mapping.Location);
+                }
             }
+
+            ValidateEventContentKeys(block, declarations, scope, context);
 
             if (block is ChildrenSyntax children)
             {
                 var property = Validate(children.Property, children.Location);
-                Walk(children.Blocks, property is null ? null : declarations.TypeProperties(property.Type.Name), declarations, context, reported, element: true);
+                var elementProperties = property is null ? null : declarations.TypeProperties(property.Type.Name);
+                if (elementProperties is not null && children.Ordering is { SortBy: { } sortBy } ordering)
+                {
+                    declarations.Property(elementProperties, sortBy, out var missing);
+                    if (missing)
+                    {
+                        context.Warning(
+                            DiagnosticCodes.UnknownChildrenSortProperty,
+                            $"Children '{children.Property}' sorts by '{sortBy}', which is not a declared property of its element type '{property!.Type.Name}'",
+                            ordering.Location);
+                    }
+                }
+
+                Walk(children.Blocks, elementProperties, declarations, scope, context, reported, element: true);
             }
             else if (block is NestedSyntax nested)
             {
                 var property = Validate(nested.Property, nested.Location);
-                Walk(nested.Blocks, property is null ? null : declarations.TypeProperties(property.Type.Name), declarations, context, reported, element: true);
+                Walk(nested.Blocks, property is null ? null : declarations.TypeProperties(property.Type.Name), declarations, scope, context, reported, element: true);
             }
         }
 
@@ -80,6 +107,42 @@ internal static class ProjectionTargetValidator
             }
 
             return property;
+        }
+    }
+
+    static void ValidateEventContentKeys(ProjectionBlockSyntax block, ConsistencyDeclarations declarations, DeclarationScope scope, ParserContext context)
+    {
+        // Only a handler for named events knows which payload the key reads; 'every' and 'all' see any event.
+        var handlers = block switch
+        {
+            FromSyntax from => from.Events.Select(spec => (spec.Event, from.Mappings)),
+            JoinSyntax join => join.Events.Select(entry => (entry.Event, entry.Mappings)),
+            _ => []
+        };
+
+        foreach (var (eventType, mappings) in handlers)
+        {
+            if (declarations.Event(eventType, scope) is not { } @event)
+            {
+                continue;
+            }
+
+            foreach (var mapping in mappings)
+            {
+                if (!EventContextPathValidator.TryGetEventContentKey(mapping.Property, out var path))
+                {
+                    continue;
+                }
+
+                declarations.Property(@event.Properties, path, out var missing);
+                if (missing)
+                {
+                    context.Warning(
+                        DiagnosticCodes.UnknownEventContentKey,
+                        $"Dynamic key '$eventContent.{path}' in '{mapping.Property}' is not a property of event '{eventType}', so the entry is never written",
+                        mapping.Location);
+                }
+            }
         }
     }
 }

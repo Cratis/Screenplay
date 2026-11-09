@@ -3,7 +3,7 @@
 
 import { dependencySourcesOf, eventDeclarations, CommandSyntax, EventVisibility, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
-    CommandItemDocument, EventItemDocument, EventItemVisibility, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
+    CommandItemDocument, EventItemDocument, EventItemVisibility, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceAnnotationDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
 import { toUserExperience } from '../Prototypes/toUserExperience';
 import { capturedEvents, consumedEvents } from './consumedEvents';
@@ -57,7 +57,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         commentCount: 0,
     };
     if (slice.direction != null) document.direction = slice.direction;
-    const annotations = specificationRouteAnnotations(slice.specifications, document.specifications);
+    const annotations = [...specificationRouteAnnotations(slice.specifications, document.specifications), ...readModelPlacementAnnotations(slice)];
     if (annotations.length > 0) document.annotations = annotations;
     if (command !== undefined) {
         document.command = command;
@@ -92,7 +92,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         ...(event.origin != null ? { origin: event.origin } : {}),
     }, constraintsByEvent.get(event.name.toLowerCase()) ?? []));
     if (slice.type === 'StateChange') {
-        return declared;
+        return [...declared, ...placedEvents(slice, scope, owners, new Set(declared.map(event => event.name.toLowerCase())))];
     }
     const declaredNames = new Set(declared.map(event => event.name.toLowerCase()));
     const produced = producedEvents(slice, owners.productions).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
@@ -106,7 +106,27 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         const event: EventItemDocument = { id: scope.idOf('consumes', name), name, schema: owners.schemaFor(name), ...(captured.has(name.toLowerCase()) ? { visibility: EventItemVisibility.public } : {}) };
         return producer === undefined ? event : { ...event, sourceEventId: producer };
     });
-    return [...declared, ...produced, ...consumed];
+    const shown = new Set([...declaredNames, ...consumed.map(event => event.name.toLowerCase())]);
+    return [...declared, ...produced, ...consumed, ...placedEvents(slice, scope, owners, shown)];
+}
+
+// 'shows event <Name>' draws a linked copy of an event declared in another slice, pointing back at its declaration.
+function placedEvents(slice: SliceSyntax, scope: SliceScope, owners: EventOwners, shown: ReadonlySet<string>): EventItemDocument[] {
+    const seen = new Set(shown);
+    return (slice.placements ?? [])
+        .filter(placement => placement.syntaxKind === 'Event' && !seen.has(placement.name.toLowerCase()) && seen.add(placement.name.toLowerCase()) !== undefined)
+        .map(placement => {
+            const event: EventItemDocument = { id: scope.idOf('shows', placement.name), name: placement.name, schema: owners.schemaFor(placement.name) };
+            const declaration = owners.idFor(placement.name);
+            return declaration === undefined ? event : { ...event, sourceEventId: declaration };
+        });
+}
+
+// The board draws one read model per slice, so a read model the slice shows is listed on the slice instead.
+function readModelPlacementAnnotations(slice: SliceSyntax): SliceAnnotationDocument[] {
+    return (slice.placements ?? [])
+        .filter(placement => placement.syntaxKind === 'ReadModel')
+        .map(placement => ({ severity: 'information', message: `Shows read model ${placement.name}, declared in another slice.` }));
 }
 
 // The slice's own command, else - for an automation - the first command its reactions invoke, shaped by

@@ -236,4 +236,9 @@ public sealed record SemanticSlice(
     /// translation that declares none, which keeps its historical inbound meaning.
     /// </summary>
     public SemanticTranslationDirection? Direction { get; init; }
+
+    /// <summary>
+    /// Gets the screens of the slice. Screens are admitted from ESM v42 when binding opts in to them.
+    /// </summary>
+    public ImmutableArray<SemanticScreen> Screens { get; init; } = [];
 }

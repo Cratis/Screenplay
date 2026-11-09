@@ -34,6 +34,7 @@ internal static partial class WorkspaceIdentifierSpans
             (DependsOnSyntax, "target") => keyword == "depends",
             (StorylineStepSyntax, "target") => StorylineParser.StepKeywords.ContainsKey(keyword),
             (SliceSyntax, "name") => keyword == "slice",
+            (SlicePlacementSyntax, "name") => keyword == "shows",
             (CommandSyntax, "name") => keyword == "command",
             (EventSyntax, "name") => keyword == "event" || keyword == "public" || (keyword == "produces" && line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) == "event"),
             (ReadModelSyntax, "name") => keyword == "readmodel",

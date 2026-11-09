@@ -4818,6 +4818,18 @@
               ],
               "name": "CancelInvoice",
               "operations": [],
+              "placements": [
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceRegistered",
+                  "syntaxKind": "Event"
+                },
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceListReadModel",
+                  "syntaxKind": "ReadModel"
+                }
+              ],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -8426,6 +8438,32 @@
                       "mode": "Extend",
                       "name": "views"
                     }
+                  ],
+                  "visuals": [
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.sketch.svg"
+                      },
+                      "syntaxKind": "Sketch"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.html"
+                      },
+                      "syntaxKind": "Mockup"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.png"
+                      },
+                      "syntaxKind": "Image"
+                    }
                   ]
                 }
               ],
@@ -9227,6 +9265,14 @@
                         {
                           "kind": "SetMappingSyntax",
                           "property": "sentAt"
+                        },
+                        {
+                          "kind": "SetOnceMappingSyntax",
+                          "property": "firstSentAt",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "sentAt"
+                          }
                         }
                       ]
                     },
@@ -9341,6 +9387,12 @@
                           "event": "InvoiceLineItemRemoved"
                         }
                       ],
+                      "ordering": {
+                        "kind": "ChildrenOrderingSyntax",
+                        "direction": "Ascending",
+                        "placement": "Sorted",
+                        "sortBy": "lineNumber"
+                      },
                       "property": "lineItems"
                     },
                     {
@@ -9568,6 +9620,18 @@
                       "isGenerated": false,
                       "isIdentifier": false,
                       "name": "sentAt",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "DateTime"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "firstSentAt",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -10059,6 +10123,14 @@
                         {
                           "kind": "PropertyMappingSyntax",
                           "property": "sentAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T09:00:00Z"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "firstSentAt",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
                             "value": "2026-10-02T09:00:00Z"

@@ -18,10 +18,13 @@ internal sealed partial class SemanticScopedProjection
             ? children.IdentifiedBy
             : element.Properties.Single(_ => _.Name == _readModel.Properties.Single(property => property.IsIdentifier).Name).Id;
 
-        return new([.. level.Address, new(children.Property, identity)], [], elementProperties, [.. level.Ancestors.IsDefault ? [] : level.Ancestors, new(scope, level)]);
+        return new([.. level.Address, new(children.Property, identity) { Ordering = children.Ordering }], [], elementProperties, [.. level.Ancestors.IsDefault ? [] : level.Ancestors, new(scope, level)]);
     }
 
-    internal sealed record ChildStep(SemanticId Property, SemanticId IdentifiedBy);
+    internal sealed record ChildStep(SemanticId Property, SemanticId IdentifiedBy)
+    {
+        public SemanticProjectionChildrenOrdering? Ordering { get; init; }
+    }
 
     internal sealed record Level(
         ImmutableArray<ChildStep> Address,

@@ -25,6 +25,9 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["specificationEventSource"] = null, ["specificationStream"] = null, ["thenOperation"] = null,
         ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["givenCallerPersona"] = null, ["purpose"] = null, ["queryResult"] = null,
         ["identitySource"] = null, ["identityDetailType"] = null, ["sink"] = null,
+
+        // A slice placement ('shows event|readmodel') draws a linked copy on the timeline: presentation, not a dependency.
+        ["shows"] = null,
         ["dataReadModel"] = null, ["type"] = null, ["exampleType"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
 
         // Placement is screen composition, like contributions and templates: what a hook, an outlet change, a picker or a

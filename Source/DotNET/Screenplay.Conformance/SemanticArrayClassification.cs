@@ -25,7 +25,7 @@ internal static class SemanticArrayClassification
         "application/concepts", "application/types", "application/modules", "application/triggers", "application/eventSources",
         "modules/features", "features/features", "features/slices",
         "slices/events", "slices/commands", "slices/readModels", "slices/projections", "slices/queries",
-        "slices/specifications", "slices/reactions", "slices/captures",
+        "slices/specifications", "slices/reactions", "slices/captures", "slices/screens",
         "types/properties", "events/properties", "commands/properties", "readModels/properties", "triggers/properties",
         "priorRevisions/properties", "eventSources/streams", "queries/keyParts",
     ];
@@ -53,7 +53,7 @@ internal static class SemanticArrayClassification
         "constraints/releasedBy", "constraints/targets", "targets/properties",
         "events/priorRevisions", "events/tags", "priorRevisions/tags",
         "every/mappings", "from/mappings", "join/mappings", "transitions/mappings", "projections/transitions",
-        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path",
+        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path", "ordering/sortBy",
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
         "handler/possibleEvents",
@@ -76,6 +76,7 @@ internal static class SemanticArrayClassification
         "specifications/thenEvents", "specifications/thenInvocations", "specifications/thenQueries", "specifications/thenReadModels",
         "thenQueries/filters", "thenQueries/results", "when/fields",
         "value/values", "key/values", "streamId/values", "operand/values", "values/values",
+        "screens/data", "screens/actions", "screens/navigation", "data/fields", "actions/inputs", "layout/fits", "layout/regions", "regions/regions", "regions/actions",
     ];
 
     static readonly ImmutableDictionary<string, SemanticArrayRule> _rules = BuildRules();

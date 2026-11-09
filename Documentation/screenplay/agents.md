@@ -7,7 +7,7 @@ An `agents` block explicitly lists the queries and commands an agent may discove
 
 ## Declare the allowlist
 
-Place at most one `agents` block at the application root, including across imported files. The following excerpt exposes the query and command declared in the v42 canonical fixture's `AgentSurface.Operations` feature:
+Place at most one `agents` block at the application root, including across imported files. The following excerpt exposes the query and command declared in the v44 canonical fixture's `AgentSurface.Operations` feature:
 
 ```play
 agents
@@ -24,16 +24,16 @@ Each entry requires one nonempty literal description and one scope. A query may 
 
 Only `tokens personal` is supported. OAuth tokens and approval directives are rejected rather than silently ignored. An empty block with `tokens personal` is valid but warns that it exposes nothing. Unlisted operations remain unexposed; the compiler reports their aggregate count without changing the model's authorization.
 
-An operation with no effective authorization produces Warning `PLAY0960`: any token holder can call it. Add an appropriate `authorize` gate to protect it; adding an allowlist entry is not a substitute for that gate.
+An operation with no effective authorization produces Warning `PLAY0980`: any token holder can call it. Add an appropriate `authorize` gate to protect it; adding an allowlist entry is not a substitute for that gate.
 
 ## Query limitations
 
-Global queries cannot be exposed. Performed queries (queries with a `performer`) and graph queries (`query ... graph ...`) produce Error `PLAY0962`, naming the query and its unsupported kind. They do not yet have portable operation identities that an agent allowlist can reference. This refusal applies in both compilers; it is not an empty or partially valid capability surface.
+Global queries cannot be exposed. Performed queries (queries with a `performer`) and graph queries (`query ... graph ...`) produce Error `PLAY0982`, naming the query and its unsupported kind. They do not yet have portable operation identities that an agent allowlist can reference. This refusal applies in both compilers; it is not an empty or partially valid capability surface.
 
 https://github.com/Cratis/Screenplay/issues/1217
 
 ## Portable contract
 
-An agents block selects language/semantic `42.0` and ESM `schemaVersion: 42`, including an explicitly empty block. Models without a block retain their earlier version and canonical bytes. The portable metadata records the personal token kind and, for each entry, its kind, existing executable operation identity, scope and description. It neither invents operation identities nor changes execution authorization. Older consumers must reject v42 rather than discard this metadata and infer exposure.
+An agents block selects language/semantic `44.0` and ESM `schemaVersion: 44`, including an explicitly empty block. Models without a block retain their earlier version and canonical bytes. The portable metadata records the personal token kind and, for each entry, its kind, existing executable operation identity, scope and description. It neither invents operation identities nor changes execution authorization. Older consumers must reject v44 rather than discard this metadata and infer exposure.
 
 In .NET, `Cratis.Screenplay.Agents.AgentCapabilities.From(CompilationResult<SemanticCompilation>)` projects a successful complete semantic compilation. Pass the result from `SemanticModelCompiler.Compile`, including all source and semantic diagnostics. Any error makes the projection null; no valid subset is returned. An absent block also returns null. An explicitly empty valid block returns an empty operation collection. Names, qualified paths and observable-query delivery come from bound operations, not from unvalidated syntax. The projection does not issue tokens or implement an agent transport.

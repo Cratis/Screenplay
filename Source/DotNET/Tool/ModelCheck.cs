@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Mcp;
 
 namespace Cratis.Screenplay.Tool;
@@ -58,6 +59,8 @@ static class ModelCheck
         return true;
     }
 
+    static string Root(ModelCheckOptions options) => options.IsFile ? Path.GetDirectoryName(Path.GetFullPath(options.Target))! : Path.GetFullPath(options.Target);
+
     static bool Exists(ModelCheckOptions options) => options.IsFile || Directory.Exists(options.Target);
 
     static bool IsPlayInput(ModelCheckOptions options) => !options.IsFile || options.Target.EndsWith(".play", StringComparison.OrdinalIgnoreCase);
@@ -67,7 +70,8 @@ static class ModelCheck
         var snapshot = McpSnapshot.Compile(options.Target, options.IsFile);
         var compilation = snapshot.Compilation;
         var additional = snapshot.Completeness(options.Checks);
-        var wholeDiagnostics = compilation.Diagnostics.Concat(additional).ToArray();
+        var visuals = compilation.Value is { } application ? ScreenVisualFiles.Check(Root(options), ScreenVisualFiles.In(application)) : [];
+        var wholeDiagnostics = compilation.Diagnostics.Concat(visuals).Concat(additional).ToArray();
         IEnumerable<Diagnostic> diagnostics = wholeDiagnostics;
         if (options.Scope is { } scope)
         {

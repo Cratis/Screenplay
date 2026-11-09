@@ -205,12 +205,22 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         VisitExpression(syntax.IdentifiedBy);
+        if (syntax.Ordering is not null)
+        {
+            VisitChildrenOrdering(syntax.Ordering);
+        }
 
         foreach (var block in syntax.Blocks)
         {
             VisitProjectionBlock(block);
         }
     }
+
+    /// <summary>
+    /// Visits a <see cref="ChildrenOrderingSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ChildrenOrderingSyntax"/> to visit.</param>
+    public virtual void VisitChildrenOrdering(ChildrenOrderingSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="NestedSyntax"/> node and its children.

@@ -42,6 +42,28 @@ children members identified by userId
 children items identified by itemNumber
 ```
 
+## Ordering the Children
+
+A new child is added at the end of the collection. To place it somewhere else, put one ordering line directly inside the `children` block:
+
+| Line | A new child goes |
+|---|---|
+| `insert last` | At the end. This is what a block without an ordering does. |
+| `insert first` | At the start, so the newest child comes first. |
+| `sort by <property> [ascending\|descending]` | Where the child property puts it: the collection is sorted after the child is added. `ascending` is the default. |
+
+```pdl
+projection Model => ModelReadModel
+  children entries identified by entryId
+    sort by addedAt descending
+    from EntryAdded key entryId
+      parent modelId
+      title = title
+      addedAt = $eventContext.occurred
+```
+
+The order is stored, not computed when the read model is read. A child is placed when it is added; an update to an existing child, even one that changes its sort property, leaves it where it is. Sorting is stable, and a child without a value sorts first when ascending and last when descending. The sort property can be a dotted path, and it is checked against the child type (`PLAY0960`). A block takes one ordering line (`PLAY0959`); an ordering anywhere but directly inside `children` is an error (`PLAY0958`). The line can stand anywhere among the block's lines; the printer writes it right after the block's `automap` or `no automap` line, as it [normalizes layout](../printing.md) elsewhere.
+
 ## Parent Key
 
 Use `parent` when the event carries the parent's identity in a field. The child's `key` and its `parent` serve different lookups:

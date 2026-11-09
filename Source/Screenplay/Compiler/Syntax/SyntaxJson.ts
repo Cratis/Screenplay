@@ -111,6 +111,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     GraphSyntax: ['sink'],
     GraphFromSyntax: ['forEach'],
     GraphRemoveSyntax: ['forEach'],
+    ChildrenSyntax: ['ordering'],
     ProducesSyntax: ['stream'],
     ConceptAttributeSyntax: ['scope', 'specialCategory'],
     ConceptSyntax: ['description', 'valueNumbers', 'generation'],

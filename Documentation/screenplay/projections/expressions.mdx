@@ -108,7 +108,7 @@ from DocumentUpdated
   UpdatedById = $eventContext.causedBy.subject
 ```
 
-Chronicle compiles and evaluates the scalar short forms `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName`. The Screenplay semantic-model binder still rejects the shorthand and reports [Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119); use `$eventContext.causedBy.subject`, `.name` or `.userName` for semantic-model binding. Whole-object `$causedBy` and `$eventContext.causedBy` are not portable scalar mappings; neither are paths through the optional `onBehalfOf` member.
+The short forms `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName` read the same values. Chronicle evaluates them and the semantic-model binder binds them exactly as the long forms, so either spelling runs in specifications. Whole-object `$causedBy` and `$eventContext.causedBy` are not portable scalar mappings; neither are paths through the optional `onBehalfOf` member.
 
 ### Literals
 

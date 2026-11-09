@@ -90,6 +90,7 @@ internal static partial class SemanticModelRead
         "subtract" => SemanticProjectionOperation.Subtract,
         "increment" => SemanticProjectionOperation.Increment,
         "decrement" => SemanticProjectionOperation.Decrement,
+        "setOnce" => SemanticProjectionOperation.SetOnce,
         _ => throw DiscriminatorError(value, "projection operation")
     };
 }

@@ -14,6 +14,8 @@ static class McpLineageText
     internal static string Mapping(MappingSyntax mapping) => mapping switch
     {
         SetMappingSyntax set => $"{set.Property} = {ScreenplaySyntaxText.Expression(set.Source)}",
+        SetOnceMappingSyntax setOnce => $"set once {setOnce.Property} = {ScreenplaySyntaxText.Expression(setOnce.Source)}",
+        RemoveKeyMappingSyntax remove => $"remove {remove.Property}",
         AddMappingSyntax add => $"add {add.Property} by {ScreenplaySyntaxText.Expression(add.Value)}",
         SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {ScreenplaySyntaxText.Expression(subtract.Value)}",
         CountMappingSyntax count => $"count {count.Property}",
@@ -36,7 +38,8 @@ static class McpLineageText
     internal static McpLineageStep? Terminal(MappingSyntax mapping, SourceLocation location) => mapping switch
     {
         SetMappingSyntax set => Terminal(set.Source, location),
-        CountMappingSyntax or IncrementMappingSyntax or DecrementMappingSyntax or ClearMappingSyntax or AddMappingSyntax or SubtractMappingSyntax =>
+        SetOnceMappingSyntax setOnce => Terminal(setOnce.Source, location),
+        CountMappingSyntax or IncrementMappingSyntax or DecrementMappingSyntax or ClearMappingSyntax or AddMappingSyntax or SubtractMappingSyntax or RemoveKeyMappingSyntax =>
             McpLineageStep.Terminal("operation", location, Mapping(mapping)),
         _ => null
     };

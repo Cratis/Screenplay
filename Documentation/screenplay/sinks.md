@@ -1,6 +1,6 @@
 ---
 title: "Cratis Screenplay sinks: choose where read models and graphs are stored"
-description: "Every read model and graph uses a default sink. Declare named sinks to keep reporting read models or graphs apart, and let the deployment map each name to real storage."
+description: "Every Screenplay read model and graph uses a default sink. Declare named sinks to keep reporting read models or graphs apart and map each to storage."
 ---
 
 # Sinks

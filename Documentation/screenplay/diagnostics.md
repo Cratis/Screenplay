@@ -1151,7 +1151,7 @@ itself what an unresolvable one means.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated-concept rules outside the supported rule forms (supported rules are checked for consistency instead: refuted rules report `PLAY0688` errors and unproven rules `PLAY0689` warnings), and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, clock operands (`today`, `now`, `date of`) outside command conditions and `validate` comparison rules, and date comparisons outside the supported shapes (`==`, `!=`, `>`, `>=`, `<`, `<=` over required scalar command properties of the same primitive, or matching literals, in `require` and `produces when`), non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
-| `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
+| `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. Screens are deferred by default and can be admitted on request as ESM v42; see [UI contract](ui-contract.md#screens-in-the-executable-model). |
 | `PLAY0270` | Information | Source syntax, including a valid persona, a query a performer answers (an opaque read, left out of the executable model), compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
@@ -1251,7 +1251,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0296` | Warning | An `$eventContext.<path>` continues into something the member before it does not have, such as `$eventContext.eventType.name`. The derived function `Week` is case-sensitive: `occurred.Week` resolves and `occurred.week` does not. |
 | `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
 | `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
-| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
+| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, `$eventContent` or `$causedBy`, such as `bySource.$eventSourceId`. Only `$eventContext.<path>`, `$eventContent.<path>` and `$causedBy.subject`, `.name` or `.userName` are resolved; any other source becomes the literal key. |
 
 ### Specification semantics
 
@@ -1772,25 +1772,53 @@ An `agents` block is an explicit operation allowlist, not an authorization grant
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0944` | Error | The agents block, operation reference or field is malformed or unsupported. Write a root `agents` block, `query <reference>` or `command <reference>`, and literal quoted descriptions. Fields cannot have children. |
-| `PLAY0945` | Error | The composed application declares more than one agents block, including across imported files. Keep one. |
-| `PLAY0946` | Error | No query or command of the declared kind matches the exposed reference. |
-| `PLAY0947` | Error | More than one operation of the declared kind matches the reference. Qualify it with its module, feature and slice. |
-| `PLAY0948` | Error | The same operation is exposed more than once, including through different short and qualified references. |
-| `PLAY0949` | Error | An exposed operation has no nonempty literal description. Add `description "<text>"`. |
-| `PLAY0950` | Error | An exposed operation is missing its scope, repeats it or uses an unsupported scope. Declare exactly one `scope read` or `scope write` on each entry. |
-| `PLAY0951` | Error | An exposed command does not require `scope write`. Commands cannot use `scope read`. |
-| `PLAY0952` | Error | The agents block is missing its token declaration or repeats it. Declare exactly one `tokens personal`. |
-| `PLAY0953` | Error | An unsupported token kind is declared. Only `tokens personal` is supported; `tokens oauth` is refused. |
-| `PLAY0954` | Error | An exposed operation declares approval. Approval is not supported; token scope and model authorization must both permit the call. |
-| `PLAY0955` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
-| `PLAY0956` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
-| `PLAY0957` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
-| `PLAY0958` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
-| `PLAY0959` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
-| `PLAY0960` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
-| `PLAY0961` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
-| `PLAY0962` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+| `PLAY0964` | Error | The agents block, operation reference or field is malformed or unsupported. Write a root `agents` block, `query <reference>` or `command <reference>`, and literal quoted descriptions. Fields cannot have children. |
+| `PLAY0965` | Error | The composed application declares more than one agents block, including across imported files. Keep one. |
+| `PLAY0966` | Error | No query or command of the declared kind matches the exposed reference. |
+| `PLAY0967` | Error | More than one operation of the declared kind matches the reference. Qualify it with its module, feature and slice. |
+| `PLAY0968` | Error | The same operation is exposed more than once, including through different short and qualified references. |
+| `PLAY0969` | Error | An exposed operation has no nonempty literal description. Add `description "<text>"`. |
+| `PLAY0970` | Error | An exposed operation is missing its scope, repeats it or uses an unsupported scope. Declare exactly one `scope read` or `scope write` on each entry. |
+| `PLAY0971` | Error | An exposed command does not require `scope write`. Commands cannot use `scope read`. |
+| `PLAY0972` | Error | The agents block is missing its token declaration or repeats it. Declare exactly one `tokens personal`. |
+| `PLAY0973` | Error | An unsupported token kind is declared. Only `tokens personal` is supported; `tokens oauth` is refused. |
+| `PLAY0974` | Error | An exposed operation declares approval. Approval is not supported; token scope and model authorization must both permit the call. |
+| `PLAY0975` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
+| `PLAY0976` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
+| `PLAY0977` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
+| `PLAY0978` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
+| `PLAY0979` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
+| `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
+| `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
+| `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+
+## Screen visuals and slice placements
+
+Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#sketches-mockups-and-images), and the linked copies a slice shows, see [Slices](slices.md#show-an-element-in-more-than-one-slice). Both compilers report `PLAY0950`, `PLAY0951` and `PLAY0953` to `PLAY0955`. `PLAY0952` needs the files beside the model, so it is reported where a model root is opened: the MCP server, `open-workspace` and the tools built on them.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0950` | Error | A screen's `sketch`, `mockup` or `image` line names no file. Write the path after the keyword, relative to the model root. |
+| `PLAY0951` | Warning | A screen's `image` is not a PNG, JPG, GIF, SVG or WebP file, or its `mockup` is not an HTML page ending in `.html` or `.htm`. |
+| `PLAY0952` | Warning | A screen's sketch, mockup or image file is not beside the model: it does not exist, or its path leaves the model root. |
+| `PLAY0953` | Error | A slice's `shows` line is not `shows event <Name>` or `shows readmodel <Name>`. |
+| `PLAY0954` | Warning | A slice shows an event or read model the application does not declare. |
+| `PLAY0955` | Warning | A slice shows an element it already declares itself, or shows the same element twice. Remove the extra line. |
+
+## Projection dictionary keys, set once and children ordering
+
+Dynamic dictionary keys, the `remove` mapping line and the ordering of a `children` block, see [Property mapping](projections/property-mapping.md#dictionary-entries) and [Children](projections/children.mdx#ordering-the-children). Both compilers report every code in this table.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0956` | Error | A `remove <target>` line names a target without a dynamic key, so there is no entry to remove. End the target in `.$eventContent.<property>`, `.$eventContext.<path>` or `.$causedBy.<member>`; to empty the whole property, write `clear <target>`. |
+| `PLAY0957` | Error | A dynamic key is malformed: `.$eventContent` names no event property, or `.$causedBy` names a member other than `subject`, `name` or `userName`. |
+| `PLAY0958` | Error | A children ordering line is not `insert first`, `insert last` or `sort by <property> [ascending\|descending]`, takes indented lines, or stands outside a `children` block. |
+| `PLAY0959` | Error | A `children` block declares more than one ordering line. Keep one. |
+| `PLAY0960` | Warning | A children `sort by` names a property the element type of the collection does not declare. |
+| `PLAY0961` | Warning | A `.$eventContent.<path>` key names a path the event the mapping handles does not have, so the entry is never written. |
+| `PLAY0962` | Warning | A dynamic key writes into a declared read-model property. Chronicle accepts a dictionary entry only in a dictionary property, and Screenplay has no dictionary type, so Chronicle refuses the projection when it registers it. |
+| `PLAY0963` | Error | A `clear` line names a target with a dynamic key. Clearing would keep the entry with no value; write `remove <target>` to delete it. |
 
 ## Toolbar buttons
 

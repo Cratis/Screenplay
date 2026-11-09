@@ -649,7 +649,7 @@ and `page` (`revision`, `totalCount`, `offset`, `items`, `nextOffset`). Filters 
 | --- | --- |
 | `anchor` | `{ semanticId }` (including an orphan's ID), `{ application: true }`, a dotted `{ address, kind }`, a typed `{ kind, parts }` address or a current source handle |
 | `scope` | Optional dotted module/feature/slice; descendants and ancestor notes |
-| `kind` | `question`, `task`, `note`; omitted selects all kinds |
+| `kind` | `question`, `task`, `note`, `issue`; omitted selects all kinds |
 | `state` | `open` (default), `resolved`, `orphaned`, `all` |
 | `ref` | Exact reference identifier in `refs` or `resolution.ref` |
 | `view` | `items` (default) or `findings` |
@@ -754,7 +754,7 @@ arguments or failed requests, never successful partial batches.
 | --- | --- | --- |
 | `repair-capabilities` | None | None |
 | `open-workspace` | None | `applicationName`, `path`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
+| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision`, `screens` |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
@@ -954,6 +954,7 @@ and `page` (`revision`, `totalBytes`, decoded-byte `offset`, `byteCount`,
 `bytesBase64`, `nextOffset`). `limit` is decoded bytes, 1–196608 (default 49152)
 for this view; other workspace views use 1–200 items (default 50).
 `expectedModelRevision` applies only to `executable-model`; `expectedAttachmentManifestRevision` applies only to `executable-model` and `implementation-requirements`. Other views ignore these arguments, and `implementation-requirements` ignores `expectedModelRevision`.
+`screens: true` admits the model's screens to the paged model as ESM v42 (see [UI contract](../ui-contract.md#screens-in-the-executable-model)); it applies only to `executable-model`, and pass it on every page so the pinned `modelRevision` stays the same. A screen reference the executable model does not hold refuses the call with `ScreensRefused` and the reasons.
 Decode each `bytesBase64` page and concatenate in offset order until `nextOffset`
 is null. For every subsequent page pass `expectedRevision`,
 `expectedModelRevision` and `expectedAttachmentManifestRevision` from the first

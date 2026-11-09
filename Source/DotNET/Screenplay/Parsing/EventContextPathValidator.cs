@@ -20,6 +20,8 @@ internal static class EventContextPathValidator
 {
     const string EventContextPrefix = "$eventContext";
     const string DynamicKeyMarker = ".$";
+    const string EventContentPrefix = "$eventContent";
+    const string CausedByPrefix = "$causedBy";
 
     /// <summary>
     /// Validates the path of an <c>$eventContext.&lt;path&gt;</c> expression.
@@ -69,9 +71,9 @@ internal static class EventContextPathValidator
     /// <param name="property">The mapping target property, unescaped.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the mapping.</param>
     /// <remarks>
-    /// Chronicle treats any target containing <c>.$</c> as a dynamic key (<c>ProjectionFactory.cs:791</c>) but only
-    /// resolves <c>.$eventContext.&lt;path&gt;</c> (<c>PropertyMappers.cs:229-250</c>); any other source is kept as the
-    /// literal key text, so the value lands under the wrong key without an error.
+    /// Chronicle treats any target containing <c>.$</c> as a dynamic key (<c>ProjectionFactory.cs:791</c>) and resolves
+    /// <c>.$eventContext.&lt;path&gt;</c>, <c>.$eventContent.&lt;path&gt;</c> and <c>.$causedBy.(subject|name|userName)</c>;
+    /// any other source is kept as the literal key text, so the value lands under the wrong key without an error.
     /// </remarks>
     public static void ValidateDynamicKey(ParserContext context, string property, SourceLocation location)
     {
@@ -82,6 +84,34 @@ internal static class EventContextPathValidator
         }
 
         var key = property[(marker + 1)..];
+        if (IsSource(key, EventContentPrefix))
+        {
+            var path = key.Length > EventContentPrefix.Length ? key[(EventContentPrefix.Length + 1)..] : string.Empty;
+            if (path.Length == 0 || path.Split('.').Any(segment => segment.Length == 0))
+            {
+                context.Error(
+                    DiagnosticCodes.InvalidDynamicKey,
+                    $"'{EventContentPrefix}' in '{property}' names no event property - write '<property>.{EventContentPrefix}.<event property>'",
+                    location);
+            }
+
+            return;
+        }
+
+        if (IsSource(key, CausedByPrefix))
+        {
+            var member = key.Length > CausedByPrefix.Length ? key[(CausedByPrefix.Length + 1)..] : string.Empty;
+            if (!ContextExpressionSyntax.KnownCausedByProperties.Contains(member, StringComparer.Ordinal))
+            {
+                context.Error(
+                    DiagnosticCodes.InvalidDynamicKey,
+                    $"'{CausedByPrefix}' in '{property}' must name one of {string.Join(", ", ContextExpressionSyntax.KnownCausedByProperties)} - write '<property>.{CausedByPrefix}.subject'",
+                    location);
+            }
+
+            return;
+        }
+
         if (key == EventContextPrefix)
         {
             Validate(context, string.Empty, location);
@@ -97,9 +127,47 @@ internal static class EventContextPathValidator
         var source = key.Split('.')[0];
         context.Warning(
             DiagnosticCodes.UnresolvedDynamicKeySource,
-            $"Dynamic dictionary key '{source}' in '{property}' is never resolved - only '{EventContextPrefix}.<path>' is, so the literal text '{source}' becomes the key",
+            $"Dynamic dictionary key '{source}' in '{property}' is never resolved - only '{EventContextPrefix}.<path>', '{EventContentPrefix}.<path>' and '{CausedByPrefix}.<member>' are, so the literal text '{source}' becomes the key",
             location);
     }
+
+    /// <summary>
+    /// Gets the base property and the event property path of a <c>&lt;property&gt;.$eventContent.&lt;path&gt;</c> target.
+    /// </summary>
+    /// <param name="property">The mapping target property, unescaped.</param>
+    /// <param name="path">The event property path the key reads, when the target has one.</param>
+    /// <returns><see langword="true"/> when the target ends in a <c>$eventContent</c> key with a path.</returns>
+    public static bool TryGetEventContentKey(string property, out string path)
+    {
+        path = string.Empty;
+        var marker = property.IndexOf(DynamicKeyMarker, StringComparison.Ordinal);
+        if (marker < 0) return false;
+        var key = property[(marker + 1)..];
+        if (!key.StartsWith($"{EventContentPrefix}.", StringComparison.Ordinal)) return false;
+        path = key[(EventContentPrefix.Length + 1)..];
+        return path.Length > 0;
+    }
+
+    /// <summary>
+    /// Gets whether a mapping target ends in a dynamic dictionary key.
+    /// </summary>
+    /// <param name="property">The mapping target property, unescaped.</param>
+    /// <returns><see langword="true"/> when the target holds <c>.$</c>.</returns>
+    public static bool HasDynamicKey(string property) => property.Contains(DynamicKeyMarker, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Gets the static part of a mapping target - the property path before any dynamic dictionary key.
+    /// </summary>
+    /// <param name="property">The mapping target property, unescaped.</param>
+    /// <returns>The property path the dynamic key writes into, or the whole target when it has no key.</returns>
+    public static string BaseProperty(string property)
+    {
+        var marker = property.IndexOf(DynamicKeyMarker, StringComparison.Ordinal);
+        return marker < 0 ? property : property[..marker];
+    }
+
+    static bool IsSource(string key, string prefix) =>
+        key == prefix || key.StartsWith($"{prefix}.", StringComparison.Ordinal);
 
     static string Names(IEnumerable<EventContextMember> members) => string.Join(", ", members.Select(member => member.Name));
 

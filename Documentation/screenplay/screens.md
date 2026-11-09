@@ -9,7 +9,7 @@ A Screenplay screen connects the data a user needs to see with the actions they 
 
 Start with a query and the commands the user needs. Add a template when you need to place that content in named regions; use [forms](forms.md) for command input rather than redeclaring command properties on the screen.
 
-To build the user interface on a stack that does not read Scene, export the [UI contract](ui-contract.md): every screen's data, actions, navigation and layout as stack-neutral JSON.
+To build the user interface on a stack that does not read Scene, export the [UI contract](ui-contract.md): every screen's data, actions, navigation and layout as stack-neutral JSON. The same members can be [admitted to the executable model](ui-contract.md#screens-in-the-executable-model) as ESM v42, keyed to the identities of the queries, commands and screens they reference.
 
 ## The structure a screen fills
 
@@ -492,6 +492,28 @@ Use `file` to reference an external screen implementation instead of describing 
 screen RegisterInvoiceScreen
   file Screens/RegisterInvoiceScreen.tsx
 ```
+
+## Sketches, mockups and images
+
+Early in modeling a screen is often a quick sketch, a screenshot of the system being replaced or a hand-written HTML page rather than a composed screen. Keep them with the screen so they travel with the model and reach whoever builds it:
+
+```screenplay
+screen RegisterInvoiceScreen
+  sketch Screens/register-invoice.sketch.json
+  mockup Screens/register-invoice/index.html
+  mockup Screens/register-invoice/confirm.html
+  image Screens/register-invoice-today.png
+```
+
+| Line | Holds |
+| --- | --- |
+| `sketch <path>` | A drawing of the screen kept as vector drawing data, such as a board sketch export. |
+| `mockup <path>` | One HTML/CSS page of a coded mockup. Repeat the line for each page, in the order a reader should see them. |
+| `image <path>` | A screenshot or a design export: PNG, JPG, GIF, SVG or WebP. |
+
+A screen can carry any number of each, beside or instead of its structure. Paths are relative to the model root, like the `file` directive, and the files live in the repository next to the `.play` files. They are authoring metadata: the printer keeps them in the order written, directly after `description`, `file` and `fits`, the AST and MCP editing tools carry them, and they never change what the screen does or reach the executable semantic model.
+
+The compiler refuses a line without a path (`PLAY0950`) and warns when an `image` is not an image file or a `mockup` is not an HTML page (`PLAY0951`). Opening a model root also checks that every file is there and inside the root, and warns about each one that is not (`PLAY0952`).
 
 ## Screen metadata
 

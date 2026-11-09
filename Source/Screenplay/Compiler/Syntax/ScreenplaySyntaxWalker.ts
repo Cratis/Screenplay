@@ -301,6 +301,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitSlice(syntax: SliceSyntax): void {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
+        syntax.placements?.forEach(node => this.visitNode(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.commands.forEach(node => this.visitCommand(node));
         syntax.operations?.forEach(node => this.visitOperation(node));
@@ -701,6 +702,7 @@ export abstract class ScreenplaySyntaxWalker {
                 break;
             case 'ChildrenSyntax':
                 if (syntax.identifiedBy !== undefined) this.visitExpression(syntax.identifiedBy);
+                if (syntax.ordering != null) this.visitNode(syntax.ordering);
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
             case 'NestedSyntax':
@@ -825,6 +827,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitScreen(syntax: ScreenSyntax): void {
         this.visitNode(syntax);
+        syntax.visuals?.forEach(visual => {
+            this.visitNode(visual);
+            this.visitFileReference(visual.file);
+        });
         syntax.directives.forEach(node => this.visitScreenDirective(node));
         syntax.contributions?.forEach(contribution => {
             this.visitNode(contribution);

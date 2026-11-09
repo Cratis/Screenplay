@@ -32,7 +32,7 @@ internal static class EsmSchemaMembers
         ["TypeReference"] = "kind:s primitive:s? target:s? collection:b optional:b",
         ["Module"] = "id:s name:s features:[]",
         ["Feature"] = "id:s name:s features:[] slices:[]",
-        ["Slice"] = "id:s name:s kind:s events:[] commands:[] readModels:[] projections:[] reducers:[] queries:[] specifications:[] constraints:[] reactions:[] captures:[] direction:s",
+        ["Slice"] = "id:s name:s kind:s events:[] commands:[] readModels:[] projections:[] reducers:[] queries:[] specifications:[] constraints:[] reactions:[] captures:[] direction:s screens:[]",
         ["EventContract"] = "id:s contractId:s contractRevision:i name:s storedName:s properties:[] tags:s[] visibility:s origin:s predecessor:i priorRevisions:[]",
         ["PriorRevision"] = "contractRevision:i predecessor:i? properties:[] tags:s[]",
         ["Command"] = "id:s name:s properties:[] validations:[] codeValidations:[] produces:[] requirements:[] authorization:1 destination:1 response:1 route:1 handler:1 reads:[] calendar:1",
@@ -49,7 +49,8 @@ internal static class EsmSchemaMembers
         ["Scope"] = "from:[] join:[] children:[] nested:[] every:1? removedWith:[] removedWithJoin:[]",
         ["From"] = "eventContract:s key:1 parentKey:1? mappings:[]",
         ["Join"] = "eventContract:s on:s mappings:[] key:1",
-        ["Children"] = "property:s identifiedBy:s scope:1",
+        ["Children"] = "property:s identifiedBy:s ordering:1 scope:1",
+        ["ChildrenOrdering"] = "placement:s sortBy:s[] direction:s",
         ["Nested"] = "property:s scope:1",
         ["Every"] = "includeChildren:b subscribesToAllEvents:b mappings:[]",
         ["Removal"] = "eventContract:s key:1 parentKey:1?",
@@ -155,7 +156,15 @@ internal static class EsmSchemaMembers
         ["CaptureRecord"] = "fields:[]",
         ["CaptureField"] = "name:s kind:s value:1 record:1 records:[]",
         ["PinnedValue"] = "command:s targetProperty:s value:1",
-        ["WhenTrigger"] = "kind:s trigger:s? values:[]"
+        ["WhenTrigger"] = "kind:s trigger:s? values:[]",
+        ["Screen"] = "id:s name:s title:s description:s data:[] actions:[] navigation:[] layout:1",
+        ["ScreenData"] = "query:s by:s fields:[]",
+        ["ScreenField"] = "path:s label:s",
+        ["ScreenAction"] = "command:s label:s subject:s inputs:[] when:s then:s",
+        ["ScreenInput"] = "property:s from:s",
+        ["ScreenNavigation"] = "screen:s trigger:s by:s opens:s",
+        ["ScreenLayout"] = "fits:s[] regions:[]",
+        ["ScreenRegion"] = "kind:s name:s shows:s title:s actions:s[] regions:[]"
     }.ToImmutableDictionary(
         pair => Enum.Parse<EsmBaselineShape>(pair.Key),
         pair => pair.Value.Split(' ').Select(member => member.Split(':')).Select(parts => (parts[0], parts[1])).ToImmutableArray());

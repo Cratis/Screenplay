@@ -16,6 +16,8 @@ internal static class ModelNotesValidation
 {
     static readonly string[] _urlSchemes = ["http", "https"];
 
+    static readonly string[] _trackers = ["github", "jira", "linear", "other"];
+
     static readonly string[] _modelEvidence = ["specification", "description"];
 
     internal static void Document(ModelNotesDocument document)
@@ -35,12 +37,13 @@ internal static class ModelNotesValidation
     internal static void Note(ModelNote note)
     {
         NoteId(note.Id);
-        Choice(note.Kind, ["question", "task", "note"]);
+        Choice(note.Kind, ["question", "task", "note", "issue"]);
         Text(note.Text);
         Text(note.Author);
         Anchor(note.Anchor);
         Instant(note.CreatedAt);
         References(note);
+        if (note.Kind == "issue") IssueReferences(note);
         ValidateOptional(note.LastAddress, Address);
         ValidateOptional(note.Resolution, Resolution);
     }
@@ -152,7 +155,13 @@ internal static class ModelNotesValidation
     {
         Text(reference.Id);
         ValidateOptional(reference.Url, Url);
+        ValidateOptional(reference.Tracker, tracker => Choice(tracker, _trackers));
     }
+
+    static void IssueReferences(ModelNote note) => RejectAny(
+        note,
+        "An issue note requires at least one reference, and every reference names its tracker: github, jira, linear or other.",
+        [value => value.Refs.IsDefaultOrEmpty, value => value.Refs.Any(reference => reference.Tracker is null)]);
 
     static void Url(string value)
     {

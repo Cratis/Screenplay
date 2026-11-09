@@ -13,7 +13,8 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseAuthorize } from './AuthorizeParser';
 import { parsePlainActionInput, parseSubjectClause } from './ActionSubjectClause';
-import { InteractionArgumentSyntax } from '../Syntax/Screens';
+import { InteractionArgumentSyntax, ScreenVisualSyntax } from '../Syntax/Screens';
+import { parseScreenVisual } from './ScreenVisualParser';
 import { parseFencedText } from './CodeBlockParser';
 import { parseMappingSource } from './ExpressionParser';
 import { parseDescription } from './DescriptionParser';
@@ -90,8 +91,10 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
     const outlets: OutletSyntax[] = [];
     let description: string | null = null;
     let fits: ScreenFit[] | undefined;
+    const visuals: ScreenVisualSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        if (parseScreenVisual(context, child, visuals)) continue;
         if (firstWord(child.content) === 'fits') {
             fits = parseFits(context, child, match?.[1] ?? '', fits);
         } else if (firstWord(child.content) === 'contribute') {
@@ -105,7 +108,7 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
             pushDirective(context, child, directives);
         }
     }
-    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), ...(fits !== undefined && fits.length > 0 ? { fits } : {}), location: locationOf(line) };
+    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), ...(fits !== undefined && fits.length > 0 ? { fits } : {}), ...(visuals.length > 0 ? { visuals } : {}), location: locationOf(line) };
 }
 
 // 'fits <role>, ...' - the places a slice's screen fits, in order of preference (PLAY0906).

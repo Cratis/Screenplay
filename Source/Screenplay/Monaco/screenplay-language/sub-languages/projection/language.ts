@@ -35,6 +35,13 @@ const KEYWORDS = [
     'set',
     'unset',
     'clear',
+    'once',
+    'insert',
+    'first',
+    'last',
+    'sort',
+    'ascending',
+    'descending',
     'events',
     'id',
     'exclude',
@@ -47,6 +54,7 @@ const BUILTINS = [
     '$eventSourceId',
     '$causedBy',
     '$eventContext',
+    '$eventContent',
 ] as const;
 
 // Operators
