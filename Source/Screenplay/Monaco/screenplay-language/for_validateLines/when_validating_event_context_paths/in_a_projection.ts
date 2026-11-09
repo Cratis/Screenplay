@@ -88,10 +88,67 @@ describe('when validating a dynamic key naming another source', () => {
     let issues: ValidationIssue[];
 
     beforeEach(() => {
-        issues = validate('count byUser.$causedBy.subject');
+        issues = validate('count bySource.$eventSourceId');
     });
 
     it('should warn with the compiler code', () => {
         issues.map((issue) => [issue.code, issue.severity]).should.deep.equal([[diagnosticCodes.unresolvedDynamicKeySource, 'warning']]);
+    });
+});
+
+describe('when validating dynamic keys from the event content and who caused it', () => {
+    let issues: ValidationIssue[];
+
+    beforeEach(() => {
+        issues = validate(
+            'slots.$eventContent.slot.name = series',
+            'count byUser.$causedBy.userName',
+            'set once owners.$causedBy.subject = $causedBy.name',
+            'remove slots.$eventContent.slot',
+            'remove @with.$eventContent.slot',
+        );
+    });
+
+    it('should report nothing', () => {
+        issues.should.be.empty;
+    });
+});
+
+describe('when validating malformed dynamic keys', () => {
+    let issues: ValidationIssue[];
+
+    beforeEach(() => {
+        issues = validate('count bySlot.$eventContent', 'count byUser.$causedBy.email');
+    });
+
+    it('should report each with the compiler code', () => {
+        issues.map((issue) => [issue.code, issue.severity]).should.deep.equal([
+            [diagnosticCodes.invalidDynamicKey, 'error'],
+            [diagnosticCodes.invalidDynamicKey, 'error'],
+        ]);
+    });
+});
+
+describe('when validating a remove line without a dynamic key', () => {
+    let issues: ValidationIssue[];
+
+    beforeEach(() => {
+        issues = validate('remove slots');
+    });
+
+    it('should report an error with the compiler code', () => {
+        issues.map((issue) => [issue.code, issue.severity]).should.deep.equal([[diagnosticCodes.removeKeyWithoutDynamicKey, 'error']]);
+    });
+});
+
+describe('when validating a clear line with a dynamic key', () => {
+    let issues: ValidationIssue[];
+
+    beforeEach(() => {
+        issues = validate('clear slots.$eventContent.slot', 'clear slots');
+    });
+
+    it('should report an error pointing at remove with the compiler code', () => {
+        issues.map((issue) => [issue.code, issue.severity]).should.deep.equal([[diagnosticCodes.clearDynamicKey, 'error']]);
     });
 });

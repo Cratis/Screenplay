@@ -278,8 +278,14 @@ public sealed partial class SemanticModelBinder
                 DecrementMappingSyntax => new(mapping.Property, SemanticProjectionOperation.Decrement, null),
                 AddMappingSyntax add => Source(SemanticProjectionOperation.Add, add.Value, add.Factor),
                 SubtractMappingSyntax subtract => Source(SemanticProjectionOperation.Subtract, subtract.Value, subtract.Factor),
-                _ => null
+                _ => Unsupported()
             };
+
+            SemanticGraphMapping? Unsupported()
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Graph mapping '{mapping.GetType().Name}' on '{mapping.Property}' is not admitted: a graph property has no set-once or dictionary-key form.", mapping.Location);
+                return null;
+            }
         }
 
         SemanticGraphSpecification? BindGraphSpecification(SliceSyntax slice, SpecificationSyntax specification, Dictionary<string, SemanticGraph> graphs, Dictionary<string, SemanticCommand> commands)

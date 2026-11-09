@@ -161,7 +161,42 @@ public sealed partial class SemanticModelBinder
             }
 
             var childLevel = level with { Targets = element, AutoMap = AutoMap(children.AutoMap, projectionAutoMap), IsRoot = false, IsChildContext = true };
-            return new(property.Id, identity.Id, BindScope(children.Blocks, childLevel, projectionAutoMap));
+            if (!TryBindOrdering(children, level, element, out var ordering))
+            {
+                return null;
+            }
+
+            return new(property.Id, identity.Id, BindScope(children.Blocks, childLevel, projectionAutoMap)) { Ordering = ordering };
+        }
+
+        // 'insert last' is what a children block does without an ordering, so it binds to none and keeps the model's bytes.
+        bool TryBindOrdering(ChildrenSyntax children, ProjectionLevel level, Dictionary<string, SemanticProperty> element, out SemanticProjectionChildrenOrdering? ordering)
+        {
+            ordering = null;
+            switch (children.Ordering)
+            {
+                case null or { Placement: ChildrenPlacement.Append }:
+                    return true;
+                case { Placement: ChildrenPlacement.Prepend }:
+                    ordering = new(SemanticChildrenPlacement.Prepend, [], SemanticSortDirection.Ascending);
+                    return true;
+                case { Placement: ChildrenPlacement.Sorted, SortBy: { } sortBy } declared:
+                    if (ResolvePath(sortBy, element) is not { } target || target.Property.Type.IsCollection || target.Property.Type.Kind == SemanticTypeReferenceKind.CompositeType)
+                    {
+                        Error(
+                            DiagnosticCodes.InvalidSemanticBinding,
+                            $"Projection '{level.Projection}' children '{children.Property}' sorts by '{sortBy}', which is not a single value of its element type.",
+                            declared.Location);
+                        return false;
+                    }
+
+                    var direction = declared.Direction == ChildrenSortDirection.Descending ? SemanticSortDirection.Descending : SemanticSortDirection.Ascending;
+                    ordering = new(SemanticChildrenPlacement.Sorted, target.Path, direction);
+                    return true;
+                default:
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{level.Projection}' children '{children.Property}' ordering is not admitted.", children.Ordering.Location);
+                    return false;
+            }
         }
 
         SemanticProjectionNested? BindNested(NestedSyntax nested, ProjectionLevel level, AutoMapMode projectionAutoMap)

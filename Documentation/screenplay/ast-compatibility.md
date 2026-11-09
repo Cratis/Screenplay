@@ -119,6 +119,14 @@ A pending `HandlerSyntax.Implementation` may coexist with unconditional `Command
 
 `RemoveWithSyntax.PartsKey` is a nullable init-only `CompositeKeySyntax`, beside the existing scalar `Key`. It holds the untyped `key` child block, defaults to null and is omitted from syntax JSON when absent. The walker visits its parts and expressions. Preserve it during source recovery; an earlier transport reader rejects the new member. A removal with both scalar and parts keys is invalid.
 
+## Set once, dictionary entries and children ordering
+
+`SetOnceMappingSyntax(Property, Source, Location)` and `RemoveKeyMappingSyntax(Property, Location)` are additive `MappingSyntax` kinds for `set once <target> = <value>` and `remove <target>`. A dictionary-entry target, such as `slots.$eventContent.slot`, adds no node: the dynamic key stays in the existing `Property` text of any mapping kind, and the part before `.$` is the property it writes into. The walker gains `VisitSetOnceMapping` and `VisitRemoveKeyMapping`.
+
+`ChildrenSyntax.Ordering` is a nullable init-only `ChildrenOrderingSyntax`, not a new constructor or Deconstruct parameter. `ChildrenOrderingSyntax(Placement, SortBy, Direction, Location)` is an additive node; the additive enums are `ChildrenPlacement` (`Append = 0`, `Prepend = 1`, `Sorted = 2`) and `ChildrenSortDirection` (`Ascending = 0`, `Descending = 1`). `SortBy` is set only for `Sorted`. A block without an ordering line keeps `Ordering` null, and syntax JSON omits the member, preserving existing documents' bytes; `insert last` is kept as an explicit `Append`. The walker gains `VisitChildrenOrdering`. Preserve the member when rewriting a children block.
+
+On the executable side, `SemanticProjectionOperation` gains `SetOnce = 6` (`"operation":"setOnce"`), and a children scope gains an optional ordering. Either selects ESM v43; a model that uses neither keeps its version and bytes, and `insert last` binds to no ordering. Dynamic keys and `RemoveKeyMappingSyntax` add no ESM member: the binder refuses them with `PLAY0268`. Older readers must reject v43 rather than drop set-once or ordering. See [decision 0150](../../decisions/0150-projection-parity-esm-v43.md).
+
 ## Reaction command identity member
 
 `ReactionSyntax.RunsAs` is a nullable init-only `ReactionIdentitySyntax`, not a new constructor or Deconstruct parameter. `ReactionIdentitySyntax(Kind, Roles, Location)` is an additive node; its CLR `Kind` uses `syntaxKind` in typed syntax JSON to avoid the node discriminator. The walker gains `VisitReactionIdentity`, and generated transport and collection schemas describe the roles. Preserve `RunsAs` when rewriting a reaction. Old syntax JSON may omit the member; its default is null. A declared identity binds to the reaction's `runsAs` member and selects ESM v10; omission preserves existing ESM bytes and revisions.

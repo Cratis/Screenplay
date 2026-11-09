@@ -19,6 +19,8 @@ In practice that means:
 - **The default key is the event source.** A `from` block without a key, and one with `key $eventSourceId`, are the same declaration. The key is resolved from the event's inline key, then the block's key, then the event source - never from a `key` written directly on the projection.
 - **`from A, B` is one transition per event**, and all of them share the block's mappings.
 - **`clear x` and `x = null` are one operation**, and **`count` is `increment`.**
+- **`set once x = v` writes only an empty target.** A target that is missing or null takes the value; one that holds a value keeps it (ESM v43, operation `setOnce`).
+- **A children ordering is stored.** `insert first` adds a new child at the start and `sort by` sorts the collection, stably, when a child is added; an update never moves a child (ESM v43, `ordering` on the children). `insert last` is what a block without an ordering does and binds to no ordering.
 - **Arithmetic is typed by the read model.** `add` and `subtract` convert both operands to the target property's type before the operation - a whole-number target rounds half to even - and a target with no value yet starts at zero. There are no arithmetic operators; `add … by` and `subtract … by` are the whole arithmetic surface.
 - **A source with no value sets the target to null.**
 - **Nested paths create what is missing.** `quantity.amount = amount` creates `quantity` if it is absent; `basis = quantity.basis` reads through a composite event property.
@@ -125,13 +127,13 @@ Each of these is reported with a precise message rather than bound and ignored:
 
 | Construct | Why |
 | --- | --- |
-| `$causedBy` | The Screenplay binder still rejects the shorthand, although Chronicle compiles and evaluates `$causedBy.subject`, `.name` and `.userName`. Write `$eventContext.causedBy.subject`, `.name` or `.userName` for semantic-model binding. Whole-object identity mappings and paths through optional `onBehalfOf` are not admitted as portable scalar values. |
+| A bare `$causedBy` | It is the whole identity, not one value. `$causedBy.subject`, `.name` and `.userName` bind as `$eventContext.causedBy.<member>`. Paths through optional `onBehalfOf` are not admitted as portable scalar values. |
 | `$eventContext.<path>` for a path Chronicle's event context does not have | Chronicle would throw when it builds the projection. The binder admits a small set of scalar paths until a shared event-context catalog replaces it. |
 | String templates and raw expressions in mappings and keys | The semantic model has no portable string-template expression. |
 | A number or Boolean literal key | Chronicle reads any key literal other than text as a property path. Write `key literal "…"`. |
 | `parent` outside `children` | Chronicle never reads it there. |
 | A second `every` or `all` on one level | Chronicle keeps only the last at the top and merges them below; the semantic model admits one. |
 | `sequence` | Which event sequence a projection observes is a realization concern, not portable behavior. |
-| Dynamic dictionary keys such as `counts.$eventContext.eventType.id` | The semantic model has no dictionary-keyed target. |
+| Dynamic dictionary keys such as `counts.$eventContext.eventType.id` or `slots.$eventContent.slot`, and `remove <target>` | The semantic model has no dictionary-keyed target. |
 
 Everything that binds is either executed by the reference evaluator or blocks its execution plan - it is never bound and then skipped. The evaluator does not execute a `remove via join` on a projection's own level (Chronicle's engine wires it as a child removal although these pages promise a delete), a child collection or `remove via join` inside a nested object, a join inside a nested object under children (Chronicle's engine does not wire these combinations), `all` beside removals or child levels, or event-context values other than the event source, which ESM v1 facts carry no occurrence context for. Specification events carry no event source in ESM v1 either, so a specification that builds an event-source-keyed projection from `given` events fails instead of guessing an identity.

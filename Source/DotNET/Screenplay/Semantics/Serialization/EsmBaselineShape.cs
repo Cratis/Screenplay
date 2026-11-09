@@ -40,6 +40,7 @@ internal enum EsmBaselineShape
     From,
     Join,
     Children,
+    ChildrenOrdering,
     Nested,
     Every,
     Removal,

@@ -107,9 +107,15 @@ public sealed partial class SemanticModelBinder
 
         SemanticProjectionMapping? BindMapping(MappingSyntax mapping, ProjectionLevel level, BoundEvent? @event)
         {
+            if (mapping is RemoveKeyMappingSyntax)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection mapping 'remove {mapping.Property}' removes a dictionary entry, which the executable model does not admit: it has no dictionary-keyed read-model property.", mapping.Location);
+                return null;
+            }
+
             if (mapping.Property.Contains('$', StringComparison.Ordinal))
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection mapping '{mapping.Property}' uses a dynamic dictionary key, which ESM v1 does not admit.", mapping.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection mapping '{mapping.Property}' uses a dynamic dictionary key, which the executable model does not admit: it has no dictionary-keyed read-model property.", mapping.Location);
                 return null;
             }
 
@@ -125,6 +131,7 @@ public sealed partial class SemanticModelBinder
             {
                 SetMappingSyntax { Source: LiteralExpressionSyntax { Value: null } } => new(target.Path, SemanticProjectionOperation.Clear, null),
                 SetMappingSyntax set => Source(SemanticProjectionOperation.Set, set.Source),
+                SetOnceMappingSyntax setOnce => Source(SemanticProjectionOperation.SetOnce, setOnce.Source),
                 ClearMappingSyntax => new(target.Path, SemanticProjectionOperation.Clear, null),
                 AddMappingSyntax add => Source(SemanticProjectionOperation.Add, add.Value, add.Factor),
                 SubtractMappingSyntax subtract => Source(SemanticProjectionOperation.Subtract, subtract.Value, subtract.Factor),
@@ -211,13 +218,17 @@ public sealed partial class SemanticModelBinder
                         expression.Location);
                     return null;
 
-                // Chronicle compiles '$causedBy' but has no runtime resolver for it (Cratis/Chronicle#4119).
-                case CausedByExpressionSyntax causedBy:
+                // '$causedBy.<member>' reads the same identity as '$eventContext.causedBy.<member>' since Chronicle resolves it
+                // at runtime (Cratis/Chronicle#4119), so it binds to exactly that value and adds nothing to the model.
+                case CausedByExpressionSyntax { Property: { } member }:
+                    return BindProjectionValue(new EventContextExpressionSyntax($"causedBy.{member}", expression.Location), @event, description);
+
+                // A bare '$causedBy' is the whole identity, which no read-model scalar holds.
+                case CausedByExpressionSyntax:
                     Error(
                         DiagnosticCodes.UnsupportedSemanticSyntax,
-                        $"'$causedBy' has no runtime resolver in Chronicle (Cratis/Chronicle#4119); use '$eventContext.causedBy.{causedBy.Property ?? "subject"}' instead.",
-                        expression.Location,
-                        DiagnosticArguments.ForIssue("Cratis/Chronicle#4119"));
+                        "A bare '$causedBy' is the whole identity, which the executable model does not admit as a value; name the member, as in '$causedBy.subject'.",
+                        expression.Location);
                     return null;
                 default:
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} expression '{expression.GetType().Name}' is not admitted by ESM v1.", expression.Location);

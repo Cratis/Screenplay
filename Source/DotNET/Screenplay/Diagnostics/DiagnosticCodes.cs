@@ -1629,7 +1629,7 @@ public static class DiagnosticCodes
     public const string MissingEventContextPath = "PLAY0298";
 
     /// <summary>
-    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, which the runtime never resolves.
+    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, <c>$eventContent</c> or <c>$causedBy</c>, which the runtime never resolves.
     /// </summary>
     public const string UnresolvedDynamicKeySource = "PLAY0299";
 
@@ -4210,4 +4210,44 @@ public static class DiagnosticCodes
     /// A slice shows an element it already declares, or shows the same element twice.
     /// </summary>
     public const string RedundantSlicePlacement = "PLAY0955";
+
+    /// <summary>
+    /// A projection <c>remove &lt;target&gt;</c> line names a target without a dynamic dictionary key, so there is no entry to remove.
+    /// </summary>
+    public const string RemoveKeyWithoutDynamicKey = "PLAY0956";
+
+    /// <summary>
+    /// A dynamic dictionary key is malformed: <c>$eventContent</c> names no event property, or <c>$causedBy</c> names a member other than <c>subject</c>, <c>name</c> or <c>userName</c>.
+    /// </summary>
+    public const string InvalidDynamicKey = "PLAY0957";
+
+    /// <summary>
+    /// A children ordering line is not <c>insert first</c>, <c>insert last</c> or <c>sort by &lt;property&gt; [ascending|descending]</c>, or it is outside a <c>children</c> block.
+    /// </summary>
+    public const string InvalidChildrenOrdering = "PLAY0958";
+
+    /// <summary>
+    /// A <c>children</c> block declares more than one ordering line.
+    /// </summary>
+    public const string DuplicateChildrenOrdering = "PLAY0959";
+
+    /// <summary>
+    /// A children <c>sort by</c> names a property the child element type does not declare.
+    /// </summary>
+    public const string UnknownChildrenSortProperty = "PLAY0960";
+
+    /// <summary>
+    /// A <c>$eventContent.&lt;path&gt;</c> dynamic dictionary key names a path the event the mapping handles does not have.
+    /// </summary>
+    public const string UnknownEventContentKey = "PLAY0961";
+
+    /// <summary>
+    /// A dynamic dictionary key writes into a declared read-model property, which Screenplay cannot type as a dictionary, so Chronicle refuses the projection.
+    /// </summary>
+    public const string DynamicKeyOnNonDictionaryProperty = "PLAY0962";
+
+    /// <summary>
+    /// A <c>clear</c> line names a target with a dynamic dictionary key; clearing would keep the entry with no value, so the entry is removed with <c>remove</c>.
+    /// </summary>
+    public const string ClearDynamicKey = "PLAY0963";
 }

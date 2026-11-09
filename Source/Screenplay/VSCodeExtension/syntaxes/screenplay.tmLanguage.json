@@ -1198,7 +1198,7 @@
             "patterns": [
                 { "include": "#description-block" },
                 {
-                    "match": "\\b(description|from|every|join|children|identified|by|key|parent|with|remove|clear|on|set|increment|decrement|add|subtract|count|graph|node|edge|source|target|detach)\\b",
+                    "match": "\\b(description|from|every|join|children|identified|by|key|parent|with|remove|clear|on|set|once|insert|first|last|sort|ascending|descending|increment|decrement|add|subtract|count|graph|node|edge|source|target|detach)\\b",
                     "name": "keyword.other.pdl.screenplay"
                 },
                 { "include": "#common" }

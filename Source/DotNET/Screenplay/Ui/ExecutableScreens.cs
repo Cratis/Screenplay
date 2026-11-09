@@ -37,8 +37,8 @@ public static class ExecutableScreens
     /// <param name="syntax">The merged application syntax.</param>
     /// <param name="compilation">The compilation of <paramref name="syntax"/>.</param>
     /// <param name="utcAssessmentYear">The UTC year whose generation horizon is assessed, or <see langword="null"/> for the current year.</param>
-    /// <returns>The admission result: the compilation unchanged when the model has no screens, an ESM v42 compilation
-    /// when every screen reference resolves, or the refusals otherwise.</returns>
+    /// <returns>The admission result: the compilation unchanged when the model has no screens, an ESM v42 (or later, when the
+    /// model already needs a later version) compilation when every screen reference resolves, or the refusals otherwise.</returns>
     public static ExecutableScreensResult Admit(ApplicationSyntax syntax, SemanticCompilation compilation, int? utcAssessmentYear = null)
     {
         ArgumentNullException.ThrowIfNull(syntax);
@@ -54,7 +54,10 @@ public static class ExecutableScreens
         var application = model.Application with { Modules = [.. model.Application.Modules.Select(module => module with { Features = WithScreens(module.Features, screens) })] };
         try
         {
-            var admitted = ExecutableSemanticModel.Create(LanguageVersion.V42, SemanticVersion.V42, application, utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
+            var (languageVersion, semanticVersion) = model.SemanticVersion.IsAtLeast(SemanticVersion.V43)
+                ? (model.LanguageVersion, model.SemanticVersion)
+                : (LanguageVersion.V42, SemanticVersion.V42);
+            var admitted = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application, utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
             return new(SemanticCompilation.Create(admitted, compilation.Documents, compilation.SourceMap).WithSidecarsOf(compilation), []);
         }
         catch (InvalidSemanticContract exception)

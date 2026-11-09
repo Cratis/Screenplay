@@ -97,6 +97,7 @@ internal static partial class SemanticModelRead
         SemanticId property = default;
         SemanticId identifiedBy = default;
         var identifiedByRead = false;
+        SemanticProjectionChildrenOrdering? ordering = null;
         SemanticProjectionScope? scope = null;
         while (NextProperty(ref reader, seen, "projection children") is { } member)
         {
@@ -107,13 +108,49 @@ internal static partial class SemanticModelRead
                     identifiedByRead = true;
                     identifiedBy = NullableString(ref reader, member) is { } value ? SemanticId.Parse(value) : default;
                     break;
+                case "ordering": RequiredToken(ref reader, JsonTokenType.StartObject, member); ordering = ChildrenOrdering(ref reader); break;
                 case "scope": RequiredToken(ref reader, JsonTokenType.StartObject, member); scope = ProjectionScope(ref reader); break;
                 default: throw Unknown(member, "projection children");
             }
         }
 
         Required(property.IsSet && identifiedByRead && scope is not null, "projection children");
-        return new(property, identifiedBy, scope!);
+        return new(property, identifiedBy, scope!) { Ordering = ordering };
+    }
+
+    static SemanticProjectionChildrenOrdering ChildrenOrdering(ref Utf8JsonReader reader)
+    {
+        var seen = NewSeen();
+        var placement = SemanticChildrenPlacement.Unknown;
+        ImmutableArray<SemanticId> sortBy = [];
+        var direction = SemanticSortDirection.Ascending;
+        while (NextProperty(ref reader, seen, "children ordering") is { } member)
+        {
+            switch (member)
+            {
+                case "placement":
+                    placement = String(ref reader, member) switch
+                    {
+                        "prepend" => SemanticChildrenPlacement.Prepend,
+                        "sorted" => SemanticChildrenPlacement.Sorted,
+                        var value => throw new InvalidSemanticContract($"Unknown children placement '{value}'.")
+                    };
+                    break;
+                case "sortBy": sortBy = IdArray(ref reader, member); break;
+                case "direction":
+                    direction = String(ref reader, member) switch
+                    {
+                        "ascending" => SemanticSortDirection.Ascending,
+                        "descending" => SemanticSortDirection.Descending,
+                        var value => throw new InvalidSemanticContract($"Unknown children sort direction '{value}'.")
+                    };
+                    break;
+                default: throw Unknown(member, "children ordering");
+            }
+        }
+
+        Required(placement != SemanticChildrenPlacement.Unknown, "children ordering");
+        return new(placement, sortBy, direction);
     }
 
     static SemanticProjectionNested ProjectionNested(ref Utf8JsonReader reader)

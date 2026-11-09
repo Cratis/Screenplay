@@ -63,6 +63,19 @@ from ItemConsumed
   LastConsumed = $eventContext.occurred
 ```
 
+## Count per key
+
+A counter target can end in a dynamic key, so one dictionary property keeps a count per distinct value:
+
+```pdl
+projection Statistics => StatisticsReadModel
+  from SlotAssigned
+    count assignmentsPerSlot.$eventContent.slot
+    increment assignmentsPerUser.$causedBy.userName
+```
+
+See [Dictionary entries](property-mapping.md#dictionary-entries) for the keys you can use.
+
 ## Difference Between Count and Increment
 
 `count` and `increment` execute the same operation: both add one. Choose the word that makes the model's intent clearer. Neither sums an event property or counts distinct values; two handled occurrences each add one.

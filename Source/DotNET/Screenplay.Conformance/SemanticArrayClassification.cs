@@ -53,7 +53,7 @@ internal static class SemanticArrayClassification
         "constraints/releasedBy", "constraints/targets", "targets/properties",
         "events/priorRevisions", "events/tags", "priorRevisions/tags",
         "every/mappings", "from/mappings", "join/mappings", "transitions/mappings", "projections/transitions",
-        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path",
+        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path", "ordering/sortBy",
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
         "handler/possibleEvents",

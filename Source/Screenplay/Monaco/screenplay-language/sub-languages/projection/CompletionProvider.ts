@@ -431,6 +431,11 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             { label: 'remove via', insertText: 'remove via join on ', documentation: 'Remove items via join', detail: 'remove via join on <EventType>' },
             { label: 'no automap', insertText: 'no automap', documentation: 'Disable automatic property mapping', detail: 'no automap' },
             { label: 'clear', insertText: 'clear ', documentation: 'Remove the value a property holds', detail: 'clear <property>' },
+            { label: 'set once', insertText: 'set once ', documentation: 'Assign a value only while the property has none yet', detail: 'set once <property> = <value>' },
+            { label: 'remove', insertText: 'remove ', documentation: 'Remove the dictionary entry a dynamic key names', detail: 'remove <property>.$eventContent.<path>' },
+            { label: 'insert first', insertText: 'insert first', documentation: 'Inside children: add a new child at the start of the collection', detail: 'insert first' },
+            { label: 'insert last', insertText: 'insert last', documentation: 'Inside children: add a new child at the end of the collection (the default)', detail: 'insert last' },
+            { label: 'sort by', insertText: 'sort by ', documentation: 'Inside children: keep the collection ordered by a child property when a child is added', detail: 'sort by <property> [ascending|descending]' },
             { label: 'increment', insertText: 'increment ', documentation: 'Increment a numeric property', detail: 'increment <property>' },
             { label: 'decrement', insertText: 'decrement ', documentation: 'Decrement a numeric property', detail: 'decrement <property>' },
             { label: 'count', insertText: 'count ', documentation: 'Count occurrences', detail: 'count <property>' },
@@ -510,7 +515,7 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             {
                 label: '$causedBy',
                 insertText: '$causedBy',
-                documentation: 'The identity that caused the event. Chronicle cannot yet evaluate this short form (Cratis/Chronicle#4119) - prefer $eventContext.causedBy.<property>.',
+                documentation: 'The identity that caused the event - $causedBy.subject, $causedBy.name or $causedBy.userName.',
                 detail: 'Identity Expression'
             },
             {

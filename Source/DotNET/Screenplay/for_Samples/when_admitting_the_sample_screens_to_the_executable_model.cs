@@ -27,7 +27,7 @@ public class when_admitting_the_sample_screens_to_the_executable_model : given.t
             }
 
             var model = admitted.Compilation!.Model;
-            if (model.SemanticVersion != SemanticVersion.V42) _versions.Add($"{name}: {model.SemanticVersion}");
+            if (!model.SemanticVersion.IsAtLeast(SemanticVersion.V42)) _versions.Add($"{name}: {model.SemanticVersion}");
             var read = SemanticModelSerializer.Deserialize(SemanticModelSerializer.Serialize(model));
             var fromSources = Neutral(UiContractBuilder.For(workspace));
             var fromModel = Neutral(UiContractBuilder.For(read));

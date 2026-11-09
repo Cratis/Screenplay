@@ -3,8 +3,9 @@
 
 import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
 import {
-    AutoMapMode, ChildrenSyntax, ClearWithSyntax, CompositeKeySyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
+    AutoMapMode, ChildrenOrderingSyntax, ChildrenSyntax, ClearWithSyntax, CompositeKeySyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
     KeyPartSyntax, KeySyntax, ProjectionBlockSyntax, ProjectionEntersOnSyntax, ProjectionSyntax, ProjectionVariantSyntax,
 } from '../Syntax/Projections';
 import { ExpressionSyntax } from '../Syntax/Expressions';
@@ -30,7 +31,9 @@ const removeViaJoinPattern = pattern('^remove\\s+via\\s+join\\s+on\\s+(@?[\\w.]+
 const clearWithPattern = pattern('^clear\\s+with\\s+(@?[\\w.]+)$');
 const variantPattern = pattern('^variant\\s+(@?[\\w.]+)\\s*$');
 const entersOnPattern = pattern('^enters\\s+on\\s+(@?[\\w.]+)(?:\\s+key\\s+(.+))?$');
-const keywordMappingPattern = pattern('^(increment|decrement|count|clear)\\s+(@?[$\\w.]+)$');
+const keywordMappingPattern = pattern('^(increment|decrement|count|clear|remove)\\s+(@?[$\\w.]+)$');
+const setOncePattern = pattern('^set\\s+once\\s+(@?[$\\w.]+)\\s+(?:=|to)\\s+(.+)$');
+const childrenOrderingPattern = pattern('^(?:insert\\s+(first|last)|sort\\s+by\\s+(@?[\\w.]+)(?:\\s+(ascending|descending))?)$');
 const arithmeticPattern = pattern('^(add|subtract)\\s+(@?[$\\w.]+)\\s+by\\s+(.+?)(?:\\s+\\*\\s+(.+))?$');
 const setPattern = pattern('^set\\s+(@?[$\\w.]+)\\s+(?:=|to)\\s+(.+)$');
 const assignmentPattern = pattern('^(@?[$\\w.@]+)\\s*=(?!=|>)\\s*(.+)$');
@@ -38,6 +41,7 @@ const keywordMappings: Record<string, MappingKind> = {
     increment: 'IncrementMappingSyntax',
     decrement: 'DecrementMappingSyntax',
     clear: 'ClearMappingSyntax',
+    remove: 'RemoveKeyMappingSyntax',
     count: 'CountMappingSyntax',
 };
 
@@ -136,6 +140,11 @@ function parseBlock(context: ParserContext, line: SourceLine, nestedScope: boole
             return parseJoin(context, line);
         case 'children':
             return parseChildren(context, line);
+        case 'insert':
+        case 'sort':
+            context.error(DiagnosticCodes.InvalidChildrenOrdering, `'${line.content}' orders a children collection and is only valid directly inside a 'children' block`, locationOf(line));
+            context.skipBlock(line.indent);
+            return undefined;
         case 'nested':
             return parseNested(context, line);
         case 'remove':
@@ -209,8 +218,18 @@ function parseChildren(context: ParserContext, line: SourceLine): ChildrenSyntax
         context.skipBlock(line.indent);
         return { kind: 'ChildrenSyntax', property: '', autoMap: 'Inherit', blocks: [], location: locationOf(line) };
     }
-    const { autoMap, blocks } = parseChildBlocks(context, line);
-    return { kind: 'ChildrenSyntax', property: unescapeIdentifier(match[1]), identifiedBy: parseProjectionExpression(match[2], locationOf(line), context), autoMap, blocks, location: locationOf(line) };
+    const orderings: ChildrenOrderingSyntax[] = [];
+    const identifiedBy = parseProjectionExpression(match[2], locationOf(line), context);
+    const { autoMap, blocks } = parseChildBlocks(context, line, orderings);
+    return {
+        kind: 'ChildrenSyntax',
+        property: unescapeIdentifier(match[1]),
+        identifiedBy,
+        autoMap,
+        blocks,
+        ...(orderings.length === 0 ? {} : { ordering: orderings[0] }),
+        location: locationOf(line),
+    };
 }
 
 function parseNested(context: ParserContext, line: SourceLine): NestedSyntax {
@@ -228,11 +247,31 @@ function parseNested(context: ParserContext, line: SourceLine): NestedSyntax {
     return { kind: 'NestedSyntax', property, autoMap, blocks, location: locationOf(line) };
 }
 
-function parseChildBlocks(context: ParserContext, line: SourceLine): { autoMap: AutoMapMode; blocks: ProjectionBlockSyntax[] } {
+function parseChildBlocks(context: ParserContext, line: SourceLine, orderings?: ChildrenOrderingSyntax[]): { autoMap: AutoMapMode; blocks: ProjectionBlockSyntax[] } {
     const blocks: ProjectionBlockSyntax[] = [];
     let autoMap: AutoMapMode = 'Inherit';
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        const word = firstWord(child.content);
+        if (orderings !== undefined && (word === 'insert' || word === 'sort')) {
+            const ordering = parseOrdering(context, child);
+            if (ordering === undefined) {
+                continue;
+            }
+            if (orderings.length > 0) {
+                const first = orderings[0];
+                const conflict = first.placement !== ordering.placement || first.sortBy !== ordering.sortBy || first.direction !== ordering.direction;
+                context.error(
+                    DiagnosticCodes.DuplicateChildrenOrdering,
+                    conflict
+                        ? `Children '${line.content}' declares conflicting orderings - a children block takes one 'insert first', 'insert last' or 'sort by' line`
+                        : `Children '${line.content}' declares its ordering twice - a children block takes one 'insert first', 'insert last' or 'sort by' line`,
+                    locationOf(child));
+                continue;
+            }
+            orderings.push(ordering);
+            continue;
+        }
         if (child.content === 'automap') {
             autoMap = 'Enabled';
             continue;
@@ -249,6 +288,23 @@ function parseChildBlocks(context: ParserContext, line: SourceLine): { autoMap: 
     return { autoMap, blocks };
 }
 
+// 'insert first', 'insert last' or 'sort by <property> [ascending|descending]' - the port of the C# ParseOrdering.
+function parseOrdering(context: ParserContext, line: SourceLine): ChildrenOrderingSyntax | undefined {
+    if (context.peekChild(line.indent) !== undefined) {
+        context.error(DiagnosticCodes.InvalidChildrenOrdering, `Children ordering '${line.content}' takes no indented lines`, locationOf(line));
+        context.skipBlock(line.indent);
+    }
+    const match = childrenOrderingPattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidChildrenOrdering, `Invalid children ordering '${line.content}' - expected 'insert first', 'insert last' or 'sort by <property> [ascending|descending]'`, locationOf(line));
+        return undefined;
+    }
+    if (match[1] !== undefined) {
+        return { kind: 'ChildrenOrderingSyntax', placement: match[1] === 'first' ? 'Prepend' : 'Append', sortBy: null, direction: 'Ascending', location: locationOf(line) };
+    }
+    return { kind: 'ChildrenOrderingSyntax', placement: 'Sorted', sortBy: unescapeIdentifier(match[2]), direction: match[3] === 'descending' ? 'Descending' : 'Ascending', location: locationOf(line) };
+}
+
 function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockSyntax | undefined {
     const viaJoin = removeViaJoinPattern.exec(line.content);
     if (viaJoin !== null) {
@@ -256,7 +312,7 @@ function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockS
     }
     const match = removeWithPattern.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidRemoveDeclaration, `Invalid remove declaration '${line.content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidRemoveDeclaration, `Invalid remove declaration '${line.content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'; to delete a dictionary entry, write 'remove <target>' as a mapping line inside a from, join or every block`, locationOf(line));
         context.skipBlock(line.indent);
         return undefined;
     }
@@ -371,22 +427,92 @@ function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (chi
     return { autoMap, mappings };
 }
 
+// One mapping line and the checks on its target - the port of the C# ParseMapping.
+export function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
+    const count = mappings.length;
+    pushMappingLine(context, line, mappings);
+    const location = locationOf(line);
+    for (const mapping of mappings.slice(count)) {
+        validateDynamicKey(context, mapping.property, location);
+        // Clearing a dictionary entry would keep its key with a null value; removing it is what deletes the entry.
+        if (mapping.kind === 'ClearMappingSyntax' && mapping.property.includes(dynamicKeyMarker)) {
+            context.error(
+                DiagnosticCodes.ClearDynamicKey,
+                `'clear ${mapping.property}' would keep the dictionary entry with no value - write 'remove ${mapping.property}' to delete the entry`,
+                location);
+        }
+    }
+}
+
+const dynamicKeyMarker = '.$';
+const causedByProperties = ['subject', 'name', 'userName'];
+
+// The $eventContent and $causedBy keys of a dictionary entry - the port of the C# EventContextPathValidator.ValidateDynamicKey.
+function validateDynamicKey(context: ParserContext, property: string, location: SourceLocation): void {
+    const marker = property.indexOf(dynamicKeyMarker);
+    if (marker < 0) return;
+    const key = property.slice(marker + 1);
+    const isSource = (prefix: string) => key === prefix || key.startsWith(`${prefix}.`);
+    if (isSource('$eventContent')) {
+        const path = key.length > '$eventContent'.length ? key.slice('$eventContent'.length + 1) : '';
+        if (path.length === 0 || path.split('.').some(segment => segment.length === 0)) {
+            context.error(
+                DiagnosticCodes.InvalidDynamicKey,
+                `'$eventContent' in '${property}' names no event property - write '<property>.$eventContent.<event property>'`,
+                location);
+        }
+        return;
+    }
+    if (isSource('$causedBy')) {
+        const member = key.length > '$causedBy'.length ? key.slice('$causedBy'.length + 1) : '';
+        if (!causedByProperties.includes(member)) {
+            context.error(
+                DiagnosticCodes.InvalidDynamicKey,
+                `'$causedBy' in '${property}' must name one of ${causedByProperties.join(', ')} - write '<property>.$causedBy.subject'`,
+                location);
+        }
+    }
+}
+
 // The property one mapping line sets, and how - the port of the C# ParseMappingLine. Exact reports
 // malformed mappings; Legacy keeps the existing skip behavior.
-export function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
+function pushMappingLine(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
     const location = locationOf(line);
+    // 'remove with' and 'remove via join' are block directives of the projection or children body, not mapping lines.
+    if (removeWithPattern.exec(line.content) !== null || removeViaJoinPattern.exec(line.content) !== null) {
+        if (context.sourceOptions.numericMode === 'exact') {
+            const directive = line.content.split(' ').filter(word => word.length > 0).slice(0, 2).join(' ');
+            context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}' - '${directive}' is a block directive of the projection or children body, not a mapping line`, location, diagnosticText('text', line.content));
+        }
+        return;
+    }
     const keyword = keywordMappingPattern.exec(line.content);
     if (keyword !== null) {
-        if (keyword[1] !== 'clear' || keyword[2] !== 'with') {
-            mappings.push({ kind: keywordMappings[keyword[1]], property: unescapeIdentifier(keyword[2]), location });
+        const verb = keyword[1];
+        const target = keyword[2];
+        const reserved = (verb === 'clear' && target === 'with') || (verb === 'remove' && (target === 'with' || target === 'via'));
+        if (!reserved) {
+            const property = unescapeIdentifier(target);
+            mappings.push({ kind: keywordMappings[verb], property, location });
+            if (verb === 'remove' && !property.includes('.$')) {
+                context.error(
+                    DiagnosticCodes.RemoveKeyWithoutDynamicKey,
+                    `'remove ${property}' names no dictionary entry - the target must end in a dynamic key, such as '${property}.$eventContent.<event property>'; to clear the property, write 'clear ${property}'`,
+                    location);
+            }
         } else if (context.sourceOptions.numericMode === 'exact') {
-            context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'`, location, diagnosticText('text', line.content));
+            context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}' - '${verb} ${target}' is a block directive and needs an event type; to ${verb} a property named '${target}', write '${verb} @${target}'`, location, diagnosticText('text', line.content));
         }
         return;
     }
     const arithmetic = arithmeticPattern.exec(line.content);
     if (arithmetic !== null) {
         mappings.push({ kind: arithmetic[1] === 'add' ? 'AddMappingSyntax' : 'SubtractMappingSyntax', property: unescapeIdentifier(arithmetic[2]), value: parseProjectionExpression(arithmetic[3], location, context), ...(arithmetic[4] === undefined ? {} : { factor: parseProjectionExpression(arithmetic[4], location, context) }), location });
+        return;
+    }
+    const setOnce = setOncePattern.exec(line.content);
+    if (setOnce !== null) {
+        mappings.push({ kind: 'SetOnceMappingSyntax', property: unescapeIdentifier(setOnce[1]), source: parseProjectionExpression(setOnce[2], location, context), location });
         return;
     }
     const assigned = setPattern.exec(line.content) ?? assignmentPattern.exec(line.content);

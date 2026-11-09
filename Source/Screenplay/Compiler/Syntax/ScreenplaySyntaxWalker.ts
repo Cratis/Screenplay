@@ -690,6 +690,7 @@ export abstract class ScreenplaySyntaxWalker {
                 break;
             case 'ChildrenSyntax':
                 if (syntax.identifiedBy !== undefined) this.visitExpression(syntax.identifiedBy);
+                if (syntax.ordering != null) this.visitNode(syntax.ordering);
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
             case 'NestedSyntax':

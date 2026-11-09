@@ -10,7 +10,7 @@ public class and_it_names_another_source : given.a_projection_counting_by_key
 {
     CompilationResult<ProjectionSyntax> _result;
 
-    void Because() => _result = _compiler.CompileProjection(Projection("countByUser.$causedBy.subject"));
+    void Because() => _result = _compiler.CompileProjection(Projection("countBySource.$eventSourceId"));
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_report_the_key() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.UnresolvedDynamicKeySource);
