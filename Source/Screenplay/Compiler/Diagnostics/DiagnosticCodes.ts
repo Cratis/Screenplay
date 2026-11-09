@@ -604,7 +604,11 @@ export const DiagnosticCodes = {
     UnknownPlacedElement: 'PLAY0954',
     RedundantSlicePlacement: 'PLAY0955',
     RemoveKeyWithoutDynamicKey: 'PLAY0956',
+    InvalidDynamicKey: 'PLAY0957',
     InvalidChildrenOrdering: 'PLAY0958',
     DuplicateChildrenOrdering: 'PLAY0959',
     UnknownChildrenSortProperty: 'PLAY0960',
+    UnknownEventContentKey: 'PLAY0961',
+    DynamicKeyOnNonDictionaryProperty: 'PLAY0962',
+    ClearDynamicKey: 'PLAY0963',
 } as const;

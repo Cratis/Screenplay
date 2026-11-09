@@ -115,7 +115,9 @@ from SlotDropped
 | `.$eventContext.<path>` | A member of the [event context](event-context.md#in-dynamic-dictionary-keys), such as `eventType.id`. |
 | `.$causedBy.subject`, `.name`, `.userName` | The identity that caused the event. |
 
-A dynamic key works with every mapping line: an assignment, `set once`, `clear`, `increment`, `decrement`, `count`, `add` and `subtract`. An `$eventContent` path the handled event does not have is a warning (`PLAY0961`); `$eventContent` without a path, or a `$causedBy` member other than the three listed, is an error (`PLAY0957`).
+A dynamic key works with an assignment, `set once`, `increment`, `decrement`, `count`, `add`, `subtract` and `remove`. It does not work with `clear`: clearing an entry would keep its key with no value, so `clear <target>` with a dynamic key is an error (`PLAY0963`) that points at `remove`. An `$eventContent` path the handled event does not have is a warning (`PLAY0961`); `$eventContent` without a path, or a `$causedBy` member other than the three listed, is an error (`PLAY0957`).
+
+The property before the key has to be a dictionary. Chronicle refuses a projection that writes an entry into a scalar or an object with properties, and Screenplay has no dictionary type: every property a read model declares is a scalar, a collection or a type with at least one property. A dynamic key whose property the read model declares is therefore a warning (`PLAY0962`), and one whose property it does not declare is the usual unknown-property warning. Until the language has a dictionary type, dictionary entries are for projections whose read model the Screenplay model does not declare, such as one defined in application code; the samples do not use them.
 
 `remove <target>` deletes the entry the key names. The target must end in a dynamic key (`PLAY0956`); removing a key that is not there does nothing. `remove` is also the start of the `remove with` and `remove via join` [removal](removal.md) blocks, so a property named `with` or `via` is escaped: `remove @with.$eventContent.slot`.
 

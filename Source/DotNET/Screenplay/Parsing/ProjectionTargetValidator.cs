@@ -57,7 +57,18 @@ internal static class ProjectionTargetValidator
             foreach (var mapping in mappings)
             {
                 // A dynamic key names a dictionary entry, not a declared property: the property it writes into is what must exist.
-                Validate(EventContextPathValidator.BaseProperty(mapping.Property), mapping.Location);
+                var basePath = EventContextPathValidator.BaseProperty(mapping.Property);
+                var target = Validate(basePath, mapping.Location);
+
+                // Chronicle accepts a dictionary entry only in an untyped or empty object property, and every declared Screenplay
+                // type is a scalar, a collection or an object with properties.
+                if (target is not null && EventContextPathValidator.HasDynamicKey(mapping.Property) && reported.Add(mapping.Location))
+                {
+                    context.Warning(
+                        DiagnosticCodes.DynamicKeyOnNonDictionaryProperty,
+                        $"'{mapping.Property}' writes a dictionary entry into '{basePath}', declared as '{target.Type.Name}' - Screenplay has no dictionary type, so Chronicle refuses the projection when it registers it",
+                        mapping.Location);
+                }
             }
 
             ValidateEventContentKeys(block, declarations, scope, context);

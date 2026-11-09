@@ -3,6 +3,7 @@
 
 import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
 import {
     AutoMapMode, ChildrenOrderingSyntax, ChildrenSyntax, ClearWithSyntax, CompositeKeySyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
     KeyPartSyntax, KeySyntax, ProjectionBlockSyntax, ProjectionEntersOnSyntax, ProjectionSyntax, ProjectionVariantSyntax,
@@ -311,7 +312,7 @@ function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockS
     }
     const match = removeWithPattern.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidRemoveDeclaration, `Invalid remove declaration '${line.content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidRemoveDeclaration, `Invalid remove declaration '${line.content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'; to delete a dictionary entry, write 'remove <target>' as a mapping line inside a from, join or every block`, locationOf(line));
         context.skipBlock(line.indent);
         return undefined;
     }
@@ -426,9 +427,56 @@ function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (chi
     return { autoMap, mappings };
 }
 
+// One mapping line and the checks on its target - the port of the C# ParseMapping.
+export function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
+    const count = mappings.length;
+    pushMappingLine(context, line, mappings);
+    const location = locationOf(line);
+    for (const mapping of mappings.slice(count)) {
+        validateDynamicKey(context, mapping.property, location);
+        // Clearing a dictionary entry would keep its key with a null value; removing it is what deletes the entry.
+        if (mapping.kind === 'ClearMappingSyntax' && mapping.property.includes(dynamicKeyMarker)) {
+            context.error(
+                DiagnosticCodes.ClearDynamicKey,
+                `'clear ${mapping.property}' would keep the dictionary entry with no value - write 'remove ${mapping.property}' to delete the entry`,
+                location);
+        }
+    }
+}
+
+const dynamicKeyMarker = '.$';
+const causedByProperties = ['subject', 'name', 'userName'];
+
+// The $eventContent and $causedBy keys of a dictionary entry - the port of the C# EventContextPathValidator.ValidateDynamicKey.
+function validateDynamicKey(context: ParserContext, property: string, location: SourceLocation): void {
+    const marker = property.indexOf(dynamicKeyMarker);
+    if (marker < 0) return;
+    const key = property.slice(marker + 1);
+    const isSource = (prefix: string) => key === prefix || key.startsWith(`${prefix}.`);
+    if (isSource('$eventContent')) {
+        const path = key.length > '$eventContent'.length ? key.slice('$eventContent'.length + 1) : '';
+        if (path.length === 0 || path.split('.').some(segment => segment.length === 0)) {
+            context.error(
+                DiagnosticCodes.InvalidDynamicKey,
+                `'$eventContent' in '${property}' names no event property - write '<property>.$eventContent.<event property>'`,
+                location);
+        }
+        return;
+    }
+    if (isSource('$causedBy')) {
+        const member = key.length > '$causedBy'.length ? key.slice('$causedBy'.length + 1) : '';
+        if (!causedByProperties.includes(member)) {
+            context.error(
+                DiagnosticCodes.InvalidDynamicKey,
+                `'$causedBy' in '${property}' must name one of ${causedByProperties.join(', ')} - write '<property>.$causedBy.subject'`,
+                location);
+        }
+    }
+}
+
 // The property one mapping line sets, and how - the port of the C# ParseMappingLine. Exact reports
 // malformed mappings; Legacy keeps the existing skip behavior.
-export function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
+function pushMappingLine(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
     const location = locationOf(line);
     // 'remove with' and 'remove via join' are block directives of the projection or children body, not mapping lines.
     if (removeWithPattern.exec(line.content) !== null || removeViaJoinPattern.exec(line.content) !== null) {

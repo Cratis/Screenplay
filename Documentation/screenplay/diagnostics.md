@@ -1781,7 +1781,7 @@ Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#ske
 
 ## Projection dictionary keys, set once and children ordering
 
-Dynamic dictionary keys, the `remove` mapping line and the ordering of a `children` block, see [Property mapping](projections/property-mapping.md#dictionary-entries) and [Children](projections/children.mdx#ordering-the-children). Both compilers report `PLAY0956`, `PLAY0958`, `PLAY0959` and `PLAY0960`; `PLAY0957` and `PLAY0961` are reported by the C# compiler only, which knows the event context catalog and the handled event's properties.
+Dynamic dictionary keys, the `remove` mapping line and the ordering of a `children` block, see [Property mapping](projections/property-mapping.md#dictionary-entries) and [Children](projections/children.mdx#ordering-the-children). Both compilers report every code in this table.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -1791,6 +1791,8 @@ Dynamic dictionary keys, the `remove` mapping line and the ordering of a `childr
 | `PLAY0959` | Error | A `children` block declares more than one ordering line. Keep one. |
 | `PLAY0960` | Warning | A children `sort by` names a property the element type of the collection does not declare. |
 | `PLAY0961` | Warning | A `.$eventContent.<path>` key names a path the event the mapping handles does not have, so the entry is never written. |
+| `PLAY0962` | Warning | A dynamic key writes into a declared read-model property. Chronicle accepts a dictionary entry only in a dictionary property, and Screenplay has no dictionary type, so Chronicle refuses the projection when it registers it. |
+| `PLAY0963` | Error | A `clear` line names a target with a dynamic key. Clearing would keep the entry with no value; write `remove <target>` to delete it. |
 
 ## Toolbar buttons
 

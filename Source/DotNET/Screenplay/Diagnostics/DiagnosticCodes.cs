@@ -4240,4 +4240,14 @@ public static class DiagnosticCodes
     /// A <c>$eventContent.&lt;path&gt;</c> dynamic dictionary key names a path the event the mapping handles does not have.
     /// </summary>
     public const string UnknownEventContentKey = "PLAY0961";
+
+    /// <summary>
+    /// A dynamic dictionary key writes into a declared read-model property, which Screenplay cannot type as a dictionary, so Chronicle refuses the projection.
+    /// </summary>
+    public const string DynamicKeyOnNonDictionaryProperty = "PLAY0962";
+
+    /// <summary>
+    /// A <c>clear</c> line names a target with a dynamic dictionary key; clearing would keep the entry with no value, so the entry is removed with <c>remove</c>.
+    /// </summary>
+    public const string ClearDynamicKey = "PLAY0963";
 }

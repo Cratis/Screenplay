@@ -458,7 +458,7 @@ internal static partial class ProjectionParser
         var match = RemoveWithRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidRemoveDeclaration, $"Invalid remove declaration '{line.Content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidRemoveDeclaration, $"Invalid remove declaration '{line.Content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'; to delete a dictionary entry, write 'remove <target>' as a mapping line inside a from, join or every block", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -682,6 +682,15 @@ internal static partial class ProjectionParser
             context.Error(
                 DiagnosticCodes.RemoveKeyWithoutDynamicKey,
                 $"'remove {remove.Property}' names no dictionary entry - the target must end in a dynamic key, such as '{remove.Property}.$eventContent.<event property>'; to clear the property, write 'clear {remove.Property}'",
+                line.Location);
+        }
+
+        // Clearing a dictionary entry would keep its key with a null value; removing it is what deletes the entry.
+        if (mapping is ClearMappingSyntax clear && EventContextPathValidator.HasDynamicKey(clear.Property))
+        {
+            context.Error(
+                DiagnosticCodes.ClearDynamicKey,
+                $"'clear {clear.Property}' would keep the dictionary entry with no value - write 'remove {clear.Property}' to delete the entry",
                 line.Location);
         }
 

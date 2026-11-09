@@ -520,6 +520,9 @@ export function validateEventContextPaths(lines: string[], fences: boolean[]): V
         if (target && /^remove\s/.test(line.trim()) && !/^remove\s+(?:with|via)\b/.test(line.trim()) && !target.includes('.$')) {
             issues.push(tokenIssue('error', index, line, target, `'remove ${target}' names no dictionary entry - the target must end in a dynamic key, such as '${target}.$eventContent.<event property>'.`, diagnosticCodes.removeKeyWithoutDynamicKey));
         }
+        if (target && /^clear\s/.test(line.trim()) && !/^clear\s+with\b/.test(line.trim()) && target.includes('.$')) {
+            issues.push(tokenIssue('error', index, line, target, `'clear ${target}' would keep the dictionary entry with no value - write 'remove ${target}' to delete the entry.`, diagnosticCodes.clearDynamicKey));
+        }
     }
 
     return issues;

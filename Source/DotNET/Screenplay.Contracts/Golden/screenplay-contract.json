@@ -61047,6 +61047,28 @@
       "title": "A $eventContent.\u003Cpath\u003E dynamic dictionary key names a path the event the mapping handles does not have.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0962",
+      "name": "DynamicKeyOnNonDictionaryProperty",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A dynamic dictionary key writes into a declared read-model property, which Screenplay cannot type as a dictionary, so Chronicle refuses the projection.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0963",
+      "name": "ClearDynamicKey",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A clear line names a target with a dynamic dictionary key; clearing would keep the entry with no value, so the entry is removed with remove.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

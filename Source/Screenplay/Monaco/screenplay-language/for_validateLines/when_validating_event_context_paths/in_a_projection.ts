@@ -140,3 +140,15 @@ describe('when validating a remove line without a dynamic key', () => {
         issues.map((issue) => [issue.code, issue.severity]).should.deep.equal([[diagnosticCodes.removeKeyWithoutDynamicKey, 'error']]);
     });
 });
+
+describe('when validating a clear line with a dynamic key', () => {
+    let issues: ValidationIssue[];
+
+    beforeEach(() => {
+        issues = validate('clear slots.$eventContent.slot', 'clear slots');
+    });
+
+    it('should report an error pointing at remove with the compiler code', () => {
+        issues.map((issue) => [issue.code, issue.severity]).should.deep.equal([[diagnosticCodes.clearDynamicKey, 'error']]);
+    });
+});
