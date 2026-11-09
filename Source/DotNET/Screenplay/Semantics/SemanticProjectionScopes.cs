@@ -93,7 +93,28 @@ public sealed record SemanticProjectionJoin(
 public sealed record SemanticProjectionChildren(
     SemanticId Property,
     SemanticId IdentifiedBy,
-    SemanticProjectionScope Scope);
+    SemanticProjectionScope Scope)
+{
+    /// <summary>
+    /// Gets where a new child goes, or <see langword="null"/> when it is appended (ESM v42).
+    /// </summary>
+    public SemanticProjectionChildrenOrdering? Ordering { get; init; }
+}
+
+/// <summary>
+/// Represents the stored order of a children collection: where a new child is placed when it is added.
+/// </summary>
+/// <param name="Placement">The <see cref="SemanticChildrenPlacement"/> of a new child.</param>
+/// <param name="SortBy">The element property path a sorted collection is ordered by; empty unless <paramref name="Placement"/> is <see cref="SemanticChildrenPlacement.Sorted"/>.</param>
+/// <param name="Direction">The <see cref="SemanticSortDirection"/> of a sorted collection.</param>
+/// <remarks>
+/// The order is applied when a child is added: an update to an existing child never moves it, even when it changes the sort
+/// property. Sorting is stable; a child without a value sorts first ascending and last descending (Chronicle#5758).
+/// </remarks>
+public sealed record SemanticProjectionChildrenOrdering(
+    SemanticChildrenPlacement Placement,
+    ImmutableArray<SemanticId> SortBy,
+    SemanticSortDirection Direction);
 
 /// <summary>
 /// Represents a nested single object of the enclosing level.

@@ -44,10 +44,7 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (Unsupported, "$context.causation.type has no scalar counterpart"),
         (Unsupported, "mapping expression 'EnvironmentExpressionSyntax'"),
 
-        // Projection expressions Chronicle cannot resolve.
-        (Unsupported, "use '$eventContext.causedBy.name' instead"),
-        (Unsupported, "use '$eventContext.causedBy.userName' instead"),
-        (Unsupported, "use '$eventContext.causedBy.subject' instead"),
+        // Projection expressions the executable model cannot execute.
         (Unsupported, "mapping expression 'TemplateExpressionSyntax'"),
 
         // Context-sourced filters, and explicit scopes remain outside the admitted query shapes.

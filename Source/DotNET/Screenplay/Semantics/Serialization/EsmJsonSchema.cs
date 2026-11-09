@@ -26,7 +26,7 @@ public static class EsmJsonSchema
     /// Gets every released ESM version a schema is published for, in ascending order.
     /// </summary>
     public static ImmutableArray<SemanticVersion> Versions { get; } =
-        [.. EsmSchemaV41Support.SemanticVersions.Where(version => EsmBaselineShapes.Majors.Contains(version.Major)).OrderBy(version => version.Major).ThenBy(version => version.Minor)];
+        [.. EsmSchemaV42Support.SemanticVersions.Where(version => EsmBaselineShapes.Majors.Contains(version.Major)).OrderBy(version => version.Major).ThenBy(version => version.Minor)];
 
     static JsonSerializerOptions Options { get; } = new() { WriteIndented = true };
 

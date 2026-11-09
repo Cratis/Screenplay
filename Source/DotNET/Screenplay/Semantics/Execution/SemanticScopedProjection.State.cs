@@ -67,7 +67,7 @@ internal sealed partial class SemanticScopedProjection
         {
             var state = State(element);
             var identity = state.GetValueOrDefault(step.IdentifiedBy, SemanticValue.Null);
-            foreach (var steps in Walk(state, address, index + 1, prefix.Add(new(step.Property, step.IdentifiedBy, identity))))
+            foreach (var steps in Walk(state, address, index + 1, prefix.Add(new(step.Property, step.IdentifiedBy, identity) { Ordering = step.Ordering })))
             {
                 yield return steps;
             }
@@ -128,7 +128,7 @@ internal sealed partial class SemanticScopedProjection
         }
 
         var value = Composite(element);
-        container[step.Property] = SemanticValue.Array(position < 0 ? elements.Add(value) : elements.SetItem(position, value));
+        container[step.Property] = SemanticValue.Array(position < 0 ? SemanticChildrenOrder.Insert(elements, value, step.Ordering) : elements.SetItem(position, value));
         return true;
     }
 

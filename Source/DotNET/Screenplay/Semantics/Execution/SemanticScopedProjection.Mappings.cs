@@ -52,6 +52,10 @@ internal sealed partial class SemanticScopedProjection
                 return Evaluate(mapping.Source!, fact, readsOccurrence);
             case SemanticProjectionOperation.Clear:
                 return SemanticValue.Null;
+
+            // Set-once writes only into an empty target - missing or null - and leaves a held value as it is (Chronicle#5757).
+            case SemanticProjectionOperation.SetOnce:
+                return current is null or SemanticNullValue ? Evaluate(mapping.Source!, fact, readsOccurrence) : null;
         }
 
         // Arithmetic is typed by the read-model target; a missing target is seeded with 0 and both operands are converted to the

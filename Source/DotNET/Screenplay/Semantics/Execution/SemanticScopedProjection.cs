@@ -336,7 +336,7 @@ internal sealed partial class SemanticScopedProjection(
         }
 
         var step = level.Address[^1];
-        return parent with { Steps = [.. parent.Steps, new(step.Property, step.IdentifiedBy, identity)], Nested = level.Nested };
+        return parent with { Steps = [.. parent.Steps, new(step.Property, step.IdentifiedBy, identity) { Ordering = step.Ordering }], Nested = level.Nested };
     }
 
     Location? FindRootParent(SemanticValue identity, out int count)
@@ -426,7 +426,10 @@ internal sealed partial class SemanticScopedProjection(
         public bool Touched { get; set; }
     }
 
-    sealed record ElementStep(SemanticId Property, SemanticId IdentifiedBy, SemanticValue Identity);
+    sealed record ElementStep(SemanticId Property, SemanticId IdentifiedBy, SemanticValue Identity)
+    {
+        public SemanticProjectionChildrenOrdering? Ordering { get; init; }
+    }
 
     sealed record Location(Document Document, ImmutableArray<ElementStep> Steps, ImmutableArray<SemanticId> Nested);
 }

@@ -25,7 +25,7 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _scopedIdentities = new(StringComparer.Ordinal)
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
-        "targets/properties", "mappings/target", "workflows/subject", "nodes/items",
+        "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "ordering/sortBy",
     };
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
@@ -39,7 +39,7 @@ internal static class SemanticStringClassification
     {
         "alphabet", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
         "commandReadMode", "contextMember", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
-        "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern",
+        "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",
         "targetKind", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
