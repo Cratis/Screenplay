@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineSyntax } from './Storylines';
+import type { AgentsSyntax } from './Agents';
 import type { TimeZoneSyntax } from './Calendar';
 import { CommandReadMode } from './CommandReadMode';
 import type { DesignProfileFacts, DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
@@ -123,6 +124,7 @@ export interface ContextMemberSyntax extends SyntaxNode {
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
+    readonly agents?: AgentsSyntax | null;
     readonly reactionProductionMode?: ReactionProductionMode | null;
     readonly commandReadMode?: CommandReadMode | null;
     readonly timeZone?: TimeZoneSyntax | null;

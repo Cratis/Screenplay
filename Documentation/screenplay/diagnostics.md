@@ -1766,6 +1766,32 @@ A `storyline` names an ordered path through the model. See [Storylines](storylin
 | `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
 | `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
 
+## Agents
+
+An `agents` block is an explicit operation allowlist, not an authorization grant. See [Agents](agents.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0944` | Error | The agents block, operation reference or field is malformed or unsupported. Write a root `agents` block, `query <reference>` or `command <reference>`, and literal quoted descriptions. Fields cannot have children. |
+| `PLAY0945` | Error | The composed application declares more than one agents block, including across imported files. Keep one. |
+| `PLAY0946` | Error | No query or command of the declared kind matches the exposed reference. |
+| `PLAY0947` | Error | More than one operation of the declared kind matches the reference. Qualify it with its module, feature and slice. |
+| `PLAY0948` | Error | The same operation is exposed more than once, including through different short and qualified references. |
+| `PLAY0949` | Error | An exposed operation has no nonempty literal description. Add `description "<text>"`. |
+| `PLAY0950` | Error | An exposed operation is missing its scope, repeats it or uses an unsupported scope. Declare exactly one `scope read` or `scope write` on each entry. |
+| `PLAY0951` | Error | An exposed command does not require `scope write`. Commands cannot use `scope read`. |
+| `PLAY0952` | Error | The agents block is missing its token declaration or repeats it. Declare exactly one `tokens personal`. |
+| `PLAY0953` | Error | An unsupported token kind is declared. Only `tokens personal` is supported; `tokens oauth` is refused. |
+| `PLAY0954` | Error | An exposed operation declares approval. Approval is not supported; token scope and model authorization must both permit the call. |
+| `PLAY0955` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
+| `PLAY0956` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
+| `PLAY0957` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
+| `PLAY0958` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
+| `PLAY0959` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
+| `PLAY0960` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
+| `PLAY0961` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
+| `PLAY0962` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+
 ## Toolbar buttons
 
 The `button` lines of a screen `toolbar` and of an actions outlet. See [Screens](screens.md#toolbar-buttons) and [Outlets](outlets.md). The canonical corpus pins `PLAY0761` and `PLAY0762` (State View and Automation slices) in its `toolbar-button-not-state-change` rejection vector.

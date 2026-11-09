@@ -24,6 +24,10 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 `storyline GetPaid` names the path an invoice takes from draft to payment: the module and feature it starts in, then a screen, commands, a slice, events, a query, a read model and a reaction, in the order a reader should walk them. Each step names one element by kind, so renaming or moving that element rewrites the step. A storyline is authoring metadata for review and boards; it never changes what the model executes. See [Storylines](../../Documentation/screenplay/storylines.md).
 
+## Agents
+
+The root `agents` block lets personal-token callers discover `ListInvoices` with `scope read` and `RegisterInvoice` with `scope write`. These are the only exposed operations, and the caller must still satisfy the module, feature and operation authorization gates. A write token also satisfies the read scope. The block selects ESM v42; the showcase's other executable-admission refusals remain unchanged. See [Agents](../../Documentation/screenplay/agents.md).
+
 ## Passive decision state
 
 In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from the invoice's real history (`InvoiceRegistered` starts it unreserved, `InvoiceNumberReserved` reserves it and `InvoiceNumberReservationReleased` resets it), with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).

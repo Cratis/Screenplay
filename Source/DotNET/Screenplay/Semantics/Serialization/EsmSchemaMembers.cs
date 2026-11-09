@@ -19,7 +19,9 @@ internal static class EsmSchemaMembers
     static readonly ImmutableDictionary<EsmBaselineShape, ImmutableArray<(string Member, string Kind)>> _members = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema:s schemaVersion:i languageVersion:s semanticVersion:s revision:s application:1",
-        ["Application"] = "id:s name:s concepts:[] types:[] modules:[] policies:[] triggers:[] stateMachines:[] workflows:[] graphs:[] graphProjections:[] graphSpecifications:[] graphQueries:[] eventSources:[] reactionProductionMode:s commandReadMode:s timeZone:1 contextMembers:[]",
+        ["Application"] = "id:s name:s concepts:[] types:[] modules:[] policies:[] triggers:[] stateMachines:[] workflows:[] graphs:[] graphProjections:[] graphSpecifications:[] graphQueries:[] eventSources:[] reactionProductionMode:s commandReadMode:s timeZone:1 contextMembers:[] agents:1",
+        ["Agents"] = "tokenKind:s operations:[]",
+        ["AgentOperation"] = "kind:s operation:s scope:s description:s",
         ["Concept"] = "id:s name:s primitive:s values:s[] validations:[] numbers:i[] compliance:1 generation:1",
         ["Generation"] = "kind:s pattern:s checksum:s min:i max:i requirement:s size:i count:i encoding:s alphabet:s prefix:s case:s",
         ["Compliance"] = "personal:1 secret:1",

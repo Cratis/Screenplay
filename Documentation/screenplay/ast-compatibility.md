@@ -9,6 +9,10 @@ The syntax tree is a public API. Every consumer that compiles Screenplay to some
 
 This page states those promises. It is deliberately narrow: a guarantee you cannot rely on is worse than one that was never made.
 
+## Agent allowlist additions
+
+`ApplicationSyntax.Agents` is nullable and init-only. Both syntax writers omit it when absent, preserving legacy syntax bytes. An explicit block contains ordered `AgentOperationSyntax` entries and an `AgentTokensSyntax` declaration under `AgentsSyntax`; operation kind is carried as `syntaxKind`, separately from the node's `kind`. Scope and description remain authored fields, not inferred permissions. These three node kinds are registered in the native schema and generated TypeScript contracts. An explicit block, including an empty one, selects ESM v42; absence retains the model's earlier executable version. See [Agents](agents.md).
+
 ## Nested sample rows
 
 `SampleDataValueKind.Rows = 4` is additive; the existing enum values, positional constructor and deconstruction of `SampleDataFieldSyntax` are unchanged. Its init-only `Rows` sequence defaults to empty and is omitted from syntax JSON when empty, including on legacy scalar fields. `syntaxKind: "Rows"` distinguishes an explicit empty collection from an omitted field. Nonempty child rows keep authored order and recurse through the same row/field syntax. Only collections of declared top-level types admit nested rows; read-model shapes remain invalid member types (`PLAY0273`). See [sample data](sample-data.md#composite-collections).

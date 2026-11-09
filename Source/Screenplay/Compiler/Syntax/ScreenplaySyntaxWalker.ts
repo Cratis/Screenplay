@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
+import { AgentOperationSyntax, AgentsSyntax, AgentTokensSyntax } from './Agents';
 import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
@@ -96,11 +97,22 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.identity != null) this.visitIdentity(syntax.identity);
         syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
+        if (syntax.agents != null) this.visitAgents(syntax.agents);
         syntax.designSystems?.forEach(node => this.visitDesignSystem(node));
         syntax.themes?.forEach(node => this.visitTheme(node));
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
+
+    visitAgents(syntax: AgentsSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.tokens != null) this.visitAgentTokens(syntax.tokens);
+        syntax.operations.forEach(operation => this.visitAgentOperation(operation));
+    }
+
+    visitAgentTokens(syntax: AgentTokensSyntax): void { this.visitNode(syntax); }
+
+    visitAgentOperation(syntax: AgentOperationSyntax): void { this.visitNode(syntax); }
 
     visitDesignSystem(syntax: DesignSystemSyntax): void {
         this.visitNode(syntax);

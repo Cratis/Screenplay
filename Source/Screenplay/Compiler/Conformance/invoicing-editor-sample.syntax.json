@@ -1,5 +1,28 @@
 {
   "kind": "ApplicationSyntax",
+  "agents": {
+    "kind": "AgentsSyntax",
+    "operations": [
+      {
+        "kind": "AgentOperationSyntax",
+        "description": "Read the invoices the caller may manage.",
+        "reference": "Invoicing.InvoiceManagement.InvoiceList.ListInvoices",
+        "scope": "Read",
+        "syntaxKind": "Query"
+      },
+      {
+        "kind": "AgentOperationSyntax",
+        "description": "Register an invoice for the caller's customer.",
+        "reference": "Invoicing.InvoiceManagement.RegisterInvoice.RegisterInvoice",
+        "scope": "Write",
+        "syntaxKind": "Command"
+      }
+    ],
+    "tokens": {
+      "kind": "AgentTokensSyntax",
+      "syntaxKind": "Personal"
+    }
+  },
   "commandReadMode": "Protected",
   "concepts": [
     {

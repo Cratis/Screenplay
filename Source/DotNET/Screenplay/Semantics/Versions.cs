@@ -212,6 +212,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// </summary>
     public static readonly LanguageVersion V41 = new(41, 0);
 
+    /// <summary>Gets language v42, with explicit agent exposure.</summary>
+    public static readonly LanguageVersion V42 = new(42, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -446,6 +449,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting graph projection handlers that run once per item of an event collection.
     /// </summary>
     public static readonly SemanticVersion V41 = new(41, 0);
+
+    /// <summary>Gets semantic v42, with explicit agent exposure.</summary>
+    public static readonly SemanticVersion V42 = new(42, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1266,7 +1272,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV41Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV42Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1279,7 +1285,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV41Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV42Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

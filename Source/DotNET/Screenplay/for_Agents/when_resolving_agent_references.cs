@@ -34,7 +34,7 @@ public class when_resolving_agent_references : given.an_agent_model
     [Fact]
     void should_include_nested_features_in_resolution()
     {
-        var model = "policy Staff\n  require role \"Staff\"\nmodule Sales\n  authorize Staff\n  feature Finance\n    feature Invoices\n      slice StateView Listing\n        readmodel Invoice\n          id String\n        query All => Invoice[]";
+        const string model = "policy Staff\n  require role \"Staff\"\nmodule Sales\n  authorize Staff\n  feature Finance\n    feature Invoices\n      slice StateView Listing\n        readmodel Invoice\n          id String\n        query All => Invoice[]";
         var result = Compiler.Compile(model + "\nagents\n  tokens personal\n  query Sales.Finance.Invoices.Listing.All\n    scope write\n    description \"Find invoices\"");
         result.Success.ShouldBeTrue();
     }

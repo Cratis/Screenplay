@@ -23,6 +23,6 @@ public class when_walking_the_allowlist : given.an_agent_model
     {
         public List<SyntaxNode> Nodes { get; } = [];
 
-        public override void VisitNode(SyntaxNode syntax) => Nodes.Add(syntax);
+        public override void VisitNode(SyntaxNode node) => Nodes.Add(node);
     }
 }

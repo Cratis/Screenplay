@@ -104,6 +104,7 @@ public static partial class SemanticModelCanonicalJson
         if (application.ReactionProductionMode is not null) writer.WriteString("reactionProductionMode", "atomic");
         if (application.CommandReadMode is not null) writer.WriteString("commandReadMode", "protected");
         WriteApplicationTimeZone(writer, application, version);
+        WriteAgents(writer, application.Agents);
         writer.WriteEndObject();
     }
 

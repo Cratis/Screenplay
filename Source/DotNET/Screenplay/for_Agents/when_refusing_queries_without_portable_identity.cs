@@ -17,7 +17,9 @@ public class when_refusing_queries_without_portable_identity : given.an_agent_mo
     [Fact]
     void should_refuse_a_graph_query()
     {
-        var source = Model.Replace("      query All => Invoice[]", """
+        var source = Model.Replace(
+            "      query All => Invoice[]",
+            """
                   graph Directory
                     node InvoiceNode
                       id String key
@@ -25,7 +27,8 @@ public class when_refusing_queries_without_portable_identity : given.an_agent_mo
                     match invoice:InvoiceNode
                     return
                       id = invoice.id
-            """, StringComparison.Ordinal);
+            """,
+            StringComparison.Ordinal);
         ExpectRefusal(source, "graph query");
     }
 
