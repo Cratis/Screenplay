@@ -19,6 +19,7 @@ static class ProjectionAutoMap
         var mappings = sourceMappings.ToArray();
         var aggregateOnly = mappings.Length > 0 && mappings.All(mapping => mapping is AddMappingSyntax or SubtractMappingSyntax or IncrementMappingSyntax or DecrementMappingSyntax or CountMappingSyntax);
         if (!isJoin && aggregateOnly) yield break;
+
         // A dictionary-entry target ('slots.$eventContent.slot') writes into its base property; the key is not a property.
         var mapped = mappings.Select(mapping => EventContextPathValidator.BaseProperty(mapping.Property).Split('.')[^1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var usedSources = isJoin ? JoinAutoMapSources.ExplicitlyMapped(mappings) : [];
