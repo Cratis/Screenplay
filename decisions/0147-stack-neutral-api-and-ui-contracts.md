@@ -43,6 +43,9 @@ models ([0135](0135-passive-read-models-are-realization-metadata.md)) and sinks
 4. **The library, CLI and MCP give the same bytes.** `screenplay export --format openapi|ui` and the `read-workspace`
    views `api-description` and `ui-contract` write exactly what the library writes.
 
+> **2026-11-09 - amended.** [Decision 0149](0149-screens-in-the-executable-model.md) admits screens to the ESM as
+> v42 on request. Point 2 holds for default binding: screens stay deferred (`PLAY0269`) unless a caller asks for them.
+
 ## In scope
 
 The two derived documents, their .NET API, the CLI formats, the MCP views and their documentation. Admitting screens as

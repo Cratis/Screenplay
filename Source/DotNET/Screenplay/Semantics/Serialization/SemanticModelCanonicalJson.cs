@@ -191,6 +191,7 @@ public static partial class SemanticModelCanonicalJson
         if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, reaction) => WriteReaction(output, reaction, version));
         if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
         if (slice.Direction is { } direction) writer.WriteString("direction", direction == SemanticTranslationDirection.Outbound ? "outbound" : "inbound");
+        WriteScreens(writer, slice, version);
         writer.WriteEndObject();
     }
 

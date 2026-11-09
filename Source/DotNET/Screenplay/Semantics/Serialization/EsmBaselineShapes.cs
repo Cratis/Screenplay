@@ -17,14 +17,14 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
         EsmBaselineShape.Application, EsmBaselineShape.Concept, EsmBaselineShape.Type, EsmBaselineShape.Property,
         EsmBaselineShape.Module, EsmBaselineShape.Feature, EsmBaselineShape.Slice, EsmBaselineShape.EventContract,
         EsmBaselineShape.Command, EsmBaselineShape.ReadModel, EsmBaselineShape.Projection, EsmBaselineShape.Reaction,
-        EsmBaselineShape.Capture, EsmBaselineShape.Specification, EsmBaselineShape.Query, EsmBaselineShape.QueryArgument,
+        EsmBaselineShape.Capture, EsmBaselineShape.Screen, EsmBaselineShape.Specification, EsmBaselineShape.Query, EsmBaselineShape.QueryArgument,
         EsmBaselineShape.QueryKeyPart, EsmBaselineShape.QueryFilter, EsmBaselineShape.Trigger, EsmBaselineShape.EventSourceDeclaration, EsmBaselineShape.EventStream
     ];
 
@@ -42,7 +42,7 @@ internal static class EsmBaselineShapes
         ["TypeReference"] = "kind primitive target collection optional",
         ["Module"] = "id name features:Feature",
         ["Feature"] = "id name features:Feature slices:Slice",
-        ["Slice"] = "id name kind events:EventContract commands:Command readModels:ReadModel projections:Projection reducers:Reducer queries:Query specifications:Specification constraints:Constraint reactions@6:Reaction captures@6:Capture direction@9",
+        ["Slice"] = "id name kind events:EventContract commands:Command readModels:ReadModel projections:Projection reducers:Reducer queries:Query specifications:Specification constraints:Constraint reactions@6:Reaction captures@6:Capture direction@9 screens@42:Screen",
         ["EventContract"] = "id contractId contractRevision name storedName@16 properties:Property tags visibility@9 origin@9 predecessor@4 priorRevisions@4:PriorRevision",
         ["PriorRevision"] = "contractRevision predecessor properties:Property tags",
         ["Command"] = "id name properties:Property validations:Validation codeValidations:CodeValidation produces:ProducedEvent requirements:Requirement authorization:Authorization destination:Destination response@7:Response route@8:CommandRoute handler@23:Handler reads@25:DecisionRead calendar@37:CommandCalendar",
@@ -165,7 +165,15 @@ internal static class EsmBaselineShapes
         ["CaptureRecord"] = "fields:CaptureField",
         ["CaptureField"] = "name kind value:Value record:CaptureRecord records:CaptureRecord",
         ["PinnedValue"] = "command targetProperty value:Value",
-        ["WhenTrigger"] = "kind trigger values:PropertyValue"
+        ["WhenTrigger"] = "kind trigger values:PropertyValue",
+        ["Screen"] = "id name title description data:ScreenData actions:ScreenAction navigation:ScreenNavigation layout:ScreenLayout",
+        ["ScreenData"] = "query by fields:ScreenField",
+        ["ScreenField"] = "path label",
+        ["ScreenAction"] = "command label subject inputs:ScreenInput when then",
+        ["ScreenInput"] = "property from",
+        ["ScreenNavigation"] = "screen trigger by opens",
+        ["ScreenLayout"] = "fits regions:ScreenRegion",
+        ["ScreenRegion"] = "kind name shows title actions regions:ScreenRegion"
     }.ToImmutableDictionary(pair => Enum.Parse<EsmBaselineShape>(pair.Key), pair => pair.Value);
 
     static readonly ImmutableDictionary<uint, ImmutableDictionary<EsmBaselineShape, ImmutableDictionary<string, EsmBaselineShape>>> _baselines =
