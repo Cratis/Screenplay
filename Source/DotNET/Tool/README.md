@@ -64,7 +64,7 @@ Run `screenplay environment ./specifications` to list the keys a model needs fro
 
 ## Export, compare and rename from scripts
 
-- `screenplay export ./specifications --output model.esm.json` writes the canonical executable model; `--scope Billing.Invoices` keeps one module, feature or slice.
+- `screenplay export ./specifications --output model.esm.json` writes the canonical executable model; `--scope Billing.Invoices` keeps one module, feature or slice; `--screens` admits the screens as ESM v42.
 - `screenplay export ./specifications --format openapi` writes the OpenAPI 3.1 description of every command and query; `--format ui` writes the stack-neutral UI contract of every screen.
 - `screenplay diff ./before ./after --format json` compares two model versions: added, removed, renamed and moved declarations, member, event contract and specification changes, grouped by slice with the slices that depend on each change.
 - `screenplay rename Billing.Invoices.Send.InvoiceSent InvoiceDispatched ./specifications` renames a declaration and keeps its semantic identity.

@@ -138,8 +138,11 @@ public static class CliCommandCatalog
     /// <summary>Gets the export format option: the executable model, its OpenAPI description or its UI contract.</summary>
     public static CliOption ExportFormat { get; } = new("--format", "esm|openapi|ui");
 
+    /// <summary>Gets the option that admits the model's screens to the exported executable model as ESM v42.</summary>
+    public static CliOption Screens { get; } = new("--screens");
+
     /// <summary>Gets the export command for the executable model, its HTTP API description and its UI contract.</summary>
-    public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output]);
+    public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output, Screens]);
 
     /// <summary>Gets the model comparison command.</summary>
     public static CliCommand Diff { get; } = new("diff", "<before> <after>", [Format]);

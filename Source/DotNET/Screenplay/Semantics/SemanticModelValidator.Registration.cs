@@ -116,6 +116,7 @@ internal static partial class SemanticModelValidator
 
             RegisterConstraints(slice);
             RegisterAutomation(slice);
+            RegisterScreens(slice);
         }
 
         void RegisterEvent(SemanticEventContract eventContract)

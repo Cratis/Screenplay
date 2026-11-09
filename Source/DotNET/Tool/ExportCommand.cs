@@ -20,7 +20,8 @@ static class ExportCommand
     {
         var arguments = CommandArguments.Parse(args, CliCommandCatalog.Export);
         var format = arguments?.Option(CliCommandCatalog.ExportFormat) ?? "esm";
-        if (arguments is null || arguments.Positional.Count > 1 || !_formats.Contains(format, StringComparer.Ordinal))
+        if (arguments is null || arguments.Positional.Count > 1 || !_formats.Contains(format, StringComparer.Ordinal) ||
+            (arguments.Flag(CliCommandCatalog.Screens) && format != "esm"))
         {
             error.WriteLine($"Usage: {CliCommandCatalog.Export.Usage}");
             return 2;
@@ -46,6 +47,19 @@ static class ExportCommand
                 error.WriteLine($"'{target}' has no executable model: {errors.Length} error(s).");
                 foreach (var diagnostic in errors) error.WriteLine($"  {diagnostic.Code}: {diagnostic.Message}");
                 return 1;
+            }
+
+            if (arguments.Flag(CliCommandCatalog.Screens))
+            {
+                var admitted = ExecutableScreens.Admit(workspace);
+                if (!admitted.Success)
+                {
+                    error.WriteLine($"'{target}' has screens the executable model cannot hold: {admitted.Refusals.Length} refusal(s).");
+                    foreach (var reason in admitted.Refusals) error.WriteLine($"  {reason}");
+                    return 1;
+                }
+
+                model = admitted.Compilation!.Model;
             }
 
             if (scope is not null) model = ExecutableSemanticModelScope.Select(model, scope);

@@ -135,6 +135,7 @@ internal static partial class SemanticModelValidator
             ValidateSliceBehaviors(slice);
             ValidateConstraints(slice);
             ValidateAutomation(slice);
+            ValidateScreens(slice);
         }
 
         void ValidateSliceContracts(SemanticSlice slice)

@@ -94,7 +94,8 @@ internal static partial class SemanticModelRead
             .Add("constraints", (ref Utf8JsonReader reader, SliceState state, string property) => state.Constraints = Array(ref reader, Constraint, property))
             .Add("reactions", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Reactions = Array(ref reader, (ref Utf8JsonReader item) => Reaction(ref item, state.SchemaVersion), property))
             .Add("captures", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Captures = Array(ref reader, (ref Utf8JsonReader item) => Capture(ref item, state.SchemaVersion), property))
-            .Add("direction", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Direction = ParseDirection(String(ref reader, property)));
+            .Add("direction", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Direction = ParseDirection(String(ref reader, property)))
+            .Add("screens", LanguageVersion.V42.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Screens = Array(ref reader, Screen, property));
 
         public SemanticSliceKind? Kind { get; set; }
 
@@ -120,6 +121,8 @@ internal static partial class SemanticModelRead
 
         public SemanticTranslationDirection? Direction { get; set; }
 
+        public ImmutableArray<SemanticScreen> Screens { get; set; } = [];
+
         bool HasContracts => !Events.IsDefault && !Commands.IsDefault && !ReadModels.IsDefault;
 
         bool HasBehaviors => !Projections.IsDefault && !Queries.IsDefault && !Specifications.IsDefault;
@@ -133,7 +136,8 @@ internal static partial class SemanticModelRead
                 Reducers = Reducers,
                 Reactions = Reactions,
                 Captures = Captures,
-                Direction = Direction
+                Direction = Direction,
+                Screens = Screens
             };
         }
     }

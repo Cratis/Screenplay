@@ -95,6 +95,7 @@ internal sealed partial class UiScreenReader
             return;
         }
 
-        if (button.Slice is { } target) _navigation.Add(new(target, "button") { Opens = UiScreenText.Opens(button) });
+        // A button names the slice it opens; the contract names that slice's screen.
+        if (button.Slice is { } target) _navigation.Add(new(index.ScreenOfSlice(target) ?? target, "button") { Opens = UiScreenText.Opens(button) });
     }
 }

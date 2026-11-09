@@ -139,7 +139,7 @@ static class McpToolSchemas
     static JsonObject StandardArgument(string tool, string property) => property switch
     {
         "before" or "after" when tool == "semantic-diff" => RevisionSource(),
-        "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
+        "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" or "screens" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "destinationIntent" when tool == "propose-repair" => McpDestinationIntent.Schema(),
         "line" when tool == "propose-repair" => new() { ["type"] = "integer", ["minimum"] = 1 },

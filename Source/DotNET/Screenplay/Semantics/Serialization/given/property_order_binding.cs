@@ -45,6 +45,14 @@ public static class property_order_binding
         return new SemanticModelBinder(utcAssessmentYear).Bind("Billing", input.Document, input.Documents, options);
     }
 
+    public static Ui.ExecutableScreensResult AdmitScreens(string source, int utcAssessmentYear = 2026)
+    {
+        var input = Inputs(source);
+        var bound = new SemanticModelBinder(utcAssessmentYear).Bind("Billing", input.Document, input.Documents);
+        if (!bound.Success) throw new InvalidSemanticContract(string.Join('\n', bound.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        return Ui.ExecutableScreens.Admit(input.Document, bound.Value!, utcAssessmentYear);
+    }
+
     static (Syntax.ApplicationSyntax Document, SemanticDocumentSet Documents) Inputs(string source)
     {
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Billing"));
