@@ -14,7 +14,7 @@ public class when_allocating_a_note_identity : Specification
         _second = ModelNotesStore.NewId();
     }
 
-    [Fact] void should_start_with_the_note_prefix() => _first.ShouldStartWith("note_");
+    [Fact] void should_start_with_the_note_prefix() => _first.StartsWith("note_", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_carry_twenty_two_characters_after_the_prefix() => _first["note_".Length..].Length.ShouldEqual(22);
     [Fact] void should_use_only_url_safe_characters() => _first["note_".Length..].All(character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_').ShouldBeTrue();
     [Fact] void should_be_unique() => _second.ShouldNotEqual(_first);
