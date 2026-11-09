@@ -346,6 +346,8 @@ export const diagnosticCodes = {
     invalidSlicePlacement: 'PLAY0953',
     unknownPlacedElement: 'PLAY0954',
     redundantSlicePlacement: 'PLAY0955',
+    removeKeyWithoutDynamicKey: 'PLAY0956',
+    invalidDynamicKey: 'PLAY0957',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

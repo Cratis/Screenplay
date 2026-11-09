@@ -603,4 +603,8 @@ export const DiagnosticCodes = {
     InvalidSlicePlacement: 'PLAY0953',
     UnknownPlacedElement: 'PLAY0954',
     RedundantSlicePlacement: 'PLAY0955',
+    RemoveKeyWithoutDynamicKey: 'PLAY0956',
+    InvalidChildrenOrdering: 'PLAY0958',
+    DuplicateChildrenOrdering: 'PLAY0959',
+    UnknownChildrenSortProperty: 'PLAY0960',
 } as const;

@@ -60,7 +60,7 @@ const document = [
     '          typeName = $eventContext.eventType.name',
     '          firstCause = $eventContext.causation.occurred',
     '          nothing = $eventContext.',
-    '          count byUser.$causedBy.subject',
+    '          count bySource.$eventSourceId',
     '      command Rename',
     '        invoiceId InvoiceId identifier',
     '        otherId InvoiceId',
@@ -198,6 +198,7 @@ describe('when validating a document with a problem of every coded kind', () => 
             '      shows event Added', '      shows event Added', '      shows event Removed', '      shows command A',
             '      screen Review', '        image', '        image Screens/review.pdf'];
         issues.push(...validateLines(visuals, { compilerDiagnostics: parse(visuals.join('\n')).diagnostics }));
+        issues.push(...validateLines(['projection P => R', '  from E', '    remove slots', '    count bySlot.$eventContent']));
     });
 
     beforeEach(() => {

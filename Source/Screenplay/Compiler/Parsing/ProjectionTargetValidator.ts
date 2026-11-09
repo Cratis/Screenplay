@@ -12,6 +12,12 @@ import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { uniqueByName } from './ResponseValidator';
 
+// The property path before a dynamic dictionary key ('.$'), or the whole target when it has none.
+function baseProperty(target: string): string {
+    const marker = target.indexOf('.$');
+    return marker < 0 ? target : target.slice(0, marker);
+}
+
 export function validateProjectionTargets(application: ApplicationSyntax, context: ParserContext): void {
     const resolver = new AuthoringProductionResolver(application);
     const slices = resolver.slices;
@@ -73,10 +79,16 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
         const ownsEvents = effectiveHandlers || blocks.some(block => block.kind === 'FromSyntax' || block.kind === 'JoinSyntax' || block.kind === 'AllSyntax');
         for (const block of blocks) {
             const mappings = block.kind === 'EverySyntax' && !ownsEvents ? [] : 'mappings' in block ? block.mappings : block.kind === 'JoinSyntax' ? block.events.flatMap(event => event.mappings) : [];
-            for (const mapping of mappings) validate(mapping.property, mapping.location);
+            // A dynamic key names a dictionary entry, not a declared property: the property it writes into is what must exist.
+            for (const mapping of mappings) validate(baseProperty(mapping.property), mapping.location);
             if (block.kind === 'ChildrenSyntax' || block.kind === 'NestedSyntax') {
                 const target = validate(block.property, block.location);
-                walk(block.blocks, target === null ? null : types.get(target.type.name)?.properties ?? null, true);
+                const elementProperties = target === null ? null : types.get(target.type.name)?.properties ?? null;
+                const sortBy = block.kind === 'ChildrenSyntax' ? block.ordering?.sortBy ?? null : null;
+                if (block.kind === 'ChildrenSyntax' && block.ordering && target !== null && elementProperties !== null && sortBy !== null && property(elementProperties, sortBy).missing) {
+                    context.warning(DiagnosticCodes.UnknownChildrenSortProperty, `Children '${block.property}' sorts by '${sortBy}', which is not a declared property of its element type '${target.type.name}'`, block.ordering.location);
+                }
+                walk(block.blocks, elementProperties, true);
             }
         }
     };

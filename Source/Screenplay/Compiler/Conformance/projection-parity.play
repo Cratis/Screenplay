@@ -1,0 +1,65 @@
+// Projection mappings that write once, key a dictionary by the event or its cause, remove a key, and order children.
+
+concept ModelId  : Uuid
+concept SeriesId : Uuid
+concept EntryId  : Uuid
+concept SlotName : String
+
+type ModelEntry
+  entryId EntryId
+  title   String
+  addedAt DateTime
+
+module Scoring
+  feature Models
+    slice StateChange DefineModel
+      event ModelDefined
+        name String
+      event SlotAssigned
+        slot   SlotName
+        series SeriesId
+      event SlotDropped
+        slot SlotName
+      event EntryAdded
+        entryId EntryId
+        title   String
+
+    slice StateView Models
+      readmodel ModelReadModel
+        modelId   ModelId key
+        name      String
+        createdBy String optional
+        createdAt DateTime optional
+        slots     String optional
+        latest    ModelEntry[]
+        ranked    ModelEntry[]
+        log       ModelEntry[]
+
+      projection Models => ModelReadModel
+        from ModelDefined key $eventSourceId
+          modelId = $eventSourceId
+          name    = name
+          set once createdBy = $causedBy.subject
+          set once createdAt to $eventContext.occurred
+        from SlotAssigned key $eventSourceId
+          slots.$eventContent.slot = series
+          count slots.$causedBy.userName
+        from SlotDropped key $eventSourceId
+          remove slots.$eventContent.slot
+        children latest identified by entryId
+          insert first
+          from EntryAdded key entryId
+            parent $eventSourceId
+            set once addedAt = $eventContext.occurred
+        children ranked identified by entryId
+          no automap
+          sort by addedAt descending
+          from EntryAdded key entryId
+            parent $eventSourceId
+            title   = title
+            addedAt = $eventContext.occurred
+        children log identified by entryId
+          insert last
+          from EntryAdded key entryId
+            parent $eventSourceId
+            addedAt = $eventContext.occurred
