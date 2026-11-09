@@ -1,7 +1,7 @@
 <Project>
     <!-- Evaluate the final opt-in after library and dedicated-spec project overrides. -->
     <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework Condition="'$(MSBuildProjectName)' != 'Tool' and '$(MSBuildProjectName)' != 'Screenplay.ContractCatalog.Specs'">$(SpecTargetFramework)</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <OutputType>Exe</OutputType>
     </PropertyGroup>

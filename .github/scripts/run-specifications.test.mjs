@@ -19,10 +19,10 @@ function trx({ total = 1, passed = 1, executed = passed, failed = 0, outcome = '
     return `<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results><UnitTestResult testId="one" outcome="${rowOutcome}" /></Results><ResultSummary outcome="${outcome}"><Counters total="${total}" executed="${executed}" passed="${passed}" failed="${failed}" notExecuted="0" /></ResultSummary></TestRun>`;
 }
 
-function fixture({ xml = trx(), mode = 'write', exitCode = 0, assembly = true, configuration = 'Debug', projectName = 'Fake', assemblyName = `Cratis.${projectName}` } = {}) {
+function fixture({ xml = trx(), mode = 'write', exitCode = 0, assembly = true, configuration = 'Debug', framework = 'net11.0', projectName = 'Fake', assemblyName = `Cratis.${projectName}` } = {}) {
     const directory = mkdtempSync(path.join(scratch, 'spec-runner-test.'));
     const projectDirectory = path.join(directory, 'project with spaces');
-    const binaryDirectory = path.join(projectDirectory, 'bin', configuration, 'net10.0');
+    const binaryDirectory = path.join(projectDirectory, 'bin', configuration, framework);
     mkdirSync(binaryDirectory, { recursive: true });
     if (assembly) writeFileSync(path.join(binaryDirectory, `${assemblyName}.dll`), 'fake native executable');
     const project = path.join(projectDirectory, `${projectName}.csproj`);
@@ -49,7 +49,7 @@ process.exit(Number(process.env.NATIVE_EXIT));
         ...process.env, PATH: `${directory}${path.delimiter}${process.env.PATH}`,
         REAL_DOTNET: dotnet.stdout.trim(), ARGUMENT_LOG: path.join(directory, 'arguments.json'),
         FIXTURE: path.join(directory, 'fixture.trx'), MODE: mode, NATIVE_EXIT: String(exitCode),
-        SPEC_RESULTS_ROOT: path.join(directory, 'results')
+        SPEC_RESULTS_ROOT: path.join(directory, 'results'), SPEC_TARGET_FRAMEWORK: ''
     } };
 }
 
@@ -76,7 +76,42 @@ test('supports the dedicated Release executable', () => {
     const input = fixture({ configuration: 'Release' });
     const result = run(input);
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.match(JSON.parse(readFileSync(input.environment.ARGUMENT_LOG, 'utf8'))[0], /bin\/Release\/net10\.0/);
+    assert.match(JSON.parse(readFileSync(input.environment.ARGUMENT_LOG, 'utf8'))[0], /bin\/Release\/net11\.0/);
+});
+
+test('defaults to net11.0 for Debug specifications', () => {
+    const input = fixture();
+    const result = run(input);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(JSON.parse(readFileSync(input.environment.ARGUMENT_LOG, 'utf8'))[0], /bin\/Debug\/net11\.0/);
+});
+
+test('supports net10.0 library compatibility specifications', () => {
+    const input = fixture({ framework: 'net10.0' });
+    input.environment.SPEC_TARGET_FRAMEWORK = 'net10.0';
+    const result = run(input, '-filterVSTest', 'FullyQualifiedName~Compatibility');
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const args = JSON.parse(readFileSync(input.environment.ARGUMENT_LOG, 'utf8'));
+    assert.match(args[0], /bin\/Debug\/net10\.0/);
+    assert.deepEqual(args.slice(3), ['-filterVSTest', 'FullyQualifiedName~Compatibility']);
+});
+
+test('refuses unsupported specification frameworks without invoking dotnet', () => {
+    const input = fixture();
+    input.environment.SPEC_TARGET_FRAMEWORK = 'net9.0';
+    const result = run(input);
+    assert.equal(result.status, 2, result.stdout + result.stderr);
+    assert.match(result.stderr, /Unsupported specification framework/);
+    assert.equal(existsSync(input.environment.ARGUMENT_LOG), false);
+});
+
+test('does not fall back to net11.0 when the net10.0 executable is missing', () => {
+    const input = fixture();
+    input.environment.SPEC_TARGET_FRAMEWORK = 'net10.0';
+    const result = run(input);
+    assert.equal(result.status, 2, result.stdout + result.stderr);
+    assert.match(result.stderr, /Build the Debug net10\.0 specification executable first/);
+    assert.equal(existsSync(input.environment.ARGUMENT_LOG), false);
 });
 
 test('uses the dedicated catalog specifications assembly name', () => {

@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 // Never download/start a guessed browser runtime. Use an explicit native VS Code installation.
 const executable = process.env.VSCODE_EXECUTABLE_PATH;
 if (!executable || !path.isAbsolute(executable) || !fs.existsSync(executable)) throw new Error('Set VSCODE_EXECUTABLE_PATH to the installed native VS Code executable. Host coverage is unverified without it.');
-const server = process.env.SCREENPLAY_REPAIR_SERVER ?? path.resolve('../../DotNET/Tool/bin/Debug/net10.0/Cratis.Screenplay.Tool' + (process.platform === 'win32' ? '.exe' : ''));
+const server = process.env.SCREENPLAY_REPAIR_SERVER ?? path.resolve('../../DotNET/Tool/bin/Debug/net11.0/Cratis.Screenplay.Tool' + (process.platform === 'win32' ? '.exe' : ''));
 if (!fs.existsSync(server)) throw new Error('Build the native C# MCP tool first or set SCREENPLAY_REPAIR_SERVER.');
 // Independent installed-client lifetimes, never a root switch to escape an
 // uncertain authority. Each case that ends in a retained unknown barrier (dirty,

@@ -12,7 +12,7 @@
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
         <DedicatedSpecsProject>true</DedicatedSpecsProject>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(SpecTargetFramework)</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <EnablePackageValidation>false</EnablePackageValidation>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

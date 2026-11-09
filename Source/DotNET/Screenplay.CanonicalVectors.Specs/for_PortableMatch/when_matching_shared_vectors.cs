@@ -5,7 +5,7 @@ using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_PortableMatch;
 
-// This project runs on net8.0, net9.0 and net10.0 in Release, unlike compiler-inline Debug specs.
+// This project runs on net11.0 by default, with net10.0 compatibility coverage in CI.
 public class when_matching_shared_vectors
 {
     [Fact]

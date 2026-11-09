@@ -130,7 +130,7 @@ When a new ESM version is added:
 Regenerate the policy-negation extension independently of the original goldens and corpora:
 
 ```bash
-SCREENPLAY_REGENERATE_POLICY_NEGATION=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_PolicyNegationCorpus
+SCREENPLAY_REGENERATE_POLICY_NEGATION=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net11.0 --filter FullyQualifiedName~for_PolicyNegationCorpus
 ```
 
 This writes the extension golden and its corpus bytes/revision, then fails deliberately. Review, rebuild and rerun without the variable; existing fixtures must remain unchanged.
@@ -139,7 +139,7 @@ The source-backed corpora have independent regeneration switches; they do not re
 For the reaction identity corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_REACTION_IDENTITY_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_ReactionIdentityCorpus
+SCREENPLAY_REGENERATE_REACTION_IDENTITY_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net11.0 --filter FullyQualifiedName~for_ReactionIdentityCorpus
 ```
 
 Each command deliberately fails after rewriting its owned vectors. Review the bytes, rebuild, then rerun without the variables.
@@ -147,7 +147,7 @@ Each command deliberately fails after rewriting its owned vectors. Review the by
 For the exact-number corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_NumberLiteralsCorpus
+SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net11.0 --filter FullyQualifiedName~for_NumberLiteralsCorpus
 ```
 
 Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.
@@ -155,7 +155,7 @@ Each command deliberately fails after regeneration. Review the bytes, rebuild an
 For the enum member numbers corpus:
 
 ```bash
-SCREENPLAY_REGENERATE_ENUM_MEMBER_NUMBERS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_EnumMemberNumbersCorpus
+SCREENPLAY_REGENERATE_ENUM_MEMBER_NUMBERS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net11.0 --filter FullyQualifiedName~for_EnumMemberNumbersCorpus
 ```
 
 Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.

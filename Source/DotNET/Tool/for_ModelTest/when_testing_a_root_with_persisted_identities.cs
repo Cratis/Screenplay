@@ -22,7 +22,7 @@ public class when_testing_a_root_with_persisted_identities : given.a_model
     void Because()
     {
         _exitCode = ModelTest.Run([Root, "--filter", "M.F.Register.Renamed", "--format", "json"], Output, Error);
-        _result = JsonDocument.Parse(Output.ToString()).RootElement.GetProperty("results")[0];
+        _result = JsonElement.Parse(Output.ToString()).GetProperty("results")[0];
     }
 
     [Fact] void should_pass() => _exitCode.ShouldEqual(0);

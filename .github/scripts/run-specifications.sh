@@ -32,9 +32,17 @@ case "$project_name" in
         leading_args=(--specifications)
         ;;
 esac
-assembly="$project_directory/bin/$configuration/net10.0/$assembly_name.dll"
+framework=${SPEC_TARGET_FRAMEWORK:-net11.0}
+case "$framework" in
+    net10.0|net11.0) ;;
+    *)
+        echo "Unsupported specification framework: $framework (expected net10.0 or net11.0)." >&2
+        exit 2
+        ;;
+esac
+assembly="$project_directory/bin/$configuration/$framework/$assembly_name.dll"
 if [ ! -f "$assembly" ]; then
-    echo "Build the $configuration net10.0 specification executable first: $assembly" >&2
+    echo "Build the $configuration $framework specification executable first: $assembly" >&2
     exit 2
 fi
 
