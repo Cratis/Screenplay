@@ -4180,4 +4180,63 @@ public static class DiagnosticCodes
     /// Two <c>storyline</c> declarations carry the same name.
     /// </summary>
     public const string DuplicateStoryline = "PLAY0943";
+
+    /// <summary>An agents declaration is malformed.</summary>
+    public const string InvalidAgentsDeclaration = "PLAY0944";
+
+    /// <summary>The application declares more than one agents block.</summary>
+    public const string DuplicateAgentsDeclaration = "PLAY0945";
+
+    /// <summary>An exposed operation does not resolve to an existing operation of its kind.</summary>
+    public const string UnknownAgentOperation = "PLAY0946";
+
+    /// <summary>An exposed operation reference has multiple candidates.</summary>
+    public const string AmbiguousAgentOperation = "PLAY0947";
+
+    /// <summary>An operation is exposed more than once.</summary>
+    public const string DuplicateAgentOperation = "PLAY0948";
+
+    /// <summary>An exposed operation needs a nonempty literal description.</summary>
+    public const string AgentOperationMissingDescription = "PLAY0949";
+
+    /// <summary>An exposed operation needs exactly one explicit scope.</summary>
+    public const string AgentOperationMissingScope = "PLAY0950";
+
+    /// <summary>A command cannot be exposed with read scope.</summary>
+    public const string AgentCommandRequiresWriteScope = "PLAY0951";
+
+    /// <summary>An agents block needs exactly one tokens declaration.</summary>
+    public const string AgentTokensMissing = "PLAY0952";
+
+    /// <summary>The agent token kind is not supported.</summary>
+    public const string UnsupportedAgentTokenKind = "PLAY0953";
+
+    /// <summary>Agent approval is not supported.</summary>
+    public const string AgentApprovalNotSupported = "PLAY0954";
+
+    /// <summary>A block-wide scope is not allowed.</summary>
+    public const string GlobalAgentScope = "PLAY0955";
+
+    /// <summary>Some model operations are not in the explicit agent allowlist.</summary>
+    public const string UnexposedAgentOperations = "PLAY0956";
+
+    /// <summary>The agents block explicitly exposes no operations.</summary>
+    public const string AgentsExposeNothing = "PLAY0957";
+
+    /// <summary>Comparison found a newly exposed operation.</summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning)]
+    public const string NewlyExposedAgentOperation = "PLAY0958";
+
+    /// <summary>Comparison found a loosened agent token requirement.</summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning)]
+    public const string WidenedAgentOperation = "PLAY0959";
+
+    /// <summary>An exposed operation has no applicable model authorization gate.</summary>
+    public const string UngatedAgentOperation = "PLAY0960";
+
+    /// <summary>A global query cannot be exposed to agents.</summary>
+    public const string AgentGlobalQueryRefused = "PLAY0961";
+
+    /// <summary>A performed or graph query has no portable operation identity for agent exposure yet.</summary>
+    public const string UnsupportedAgentQueryKind = "PLAY0962";
 }

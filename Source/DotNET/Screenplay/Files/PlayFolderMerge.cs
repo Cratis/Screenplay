@@ -79,6 +79,7 @@ internal static partial class PlayFolderMerge
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
             DesignSystems = OnlyOne(applications.SelectMany(application => application.DesignSystems), designSystem => designSystem.Location, "design system", context) is { } designSystem ? [designSystem] : [],
             Onboarding = OnlyOne(applications.Select(application => application.Onboarding), onboarding => onboarding.Location, "onboarding block", context),
+            Agents = MergeAgents(applications, context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],
@@ -169,6 +170,24 @@ internal static partial class PlayFolderMerge
     /// Each document holds at most one already - the parser rejects a second within a document - so anything
     /// found here came from another file.
     /// </remarks>
+    static AgentsSyntax? MergeAgents(IEnumerable<ApplicationSyntax> applications, ParserContext context)
+    {
+        AgentsSyntax? result = null;
+        foreach (var agents in applications.Select(application => application.Agents).OfType<AgentsSyntax>())
+        {
+            if (result is not null)
+            {
+                context.Error(DiagnosticCodes.DuplicateAgentsDeclaration, "An application can declare only one agents block", agents.Location);
+            }
+            else
+            {
+                result = agents;
+            }
+        }
+
+        return result;
+    }
+
     static TSyntax? OnlyOne<TSyntax>(
         IEnumerable<TSyntax?> declarations,
         Func<TSyntax, SourceLocation> location,

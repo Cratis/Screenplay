@@ -63,6 +63,9 @@ public record ApplicationSyntax(
     /// </summary>
     public OnboardingSyntax? Onboarding { get; init; }
 
+    /// <summary>Gets the explicit agent operation allowlist; absence exposes nothing.</summary>
+    public AgentsSyntax? Agents { get; init; }
+
     /// <summary>
     /// Gets the explicit reaction production mode, inherited by the composed application.
     /// Absence preserves legacy per-fact production.

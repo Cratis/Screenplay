@@ -228,6 +228,7 @@ public sealed partial class ScreenplayPrinter :
     {
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
         WriteOptionalSection(writer, application.Onboarding, WriteOnboarding);
+        WriteOptionalSection(writer, application.Agents, WriteAgents);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
         WriteSection(writer, application.DesignSystems, WriteDesignSystem);
         WriteSection(writer, application.Themes ?? [], WriteTheme);

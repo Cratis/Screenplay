@@ -131,6 +131,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitOnboarding(syntax.Onboarding);
         }
 
+        VisitAgentDeclarations(syntax);
+
         foreach (var designSystem in syntax.DesignSystems)
         {
             VisitDesignSystem(designSystem);
