@@ -199,6 +199,10 @@ describe('when validating a document with a problem of every coded kind', () => 
             '      screen Review', '        image', '        image Screens/review.pdf'];
         issues.push(...validateLines(visuals, { compilerDiagnostics: parse(visuals.join('\n')).diagnostics }));
         issues.push(...validateLines(['projection P => R', '  from E', '    remove slots', '    count bySlot.$eventContent', '    clear slots.$eventContent.slot']));
+        // Assembled compiler diagnostics must pass the editor gate without dropping an agents code.
+        for (const [name, code] of Object.entries(diagnosticCodes).filter(([name]) => /agent/i.test(name))) {
+            issues.push(...validateLines(['agents'], { compilerDiagnostics: [{ code, severity: 'error', message: name, location: { line: 1, column: 1 } }] }));
+        }
     });
 
     beforeEach(() => {

@@ -12,6 +12,24 @@ const clauseWords = (line: string) => rules
     .filter(rule => rule.name === 'keyword.other.screenplay')
     .flatMap(rule => [...line.matchAll(new RegExp(rule.match, 'g'))].map(match => match[0]));
 
+describe('when highlighting an agents block', () => {
+    const block = grammar.repository['agents-block'] as { begin: string; end: string; patterns: { match?: string; captures?: Record<string, { name: string }> }[] };
+    const highlighted = (line: string) => block.patterns.some(rule => rule.match && new RegExp(rule.match).test(line));
+    it('registers an unnamed application block only', () => {
+        grammar.patterns.some((pattern: { include: string }) => pattern.include === '#agents-block').should.equal(true);
+        new RegExp(block.begin).test('agents').should.equal(true);
+        new RegExp(block.begin).test('  agents String').should.equal(false);
+        new RegExp(block.begin).test('agents Staff').should.equal(false);
+        new RegExp(block.end).test('module Sales').should.equal(true);
+    });
+    it('scopes personal tokens, qualified targets and operation metadata', () => {
+        for (const line of ['  tokens personal', '  query Sales.List.All', '  command Sales.Issue', '    scope read', '    scope write', '    description "Issue"']) highlighted(line).should.equal(true);
+    });
+    it('does not reserve contextual directive words as property names', () => {
+        for (const line of ['  tokens String', '  scope String', '  personal String', '  agents String']) highlighted(line).should.equal(false);
+    });
+});
+
 describe('when highlighting an onboarding block', () => {
     it('scopes onboarding as a construct keyword', () => scopesConstruct('onboarding').should.equal(true));
 

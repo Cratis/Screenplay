@@ -48,6 +48,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const inAgents = enclosingHeaders(lines, fences, lineIndex, indentOf(line)).includes('agents');
+    if (inAgents && ['command', 'query', 'tokens', 'personal', 'scope', 'read', 'write', 'description'].includes(word)) return keywordDocs.agents;
     const actionSubject = actionSubjectHover(line, word, startColumn);
     if (actionSubject) return actionSubject;
     const returned = continuationResponseHover(lines, lineIndex, word, startColumn, endColumn, application);
