@@ -19,16 +19,19 @@ static class McpSemanticDiff
 
     static object Read(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, JsonElement arguments, string revision, bool revisions, bool matchByAddress = false)
     {
-        ValidateRevision(arguments, revision, revisions);
+        var expected = McpJson.OptionalString(arguments, "expectedSourceRevision");
+        if (expected is not null && expected != revision)
+        {
+            throw new McpFailure(revisions ? "StaleRevision: semantic-diff pages must identify both snapshot revisions." : "StaleRevision: semantic-diff pages must identify the proposal revision.") { FailureKind = revisions ? "StaleRevision" : "RequestFailed" };
+        }
+        if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expected is null)
+        {
+            throw new McpFailure("'expectedSourceRevision' is required for continuation.", -32602);
+        }
 
         var before = McpWorkspaceAnalysis.For(baseline);
         var after = McpWorkspaceAnalysis.For(candidate);
         var difference = StructuralComparison.Compare(baseline, candidate, before.Source.Authoring, before.Syntax, after.Source.Authoring, after.Syntax, matchByAddress: matchByAddress);
-        if (McpJson.OptionalString(arguments, "view") == "agent-exposure")
-        {
-            return McpAgentExposureDiff.Read(difference.AgentExposure, arguments, revision, baseline.Revision.ToString(), candidate.Revision.ToString());
-        }
-
         return new
         {
             sourceRevision = revision,
@@ -49,19 +52,6 @@ static class McpSemanticDiff
             slices = McpSliceChanges.Project(difference, before.Source.Authoring, after.Source.Authoring, matchByAddress),
             page = McpPaging.BoundedSourcePage(difference.Changes.Select(Project), arguments, revision)
         };
-    }
-
-    static void ValidateRevision(JsonElement arguments, string revision, bool revisions)
-    {
-        var expected = McpJson.OptionalString(arguments, "expectedSourceRevision");
-        if (expected is not null && expected != revision)
-        {
-            throw new McpFailure(revisions ? "StaleRevision: semantic-diff pages must identify both snapshot revisions." : "StaleRevision: semantic-diff pages must identify the proposal revision.") { FailureKind = revisions ? "StaleRevision" : "RequestFailed" };
-        }
-        if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expected is null)
-        {
-            throw new McpFailure("'expectedSourceRevision' is required for continuation.", -32602);
-        }
     }
 
     static object Project(StructuralComparison.Change change) => change.ChangeKind.StartsWith("enum-", StringComparison.Ordinal)

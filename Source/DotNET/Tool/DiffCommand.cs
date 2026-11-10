@@ -13,7 +13,7 @@ static class DiffCommand
     {
         var arguments = CommandArguments.Parse(args, CliCommandCatalog.Diff);
         var format = arguments?.Option(CliCommandCatalog.Format) ?? "text";
-        if (!Valid(arguments, format))
+        if (arguments is null || arguments.Positional.Count != 2 || format is not "text" and not "json")
         {
             error.WriteLine($"Usage: {CliCommandCatalog.Diff.Usage}");
             return 2;
@@ -43,12 +43,6 @@ static class DiffCommand
                 DiffText.Write(report, output);
             }
 
-            if (difference.AgentExposure.HasDeclaredAgents && difference.AgentExposure.Coverage != AgentExposureCoverage.Complete)
-            {
-                error.WriteLine("Agent exposure comparison is incomplete; no safe exposure verdict is available.");
-                return 1;
-            }
-
             return 0;
         }
         catch (IncompatibleModelIdentities exception)
@@ -62,9 +56,6 @@ static class DiffCommand
             return 2;
         }
     }
-
-    static bool Valid([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] CommandArguments? arguments, string format) =>
-        arguments?.Positional.Count == 2 && (string.Equals(format, "text", StringComparison.Ordinal) || string.Equals(format, "json", StringComparison.Ordinal));
 
     static ComparedModel Compared(ModelSourceLoad load) =>
         load.HasPersistedIdentities ? ComparedModel.WithIdentities(load.Workspace) : ComparedModel.WithoutIdentities(load.Workspace);

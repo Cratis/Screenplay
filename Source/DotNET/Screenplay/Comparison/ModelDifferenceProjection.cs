@@ -24,7 +24,6 @@ static class ModelDifferenceProjection
         [.. difference.Sections.Select(section => new ComparisonSection(SectionKind(section.Section), section.Complete, [.. section.Gaps.Select(gap => new ComparisonGap(GapKind(gap.Kind), gap.Statement))]))],
         [.. difference.Limits])
     {
-        AgentExposure = difference.AgentExposure,
         Enumerations = [.. difference.Changes.Where(change => change.ChangeKind.StartsWith("enum-", StringComparison.Ordinal)).Select(change => new EnumerationMemberChange(
             Declaration(change, matching), EnumerationKind(change.ChangeKind), change.Member!, change.AfterMember, change.BeforeNumber!.Value, change.AfterNumber, Numbering(change.BeforeNumbering!), Numbering(change.AfterNumbering!), change.ContractBreaking == true, change.Stored == true))]
     };

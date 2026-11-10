@@ -17,7 +17,7 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 ## Context
 
-[Decision 0155](0155-explicit-agent-exposure-and-fail-closed-comparison.md) makes agent exposure an
+[Decision 0155](0155-explicit-agent-exposure-default-deny.md) makes agent exposure an
 explicit default-deny allowlist. Consumers such as Arc need a small portable declaration, not an ESM
 parser or inferred exposure. This is an export/transport contract, not a language change.
 

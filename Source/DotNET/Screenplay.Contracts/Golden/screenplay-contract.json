@@ -74671,7 +74671,6 @@
         "expectedSourceRevision",
         "limit",
         "offset",
-        "version",
         "view"
       ],
       "inputSchema": {
@@ -74692,17 +74691,11 @@
               "typed-contexts",
               "dropped-comments",
               "semantic-diff",
-              "agent-exposure",
               "notes",
               "release-baseline",
               "production-destinations",
               "production-destination-identities"
             ]
-          },
-          "version": {
-            "type": "integer",
-            "const": 2,
-            "description": "Required with view=agent-exposure on every page. Must equal the answered version (2); never fall back to legacy coverage."
           },
           "documentId": {
             "type": "string"
@@ -75143,9 +75136,7 @@
         "beforeWorkspaceJson",
         "expectedSourceRevision",
         "limit",
-        "offset",
-        "version",
-        "view"
+        "offset"
       ],
       "inputSchema": {
         "type": "object",
@@ -75231,18 +75222,6 @@
           "afterWorkspaceJson": {
             "type": "string",
             "description": "Complete canonical UTF-8 export-workspace JSON for the candidate, with the same application identity; not a Git ref or path."
-          },
-          "view": {
-            "type": "string",
-            "enum": [
-              "semantic-diff",
-              "agent-exposure"
-            ]
-          },
-          "version": {
-            "type": "integer",
-            "const": 2,
-            "description": "Required with view=agent-exposure on every page. Must equal the answered version (2); never fall back to legacy coverage."
           },
           "offset": {
             "type": "integer",

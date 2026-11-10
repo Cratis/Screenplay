@@ -306,7 +306,6 @@ static class WorkspaceReferenceMembers
     {
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
-        NarrowSyntax => [("policy", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
         UserSyntax => [("personas", WorkspaceReferenceDomain.Persona)],
         StorylineStepSyntax step => [("target", StorylineDomain(step.ElementKind))],

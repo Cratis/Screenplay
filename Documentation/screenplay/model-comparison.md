@@ -144,47 +144,6 @@ This report classifies differences between two models; it does not enforce the [
 The release baseline freezes resolved schemas by equality, so even an appended member or an explicit rename can
 violate a baselined event revision despite no breaking numeric identity change here.
 
-## Compare agent exposure separately
-
-`ModelDifference.AgentExposure` is a typed `AgentExposureComparison` beside the legacy structural sections.
-Its `Rows` are ordered by operation kind and resolved qualified name. An absent or explicitly empty agents block
-exposes nothing. Adding exposure produces `Added` and comparison warning `PLAY0978`; removing it produces `Removed`.
-A higher declared scope (`read < write`), changed exposed signature/referenced contract or admitted token-contract
-loosening is `Widened` (`PLAY0979`). A lower scope alone is `Narrowed`. Description edits and alternate spelling of
-the same resolved target are `Unchanged`.
-
-The contract includes the complete authorization requirement tree of the operation and its enclosing scopes,
-including logical operators and grouping. Any change to that tree is conservatively `Widened`, even if it might
-restrict access. Unrelated scopes do not contribute to the signature. Referenced read-model declarations are
-compared, so adding or changing a returned field changes the signature. Projection and event logic that populates
-an unchanged read-model shape is not compared as part of agent exposure; use the structural diff to review it.
-
-Always inspect this aggregate's own `Coverage`, not the legacy `Complete` field. Parsing/validation errors on either
-side make every available row `Unknown`, `Coverage` becomes `Incomplete` and `HasWidening` is null, even if no block
-or row survived. An unrecognized reference-bearing syntax node in an exposed operation or dependency also makes
-its row `Unknown`, coverage `Incomplete` and `HasWidening` null. Warnings and executable-binding refusal alone do not.
-Without such errors or indexing gaps, an unresolved exposed contract is conservatively `Widened` for review,
-never Unknown or safely unchanged. The compared dependencies include policies that narrow an exposed query's rows.
-Never convert an incomplete result's null to a safe `false`. `HasDeclaredAgents` records whether either source
-declares an agents block in any parsed document, including recovered and duplicate blocks. CLI `diff` returns
-exit code 1 and writes `Agent exposure comparison is incomplete; no safe exposure verdict is available.` to
-stderr only when coverage is incomplete **and** `HasDeclaredAgents` is true, in both text and JSON formats.
-Without declared agents, source errors preserve the previous exit code and add only the legacy limit statement;
-clean sources without agents have Complete exposure coverage. Legacy report shapes remain unchanged.
-Only personal tokens are supported; an unsupported-token attempt follows this error rule rather than comparing a
-valid subset.
-
-Executable-binding refusal is different: a preview `system`/`operation` can parse and validate cleanly, then refuse
-binding with `PLAY0268`. Its authoring allowlist remains intact and is compared independently of binding. Such a
-binding refusal without agents adds no exposure limit and preserves the existing legacy response bytes.
-
-The typed aggregate is excluded from default CLI/library JSON serialization; legacy rows do not acquire new fields.
-`NotCompared` adds exactly one `Agent exposure was not compared; use the agent-exposure view.` statement when either
-side has a block (including empty), or either side has parsing/validation errors. Clean sources without agents add
-nothing. MCP callers opt into [the agent-exposure view](mcp/reference.md#agent-exposure-difference) for bounded rows.
-This structural report grants no authorization, issues no tokens and implements no runtime endpoint. See
-[decision 0155](../../decisions/0155-explicit-agent-exposure-and-fail-closed-comparison.md).
-
 ## Group changes by slice
 
 A tool that builds code slice by slice needs to know which slices to rebuild,
