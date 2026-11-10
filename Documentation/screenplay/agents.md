@@ -39,9 +39,10 @@ Use the C# [agent exposure comparison](model-comparison.md#compare-agent-exposur
 the revision pin and coverage; request and check that version on every page. The separate result classifies added, removed,
 widened, narrowed, unchanged and unknown exposure with its own coverage. Parsing/validation errors fail closed:
 all rows become Unknown and coverage is Incomplete, even if no block survives. A clean authoring model refused
-only by executable binding is different; its intact allowlist can still be compared. Unknown is reserved for
-parsing/validation errors. A changed exposed contract at unchanged scope is Widened; an unresolved contract without
-source errors is conservatively Widened for review, not Unknown.
+only by executable binding is different; its intact allowlist can still be compared. An unrecognized reference-bearing
+syntax node in an exposed operation or its dependencies also makes the row Unknown and coverage Incomplete.
+A changed exposed contract at unchanged scope is Widened, including a changed policy used to narrow query rows.
+An indexed but unresolved contract without source errors is conservatively Widened for review, not Unknown.
 
 Legacy structural diff rows do not compare exposure. When a block or source errors exist, their limits say so
 explicitly. Do not treat legacy structural completeness or incomplete empty exposure rows as a safe no-widening
