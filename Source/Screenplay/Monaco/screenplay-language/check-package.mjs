@@ -49,7 +49,10 @@ export function checkRuntimeBudget(files) {
     // dependency was bundled and no module is duplicated.
     // Raised from 1_150_000 after reviewing the breakdown: screen visuals and slice placements added about
     // 4 KB (compiler parsing and validation, completion items, keyword docs); no dependency was bundled.
-    if (runtimeBytes > 1_175_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
+    // Raised from 1_175_000 when the runtime reached 1_179_044 bytes: the agents block (compiler parsing,
+    // language tokens, completions, diagnostic forwarding) and producerless event-source inference grew
+    // the bundled compiler; no package dependency changed and no dependency was bundled.
+    if (runtimeBytes > 1_200_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
     return { modules, runtimeBytes };
 }
 

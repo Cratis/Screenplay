@@ -18,7 +18,7 @@ public class when_reading_a_minor_vector : given.golden_files
         SemanticVersion[] expected = [SemanticVersion.V37_1];
         EsmGoldenVectors.MinorVersions.ShouldEqual(expected);
     }
-    [Fact] void should_not_change_the_integer_api() => EsmGoldenVectors.Versions.ShouldEqual(Enumerable.Range(1, 38).Append(40).Append(41).Append(42).Append(43).Append(44).Append(45).Append(46).Append(47));
+    [Fact] void should_not_change_the_integer_api() => EsmGoldenVectors.Versions.ShouldEqual(Enumerable.Range(1, 38).Append(40).Append(41).Append(42).Append(43).Append(44).Append(45).Append(46).Append(47).Append(48));
     [Fact] void should_leave_get_36_pointing_to_the_original_golden() => EsmGoldenVectors.Get(36).Bytes.ShouldEqual(File.ReadAllBytes(Path.Combine(_goldenFolder, "full-esm-v36.json")));
     [Fact] void should_leave_get_37_pointing_to_the_original_golden() => EsmGoldenVectors.Get(37).Bytes.ShouldEqual(File.ReadAllBytes(Path.Combine(_goldenFolder, "full-esm-v37.json")));
     [Fact] void should_read_exact_minor_bytes() => _vector.Bytes.ShouldEqual(File.ReadAllBytes(Path.Combine(_goldenFolder, "full-esm-v37.1.json")));

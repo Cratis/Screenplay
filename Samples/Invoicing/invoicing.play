@@ -354,6 +354,16 @@ authentication
   provider OpenId name Partner
   provider OpenId name CustomerPortal
 
+// The agent can read the invoice list and register an invoice, but still needs the same staff policies as a person.
+agents
+  tokens personal
+  query Invoicing.InvoiceManagement.InvoiceList.ListInvoices
+    scope read
+    description "Read the invoices the caller may manage."
+  command Invoicing.InvoiceManagement.RegisterInvoice.RegisterInvoice
+    scope write
+    description "Register an invoice for the caller's customer."
+
 // How people get in. Authoring metadata only: the sender address and the mail server are environment values,
 // found by name (see Documentation/screenplay/environments.md), never part of the model.
 onboarding

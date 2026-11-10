@@ -1162,6 +1162,8 @@ For read-model members, both compilers and editor validation share `PLAY0273` fo
 
 Executable binding reports independent semantic contract failures together as `PLAY0273`, at the nearest enclosing declaration with a source location. If no declaration location is available, it uses the application location. Identity registration and application-wide version checks still stop at their first failure.
 
+For an event-source assertion whose identity type cannot be determined, `PLAY0273` names the event and explains how to supply the missing contract: declare a read-model projection keyed on the event source (`$eventSourceId`) or a producing command with a required scalar destination. An unrouted producerless event can use one consistent required scalar projected key type; missing, conflicting or nonscalar keys remain refused. Case parameters and example overrides use that same projected identity type during parameter-target validation.
+
 Comparison operands must be required, including command properties and protected read-model properties on either side. An optional operand is refused with `PLAY0268` at the comparison rather than deferred to semantic contract validation.
 
 ### Specification event-source assertions
@@ -1765,6 +1767,32 @@ A `storyline` names an ordered path through the model. See [Storylines](storylin
 | `PLAY0941` | Error | A line in a storyline is not `<kind> <reference> ["<note>"]` with kind `module`, `feature`, `slice`, `command`, `event`, `readmodel`, `query`, `screen` or `reaction`, nor `description "<text>"`; or a step has a line nested under it. |
 | `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
 | `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
+
+## Agents
+
+An `agents` block is an explicit operation allowlist, not an authorization grant. See [Agents](agents.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0964` | Error | The agents block, operation reference or field is malformed or unsupported. Write a root `agents` block, `query <reference>` or `command <reference>`, and literal quoted descriptions. Fields cannot have children. |
+| `PLAY0965` | Error | The composed application declares more than one agents block, including across imported files. Keep one. |
+| `PLAY0966` | Error | No query or command of the declared kind matches the exposed reference. |
+| `PLAY0967` | Error | More than one operation of the declared kind matches the reference. Qualify it with its module, feature and slice. |
+| `PLAY0968` | Error | The same operation is exposed more than once, including through different short and qualified references. |
+| `PLAY0969` | Error | An exposed operation has no nonempty literal description. Add `description "<text>"`. |
+| `PLAY0970` | Error | An exposed operation is missing its scope, repeats it or uses an unsupported scope. Declare exactly one `scope read` or `scope write` on each entry. |
+| `PLAY0971` | Error | An exposed command does not require `scope write`. Commands cannot use `scope read`. |
+| `PLAY0972` | Error | The agents block is missing its token declaration or repeats it. Declare exactly one `tokens personal`. |
+| `PLAY0973` | Error | An unsupported token kind is declared. Only `tokens personal` is supported; `tokens oauth` is refused. |
+| `PLAY0974` | Error | An exposed operation declares approval. Approval is not supported; token scope and model authorization must both permit the call. |
+| `PLAY0975` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
+| `PLAY0976` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
+| `PLAY0977` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
+| `PLAY0978` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
+| `PLAY0979` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
+| `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
+| `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
+| `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
 
 ## Screen visuals and slice placements
 

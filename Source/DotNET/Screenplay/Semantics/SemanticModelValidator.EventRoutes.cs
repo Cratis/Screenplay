@@ -183,9 +183,14 @@ internal static partial class SemanticModelValidator
             _ = FixtureEventSourceType(route, eventContract);
         }
 
-        SemanticTypeReference UnroutedFixtureSourceType(SemanticId eventContract) => _events[eventContract].Origin is not null
-            ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
-            : DeclaredEventSourceType(_commands.Values, _reactions, _captures.Values, AllSlices(_eventRoutesApplication).SelectMany(slice => slice.Projections), eventContract);
+        SemanticTypeReference UnroutedFixtureSourceType(SemanticId eventContract)
+        {
+            var type = _events[eventContract].Origin is not null
+                ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
+                : DeclaredFixtureEventSourceType(_commands.Values, _reactions, _captures.Values, AllSlices(_eventRoutesApplication).SelectMany(slice => slice.Projections), _readModels.Values, eventContract);
+            ValidateComplianceIdentity(type);
+            return type;
+        }
 
         SemanticTypeReference FixtureEventSourceType(SemanticFixtureRoute? route, SemanticId eventContract) => route is null
             ? UnroutedFixtureSourceType(eventContract)

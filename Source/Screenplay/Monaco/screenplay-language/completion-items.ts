@@ -26,6 +26,18 @@ const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export { exampleDeclarationItems } from './example-declaration-items';
 
+export const agentItems: CompletionEntry[] = [
+    { label: 'tokens personal', insertText: 'tokens personal', documentation: 'Only caller-owned personal tokens are supported; existing authorization still applies.' },
+    { label: 'query', insertText: 'query ${1:Qualified.Query}\n    scope read\n    description "${2:Read one item}"', documentation: 'Expose an explicit, keyed single-result query. Global and collection queries are refused.' },
+    { label: 'command', insertText: 'command ${1:Qualified.Command}\n    scope write\n    description "${2:Change one item}"', documentation: 'Expose an explicit command with write scope; no approval directive is supported.' },
+];
+
+export const agentOperationItems = (command: boolean): CompletionEntry[] => [
+    { label: command ? 'scope write' : 'scope read', insertText: command ? 'scope write' : 'scope read', documentation: 'Commands require write scope. A query can require read or write scope.' },
+    ...(!command ? [{ label: 'scope write', insertText: 'scope write', documentation: 'Require write scope for this query.' }] : []),
+    { label: 'description', insertText: 'description "${1:Purpose of this operation}"', documentation: 'A non-empty description is required for every exposed operation.' },
+];
+
 export const identityItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:caller details}"', documentation: 'Describes the caller metadata.' },
     { label: 'detail from claim', insertText: '${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'One typed detail sourced from a token claim.' },
@@ -59,6 +71,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar default. Command calendar, scenario zone and execution-context zone take precedence.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
     { label: 'reaction batches atomic', insertText: 'reaction batches atomic', documentation: 'Opts the composed application into atomic direct and refusal-branch reaction batches (ESM v22). Omit only to retain legacy per-fact behavior.' },
+    { label: 'agents', insertText: 'agents\n    tokens personal\n    query ${1:Qualified.Query}\n        scope read\n        description "${2:Read one item}"', documentation: 'Explicit application allowlist for personal tokens. Ungated, global and unsupported query shapes are refused; ESM authoring-only (PLAY0268).' },
     { label: 'identity', insertText: 'identity\n    ${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'Typed additional caller details; authoring metadata only, at most one block per application.' },
     { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,

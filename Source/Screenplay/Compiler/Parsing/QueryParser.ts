@@ -20,6 +20,11 @@ const scopePattern = pattern('^scoped\\s+to\\s+([a-z_]\\w*)$');
 // Query directives this compiler does not model. They are skipped whole.
 const opaqueDirectives = new Set(['performer']);
 
+const performedQueries = new WeakSet<QuerySyntax>();
+
+// Performer bodies remain opaque on the syntax wire, but agent admission must remember their presence.
+export function isPerformedQuery(query: QuerySyntax): boolean { return performedQueries.has(query); }
+
 export function parseQuery(context: ParserContext, line: SourceLine): QuerySyntax {
     const match = header.exec(line.content);
     if (match === null) {
@@ -46,6 +51,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     let narrow: NarrowSyntax | undefined;
     let authorize: AuthorizeSyntax | null = null;
     let authorizationDepthExceeded = false;
+    let performed = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -99,13 +105,14 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         } else if (keyword === 'scoped') {
             scope = parseScope(context, child, scope, name) ?? scope;
         } else if (opaqueDirectives.has(keyword)) {
+            performed = true;
             context.skipOpaqueBlock(child.indent);
         } else {
             context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, narrow, scoped or performer`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
-    return {
+    const query: QuerySyntax = {
         kind: 'QuerySyntax',
         name,
         returnType,
@@ -119,6 +126,8 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         ...(narrow === undefined ? {} : { narrow }),
         location: locationOf(line),
     };
+    if (performed) performedQueries.add(query);
+    return query;
 }
 
 export const parseQueryParameter = (context: ParserContext, line: SourceLine, keyword: string): QueryParameterSyntax | undefined => parseParameter(context, line, keyword);

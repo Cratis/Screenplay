@@ -12,6 +12,8 @@ internal enum EsmBaselineShape
     Atom,
     Envelope,
     Application,
+    Agents,
+    AgentOperation,
     Concept,
     Generation,
     Compliance,

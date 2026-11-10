@@ -160,6 +160,9 @@ public sealed record SemanticApplication(
     /// </summary>
     public SemanticTimeZone? TimeZone { get; init; }
 
+    /// <summary>Gets the explicit agent exposure allowlist (ESM v42), or null when absent.</summary>
+    public SemanticAgents? Agents { get; init; }
+
     /// <summary>
     /// Gets the time-zone members the application declares in its <c>context</c> block, in declaration order (ESM v37, decision 0132).
     /// </summary>

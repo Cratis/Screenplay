@@ -239,7 +239,7 @@ public sealed partial class SemanticModelBinder
                     return null;
                 }
 
-                return fixtureSyntax.For is null ? null : BindEventSource(fixtureSyntax.For, type);
+                return fixtureSyntax.For is null ? null : BindEventSource(fixtureSyntax.For, type, fixtureSyntax.EventType);
             }
         }
     }

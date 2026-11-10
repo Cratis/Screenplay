@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineSyntax } from '../Syntax/Storylines';
+import { validateAgents } from '../Parsing/AgentsValidator';
 import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
 import { validateDesignSystem } from '../Parsing/DesignSystemValidator';
@@ -49,6 +50,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
     const identities = applications.flatMap(application => application.identity == null ? [] : [application.identity]);
+    const agents = applications.flatMap(application => application.agents == null ? [] : [application.agents]);
+    for (const extra of agents.slice(1)) diagnostics.push(error(DiagnosticCodes.DuplicateAgentsDeclaration, 'An application allows exactly one agents block', extra.location));
     for (const extra of identities.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
         `The folder already declares an identity block in '${describe(identities[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
     const contexts = applications.flatMap(application => application.context == null ? [] : [application.context]);
@@ -88,6 +91,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...(zones.length === 0 ? {} : { timeZone: zones[0].timeZone }),
         ...(identities.length === 0 ? {} : { identity: identities[0] }),
         ...(contexts.length === 0 ? {} : { context: contexts[0] }),
+        ...(agents.length === 0 ? {} : { agents: agents[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
@@ -120,6 +124,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
     validateDesignSystem(value, identityContext);
+    validateAgents(value, identityContext);
     diagnostics.push(...identityContext.diagnostics);
     const documentDiagnostics = documents.flatMap(document => document.diagnostics).filter(diagnostic =>
         diagnostic.code !== DiagnosticCodes.DuplicateDeclaration || !droppedPolicies.some(location => sameLocation(location, diagnostic.location)));
@@ -129,7 +134,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.storylines?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.agents != null || application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.storylines?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

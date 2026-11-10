@@ -26,6 +26,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "application-context",
         "reaction-identity",
         "reaction-event-source",
+        "producerless-event-source",
         "declaration-descriptions",
         "purposes",
         "event-subject",
@@ -133,7 +134,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
             {
                 // Newly demonstrated classifications have their own conformance vector. Preserve the
                 // baseline for every existing concept, rather than rewriting protected historical bytes.
-                legacy = legacy with { StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
+                // Agent exposure is pinned by the current sample vectors and agents specs, not the pre-feature baseline.
+                legacy = legacy with { Agents = null, StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");

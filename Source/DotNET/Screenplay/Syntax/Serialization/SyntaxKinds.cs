@@ -13,6 +13,9 @@ internal static class SyntaxKinds
     static readonly Type[] _types =
     [
         typeof(AddMappingSyntax),
+        typeof(AgentsSyntax),
+        typeof(AgentOperationSyntax),
+        typeof(AgentTokensSyntax),
         typeof(AllSyntax),
         typeof(ApplicationSyntax),
         typeof(ApplicationContextSyntax),

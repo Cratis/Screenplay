@@ -806,7 +806,7 @@ executable errors, before `apply`. See [whole-source authoring](authoring-tools.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, named-rule-intents, named-rule-intent-details, typed-contexts, executable-model, api-description and ui-contract. The `source-map`
+executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, named-rule-intents, named-rule-intent-details, typed-contexts, executable-model, api-description, ui-contract and capability-manifest. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -992,6 +992,23 @@ the response carries `format` (`openapi-3.1.0` or `screenplay-ui/1`),
 `modelRevision`, `totalBytes` and `page`, and every later page passes
 `expectedRevision` and, when the first response had one, `expectedModelRevision`.
 See [Describe the HTTP API](../api-description.md) and [UI contract](../ui-contract.md).
+
+`view: "capability-manifest"` pages the [explicit agents allowlist](../agents.md#capability-manifest)
+as `screenplay-capability-manifest/1`, exactly the bytes from `AgentCapabilityManifestJson.Write`
+and `screenplay export --format capability-manifest`. It does not export the ESM and its contract version
+is independent of ESM versions. A successful complete compilation and an `agents` block are required.
+Otherwise `available: false` carries `refusal` (`CompilationErrors`, `NoAgentsBlock` or
+`DescriptionTooLong`) and no bytes. `DescriptionTooLong` also names the `operation`; the manifest-only
+limit is 1024 Unicode code points and nothing is truncated. An explicit empty block emits an empty array.
+Descriptions are untrusted text; escaping is not prompt-injection protection. `approvalRequired: false`
+is not authorization. Only the explicit allowlist, with the token-kind, token-scope and runtime authorization
+checks, can constrain calls. Consumers must match exact canonical identity plus kind and fail closed on
+absent or unknown contracts, shapes, properties or ambiguous registrations. Nested features remain an
+ordered non-empty `features` array; see the [schema](../capability-manifest-v1.schema.json).
+
+This view uses the same byte paging envelope (`format`, `modelRevision`, `totalBytes`, `page`). Pin
+`expectedRevision` and `expectedModelRevision` on later pages. A continuation whose manifest becomes
+unavailable refuses with `StaleRevision`, never bytes from another allowlist.
 
 ## Repair contract v1 and pinned evidence
 

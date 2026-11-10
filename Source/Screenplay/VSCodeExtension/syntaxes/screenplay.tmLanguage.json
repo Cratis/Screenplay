@@ -28,6 +28,7 @@
         { "include": "#concept-block" },
         { "include": "#purpose-block" },
         { "include": "#context-block" },
+        { "include": "#agents-block" },
         { "include": "#identity-block" },
         { "include": "#operation-block" },
         { "include": "#description-block" },
@@ -44,6 +45,28 @@
         { "include": "#common" }
     ],
     "repository": {
+        "agents-block": {
+            "begin": "^(agents)\\b(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "1": { "name": "keyword.control.screenplay" } },
+            "end": "^(?=\\S)",
+            "patterns": [
+                { "include": "#comment" },
+                {
+                    "match": "^\\s+(tokens)\\s+(personal)\\b(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s+(command|query)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s+(scope)\\s+(read|write|global)\\b(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                { "match": "^\\s+(description)(?=\\s+\")", "captures": { "1": { "name": "keyword.other.screenplay" } } },
+                { "include": "#common" }
+            ]
+        },
         "action-subjects": {
             "patterns": [
                 {

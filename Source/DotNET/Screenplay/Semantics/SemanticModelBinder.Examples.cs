@@ -79,7 +79,7 @@ public sealed partial class SemanticModelBinder
                             .Select(produced => SemanticModelValidator.ProducedEventSourceType(command, produced))).OfType<SemanticTypeReference>().Distinct().ToArray();
                     var producerTypes = localTypes.Length == 1 ? localTypes : CommandEventSourceTypes(eventName);
                     if (producerTypes.Length != 1) producerTypes = ProducerEventSourceTypes(eventName, []);
-                    destinationType = producerTypes.Length == 1 ? producerTypes[0] : null;
+                    destinationType = producerTypes.Length == 1 ? producerTypes[0] : ProjectedEventSourceType(eventName);
                 }
 
                 if (destinationType is null or { IsCollection: true } or { IsOptional: true })

@@ -116,6 +116,9 @@ internal static class SemanticArrayClassification
         Add(rules, _nameSets, new(SemanticArrayKind.NameSet, "name"));
         Add(rules, _targetPropertySets, new(SemanticArrayKind.ReferenceSet, "targetProperty"));
         Add(rules, _ordered, new(SemanticArrayKind.Ordered));
+
+        // Agent exposure is an allowlist; the canonical writer sorts it by operation kind and identity.
+        rules.Add("agents/operations", new(SemanticArrayKind.ReferenceSet, "operation"));
         rules.Add("reducers/transitions", new(SemanticArrayKind.ReferenceSet, "eventContract"));
         rules.Add("key/parts", new(SemanticArrayKind.ReferenceSet, "property"));
         rules.Add("parentKey/parts", new(SemanticArrayKind.ReferenceSet, "property"));

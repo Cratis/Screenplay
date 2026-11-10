@@ -38,6 +38,7 @@ import { validateGuardedActions } from './Parsing/GuardedActionValidator';
 import { validatePersonaCallers } from './Parsing/PersonaCallerValidator';
 import { validatePurposes } from './Parsing/PurposeValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
+import { validateAgents } from './Parsing/AgentsValidator';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
 import { ApplicationSyntax } from './Syntax/Structure';
@@ -110,6 +111,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);
         validatePersonaCallers(value, context);
+        validateAgents(value, context, true);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
         for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);

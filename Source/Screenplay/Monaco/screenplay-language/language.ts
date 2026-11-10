@@ -32,6 +32,7 @@ export const constructKeywords = [
     'sink',
     'sticky',
     'authentication',
+    'agents',
     'onboarding',
     'context',
     'identity',

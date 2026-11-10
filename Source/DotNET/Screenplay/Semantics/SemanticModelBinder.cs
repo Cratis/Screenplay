@@ -46,6 +46,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (application.Agents is not null) return (LanguageVersion.V48, SemanticVersion.V48);
         if (SemanticModelValidator.UsesNarrowing(application)) return (LanguageVersion.V47, SemanticVersion.V47);
         if (SemanticModelValidator.UsesPolicyInputs(application)) return (LanguageVersion.V46, SemanticVersion.V46);
         if (SemanticModelValidator.UsesTextOperators(application)) return (LanguageVersion.V45, SemanticVersion.V45);
@@ -154,6 +155,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
         var memberTypes = ParserContext.ForDiagnostics();
+        var agents = ParserContext.ForDiagnostics();
+        AgentsValidator.Validate(syntax, agents, deferImportedReferences: false);
+        foreach (var diagnostic in agents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) memberTypes.Add(diagnostic);
         ReadModelMemberTypeValidator.Validate(syntax, memberTypes, rejectUnknownTypes: true);
         admission.AddRange(memberTypes.Diagnostics);
         if (syntax.Identity?.Details.Any() == true)
@@ -192,6 +196,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         try
         {
             var application = context.BindApplication();
+            application = application with { Agents = context.BindAgents(application) };
             var descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
             if (context.HasErrors)
             {
@@ -262,7 +267,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV47Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV48Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
