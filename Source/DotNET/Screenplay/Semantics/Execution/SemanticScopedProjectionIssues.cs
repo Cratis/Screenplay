@@ -85,7 +85,7 @@ static class SemanticScopedProjectionIssues
 
     static bool UnsupportedMapping(SemanticProjectionMapping mapping, bool allowOccurred) =>
         UnsupportedContext(mapping.Factor) ||
-        (UnsupportedContext(mapping.Source) && !(allowOccurred && mapping.Operation == SemanticProjectionOperation.Set &&
+        (UnsupportedContext(mapping.Source) && !(allowOccurred && mapping.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce &&
             mapping.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal) && mapping.Factor is null));
 
     static bool UsesEventContext(SemanticProjectionKey? key) => key switch

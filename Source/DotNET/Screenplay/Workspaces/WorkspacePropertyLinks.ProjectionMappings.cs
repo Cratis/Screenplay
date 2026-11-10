@@ -12,6 +12,7 @@ internal sealed partial class WorkspacePropertyLinks
     static ExpressionSyntax? MappingExpression(MappingSyntax mapping) => mapping switch
     {
         SetMappingSyntax set => set.Source,
+        SetOnceMappingSyntax setOnce => setOnce.Source,
         AddMappingSyntax add => add.Value,
         SubtractMappingSyntax subtract => subtract.Value,
         _ => null

@@ -15,13 +15,19 @@ public partial class when_freezing_legacy_source_syntax_bytes
     [
         "design-system",
         "command-reads",
+        "state-policies",
+        "policy-inputs",
+        "narrowed-queries",
+        "caller-identity",
         "graph-queries",
         "graph-foreach",
+        "projection-parity",
         "reaction-batches",
         "identity",
         "application-context",
         "reaction-identity",
         "reaction-event-source",
+        "producerless-event-source",
         "declaration-descriptions",
         "purposes",
         "event-subject",
@@ -106,7 +112,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed)))))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleProjectionParity(WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed))))))),
                 "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
@@ -129,7 +135,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
             {
                 // Newly demonstrated classifications have their own conformance vector. Preserve the
                 // baseline for every existing concept, rather than rewriting protected historical bytes.
-                legacy = legacy with { StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
+                // Agent exposure is pinned by the current sample vectors and agents specs, not the pre-feature baseline.
+                legacy = legacy with { Agents = null, StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
@@ -516,6 +523,42 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
     // Screenplay 6 placement (Cratis/Screenplay#1178) - fits, pickers, slots that show a selection, the routed and docked slots of
     // the List template and the slice only a hook issues - has its own parser, printer and compiler specs; the frozen bytes predate it.
+    // Set once and the children sort (decision 0150) have their own parser, printer, conformance and
+    // evaluator specs; the frozen bytes predate them, so the invoice details slice is restored to its pre-feature shape.
+    static ApplicationSyntax WithoutSampleProjectionParity(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutProjectionParity).ToArray() }).ToArray()
+    };
+
+    static FeatureSyntax WithoutProjectionParity(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutProjectionParity).ToArray(),
+        Slices = feature.Slices.Select(slice => slice.Name != "InvoiceDetails" ? slice : slice with
+        {
+            ReadModels = slice.ReadModels.Select(readModel => readModel with
+            {
+                Properties = readModel.Properties.Where(property => property.Name != "firstSentAt").ToArray()
+            }).ToArray(),
+            Projections = slice.Projections.Select(projection => projection with
+            {
+                Blocks = projection.Blocks
+                    .Select(block => block switch
+                    {
+                        Projections.FromSyntax handler => handler with { Mappings = handler.Mappings.Where(mapping => mapping is not Projections.SetOnceMappingSyntax).ToArray() },
+                        Projections.ChildrenSyntax children => children with { Ordering = null },
+                        _ => block
+                    }).ToArray()
+            }).ToArray(),
+            Specifications = slice.Specifications.Select(specification => specification with
+            {
+                ThenReadModels = specification.ThenReadModels?.Select(readModel => readModel with
+                {
+                    Properties = readModel.Properties.Where(property => property.Property != "firstSentAt").ToArray()
+                }).ToArray()
+            }).ToArray()
+        }).ToArray()
+    };
+
     static ApplicationSyntax WithoutSamplePlacement(ApplicationSyntax application) => application with
     {
         Modules = application.Modules.Select(module => module with

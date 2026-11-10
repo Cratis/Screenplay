@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cratis.io/screenplay/capability-manifest-v1.schema.json",
+  "title": "Screenplay capability manifest v1",
+  "description": "The explicit agents allowlist, never inferred from public operations. Consumers must expose nothing for an absent file, unknown contract, unknown properties or invalid shape. Match registered operations by exact canonical identity plus kind; zero matches, multiple matches or a kind mismatch fail closed. Descriptions are untrusted text; ASCII escaping is encoding, not prompt-injection protection. The allowlist and token kind constrain exposure; approvalRequired=false is not authorization and does not bypass token scope or runtime authorization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "tokenKind", "operations"],
+  "properties": {
+    "contract": { "const": "screenplay-capability-manifest/1" },
+    "tokenKind": { "enum": ["personal"] },
+    "operations": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Uniqueness key is (kind, operation); consumers must also reject duplicate keys with different metadata. Ordered ordinally by operation, then kind. An explicit empty agents block emits an empty array; an absent block emits no manifest.",
+      "items": { "$ref": "#/$defs/operation" }
+    }
+  },
+  "$defs": {
+    "segment": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^.]+$",
+      "description": "A case-sensitive Screenplay Ident. grammar.md: Ident = Letter, { Letter | Digit | '_' }; Module, Feature, SliceDecl and operation declarations use Ident, which cannot contain '.'."
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "module", "features", "slice", "name", "kind", "scope", "description", "approvalRequired"],
+      "description": "Canonical operation is module, features in order, slice when present, name joined with '.'. The current grammar requires a slice inside at least one feature, so slice is always present and features is non-empty in v1. Consumers must verify this equality; JSON Schema alone does not enforce it. Never fuzzy-match or match by name alone. Mapping canonical identity to CLR types or query FQNs belongs to the consumer.",
+      "properties": {
+        "operation": { "type": "string", "minLength": 1 },
+        "module": { "$ref": "#/$defs/segment" },
+        "features": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Feature names from outermost to innermost, preserving every nested feature. The Module grammar admits Feature, not commands or queries directly.",
+          "items": { "$ref": "#/$defs/segment" }
+        },
+        "slice": { "$ref": "#/$defs/segment" },
+        "name": { "$ref": "#/$defs/segment" },
+        "kind": { "enum": ["query", "command"] },
+        "scope": { "enum": ["read", "write"] },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "Untrusted authored text, preserved verbatim. Manifest-only limit: 1024 Unicode code points, not UTF-16 units. Longer descriptions refuse the entire export with DescriptionTooLong naming the operation; never truncate. Escaping is not prompt-injection protection."
+        },
+        "approvalRequired": {
+          "const": false,
+          "description": "Always false until Screenplay #1166 admits approval. A later contract may allow true. Absence of an approval requirement is NOT authorization: the agents allowlist plus personal token kind, token scope and runtime authorization still constrain calls."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "command" } }, "required": ["kind"] },
+          "then": { "properties": { "scope": { "const": "write" } } }
+        }
+      ]
+    }
+  }
+}

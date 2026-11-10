@@ -68,6 +68,7 @@ public static class ApiAuthorizationText
         SemanticAuthenticatedCondition => "authenticated",
         SemanticRoleCondition role => $"role \"{role.Role}\"",
         SemanticClaimCondition claim => Claim(claim),
+        SemanticStatePolicyCondition => "recorded state",
         SemanticOpaquePolicyCondition opaque => $"requirement \"{opaque.RequirementId}\"",
         SemanticNotPolicyCondition not => $"not {Condition(not.Operand, SemanticLogicalOperator.And)}",
         SemanticLogicalPolicyCondition logical => Logical(logical, parent),

@@ -1,6 +1,6 @@
 ---
 title: "Screenplay navigation: navigation outlets in the shell"
-description: "Declare topbar and sidebar destinations as navigation outlets on a Screenplay layout. Modules, features and screens inherit, extend or override them to guide users through their features."
+description: "Declare topbar and sidebar destinations as navigation outlets on a Screenplay layout, which modules, features and screens can inherit, extend or override."
 ---
 
 # Navigation

@@ -16,6 +16,7 @@ import { RefusalDeclarations } from './RefusalDeclarations';
 import { compatibleValue } from './ResponseValidator';
 import { foldedSources } from './FoldedEventSources';
 import { specificationExamples } from './SpecificationCommandExamples';
+import { projectedEventSourceIdentity } from './ProjectedEventSourceIdentity';
 
 const primitives = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 
@@ -162,5 +163,5 @@ function producedDestinationType(event: EventSyntax, local: SliceSyntax, applica
         }
         return types;
     };
-    return uniqueDestinationType(commandTypes(event, declarations.slices.filter(owner => owner.slice === local))) ?? uniqueDestinationType(commandTypes(event)) ?? uniqueDestinationType(producerTypes(event, new Set()));
+    return uniqueDestinationType(commandTypes(event, declarations.slices.filter(owner => owner.slice === local))) ?? uniqueDestinationType(commandTypes(event)) ?? uniqueDestinationType(producerTypes(event, new Set())) ?? projectedEventSourceIdentity(event, declarations);
 }

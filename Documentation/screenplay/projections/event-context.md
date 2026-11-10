@@ -116,7 +116,7 @@ from OrderPlaced
   PlacedByName = $eventContext.causedBy.name
 ```
 
-The short form `$causedBy.subject` also parses and Chronicle has a runtime resolver for it. Screenplay's executable semantic model still rejects that short form, so use `$eventContext.causedBy.<property>` when binding a projection. The earlier runtime limitation is recorded in [Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119).
+The short forms `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName` read the same values and are first-class: Chronicle resolves them at runtime and the executable semantic model binds them exactly as the long forms. A bare `$causedBy`, the whole identity, is not one value and is refused as a mapping source. As a [dictionary key](property-mapping.md#dictionary-entries), `.$causedBy.<member>` keys an entry by who caused the event.
 
 ### eventSourceId
 
@@ -138,7 +138,7 @@ from UserCreated key $eventSourceId
 
 ## In Dynamic Dictionary Keys
 
-A mapping target can end in a dynamic key - a static property path followed by `.$eventContext.<path>`. The value at that path becomes the dictionary key the mapping writes under, so one property holds one entry per distinct value:
+A mapping target can end in a dynamic key - a static property path followed by `.$eventContext.<path>`. The value at that path becomes the dictionary key the mapping writes under, so one property holds one entry per distinct value. A key can also read the event itself, `.$eventContent.<path>`, or who caused it, `.$causedBy.<member>`; see [Dictionary entries](property-mapping.md#dictionary-entries).
 
 ```pdl
 projection EventStatistics => EventStatisticsReadModel
@@ -147,7 +147,7 @@ projection EventStatistics => EventStatisticsReadModel
     increment eventsPerSource.$eventContext.eventSourceId
 ```
 
-The path is checked against the same catalog. Only `$eventContext` is resolved in a key; any other `$` source, such as `countByUser.$causedBy.subject`, is kept as the literal key text, which is a warning (`PLAY0299`). Write `countByUser.$eventContext.causedBy.subject` instead.
+The path is checked against the same catalog. `$eventContext`, `$eventContent` and `$causedBy` are resolved in a key; any other `$` source, such as `countBySource.$eventSourceId`, is kept as the literal key text, which is a warning (`PLAY0299`). Write `countBySource.$eventContext.eventSourceId` instead.
 
 ## Not the Same as `$context`
 

@@ -18,7 +18,7 @@ internal static class SyntaxJsonWriter
         {
             var value = member.Property.GetValue(node);
             if (OmitPossibleEvents(node, member.Name, value)) continue;
-            if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "context" || member.Name == "onboarding" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
+            if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "context" || member.Name == "onboarding" || member.Name == "agents" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;
@@ -33,6 +33,12 @@ internal static class SyntaxJsonWriter
             if (node is PropertySyntax && (member.Name == "isSubject" || member.Name == "isKey") && Equals(value, false)) continue;
             if (node is Projections.RemoveWithSyntax && member.Name == "partsKey" && value is null) continue;
             if (node is Projections.GraphFromSyntax or Projections.GraphRemoveSyntax && member.Name == "forEach" && value is null) continue;
+            if (node is Projections.ChildrenSyntax && member.Name == "ordering" && value is null) continue;
+            if (node is QuerySyntax && member.Name == "narrow" && value is null) continue;
+            if (node is Specifications.SpecificationCallerSyntax && member.Name == "id" && value is null) continue;
+            if (node is PolicySyntax && member.Name == "inputs" && (value is null || (value is IEnumerable policyInputs && !policyInputs.Cast<object>().Any()))) continue;
+            if (node is AuthorizeSyntax && member.Name == "mappings" && (value is null || (value is IEnumerable authorizeMappings && !authorizeMappings.Cast<object>().Any()))) continue;
+            if (node is PolicySyntax && member.Name == "reads" && (value is null || (value is IEnumerable policyReads && !policyReads.Cast<object>().Any()))) continue;
             if (node is QuerySyntax or ReadsSyntax && member.Name == "byParts" && value is IEnumerable parts && !parts.Cast<object>().Any()) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
             if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;

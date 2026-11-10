@@ -10,6 +10,25 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    invalidAgentsDeclaration: 'PLAY0964',
+    duplicateAgentsDeclaration: 'PLAY0965',
+    unknownAgentOperation: 'PLAY0966',
+    ambiguousAgentOperation: 'PLAY0967',
+    duplicateAgentOperation: 'PLAY0968',
+    agentOperationMissingDescription: 'PLAY0969',
+    agentOperationMissingScope: 'PLAY0970',
+    agentCommandRequiresWriteScope: 'PLAY0971',
+    agentTokensMissing: 'PLAY0972',
+    unsupportedAgentTokenKind: 'PLAY0973',
+    agentApprovalNotSupported: 'PLAY0974',
+    globalAgentScope: 'PLAY0975',
+    unexposedAgentOperations: 'PLAY0976',
+    agentsExposeNothing: 'PLAY0977',
+    newlyExposedAgentOperation: 'PLAY0978',
+    widenedAgentOperation: 'PLAY0979',
+    ungatedAgentOperation: 'PLAY0980',
+    agentGlobalQueryRefused: 'PLAY0981',
+    unsupportedAgentQueryKind: 'PLAY0982',
     repeatedPassiveDirective: 'PLAY0858',
     conditionDepthExceeded: 'PLAY0861',
     invalidSemanticBinding: 'PLAY0273',
@@ -346,6 +365,9 @@ export const diagnosticCodes = {
     invalidSlicePlacement: 'PLAY0953',
     unknownPlacedElement: 'PLAY0954',
     redundantSlicePlacement: 'PLAY0955',
+    removeKeyWithoutDynamicKey: 'PLAY0956',
+    invalidDynamicKey: 'PLAY0957',
+    clearDynamicKey: 'PLAY0963',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

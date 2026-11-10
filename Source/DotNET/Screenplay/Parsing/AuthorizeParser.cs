@@ -60,7 +60,20 @@ internal static partial class AuthorizeParser
             static (left, @operator, right, location) => new LogicalPolicyRequirementSyntax(left, @operator, right, location),
             _diagnostics);
 
-        return requirement is null ? null : new AuthorizeSyntax(requirement, line.Location);
+        if (requirement is null) return null;
+        var mappings = new List<PolicyInputMappingSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child) && MappingRegex().Match(child.Content) is { Success: true } mapping)
+        {
+            context.Reader.TakeSignificant();
+            mappings.Add(new(mapping.Groups[1].Value, mapping.Groups[2].Value, child.Location));
+        }
+
+        if (mappings.Count > 0 && requirement is not PolicyReferenceSyntax)
+        {
+            context.Error(DiagnosticCodes.InvalidPolicyReference, "An input mapping block belongs to a single policy; write one 'authorize' line per policy to map its inputs.", mappings[0].Location);
+        }
+
+        return new AuthorizeSyntax(requirement, line.Location) { Mappings = mappings.Count == 0 ? null : mappings };
     }
 
     internal static void RecordOwnerRefusal(IEnumerable<FileImportSyntax> imports) => _refusedOwners.GetOrCreateValue(imports);
@@ -74,7 +87,8 @@ internal static partial class AuthorizeParser
         var depth = 1 + Math.Max(RequirementDepth(first.Requirement), RequirementDepth(next.Requirement));
         if (!new ConditionDepthBudget(context, next.Location).AllowsDepth(depth)) return null;
 
-        return new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location);
+        var combined = (first.Mappings ?? []).Concat(next.Mappings ?? []).ToList();
+        return new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location) { Mappings = combined.Count == 0 ? null : combined };
     }
 
     /// <summary>
@@ -177,6 +191,9 @@ internal static partial class AuthorizeParser
     static bool IsOperandStart(string token) => token == "(" || IsName(token);
 
     static bool IsName(string token) => token is not ("(" or ")" or "and" or "or");
+
+    [GeneratedRegex(@"^([a-z]\w*)\s*=\s*([a-z]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex MappingRegex();
 
     [GeneratedRegex(@"^(?:(?:or|and)\s+)?[A-Za-z_(][\w\s()]*$", RegexOptions.NonBacktracking)]
     private static partial Regex ContinuationRegex();

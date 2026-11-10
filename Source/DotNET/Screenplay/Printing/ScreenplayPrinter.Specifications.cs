@@ -60,6 +60,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     if (caller.Authenticated) writer.DirectiveLine("authenticated", caller, "authenticated");
+                    if (caller.Id is not null) writer.DirectiveLine($"id {StringLiteral.Quote(caller.Id)}", caller, "id");
                     var roles = caller.Roles.ToList();
                     for (var index = 0; index < roles.Count; index++)
                     {

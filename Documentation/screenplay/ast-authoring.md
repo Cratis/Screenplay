@@ -9,6 +9,10 @@ description: The Cratis Screenplay AST authoring API supports typed syntax edits
 
 Use nullable `description` on `SpecificationSyntax` and nullable `documentation` on `ModuleSyntax`, `FeatureSyntax`, `SliceSyntax`, `CommandSyntax`, `ReadModelSyntax` and `ReactionSyntax`. `EventSyntax` retains its existing fields. The typed AST carries the text without changing executable semantics; preserve these members during replacements. MCP `declaration-details` includes both fields in the summary for supporting kinds. See [Descriptions and documentation](slices.md#descriptions-and-documentation) for the source forms.
 
+## Agent allowlist
+
+Preserve optional `ApplicationSyntax.agents` during root replacements. Omit it for no agent exposure; do not infer entries from authorization or from the operations present in the application. An explicit `AgentsSyntax` holds ordered `operations` and `tokens`. Each `AgentOperationSyntax` records `syntaxKind` (`Query` or `Command`), `reference`, `scope` (`Read` or `Write`) and a literal `description`; `AgentTokensSyntax.syntaxKind` records `Personal` or the currently refused `OAuth`. Validation requires exactly one personal-token declaration, a nonempty description and an explicit scope per entry, with write scope for commands. Resolve references against the composed application, not a partial imported file. See [Agents](agents.md) for authorization and query restrictions.
+
 ## Concept compliance
 
 Preserve concept attributes and their typed `scope`, `specialCategory` and `criminal` settings during replacements. Source uses `pii`/`personal` and `secret`; AST wire marker names remain `pii` and `sensitive`. These classifications bind as ESM v13, while reasons remain report-only. Personal takes precedence over secret, with no secret scope retained next to personal. Identity and enum compliance are refused, as are events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark. No subject bytes are added; see [Concepts](concepts.md).

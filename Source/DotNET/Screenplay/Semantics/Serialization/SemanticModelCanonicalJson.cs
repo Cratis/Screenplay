@@ -104,6 +104,7 @@ public static partial class SemanticModelCanonicalJson
         if (application.ReactionProductionMode is not null) writer.WriteString("reactionProductionMode", "atomic");
         if (application.CommandReadMode is not null) writer.WriteString("commandReadMode", "protected");
         WriteApplicationTimeZone(writer, application, version);
+        WriteAgents(writer, application.Agents);
         writer.WriteEndObject();
     }
 
@@ -485,6 +486,11 @@ public static partial class SemanticModelCanonicalJson
         {
             writer.WritePropertyName("authorization");
             WriteAuthorization(writer, query.Authorization);
+        }
+        if (query.Narrowing is not null)
+        {
+            writer.WritePropertyName("narrowing");
+            WriteAuthorization(writer, query.Narrowing);
         }
         writer.WriteEndObject();
     }

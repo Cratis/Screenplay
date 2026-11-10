@@ -148,7 +148,10 @@ public sealed partial class SemanticModelBinder
                 GivenCaller = specification.GivenCaller is null ? null : new(
                     specification.GivenCaller.Authenticated,
                     [.. specification.GivenCaller.Roles],
-                    [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]),
+                    [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))])
+                {
+                    Id = specification.GivenCaller.Id
+                },
                 ThenDenied = specification.ThenDenied is not null,
                 ThenReturns = BindThenReturns(specification.ThenReturns, command),
                 WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),
@@ -283,21 +286,24 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            // Producerless history can be typed by the read model keyed on the event's own source identity.
+            type = FixtureEventSourceType(type, value.For, ShortName(value.EventType));
+
             return new(
                 @event.Contract.Id,
                 BindPropertyValues(value.Values, @event.Properties, "specification event"))
             {
-                EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type),
+                EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type, value.EventType),
                 Route = BindFixtureRoute(value),
                 Unrouted = value.NoStream is not null
             };
         }
 
-        SemanticEventSourceIdentity? BindEventSource(ExpressionSyntax expression, SemanticTypeReference? type)
+        SemanticEventSourceIdentity? BindEventSource(ExpressionSyntax expression, SemanticTypeReference? type, string? eventName = null)
         {
             if (type is null or { IsCollection: true } or { IsOptional: true })
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, "An event-source assertion needs one unambiguous required scalar command destination type.", expression.Location);
+                Error(DiagnosticCodes.InvalidSemanticBinding, FixtureEventSourceMessage(eventName), expression.Location);
                 return null;
             }
 

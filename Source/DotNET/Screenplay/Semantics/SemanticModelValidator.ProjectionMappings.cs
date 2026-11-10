@@ -124,7 +124,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract("Only an add or subtract projection mapping can carry a factor.");
                 }
 
-                var takesSource = mapping.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.Add or SemanticProjectionOperation.Subtract;
+                var takesSource = mapping.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce or SemanticProjectionOperation.Add or SemanticProjectionOperation.Subtract;
                 if (takesSource != (mapping.Source is not null))
                 {
                     throw new InvalidSemanticContract($"Projection operation '{mapping.Operation}' has an invalid source shape.");
@@ -132,7 +132,7 @@ internal static partial class SemanticModelValidator
 
                 switch (mapping.Operation)
                 {
-                    case SemanticProjectionOperation.Set:
+                    case SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce:
                         ValidateSet(mapping.Source!, target.Type, sources);
                         break;
                     case SemanticProjectionOperation.Clear when !target.Type.IsOptional:

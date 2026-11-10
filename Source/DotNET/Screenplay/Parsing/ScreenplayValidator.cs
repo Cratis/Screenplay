@@ -58,6 +58,7 @@ internal static partial class ScreenplayValidator
 
         authored = DeclaredDependencyTargets.Validate(authored, context);
         DeclaredDependencies.Validate(authored, context);
+        AgentsValidator.Validate(application, context, deferImportedExampleTypes);
 
         return authored;
     }

@@ -1,6 +1,6 @@
 ---
 title: Executable model JSON Schema
-description: Download the JSON Schema for each released version of the Cratis Screenplay executable semantic model and validate or generate types for ESM documents in any language.
+description: Download the JSON Schema for each released version of the Screenplay executable model, then validate ESM documents or generate types for them in any language.
 ---
 
 ## Read ESM documents outside .NET

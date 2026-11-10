@@ -87,6 +87,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitAuthorize(AuthorizeSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var mapping in syntax.Mappings ?? []) VisitNode(mapping);
 
         VisitPolicyRequirement(syntax.Requirement);
     }

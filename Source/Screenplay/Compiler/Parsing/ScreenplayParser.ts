@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineSyntax } from '../Syntax/Storylines';
+import type { AgentsSyntax } from '../Syntax/Agents';
+import { parseAgents } from './AgentsParser';
 import { parseStoryline } from './StorylineParser';
 import { CommandReadMode } from '../Syntax/CommandReadMode';
 import { ReactionProductionMode } from '../Syntax/ReactionProductionMode';
@@ -126,6 +128,7 @@ interface RootState {
     readonly personas: PersonaSyntax[];
     readonly users: UserSyntax[];
     readonly storylines: StorylineSyntax[];
+    agents: AgentsSyntax | null;
     readonly sinks: SinkSyntax[];
     readonly stickyNotes: StickyNoteSyntax[];
     readonly policies: PolicySyntax[];
@@ -153,7 +156,7 @@ function createRootState(placement: PlayPlacement): RootState {
         identity: null, applicationContext: null, reactionProductionMode: null, sawReactionBatches: false, commandReadMode: null,
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
         imports: [], fileImports: [], concepts: [], types: [], systems: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
-        personas: [], users: [], storylines: [], sinks: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
+        personas: [], users: [], storylines: [], agents: null, sinks: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
         themes: [], designSystems: [], designProfiles: []
     };
 }
@@ -184,6 +187,11 @@ const bodyRules: readonly RootRule[] = [
     { matches: isKeyword('module'), parse: (context, line, state) => { state.modules.push(parseModule(context, line)); } },
     { matches: isKeyword('user'), parse: (context, line, state) => { state.users.push(parseUser(context, line)); } },
     { matches: isKeyword('storyline'), parse: (context, line, state) => { state.storylines.push(parseStoryline(context, line)); } },
+    { matches: isKeyword('agents'), parse: (context, line, state) => {
+        const agents = parseAgents(context, line);
+        if (state.agents !== null) context.error(DiagnosticCodes.DuplicateAgentsDeclaration, 'An application allows exactly one agents block', locationOf(line));
+        else state.agents = agents;
+    } },
     { matches: isKeyword(sinkKeyword), parse: (context, line, state) => { const sink = parseSinkDeclaration(context, line); if (sink !== undefined) state.sinks.push(sink); } },
     { matches: isKeyword('persona'), parse: (context, line, state) => { state.personas.push(parsePersona(context, line)); } },
     { matches: isKeyword('sticky'), parse: parseRootStickyNote },
@@ -350,7 +358,7 @@ function buildApplication(context: ParserContext, state: RootState): Application
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
     const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, storylines, sinks, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions, themes, designSystems, designProfiles } = state;
-    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
+    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('agents', state.agents), ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

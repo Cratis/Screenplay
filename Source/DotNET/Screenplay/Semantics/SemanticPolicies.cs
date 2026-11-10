@@ -21,7 +21,46 @@ public enum SemanticClaimTargetKind
 /// <summary>Represents a named, declarative authorization rule.</summary>
 /// <param name="Name">The referenced name.</param>
 /// <param name="Condition">The condition that must hold.</param>
-public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Condition);
+public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Condition)
+{
+    /// <summary>
+    /// Gets the read models the policy decides from, empty for a policy that decides from the caller and the artifact alone.
+    /// </summary>
+    public ImmutableArray<SemanticPolicyRead> Reads { get; init; } = [];
+
+    /// <summary>
+    /// Gets the typed inputs the policy declares (ESM v46), empty when it declares none.
+    /// </summary>
+    public ImmutableArray<SemanticPolicyInput> Inputs { get; init; } = [];
+}
+
+/// <summary>
+/// A typed input of a policy, which a policy read can take its key from.
+/// </summary>
+/// <param name="Name">The input name.</param>
+/// <param name="Type">The declared type.</param>
+public sealed record SemanticPolicyInput(string Name, SemanticTypeReference Type);
+
+/// <summary>
+/// An explicit mapping of a policy input to a property of the authorized command or query.
+/// </summary>
+/// <param name="Input">The policy input.</param>
+/// <param name="Property">The name of the artifact property that fills it.</param>
+public sealed record SemanticPolicyInputMapping(string Input, string Property);
+
+/// <summary>
+/// A read model a policy consults, keyed by a property of the command or query it authorizes.
+/// </summary>
+/// <param name="Name">The alias state conditions use to name the read.</param>
+/// <param name="ReadModel">The read model that is read.</param>
+/// <param name="By">The name of the property of the authorized command or query that holds the read model's key.</param>
+public sealed record SemanticPolicyRead(string Name, SemanticId ReadModel, string By);
+
+/// <summary>
+/// A policy condition that compares recorded state, which is read through the policy's <see cref="SemanticPolicy.Reads"/>.
+/// </summary>
+/// <param name="Condition">The comparison, over read aliases and constants.</param>
+public sealed record SemanticStatePolicyCondition(SemanticCondition Condition) : SemanticPolicyCondition;
 
 /// <summary>Represents a portable authorization condition or an opaque implementation attachment.</summary>
 public abstract record SemanticPolicyCondition;
@@ -66,7 +105,13 @@ public abstract record SemanticAuthorization;
 
 /// <summary>References a named authorization policy.</summary>
 /// <param name="Name">The policy name.</param>
-public sealed record SemanticPolicyReference(string Name) : SemanticAuthorization;
+public sealed record SemanticPolicyReference(string Name) : SemanticAuthorization
+{
+    /// <summary>
+    /// Gets the explicit input mappings (ESM v46), empty when inputs are filled by name.
+    /// </summary>
+    public ImmutableArray<SemanticPolicyInputMapping> Mappings { get; init; } = [];
+}
 
 /// <summary>Combines policy references with the authored logical operator.</summary>
 /// <param name="Left">The left authorization.</param>
@@ -81,7 +126,13 @@ public sealed record SemanticLogicalAuthorization(
 /// <param name="Authenticated">Whether the caller is authenticated.</param>
 /// <param name="Roles">Roles held by the caller.</param>
 /// <param name="Claims">Multi-valued claims carried by the caller.</param>
-public sealed record SemanticCaller(bool Authenticated, ImmutableArray<string> Roles, ImmutableArray<SemanticCallerClaim> Claims);
+public sealed record SemanticCaller(bool Authenticated, ImmutableArray<string> Roles, ImmutableArray<SemanticCallerClaim> Claims)
+{
+    /// <summary>
+    /// Gets the caller's identifier (ESM v48), which <c>$identity.id</c> reads in a policy state condition, or <see langword="null"/> when the caller has none.
+    /// </summary>
+    public string? Id { get; init; }
+}
 
 /// <summary>Represents one caller claim, allowing repeated claim types.</summary>
 /// <param name="Type">The claim type.</param>

@@ -1629,7 +1629,7 @@ public static class DiagnosticCodes
     public const string MissingEventContextPath = "PLAY0298";
 
     /// <summary>
-    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, which the runtime never resolves.
+    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, <c>$eventContent</c> or <c>$causedBy</c>, which the runtime never resolves.
     /// </summary>
     public const string UnresolvedDynamicKeySource = "PLAY0299";
 
@@ -4181,6 +4181,65 @@ public static class DiagnosticCodes
     /// </summary>
     public const string DuplicateStoryline = "PLAY0943";
 
+    /// <summary>An agents declaration is malformed.</summary>
+    public const string InvalidAgentsDeclaration = "PLAY0964";
+
+    /// <summary>The application declares more than one agents block.</summary>
+    public const string DuplicateAgentsDeclaration = "PLAY0965";
+
+    /// <summary>An exposed operation does not resolve to an existing operation of its kind.</summary>
+    public const string UnknownAgentOperation = "PLAY0966";
+
+    /// <summary>An exposed operation reference has multiple candidates.</summary>
+    public const string AmbiguousAgentOperation = "PLAY0967";
+
+    /// <summary>An operation is exposed more than once.</summary>
+    public const string DuplicateAgentOperation = "PLAY0968";
+
+    /// <summary>An exposed operation needs a nonempty literal description.</summary>
+    public const string AgentOperationMissingDescription = "PLAY0969";
+
+    /// <summary>An exposed operation needs exactly one explicit scope.</summary>
+    public const string AgentOperationMissingScope = "PLAY0970";
+
+    /// <summary>A command cannot be exposed with read scope.</summary>
+    public const string AgentCommandRequiresWriteScope = "PLAY0971";
+
+    /// <summary>An agents block needs exactly one tokens declaration.</summary>
+    public const string AgentTokensMissing = "PLAY0972";
+
+    /// <summary>The agent token kind is not supported.</summary>
+    public const string UnsupportedAgentTokenKind = "PLAY0973";
+
+    /// <summary>Agent approval is not supported.</summary>
+    public const string AgentApprovalNotSupported = "PLAY0974";
+
+    /// <summary>A block-wide scope is not allowed.</summary>
+    public const string GlobalAgentScope = "PLAY0975";
+
+    /// <summary>Some model operations are not in the explicit agent allowlist.</summary>
+    public const string UnexposedAgentOperations = "PLAY0976";
+
+    /// <summary>The agents block explicitly exposes no operations.</summary>
+    public const string AgentsExposeNothing = "PLAY0977";
+
+    /// <summary>Comparison found a newly exposed operation.</summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning)]
+    public const string NewlyExposedAgentOperation = "PLAY0978";
+
+    /// <summary>Comparison found a loosened agent token requirement.</summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning)]
+    public const string WidenedAgentOperation = "PLAY0979";
+
+    /// <summary>An exposed operation has no applicable model authorization gate.</summary>
+    public const string UngatedAgentOperation = "PLAY0980";
+
+    /// <summary>A global query cannot be exposed to agents.</summary>
+    public const string AgentGlobalQueryRefused = "PLAY0981";
+
+    /// <summary>A performed or graph query has no portable operation identity for agent exposure yet.</summary>
+    public const string UnsupportedAgentQueryKind = "PLAY0982";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>
@@ -4210,4 +4269,44 @@ public static class DiagnosticCodes
     /// A slice shows an element it already declares, or shows the same element twice.
     /// </summary>
     public const string RedundantSlicePlacement = "PLAY0955";
+
+    /// <summary>
+    /// A projection <c>remove &lt;target&gt;</c> line names a target without a dynamic dictionary key, so there is no entry to remove.
+    /// </summary>
+    public const string RemoveKeyWithoutDynamicKey = "PLAY0956";
+
+    /// <summary>
+    /// A dynamic dictionary key is malformed: <c>$eventContent</c> names no event property, or <c>$causedBy</c> names a member other than <c>subject</c>, <c>name</c> or <c>userName</c>.
+    /// </summary>
+    public const string InvalidDynamicKey = "PLAY0957";
+
+    /// <summary>
+    /// A children ordering line is not <c>insert first</c>, <c>insert last</c> or <c>sort by &lt;property&gt; [ascending|descending]</c>, or it is outside a <c>children</c> block.
+    /// </summary>
+    public const string InvalidChildrenOrdering = "PLAY0958";
+
+    /// <summary>
+    /// A <c>children</c> block declares more than one ordering line.
+    /// </summary>
+    public const string DuplicateChildrenOrdering = "PLAY0959";
+
+    /// <summary>
+    /// A children <c>sort by</c> names a property the child element type does not declare.
+    /// </summary>
+    public const string UnknownChildrenSortProperty = "PLAY0960";
+
+    /// <summary>
+    /// A <c>$eventContent.&lt;path&gt;</c> dynamic dictionary key names a path the event the mapping handles does not have.
+    /// </summary>
+    public const string UnknownEventContentKey = "PLAY0961";
+
+    /// <summary>
+    /// A dynamic dictionary key writes into a declared read-model property, which Screenplay cannot type as a dictionary, so Chronicle refuses the projection.
+    /// </summary>
+    public const string DynamicKeyOnNonDictionaryProperty = "PLAY0962";
+
+    /// <summary>
+    /// A <c>clear</c> line names a target with a dynamic dictionary key; clearing would keep the entry with no value, so the entry is removed with <c>remove</c>.
+    /// </summary>
+    public const string ClearDynamicKey = "PLAY0963";
 }

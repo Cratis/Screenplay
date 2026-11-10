@@ -13,7 +13,7 @@ const offered = (text: string): string[] => {
 };
 
 const scopes: Record<string, [string, string[]]> = {
-    'the root': ['', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sink', 'statemachine', 'sticky', 'storyline', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
+    'the root': ['', ['agents', 'context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sink', 'statemachine', 'sticky', 'storyline', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
     'a domain': ['domain Catalog\n  ', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sink', 'statemachine', 'sticky', 'storyline', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
     'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'outlet extends', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'outlet extends', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
@@ -28,6 +28,9 @@ const scopes: Record<string, [string, string[]]> = {
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],
     'a persona': ['persona P\n  ', ['description', 'goal', 'policy', 'position', 'size']],
     'application context': ['context\n  ', ['time zone member', 'description']],
+    'agent exposure': ['agents\n  ', ['tokens personal', 'command', 'query']],
+    'an exposed command': ['agents\n  command Sales.Issue\n    ', ['scope write', 'description']],
+    'an exposed query': ['agents\n  query Sales.List.One\n    ', ['scope read', 'scope write', 'description']],
     'authentication': ['authentication\n  ', ['provider', 'provider (named)']],
     'onboarding': ['onboarding\n  ', ['signup (creates tenant)', 'signup (joins tenant)', 'invite tenant', 'invite member', 'legal terms', 'offering', 'emails']],
     'a member invitation': ['onboarding\n  invite member\n    ', ['by', 'grant']],

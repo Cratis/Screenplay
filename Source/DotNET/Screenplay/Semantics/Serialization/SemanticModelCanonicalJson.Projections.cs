@@ -80,8 +80,45 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         writer.WriteString("property", children.Property.ToString());
         WriteOptionalSemanticId(writer, "identifiedBy", children.IdentifiedBy);
+        if (children.Ordering is { } ordering)
+        {
+            writer.WritePropertyName("ordering");
+            WriteChildrenOrdering(writer, ordering);
+        }
+
         writer.WritePropertyName("scope");
         WriteScope(writer, children.Scope);
+        writer.WriteEndObject();
+    }
+
+    // ESM v43: only a sorted collection names its sort property and direction.
+    static void WriteChildrenOrdering(Utf8JsonWriter writer, SemanticProjectionChildrenOrdering ordering)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("placement", ordering.Placement switch
+        {
+            SemanticChildrenPlacement.Prepend => "prepend",
+            SemanticChildrenPlacement.Sorted => "sorted",
+            _ => throw Unknown(nameof(SemanticChildrenPlacement), ordering.Placement)
+        });
+        if (ordering.Placement == SemanticChildrenPlacement.Sorted)
+        {
+            writer.WritePropertyName("sortBy");
+            writer.WriteStartArray();
+            foreach (var segment in Require(ordering.SortBy))
+            {
+                writer.WriteStringValue(segment.ToString());
+            }
+
+            writer.WriteEndArray();
+            writer.WriteString("direction", ordering.Direction switch
+            {
+                SemanticSortDirection.Ascending => "ascending",
+                SemanticSortDirection.Descending => "descending",
+                _ => throw Unknown(nameof(SemanticSortDirection), ordering.Direction)
+            });
+        }
+
         writer.WriteEndObject();
     }
 
@@ -250,6 +287,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticProjectionOperation.Subtract => "subtract",
         SemanticProjectionOperation.Increment => "increment",
         SemanticProjectionOperation.Decrement => "decrement",
+        SemanticProjectionOperation.SetOnce => "setOnce",
         _ => throw Unknown(nameof(SemanticProjectionOperation), value)
     };
 

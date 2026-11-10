@@ -514,6 +514,7 @@ internal static partial class SpecificationParser
 
         var authenticated = false;
         var seenAuthenticated = false;
+        string? id = null;
         var roles = new List<string>();
         var claims = new List<SpecificationCallerClaimSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -524,6 +525,14 @@ internal static partial class SpecificationParser
             {
                 authenticated = seenAuthenticated = true;
                 directiveLocations["authenticated"] = child.Location;
+                continue;
+            }
+
+            var identifier = CallerIdRegex().Match(child.Content);
+            if (identifier.Success && id is null)
+            {
+                id = StringLiteral.Unescape(identifier.Groups[1].Value);
+                directiveLocations["id"] = child.Location;
                 continue;
             }
 
@@ -545,7 +554,7 @@ internal static partial class SpecificationParser
             context.Error(ContainsCaseReference(child.Content) ? DiagnosticCodes.InvalidSpecificationCaseReference : DiagnosticCodes.InvalidSpecificationCaller, $"Invalid caller fixture '{child.Content}' - expected authenticated, role \"...\", or claim \"...\" = \"...\".", child.Location);
         }
 
-        return new(authenticated, roles, claims, line.Location) { DirectiveLocations = directiveLocations };
+        return new(authenticated, roles, claims, line.Location) { DirectiveLocations = directiveLocations, Id = id };
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)
@@ -960,6 +969,9 @@ internal static partial class SpecificationParser
 
         return values;
     }
+
+    [GeneratedRegex("^id\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
+    private static partial Regex CallerIdRegex();
 
     [GeneratedRegex("^role\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.NonBacktracking)]
     private static partial Regex CallerRoleRegex();

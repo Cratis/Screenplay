@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
+import { AgentOperationSyntax, AgentsSyntax, AgentTokensSyntax } from './Agents';
 import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
@@ -96,11 +97,22 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.identity != null) this.visitIdentity(syntax.identity);
         syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
+        if (syntax.agents != null) this.visitAgents(syntax.agents);
         syntax.designSystems?.forEach(node => this.visitDesignSystem(node));
         syntax.themes?.forEach(node => this.visitTheme(node));
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
+
+    visitAgents(syntax: AgentsSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.tokens != null) this.visitAgentTokens(syntax.tokens);
+        syntax.operations.forEach(operation => this.visitAgentOperation(operation));
+    }
+
+    visitAgentTokens(syntax: AgentTokensSyntax): void { this.visitNode(syntax); }
+
+    visitAgentOperation(syntax: AgentOperationSyntax): void { this.visitNode(syntax); }
 
     visitDesignSystem(syntax: DesignSystemSyntax): void {
         this.visitNode(syntax);
@@ -173,6 +185,8 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitPolicy(syntax: PolicySyntax): void {
         this.visitNode(syntax);
+        syntax.inputs?.forEach(input => this.visitNode(input));
+        syntax.reads?.forEach(reads => this.visitReads(reads));
         if (syntax.condition !== null) this.visitPolicyCondition(syntax.condition);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
@@ -181,6 +195,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitPolicyCondition(syntax: PolicyConditionSyntax): void {
         this.visitNode(syntax);
         if (syntax.kind === 'ClaimConditionSyntax' && syntax.matches !== null) this.visitExpression(syntax.matches);
+        if (syntax.kind === 'StateConditionSyntax') this.visitCondition(syntax.comparison);
         if (syntax.kind === 'NotPolicyConditionSyntax') this.visitPolicyCondition(syntax.operand);
         if (syntax.kind === 'LogicalPolicyConditionSyntax') { this.visitPolicyCondition(syntax.left); this.visitPolicyCondition(syntax.right); }
     }
@@ -220,6 +235,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitAuthorize(syntax: AuthorizeSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(mapping => this.visitNode(mapping));
         this.visitPolicyRequirement(syntax.requirement);
     }
 
@@ -648,6 +664,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.byParts?.forEach(part => this.visitQueryParameter(part));
         syntax.filters.forEach(node => this.visitQueryParameter(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        if (syntax.narrow !== undefined) this.visitNode(syntax.narrow);
     }
 
     visitQueryParameter(syntax: QueryParameterSyntax): void {
@@ -690,6 +707,7 @@ export abstract class ScreenplaySyntaxWalker {
                 break;
             case 'ChildrenSyntax':
                 if (syntax.identifiedBy !== undefined) this.visitExpression(syntax.identifiedBy);
+                if (syntax.ordering != null) this.visitNode(syntax.ordering);
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
             case 'NestedSyntax':

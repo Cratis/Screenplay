@@ -13,6 +13,7 @@ internal sealed partial class McpWorkspaces
     // The HTTP API needs the executable model; the UI contract needs only the sources and adds identities and routes when the model exists.
     static object ReadPortableContractView(ScreenplayWorkspace workspace, JsonElement arguments, string view)
     {
+        if (view == "capability-manifest") return ReadCapabilityManifest(workspace, arguments, view);
         var model = workspace.Compilation.Success ? workspace.Compilation.Value!.Model : null;
         if (view == "api-description" && model is null)
         {

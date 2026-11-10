@@ -10,6 +10,7 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    agents: '**agents** declares an explicit application allowlist for AI agents. Use `tokens personal`, qualified `command` / `query` targets, a non-empty `description` and `scope read` or `scope write` (commands require write). Existing module, feature and operation authorization still applies. Global scopes, approval directives, ungated operations and unsupported query shapes are refused. Only keyed, single-result, non-observable queries are admitted. Authoring-only: executable-model binding reports PLAY0268 (#1165); no token issuance or authentication protocol is defined.',
     item: 'One element of a structured list, one per line: `item <value>` for a scalar, a bare `item` with an indented block for an object or nested list, `item none` for an empty list and `item empty` for an object without members. Also a navigation or toolbar entry. Screenplay has no JSON.',
     none: 'States an empty list in a structured value: `<name> none`. Elsewhere, an explicit empty choice such as `operations none`.',
     parameter: 'A typed value declared by a specification table, or an argument of a named behavior. Table types are required; every case supplies each parameter exactly once.',

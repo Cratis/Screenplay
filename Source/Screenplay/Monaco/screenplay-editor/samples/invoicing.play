@@ -354,6 +354,16 @@ authentication
   provider OpenId name Partner
   provider OpenId name CustomerPortal
 
+// The agent can read the invoice list and register an invoice, but still needs the same staff policies as a person.
+agents
+  tokens personal
+  query Invoicing.InvoiceManagement.InvoiceList.ListInvoices
+    scope read
+    description "Read the invoices the caller may manage."
+  command Invoicing.InvoiceManagement.RegisterInvoice.RegisterInvoice
+    scope write
+    description "Register an invoice for the caller's customer."
+
 // How people get in. Authoring metadata only: the sender address and the mail server are environment values,
 // found by name (see Documentation/screenplay/environments.md), never part of the model.
 onboarding
@@ -2224,6 +2234,7 @@ module Invoicing
         registeredForSubject String
         displayLabel         String
         sentAt               DateTime optional
+        firstSentAt          DateTime optional
         paidAt               DateTime optional
         overdueAt            DateTime optional
         customerName         String optional
@@ -2258,6 +2269,7 @@ module Invoicing
         from InvoiceSent
           set status to "sent"
           sentAt = sentAt
+          set once firstSentAt = sentAt
         from InvoicePaid
           status = "paid"
           paidAt = paidAt
@@ -2273,6 +2285,7 @@ module Invoicing
             customerName = name
         children lineItems identified by lineNumber
           no automap
+          sort by lineNumber
           from InvoiceLineItemAdded key lineNumber
             parent $eventSourceId
             quantity  = quantity
@@ -2370,6 +2383,7 @@ module Invoicing
           invoiceNumber = "INV-000123"
           status        = "sent"
           sentAt        = "2026-10-02T09:00:00Z"
+          firstSentAt   = "2026-10-02T09:00:00Z"
           customerName  = "Acme Corp"
           displayLabel  = "INV-000123 (NOK)"
         then query GetInvoice

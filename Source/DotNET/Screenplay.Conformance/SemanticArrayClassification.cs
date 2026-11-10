@@ -48,12 +48,12 @@ internal static class SemanticArrayClassification
         "appends/mappings", "appends/tags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",
         "children/appends", "children/map", "nested/appends", "nested/map",
-        "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations",
+        "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations", "policies/reads", "policies/inputs", "authorization/mappings",
         "concepts/numbers", "concepts/validations", "concepts/values",
         "constraints/releasedBy", "constraints/targets", "targets/properties",
         "events/priorRevisions", "events/tags", "priorRevisions/tags",
         "every/mappings", "from/mappings", "join/mappings", "transitions/mappings", "projections/transitions",
-        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path",
+        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path", "ordering/sortBy",
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
         "handler/possibleEvents",
@@ -116,6 +116,9 @@ internal static class SemanticArrayClassification
         Add(rules, _nameSets, new(SemanticArrayKind.NameSet, "name"));
         Add(rules, _targetPropertySets, new(SemanticArrayKind.ReferenceSet, "targetProperty"));
         Add(rules, _ordered, new(SemanticArrayKind.Ordered));
+
+        // Agent exposure is an allowlist; the canonical writer sorts it by operation kind and identity.
+        rules.Add("agents/operations", new(SemanticArrayKind.ReferenceSet, "operation"));
         rules.Add("reducers/transitions", new(SemanticArrayKind.ReferenceSet, "eventContract"));
         rules.Add("key/parts", new(SemanticArrayKind.ReferenceSet, "property"));
         rules.Add("parentKey/parts", new(SemanticArrayKind.ReferenceSet, "property"));

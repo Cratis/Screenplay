@@ -218,6 +218,37 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V42 = new(42, 0);
 
     /// <summary>
+    /// Gets the language version admitting set-once projection mappings and the stored order of a children collection.
+    /// </summary>
+    public static readonly LanguageVersion V43 = new(43, 0);
+
+    /// <summary>
+    /// Gets the language version admitting policies that decide from recorded state.
+    /// </summary>
+    public static readonly LanguageVersion V44 = new(44, 0);
+
+    /// <summary>
+    /// Gets the language version admitting text and membership operators in policy state conditions.
+    /// </summary>
+    public static readonly LanguageVersion V45 = new(45, 0);
+
+    /// <summary>
+    /// Gets the language version admitting typed policy inputs and input mappings.
+    /// </summary>
+    public static readonly LanguageVersion V46 = new(46, 0);
+
+    /// <summary>
+    /// Gets the language version admitting row narrowing of a collection query by a policy.
+    /// </summary>
+    public static readonly LanguageVersion V47 = new(47, 0);
+
+    /// <summary>Gets language v48, with explicit agent exposure.</summary>
+    public static readonly LanguageVersion V48 = new(48, 0);
+
+    /// <summary>Gets language v49, with the caller's identifier in a policy state condition.</summary>
+    public static readonly LanguageVersion V49 = new(49, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -456,6 +487,37 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting screens as a stack-neutral UI contract.
     /// </summary>
     public static readonly SemanticVersion V42 = new(42, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting set-once projection mappings and the stored order of a children collection.
+    /// </summary>
+    public static readonly SemanticVersion V43 = new(43, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting policies that decide from recorded state.
+    /// </summary>
+    public static readonly SemanticVersion V44 = new(44, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting text and membership operators in policy state conditions.
+    /// </summary>
+    public static readonly SemanticVersion V45 = new(45, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting typed policy inputs and input mappings.
+    /// </summary>
+    public static readonly SemanticVersion V46 = new(46, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting row narrowing of a collection query by a policy.
+    /// </summary>
+    public static readonly SemanticVersion V47 = new(47, 0);
+
+    /// <summary>Gets semantic v48, with explicit agent exposure.</summary>
+    public static readonly SemanticVersion V48 = new(48, 0);
+
+    /// <summary>Gets semantic v49, with the caller's identifier in a policy state condition.</summary>
+    public static readonly SemanticVersion V49 = new(49, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1276,7 +1338,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV42Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV49Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1289,7 +1351,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV42Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV49Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

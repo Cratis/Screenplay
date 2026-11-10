@@ -1,0 +1,23 @@
+concept InvoiceId : Uuid
+policy Staff
+  require role "Staff"
+module Sales
+  authorize Staff
+  feature Invoices
+    slice StateChange Creating
+      command Create
+        invoiceId InvoiceId identifier
+    feature History
+      slice StateView Listing
+        readmodel Invoice
+          invoiceId InvoiceId
+        query All => Invoice[]
+        query Unlisted => Invoice[]
+agents
+  tokens personal
+  query Sales.Invoices.History.Listing.All
+    scope read
+    description "List invoices"
+  command Sales.Invoices.Creating.Create
+    scope write
+    description "Create an invoice"

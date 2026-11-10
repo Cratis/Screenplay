@@ -73,6 +73,16 @@ internal static class ReservedWords
         new HashSet<string>(StringComparer.Ordinal) { "with" };
 
     /// <summary>
+    /// The words a <c>remove</c> mapping reserves as its target, and so the property names that need escaping.
+    /// </summary>
+    /// <remarks>
+    /// <c>remove with</c> and <c>remove via</c> read as the start of the <c>remove with &lt;EventType&gt;</c> and
+    /// <c>remove via join on &lt;EventType&gt;</c> block directives, so the parser rejects them in mapping position.
+    /// </remarks>
+    public static readonly IReadOnlySet<string> RemoveKeyMapping =
+        new HashSet<string>(StringComparer.Ordinal) { "with", "via" };
+
+    /// <summary>
     /// The keywords an enumeration <c>concept</c> body reserves, and so the values that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> ConceptBody =

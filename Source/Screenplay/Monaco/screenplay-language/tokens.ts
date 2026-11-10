@@ -26,7 +26,7 @@ const clockRules: MonarchTokenRules = [
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow']);
+const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow', 'agents']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -80,6 +80,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
             [/^()(context)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@applicationContextBody.$1' }]],
+            [/^()(agents)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@agentsBody.$1' }]],
             [/^(\s*)(context)(\s+)(from)\b/, ['white', 'keyword', 'white', 'keyword']],
             [/^(command)(\s+)(reads)(\s+)(protected)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(reaction)(\s+)(batches)(\s+)(atomic)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
@@ -214,6 +215,15 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(otherwise)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             [/^(\s*)(when)(\s+)(?=item\.|\()/, ['white', 'keyword', 'white']],
             [/^(\s*)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
+        agentsBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(tokens)(\s+)(personal)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(command|query)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(scope)(\s+)(read|write|global)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(description)(?=\s+")/, ['white', 'keyword']],
             { include: '@root' },
         ],
 

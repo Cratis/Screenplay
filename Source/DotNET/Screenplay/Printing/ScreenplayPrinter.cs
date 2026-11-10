@@ -228,6 +228,7 @@ public sealed partial class ScreenplayPrinter :
     {
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
         WriteOptionalSection(writer, application.Onboarding, WriteOnboarding);
+        WriteOptionalSection(writer, application.Agents, WriteAgents);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
         WriteSection(writer, application.DesignSystems, WriteDesignSystem);
         WriteSection(writer, application.Themes ?? [], WriteTheme);
@@ -657,6 +658,16 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, policy.Description, policy);
+            foreach (var input in policy.Inputs ?? [])
+            {
+                writer.Line($"{input.Name} {input.Type}{(input.From is null ? string.Empty : $" from {input.From}")}", input);
+            }
+
+            foreach (var reads in policy.Reads ?? [])
+            {
+                WriteReads(writer, reads);
+            }
+
             if (policy.Condition is not null)
             {
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);

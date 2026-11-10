@@ -254,6 +254,7 @@ static class ContractAdmission
     // Every published condition is a binding result for one of these sources, not a prose promise.
     internal static readonly Probe[] Probes =
     [
+        new("agents", "agents\n  tokens personal\n", [Slice + Event + Command + "agents\n  tokens personal\n  command M.F.S.Record\n    scope write\n    description \"Record a value\"\n"], Baseline: string.Empty, VariantBaselines: [Slice + Event + Command]),
         new("authentication", "authentication\n  provider GitHub\n"),
         new("onboarding", "authentication\n  provider GitHub\nonboarding\n  signup open creates tenant\n", Baseline: "authentication\n  provider GitHub\n"),
         new("identity", "identity\n  department String from claim \"department\"\n", ["identity\n  department String from claim \"department\"\n" + Slice + Event + Command.Replace("value = value", "value = $identity.department", StringComparison.Ordinal)], Baseline: string.Empty),

@@ -1162,6 +1162,8 @@ For read-model members, both compilers and editor validation share `PLAY0273` fo
 
 Executable binding reports independent semantic contract failures together as `PLAY0273`, at the nearest enclosing declaration with a source location. If no declaration location is available, it uses the application location. Identity registration and application-wide version checks still stop at their first failure.
 
+For an event-source assertion whose identity type cannot be determined, `PLAY0273` names the event and explains how to supply the missing contract: declare a read-model projection keyed on the event source (`$eventSourceId`) or a producing command with a required scalar destination. An unrouted producerless event can use one consistent required scalar projected key type; missing, conflicting or nonscalar keys remain refused. Case parameters and example overrides use that same projected identity type during parameter-target validation.
+
 Comparison operands must be required, including command properties and protected read-model properties on either side. An optional operand is refused with `PLAY0268` at the comparison rather than deferred to semantic contract validation.
 
 ### Specification event-source assertions
@@ -1251,7 +1253,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0296` | Warning | An `$eventContext.<path>` continues into something the member before it does not have, such as `$eventContext.eventType.name`. The derived function `Week` is case-sensitive: `occurred.Week` resolves and `occurred.week` does not. |
 | `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
 | `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
-| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
+| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, `$eventContent` or `$causedBy`, such as `bySource.$eventSourceId`. Only `$eventContext.<path>`, `$eventContent.<path>` and `$causedBy.subject`, `.name` or `.userName` are resolved; any other source becomes the literal key. |
 
 ### Specification semantics
 
@@ -1766,6 +1768,32 @@ A `storyline` names an ordered path through the model. See [Storylines](storylin
 | `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
 | `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
 
+## Agents
+
+An `agents` block is an explicit operation allowlist, not an authorization grant. See [Agents](agents.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0964` | Error | The agents block, operation reference or field is malformed or unsupported. Write a root `agents` block, `query <reference>` or `command <reference>`, and literal quoted descriptions. Fields cannot have children. |
+| `PLAY0965` | Error | The composed application declares more than one agents block, including across imported files. Keep one. |
+| `PLAY0966` | Error | No query or command of the declared kind matches the exposed reference. |
+| `PLAY0967` | Error | More than one operation of the declared kind matches the reference. Qualify it with its module, feature and slice. |
+| `PLAY0968` | Error | The same operation is exposed more than once, including through different short and qualified references. |
+| `PLAY0969` | Error | An exposed operation has no nonempty literal description. Add `description "<text>"`. |
+| `PLAY0970` | Error | An exposed operation is missing its scope, repeats it or uses an unsupported scope. Declare exactly one `scope read` or `scope write` on each entry. |
+| `PLAY0971` | Error | An exposed command does not require `scope write`. Commands cannot use `scope read`. |
+| `PLAY0972` | Error | The agents block is missing its token declaration or repeats it. Declare exactly one `tokens personal`. |
+| `PLAY0973` | Error | An unsupported token kind is declared. Only `tokens personal` is supported; `tokens oauth` is refused. |
+| `PLAY0974` | Error | An exposed operation declares approval. Approval is not supported; token scope and model authorization must both permit the call. |
+| `PLAY0975` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
+| `PLAY0976` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
+| `PLAY0977` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
+| `PLAY0978` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
+| `PLAY0979` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
+| `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
+| `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
+| `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+
 ## Screen visuals and slice placements
 
 Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#sketches-mockups-and-images), and the linked copies a slice shows, see [Slices](slices.md#show-an-element-in-more-than-one-slice). Both compilers report `PLAY0950`, `PLAY0951` and `PLAY0953` to `PLAY0955`. `PLAY0952` needs the files beside the model, so it is reported where a model root is opened: the MCP server, `open-workspace` and the tools built on them.
@@ -1778,6 +1806,21 @@ Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#ske
 | `PLAY0953` | Error | A slice's `shows` line is not `shows event <Name>` or `shows readmodel <Name>`. |
 | `PLAY0954` | Warning | A slice shows an event or read model the application does not declare. |
 | `PLAY0955` | Warning | A slice shows an element it already declares itself, or shows the same element twice. Remove the extra line. |
+
+## Projection dictionary keys, set once and children ordering
+
+Dynamic dictionary keys, the `remove` mapping line and the ordering of a `children` block, see [Property mapping](projections/property-mapping.md#dictionary-entries) and [Children](projections/children.mdx#ordering-the-children). Both compilers report every code in this table.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0956` | Error | A `remove <target>` line names a target without a dynamic key, so there is no entry to remove. End the target in `.$eventContent.<property>`, `.$eventContext.<path>` or `.$causedBy.<member>`; to empty the whole property, write `clear <target>`. |
+| `PLAY0957` | Error | A dynamic key is malformed: `.$eventContent` names no event property, or `.$causedBy` names a member other than `subject`, `name` or `userName`. |
+| `PLAY0958` | Error | A children ordering line is not `insert first`, `insert last` or `sort by <property> [ascending\|descending]`, takes indented lines, or stands outside a `children` block. |
+| `PLAY0959` | Error | A `children` block declares more than one ordering line. Keep one. |
+| `PLAY0960` | Warning | A children `sort by` names a property the element type of the collection does not declare. |
+| `PLAY0961` | Warning | A `.$eventContent.<path>` key names a path the event the mapping handles does not have, so the entry is never written. |
+| `PLAY0962` | Warning | A dynamic key writes into a declared read-model property. Chronicle accepts a dictionary entry only in a dictionary property, and Screenplay has no dictionary type, so Chronicle refuses the projection when it registers it. |
+| `PLAY0963` | Error | A `clear` line names a target with a dynamic key. Clearing would keep the entry with no value; write `remove <target>` to delete it. |
 
 ## Toolbar buttons
 

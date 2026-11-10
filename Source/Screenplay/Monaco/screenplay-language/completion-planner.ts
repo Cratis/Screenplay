@@ -54,7 +54,7 @@ export interface CompletionScope {
 const declaredIn = (document: readonly string[], keyword: string) => document.some(line => new RegExp(`^${keyword}\\b`).test(line));
 
 function topLevelEntries(document: readonly string[]): CompletionEntry[] {
-    const singularDeclarations = ['domain', 'authentication', 'onboarding', 'identity', 'context'];
+    const singularDeclarations = ['domain', 'authentication', 'onboarding', 'identity', 'context', 'agents'];
     return items.topLevelItems.filter(item => !singularDeclarations.includes(item.label) || !declaredIn(document, item.label));
 }
 
@@ -70,7 +70,9 @@ function expansionEntry(text: string, indent: number): CompletionEntry {
 
 export function completionEntriesFor(chain: string[], where: CompletionScope = { headers: [], document: [] }): CompletionEntry[] {
     const construct = chain[0];
-    if (construct === undefined || construct === 'domain') return topLevelEntries(where.document);
+    if (construct === undefined) return topLevelEntries(where.document);
+    if (construct === 'domain') return topLevelEntries(where.document).filter(entry => entry.label !== 'agents');
+    if (chain.includes('agents')) return construct === 'agents' ? items.agentItems : items.agentOperationItems(construct === 'command');
     if (chain.includes('sample') && !chain.includes('ui')) {
         if (construct === 'row') return scope.sampleRowItems;
         if (chain[1] === 'row' && /^[A-Za-z_]\w*$/.test(where.headers[0] ?? construct)) return scope.sampleShapeItems;

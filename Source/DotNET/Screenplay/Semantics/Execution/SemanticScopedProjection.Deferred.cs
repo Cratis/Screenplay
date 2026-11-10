@@ -14,7 +14,7 @@ internal sealed partial class SemanticScopedProjection
     bool ReadsOccurrence(DeferredChild deferred) =>
         (deferred.Removal is null ? deferred.From!.Mappings.Concat(deferred.Scope.Every?.Mappings ?? []) : [])
             .Concat(AncestorsAppliedForCurrentFact(deferred.Level).SelectMany(_ => _.Scope.Every!.Mappings))
-            .Any(_ => _.Operation == SemanticProjectionOperation.Set && _.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal));
+            .Any(_ => _.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce && _.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal));
 
     // The single place a child is deferred: one that will read an occurrence its fact lacks fails now, so no pending state
     // is published for it.
