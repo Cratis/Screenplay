@@ -100,6 +100,20 @@ internal static class WorkspaceTimelineContentProof
             _ => outer
         };
 
+        NormalizeChildren(syntax, node, scope, pins);
+        if (container && node["fileImports"] is JsonArray imports)
+        {
+            RemovePinnedImports(imports, scope, pins);
+        }
+
+        if (container)
+        {
+            SortTimelineSiblings(node);
+        }
+    }
+
+    static void NormalizeChildren(SyntaxNode syntax, JsonObject node, string[] scope, List<TimelineImportPin> pins)
+    {
         // Traverse codec-declared syntax children only. Literal data can contain a 'kind' property,
         // but it is data, never a declaration or permission to reorder one of its arrays.
         foreach (var member in _children[syntax.GetType()])
@@ -118,24 +132,27 @@ internal static class WorkspaceTimelineContentProof
                 }
             }
         }
+    }
 
-        if (container && node["fileImports"] is JsonArray imports)
+    static void RemovePinnedImports(JsonArray imports, string[] scope, List<TimelineImportPin> pins)
+    {
+        foreach (var pin in pins.Where(pin => pin.Placement.Scope.SequenceEqual(scope)).ToArray())
         {
-            foreach (var pin in pins.Where(pin => pin.Placement.Scope.SequenceEqual(scope)).ToArray())
-            {
-                var expected = JsonNode.Parse(SyntaxJson.Serialize(pin.Import).GetRawText(), documentOptions: _documentOptions);
-                var position = Enumerable.Range(0, imports.Count).FirstOrDefault(position => JsonNode.DeepEquals(imports[position], expected), -1);
-                if (position < 0) continue;
-                imports.RemoveAt(position);
-                pins.Remove(pin);
-            }
+            var expected = JsonNode.Parse(SyntaxJson.Serialize(pin.Import).GetRawText(), documentOptions: _documentOptions);
+            var position = Enumerable.Range(0, imports.Count).FirstOrDefault(position => JsonNode.DeepEquals(imports[position], expected), -1);
+            if (position < 0) continue;
+            imports.RemoveAt(position);
+            pins.Remove(pin);
         }
+    }
 
+    static void SortTimelineSiblings(JsonObject node)
+    {
         foreach (var (member, value) in node)
         {
             // Only the timeline's named sibling collections and imports may permute. In particular,
             // events, commands, projection blocks, specifications and every scalar array retain order.
-            if (!container || member is not ("modules" or "features" or "slices" or "fileImports") || value is not JsonArray children) continue;
+            if (member is not ("modules" or "features" or "slices" or "fileImports") || value is not JsonArray children) continue;
             var ordered = children.OrderBy(element => element?.ToJsonString(_jsonOptions), StringComparer.Ordinal).Select(element => element?.DeepClone()).ToArray();
             children.Clear();
             foreach (var element in ordered) children.Add(element);
