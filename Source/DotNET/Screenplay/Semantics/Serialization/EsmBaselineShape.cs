@@ -29,6 +29,7 @@ internal enum EsmBaselineShape
     CodeValidation,
     Handler,
     DecisionRead,
+    PolicyRead,
     ProducedEvent,
     Destination,
     Mapping,

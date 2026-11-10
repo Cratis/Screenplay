@@ -26,12 +26,22 @@ public static partial class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         CanonicalJson.WriteString(writer, "name", policy.Name);
+        if (!policy.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", policy.Reads, WritePolicyRead);
         writer.WritePropertyName("condition");
         WritePolicyCondition(writer, policy.Condition);
         if (policy.Condition is SemanticOpaquePolicyCondition opaque)
         {
             CanonicalJson.WriteString(writer, "requirementId", opaque.RequirementId);
         }
+        writer.WriteEndObject();
+    }
+
+    static void WritePolicyRead(Utf8JsonWriter writer, SemanticPolicyRead read)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", read.Name);
+        writer.WriteString("readModel", read.ReadModel.ToString());
+        CanonicalJson.WriteString(writer, "by", read.By);
         writer.WriteEndObject();
     }
 
@@ -64,6 +74,11 @@ public static partial class SemanticModelCanonicalJson
                     _ => throw new InvalidSemanticContract("Unknown claim target kind.")
                 });
                 if (claim.Value is not null) CanonicalJson.WriteString(writer, "value", claim.Value);
+                break;
+            case SemanticStatePolicyCondition state:
+                writer.WriteString("kind", "state");
+                writer.WritePropertyName("condition");
+                WriteCondition(writer, state.Condition);
                 break;
             case SemanticNotPolicyCondition not:
                 writer.WriteString("kind", "not");

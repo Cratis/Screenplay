@@ -26,6 +26,7 @@ internal static class SemanticPolicyEvaluation
         string? tenant = null,
         DateTimeOffset? occurred = null,
         bool hasPolicySubject = true,
+        System.Collections.Immutable.ImmutableArray<SemanticReadModelInstance> readModels = default,
         CancellationToken cancellationToken = default)
     {
         if (authorization is null || IsAnonymous(authorization, plan)) return new(SemanticPolicyOutcome.Allow);
@@ -42,7 +43,7 @@ internal static class SemanticPolicyEvaluation
             SemanticBodyIdentity.From(caller),
             tenant,
             occurred);
-        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties, bodies ?? SemanticPolicyBodyExecution.None, Context, cancellationToken);
+        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null) { ReadModels = readModels.IsDefault ? [] : readModels }, artifact, subject, properties, bodies ?? SemanticPolicyBodyExecution.None, Context, cancellationToken);
     }
 
     internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
@@ -72,7 +73,14 @@ internal static class SemanticPolicyEvaluation
                     ? bodies.Authorize(policy, opaque, context(), cancellationToken)
                     : new(SemanticPolicyOutcome.Unsupported, reference.Name);
             }
-            return new(EvaluateCondition(policy.Condition, plan, caller, artifact, subject, properties).IsTrue
+            IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? state = null;
+            if (!policy.Reads.IsDefaultOrEmpty)
+            {
+                state = ReadState(policy, caller, artifact);
+                if (state is null) return new(SemanticPolicyOutcome.Deny, policy.Name, "No recorded state exists for the policy.");
+            }
+
+            return new(EvaluateCondition(policy.Condition, plan, caller with { State = state }, artifact, subject, properties).IsTrue
                 ? SemanticPolicyOutcome.Allow : SemanticPolicyOutcome.Deny);
         }
 
@@ -109,6 +117,7 @@ internal static class SemanticPolicyEvaluation
         SemanticNotPolicyCondition not => EvaluateCondition(not.Operand, plan, caller, artifact, subject, properties).Not(),
         SemanticRoleCondition role => new(caller.Caller.Roles.Contains(role.Role, StringComparer.Ordinal)),
         SemanticClaimCondition claim => MatchClaim(claim, plan, caller, artifact, subject, properties),
+        SemanticStatePolicyCondition state => new(caller.State is not null && SemanticConditionEvaluator.Evaluate(state.Condition, new Dictionary<SemanticId, SemanticValue>(), null, caller.State)),
         SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.And or SemanticLogicalOperator.Or } logical =>
             EvaluateLogicalCondition(logical, plan, caller, artifact, subject, properties),
         _ => throw new InvalidSemanticContract("Unknown policy condition node or operator.")
@@ -172,5 +181,25 @@ internal static class SemanticPolicyEvaluation
 
     static string? Text(SemanticValue? value) => value is SemanticTextValue text ? text.Value : null;
 
-    sealed record Principal(SemanticCaller Caller, bool IsSystem);
+    // A policy read that finds no instance denies: an absent fact never allows.
+    static IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? ReadState(SemanticPolicy policy, Principal caller, IReadOnlyDictionary<string, SemanticValue> artifact)
+    {
+        var state = new Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>(StringComparer.Ordinal);
+        foreach (var read in policy.Reads)
+        {
+            if (!artifact.TryGetValue(read.By, out var key) || RefusedReadKeys.IsRefused(key)) return null;
+            var instance = caller.ReadModels.FirstOrDefault(candidate => candidate.ReadModel == read.ReadModel && SemanticValueRules.AreEqual(candidate.Key, key));
+            if (instance is null) return null;
+            state[read.Name] = instance.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
+        }
+
+        return state;
+    }
+
+    sealed record Principal(SemanticCaller Caller, bool IsSystem)
+    {
+        public System.Collections.Immutable.ImmutableArray<SemanticReadModelInstance> ReadModels { get; init; } = [];
+
+        public IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? State { get; init; }
+    }
 }

@@ -54,18 +54,40 @@ internal static partial class SemanticModelRead
         string? name = null;
         SemanticPolicyCondition? condition = null;
         string? requirementId = null;
+        var reads = ImmutableArray<SemanticPolicyRead>.Empty;
         while (NextProperty(ref reader, seen, "policy") is { } property)
         {
             switch (property)
             {
                 case "name": name = String(ref reader, property); break;
+                case "reads": reads = Array(ref reader, PolicyRead, property); break;
                 case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = PolicyCondition(ref reader); break;
                 case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "policy");
             }
         }
         Required(name is not null && condition is not null && (condition is SemanticOpaquePolicyCondition) == (requirementId is not null), "policy");
-        return new(name!, condition is SemanticOpaquePolicyCondition ? new SemanticOpaquePolicyCondition(requirementId!) : condition!);
+        return new(name!, condition is SemanticOpaquePolicyCondition ? new SemanticOpaquePolicyCondition(requirementId!) : condition!) { Reads = reads };
+    }
+
+    internal static SemanticPolicyRead PolicyRead(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "policy read");
+        var seen = NewSeen();
+        string? name = null, by = null;
+        SemanticId readModel = default;
+        while (NextProperty(ref reader, seen, "policy read") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "readModel": readModel = Identifier(ref reader, property); break;
+                case "by": by = String(ref reader, property); break;
+                default: throw Unknown(property, "policy read");
+            }
+        }
+        Required(name is not null && by is not null && readModel.IsSet, "policy read");
+        return new(name!, readModel, by!);
     }
 
     internal static SemanticPolicyCondition PolicyCondition(ref Utf8JsonReader reader, bool allowOpaque = true)
@@ -74,11 +96,13 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         string? kind = null, role = null, claim = null, targetKind = null, value = null, op = null;
         SemanticPolicyCondition? left = null, right = null, operand = null;
+        SemanticCondition? state = null;
         while (NextProperty(ref reader, seen, "policy condition") is { } property)
         {
             switch (property)
             {
                 case "kind": kind = String(ref reader, property); break;
+                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); state = Condition(ref reader, LanguageVersion.V44.Major); break;
                 case "role": role = String(ref reader, property); break;
                 case "claim": claim = String(ref reader, property); break;
                 case "targetKind": targetKind = String(ref reader, property); break;
@@ -95,7 +119,12 @@ internal static partial class SemanticModelRead
             Required(seen.SetEquals(["kind", "operand"]) && operand is not null, "negated policy condition");
             return new SemanticNotPolicyCondition(operand!);
         }
-        if (seen.Contains("operand")) throw Unknown("operand", "policy condition");
+        if (kind == "state")
+        {
+            Required(seen.SetEquals(["kind", "condition"]) && state is not null, "state policy condition");
+            return new SemanticStatePolicyCondition(state!);
+        }
+        if (seen.Contains("operand") || seen.Contains("condition")) throw Unknown(seen.Contains("operand") ? "operand" : "condition", "policy condition");
 
         return kind switch
         {
