@@ -36,7 +36,17 @@ public enum SemanticComparisonOperator
     /// <summary>
     /// Less than or equal.
     /// </summary>
-    LessThanOrEqual
+    LessThanOrEqual,
+
+    /// <summary>
+    /// Text contains a substring, or a collection holds an element (ESM v45, policy state conditions).
+    /// </summary>
+    Contains,
+
+    /// <summary>
+    /// Text starts with a prefix (ESM v45, policy state conditions).
+    /// </summary>
+    StartsWith
 }
 
 /// <summary>

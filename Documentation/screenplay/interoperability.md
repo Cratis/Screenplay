@@ -200,6 +200,7 @@ Use the table to identify the ESM contract selected by a construct before decidi
 | 41.0 | Graph projection handlers that run once per item of an event collection (`forEach` on a graph handler; released in Screenplay 5.10.0) | 41 | [0140](https://github.com/Cratis/Screenplay/blob/main/decisions/0140-graph-foreach-esm-v41.md) | `full-esm-v41.json` | `EsmGoldenVectors.Get(41)` |
 | 42.0 | Screens admitted on request as a stack-neutral UI contract (`screens` on a slice: data, actions, navigation and layout; released in Screenplay 6.8.0) | 42 | [0149](https://github.com/Cratis/Screenplay/blob/main/decisions/0149-screens-in-the-executable-model.md) | `full-esm-v42.json` | `EsmGoldenVectors.Get(42)` |
 | 43.0 | Set-once projection mappings and children collections with a stored order (`"operation":"setOnce"`, `ordering` on children) | 43 | [0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md) | `full-esm-v43.json` | `EsmGoldenVectors.Get(43)` |
+| 44.0 | Policies that decide from recorded state (`reads` on a policy, `"kind":"state"` policy conditions) | 44 | [0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md) | `full-esm-v44.json` | `EsmGoldenVectors.Get(44)` |
 
 Read-model declaration order is optional, ignorable metadata. The historical `Bind` overload and default `SemanticBindingOptions` preserve existing versions, bytes and revisions. `PreserveReadModelPropertyOrder: true` selects language/semantic `37.1` only when metadata is emitted and removing it leaves a valid 37.0 model reading the application calendar or a clock. Otherwise the binder returns `PropertyOrderMetadataRefusal` with no executable value. A model with no read models emits no metadata and retains its version.
 
@@ -281,7 +282,7 @@ A policy condition using unary `not` also selects v7 under 0027. Its canonical v
 
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
-| 44.0 | Policies that decide from recorded state (`reads` on a policy, `"kind":"state"` policy conditions) | 44 | [0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md) | `full-esm-v44.json` | `EsmGoldenVectors.Get(44)` |
+| 45.0 | Text and membership operators in policy state conditions (`"operator":"contains"` and `"startsWith"`) | 45 | [0152](https://github.com/Cratis/Screenplay/blob/main/decisions/0152-text-and-membership-conditions-esm-v45.md) | `full-esm-v45.json` | `EsmGoldenVectors.Get(45)` |
 
 A model that declares a `set once` projection mapping or a children `insert first` or `sort by` selects language/semantic `43.0` and `schemaVersion: 43`, also when its screens are admitted; the version number is provisional until it is admitted by consumers; see [decision 0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md). `insert last` is what a children block does without an ordering and keeps the model's version.
 

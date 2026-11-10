@@ -51,6 +51,7 @@ internal static partial class SemanticModelValidator
                 case SemanticAuthenticatedCondition: break;
                 case SemanticStatePolicyCondition state when _semanticVersion.IsAtLeast(SemanticVersion.V44):
                     if (state.Condition is null) throw new InvalidSemanticContract("A state policy condition requires a comparison.");
+                    if (UsesTextOperators(state.Condition) && !_semanticVersion.IsAtLeast(SemanticVersion.V45)) throw new InvalidSemanticContract("Text and membership operators in a policy state condition require ESM v45.");
                     break;
                 case SemanticStatePolicyCondition: throw new InvalidSemanticContract("Policies that decide from recorded state require ESM v44.");
                 case SemanticNotPolicyCondition not when _semanticVersion.IsAtLeast(SemanticVersion.V7):

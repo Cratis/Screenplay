@@ -86,7 +86,7 @@ public sealed record ExecutableSemanticModel
     /// <returns>The validated model.</returns>
     public static ExecutableSemanticModel Create(LanguageVersion languageVersion, SemanticVersion semanticVersion, SemanticApplication application, int utcAssessmentYear)
     {
-        EsmSchemaV44Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV45Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion, utcAssessmentYear);
         return CreateValidated(languageVersion, semanticVersion, application);
     }
@@ -181,6 +181,7 @@ internal static partial class SemanticModelValidator
         ValidateScreenVersion(application, semanticVersion);
         ValidateProjectionParityVersion(application, semanticVersion);
         ValidateStatePolicyVersion(application, semanticVersion);
+        ValidateTextOperatorVersion(application, semanticVersion);
     }
 
     static void RejectDuplicateRequirementIds(IEnumerable<string?> requirementIds, string owner)
