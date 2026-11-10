@@ -182,7 +182,7 @@ internal static class SemanticPolicyEvaluation
     static string? Text(SemanticValue? value) => value is SemanticTextValue text ? text.Value : null;
 
     // A policy read that finds no instance denies: an absent fact never allows.
-    static IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? ReadState(SemanticPolicy policy, Principal caller, IReadOnlyDictionary<string, SemanticValue> artifact)
+    static Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? ReadState(SemanticPolicy policy, Principal caller, IReadOnlyDictionary<string, SemanticValue> artifact)
     {
         var state = new Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>(StringComparer.Ordinal);
         foreach (var read in policy.Reads)

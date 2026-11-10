@@ -13,6 +13,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        readonly Dictionary<string, SemanticPolicyRead> _policyReads = new(StringComparer.Ordinal);
+
         static SemanticLogicalOperator PolicyOperator(LogicalOperator op) => op == LogicalOperator.And
             ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or;
 
@@ -97,8 +99,6 @@ public sealed partial class SemanticModelBinder
             _ => UnsupportedPolicyCondition(syntaxCondition)
         };
 
-        readonly Dictionary<string, SemanticPolicyRead> _policyReads = new(StringComparer.Ordinal);
-
         ImmutableArray<SemanticPolicyRead> BindPolicyReads(PolicySyntax policy)
         {
             _policyReads.Clear();
@@ -125,7 +125,7 @@ public sealed partial class SemanticModelBinder
             return reads.ToImmutable();
         }
 
-        SemanticPolicyCondition? BindStatePolicyCondition(StateConditionSyntax state)
+        SemanticStatePolicyCondition? BindStatePolicyCondition(StateConditionSyntax state)
         {
             var comparison = state.Comparison;
             var parts = comparison.Left.Split('.');
@@ -152,7 +152,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            SemanticValue? value = comparison.Right switch
+            var value = comparison.Right switch
             {
                 LiteralExpressionSyntax literal => BindLiteral(literal),
                 PathExpressionSyntax path when subject.Values.Contains(path.Path, StringComparer.Ordinal) => SemanticValue.Text(path.Path),
