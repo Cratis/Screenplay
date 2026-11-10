@@ -1,0 +1,7 @@
+policy DataQualityEnabled
+  reads AssetPlan as plan by assetId
+  require authenticated and plan.dataQuality == true
+
+policy IsAuthor
+  reads ArticleView as article by slug
+  require article.author == $identity.id

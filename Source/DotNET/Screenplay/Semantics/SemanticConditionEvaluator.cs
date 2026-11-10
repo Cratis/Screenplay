@@ -53,6 +53,7 @@ public static class SemanticConditionEvaluator
         var right = Operand(comparison.Right, values, reads);
         if (dateTypes is not null && dateTypes.TryGetValue(comparison.Left.Property, out var primitive))
             return CompareDate(comparison.Operator, SemanticDateComparisons.Compare(left, right, primitive));
+        if (comparison.Operator is SemanticComparisonOperator.Contains or SemanticComparisonOperator.StartsWith) return TextOrMembership(comparison.Operator, left, right);
         if (comparison.Operator == SemanticComparisonOperator.Equal) return SemanticValueRules.AreEqual(left, right);
         if (comparison.Operator == SemanticComparisonOperator.NotEqual) return !SemanticValueRules.AreEqual(left, right);
         if (left is not SemanticNumberValue leftNumber || right is not SemanticNumberValue rightNumber)
@@ -66,6 +67,17 @@ public static class SemanticConditionEvaluator
             _ => throw new InvalidSemanticContract("Unknown comparison operator.")
         };
     }
+
+    // Text operators are ordinal and case-sensitive; membership holds when an element equals the operand by value.
+    // An absent (null) subject never matches, so a missing fact cannot grant access.
+    static bool TextOrMembership(SemanticComparisonOperator op, SemanticValue left, SemanticValue right) => (op, left, right) switch
+    {
+        (SemanticComparisonOperator.Contains, SemanticTextValue text, SemanticTextValue part) => text.Value.Contains(part.Value, StringComparison.Ordinal),
+        (SemanticComparisonOperator.StartsWith, SemanticTextValue text, SemanticTextValue prefix) => text.Value.StartsWith(prefix.Value, StringComparison.Ordinal),
+        (SemanticComparisonOperator.Contains, SemanticArrayValue array, _) => array.Values.Any(element => SemanticValueRules.AreEqual(element, right)),
+        (_, SemanticNullValue, _) => false,
+        _ => throw new InvalidSemanticContract("Text and membership conditions require text or collection operands.")
+    };
 
     static SemanticValue Operand(
         SemanticConditionOperand operand,

@@ -54,39 +54,6 @@
         }
       }
     },
-    "AgentOperation": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "kind": {
-          "type": "string"
-        },
-        "operation": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
-    "Agents": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "tokenKind": {
-          "type": "string"
-        },
-        "operations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/AgentOperation"
-          }
-        }
-      }
-    },
     "Application": {
       "type": "object",
       "additionalProperties": false,
@@ -183,9 +150,6 @@
           "items": {
             "$ref": "#/$defs/ContextMember"
           }
-        },
-        "agents": {
-          "$ref": "#/$defs/Agents"
         }
       }
     },
@@ -1826,6 +1790,12 @@
         "name": {
           "type": "string"
         },
+        "reads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PolicyRead"
+          }
+        },
         "condition": {
           "$ref": "#/$defs/PolicyCondition"
         },
@@ -1853,6 +1823,9 @@
         "value": {
           "type": "string"
         },
+        "condition": {
+          "$ref": "#/$defs/Condition"
+        },
         "operand": {
           "$ref": "#/$defs/PolicyCondition"
         },
@@ -1864,6 +1837,21 @@
         },
         "right": {
           "$ref": "#/$defs/PolicyCondition"
+        }
+      }
+    },
+    "PolicyRead": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "readModel": {
+          "type": "string"
+        },
+        "by": {
+          "type": "string"
         }
       }
     },

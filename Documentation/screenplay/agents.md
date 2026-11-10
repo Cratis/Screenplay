@@ -7,7 +7,7 @@ An `agents` block explicitly lists the queries and commands an agent may discove
 
 ## Declare the allowlist
 
-Place at most one `agents` block at the application root, including across imported files. The following excerpt exposes the query and command declared in the v44 canonical fixture's `AgentSurface.Operations` feature:
+Place at most one `agents` block at the application root, including across imported files. The following excerpt exposes the query and command declared in the v48 canonical fixture's `AgentSurface.Operations` feature:
 
 ```play
 agents
@@ -45,11 +45,11 @@ source errors is conservatively Widened for review, not Unknown.
 
 Legacy structural diff rows do not compare exposure. When a block or source errors exist, their limits say so
 explicitly. Do not treat legacy structural completeness or incomplete empty exposure rows as a safe no-widening
-verdict. [Decision 0151](../../decisions/0151-explicit-agent-exposure-and-fail-closed-comparison.md) records the
+verdict. [Decision 0155](../../decisions/0155-explicit-agent-exposure-and-fail-closed-comparison.md) records the
 compatibility and fail-closed rules. None of these views implements endpoints or token issuance.
 
 ## Portable contract
 
-An agents block selects language/semantic `44.0` and ESM `schemaVersion: 44`, including an explicitly empty block. Models without a block retain their earlier version and canonical bytes. The portable metadata records the personal token kind and, for each entry, its kind, existing executable operation identity, scope and description. It neither invents operation identities nor changes execution authorization. Older consumers must reject v44 rather than discard this metadata and infer exposure.
+An agents block selects language/semantic `48.0` and ESM `schemaVersion: 48`, including an explicitly empty block. Models without a block retain their earlier version and canonical bytes. The portable metadata records the personal token kind and, for each entry, its kind, existing executable operation identity, scope and description. It neither invents operation identities nor changes execution authorization. Older consumers must reject v48 rather than discard this metadata and infer exposure.
 
 In .NET, `Cratis.Screenplay.Agents.AgentCapabilities.From(CompilationResult<SemanticCompilation>)` projects a successful complete semantic compilation. Pass the result from `SemanticModelCompiler.Compile`, including all source and semantic diagnostics. Any error makes the projection null; no valid subset is returned. An absent block also returns null. An explicitly empty valid block returns an empty operation collection. Names, qualified paths and observable-query delivery come from bound operations, not from unvalidated syntax. The projection does not issue tokens or implement an agent transport.

@@ -6,7 +6,8 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Declares the language and semantic version pairs of ESM schema v44, which adds explicit agent exposure.
+/// Declares the language and semantic version pairs of ESM schema v44, which adds set-once projection mappings and the
+/// stored order of a children collection.
 /// </summary>
 public static class EsmSchemaV44Support
 {

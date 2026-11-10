@@ -61,7 +61,7 @@ internal static partial class ConditionParser
         }
     }
 
-    static ConditionSyntax? ParseComparison(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
+    internal static ConditionSyntax? ParseComparison(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
         if (position >= tokens.Count)
         {
@@ -97,7 +97,7 @@ internal static partial class ConditionParser
     /// because that is the phrase, not because the grammar needed a separator. So an operator is not always
     /// one token, and the width says how far to step.
     /// </remarks>
-    static ComparisonOperator? ParseOperator(IReadOnlyList<string> tokens, int position, out int width)
+    internal static ComparisonOperator? ParseOperator(IReadOnlyList<string> tokens, int position, out int width)
     {
         width = 1;
         if (tokens[position] == "starts" && position + 1 < tokens.Count && tokens[position + 1] == "with")

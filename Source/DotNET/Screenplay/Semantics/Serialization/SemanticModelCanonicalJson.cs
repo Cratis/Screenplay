@@ -487,6 +487,11 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("authorization");
             WriteAuthorization(writer, query.Authorization);
         }
+        if (query.Narrowing is not null)
+        {
+            writer.WritePropertyName("narrowing");
+            WriteAuthorization(writer, query.Narrowing);
+        }
         writer.WriteEndObject();
     }
 

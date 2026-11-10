@@ -1,5 +1,5 @@
 ---
-id: 0151
+id: 0155
 title: Keep explicit agent exposure default-deny and compare it separately with fail-closed coverage
 status: proposed
 stage: none
@@ -30,7 +30,9 @@ change as safe. At the same time, existing comparison responses and published ES
 [0094](0094-report-enum-numeric-identity-changes-in-model-comparison.md) adds comparison detail without replacing
 existing transport layouts. [0066](0066-published-esm-versions-are-frozen.md),
 [0149](0149-screens-in-the-executable-model.md) and [0150](0150-projection-parity-esm-v43.md) reserve the published
-v42/v43 contracts. Agent exposure therefore takes the next version, v44, rather than extending either baseline.
+v42/v43 contracts. Decisions 0151–0154 reserve v44–v47 for state policies, text and membership conditions,
+policy inputs and query narrowing. Agent exposure therefore takes the next version, v48, rather than extending
+any published baseline.
 
 ## Decision
 
@@ -124,7 +126,7 @@ verdict. No runtime agent surface is created by this record.
 
 ## Timeline and scope
 
-The contract applies to the v44 agent metadata admission and its structural review surfaces. Existing versions,
+The contract applies to the v48 agent metadata admission and its structural review surfaces. Existing versions,
 goldens and schemas remain frozen. Scope includes C# typed comparison, MCP opt-in transport, legacy limit disclosure,
 compiler/editor authoring support and documentation. TypeScript authoring validates the block but has no model
 comparison API to extend.
@@ -134,7 +136,7 @@ are out of scope. This is a desired host contract, not a shipped runtime impleme
 
 ## Verification
 
-**Done when:** default-deny admission and v44 round trips are pinned; added/removed, scope, signature and description
+**Done when:** default-deny admission and v48 round trips are pinned; added/removed, scope, signature and description
 changes have focused specs; source errors on either side make every row Unknown with incomplete coverage; preview
 binding refusal alone preserves the existing incomplete-response golden (`with_incomplete_json_contract.cs`);
 opt-in pages are bounded, deterministic, version-checked and revision-pinned with coverage on every page;
@@ -143,7 +145,7 @@ root/recovery protections remain enforced; and existing no-agent transport/golde
 **Verify by:** focused native agent/comparison/serialization specs, MCP semantic/revision/proposal comparison specs
 including frozen JSON contracts, native-generated TypeScript transport checks and TypeScript compiler/editor tests,
 then the repository's Release solution build and required lint/non-integration test matrix. Generation of the new
-v44 artifacts must leave v42/v43 and all older published artifacts unchanged.
+v48 artifacts must leave v44–v47 and all older published artifacts unchanged.
 
 ## Consequences
 

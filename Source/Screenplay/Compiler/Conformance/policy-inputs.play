@@ -1,0 +1,21 @@
+policy PlanGrants
+  asset String
+  reads AssetPlan as plan by asset
+  require authenticated and plan.dataQuality == true
+
+module Plans
+  feature Grants
+    slice StateChange RequestGrant
+      event GrantRequested
+        vesselId String
+      command RequestGrant
+        vesselId String identifier
+        authorize PlanGrants
+          asset = vesselId
+        produces GrantRequested
+          for vesselId
+          vesselId = vesselId
+    slice StateView PlanOfAssets
+      readmodel AssetPlan
+        assetId String key
+        dataQuality Bool

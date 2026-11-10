@@ -181,6 +181,7 @@ public sealed partial class SemanticModelBinder
                 keyPropertyId = keyProperty.Id;
             }
 
+            var narrowing = BindNarrowing(query, cardinality, readModel);
             return new(
                 id,
                 query.Name,
@@ -191,8 +192,50 @@ public sealed partial class SemanticModelBinder
                 query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot)
             {
                 Filters = BindQueryFilters(address, query, readModel),
-                KeyParts = BindQueryKeyParts(address, query, readModel)
+                KeyParts = BindQueryKeyParts(address, query, readModel),
+                Narrowing = narrowing
             };
+        }
+
+        SemanticPolicyReference? BindNarrowing(QuerySyntax query, SemanticQueryCardinality cardinality, BoundReadModel readModel)
+        {
+            if (query.Narrow is not { } narrow) return null;
+            var policy = syntax.Policies.FirstOrDefault(candidate => candidate.Name == narrow.Policy);
+            if (policy is null)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Query '{query.Name}' narrows by policy '{narrow.Policy}', which is unresolved.", narrow.Location);
+                return null;
+            }
+
+            if (cardinality != SemanticQueryCardinality.Many)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' narrows rows, which needs a read-model collection result.", narrow.Location);
+                return null;
+            }
+
+            if (policy.Condition is not StateConditionSyntax and not LogicalPolicyConditionSyntax and not NotPolicyConditionSyntax and not AuthenticatedConditionSyntax and not RoleConditionSyntax and not ClaimConditionSyntax)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' has an opaque predicate and cannot narrow the rows of query '{query.Name}'.", narrow.Location);
+                return null;
+            }
+
+            foreach (var read in policy.Reads ?? [])
+            {
+                var mapped = (policy.Inputs ?? []).Any(input => input.Name == read.By) ? null : read.By;
+                if (mapped is null)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' read '{read.ReadModel}' takes its key from input '{read.By}'; to narrow rows, key the read by a property of '{ShortName(query.ReturnType.Name)}'.", narrow.Location);
+                    return null;
+                }
+
+                if (!readModel.Properties.ContainsKey(mapped))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' read '{read.ReadModel}' takes its key from '{mapped}', which is not a property of '{ShortName(query.ReturnType.Name)}'.", narrow.Location);
+                    return null;
+                }
+            }
+
+            return new SemanticPolicyReference(policy.Name);
         }
     }
 }

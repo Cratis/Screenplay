@@ -658,6 +658,16 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, policy.Description, policy);
+            foreach (var input in policy.Inputs ?? [])
+            {
+                writer.Line($"{input.Name} {input.Type}{(input.From is null ? string.Empty : $" from {input.From}")}", input);
+            }
+
+            foreach (var reads in policy.Reads ?? [])
+            {
+                WriteReads(writer, reads);
+            }
+
             if (policy.Condition is not null)
             {
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);
