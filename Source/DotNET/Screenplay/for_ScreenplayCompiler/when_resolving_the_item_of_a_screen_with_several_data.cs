@@ -97,7 +97,7 @@ public class when_resolving_the_item_of_a_screen_with_several_data : given.a_com
         var narrowed = Codes("        data Header via query HeaderOf\n        data Row[] via query Rows\n        table Row\n        action Tag for item\n          with tags from item.rowId", DiagnosticCodes.UnknownActionArgumentProperty);
         var single = Codes("        data Row[] via query Rows\n        action Tag for item\n          with tags from item.rowId", DiagnosticCodes.UnknownActionArgumentProperty);
         single.Length.ShouldEqual(1);
-        string.Join("|", narrowed.Select(diagnostic => diagnostic.Message)).ShouldEqual(string.Join("|", single.Select(diagnostic => diagnostic.Message)));
+        string.Join('|', narrowed.Select(diagnostic => diagnostic.Message)).ShouldEqual(string.Join('|', single.Select(diagnostic => diagnostic.Message)));
     }
 
     [Fact]
