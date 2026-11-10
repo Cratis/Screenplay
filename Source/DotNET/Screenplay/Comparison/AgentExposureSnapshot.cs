@@ -44,11 +44,12 @@ sealed record AgentExposureSnapshot(bool HasErrors, bool HasBlock, AgentTokenKin
         var resolution = ReferenceResolver.Resolve(operation.Reference, new([]), [.. candidates.Select(target => target.Declaration)]);
         var name = resolution.Resolved is { } resolved ? candidates.Single(target => target.Declaration == resolved).QualifiedName : operation.Reference;
         var declarations = index.Declarations.Where(declaration => declaration.Kind == operation.Kind.ToString() && declaration.Address == name).ToArray();
-        var signature = sourceValid && declarations.Length == 1 ? AgentExposureSignature.Read(index, declarations[0]) : null;
-        return new(new(operation.Kind, name), new(operation.Scope, signature));
+        var incompleteReferences = false;
+        var signature = sourceValid && declarations.Length == 1 ? AgentExposureSignature.Read(index, declarations[0], out incompleteReferences) : null;
+        return new(new(operation.Kind, name), new(operation.Scope, signature, incompleteReferences));
     }
 
     internal sealed record Key(AgentOperationKind Kind, string Name);
 
-    internal sealed record Operation(AgentScope? Scope, string? Signature);
+    internal sealed record Operation(AgentScope? Scope, string? Signature, bool IncompleteReferences);
 }
