@@ -16,10 +16,11 @@ namespace Cratis.Screenplay.Parsing;
 internal static partial class ScreenplayParser
 {
     // The words that open something belonging in a module or feature body, which a document's top level cannot hold.
-    static readonly HashSet<string> _scopeKeywords = new(StringComparer.Ordinal)
-    {
+    static readonly HashSet<string> _scopeKeywords =
+    [
+        with(StringComparer.Ordinal),
         "slice", "feature", "description", "documentation", "authorize", "screen", "dialog", "form", "contribute", "on", "uses"
-    };
+    ];
 
     /// <summary>
     /// Parses a document.
