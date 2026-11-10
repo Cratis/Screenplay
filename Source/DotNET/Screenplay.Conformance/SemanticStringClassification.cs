@@ -32,12 +32,12 @@ internal static class SemanticStringClassification
     // Scoped literals whose property name is an identity name elsewhere.
     static readonly HashSet<string> _literalsNamedLikeIdentities = new(StringComparer.Ordinal)
     {
-        "then/target", "nodes/trigger", "timeZone/id", "navigation/trigger",
+        "then/target", "mappings/property", "nodes/trigger", "timeZone/id", "navigation/trigger",
     };
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
-        "then/target", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
         "screens/title", "screens/description", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
         "layout/fits", "regions/shows", "regions/title", "regions/actions",
     };
@@ -51,7 +51,7 @@ internal static class SemanticStringClassification
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",
-        "targetKind", "by", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
+        "targetKind", "by", "input", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
     };
 
     /// <summary>

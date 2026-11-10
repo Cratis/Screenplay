@@ -55,19 +55,58 @@ internal static partial class SemanticModelRead
         SemanticPolicyCondition? condition = null;
         string? requirementId = null;
         var reads = ImmutableArray<SemanticPolicyRead>.Empty;
+        var inputs = ImmutableArray<SemanticPolicyInput>.Empty;
         while (NextProperty(ref reader, seen, "policy") is { } property)
         {
             switch (property)
             {
                 case "name": name = String(ref reader, property); break;
                 case "reads": reads = Array(ref reader, PolicyRead, property); break;
+                case "inputs": inputs = Array(ref reader, PolicyInput, property); break;
                 case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = PolicyCondition(ref reader); break;
                 case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "policy");
             }
         }
         Required(name is not null && condition is not null && (condition is SemanticOpaquePolicyCondition) == (requirementId is not null), "policy");
-        return new(name!, condition is SemanticOpaquePolicyCondition ? new SemanticOpaquePolicyCondition(requirementId!) : condition!) { Reads = reads };
+        return new(name!, condition is SemanticOpaquePolicyCondition ? new SemanticOpaquePolicyCondition(requirementId!) : condition!) { Reads = reads, Inputs = inputs };
+    }
+
+    internal static SemanticPolicyInput PolicyInput(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "policy input");
+        var seen = NewSeen();
+        string? name = null;
+        SemanticTypeReference? type = null;
+        while (NextProperty(ref reader, seen, "policy input") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "type": RequiredToken(ref reader, JsonTokenType.StartObject, property); type = TypeReference(ref reader); break;
+                default: throw Unknown(property, "policy input");
+            }
+        }
+        Required(name is not null && type is not null, "policy input");
+        return new(name!, type!);
+    }
+
+    internal static SemanticPolicyInputMapping PolicyInputMapping(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "policy input mapping");
+        var seen = NewSeen();
+        string? input = null, mapped = null;
+        while (NextProperty(ref reader, seen, "policy input mapping") is { } property)
+        {
+            switch (property)
+            {
+                case "input": input = String(ref reader, property); break;
+                case "property": mapped = String(ref reader, property); break;
+                default: throw Unknown(property, "policy input mapping");
+            }
+        }
+        Required(input is not null && mapped is not null, "policy input mapping");
+        return new(input!, mapped!);
     }
 
     internal static SemanticPolicyRead PolicyRead(ref Utf8JsonReader reader)
@@ -147,6 +186,7 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         string? kind = null, name = null, op = null;
         SemanticAuthorization? left = null, right = null;
+        var mappings = ImmutableArray<SemanticPolicyInputMapping>.Empty;
         while (NextProperty(ref reader, seen, "authorization") is { } property)
         {
             switch (property)
@@ -156,12 +196,13 @@ internal static partial class SemanticModelRead
                 case "operator": op = String(ref reader, property); break;
                 case "left": RequiredToken(ref reader, JsonTokenType.StartObject, property); left = Authorization(ref reader); break;
                 case "right": RequiredToken(ref reader, JsonTokenType.StartObject, property); right = Authorization(ref reader); break;
+                case "mappings": mappings = Array(ref reader, PolicyInputMapping, property); break;
                 default: throw Unknown(property, "authorization");
             }
         }
         return kind switch
         {
-            "policy" when name is not null && op is null && left is null && right is null => new SemanticPolicyReference(name),
+            "policy" when name is not null && op is null && left is null && right is null => new SemanticPolicyReference(name) { Mappings = mappings },
             "logical" when name is null && (op == "and" || op == "or") && left is not null && right is not null =>
                 new SemanticLogicalAuthorization(left, op == "and" ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, right),
             _ => throw Malformed("authorization", "a policy reference or logical authorization")

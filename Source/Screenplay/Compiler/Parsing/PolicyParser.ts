@@ -12,6 +12,7 @@ import { parseCode, parseFile } from './ImplementationParser';
 import { parseReads } from './ReadsParser';
 import { parseCondition } from './ConditionParser';
 import { ReadsSyntax } from '../Syntax/ReadsSyntax';
+import { PolicyInputSyntax } from '../Syntax/Policies';
 import { firstWord } from './LineText';
 import { parseDescription } from './DescriptionParser';
 import { ParserContext } from './ParserContext';
@@ -32,10 +33,14 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     let depthExceeded = false;
     let description: string | null = null;
     const reads: ReadsSyntax[] = [];
+    const inputs: PolicyInputSyntax[] = [];
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (firstWord(line.content) === 'description') {
             description = parseDescription(diagnosticContext, line, description, `Policy '${name}'`);
+        } else if (inputPattern.test(line.content) && !['reads', 'require', 'file', 'description', 'anonymous'].includes(firstWord(line.content))) {
+            const match = inputPattern.exec(line.content)!;
+            inputs.push({ kind: 'PolicyInputSyntax', name: match[1], type: match[2], ...(match[3] === undefined ? {} : { from: match[3] }), location: locationOf(line) });
         } else if (firstWord(line.content) === 'reads') {
             const read = parseReads(context, line);
             if (read !== undefined) reads.push(read);
@@ -70,7 +75,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     }
     if (condition !== null && (code !== null || file !== null)) context.error(DiagnosticCodes.MixedPolicyImplementation, `Policy '${name}' cannot combine 'require' with a file or inline code block`, locationOf(header));
     if (condition === null && code === null && file === null && !depthExceeded) context.error(DiagnosticCodes.PolicyWithoutRequirement, `Policy '${name}' must declare a 'require' condition, a file reference or an inline code block`, locationOf(header));
-    return { kind: 'PolicySyntax', name, ...(reads.length === 0 ? {} : { reads }), condition, code, file, description, location: locationOf(header) };
+    return { kind: 'PolicySyntax', name, ...(inputs.length === 0 ? {} : { inputs }), ...(reads.length === 0 ? {} : { reads }), condition, code, file, description, location: locationOf(header) };
 }
 
 function tokenizePolicyCondition(context: ParserContext, text: string): string[] {
@@ -153,6 +158,8 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
     }
     return condition;
 }
+
+const inputPattern = /^([a-z]\w*)\s+([A-Z]\w*)(?:\s+from\s+(\$[\w.]+))?$/u;
 
 const comparisonOperators = new Set(['==', '!=', '>', '>=', '<', '<=', 'contains']);
 

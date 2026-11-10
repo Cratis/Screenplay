@@ -26,6 +26,7 @@ public static partial class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         CanonicalJson.WriteString(writer, "name", policy.Name);
+        if (!policy.Inputs.IsDefaultOrEmpty) WriteArray(writer, "inputs", policy.Inputs, WritePolicyInput);
         if (!policy.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", policy.Reads, WritePolicyRead);
         writer.WritePropertyName("condition");
         WritePolicyCondition(writer, policy.Condition);
@@ -33,6 +34,23 @@ public static partial class SemanticModelCanonicalJson
         {
             CanonicalJson.WriteString(writer, "requirementId", opaque.RequirementId);
         }
+        writer.WriteEndObject();
+    }
+
+    static void WritePolicyInput(Utf8JsonWriter writer, SemanticPolicyInput input)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", input.Name);
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, input.Type);
+        writer.WriteEndObject();
+    }
+
+    static void WritePolicyInputMapping(Utf8JsonWriter writer, SemanticPolicyInputMapping mapping)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "input", mapping.Input);
+        CanonicalJson.WriteString(writer, "property", mapping.Property);
         writer.WriteEndObject();
     }
 
@@ -106,6 +124,7 @@ public static partial class SemanticModelCanonicalJson
             case SemanticPolicyReference reference:
                 writer.WriteString("kind", "policy");
                 CanonicalJson.WriteString(writer, "name", reference.Name);
+                if (!reference.Mappings.IsDefaultOrEmpty) WriteArray(writer, "mappings", reference.Mappings, WritePolicyInputMapping);
                 break;
             case SemanticLogicalAuthorization logical:
                 writer.WriteString("kind", "logical");

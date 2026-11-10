@@ -21,6 +21,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileReference(syntax.File);
         }
 
+        foreach (var input in syntax.Inputs ?? [])
+        {
+            VisitNode(input);
+        }
+
         foreach (var reads in syntax.Reads ?? [])
         {
             VisitReads(reads);

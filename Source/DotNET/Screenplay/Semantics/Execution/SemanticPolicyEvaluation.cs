@@ -76,7 +76,7 @@ internal static class SemanticPolicyEvaluation
             IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? state = null;
             if (!policy.Reads.IsDefaultOrEmpty)
             {
-                state = ReadState(policy, caller, artifact);
+                state = ReadState(policy, reference, caller, artifact);
                 if (state is null) return new(SemanticPolicyOutcome.Deny, policy.Name, "No recorded state exists for the policy.");
             }
 
@@ -182,12 +182,13 @@ internal static class SemanticPolicyEvaluation
     static string? Text(SemanticValue? value) => value is SemanticTextValue text ? text.Value : null;
 
     // A policy read that finds no instance denies: an absent fact never allows.
-    static Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? ReadState(SemanticPolicy policy, Principal caller, IReadOnlyDictionary<string, SemanticValue> artifact)
+    static Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? ReadState(SemanticPolicy policy, SemanticPolicyReference reference, Principal caller, IReadOnlyDictionary<string, SemanticValue> artifact)
     {
         var state = new Dictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>(StringComparer.Ordinal);
         foreach (var read in policy.Reads)
         {
-            if (!artifact.TryGetValue(read.By, out var key) || RefusedReadKeys.IsRefused(key)) return null;
+            var source = reference.Mappings.IsDefaultOrEmpty ? read.By : reference.Mappings.FirstOrDefault(mapping => mapping.Input == read.By)?.Property ?? read.By;
+            if (!artifact.TryGetValue(source, out var key) || RefusedReadKeys.IsRefused(key)) return null;
             var instance = caller.ReadModels.FirstOrDefault(candidate => candidate.ReadModel == read.ReadModel && SemanticValueRules.AreEqual(candidate.Key, key));
             if (instance is null) return null;
             state[read.Name] = instance.Values.ToDictionary(value => value.TargetProperty, value => value.Value);

@@ -354,7 +354,17 @@ public partial class ScreenplayPrinter
     }
 
     void WriteAuthorize(ScreenplayWriter writer, AuthorizeSyntax authorize) =>
+        WriteAuthorizeWithMappings(writer, authorize);
+
+    void WriteAuthorizeWithMappings(ScreenplayWriter writer, AuthorizeSyntax authorize)
+    {
         writer.Line($"authorize {ScreenplaySyntaxText.PolicyRequirement(authorize.Requirement)}", authorize);
+        if (authorize.Mappings is null) return;
+        using (writer.Indent())
+        {
+            foreach (var mapping in authorize.Mappings) writer.Line($"{mapping.Input} = {mapping.Property}", mapping);
+        }
+    }
 
     void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate, bool impliedSubject = false)
     {
