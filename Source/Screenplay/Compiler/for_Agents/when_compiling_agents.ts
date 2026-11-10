@@ -108,6 +108,67 @@ describe('when compiling agents', () => {
         }
     });
 
+    it('should refuse a named agents block', () => {
+        const result = parse(`${model}\n${allowlist.replace('agents\n', 'agents Staff\n')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.InvalidAgentsDeclaration && diagnostic.message === "Expected 'agents' with no name or arguments")).to.be.true;
+    });
+
+    it('should recover from an invalid token declaration without losing the personal token', () => {
+        const result = parse(`${model}\n${allowlist.replace('tokens personal', 'tokens unknown\n  tokens personal')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.InvalidAgentsDeclaration && diagnostic.message === "Expected 'tokens personal'")).to.be.true;
+        expect(result.value.agents!.tokens!.syntaxKind).to.equal('Personal');
+    });
+
+    it('should refuse a second token declaration without replacing the first', () => {
+        const result = parse(`${model}\n${allowlist.replace('tokens personal', 'tokens personal\n  tokens oauth')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.AgentTokensMissing && diagnostic.message === 'An agents block allows exactly one tokens declaration')).to.be.true;
+        expect(result.value.agents!.tokens!.syntaxKind).to.equal('Personal');
+    });
+
+    it('should skip a malformed operation and retain the following valid operations', () => {
+        const malformed = '  query All extra\n    scope read\n    description "Invalid reference"';
+        const result = parse(`${model}\n${allowlist.replace('  tokens personal', `  tokens personal\n${malformed}`)}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.filter(diagnostic => diagnostic.severity === 'error').map(diagnostic => diagnostic.code)).to.deep.equal([DiagnosticCodes.InvalidAgentsDeclaration]);
+        expect(result.value.agents!.operations.map(operation => operation.reference)).to.deep.equal(['Sales.Invoices.Listing.All', 'Sales.Invoices.Drafting.Issue']);
+    });
+
+    it('should refuse an invalid scope even when a valid scope follows', () => {
+        const result = parse(`${model}\n${allowlist.replace('    scope read', '    scope admin\n    scope read')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.AgentOperationMissingScope)).to.be.true;
+        expect(result.value.agents!.operations[0].scope).to.equal('Read');
+    });
+
+    it('should refuse a duplicate scope without replacing the first', () => {
+        const result = parse(`${model}\n${allowlist.replace('    scope read', '    scope read\n    scope write')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.AgentOperationMissingScope)).to.be.true;
+        expect(result.value.agents!.operations[0].scope).to.equal('Read');
+    });
+
+    it('should refuse a nonliteral description and recover at the next operation field', () => {
+        const result = parse(`${model}\n${allowlist.replace('    description "Read invoices"', '    description $strings.readInvoices\n      approval manual\n    description "Read invoices"')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.filter(diagnostic => diagnostic.severity === 'error').map(diagnostic => diagnostic.code)).to.deep.equal([DiagnosticCodes.AgentOperationMissingDescription]);
+        expect(result.value.agents!.operations[0].description).to.equal('Read invoices');
+    });
+
+    it('should refuse nested directives under leaf fields without losing the allowlist', () => {
+        const result = parse(`${model}\n${allowlist.replace('  tokens personal', '  tokens personal\n    issuer "custom"').replace('    scope read', '    scope read\n      approval manual').replace('    description "Read invoices"', '    description "Read invoices"\n      translated "Other text"')}`);
+        expect(result.success).to.be.false;
+        expect(result.diagnostics.filter(diagnostic => diagnostic.severity === 'error').map(diagnostic => diagnostic.code)).to.deep.equal([
+            DiagnosticCodes.InvalidAgentsDeclaration,
+            DiagnosticCodes.AgentApprovalNotSupported,
+            DiagnosticCodes.InvalidAgentsDeclaration
+        ]);
+        expect(result.value.agents!.operations).to.have.lengthOf(2);
+        expect(result.value.agents!.operations[0].description).to.equal('Read invoices');
+    });
+
     it('should refuse duplicate blocks across documents', () => {
         const source = `${model}\n${allowlist}`;
         const result = mergeDocuments([parse(source), parse(source)]);
