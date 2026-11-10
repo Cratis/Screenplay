@@ -26,6 +26,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "application-context",
         "reaction-identity",
         "reaction-event-source",
+        "producerless-event-source",
         "declaration-descriptions",
         "purposes",
         "event-subject",

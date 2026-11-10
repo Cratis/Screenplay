@@ -283,6 +283,9 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            // Producerless history can be typed by the read model keyed on the event's own source identity.
+            type = FixtureEventSourceType(type, value.For, ShortName(value.EventType));
+
             return new(
                 @event.Contract.Id,
                 BindPropertyValues(value.Values, @event.Properties, "specification event"))
