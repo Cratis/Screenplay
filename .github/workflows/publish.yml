@@ -244,7 +244,6 @@ jobs:
         with:
           global-json-file: global.json
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          dotnet-quality: preview # Drop at .NET 11 GA.
 
       - name: Remove any existing artifacts
         run: rm -rf ${{ env.NUGET_OUTPUT }}
