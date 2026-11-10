@@ -25,6 +25,7 @@ describe('when parsing policies that decide from recorded state', () => {
     });
 
     it('should parse a comparison with the caller identity', () => {
-        (second?.condition?.kind === 'StateConditionSyntax' ? second?.condition.comparison.left : '').should.equal('article.author');
+        const condition = second?.condition;
+        (condition?.kind === 'StateConditionSyntax' ? condition.comparison.left : '').should.equal('article.author');
     });
 });
