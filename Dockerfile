@@ -24,7 +24,7 @@ RUN yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 ####################################
 # Tool - compiled with the board embedded
 ####################################
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0-resolute AS build
 ARG VERSION=0.0.0
 
 WORKDIR /src
@@ -45,7 +45,7 @@ RUN dotnet publish Source/DotNET/Tool \
 ####################################
 # Runtime
 ####################################
-FROM mcr.microsoft.com/dotnet/runtime:10.0-noble-chiseled
+FROM mcr.microsoft.com/dotnet/runtime:11.0-resolute-chiseled
 
 LABEL org.opencontainers.image.title="Cratis Screenplay" \
       org.opencontainers.image.description="Compiler, CLI and MCP server for Cratis Screenplay (.play) models" \

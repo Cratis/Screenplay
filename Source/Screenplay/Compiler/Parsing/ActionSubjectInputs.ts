@@ -11,6 +11,7 @@ import { RefusalDeclarations } from './RefusalDeclarations';
 
 export interface ActionSubjectContext {
     readonly data: readonly ScreenDataSyntax[];
+    readonly tables: readonly string[];
     readonly slice: SliceSyntax;
     readonly location: SourceLocation;
 }

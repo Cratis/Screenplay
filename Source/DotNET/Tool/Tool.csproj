@@ -4,7 +4,7 @@
         <AssemblyName>Cratis.Screenplay.Tool</AssemblyName>
         <RootNamespace>Cratis.Screenplay.Tool</RootNamespace>
         <PackageId>Cratis.Screenplay.Tool</PackageId>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <RuntimeIdentifiers></RuntimeIdentifiers>
         <IsPackable>true</IsPackable>

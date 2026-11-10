@@ -20,21 +20,21 @@ internal static partial class GuardedActionValidator
         {
             foreach (var screen in slice.Screens)
             {
-                ValidateContainer(screen.Directives, [], scope, declarations, context, behaviors);
+                ValidateContainer(screen.Directives, ActionSubjectVisibility.None, scope, declarations, context, behaviors);
             }
         }
     }
 
     static void ValidateContainer(
         IEnumerable<ScreenDirectiveSyntax> directives,
-        IReadOnlyList<ScreenDataSyntax> inherited,
+        ActionSubjectVisibility inherited,
         DeclarationScope scope,
         ConsistencyDeclarations declarations,
         ParserContext context,
         ILookup<string, BehaviorSyntax> behaviors)
     {
-        var local = directives.OfType<ScreenDataSyntax>().ToArray();
-        var subjects = local.Length == 0 ? inherited : local;
+        var visible = ActionSubjectVisibility.Within(directives, inherited);
+        var subjects = visible.Data;
         foreach (var directive in directives)
         {
             switch (directive)
@@ -43,7 +43,8 @@ internal static partial class GuardedActionValidator
                     ValidateAction(action, subjects, scope, declarations, context);
                     break;
                 case ScreenActionSyntax action:
-                    ValidateArguments(action.Command, action.Inputs, subjects.Count == 1 ? declarations.ViewProperties(subjects[0].Type.Name, scope) : null, scope, declarations, context);
+                    var itemSubjects = visible.ItemSubjects(action.Subject);
+                    ValidateArguments(action.Command, action.Inputs, itemSubjects.Count == 1 ? declarations.ViewProperties(itemSubjects[0].Type.Name, scope) : null, scope, declarations, context);
                     break;
                 case ScreenBehaviorSyntax attached:
                     ValidateInteraction(attached.Behavior, subjects, scope, declarations, context);
@@ -59,16 +60,16 @@ internal static partial class GuardedActionValidator
                 case ScreenComponentSyntax component:
                     foreach (var behavior in component.Behaviors) ValidateInteraction(behavior, subjects, scope, declarations, context);
                     foreach (var uses in component.UsedBehaviors) ValidateInteractionUse(uses, subjects, scope, declarations, context, behaviors);
-                    foreach (var slot in component.Slots) ValidateContainer(slot.Directives, subjects, scope, declarations, context, behaviors);
+                    foreach (var slot in component.Slots) ValidateContainer(slot.Directives, visible, scope, declarations, context, behaviors);
                     break;
                 case ScreenSectionSyntax section:
-                    ValidateContainer(section.Directives, subjects, scope, declarations, context, behaviors);
+                    ValidateContainer(section.Directives, visible, scope, declarations, context, behaviors);
                     break;
                 case ScreenSlotSyntax slot:
-                    ValidateContainer(slot.Directives, subjects, scope, declarations, context, behaviors);
+                    ValidateContainer(slot.Directives, visible, scope, declarations, context, behaviors);
                     break;
                 case ScreenTemplateReferenceSyntax template:
-                    foreach (var slot in template.Slots) ValidateContainer(slot.Directives, subjects, scope, declarations, context, behaviors);
+                    foreach (var slot in template.Slots) ValidateContainer(slot.Directives, visible, scope, declarations, context, behaviors);
                     break;
             }
         }

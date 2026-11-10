@@ -12,7 +12,7 @@ public class when_printing_a_trace_as_json : given.the_library
     void Because()
     {
         ExitCode = ToolCommands.Run(["lineage", Title, Root, "--format", "json", "--direction", "downstream"], Output, Error);
-        _report = JsonDocument.Parse(Output.ToString()).RootElement.Clone();
+        _report = JsonElement.Parse(Output.ToString());
     }
 
     [Fact] void should_succeed() => ExitCode.ShouldEqual(0);

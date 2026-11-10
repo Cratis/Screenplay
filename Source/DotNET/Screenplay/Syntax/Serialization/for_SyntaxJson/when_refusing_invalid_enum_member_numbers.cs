@@ -15,7 +15,7 @@ public class when_refusing_invalid_enum_member_numbers : Specification
         "\"type\":\"Enum\",\"values\":[\"draft\",\"issued\"],\"valueNumbers\":[1]",
         "\"type\":\"Enum\",\"values\":[\"draft\",\"issued\"],\"valueNumbers\":[1,1]",
         "\"type\":\"Enum\",\"values\":[\"draft\"],\"valueNumbers\":[2147483648]"
-    }.Select(members => Catch.Exception(() => SyntaxJson.Deserialize(JsonDocument.Parse("{\"kind\":\"ConceptSyntax\",\"name\":\"Status\"," + members + "}").RootElement)))];
+    }.Select(members => Catch.Exception(() => SyntaxJson.Deserialize(JsonElement.Parse("{\"kind\":\"ConceptSyntax\",\"name\":\"Status\"," + members + "}"))))];
 
     [Fact] void should_reject_non_enums_cardinality_aliases_and_overflow() => _errors.All(error => error is InvalidSyntaxJson).ShouldBeTrue();
 }

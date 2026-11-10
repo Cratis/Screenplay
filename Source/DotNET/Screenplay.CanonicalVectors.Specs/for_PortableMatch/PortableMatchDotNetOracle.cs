@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if NET10_0
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Semantics;
 
@@ -20,4 +19,3 @@ static class PortableMatchDotNetOracle
     internal static Func<string, bool> Compile(MatchPatternResult pattern) =>
         new Regex(pattern.NormalizedDotNetPattern, RegexOptions.NonBacktracking | RegexOptions.CultureInvariant, Regex.InfiniteMatchTimeout).IsMatch;
 }
-#endif

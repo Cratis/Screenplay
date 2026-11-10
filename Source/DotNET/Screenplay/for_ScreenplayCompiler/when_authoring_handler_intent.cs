@@ -48,10 +48,10 @@ public class when_authoring_handler_intent : given.a_compiler
 
     [Fact]
     void should_keep_old_transport_readable() =>
-        ((HandlerSyntax)SyntaxJson.Deserialize(JsonDocument.Parse("{\"kind\":\"HandlerSyntax\",\"file\":{\"kind\":\"FileReferenceSyntax\",\"path\":\"C.cs\"},\"code\":null}").RootElement)).Implementation.ShouldBeNull();
+        ((HandlerSyntax)SyntaxJson.Deserialize(JsonElement.Parse("{\"kind\":\"HandlerSyntax\",\"file\":{\"kind\":\"FileReferenceSyntax\",\"path\":\"C.cs\"},\"code\":null}"))).Implementation.ShouldBeNull();
 
     [Fact]
-    void should_reject_unknown_metadata_fields() => Catch.Exception(() => SyntaxJson.Deserialize(JsonDocument.Parse("{\"kind\":\"ImplementationSyntax\",\"hints\":[],\"confirmed\":true}").RootElement)).ShouldBeOfExactType<InvalidSyntaxJson>();
+    void should_reject_unknown_metadata_fields() => Catch.Exception(() => SyntaxJson.Deserialize(JsonElement.Parse("{\"kind\":\"ImplementationSyntax\",\"hints\":[],\"confirmed\":true}"))).ShouldBeOfExactType<InvalidSyntaxJson>();
 
     [Fact]
     void should_reject_conflicting_typed_payloads() => Catch.Exception(() => SyntaxJson.Serialize(new HandlerSyntax(new("C.cs", SourceLocation.Start), new("csharp", "return null;", SourceLocation.Start), SourceLocation.Start) { Implementation = new([], SourceLocation.Start) })).ShouldBeOfExactType<InvalidSyntaxJson>();

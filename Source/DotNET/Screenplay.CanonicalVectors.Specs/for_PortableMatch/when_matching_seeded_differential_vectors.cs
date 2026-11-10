@@ -18,11 +18,9 @@ public class when_matching_seeded_differential_vectors
             return machine.IsMatch;
         });
 
-#if NET10_0
     [Fact]
     void should_equal_node_for_the_normalized_dotnet_10_renderer_pattern() =>
         Check(PortableMatchDotNetOracle.Compile);
-#endif
 
     static void Check(Func<MatchPatternResult, Func<string, bool>> compile)
     {

@@ -98,7 +98,7 @@ Specifications without these header details keep their titles.
 
 This route needs an MCP Apps-capable chat host and a compatible Screenplay MCP
 server. MCP (Model Context Protocol) connects the host to tools; MCP Apps lets it
-show the interactive board. For the .NET tool below, install the .NET 10 SDK first,
+show the interactive board. For the .NET tool below, install the .NET 11 SDK first,
 and make sure the global tool directory is on `PATH`:
 
 ```bash

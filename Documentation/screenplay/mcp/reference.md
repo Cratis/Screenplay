@@ -219,7 +219,7 @@ Query `by` keys and supplied filter values obey their concept rules after author
 
 ## Embedding API
 
-The `Cratis.Screenplay.Mcp` library targets .NET 10 and references the Screenplay
+The `Cratis.Screenplay.Mcp` library targets .NET 10 and .NET 11 and references the Screenplay
 compiler. Hosts can embed the server without launching or installing another
 executable. The standalone `screenplay mcp <root>` command remains supported and
 delegates to the same server. Cratis CLI/AI-distribution integration is delivered

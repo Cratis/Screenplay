@@ -30,7 +30,7 @@ public class when_validating_a_document_the_schema_does_not_describe : Specifica
     [Fact] void should_refuse_a_version_without_a_schema() => Catch.Exception(() => EsmJsonSchema.For(new SemanticVersion(39, 0))).ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_not_allow_a_member_added_by_a_later_version() => EsmJsonSchema.For(new SemanticVersion(5, 0)).ShouldNotContain("\"triggers\"");
 
-    IReadOnlyList<string> Errors(JsonObject document) => _validator.Validate(JsonDocument.Parse(document.ToJsonString()).RootElement);
+    IReadOnlyList<string> Errors(JsonObject document) => _validator.Validate(JsonElement.Parse(document.ToJsonString()));
 
     JsonObject With(Action<JsonObject> change)
     {

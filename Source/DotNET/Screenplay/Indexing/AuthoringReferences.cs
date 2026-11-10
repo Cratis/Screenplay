@@ -18,11 +18,7 @@ sealed class AuthoringReferences
     readonly Dictionary<AuthoredReference, AuthoredDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Name, string Kinds, string Scope), AuthoredDeclaration[]> _names = [];
     readonly Dictionary<(string Name, string Kinds, string Scope), AuthoredDeclaration[]> _productionNames = [];
-#if NET9_0_OR_GREATER
     readonly Lock _resolutionLock = new();
-#else
-    readonly object _resolutionLock = new();
-#endif
     readonly Dictionary<AuthoredDeclaration, List<ReferenceResolution>> _incoming = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<ReadOwner, List<AuthoredReference>> _outgoing = [];
     readonly Dictionary<string, List<AuthoredReference>> _outgoingByAddress = new(StringComparer.Ordinal);
@@ -37,32 +33,8 @@ sealed class AuthoringReferences
         _sources = declared.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0).ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
         _streams = declared.Where(declaration => declaration.Kind == "EventStream" && declaration.Scope.Length == 1).ToLookup(declaration => declaration.Address, StringComparer.Ordinal);
         _sourceValueTypes = declared.Where(declaration => (declaration.Kind == "Concept" || declaration.Kind == "Type") && declaration.Scope.Length == 0).ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
-        foreach (var declaration in declared)
-        {
-            for (var depth = 0; depth <= declaration.Scope.Length; depth++)
-            {
-                Add(_prefixes, (declaration.Name, ScopeKey(declaration.Scope.Take(depth))), declaration);
-                Add(_suffixes, (declaration.Name, ScopeKey(declaration.Scope.Skip(depth))), declaration);
-            }
-        }
-
-        foreach (var reference in references)
-        {
-            var candidates = Resolve(reference);
-            _resolutions.Add(reference, candidates);
-            var resolution = new ReferenceResolution(reference, candidates);
-            _resolvedReferences.Add(resolution);
-            foreach (var candidate in candidates)
-            {
-                Add(_incoming, candidate, resolution);
-            }
-
-            if (reference.Owner is not null)
-            {
-                Add(_outgoing, reference.Owner, reference);
-                Add(_outgoingByAddress, reference.Owner.Address, reference);
-            }
-        }
+        foreach (var declaration in declared) IndexDeclarationScopes(declaration);
+        foreach (var reference in references) RegisterReference(reference);
     }
 
     internal IEnumerable<ReferenceResolution> ResolvedReferences => _resolvedReferences;
@@ -140,6 +112,28 @@ sealed class AuthoringReferences
         }
     }
 
+    void IndexDeclarationScopes(AuthoredDeclaration declaration)
+    {
+        for (var depth = 0; depth <= declaration.Scope.Length; depth++)
+        {
+            Add(_prefixes, (declaration.Name, ScopeKey(declaration.Scope.Take(depth))), declaration);
+            Add(_suffixes, (declaration.Name, ScopeKey(declaration.Scope.Skip(depth))), declaration);
+        }
+    }
+
+    void RegisterReference(AuthoredReference reference)
+    {
+        var candidates = Resolve(reference);
+        _resolutions.Add(reference, candidates);
+        var resolution = new ReferenceResolution(reference, candidates);
+        _resolvedReferences.Add(resolution);
+        foreach (var candidate in candidates) Add(_incoming, candidate, resolution);
+
+        if (reference.Owner is null) return;
+        Add(_outgoing, reference.Owner, reference);
+        Add(_outgoingByAddress, reference.Owner.Address, reference);
+    }
+
     AuthoredDeclaration[] ResolveName(AuthoredReference reference)
     {
         if (reference.Kinds.Contains("EventSource", StringComparer.Ordinal))
@@ -150,10 +144,19 @@ sealed class AuthoringReferences
         if (reference.Kinds.Contains("EventStream", StringComparer.Ordinal)) return [.. _streams[reference.Name]];
         if (reference.Kinds.Contains("Event", StringComparer.Ordinal) && reference.Kinds.Contains("Trigger", StringComparer.Ordinal))
         {
-            var events = ResolveName(reference with { Kinds = ["Event"] });
-            if (events.Length > 0 || _imports.Contains(reference.Name)) return events;
-            return ResolveName(reference with { Kinds = ["Trigger"] });
+            return ResolveEventOrTrigger(reference);
         }
+        return ResolveScopedName(reference);
+    }
+
+    AuthoredDeclaration[] ResolveEventOrTrigger(AuthoredReference reference)
+    {
+        var events = ResolveName(reference with { Kinds = ["Event"] });
+        return events.Length > 0 || _imports.Contains(reference.Name) ? events : ResolveName(reference with { Kinds = ["Trigger"] });
+    }
+
+    AuthoredDeclaration[] ResolveScopedName(AuthoredReference reference)
+    {
         var segments = reference.Name.Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0)
         {

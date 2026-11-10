@@ -2,8 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { resolveActionSubjects } from '../ScreenActionSubjects';
-import { ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenTableSyntax } from '../Syntax/Screens';
+import { ScreenActionSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenTableSyntax } from '../Syntax/Screens';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
+import { itemSubjects } from './ActionSubjectVisibility';
 import { comparisons, validateArguments, validateItemPath, viewProperties } from './GuardedActionInputs';
 import { validateGuardedActionShadowing } from './GuardedActionShadowing';
 import { GuardedInteractions } from './GuardedInteractions';
@@ -17,7 +18,7 @@ export function validateGuardedActions(application: ApplicationSyntax, context: 
     const interactions = new GuardedInteractions(declarations, context);
     interactions.structural(application);
     for (const { slice } of declarations.slices) {
-        for (const screen of slice.screens) validateContainer(screen.directives, [], slice, declarations, context, interactions);
+        for (const screen of slice.screens) validateContainer(screen.directives, [], [], slice, declarations, context, interactions);
     }
 }
 
@@ -29,16 +30,18 @@ function tableSubjects(table: ScreenTableSyntax, subjects: readonly ScreenDataSy
     return fields?.length === 1 ? [{ ...source, type: fields[0].type, by: null, location: table.location }] : [];
 }
 
-function validateContainer(directives: readonly ScreenDirectiveSyntax[], inherited: readonly ScreenDataSyntax[], slice: SliceSyntax, declarations: RefusalDeclarations, context: ParserContext, interactions: GuardedInteractions): void {
+function validateContainer(directives: readonly ScreenDirectiveSyntax[], inherited: readonly ScreenDataSyntax[], inheritedTables: readonly string[], slice: SliceSyntax, declarations: RefusalDeclarations, context: ParserContext, interactions: GuardedInteractions): void {
     const local = directives.filter(directive => directive.kind === 'ScreenDataSyntax');
     const subjects = local.length === 0 ? inherited : local;
+    const shown = directives.filter(directive => directive.kind === 'ScreenTableSyntax').map(directive => directive.target);
+    const tables = shown.length === 0 ? inheritedTables : shown;
     for (const directive of directives) {
         switch (directive.kind) {
             case 'ScreenGuardedActionSyntax':
                 validateAction(directive, subjects, slice, declarations, context);
                 break;
             case 'ScreenActionSyntax':
-                validateArguments(directive.command, directive.inputs ?? [], subjects.length === 1 ? viewProperties(subjects[0].type.name, slice, declarations) : null, slice, declarations, context);
+                validateItemAction(directive, itemSubjects(directive.subject, subjects, tables), slice, declarations, context);
                 break;
             case 'ScreenBehaviorSyntax':
                 interactions.at(directive.location, subjects, slice);
@@ -51,16 +54,20 @@ function validateContainer(directives: readonly ScreenDirectiveSyntax[], inherit
                 break;
             case 'ScreenComponentSyntax':
                 interactions.at(directive.location, subjects, slice, true);
-                for (const slot of directive.slots) validateContainer(slot.directives, subjects, slice, declarations, context, interactions);
+                for (const slot of directive.slots) validateContainer(slot.directives, subjects, tables, slice, declarations, context, interactions);
                 break;
             case 'ScreenSectionSyntax':
-                validateContainer(directive.directives, subjects, slice, declarations, context, interactions);
+                validateContainer(directive.directives, subjects, tables, slice, declarations, context, interactions);
                 break;
             case 'ScreenTemplateReferenceSyntax':
-                for (const slot of directive.slots) validateContainer(slot.directives, subjects, slice, declarations, context, interactions);
+                for (const slot of directive.slots) validateContainer(slot.directives, subjects, tables, slice, declarations, context, interactions);
                 break;
         }
     }
+}
+
+function validateItemAction(action: ScreenActionSyntax, subjects: readonly ScreenDataSyntax[], slice: SliceSyntax, declarations: RefusalDeclarations, context: ParserContext): void {
+    validateArguments(action.command, action.inputs ?? [], subjects.length === 1 ? viewProperties(subjects[0].type.name, slice, declarations) : null, slice, declarations, context);
 }
 
 function validateAction(action: ScreenGuardedActionSyntax, subjects: readonly ScreenDataSyntax[], slice: SliceSyntax, declarations: RefusalDeclarations, context: ParserContext): void {

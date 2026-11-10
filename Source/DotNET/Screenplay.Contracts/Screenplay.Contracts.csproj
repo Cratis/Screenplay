@@ -2,8 +2,6 @@
     <PropertyGroup>
         <AssemblyName>Cratis.Screenplay.Contracts</AssemblyName>
         <RootNamespace>Cratis.Screenplay.Contracts</RootNamespace>
-        <TargetFramework>net10.0</TargetFramework>
-        <TargetFrameworks></TargetFrameworks>
         <IsPackable>true</IsPackable>
         <!-- This is a new package; no released API baseline exists yet. -->
         <PackageValidationBaselineVersion></PackageValidationBaselineVersion>

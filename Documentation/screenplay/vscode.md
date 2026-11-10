@@ -572,7 +572,7 @@ The ordinary `yarn workspace screenplay test` suite uses a VS Code stub for loca
 editor tests. Build the C# tool, then run `yarn workspace screenplay test:repair-process`
 for the real subprocess gate; it fails rather than skips when the tool is missing.
 Set `SCREENPLAY_REPAIR_SERVER` to an absolute compatible binary if you are not using
-`Source/DotNET/Tool/bin/Debug/net10.0/Cratis.Screenplay.Tool` (`.exe` on Windows).
+`Source/DotNET/Tool/bin/Debug/net11.0/Cratis.Screenplay.Tool` (`.exe` on Windows).
 
 For native extension-host tests, run `yarn workspace screenplay build:test-host`,
 then `yarn workspace screenplay test:host` with `VSCODE_EXECUTABLE_PATH` pointing to

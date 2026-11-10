@@ -17,7 +17,7 @@ If you are building your own tooling, the compiler is also available as a
 
 ## Install the CLI
 
-For a local installation, you need the .NET 10 SDK and the global .NET tool
+For a local installation, you need the .NET 11 SDK and the global .NET tool
 directory on `PATH`. The CLI is a
 [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools)
 published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:

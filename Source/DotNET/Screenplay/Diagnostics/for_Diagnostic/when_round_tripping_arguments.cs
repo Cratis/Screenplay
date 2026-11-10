@@ -34,7 +34,7 @@ public class when_round_tripping_arguments : Specification
     [Fact] void should_ignore_argument_order_for_equality() => _reordered.ShouldEqual(_original);
     [Fact] void should_ignore_argument_order_for_hashing() => _reordered.GetHashCode().ShouldEqual(_original.GetHashCode());
     [Fact] void should_read_old_diagnostics_as_an_empty_map() => _legacy.Arguments.ShouldBeEmpty();
-    [Fact] void should_write_an_empty_map_as_an_object() => JsonDocument.Parse(JsonSerializer.Serialize(_legacy, _options)).RootElement.GetProperty("arguments").GetRawText().ShouldEqual("{}");
+    [Fact] void should_write_an_empty_map_as_an_object() => JsonElement.Parse(JsonSerializer.Serialize(_legacy, _options)).GetProperty("arguments").GetRawText().ShouldEqual("{}");
     [Fact] void should_preserve_the_four_parameter_deconstructor() => Deconstruct(_legacy).ShouldEqual("PLAY0001");
     [Fact] void should_keep_the_three_argument_helpers() => Diagnostic.Warning("PLAY0001", "Legacy", new(1, 1)).Arguments.ShouldBeEmpty();
 
