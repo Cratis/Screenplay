@@ -26,7 +26,7 @@ internal static class SemanticStringClassification
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
         "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "navigation/screen", "actions/then",
-        "ordering/sortBy",
+        "ordering/sortBy", "operations/operation",
     };
 
     // Scoped literals whose property name is an identity name elsewhere.
@@ -39,7 +39,7 @@ internal static class SemanticStringClassification
     {
         "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
         "screens/title", "screens/description", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
-        "layout/fits", "regions/shows", "regions/title", "regions/actions",
+        "layout/fits", "regions/shows", "regions/title", "regions/actions", "agents/tokenKind",
     };
 
     // All remaining string emissions from the nine canonical writer partials. Unknown strings fail closed;
@@ -47,7 +47,7 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _literals = new(StringComparer.Ordinal)
     {
         "alphabet", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
-        "commandReadMode", "contextMember", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
+        "commandReadMode", "contextMember", "description", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",

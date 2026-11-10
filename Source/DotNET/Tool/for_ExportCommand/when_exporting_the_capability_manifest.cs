@@ -22,7 +22,7 @@ public class when_exporting_the_capability_manifest : given.a_renderable_model
         ExportCommand.Run(["--format", "capability-manifest", SourcePath], output, new StringWriter()).ShouldEqual(0);
         using var document = JsonDocument.Parse(output.ToString());
         document.RootElement.GetProperty("operations").GetArrayLength().ShouldEqual(1);
-        output.ToString().EndsWith("\n", StringComparison.Ordinal).ShouldBeTrue();
+        output.ToString().EndsWith('\n').ShouldBeTrue();
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class when_exporting_the_capability_manifest : given.a_renderable_model
         var arguments = new List<string> { "--format", "capability-manifest", option };
         if (value.Length > 0) arguments.Add(value);
         arguments.Add(SourcePath);
-        ExportCommand.Run(arguments.ToArray(), new StringWriter(), new StringWriter()).ShouldEqual(2);
+        ExportCommand.Run([.. arguments], new StringWriter(), new StringWriter()).ShouldEqual(2);
     }
 
     int Export() => ExportCommand.Run(["--format", "capability-manifest", "--output", _target, SourcePath], new StringWriter(), new StringWriter());
