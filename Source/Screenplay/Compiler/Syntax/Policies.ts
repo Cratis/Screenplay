@@ -26,6 +26,14 @@ export interface NotPolicyConditionSyntax extends SyntaxNode {
     readonly kind: 'NotPolicyConditionSyntax';
     readonly operand: PolicyConditionSyntax;
 }
+// 'asset AssetId [from $context.asset]' - a typed input a policy read can take its key from.
+export interface PolicyInputSyntax extends SyntaxNode {
+    readonly kind: 'PolicyInputSyntax';
+    readonly name: string;
+    readonly type: string;
+    readonly from?: string | null;
+}
+
 export interface StateConditionSyntax extends SyntaxNode {
     readonly kind: 'StateConditionSyntax';
     readonly comparison: ComparisonConditionSyntax;
@@ -36,6 +44,7 @@ export interface PolicySyntax extends SyntaxNode {
     readonly description?: string | null;
     readonly kind: 'PolicySyntax';
     readonly name: string;
+    readonly inputs?: readonly PolicyInputSyntax[];
     readonly reads?: readonly ReadsSyntax[];
     readonly condition: PolicyConditionSyntax | null;
     readonly code: CodeBlockSyntax | null;

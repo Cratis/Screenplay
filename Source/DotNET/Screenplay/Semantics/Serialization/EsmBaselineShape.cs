@@ -30,6 +30,8 @@ internal enum EsmBaselineShape
     Handler,
     DecisionRead,
     PolicyRead,
+    PolicyInput,
+    PolicyInputMapping,
     ProducedEvent,
     Destination,
     Mapping,

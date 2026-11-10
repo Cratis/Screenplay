@@ -245,6 +245,11 @@ public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location)
 public record AuthorizeSyntax(PolicyRequirementSyntax Requirement, SourceLocation Location) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the input mappings under a single-policy <c>authorize</c>, <see langword="null"/> when there are none.
+    /// </summary>
+    public IEnumerable<PolicyInputMappingSyntax>? Mappings { get; init; }
+
+    /// <summary>
     /// Gets every policy the requirement names, in the order they appear.
     /// </summary>
     /// <returns>The <see cref="PolicyReferenceSyntax">references</see> held anywhere in the requirement.</returns>

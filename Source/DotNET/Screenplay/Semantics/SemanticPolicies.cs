@@ -27,7 +27,26 @@ public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Conditi
     /// Gets the read models the policy decides from, empty for a policy that decides from the caller and the artifact alone.
     /// </summary>
     public ImmutableArray<SemanticPolicyRead> Reads { get; init; } = [];
+
+    /// <summary>
+    /// Gets the typed inputs the policy declares (ESM v46), empty when it declares none.
+    /// </summary>
+    public ImmutableArray<SemanticPolicyInput> Inputs { get; init; } = [];
 }
+
+/// <summary>
+/// A typed input of a policy, which a policy read can take its key from.
+/// </summary>
+/// <param name="Name">The input name.</param>
+/// <param name="Type">The declared type.</param>
+public sealed record SemanticPolicyInput(string Name, SemanticTypeReference Type);
+
+/// <summary>
+/// An explicit mapping of a policy input to a property of the authorized command or query.
+/// </summary>
+/// <param name="Input">The policy input.</param>
+/// <param name="Property">The name of the artifact property that fills it.</param>
+public sealed record SemanticPolicyInputMapping(string Input, string Property);
 
 /// <summary>
 /// A read model a policy consults, keyed by a property of the command or query it authorizes.
@@ -86,7 +105,13 @@ public abstract record SemanticAuthorization;
 
 /// <summary>References a named authorization policy.</summary>
 /// <param name="Name">The policy name.</param>
-public sealed record SemanticPolicyReference(string Name) : SemanticAuthorization;
+public sealed record SemanticPolicyReference(string Name) : SemanticAuthorization
+{
+    /// <summary>
+    /// Gets the explicit input mappings (ESM v46), empty when inputs are filled by name.
+    /// </summary>
+    public ImmutableArray<SemanticPolicyInputMapping> Mappings { get; init; } = [];
+}
 
 /// <summary>Combines policy references with the authored logical operator.</summary>
 /// <param name="Left">The left authorization.</param>

@@ -66,7 +66,25 @@ policy IsAuthor
 - A state condition is the shared condition operand (`<path> <operator> <value>`) used by `produces when` and `validate require`. The path starts at a read alias, a property of the artifact being authorized or `$identity`. It combines with `authenticated`, `role`, `claim`, `not`, `and` and `or`.
 - A read that finds nothing denies. A policy never allows because state is missing.
 - A model that declares one selects ESM v44. The reference evaluator reads the given read-model state through `reads`: an absent instance denies, so a specification says "given this asset's plan and this caller, the command is refused" with a `given` read model and a `then` rejection of kind `Unauthorized`. The runtime meaning stays with Arc and Chronicle ([decision 0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md)).
-- The executable model admits a read property compared with a constant of its scalar type (text, enumeration, number, boolean). Comparing with `$identity` or a property of the authorized artifact parses and prints, and reports `PLAY0268` when bound until policy inputs arrive (Cratis/Screenplay#1231).
+- The executable model admits a read property compared with a constant of its scalar type (text, enumeration, number, boolean). Comparing with `$identity` or a property of the authorized artifact parses and prints, and reports `PLAY0268` when bound; a policy input is filled from an artifact property, not from the caller.
+- A policy can declare typed inputs and a command or query can map them, so the policy does not depend on how an artifact spells its key ([decision 0153](https://github.com/Cratis/Screenplay/blob/main/decisions/0153-policy-inputs-esm-v46.md), ESM v46):
+
+```screenplay
+policy PlanGrants
+  asset AssetId
+  reads AssetPlan as plan by asset
+  require plan.dataQuality == true
+
+module Fleet
+  feature Tokens
+    slice StateChange RequestToken
+      command RequestToken
+        vesselId AssetId identifier
+        authorize PlanGrants
+          asset = vesselId
+```
+
+  An input that is not mapped is filled from the artifact property of the same name. A mapping block belongs to a single `authorize <Policy>` line. `asset AssetId from $context.asset` parses and prints but is refused when bound until a trusted context supplies it.
 - `contains` tests a required text collection for an element, or a required text property for a substring; `starts with` tests a text prefix. Both compare against a text constant, are ordinal and case-sensitive, and select ESM v45 ([decision 0152](https://github.com/Cratis/Screenplay/blob/main/decisions/0152-text-and-membership-conditions-esm-v45.md)). An absent value never matches.
 
 ```screenplay

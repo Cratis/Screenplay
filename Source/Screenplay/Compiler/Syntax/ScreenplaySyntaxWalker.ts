@@ -173,6 +173,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitPolicy(syntax: PolicySyntax): void {
         this.visitNode(syntax);
+        syntax.inputs?.forEach(input => this.visitNode(input));
         syntax.reads?.forEach(reads => this.visitReads(reads));
         if (syntax.condition !== null) this.visitPolicyCondition(syntax.condition);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
@@ -222,6 +223,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitAuthorize(syntax: AuthorizeSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(mapping => this.visitNode(mapping));
         this.visitPolicyRequirement(syntax.requirement);
     }
 

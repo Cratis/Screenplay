@@ -40,11 +40,18 @@ internal static partial class PolicyParser
         string? description = null;
         var locations = new Dictionary<string, SourceLocation>();
         var reads = new List<ReadsSyntax>();
+        var inputs = new List<PolicyInputSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Policy '{name.Groups[1].Value}'", locations)) continue;
+            if (InputRegex().Match(line.Content) is { Success: true } input && LineText.FirstWord(line.Content) is not ("reads" or "require" or "file" or "description" or "anonymous"))
+            {
+                inputs.Add(new(input.Groups[1].Value, input.Groups[2].Value, line.Location) { From = input.Groups[3].Success ? input.Groups[3].Value : null });
+                continue;
+            }
+
             if (LineText.FirstWord(line.Content) == "reads")
             {
                 if (ReadsParser.Parse(context, line) is { } read) reads.Add(read);
@@ -115,7 +122,7 @@ internal static partial class PolicyParser
             context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition, a file reference or an inline code block", header.Location);
         }
 
-        return new(name.Groups[1].Value, condition, code, header.Location) { File = file, Description = description, DirectiveLocations = locations, Reads = reads.Count == 0 ? null : reads };
+        return new(name.Groups[1].Value, condition, code, header.Location) { File = file, Description = description, DirectiveLocations = locations, Reads = reads.Count == 0 ? null : reads, Inputs = inputs.Count == 0 ? null : inputs };
     }
 
     static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location, ConditionDepthBudget budget) =>
@@ -227,6 +234,9 @@ internal static partial class PolicyParser
         LogicalPolicyConditionSyntax logical => NegatesAnonymous(logical.Left) || NegatesAnonymous(logical.Right),
         _ => false
     };
+
+    [GeneratedRegex(@"^([a-z]\w*)\s+([A-Z]\w*)(?:\s+from\s+(\$[\w.]+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex InputRegex();
 
     static bool IsStatePath(string token) => token.Length > 0 && (char.IsLetter(token[0]) || token[0] is '_' or '$');
 

@@ -49,6 +49,11 @@ public record PolicySyntax(
     /// <c>by</c> names a property of the command or query being authorized.
     /// </summary>
     public IEnumerable<ReadsSyntax>? Reads { get; init; }
+
+    /// <summary>
+    /// Gets the typed inputs the policy declares, <see langword="null"/> when it declares none.
+    /// </summary>
+    public IEnumerable<PolicyInputSyntax>? Inputs { get; init; }
 }
 
 /// <summary>
@@ -118,3 +123,25 @@ public record LogicalPolicyConditionSyntax(
 /// <param name="Comparison">The shared comparison condition the operand is written as.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> of the condition.</param>
 public record StateConditionSyntax(ComparisonConditionSyntax Comparison, SourceLocation Location) : PolicyConditionSyntax(Location);
+
+/// <summary>
+/// A typed input a policy declares, <c>assetId AssetId [from $context.asset]</c>, which a policy read can take its key from.
+/// </summary>
+/// <param name="Name">The input name.</param>
+/// <param name="Type">The declared type name.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the input.</param>
+public record PolicyInputSyntax(string Name, string Type, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the default source, such as <c>$context.asset</c>, used when the authorized artifact does not map the input.
+    /// </summary>
+    public string? From { get; init; }
+}
+
+/// <summary>
+/// One <c>input = property</c> line of the mapping block under a single-policy <c>authorize</c>.
+/// </summary>
+/// <param name="Input">The policy input that is mapped.</param>
+/// <param name="Property">The property of the authorized command or query that fills it.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the mapping.</param>
+public record PolicyInputMappingSyntax(string Input, string Property, SourceLocation Location) : SyntaxNode(Location);

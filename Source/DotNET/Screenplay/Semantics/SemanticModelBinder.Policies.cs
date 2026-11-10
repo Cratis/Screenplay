@@ -14,6 +14,7 @@ public sealed partial class SemanticModelBinder
     private sealed partial class BindingContext
     {
         readonly Dictionary<string, SemanticPolicyRead> _policyReads = new(StringComparer.Ordinal);
+        List<PolicyInputMappingSyntax> _mappings = [];
 
         static SemanticLogicalOperator PolicyOperator(LogicalOperator op) => op == LogicalOperator.And
             ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or;
@@ -78,9 +79,10 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            var inputs = BindPolicyInputs(policy);
             var reads = BindPolicyReads(policy);
             var condition = policy.Condition is null ? null : BindPolicyCondition(policy.Condition);
-            return condition is null ? null : new SemanticPolicy(policy.Name, condition) { Reads = reads };
+            return condition is null ? null : new SemanticPolicy(policy.Name, condition) { Reads = reads, Inputs = inputs };
         }).Where(policy => policy is not null).Select(policy => policy!)];
 
         SemanticPolicyCondition? BindPolicyCondition(PolicyConditionSyntax syntaxCondition) => syntaxCondition switch
@@ -98,6 +100,29 @@ public sealed partial class SemanticModelBinder
             StateConditionSyntax state => BindStatePolicyCondition(state),
             _ => UnsupportedPolicyCondition(syntaxCondition)
         };
+
+        ImmutableArray<SemanticPolicyInput> BindPolicyInputs(PolicySyntax policy)
+        {
+            var inputs = ImmutableArray.CreateBuilder<SemanticPolicyInput>();
+            foreach (var input in policy.Inputs ?? [])
+            {
+                if (input.From is not null)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' input '{input.Name}' declares a default source ('from {input.From}'); a default source is not yet part of the executable model, map the input under 'authorize' instead.", input.Location);
+                    continue;
+                }
+
+                if (inputs.Any(existing => existing.Name == input.Name))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' declares input '{input.Name}' twice.", input.Location);
+                    continue;
+                }
+
+                inputs.Add(new(input.Name, BindTypeReference(new TypeRefSyntax(input.Type, false, false, input.Location))));
+            }
+
+            return inputs.ToImmutable();
+        }
 
         ImmutableArray<SemanticPolicyRead> BindPolicyReads(PolicySyntax policy)
         {
@@ -233,6 +258,7 @@ public sealed partial class SemanticModelBinder
         {
             if (authorize is null) return null;
             var properties = artifactProperties.ToDictionary(property => property.Name, StringComparer.Ordinal);
+            _mappings = authorize.Mappings?.ToList() ?? [];
             return BindAuthorizationNode(authorize.Requirement, properties, commandName, queryFilterNames);
         }
 
@@ -274,17 +300,36 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            var mappings = ImmutableArray.CreateBuilder<SemanticPolicyInputMapping>();
+            foreach (var mapping in _mappings)
+            {
+                if (!(policy.Inputs ?? []).Any(input => input.Name == mapping.Input))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' declares no input '{mapping.Input}'.", mapping.Location);
+                }
+                else if (!properties.TryGetValue(mapping.Property, out var mapped) || mapped.IsGenerated)
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' input '{mapping.Input}' maps to '{mapping.Property}', which is not an input of the authorized command or query.", mapping.Location);
+                }
+                else
+                {
+                    mappings.Add(new(mapping.Input, mapping.Property));
+                }
+            }
+
             foreach (var read in policy.Reads ?? [])
             {
-                if (read.By is null || !properties.TryGetValue(read.By, out var key) || key.IsGenerated)
+                var viaInput = read.By is not null && (policy.Inputs ?? []).Any(input => input.Name == read.By);
+                var source = viaInput ? mappings.FirstOrDefault(mapping => mapping.Input == read.By)?.Property ?? read.By : read.By;
+                if (source is null || !properties.TryGetValue(source, out var key) || key.IsGenerated)
                 {
-                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' read '{read.ReadModel}' takes its key from '{read.By}', which is not an input of the authorized command or query.", reference.Location);
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' read '{read.ReadModel}' takes its key from '{read.By}', which is not an input of the authorized command or query{(viaInput ? "; map the input under 'authorize'" : string.Empty)}.", reference.Location);
                 }
             }
 
             WarnAboutUnknownNegatedTargets(policy, properties, commandName, reference.Location);
 
-            return new SemanticPolicyReference(reference.Name);
+            return new SemanticPolicyReference(reference.Name) { Mappings = mappings.ToImmutable() };
         }
 
         bool ResolvesPolicyPath(string path, Dictionary<string, SemanticProperty> properties)

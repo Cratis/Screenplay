@@ -91,9 +91,17 @@ internal static partial class SemanticModelValidator
                     {
                         throw new InvalidSemanticContract($"Policy '{policy.Name}' cannot reference the subject of a generated identifier before generation.");
                     }
+                    foreach (var mapping in reference.Mappings.IsDefault ? [] : reference.Mappings)
+                    {
+                        if (policy.Inputs.All(input => input.Name != mapping.Input) || properties.All(property => property.Name != mapping.Property || property.IsGenerated))
+                        {
+                            throw new InvalidSemanticContract($"Policy '{policy.Name}' input mapping '{mapping.Input}' is unresolved.");
+                        }
+                    }
                     foreach (var read in policy.Reads.IsDefault ? [] : policy.Reads)
                     {
-                        if (properties.All(property => property.Name != read.By || property.IsGenerated)) throw new InvalidSemanticContract($"Policy '{policy.Name}' read key '{read.By}' is not an input of the authorized command or query.");
+                        var keyName = (reference.Mappings.IsDefault ? null : reference.Mappings.FirstOrDefault(mapping => mapping.Input == read.By)?.Property) ?? read.By;
+                        if (properties.All(property => property.Name != keyName || property.IsGenerated)) throw new InvalidSemanticContract($"Policy '{policy.Name}' read key '{read.By}' is not an input of the authorized command or query.");
                     }
                     foreach (var path in ArtifactPaths(policy.Condition))
                     {
