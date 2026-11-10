@@ -2,101 +2,56 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Syntax.Captures;
-using Cratis.Screenplay.Syntax.Projections;
-using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Indexing;
 
-static class ReferenceKinds
+internal static partial class ReferenceKinds
 {
     internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, identity query sources, policies, processing purposes, commands, queries, screen data, forms, contribution points, outlet changes, hook slices, picker queries, screens a slot shows, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Property queries cover command, current-generation event and read-model mapping paths, AutoMap, conditions, screen/form bindings and specification/example assignments and assertions, and seed event values. Opaque code naming a property is reported as opaque, not resolved. Not code, imports, slot names and outlet item ids (hide, before, after), which are local to the template that declares them, profile settings, external host registrations, arbitrary expression identifiers or external code contents; nested composite paths are incomplete evidence. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
-    static readonly string[] _eventKinds = ["Event"];
 
-    internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => Known(node, owner) ?? [];
+    // Lazy initialization avoids depending on the order of fields across partial files. Keep the
+    // original entries (rather than a set) so the inventory spec can also detect duplicate decisions.
+    static readonly Lazy<Member[]> _members = new(CollectMembers);
+    static readonly Lazy<ILookup<Type, Member>> _byType = new(() => _members.Value.ToLookup(member => member.Node));
 
-    internal static bool Covers(SyntaxNode node, SyntaxNode? owner) => Known(node, owner) is not null;
+    internal static IEnumerable<(Type Node, string Property)> Classified => _members.Value.Select(member => (member.Node, member.Property));
 
-    static IEnumerable<(string Name, string[] Kinds, string Role)>? Known(SyntaxNode node, SyntaxNode? owner) => node switch
+    internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) =>
+        InlineDeclarations(node).Concat(_byType.Value[node.GetType()].Where(member => member.Kinds.Length > 0).SelectMany(member => member.Read(node, owner)));
+
+    internal static bool Classifies(SyntaxNode node, string property) => _byType.Value[node.GetType()].Any(member => member.Property == property);
+
+    internal static bool IsReference(SyntaxNode node, string property) => _byType.Value[node.GetType()].Any(member => member.Property == property && member.Kinds.Length > 0);
+
+    internal static bool Covers(SyntaxNode node, SyntaxNode? owner) => node.GetType().GetProperties()
+        .Where(property => IsStringMember(property.PropertyType)).All(property => Classifies(node, property.Name));
+
+    internal static bool IsStringMember(Type type) => type == typeof(string) || typeof(IEnumerable<string>).IsAssignableFrom(type);
+
+    // Inline events have no string-bearing slice member of their own; keep their declaration edges.
+    static IEnumerable<(string Name, string[] Kinds, string Role)> InlineDeclarations(SyntaxNode node)
     {
-        QueryIdentitySourceSyntax value => [(value.Query, ["Query"], "identitySource")],
-        SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
-        OperationSyntax value => [(value.Uses, ["System"], "uses")],
-        StateMachineSyntax value => [(value.Follows, ["ReadModel"], "follows")],
-        StateEntrySyntax { EntryKind: StateEntryKind.Send } value => [(value.Target, ["Command"], "entersSend")],
-        StateEntrySyntax value => [(value.Target, ["Workflow"], "entersStart")],
-        StateTransitionSyntax value => [(value.Event, _eventKinds, "transitionOn")],
-        WorkflowSyntax value => [(value.Subject, ["ReadModel"], "workflowSubject")],
-        WorkflowNodeSyntax value => WorkflowReferences(value),
-        CommandStreamSyntax value => [(value.EventSource, ["EventSource"], "commandEventSource"), ($"{value.EventSource}.{value.Stream}", ["EventStream"], "commandStream")],
-        SpecificationStreamSyntax value => [(value.EventSource, ["EventSource"], "specificationEventSource"), ($"{value.EventSource}.{value.Stream}", ["EventStream"], "specificationStream")],
-        SpecificationOperationSyntax value => [(value.Operation, ["Operation"], "thenOperation")],
-        SpecificationOperationFailureSyntax value => [(value.Operation, ["Operation"], "givenOperationFailure")],
-        SpecificationCompensatedSyntax value => [(value.Operation, ["Operation"], "thenCompensated")],
-        ProducesSyntax { InlineOperation: not null } value => [(value.Event, ["Operation"], "declares"), (value.Event, ["Event", "Operation"], "produces")],
-        ProducesSyntax { InlineEvent: not null } value => [(value.Event, ["Event"], "declares"), (value.Event, ["Event", "Operation"], "produces")],
-        ProducesSyntax value => [(value.Event, ["Event", "Operation"], "produces")],
-        InvocationRefusalSyntax { Constraint: { } name } => [(name, ["Constraint"], "refusalConstraint")],
-        SpecificationRedeliverySyntax value => [(value.EventType, ["Event"], "whenRedeliveredEvent"), (value.Reaction, ["Reaction"], "redeliveryReaction")],
-        InvokesSyntax value => [(value.Command, ["Command"], "invokes")],
-        ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
-        ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),
-        PolicyReferenceSyntax value => [(value.Name, ["Policy"], "authorizes")],
-        NarrowSyntax value => [(value.Policy, ["Policy"], "authorizes")],
-        PurposeReferenceSyntax value => [(value.Name, ["Purpose"], "purpose")],
-        SlicePlacementSyntax { Kind: SlicePlacementKind.Event } value => [(value.Name, _eventKinds, "shows")],
-        SlicePlacementSyntax value => [(value.Name, ["ReadModel"], "shows")],
-        TypeRefSyntax value when owner is IdentityDetailSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "identityDetailType")],
-        TypeRefSyntax value when owner is QuerySyntax query && ReferenceEquals(query.ReturnType, value) && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "queryResult")],
-        TypeRefSyntax value when owner is ScreenSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel"], "dataReadModel")],
-        TypeRefSyntax value when !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["Concept", "Type"], "type")],
-        ScreenDataSyntax value => [(value.Query, ["Query"], "dataQuery")],
-        ContributionSyntax value => [(value.ContributionPoint, ["ContributionPoint"], "contributes")],
-        ScreenActionSyntax value => [(value.Command, ["Command"], "action")],
-        ScreenActionAlternativeSyntax value => [(value.Command, ["Command"], "actionAlternative")],
-        ScreenActionOtherwiseSyntax { Command: { } command } => [(command, ["Command"], "actionOtherwise")],
-        ScreenNavigateSyntax value => [(value.Screen, ["Screen"], "navigate")],
-        ScreenShowSyntax value => [(value.Screen, ["Screen"], "show")],
-        OutletSyntax { Kind: null } value => [(value.Name, ["ContributionPoint"], "changesOutlet")],
-        ToolbarButtonSyntax { Slice: { } slice } => [(slice, ["Slice"], "hook")],
-        FormFieldChoicesSyntax value => [(value.Query, ["Query"], "pickerQuery")],
-        ScreenTemplateReferenceSyntax { Blueprint: null } value => [(value.Name, ["ScreenTemplate", "DialogTemplate"], "template")],
-        FormSyntax value => [(value.For, ["Command"], "formCommand")],
-        FormPopulateViaQuerySyntax value => [(value.Query, ["Query"], "populate")],
-        SpecificationExampleSyntax value => [(value.Type, ["Event", "Command", "ReadModel"], "exampleType")],
-        SpecificationCallerPersonaSyntax value => [(value.Name, ["Persona"], "givenCallerPersona")],
-        SpecificationEventSyntax value => [(value.EventType, ["Event", "Example"], "specificationEvent")],
-        SpecificationCommandSyntax value => [(value.CommandType, ["Command", "Example"], "whenCommand")],
-        SpecificationInvocationSyntax value => [(value.Command, ["Command"], "thenInvokes")],
-        SpecificationReadModelSyntax value => [(value.Name, ["ReadModel", "Example"], "specificationReadModel")],
-        SpecificationAbsentReadModelSyntax value => [(value.Name, ["ReadModel"], "thenAbsentReadModel")],
-        ReadModelSyntax { Sink: { } sink } => [(sink, ["Sink"], "sink")],
-        GraphSyntax { Sink: { } sink } => [(sink, ["Sink"], "sink")],
-        SpecificationQuerySyntax value => [(value.Query, ["Query"], "thenQuery")],
-        CompositeKeySyntax value => [(value.Type, ["Type", "Concept"], "compositeKeyType")],
-        EventSpecSyntax value => [(value.Event, ["Event"], "from")],
-        JoinEventSyntax value => [(value.Event, ["Event"], "join")],
-        ClearWithSyntax value => [(value.Event, ["Event"], "clear")],
-        RemoveWithSyntax value => [(value.Event, ["Event"], "remove")],
-        RemoveViaJoinSyntax value => [(value.Event, ["Event"], "removeViaJoin")],
-        ProjectionEntersOnSyntax value => [(value.Event, ["Event"], "entersOn")],
-        ProjectionSyntax value when !value.Blocks.OfType<ProjectionVariantSyntax>().Any() => [(value.ReadModel ?? value.Name, ["ReadModel"], "builds")],
-        ProjectionVariantSyntax value => [(value.Name, ["ReadModel"], "buildsVariant")],
-        ReducerSyntax value => [(value.ReadModel, ["ReadModel"], "builds")],
-        ReducerRuleSyntax value => [(value.Event, ["Event"], "reduces")],
-        NamedTriggerSourceSyntax value => [(value.Name, ["Event", "Trigger"], "trigger")],
-        CaptureAppendSyntax value => [(value.Event, ["Event"], "appends")],
-        UniqueEventConstraintSyntax value => [(value.Event, ["Event"], "uniqueEvent")],
-        UniquePropertyConstraintSyntax value => [(value.Event, ["Event"], "uniqueProperty")],
-        SeedEventSyntax value => [(value.Event, ["Event"], "seed")],
-        _ => null
+        if (node is not SliceSyntax slice) yield break;
+        foreach (var @event in EventDeclarations.In(slice).Except(slice.Events)) yield return (@event.Name, ["Event"], "declares");
+    }
+
+    static Member[] CollectMembers() => [.. _nonReferences, .. _references];
+
+    static IEnumerable<Member> NonReferences<T>(params string[] properties)
+        where T : SyntaxNode => properties.Select(property => new Member(typeof(T), property, [], string.Empty, (_, _) => []));
+
+    static Member Reference<T>(string property, string[] kinds, string role, Func<T, SyntaxNode?, IEnumerable<(string Name, string[] Kinds, string Role)>>? read = null)
+        where T : SyntaxNode =>
+        new(typeof(T), property, kinds, role, (node, owner) => read is not null ? read((T)node, owner) : Names(typeof(T).GetProperty(property)!.GetValue(node)).Select(name => (name, kinds, role)));
+
+    static IEnumerable<string> Names(object? value) => value switch
+    {
+        string name => [name],
+        IEnumerable<string> names => names,
+        _ => []
     };
 
-    static IEnumerable<(string Name, string[] Kinds, string Role)> WorkflowReferences(WorkflowNodeSyntax node)
-    {
-        if (node.Event is not null) yield return (node.Event, _eventKinds, node.NodeKind == WorkflowNodeKind.Wait ? "workflowWait" : "workflowTrigger");
-        if (node.StateMachine is not null) yield return (node.StateMachine, ["StateMachine"], "workflowTrigger");
-        if (node.Command is not null) yield return (node.Command, ["Command"], "workflowAction");
-        if (node.By is not null) yield return (node.By, ["Persona", "Policy"], "workflowApproval");
-    }
+    static IEnumerable<(string Name, string[] Kinds, string Role)> One(string? name, string[] kinds, string role) => name is null ? [] : [(name, kinds, role)];
+
+    sealed record Member(Type Node, string Property, string[] Kinds, string Role, Func<SyntaxNode, SyntaxNode?, IEnumerable<(string Name, string[] Kinds, string Role)>> Read);
 }
