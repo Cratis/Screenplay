@@ -5,9 +5,10 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import type { CompilationResult } from '../ScreenplayCompiler';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
-import { ScreenActionSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax, ToolbarItemSyntax } from '../Syntax/Screens';
+import { ScreenActionSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax, ToolbarItemSyntax } from '../Syntax/Screens';
 import { RefusalDeclarations } from './RefusalDeclarations';
 import { ActionSubjectContext, ActionSubjectInputs } from './ActionSubjectInputs';
+import { itemSubjects, unresolvedSubjectMessage, visibleWithin } from './ActionSubjectVisibility';
 
 export interface ActionSubjectEvidence {
     readonly authored: ScreenActionSyntax | ToolbarItemSyntax;
@@ -16,22 +17,12 @@ export interface ActionSubjectEvidence {
     readonly context: ActionSubjectContext;
 }
 
-// An explicit 'for item' acts on the one collection data a table in scope shows; anything else keeps the nearest data.
-export function itemSubjects(authored: ScreenActionSyntax['subject'], data: readonly ScreenDataSyntax[], tables: readonly string[]): readonly ScreenDataSyntax[] {
-    if (authored !== 'Item' || data.length <= 1) return data;
-    const shown = data.filter(entry => entry.type.isCollection && tables.includes(entry.type.name));
-    return shown.length === 1 ? shown : data;
-}
-
 export function resolveActionSubjectApplication(application: ApplicationSyntax, observe?: (evidence: ActionSubjectEvidence) => void): CompilationResult<ApplicationSyntax> {
     const diagnostics: Diagnostic[] = [];
     const resolver = new ActionSubjectInputs(new RefusalDeclarations(application), diagnostics);
     const hasSubject = (context: ActionSubjectContext, guarded: boolean): boolean => {
         if (context.data.length === 1) return true;
-        const candidates = context.data.map(data => data.type.isCollection ? `${data.type.name}[]` : data.type.name).join(', ');
-        const ambiguous = `Action 'for item' is ambiguous between data ${candidates} - keep exactly one data (or a table over exactly one collection data) in the action's container, or move the action into a section beside the data it acts on`;
-        const unresolved = context.data.length > 1 ? ambiguous : "Action 'for item' requires one resolvable data subject - no item binding is inferred";
-        const message = guarded ? "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved" : unresolved;
+        const message = unresolvedSubjectMessage(context.data, guarded);
         diagnostics.push({ severity: 'warning', code: DiagnosticCodes.UnresolvedActionSubject, message, location: context.location });
         return false;
     };
@@ -71,9 +62,7 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
         return effective;
     };
     const body = (directives: readonly ScreenDirectiveSyntax[], inherited: ActionSubjectContext): readonly ScreenDirectiveSyntax[] => {
-        const local = directives.filter((node): node is Extract<ScreenDirectiveSyntax, { kind: 'ScreenDataSyntax' }> => node.kind === 'ScreenDataSyntax');
-        const tables = directives.filter((node): node is Extract<ScreenDirectiveSyntax, { kind: 'ScreenTableSyntax' }> => node.kind === 'ScreenTableSyntax').map(node => node.target);
-        const scope = { ...inherited, data: local.length > 0 ? local : inherited.data, tables: tables.length > 0 ? tables : inherited.tables };
+        const scope = visibleWithin(directives, inherited);
         return directives.map(node => {
             const context = { ...scope, location: node.location };
             switch (node.kind) {

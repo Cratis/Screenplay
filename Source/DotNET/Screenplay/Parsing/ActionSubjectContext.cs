@@ -6,6 +6,4 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
 
-internal sealed record ActionSubjectVisibility(IReadOnlyList<ScreenDataSyntax> Data, IReadOnlyList<string> Tables);
-
 internal sealed record ActionSubjectContext(IReadOnlyList<ScreenDataSyntax> Data, DeclarationScope Scope, SourceLocation Location);

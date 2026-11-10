@@ -33,8 +33,8 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
         {
             Screens = [.. slice.Screens.Select(screen => screen with
             {
-                Directives = Container(screen.Directives, new([], []), scope),
-                Contributions = [.. screen.Contributions.Select(contribution => contribution with { Directives = Container(contribution.Directives, new([], []), scope) })]
+                Directives = Container(screen.Directives, ActionSubjectVisibility.None, scope),
+                Contributions = [.. screen.Contributions.Select(contribution => contribution with { Directives = Container(contribution.Directives, ActionSubjectVisibility.None, scope) })]
             })]
         };
     }
@@ -42,9 +42,7 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
     ScreenDirectiveSyntax[] Container(IEnumerable<ScreenDirectiveSyntax> directives, ActionSubjectVisibility inherited, DeclarationScope scope)
     {
         var nodes = directives.ToArray();
-        var local = nodes.OfType<ScreenDataSyntax>().ToArray();
-        var tables = nodes.OfType<ScreenTableSyntax>().Select(table => table.Target).ToArray();
-        var visible = new ActionSubjectVisibility(local.Length == 0 ? inherited.Data : local, tables.Length == 0 ? inherited.Tables : tables);
+        var visible = ActionSubjectVisibility.Within(nodes, inherited);
         return [.. nodes.Select(node => Directive(node, visible, scope))];
     }
 
@@ -62,7 +60,7 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
 
     ScreenActionSyntax PlainAction(ScreenActionSyntax action, ActionSubjectVisibility visible, DeclarationScope scope)
     {
-        var subjects = ItemSubjects(action.Subject, visible);
+        var subjects = visible.ItemSubjects(action.Subject);
         var context = new ActionSubjectContext(subjects, scope, action.Location);
         var subject = Subject(action.Subject, action.Command, action.Inputs.Select(input => input.Name), context);
         var inputs = subject == ScreenActionSubjectKind.Item && HasSubject(subjects, action.Location, false) ? Inputs(action.Command, action.Inputs, context) : action.Inputs;
@@ -74,7 +72,7 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
     ToolbarItemSyntax ToolbarItem(ToolbarItemSyntax item, ActionSubjectVisibility visible, DeclarationScope scope)
     {
         if (item.Kind != ToolbarItemKind.Action) return item;
-        var subjects = ItemSubjects(item.Subject, visible);
+        var subjects = visible.ItemSubjects(item.Subject);
         var context = new ActionSubjectContext(subjects, scope, item.Location);
         var subject = Subject(item.Subject, item.Target, item.Parameters.Select(parameter => parameter.Name), context);
         if (subject != ScreenActionSubjectKind.Item || !HasSubject(subjects, item.Location, false))
@@ -94,7 +92,7 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
     bool HasSubject(IReadOnlyList<ScreenDataSyntax> subjects, Cratis.Screenplay.Diagnostics.SourceLocation location, bool guarded)
     {
         if (subjects.Count == 1) return true;
-        _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UnresolvedActionSubject, UnresolvedMessage(subjects, guarded), location));
+        _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UnresolvedActionSubject, UnresolvedActionSubjectMessage.For(subjects, guarded), location));
         return false;
     }
 

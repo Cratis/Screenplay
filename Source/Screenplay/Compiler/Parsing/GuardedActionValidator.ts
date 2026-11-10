@@ -4,7 +4,7 @@
 import { resolveActionSubjects } from '../ScreenActionSubjects';
 import { ScreenActionSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenTableSyntax } from '../Syntax/Screens';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
-import { itemSubjects } from './ActionSubjectResolution';
+import { itemSubjects } from './ActionSubjectVisibility';
 import { comparisons, validateArguments, validateItemPath, viewProperties } from './GuardedActionInputs';
 import { validateGuardedActionShadowing } from './GuardedActionShadowing';
 import { GuardedInteractions } from './GuardedInteractions';
