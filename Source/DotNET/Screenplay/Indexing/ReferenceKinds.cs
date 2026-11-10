@@ -13,11 +13,7 @@ static class ReferenceKinds
     internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, identity query sources, policies, processing purposes, commands, queries, screen data, forms, contribution points, outlet changes, hook slices, picker queries, screens a slot shows, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Property queries cover command, current-generation event and read-model mapping paths, AutoMap, conditions, screen/form bindings and specification/example assignments and assertions, and seed event values. Opaque code naming a property is reported as opaque, not resolved. Not code, imports, slot names and outlet item ids (hide, before, after), which are local to the template that declares them, profile settings, external host registrations, arbitrary expression identifiers or external code contents; nested composite paths are incomplete evidence. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
     static readonly string[] _eventKinds = ["Event"];
 
-    internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => Known(node, owner) ?? [];
-
-    internal static bool Covers(SyntaxNode node, SyntaxNode? owner) => Known(node, owner) is not null;
-
-    static IEnumerable<(string Name, string[] Kinds, string Role)>? Known(SyntaxNode node, SyntaxNode? owner) => node switch
+    internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
     {
         QueryIdentitySourceSyntax value => [(value.Query, ["Query"], "identitySource")],
         SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
@@ -42,7 +38,6 @@ static class ReferenceKinds
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),
         PolicyReferenceSyntax value => [(value.Name, ["Policy"], "authorizes")],
-        NarrowSyntax value => [(value.Policy, ["Policy"], "authorizes")],
         PurposeReferenceSyntax value => [(value.Name, ["Purpose"], "purpose")],
         SlicePlacementSyntax { Kind: SlicePlacementKind.Event } value => [(value.Name, _eventKinds, "shows")],
         SlicePlacementSyntax value => [(value.Name, ["ReadModel"], "shows")],
@@ -89,7 +84,7 @@ static class ReferenceKinds
         UniqueEventConstraintSyntax value => [(value.Event, ["Event"], "uniqueEvent")],
         UniquePropertyConstraintSyntax value => [(value.Event, ["Event"], "uniqueProperty")],
         SeedEventSyntax value => [(value.Event, ["Event"], "seed")],
-        _ => null
+        _ => []
     };
 
     static IEnumerable<(string Name, string[] Kinds, string Role)> WorkflowReferences(WorkflowNodeSyntax node)

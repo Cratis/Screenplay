@@ -33,7 +33,7 @@ public sealed record AgentExposureComparison(AgentExposureCoverage Coverage, Imm
         var rows = baseline.Operations.Keys.Union(candidate.Operations.Keys)
             .OrderBy(key => key.Kind).ThenBy(key => key.Name, StringComparer.Ordinal)
             .Select(key => Compare(key, baseline, candidate, sourceErrors)).ToImmutableArray();
-        return new(sourceErrors || rows.Any(row => row.Change == AgentExposureChangeKind.Unknown) ? AgentExposureCoverage.Incomplete : AgentExposureCoverage.Complete, rows)
+        return new(sourceErrors ? AgentExposureCoverage.Incomplete : AgentExposureCoverage.Complete, rows)
         {
             HasDeclaredAgents = baseline.HasBlock || candidate.HasBlock,
             RequiresLegacyLimit = sourceErrors || baseline.HasBlock || candidate.HasBlock
@@ -57,7 +57,6 @@ public sealed record AgentExposureComparison(AgentExposureCoverage Coverage, Imm
     static (AgentExposureChangeKind Change, string Reason) Classify(AgentExposureSnapshot.Operation? before, AgentExposureSnapshot.Operation? after, bool tokensChanged, bool sourceErrors)
     {
         if (sourceErrors) return (AgentExposureChangeKind.Unknown, "Parsing or validation errors prevent exposure comparison on either source.");
-        if (before?.IncompleteReferences == true || after?.IncompleteReferences == true) return (AgentExposureChangeKind.Unknown, "The exposed contract contains references that could not be completely indexed.");
         if (before is null) return (AgentExposureChangeKind.Added, "The operation becomes explicitly exposed.");
         if (after is null) return (AgentExposureChangeKind.Removed, "The operation is no longer exposed.");
         if (tokensChanged) return (AgentExposureChangeKind.Widened, "The accepted token contract changes; review as widened exposure.");

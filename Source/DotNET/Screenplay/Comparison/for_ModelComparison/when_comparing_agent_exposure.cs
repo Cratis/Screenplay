@@ -8,43 +8,6 @@ namespace Cratis.Screenplay.Comparison.for_ModelComparison;
 
 public class when_comparing_agent_exposure : Cratis.Screenplay.for_Agents.given.an_agent_model
 {
-    internal const string Narrowed = """
-        policy Gate
-          require role "Staff"
-        policy VisibleRows
-          require authenticated
-        agents
-          tokens personal
-          query Invoices.Listing.ListInvoices.ListInvoices
-            scope read
-            description "List visible invoices"
-        module Invoices
-          authorize Gate
-          feature Listing
-            slice StateView ListInvoices
-              readmodel Invoice
-                id Uuid
-              query ListInvoices => Invoice[]
-                narrow VisibleRows
-        """;
-
-    [Fact]
-    void should_report_a_changed_row_narrowing_policy_as_widened()
-    {
-        var result = Compare(Narrowed, Narrowed.Replace("require authenticated", "require anonymous", StringComparison.Ordinal)).AgentExposure;
-        result.Rows.Single().Change.ShouldEqual(AgentExposureChangeKind.Widened);
-        result.Coverage.ShouldEqual(AgentExposureCoverage.Complete);
-        result.HasWidening.ShouldEqual(true);
-    }
-
-    [Fact]
-    void should_report_an_unchanged_row_narrowing_policy_as_unchanged()
-    {
-        var result = Compare(Narrowed, Narrowed).AgentExposure;
-        result.Rows.Single().Change.ShouldEqual(AgentExposureChangeKind.Unchanged);
-        result.HasWidening.ShouldEqual(false);
-    }
-
     const string Empty = "agents\n  tokens personal\n";
     const string Query = "agents\n  tokens personal\n  query All\n    scope read\n    description \"Find invoices\"\n";
     const string Limit = "Agent exposure was not compared; use the agent-exposure view.";

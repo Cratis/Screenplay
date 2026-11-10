@@ -161,10 +161,8 @@ an unchanged read-model shape is not compared as part of agent exposure; use the
 
 Always inspect this aggregate's own `Coverage`, not the legacy `Complete` field. Parsing/validation errors on either
 side make every available row `Unknown`, `Coverage` becomes `Incomplete` and `HasWidening` is null, even if no block
-or row survived. An unrecognized reference-bearing syntax node in an exposed operation or dependency also makes
-its row `Unknown`, coverage `Incomplete` and `HasWidening` null. Warnings and executable-binding refusal alone do not.
-Without such errors or indexing gaps, an unresolved exposed contract is conservatively `Widened` for review,
-never Unknown or safely unchanged. The compared dependencies include policies that narrow an exposed query's rows.
+or row survived. Unknown is reserved for these errors, not warnings or executable-binding refusal. Without such
+errors, an unresolved exposed contract is conservatively `Widened` for review, never Unknown or safely unchanged.
 Never convert an incomplete result's null to a safe `false`. `HasDeclaredAgents` records whether either source
 declares an agents block in any parsed document, including recovered and duplicate blocks. CLI `diff` returns
 exit code 1 and writes `Agent exposure comparison is incomplete; no safe exposure verdict is available.` to

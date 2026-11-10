@@ -10,11 +10,8 @@ namespace Cratis.Screenplay.Comparison;
 
 static class AgentExposureSignature
 {
-    internal static string? Read(AuthoringIndex index, AuthoredDeclaration operation) => Read(index, operation, out _);
-
-    internal static string? Read(AuthoringIndex index, AuthoredDeclaration operation, out bool incompleteReferences)
+    internal static string? Read(AuthoringIndex index, AuthoredDeclaration operation)
     {
-        incompleteReferences = false;
         var pending = new Stack<AuthoredDeclaration>();
         var visited = new Dictionary<(string Kind, string Address), string>();
         pending.Push(operation);
@@ -22,11 +19,6 @@ static class AgentExposureSignature
         {
             var key = (declaration.Kind, declaration.Address);
             if (visited.ContainsKey(key)) continue;
-            if (declaration.Parts.Exists(part => !AgentReferenceCoverage.Complete(part, declaration.Syntax)))
-            {
-                incompleteReferences = true;
-                return null;
-            }
             var authorization = InheritedAuthorization(index, declaration);
             if (authorization is null) return null;
             visited.Add(key, $"{string.Join('\n', declaration.Parts.Select(part => SyntaxJson.Serialize(part).GetRawText()))}\n{authorization}");
