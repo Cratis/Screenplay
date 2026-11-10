@@ -153,22 +153,11 @@ A higher declared scope (`read < write`), changed exposed signature/referenced c
 loosening is `Widened` (`PLAY0979`). A lower scope alone is `Narrowed`. Description edits and alternate spelling of
 the same resolved target are `Unchanged`.
 
-The contract includes the complete authorization requirement tree of the operation and its enclosing scopes,
-including logical operators and grouping. Any change to that tree is conservatively `Widened`, even if it might
-restrict access. Unrelated scopes do not contribute to the signature. Referenced read-model declarations are
-compared, so adding or changing a returned field changes the signature. Projection and event logic that populates
-an unchanged read-model shape is not compared as part of agent exposure; use the structural diff to review it.
-
 Always inspect this aggregate's own `Coverage`, not the legacy `Complete` field. Parsing/validation errors on either
 side make every available row `Unknown`, `Coverage` becomes `Incomplete` and `HasWidening` is null, even if no block
 or row survived. Unknown is reserved for these errors, not warnings or executable-binding refusal. Without such
 errors, an unresolved exposed contract is conservatively `Widened` for review, never Unknown or safely unchanged.
-Never convert an incomplete result's null to a safe `false`. `HasDeclaredAgents` records whether either source
-declares an agents block in any parsed document, including recovered and duplicate blocks. CLI `diff` returns
-exit code 1 and writes `Agent exposure comparison is incomplete; no safe exposure verdict is available.` to
-stderr only when coverage is incomplete **and** `HasDeclaredAgents` is true, in both text and JSON formats.
-Without declared agents, source errors preserve the previous exit code and add only the legacy limit statement;
-clean sources without agents have Complete exposure coverage. Legacy report shapes remain unchanged.
+Never convert an incomplete result's null to a safe `false`.
 Only personal tokens are supported; an unsupported-token attempt follows this error rule rather than comparing a
 valid subset.
 

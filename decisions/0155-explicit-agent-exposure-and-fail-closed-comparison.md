@@ -50,12 +50,6 @@ signature or referenced contract is `Widened`, even when scope is unchanged. Cha
 resolved target and exposure contract are metadata-only `Unchanged` rows. These classifications are review signals,
 not claims about runtime behavior or an authorization lattice.
 
-The structural contract includes each enclosing scope's complete authorization requirement tree, including
-operators and grouping, as well as the operation's own authorization. An edit to any of these trees is
-conservatively `Widened`; unrelated scopes are excluded. Referenced read-model declarations are hashed, so a
-returned field-shape change is covered. Projection and event logic that populates an unchanged read-model shape
-is outside agent-exposure comparison and remains a structural-diff review concern.
-
 Loosening accepted tokens must never appear unchanged or narrowed. An admitted change of token contract is
 conservatively widened. Today only personal tokens are admitted: an attempt to add OAuth or another unsupported
 kind is a validation error and follows the Unknown rule below, not a partially compared token surface.
@@ -71,15 +65,6 @@ result with incomplete coverage is never a safe no-widening conclusion. Unknown 
 errors, not warnings or an unresolved referenced contract in otherwise valid authoring source. Without source
 errors, an exposed contract change is Widened (including at identical scope); a contract that cannot be uniquely
 resolved is conservatively Widened for review, never Unknown or a safe unchanged result.
-
-Exposure aggregates on differences default to Incomplete until explicitly compared. Clean sources without agents
-are explicitly compared as Complete. `HasDeclaredAgents` uses the same parsed-block evidence as the legacy limit,
-including all physical documents, error recovery and duplicate blocks. CLI `diff` returns exit code 1 and writes
-an incomplete-exposure verdict to stderr only when coverage is incomplete and either source declares agents.
-Without declared agents, source errors retain the previous exit code; the rule-3 limit statement is the only
-addition. This applies to both text and JSON formats without changing legacy report shapes or frozen goldens.
-MCP exposes Incomplete coverage and null `hasWidening`, never a passing false verdict. `PLAY0978` and `PLAY0979`
-annotate Added/Widened rows, not incomplete comparisons.
 
 Executable binding is a later, separate stage. A preview construct such as `system`/`operation` can parse and
 validate with no diagnostics, then be refused by binding with `PLAY0268` and `executable*Available=false`.
