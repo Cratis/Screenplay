@@ -1786,8 +1786,8 @@ An `agents` block is an explicit operation allowlist, not an authorization grant
 | `PLAY0975` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
 | `PLAY0976` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
 | `PLAY0977` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
-| `PLAY0978` | Warning | Agent exposure comparison reports a newly exposed operation; not emitted by compilation. |
-| `PLAY0979` | Warning | Agent exposure comparison reports widened scope, token contract or exposed signature; not emitted by compilation. |
+| `PLAY0978` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
+| `PLAY0979` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
 | `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
 | `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
 | `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |

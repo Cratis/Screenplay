@@ -287,7 +287,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `ui-profiles` | Optional profile `name` | Each ui profile's root template, shell options, appearance, selected theme and the theme and mode it resolves to, new screens default and shell diagnostics (PLAY0790-PLAY0799), the own templates applicable as root or new screens default, and the accepted appearance values; also the application's [design system](../design-system.md), every theme with its values and its resolved tokens and components per mode, and the design diagnostics (PLAY0916-PLAY0930) |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
-| `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional view (`agent-exposure` for allowlist comparison, requiring version=2 on every page), offset/limit/expectedSourceRevision | Paged authoring-structure comparison without rebinding the workspace |
+| `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison without rebinding the workspace |
 
 Names and kinds are case-sensitive. Logical address example:
 `Projects.Registration.RegisterProject.RegisterProject`, kind `Command`.
@@ -767,7 +767,7 @@ arguments or failed requests, never successful partial batches.
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `propose-inline-event` | `expectedRevision`, `expectedCatalogRevision`, standalone event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; refuses unless meaning is provably preserved |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `agent-exposure` for fail-closed allowlist comparison, requiring version=2 on every page; `implementation-requirements` for attachments; `notes` for note before/after items; `release-baseline` for mutability and violations), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision, expectedReleaseBaselineRevision |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items; `release-baseline` for mutability and violations), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision, expectedReleaseBaselineRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `list-release-baseline` | None | offset, limit, expectedReleaseBaselineRevision |
@@ -1432,36 +1432,6 @@ not analyze behavior inside code, load or compare external attachment file
 contents (inspect `implementation-requirements` hashes separately), execute
 specifications, prove runtime or transitive impact, or compare two arbitrary
 revisions.
-
-## Agent exposure difference
-
-Opt into `view: "agent-exposure"` with integer `version: 2` on `semantic-diff` (with its existing before/after source
-selection) or `read-proposal` (with its proposal ID). Missing versions and versions other than 2 refuse with an
-invalid-arguments error. This is a separate view, not extra rows in the default structural response
-and not a new tool. It uses the typed [agent exposure comparison](../model-comparison.md#compare-agent-exposure-separately).
-
-The result contains `version: 2`, `sourceRevision`, `beforeRevision`, `afterRevision`, `comparisonLevel: "agent-exposure"`,
-`coverage` (`Complete` or `Incomplete`), nullable `hasWidening`, and `page`. Page items contain `kind`,
-`qualifiedName`, `change`, `reason`, nullable `beforeScope`/`afterScope`, and nullable `diagnosticCode`.
-The change is `Added`, `Removed`, `Widened`, `Narrowed`, `Unchanged` or `Unknown`. Rows have deterministic
-operation-kind/name order and use the existing count and serialized-byte page bounds. Continue with `nextOffset`
-and the same `expectedSourceRevision`, `view` and `version: 2`; stale pairs and unpinned continuations refuse.
-Every page repeats the revision pin, version and coverage, including empty, incomplete and byte-bounded pages.
-Check requested version equals answered version on every page; a mismatch must not fall back to legacy completeness.
-Proposal baseline, pending
-recovery, snapshot path containment and read-only source guards apply unchanged.
-
-Parsing/validation errors on either side make every available row Unknown and coverage Incomplete, with
-`hasWidening: null`, even when no block or rows survive. An executable-binding refusal alone (such as preview
-`system`/`operation` with `PLAY0268`) does not imply source errors: intact authoring allowlists still compare.
-Unknown is reserved for parsing/validation errors, not warnings. An exposed signature or contract change at the same
-scope is Widened; an unresolved contract without source errors is conservatively Widened for review, not Unknown.
-Absent and explicitly empty valid blocks expose nothing. Descriptions alone do not widen exposure.
-
-The default semantic-diff views keep their shapes. Their limits append exactly one
-`Agent exposure was not compared; use the agent-exposure view.` statement when either source has an agents block
-(including empty), or either source has parsing/validation errors. Clean sources without agents add nothing,
-including preview-only binding refusal. This view grants no authorization and implements no endpoints or tokens.
 
 ## Semantic revision difference
 

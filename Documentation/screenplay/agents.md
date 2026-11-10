@@ -32,22 +32,6 @@ Global queries cannot be exposed. Performed queries (queries with a `performer`)
 
 https://github.com/Cratis/Screenplay/issues/1217
 
-## Review exposure changes
-
-Use the C# [agent exposure comparison](model-comparison.md#compare-agent-exposure-separately), or opt into
-`view: "agent-exposure"` with `version: 2` on MCP `semantic-diff` or `read-proposal`. Each page repeats version 2,
-the revision pin and coverage; request and check that version on every page. The separate result classifies added, removed,
-widened, narrowed, unchanged and unknown exposure with its own coverage. Parsing/validation errors fail closed:
-all rows become Unknown and coverage is Incomplete, even if no block survives. A clean authoring model refused
-only by executable binding is different; its intact allowlist can still be compared. Unknown is reserved for
-parsing/validation errors. A changed exposed contract at unchanged scope is Widened; an unresolved contract without
-source errors is conservatively Widened for review, not Unknown.
-
-Legacy structural diff rows do not compare exposure. When a block or source errors exist, their limits say so
-explicitly. Do not treat legacy structural completeness or incomplete empty exposure rows as a safe no-widening
-verdict. [Decision 0155](../../decisions/0155-explicit-agent-exposure-and-fail-closed-comparison.md) records the
-compatibility and fail-closed rules. None of these views implements endpoints or token issuance.
-
 ## Portable contract
 
 An agents block selects language/semantic `48.0` and ESM `schemaVersion: 48`, including an explicitly empty block. Models without a block retain their earlier version and canonical bytes. The portable metadata records the personal token kind and, for each entry, its kind, existing executable operation identity, scope and description. It neither invents operation identities nor changes execution authorization. Older consumers must reject v48 rather than discard this metadata and infer exposure.
