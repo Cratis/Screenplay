@@ -652,6 +652,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.byParts?.forEach(part => this.visitQueryParameter(part));
         syntax.filters.forEach(node => this.visitQueryParameter(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        if (syntax.narrow !== undefined) this.visitNode(syntax.narrow);
     }
 
     visitQueryParameter(syntax: QueryParameterSyntax): void {

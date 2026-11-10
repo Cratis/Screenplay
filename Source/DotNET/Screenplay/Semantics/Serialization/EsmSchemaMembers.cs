@@ -59,7 +59,7 @@ internal static class EsmSchemaMembers
         ["ProjectionValue"] = "kind:s value:1 path:path",
         ["Reducer"] = "name:s event:s readModel:s key:s initialState:null result:s transitions:[] from:1",
         ["ReducerTransition"] = "eventContract:s requirementId:s",
-        ["Query"] = "id:s name:s readModel:s argument:1 keyProperty:s keyParts:[] filters:[] cardinality:s delivery:s authorization:1",
+        ["Query"] = "id:s name:s readModel:s argument:1 keyProperty:s keyParts:[] filters:[] cardinality:s delivery:s authorization:1 narrowing:1",
         ["QueryArgument"] = "id:s name:s type:1",
         ["QueryKeyPart"] = "id:s name:s type:1 keyProperty:s",
         ["QueryFilter"] = "id:s name:s type:1 property:s",

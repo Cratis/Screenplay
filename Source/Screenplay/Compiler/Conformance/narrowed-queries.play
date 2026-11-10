@@ -1,0 +1,27 @@
+policy VesselOnThePlan
+  reads VesselPlan as plan by vesselId
+  require plan.enabled == true
+
+module Fleet
+  feature Vessels
+    slice StateView VesselList
+      readmodel Vessel
+        vesselId String key
+        name String
+      readmodel VesselPlan
+        vesselId String key
+        enabled Bool
+      event VesselNamed
+        name String
+      event VesselPlanSet
+        enabled Bool
+      projection BuildVessel => Vessel
+        from VesselNamed
+          vesselId = $eventSourceId
+          name = name
+      projection BuildVesselPlan => VesselPlan
+        from VesselPlanSet
+          vesselId = $eventSourceId
+          enabled = enabled
+      query VesselsOnThePlan => Vessel[]
+        narrow VesselOnThePlan

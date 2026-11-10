@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -71,7 +71,7 @@ internal static class EsmBaselineShapes
         ["ProjectionValue"] = "kind value:Value path",
         ["Reducer"] = "name event@9 readModel key initialState result transitions:ReducerTransition from@10:ObserverFilter",
         ["ReducerTransition"] = "eventContract requirementId",
-        ["Query"] = "id name readModel argument:QueryArgument keyProperty keyParts@27:QueryKeyPart filters@14:QueryFilter cardinality delivery authorization:Authorization",
+        ["Query"] = "id name readModel argument:QueryArgument keyProperty keyParts@27:QueryKeyPart filters@14:QueryFilter cardinality delivery authorization:Authorization narrowing@47:Authorization",
         ["QueryArgument"] = "id name type:TypeReference",
         ["QueryKeyPart"] = "id name type:TypeReference keyProperty",
         ["QueryFilter"] = "id name type:TypeReference property",
