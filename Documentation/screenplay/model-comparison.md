@@ -144,6 +144,34 @@ This report classifies differences between two models; it does not enforce the [
 The release baseline freezes resolved schemas by equality, so even an appended member or an explicit rename can
 violate a baselined event revision despite no breaking numeric identity change here.
 
+## Compare agent exposure separately
+
+`ModelDifference.AgentExposure` is a typed `AgentExposureComparison` beside the legacy structural sections.
+Its `Rows` are ordered by operation kind and resolved qualified name. An absent or explicitly empty agents block
+exposes nothing. Adding exposure produces `Added` and comparison warning `PLAY0978`; removing it produces `Removed`.
+A higher declared scope (`read < write`), changed exposed signature/referenced contract or admitted token-contract
+loosening is `Widened` (`PLAY0979`). A lower scope alone is `Narrowed`. Description edits and alternate spelling of
+the same resolved target are `Unchanged`.
+
+Always inspect this aggregate's own `Coverage`, not the legacy `Complete` field. Parsing/validation errors on either
+side make every available row `Unknown`, `Coverage` becomes `Incomplete` and `HasWidening` is null, even if no block
+or row survived. Unknown is reserved for these errors, not warnings or executable-binding refusal. Without such
+errors, an unresolved exposed contract is conservatively `Widened` for review, never Unknown or safely unchanged.
+Never convert an incomplete result's null to a safe `false`.
+Only personal tokens are supported; an unsupported-token attempt follows this error rule rather than comparing a
+valid subset.
+
+Executable-binding refusal is different: a preview `system`/`operation` can parse and validate cleanly, then refuse
+binding with `PLAY0268`. Its authoring allowlist remains intact and is compared independently of binding. Such a
+binding refusal without agents adds no exposure limit and preserves the existing legacy response bytes.
+
+The typed aggregate is excluded from default CLI/library JSON serialization; legacy rows do not acquire new fields.
+`NotCompared` adds exactly one `Agent exposure was not compared; use the agent-exposure view.` statement when either
+side has a block (including empty), or either side has parsing/validation errors. Clean sources without agents add
+nothing. MCP callers opt into [the agent-exposure view](mcp/reference.md#agent-exposure-difference) for bounded rows.
+This structural report grants no authorization, issues no tokens and implements no runtime endpoint. See
+[decision 0151](../../decisions/0151-explicit-agent-exposure-and-fail-closed-comparison.md).
+
 ## Group changes by slice
 
 A tool that builds code slice by slice needs to know which slices to rebuild,
