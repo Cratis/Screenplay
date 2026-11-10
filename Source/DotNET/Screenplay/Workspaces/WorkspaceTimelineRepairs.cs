@@ -99,21 +99,15 @@ internal static partial class WorkspaceTimelineRepairs
             return null;
         }
 
-        var common = 0;
-        while (common < consumer.Count && common < producer.Count && consumer[common] == producer[common]) common++;
-        if (common == consumer.Count || common == producer.Count) return null;
-        var left = consumer[common];
-        var right = producer[common];
+        var divergence = FirstDivergence(consumer, producer);
+        if (divergence is null) return null;
+        var (left, right) = divergence.Value;
         if (left.Path != right.Path) return null;
         var consumerEntry = Entry(index, left);
         var producerEntry = Entry(index, right);
-        if (consumerEntry is null || producerEntry is null || consumerEntry.Parent != producerEntry.Parent || consumerEntry.Member != producerEntry.Member ||
-            consumerEntry.Parent is null || consumerEntry.Index is null || producerEntry.Index is null)
-        {
-            return null;
-        }
+        if (!AreIndexedSiblings(consumerEntry, producerEntry)) return null;
 
-        var parent = index.Find(consumerEntry.Parent)!;
+        var parent = index.Find(consumerEntry!.Parent!)!;
         if (left.Node is FileImportSyntax leftImport && right.Node is FileImportSyntax)
         {
             if (left.Location == right.Location && PlayGlob.HasWildcard(leftImport.Pattern))
@@ -143,6 +137,18 @@ internal static partial class WorkspaceTimelineRepairs
             ? ExpandImports(index, timeline, finding, subject, parent, consumerEntry, producerEntry, left, right)
             : null;
     }
+
+    static (AuthoredOrderStep Left, AuthoredOrderStep Right)? FirstDivergence(IReadOnlyList<AuthoredOrderStep> consumer, IReadOnlyList<AuthoredOrderStep> producer)
+    {
+        var common = 0;
+        while (common < consumer.Count && common < producer.Count && consumer[common] == producer[common]) common++;
+
+        return common == consumer.Count || common == producer.Count ? null : (consumer[common], producer[common]);
+    }
+
+    static bool AreIndexedSiblings(WorkspaceSyntaxEntry? consumerEntry, WorkspaceSyntaxEntry? producerEntry) =>
+        consumerEntry is not null && producerEntry is not null && consumerEntry.Parent == producerEntry.Parent && consumerEntry.Member == producerEntry.Member &&
+        consumerEntry.Parent is not null && consumerEntry.Index is not null && producerEntry.Index is not null;
 
     static WorkspaceSyntaxEntry? Entry(WorkspaceSyntaxIndex index, AuthoredOrderStep step)
     {
@@ -263,13 +269,7 @@ internal static partial class WorkspaceTimelineRepairs
             // collection in one typed operation, carrying all original nodes and comment metadata.
             var imports = index.Entries.Where(entry => entry.Parent == parent.Handle && entry.Member == "fileImports").OrderBy(entry => entry.Index).Select(entry => (FileImportSyntax)entry.Node).ToList();
             imports.InsertRange(glob.Index!.Value, pins);
-            var replacement = parent.Node switch
-            {
-                ApplicationSyntax application => application with { FileImports = imports },
-                ModuleSyntax module => module with { FileImports = imports },
-                FeatureSyntax feature => feature with { FileImports = imports },
-                _ => parent.Node
-            };
+            var replacement = WithFileImports(parent.Node, imports);
             if (ReferenceEquals(replacement, parent.Node)) return null;
             operations = [new ReplaceWorkspaceNode(parent.Handle, parent.Node, replacement)];
         }
