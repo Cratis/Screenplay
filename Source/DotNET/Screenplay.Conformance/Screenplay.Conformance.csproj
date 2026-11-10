@@ -21,7 +21,8 @@
         -->
         <NoWarn>$(NoWarn);NU5128;IDE0240;MA0182</NoWarn>
 
-        <!-- The sources must compile in a consumer that has no implicit usings and C# 12. -->
+        <!-- The sources must compile in a consumer that has no implicit usings and C# 12.
+             This overrides the repository-wide `latest` in Directory.Build.props. -->
         <LangVersion>12.0</LangVersion>
         <ImplicitUsings>disable</ImplicitUsings>
     </PropertyGroup>
