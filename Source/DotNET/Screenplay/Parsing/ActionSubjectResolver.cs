@@ -33,34 +33,36 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
         {
             Screens = [.. slice.Screens.Select(screen => screen with
             {
-                Directives = Container(screen.Directives, [], scope),
-                Contributions = [.. screen.Contributions.Select(contribution => contribution with { Directives = Container(contribution.Directives, [], scope) })]
+                Directives = Container(screen.Directives, new([], []), scope),
+                Contributions = [.. screen.Contributions.Select(contribution => contribution with { Directives = Container(contribution.Directives, new([], []), scope) })]
             })]
         };
     }
 
-    ScreenDirectiveSyntax[] Container(IEnumerable<ScreenDirectiveSyntax> directives, IReadOnlyList<ScreenDataSyntax> inherited, DeclarationScope scope)
+    ScreenDirectiveSyntax[] Container(IEnumerable<ScreenDirectiveSyntax> directives, ActionSubjectVisibility inherited, DeclarationScope scope)
     {
         var nodes = directives.ToArray();
         var local = nodes.OfType<ScreenDataSyntax>().ToArray();
-        var subjects = local.Length == 0 ? inherited : local;
-        return [.. nodes.Select(node => Directive(node, subjects, scope))];
+        var tables = nodes.OfType<ScreenTableSyntax>().Select(table => table.Target).ToArray();
+        var visible = new ActionSubjectVisibility(local.Length == 0 ? inherited.Data : local, tables.Length == 0 ? inherited.Tables : tables);
+        return [.. nodes.Select(node => Directive(node, visible, scope))];
     }
 
-    ScreenDirectiveSyntax Directive(ScreenDirectiveSyntax node, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope) => node switch
+    ScreenDirectiveSyntax Directive(ScreenDirectiveSyntax node, ActionSubjectVisibility visible, DeclarationScope scope) => node switch
     {
-        ScreenActionSyntax action => PlainAction(action, subjects, scope),
-        ScreenGuardedActionSyntax action => GuardedAction(action, subjects, scope),
-        ScreenToolbarSyntax toolbar => toolbar with { Items = [.. toolbar.Items.Select(item => ToolbarItem(item, subjects, scope))] },
-        ScreenSectionSyntax section => section with { Directives = Container(section.Directives, subjects, scope) },
-        ScreenSlotSyntax slot => slot with { Directives = Container(slot.Directives, subjects, scope) },
-        ScreenTemplateReferenceSyntax template => template with { Slots = [.. template.Slots.Select(slot => slot with { Directives = Container(slot.Directives, subjects, scope) })] },
-        ScreenComponentSyntax component => component with { Slots = [.. component.Slots.Select(slot => slot with { Directives = Container(slot.Directives, subjects, scope) })] },
+        ScreenActionSyntax action => PlainAction(action, visible, scope),
+        ScreenGuardedActionSyntax action => GuardedAction(action, visible.Data, scope),
+        ScreenToolbarSyntax toolbar => toolbar with { Items = [.. toolbar.Items.Select(item => ToolbarItem(item, visible, scope))] },
+        ScreenSectionSyntax section => section with { Directives = Container(section.Directives, visible, scope) },
+        ScreenSlotSyntax slot => slot with { Directives = Container(slot.Directives, visible, scope) },
+        ScreenTemplateReferenceSyntax template => template with { Slots = [.. template.Slots.Select(slot => slot with { Directives = Container(slot.Directives, visible, scope) })] },
+        ScreenComponentSyntax component => component with { Slots = [.. component.Slots.Select(slot => slot with { Directives = Container(slot.Directives, visible, scope) })] },
         _ => node
     };
 
-    ScreenActionSyntax PlainAction(ScreenActionSyntax action, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope)
+    ScreenActionSyntax PlainAction(ScreenActionSyntax action, ActionSubjectVisibility visible, DeclarationScope scope)
     {
+        var subjects = ItemSubjects(action.Subject, visible);
         var context = new ActionSubjectContext(subjects, scope, action.Location);
         var subject = Subject(action.Subject, action.Command, action.Inputs.Select(input => input.Name), context);
         var inputs = subject == ScreenActionSubjectKind.Item && HasSubject(subjects, action.Location, false) ? Inputs(action.Command, action.Inputs, context) : action.Inputs;
@@ -69,9 +71,10 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
         return effective;
     }
 
-    ToolbarItemSyntax ToolbarItem(ToolbarItemSyntax item, IReadOnlyList<ScreenDataSyntax> subjects, DeclarationScope scope)
+    ToolbarItemSyntax ToolbarItem(ToolbarItemSyntax item, ActionSubjectVisibility visible, DeclarationScope scope)
     {
         if (item.Kind != ToolbarItemKind.Action) return item;
+        var subjects = ItemSubjects(item.Subject, visible);
         var context = new ActionSubjectContext(subjects, scope, item.Location);
         var subject = Subject(item.Subject, item.Target, item.Parameters.Select(parameter => parameter.Name), context);
         if (subject != ScreenActionSubjectKind.Item || !HasSubject(subjects, item.Location, false))
@@ -91,8 +94,7 @@ internal sealed partial class ActionSubjectResolver(ApplicationSyntax applicatio
     bool HasSubject(IReadOnlyList<ScreenDataSyntax> subjects, Cratis.Screenplay.Diagnostics.SourceLocation location, bool guarded)
     {
         if (subjects.Count == 1) return true;
-        var message = guarded ? "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved" : "Action 'for item' requires one resolvable data subject - no item binding is inferred";
-        _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UnresolvedActionSubject, message, location));
+        _diagnostics.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UnresolvedActionSubject, UnresolvedMessage(subjects, guarded), location));
         return false;
     }
 

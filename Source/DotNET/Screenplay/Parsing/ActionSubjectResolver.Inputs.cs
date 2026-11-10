@@ -10,6 +10,22 @@ internal sealed partial class ActionSubjectResolver
 {
     static bool EligibleIdentifier(PropertySyntax input) => input.IsIdentifier && !input.IsGenerated && !input.Type.IsOptional && !input.Type.IsCollection;
 
+    // An explicit 'for item' acts on the one collection data a table in scope shows; anything else keeps the nearest data.
+    static IReadOnlyList<ScreenDataSyntax> ItemSubjects(ScreenActionSubjectKind? authored, ActionSubjectVisibility visible)
+    {
+        if (authored != ScreenActionSubjectKind.Item || visible.Data.Count <= 1) return visible.Data;
+        var shown = visible.Data.Where(data => data.Type.IsCollection && visible.Tables.Contains(data.Type.Name)).ToArray();
+        return shown.Length == 1 ? shown : visible.Data;
+    }
+
+    static string UnresolvedMessage(IReadOnlyList<ScreenDataSyntax> subjects, bool guarded)
+    {
+        if (guarded) return "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved";
+        if (subjects.Count <= 1) return "Action 'for item' requires one resolvable data subject - no item binding is inferred";
+        var candidates = string.Join(", ", subjects.Select(data => data.Type.IsCollection ? $"{data.Type.Name}[]" : data.Type.Name));
+        return $"Action 'for item' is ambiguous between data {candidates} - keep exactly one data (or a table over exactly one collection data) in the action's container, or move the action into a section beside the data it acts on";
+    }
+
     ScreenActionSubjectKind? Subject(ScreenActionSubjectKind? authored, string command, IEnumerable<string> bound, ActionSubjectContext context)
     {
         if (authored is not null) return authored;
