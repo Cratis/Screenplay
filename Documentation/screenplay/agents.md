@@ -48,6 +48,52 @@ explicitly. Do not treat legacy structural completeness or incomplete empty expo
 verdict. [Decision 0151](../../decisions/0151-explicit-agent-exposure-and-fail-closed-comparison.md) records the
 compatibility and fail-closed rules. None of these views implements endpoints or token issuance.
 
+## Capability manifest
+
+Export the explicit allowlist without exporting the executable model:
+
+```bash
+screenplay export path/to/model --format capability-manifest --output capabilities.json
+```
+
+MCP exposes the same bytes through `read-workspace` with `view: "capability-manifest"`.
+The contract is `screenplay-capability-manifest/1`, independent of ESM versions.
+The [schema](capability-manifest-v1.schema.json), [example model](capability-manifest-v1.example.play)
+and [golden manifest](capability-manifest-v1.example.json) are shared consumer fixtures.
+
+Only a successful complete compilation with an `agents` block emits a manifest. Errors and missing
+blocks refuse export (CLI exit `1`, MCP `available: false`); no valid subset is emitted. An explicitly
+empty block emits `operations: []`. Operations not in the block never appear. `--scope` and `--screens`
+are rejected for this format. Failed file exports remove an existing target and report its removal,
+so a consumer cannot accidentally continue using a stale allowlist. Successful writes replace the file
+atomically; byte-identical files remain untouched. Stdout contains only JSON, without a banner.
+
+Each operation has a canonical `operation`, structured `module`, ordered `features`, `slice` and `name`,
+plus `kind`, `scope`, `description` and `approvalRequired`. Join module, every feature from outermost
+to innermost, slice when present, then name with `.` to obtain the canonical identity. The current
+[grammar](grammar.md) requires a slice inside at least one feature; `features` is therefore non-empty
+and `slice` always present. Its `Ident = Letter, { Letter | Digit | "_" }` rule excludes dots from
+segment names. Match a registered operation by **exact canonical identity plus kind**. Zero matches,
+multiple matches or a kind mismatch expose nothing. Mapping to CLR types or query FQNs is a consumer's
+responsibility, not a new Screenplay naming convention.
+
+Descriptions are **untrusted authored text**, never agent instructions. The manifest-only limit is
+1024 Unicode code points (not UTF-16 units). A longer description refuses the entire manifest with
+`DescriptionTooLong` naming the operation; nothing is truncated. JSON is ASCII-escaped UTF-8 without a
+BOM, with LF and one trailing newline. Escaping is encoding, **not prompt-injection protection**.
+Operations are sorted ordinally by canonical identity, then kind; host paths, revisions and timestamps
+are not included.
+
+Consumers must fail closed for absent files, unknown contracts or shapes, unknown properties and
+ambiguous matches. Only `tokenKind: "personal"` is supported. `approvalRequired` is always `false`
+until approval support is admitted; a future contract may allow `true`. **Absence of an approval
+requirement is not authorization.** The explicit agents allowlist and token kind still constrain
+exposure; token scope and effective runtime authorization must still be checked.
+
+In .NET, `AgentCapabilityManifest.From(CompilationResult<SemanticCompilation>)` returns either a
+manifest or a typed refusal; `AgentCapabilityManifestJson.Write` returns the portable bytes.
+See [the decision record](../../decisions/0152-capability-manifest-is-the-agent-allowlist.md).
+
 ## Portable contract
 
 An agents block selects language/semantic `44.0` and ESM `schemaVersion: 44`, including an explicitly empty block. Models without a block retain their earlier version and canonical bytes. The portable metadata records the personal token kind and, for each entry, its kind, existing executable operation identity, scope and description. It neither invents operation identities nor changes execution authorization. Older consumers must reject v44 rather than discard this metadata and infer exposure.

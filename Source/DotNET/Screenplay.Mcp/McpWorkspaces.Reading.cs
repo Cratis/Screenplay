@@ -405,7 +405,7 @@ internal sealed partial class McpWorkspaces
             page = McpPaging.BoundedSourcePage(WorkspaceProductionDestinationRepairs.Discover(workspace).Select(McpDestinationIntent.Describe), arguments, workspace.Revision.ToString())
         }),
         "executable-model" => ReadExecutableModelView(workspace, arguments, view),
-        "api-description" or "ui-contract" => ReadPortableContractView(workspace, arguments, view),
+        "api-description" or "ui-contract" or "capability-manifest" => ReadPortableContractView(workspace, arguments, view),
         _ when _eventSourceViews.Contains(view, StringComparer.Ordinal) => ReadEventSourceView(workspace, arguments, view),
         _ when _operationIntentViews.Contains(view, StringComparer.Ordinal) => ReadOperationIntentView(workspace, arguments, view),
         _ => ReadIntentOrListedView(workspace, arguments, view)

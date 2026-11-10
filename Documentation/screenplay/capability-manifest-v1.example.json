@@ -1,0 +1,33 @@
+{
+  "contract": "screenplay-capability-manifest/1",
+  "tokenKind": "personal",
+  "operations": [
+    {
+      "operation": "Sales.Invoices.Creating.Create",
+      "module": "Sales",
+      "features": [
+        "Invoices"
+      ],
+      "slice": "Creating",
+      "name": "Create",
+      "kind": "command",
+      "scope": "write",
+      "description": "Create an invoice",
+      "approvalRequired": false
+    },
+    {
+      "operation": "Sales.Invoices.History.Listing.All",
+      "module": "Sales",
+      "features": [
+        "Invoices",
+        "History"
+      ],
+      "slice": "Listing",
+      "name": "All",
+      "kind": "query",
+      "scope": "read",
+      "description": "List invoices",
+      "approvalRequired": false
+    }
+  ]
+}

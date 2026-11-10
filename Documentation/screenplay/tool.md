@@ -494,7 +494,7 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
 
-## Export the executable model, its HTTP API and its UI contract
+## Export the executable model, its HTTP API, UI contract and agent allowlist
 
 Write the canonical executable semantic model (ESM) of a model, for a builder, a script or a CI step:
 
@@ -513,6 +513,20 @@ The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the sa
 screenplay export path/to/screenplays --screens --output model.esm.json
 ```
 
+The [capability manifest](agents.md#capability-manifest) exports only the explicit `agents` allowlist:
+
+```bash
+screenplay export path/to/screenplays --format capability-manifest --output capabilities.json
+```
+
+It requires a successful complete compilation and an `agents` block, not executable-model export.
+No block or any compilation error exits `1` without a manifest; an explicitly empty block emits an empty
+operations array. Descriptions over 1024 Unicode code points also refuse emission, naming the operation.
+There is no truncation. Descriptions are untrusted; ASCII escaping does not protect against prompt injection.
+`approvalRequired: false` is not authorization. `--scope` and `--screens` are rejected (exit `2`).
+Without `--output` stdout contains only the JSON. With it, failed exports delete an existing stale target and
+report the deletion on stderr; successful writes are atomic and leave byte-identical files untouched.
+
 Two more formats describe the same model for builders on any stack:
 
 ```bash
@@ -524,8 +538,8 @@ screenplay export path/to/screenplays --format ui --output screens.json
 
 | Exit code | Meaning |
 |---|---|
-| `0` | The model was written |
-| `1` | The model has no executable model, or `--screens` was refused; the errors or refusals are listed on standard error |
+| `0` | The model or capability manifest was written |
+| `1` | The model has no executable model, `--screens` was refused, or capability-manifest emission was refused; details are listed on standard error |
 | `2` | Invalid arguments or scope, or the model could not be read |
 
 ## Compare two model versions

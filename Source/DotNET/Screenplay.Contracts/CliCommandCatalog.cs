@@ -136,7 +136,7 @@ public static class CliCommandCatalog
     public static CliCommand BaselineCheck { get; } = new("baseline check", "<root>", []);
 
     /// <summary>Gets the export format option: the executable model, its OpenAPI description or its UI contract.</summary>
-    public static CliOption ExportFormat { get; } = new("--format", "esm|openapi|ui");
+    public static CliOption ExportFormat { get; } = new("--format", "esm|openapi|ui|capability-manifest");
 
     /// <summary>Gets the option that admits the model's screens to the exported executable model as ESM v42.</summary>
     public static CliOption Screens { get; } = new("--screens");

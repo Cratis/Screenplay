@@ -141,3 +141,4 @@
 | [0149](0149-screens-in-the-executable-model.md) | Screens are admitted to the executable model on request as ESM v42 | accepted | none | 2026-11-09 | Accepted Screenplay#1187 (delegated) |
 | [0150](0150-projection-parity-esm-v43.md) | Write once, key a dictionary by the event or its cause, remove a key and order children in projections (ESM v43) | accepted | none | 2026-11-09 | Einar Ingebrigtsen (cross-repository contract on Chronicle#5755) |
 | [0151](0151-explicit-agent-exposure-and-fail-closed-comparison.md) | Keep explicit agent exposure default-deny and compare it separately with fail-closed coverage | proposed | none | — | — |
+| [0152](0152-capability-manifest-is-the-agent-allowlist.md) | Emit a capability manifest only from the explicit agents allowlist (number placeholder) | accepted | none | 2026-11-10 | User's binding #1199 plan and contract decisions |
