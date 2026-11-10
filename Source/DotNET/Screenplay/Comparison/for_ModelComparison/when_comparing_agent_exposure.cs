@@ -17,6 +17,7 @@ public class when_comparing_agent_exposure : Cratis.Screenplay.for_Agents.given.
     {
         var result = Compare(Model, Model);
         result.AgentExposure.Rows.ShouldBeEmpty();
+        result.AgentExposure.HasDeclaredAgents.ShouldBeFalse();
         result.AgentExposure.Coverage.ShouldEqual(AgentExposureCoverage.Complete);
         result.AgentExposure.HasWidening.ShouldEqual(false);
         result.NotCompared.Contains(Limit).ShouldBeFalse();
@@ -26,6 +27,7 @@ public class when_comparing_agent_exposure : Cratis.Screenplay.for_Agents.given.
     void should_treat_an_empty_block_as_an_empty_allowlist()
     {
         var result = Compare(Model, Model + "\n" + Empty);
+        result.AgentExposure.HasDeclaredAgents.ShouldBeTrue();
         result.AgentExposure.Rows.ShouldBeEmpty();
         result.AgentExposure.HasWidening.ShouldEqual(false);
         result.NotCompared.Count(limit => limit == Limit).ShouldEqual(1);
@@ -239,6 +241,61 @@ public class when_comparing_agent_exposure : Cratis.Screenplay.for_Agents.given.
         Compare(before, unrelated).AgentExposure.Rows.Single().Change.ShouldEqual(AgentExposureChangeKind.Unchanged);
     }
 
+    [Theory]
+    [InlineData("module Sales\n  authorize Staff and Auditors", "module Sales\n  authorize Staff or Auditors")]
+    [InlineData("feature Invoices\n    authorize Staff and Auditors", "feature Invoices\n    authorize Staff or Auditors")]
+    [InlineData("module Sales\n  authorize (Staff and Auditors) or Managers", "module Sales\n  authorize Staff and (Auditors or Managers)")]
+    [InlineData("module Sales", "module Sales\n  authorize Staff")]
+    [InlineData("module Sales\n  authorize Staff", "module Sales")]
+    [InlineData("feature Invoices", "feature Invoices\n    authorize Staff")]
+    [InlineData("feature Invoices\n    authorize Staff", "feature Invoices")]
+    void should_compare_the_structure_of_every_inherited_authorization(string original, string replacement)
+    {
+        const string policies = "policy Auditors\n  require role \"Auditors\"\npolicy Managers\n  require role \"Managers\"\n";
+        var ungated = Model.Replace("\n  authorize Staff", string.Empty, StringComparison.Ordinal);
+        var header = original.StartsWith("module", StringComparison.Ordinal) ? "module Sales" : "feature Invoices";
+        var before = policies + ungated.Replace(header, original, StringComparison.Ordinal) + "\n" + Allowlist;
+        var after = before.Replace(original, replacement, StringComparison.Ordinal);
+        new ScreenplayCompiler().Compile(before).Success.ShouldBeTrue();
+        new ScreenplayCompiler().Compile(after).Success.ShouldBeTrue();
+        var exposure = Compare(before, after).AgentExposure;
+        exposure.Coverage.ShouldEqual(AgentExposureCoverage.Complete);
+        exposure.Rows.Length.ShouldEqual(2);
+        exposure.Rows.All(row => row.Change == AgentExposureChangeKind.Widened && row.DiagnosticCode == DiagnosticCodes.WidenedAgentOperation).ShouldBeTrue();
+        exposure.HasWidening.ShouldEqual(true);
+    }
+
+    [Fact]
+    void should_ignore_authorization_edits_in_an_unrelated_module()
+    {
+        const string before = Model + "\nmodule Other\n  authorize Staff\n" + Query;
+        var after = before.Replace("module Other\n  authorize Staff", "module Other", StringComparison.Ordinal);
+        new ScreenplayCompiler().Compile(before).Success.ShouldBeTrue();
+        new ScreenplayCompiler().Compile(after).Success.ShouldBeTrue();
+        Compare(before, after).AgentExposure.Rows.Single().Change.ShouldEqual(AgentExposureChangeKind.Unchanged);
+    }
+
+    [Fact]
+    void should_compare_new_read_model_fields_reached_by_an_exposed_query()
+    {
+        const string before = Model + "\n" + Query;
+        var after = before.Replace("readmodel Invoice\n        id String", "readmodel Invoice\n        id String\n        label String", StringComparison.Ordinal);
+        after.ShouldNotEqual(before);
+        new ScreenplayCompiler().Compile(after).Success.ShouldBeTrue();
+        Compare(before, after).AgentExposure.Rows.Single().Change.ShouldEqual(AgentExposureChangeKind.Widened);
+    }
+
+    [Fact]
+    void should_not_treat_default_coverage_as_a_safe_verdict()
+    {
+        var structural = new StructuralDifference([], [], true, false, [], 0, 0);
+        structural.AgentExposure.Coverage.ShouldEqual(AgentExposureCoverage.Incomplete);
+        structural.AgentExposure.HasWidening.ShouldBeNull();
+        var projected = new ModelDifference(DeclarationMatching.Address, true, false, true, true, 0, 0, [], [], [], [], [], [], [], []);
+        projected.AgentExposure.Coverage.ShouldEqual(AgentExposureCoverage.Incomplete);
+        projected.AgentExposure.HasWidening.ShouldBeNull();
+    }
+
     [Fact]
     void should_not_hash_locations_or_unused_type_contracts()
     {
@@ -265,6 +322,7 @@ public class when_comparing_agent_exposure : Cratis.Screenplay.for_Agents.given.
             });
         var valid = Source(Model + "\n" + Query);
         var result = baselineInvalid ? ModelComparison.Compare(invalid, valid) : ModelComparison.Compare(valid, invalid);
+        result.AgentExposure.HasDeclaredAgents.ShouldBeTrue();
         result.AgentExposure.Coverage.ShouldEqual(AgentExposureCoverage.Incomplete);
         result.AgentExposure.HasWidening.ShouldBeNull();
         result.AgentExposure.Rows.Length.ShouldEqual(2);
