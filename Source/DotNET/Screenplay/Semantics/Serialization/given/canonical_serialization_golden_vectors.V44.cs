@@ -4,45 +4,56 @@
 #if DEBUG
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
+/// <summary>
+/// Supplies the ESM v44 golden: every v43 construct plus a policy that decides from recorded state.
+/// </summary>
 public static partial class canonical_serialization_golden_vectors
 {
     /// <summary>
-    /// The v43 source plus explicitly exposed executable query and command declarations.
+    /// The source of the v44 golden: the v43 golden plus a policy that reads a plan and a command it authorizes.
     /// </summary>
-    public const string AgentExposureSource = ProjectionParitySource + """
+    public const string StatePolicySource = """
+        policy DataQualityEnabled
+          reads AssetPlan as plan by assetId
+          require authenticated and plan.dataQuality == true
 
-        module AgentSurface
-          feature Operations
-            slice StateView Directory
-              readmodel AgentPerson
-                personId PersonId key
-              query People => AgentPerson[]
-            slice StateChange Actions
-              command Refresh
-                personId PersonId identifier
+        """ + ProjectionParitySource + """
 
-        agents
-          tokens personal
-          query AgentSurface.Operations.Directory.People
-            scope read
-            description "Read the directory."
-          command AgentSurface.Operations.Actions.Refresh
-            scope write
-            description "Refresh the directory."
+        module Fleet
+          feature Tokens
+            slice StateChange RequestToken
+              event TokenRequested
+                assetId String
+              command RequestScopedToken
+                assetId String identifier
+                authorize DataQualityEnabled
+                produces TokenRequested
+                  for assetId
+                  assetId = assetId
+            slice StateView Plans
+              readmodel AssetPlan
+                assetId String key
+                dataQuality Bool
+              event PlanSet
+                dataQuality Bool
+              projection Build => AssetPlan
+                from PlanSet
+                  assetId = $eventSourceId
+                  dataQuality = dataQuality
         """;
 
     /// <summary>
-    /// Gets the canonical v44 bytes with an explicit query and command allowlist.
+    /// Gets the canonical bytes of the v44 golden.
     /// </summary>
     public static byte[] EsmV44Bytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v44.json");
 
     /// <summary>
-    /// Creates the v44 executable model without changing existing authorization.
+    /// Creates the v44 golden model.
     /// </summary>
-    /// <returns>The v44 executable model.</returns>
+    /// <returns>The model.</returns>
     public static ExecutableSemanticModel CreateSemanticModelV44()
     {
-        var result = property_order_binding.AdmitScreens(AgentExposureSource);
+        var result = property_order_binding.AdmitScreens(StatePolicySource);
         if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Refusals));
         return result.Compilation!.Model;
     }

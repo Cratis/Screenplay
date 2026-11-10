@@ -1,5 +1,5 @@
 ---
-id: 0152
+id: 0156
 title: Emit a capability manifest only from the explicit agents allowlist
 status: accepted
 stage: none
@@ -17,11 +17,9 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 ## Context
 
-[Decision 0151](0151-explicit-agent-exposure-and-fail-closed-comparison.md) makes agent exposure an
+[Decision 0155](0155-explicit-agent-exposure-and-fail-closed-comparison.md) makes agent exposure an
 explicit default-deny allowlist. Consumers such as Arc need a small portable declaration, not an ESM
 parser or inferred exposure. This is an export/transport contract, not a language change.
-
-Number 0152 is a local placeholder pending coordination with the parent release train.
 
 ## Decision
 

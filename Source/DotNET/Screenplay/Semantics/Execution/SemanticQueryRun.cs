@@ -66,6 +66,13 @@ sealed class SemanticQueryRun(
                 value.TargetProperty == query.Filters.Single(filter => filter.Id == filterValue.Filter).Property &&
                 SemanticValueRules.AreEqual(value.Value, filterValue.Value))))
             .ToImmutableArray();
+        if (query.Narrowing is not null)
+        {
+            var narrowed = Narrow(query, results);
+            if (narrowed.Refusal is not null) return narrowed.Refusal;
+            results = narrowed.Rows;
+        }
+
         result = new(query.Id, queryRequest.Key, results)
         {
             Filters = [.. query.Filters.Select(filter => queryRequest.Filters.SingleOrDefault(value => value.Filter == filter.Id))
@@ -126,6 +133,45 @@ sealed class SemanticQueryRun(
                 $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.")
             : null;
 
+    // Row narrowing: each row is judged by the policy with the row's own values as the artifact. A denied row is
+    // dropped, never refused, so the caller sees only the rows the recorded state allows (decision 0154).
+    (ImmutableArray<SemanticReadModelInstance> Rows, SemanticExecutionResult? Refusal) Narrow(SemanticKeyedQuery query, ImmutableArray<SemanticReadModelInstance> rows)
+    {
+        var readModel = plan.ReadModels[query.ReadModel];
+        var names = readModel.Properties.ToDictionary(property => property.Id, property => property.Name);
+        var kept = ImmutableArray.CreateBuilder<SemanticReadModelInstance>();
+        foreach (var row in rows)
+        {
+            var values = new Dictionary<string, SemanticValue>(StringComparer.Ordinal);
+            foreach (var value in row.Values)
+            {
+                if (names.TryGetValue(value.TargetProperty, out var name)) values[name] = value.Value;
+            }
+
+            var decision = SemanticPolicyEvaluation.Evaluate(
+                query.Narrowing,
+                plan,
+                caller,
+                values,
+                row.Key,
+                readModel.Properties,
+                bodies: policies,
+                tenant: tenant,
+                occurred: occurred,
+                hasPolicySubject: false,
+                readModels: tentative.ReadModels,
+                cancellationToken: cancellationToken);
+            if (decision.Outcome == SemanticPolicyOutcome.Unsupported)
+            {
+                return (rows, new SemanticUnsupported(original, SemanticExecutionCapability.Authorization, decision.Details ?? $"Policy '{decision.Policy}' has an opaque predicate and requires a target provider."));
+            }
+
+            if (decision.Outcome == SemanticPolicyOutcome.Allow) kept.Add(row);
+        }
+
+        return (kept.ToImmutable(), null);
+    }
+
     SemanticExecutionResult? Authorize(SemanticKeyedQuery query, SemanticValue key)
     {
         var arguments = query.Argument is null
@@ -153,6 +199,7 @@ sealed class SemanticQueryRun(
             tenant: tenant,
             occurred: occurred,
             hasPolicySubject: query.Argument is not null && query.KeyParts.IsEmpty,
+            readModels: tentative.ReadModels,
             cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {

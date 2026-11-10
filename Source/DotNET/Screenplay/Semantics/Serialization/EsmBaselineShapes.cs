@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -31,7 +31,7 @@ internal static class EsmBaselineShapes
     static readonly ImmutableDictionary<EsmBaselineShape, string> _definitions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema schemaVersion languageVersion semanticVersion revision application:Application",
-        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification graphQueries@40:GraphQuery eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember agents@44:Agents",
+        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification graphQueries@40:GraphQuery eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember agents@48:Agents",
         ["Agents"] = "tokenKind operations:AgentOperation",
         ["AgentOperation"] = "kind operation scope description",
         ["Concept"] = "id name primitive values validations:Validation numbers@12 compliance@13:Compliance generation@15:Generation",
@@ -73,7 +73,7 @@ internal static class EsmBaselineShapes
         ["ProjectionValue"] = "kind value:Value path",
         ["Reducer"] = "name event@9 readModel key initialState result transitions:ReducerTransition from@10:ObserverFilter",
         ["ReducerTransition"] = "eventContract requirementId",
-        ["Query"] = "id name readModel argument:QueryArgument keyProperty keyParts@27:QueryKeyPart filters@14:QueryFilter cardinality delivery authorization:Authorization",
+        ["Query"] = "id name readModel argument:QueryArgument keyProperty keyParts@27:QueryKeyPart filters@14:QueryFilter cardinality delivery authorization:Authorization narrowing@47:Authorization",
         ["QueryArgument"] = "id name type:TypeReference",
         ["QueryKeyPart"] = "id name type:TypeReference keyProperty",
         ["QueryFilter"] = "id name type:TypeReference property",
@@ -105,9 +105,12 @@ internal static class EsmBaselineShapes
         ["ResponseField"] = "name source type:TypeReference",
         ["ThenReturns"] = "kind value:Value fields:ReturnField",
         ["ReturnField"] = "name value:Value",
-        ["Policy"] = "name condition:PolicyCondition requirementId",
-        ["PolicyCondition"] = "kind role claim targetKind value operand:PolicyCondition operator left:PolicyCondition right:PolicyCondition",
-        ["Authorization"] = "kind name operator left:Authorization right:Authorization",
+        ["Policy"] = "name inputs@46:PolicyInput reads@44:PolicyRead condition:PolicyCondition requirementId",
+        ["PolicyRead"] = "name readModel by",
+        ["PolicyInput"] = "name type:TypeReference",
+        ["PolicyInputMapping"] = "input property",
+        ["PolicyCondition"] = "kind role claim targetKind value condition@44:Condition operand:PolicyCondition operator left:PolicyCondition right:PolicyCondition",
+        ["Authorization"] = "kind name mappings@46:PolicyInputMapping operator left:Authorization right:Authorization",
         ["Caller"] = "authenticated roles claims:CallerClaim",
         ["CallerClaim"] = "type value",
         ["EventSourceDeclaration"] = "id name sourceKind identifierType:TypeReference streams:EventStream",

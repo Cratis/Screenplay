@@ -181,7 +181,7 @@ The typed aggregate is excluded from default CLI/library JSON serialization; leg
 side has a block (including empty), or either side has parsing/validation errors. Clean sources without agents add
 nothing. MCP callers opt into [the agent-exposure view](mcp/reference.md#agent-exposure-difference) for bounded rows.
 This structural report grants no authorization, issues no tokens and implements no runtime endpoint. See
-[decision 0151](../../decisions/0151-explicit-agent-exposure-and-fail-closed-comparison.md).
+[decision 0155](../../decisions/0155-explicit-agent-exposure-and-fail-closed-comparison.md).
 
 ## Group changes by slice
 

@@ -14,12 +14,12 @@ public class when_binding_agent_capabilities : given.an_agent_model
     static string BindableModel => "concept InvoiceId : Uuid\n" + Model.Replace("        id String", "        invoiceId InvoiceId", StringComparison.Ordinal);
 
     [Fact]
-    void should_admit_explicit_exposure_as_v44()
+    void should_admit_explicit_exposure_as_v48()
     {
         var result = Bind(BindableModel + "\n" + Allowlist);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V44);
-        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V44);
+        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V48);
+        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V48);
         var capabilities = AgentCapabilities.From(result)!;
         capabilities.TokenKind.ShouldEqual(AgentTokenKind.Personal);
         capabilities.Operations.Count.ShouldEqual(2);
@@ -34,7 +34,7 @@ public class when_binding_agent_capabilities : given.an_agent_model
         result.Success.ShouldBeTrue();
         result.Value!.Model.Application.Agents.ShouldBeNull();
         AgentCapabilities.From(result).ShouldBeNull();
-        (result.Value.Model.SemanticVersion == SemanticVersion.V44).ShouldBeFalse();
+        (result.Value.Model.SemanticVersion == SemanticVersion.V48).ShouldBeFalse();
     }
 
     [Fact]
@@ -88,7 +88,8 @@ public class when_binding_agent_capabilities : given.an_agent_model
     {
         var model = Bind(BindableModel + "\n" + Allowlist).Value!.Model;
         Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(LanguageVersion.V41, SemanticVersion.V41, model.Application));
-        Assert.Throws<InvalidSemanticContract>(() => EsmSchemaV43Support.EnsureSupported(LanguageVersion.V44, SemanticVersion.V44));
+        Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(LanguageVersion.V47, SemanticVersion.V47, model.Application));
+        Assert.Throws<InvalidSemanticContract>(() => EsmSchemaV47Support.EnsureSupported(LanguageVersion.V48, SemanticVersion.V48));
     }
 
     [Fact]
@@ -97,7 +98,7 @@ public class when_binding_agent_capabilities : given.an_agent_model
         var model = Bind(BindableModel + "\n" + Allowlist).Value!.Model;
         var operation = model.Application.Agents!.Operations[0];
         var invalid = model.Application with { Agents = model.Application.Agents with { Operations = [operation with { Kind = operation.Kind == SemanticAgentOperationKind.Query ? SemanticAgentOperationKind.Command : SemanticAgentOperationKind.Query }] } };
-        Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(LanguageVersion.V44, SemanticVersion.V44, invalid));
+        Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(LanguageVersion.V48, SemanticVersion.V48, invalid));
     }
 
     [Fact]
@@ -120,16 +121,16 @@ public class when_binding_agent_capabilities : given.an_agent_model
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         var model = result.Value!.Model;
         var application = model.Application with { Agents = model.Application.Agents! with { Operations = [.. model.Application.Agents!.Operations.Reverse()] } };
-        var reordered = ExecutableSemanticModel.Create(LanguageVersion.V44, SemanticVersion.V44, application);
+        var reordered = ExecutableSemanticModel.Create(LanguageVersion.V48, SemanticVersion.V48, application);
         reordered.Revision.ShouldEqual(model.Revision);
         SemanticModelSerializer.Serialize(reordered).SequenceEqual(SemanticModelSerializer.Serialize(model)).ShouldBeTrue();
     }
 
     [Fact]
-    void should_pin_the_v44_canonical_golden()
+    void should_pin_the_v48_canonical_golden()
     {
-        var model = Semantics.Serialization.given.canonical_serialization_golden_vectors.CreateSemanticModelV44();
-        SemanticModelSerializer.Serialize(model).SequenceEqual(Semantics.Serialization.given.canonical_serialization_golden_vectors.EsmV44Bytes).ShouldBeTrue();
+        var model = Semantics.Serialization.given.canonical_serialization_golden_vectors.CreateSemanticModelV48();
+        SemanticModelSerializer.Serialize(model).SequenceEqual(Semantics.Serialization.given.canonical_serialization_golden_vectors.EsmV48Bytes).ShouldBeTrue();
     }
 
     static CompilationResult<SemanticCompilation> Bind(string source)

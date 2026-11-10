@@ -29,7 +29,7 @@ public class when_regenerating_the_current_full_golden : Specification
         error.Message.ShouldContain("regenerated");
         var fullName = version.Minor == 0 ? $"full-esm-v{version.Major}.json" : $"full-esm-v{current}.json";
         Directory.GetFiles(_directory, "full-esm-*.json").Select(Path.GetFileName).ShouldContainOnly([fullName]);
-        File.ReadAllBytes(Path.Combine(_directory, fullName)).ShouldEqual(canonical_serialization_golden_vectors.EsmV44Bytes);
+        File.ReadAllBytes(Path.Combine(_directory, fullName)).ShouldEqual(canonical_serialization_golden_vectors.EsmV48Bytes);
         Directory.GetFiles(_directory).Length.ShouldEqual(includeSidecars ? 6 : 1);
     }
 

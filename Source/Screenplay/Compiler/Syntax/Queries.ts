@@ -24,4 +24,11 @@ export interface QuerySyntax extends SyntaxNode {
     readonly isObservable: boolean;
     readonly scope: string | null;
     readonly authorize: AuthorizeSyntax | null;
+    readonly narrow?: NarrowSyntax;
+}
+
+// 'narrow <Policy>' on a collection query: only the rows the policy allows are returned.
+export interface NarrowSyntax extends SyntaxNode {
+    readonly kind: 'NarrowSyntax';
+    readonly policy: string;
 }

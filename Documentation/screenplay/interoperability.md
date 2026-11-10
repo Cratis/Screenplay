@@ -199,6 +199,9 @@ Use the table to identify the ESM contract selected by a construct before decidi
 | 40.0 | Queries that read a graph and an event-time clock in graph specifications (`graphQueries`, the graph specification `clock`; released in Screenplay 5.8.0) | 40 | [0139](https://github.com/Cratis/Screenplay/blob/main/decisions/0139-graph-reads-collection-iteration-and-event-context-esm-v40.md) | `full-esm-v40.json` | `EsmGoldenVectors.Get(40)` |
 | 41.0 | Graph projection handlers that run once per item of an event collection (`forEach` on a graph handler; released in Screenplay 5.10.0) | 41 | [0140](https://github.com/Cratis/Screenplay/blob/main/decisions/0140-graph-foreach-esm-v41.md) | `full-esm-v41.json` | `EsmGoldenVectors.Get(41)` |
 | 42.0 | Screens admitted on request as a stack-neutral UI contract (`screens` on a slice: data, actions, navigation and layout; released in Screenplay 6.8.0) | 42 | [0149](https://github.com/Cratis/Screenplay/blob/main/decisions/0149-screens-in-the-executable-model.md) | `full-esm-v42.json` | `EsmGoldenVectors.Get(42)` |
+| 43.0 | Set-once projection mappings and children collections with a stored order (`"operation":"setOnce"`, `ordering` on children) | 43 | [0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md) | `full-esm-v43.json` | `EsmGoldenVectors.Get(43)` |
+| 44.0 | Policies that decide from recorded state (`reads` on a policy, `"kind":"state"` policy conditions) | 44 | [0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md) | `full-esm-v44.json` | `EsmGoldenVectors.Get(44)` |
+| 45.0 | Text and membership operators in policy state conditions (`"operator":"contains"` and `"startsWith"`) | 45 | [0152](https://github.com/Cratis/Screenplay/blob/main/decisions/0152-text-and-membership-conditions-esm-v45.md) | `full-esm-v45.json` | `EsmGoldenVectors.Get(45)` |
 
 Read-model declaration order is optional, ignorable metadata. The historical `Bind` overload and default `SemanticBindingOptions` preserve existing versions, bytes and revisions. `PreserveReadModelPropertyOrder: true` selects language/semantic `37.1` only when metadata is emitted and removing it leaves a valid 37.0 model reading the application calendar or a clock. Otherwise the binder returns `PropertyOrderMetadataRefusal` with no executable value. A model with no read models emits no metadata and retains its version.
 
@@ -280,8 +283,9 @@ A policy condition using unary `not` also selects v7 under 0027. Its canonical v
 
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
-| 44.0 | An explicit application-root `agents` allowlist, including an empty one | 44 | [Agent exposure](agents.md#portable-contract) | `full-esm-v44.json` | `EsmGoldenVectors.Get(44)` |
-| 43.0 | Set-once projection mappings and children collections with a stored order (`"operation":"setOnce"`, `ordering` on children) | 43 | [0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md) | `full-esm-v43.json` | `EsmGoldenVectors.Get(43)` |
+| 46.0 | Typed policy inputs and input mappings under `authorize` (`"inputs"` on a policy, `"mappings"` on a policy authorization) | 46 | [0153](https://github.com/Cratis/Screenplay/blob/main/decisions/0153-policy-inputs-esm-v46.md) | `full-esm-v46.json` | `EsmGoldenVectors.Get(46)` |
+| 47.0 | A collection query that narrows its rows by a policy (`"narrowing"` on a query) | 47 | [0154](https://github.com/Cratis/Screenplay/blob/main/decisions/0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md) | `full-esm-v47.json` | `EsmGoldenVectors.Get(47)` |
+| 48.0 | An explicit application-root `agents` allowlist, including an empty one | 48 | [Agent exposure](agents.md#portable-contract) | `full-esm-v48.json` | `EsmGoldenVectors.Get(48)` |
 
 A model that declares a `set once` projection mapping or a children `insert first` or `sort by` selects language/semantic `43.0` and `schemaVersion: 43`, also when its screens are admitted; the version number is provisional until it is admitted by consumers; see [decision 0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md). `insert last` is what a children block does without an ordering and keeps the model's version.
 
@@ -289,7 +293,7 @@ Screens stay deferred (`PLAY0269`) by default, so a default compilation keeps it
 
 A model that declares a graph handler with `foreach` selects language/semantic `41.0` and `schemaVersion: 41`; see [decision 0140](https://github.com/Cratis/Screenplay/blob/main/decisions/0140-graph-foreach-esm-v41.md).
 
-An application-root `agents` block selects language/semantic `44.0` and `schemaVersion: 44`. It records token kinds and resolved query/command identities, descriptions and scopes; it grants no authorization and implements no endpoints or tokens. Models without it retain their versions and bytes. See [Agent exposure](agents.md#portable-contract).
+An application-root `agents` block selects language/semantic `48.0` and `schemaVersion: 48`. It records token kinds and resolved query/command identities, descriptions and scopes; it grants no authorization and implements no endpoints or tokens. Models without it retain their versions and bytes. See [Agent exposure](agents.md#portable-contract).
 
 A model that declares a `query ... graph <Graph>` or a `given clock` in a graph specification selects language/semantic `40.0` and `schemaVersion: 40`; a model that declares only graphs, graph projections and graph steps stays at `38.0`. The version number is provisional until it is admitted by consumers; see [decision 0139](https://github.com/Cratis/Screenplay/blob/main/decisions/0139-graph-reads-collection-iteration-and-event-context-esm-v40.md).
 

@@ -185,6 +185,8 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitPolicy(syntax: PolicySyntax): void {
         this.visitNode(syntax);
+        syntax.inputs?.forEach(input => this.visitNode(input));
+        syntax.reads?.forEach(reads => this.visitReads(reads));
         if (syntax.condition !== null) this.visitPolicyCondition(syntax.condition);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
@@ -193,6 +195,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitPolicyCondition(syntax: PolicyConditionSyntax): void {
         this.visitNode(syntax);
         if (syntax.kind === 'ClaimConditionSyntax' && syntax.matches !== null) this.visitExpression(syntax.matches);
+        if (syntax.kind === 'StateConditionSyntax') this.visitCondition(syntax.comparison);
         if (syntax.kind === 'NotPolicyConditionSyntax') this.visitPolicyCondition(syntax.operand);
         if (syntax.kind === 'LogicalPolicyConditionSyntax') { this.visitPolicyCondition(syntax.left); this.visitPolicyCondition(syntax.right); }
     }
@@ -232,6 +235,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitAuthorize(syntax: AuthorizeSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(mapping => this.visitNode(mapping));
         this.visitPolicyRequirement(syntax.requirement);
     }
 
@@ -660,6 +664,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.byParts?.forEach(part => this.visitQueryParameter(part));
         syntax.filters.forEach(node => this.visitQueryParameter(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        if (syntax.narrow !== undefined) this.visitNode(syntax.narrow);
     }
 
     visitQueryParameter(syntax: QueryParameterSyntax): void {

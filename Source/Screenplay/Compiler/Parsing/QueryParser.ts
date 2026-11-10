@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
-import { QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
+import { NarrowSyntax, QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
@@ -48,6 +48,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     const filters: QueryParameterSyntax[] = [];
     let description: string | null = null;
     let scope: string | null = null;
+    let narrow: NarrowSyntax | undefined;
     let authorize: AuthorizeSyntax | null = null;
     let authorizationDepthExceeded = false;
     let performed = false;
@@ -92,13 +93,22 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
                 authorize = combineAuthorize(authorize, next, context);
                 authorizationDepthExceeded = previous !== null && authorize === null;
             }
+        } else if (keyword === 'narrow') {
+            const narrowing = /^narrow\s+([A-Z]\w*)$/.exec(child.content);
+            if (narrowing === null) {
+                context.error(DiagnosticCodes.UnknownQueryDirective, `Invalid narrow declaration '${child.content}' - expected 'narrow <Policy>'`, locationOf(child));
+            } else if (narrow !== undefined) {
+                context.error(DiagnosticCodes.UnknownQueryDirective, "A query declares at most one 'narrow' policy; combine the conditions in one policy.", locationOf(child));
+            } else {
+                narrow = { kind: 'NarrowSyntax', policy: narrowing[1], location: locationOf(child) };
+            }
         } else if (keyword === 'scoped') {
             scope = parseScope(context, child, scope, name) ?? scope;
         } else if (opaqueDirectives.has(keyword)) {
             performed = true;
             context.skipOpaqueBlock(child.indent);
         } else {
-            context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, scoped or performer`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, narrow, scoped or performer`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
@@ -113,6 +123,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         isObservable: match[2] !== undefined,
         scope,
         authorize,
+        ...(narrow === undefined ? {} : { narrow }),
         location: locationOf(line),
     };
     if (performed) performedQueries.add(query);

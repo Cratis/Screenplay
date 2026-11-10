@@ -7,7 +7,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
-import { AnonymousConditionSyntax, AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax } from '../Syntax/Policies';
+import { AnonymousConditionSyntax, AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax, StateConditionSyntax } from '../Syntax/Policies';
 import { SpecificationCallerSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
 import { combine, conditionTruth, requirementTruth, Truth } from './AuthorizationFacts';
@@ -105,8 +105,9 @@ function conditionText(condition: PolicyConditionSyntax): string {
     return `${condition.left.kind === 'LogicalPolicyConditionSyntax' && condition.left.operator !== condition.operator ? `(${left})` : left} ${condition.operator.toLowerCase()} ${condition.right.kind === 'LogicalPolicyConditionSyntax' ? `(${right})` : right}`;
 }
 
-function atomText(condition: AnonymousConditionSyntax | AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax): string {
+function atomText(condition: AnonymousConditionSyntax | AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | StateConditionSyntax): string {
     if (condition.kind === 'AuthenticatedConditionSyntax') return 'authenticated';
+    if (condition.kind === 'StateConditionSyntax') return `state ${condition.comparison.left} ${condition.comparison.operator}`;
     if (condition.kind === 'AnonymousConditionSyntax') return 'anonymous';
     if (condition.kind === 'RoleConditionSyntax') return `role ${quote(condition.role)}`;
     return `claim ${quote(condition.claim)} matches ${condition.matchesSubject ? 'subject' : condition.matches === null ? quote('') : expressionText(condition.matches)}`;

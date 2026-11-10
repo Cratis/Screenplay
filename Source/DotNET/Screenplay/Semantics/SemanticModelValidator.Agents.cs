@@ -8,7 +8,7 @@ internal static partial class SemanticModelValidator
     static void ValidateAgents(SemanticApplication application, SemanticVersion version)
     {
         if (application.Agents is not { } agents) return;
-        if (!version.IsAtLeast(SemanticVersion.V44)) throw new InvalidSemanticContract("Agent exposure requires ESM v44 or later.");
+        if (!version.IsAtLeast(SemanticVersion.V48)) throw new InvalidSemanticContract("Agent exposure requires ESM v48 or later.");
         if (agents.TokenKind != SemanticAgentTokenKind.Personal) throw new InvalidSemanticContract("Agent exposure requires personal tokens.");
         if (agents.Operations.IsDefault) throw new InvalidSemanticContract("Agent operations must be an initialized array.");
         var targets = SemanticAgentOperationCatalog.Of(application).Select(target => (target.Kind, target.Id)).ToHashSet();

@@ -78,7 +78,7 @@ internal static partial class SemanticModelRead
             .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."))
             .Add("timeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.TimeZone = Nested(ref reader, ApplicationTimeZone, property))
             .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property))
-            .Add("agents", LanguageVersion.V44.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property));
+            .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 
