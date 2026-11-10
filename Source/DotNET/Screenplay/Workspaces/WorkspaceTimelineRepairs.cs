@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
@@ -107,7 +108,7 @@ internal static partial class WorkspaceTimelineRepairs
         var producerEntry = Entry(index, right);
         if (!AreIndexedSiblings(consumerEntry, producerEntry)) return null;
 
-        var parent = index.Find(consumerEntry!.Parent!)!;
+        var parent = index.Find(consumerEntry.Parent!)!;
         if (left.Node is FileImportSyntax leftImport && right.Node is FileImportSyntax)
         {
             if (left.Location == right.Location && PlayGlob.HasWildcard(leftImport.Pattern))
@@ -146,7 +147,7 @@ internal static partial class WorkspaceTimelineRepairs
         return common == consumer.Count || common == producer.Count ? null : (consumer[common], producer[common]);
     }
 
-    static bool AreIndexedSiblings(WorkspaceSyntaxEntry? consumerEntry, WorkspaceSyntaxEntry? producerEntry) =>
+    static bool AreIndexedSiblings([NotNullWhen(true)] WorkspaceSyntaxEntry? consumerEntry, [NotNullWhen(true)] WorkspaceSyntaxEntry? producerEntry) =>
         consumerEntry is not null && producerEntry is not null && consumerEntry.Parent == producerEntry.Parent && consumerEntry.Member == producerEntry.Member &&
         consumerEntry.Parent is not null && consumerEntry.Index is not null && producerEntry.Index is not null;
 
