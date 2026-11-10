@@ -13,6 +13,10 @@ describe('when parsing producerless event source fixtures', () => {
     let result: CompilationResult<ApplicationSyntax>;
     let specification: SpecificationSyntax;
 
+    const caseSource = (type: string) => source
+        .replace('specification CountingSlots', `specification CountingSlots\n        parameter day ${type}\n        case First day = "2026-11-10"`)
+        .replaceAll('for "2026-11-10"', 'for case.day');
+
     beforeAll(() => {
         source = readFileSync(resolve(__dirname, '../Conformance/producerless-event-source.play'), 'utf8');
         result = parse(source);
@@ -32,6 +36,24 @@ describe('when parsing producerless event source fixtures', () => {
         const appended = parse(source.replace('given SlotTaken', 'when append SlotTaken'));
         appended.success.should.be.true;
         appended.value!.modules[0].features[0].slices[0].specifications[0].whenAppended!.for!.kind.should.equal('LiteralExpressionSyntax');
+    });
+    it('should accept a case parameter as the producerless event source', () => {
+        parse(caseSource('String')).success.should.be.true;
+    });
+    it('should refuse an optional case parameter for a required projected identity', () => {
+        const refused = parse(caseSource('String?'));
+        refused.diagnostics.map(diagnostic => diagnostic.code).should.include(DiagnosticCodes.OptionalSpecificationParameterTarget);
+    });
+    it('should refuse an incompatible case parameter for a projected identity', () => {
+        const refused = parse(caseSource('Date'));
+        refused.diagnostics.map(diagnostic => diagnostic.code).should.include(DiagnosticCodes.IncompatibleSpecificationParameterType);
+    });
+    it('should check the projected identity type when a case overrides an event example', () => {
+        const example = caseSource('String?')
+            .replace('      specification CountingSlots', '      example SavedSlot : SlotTaken\n        for "2026-11-10"\n        dayId = "2026-11-10"\n      specification CountingSlots')
+            .replace('given SlotTaken', 'given SavedSlot');
+        const refused = parse(example);
+        refused.diagnostics.map(diagnostic => diagnostic.code).should.include(DiagnosticCodes.OptionalSpecificationParameterTarget);
     });
     it('should still refuse an empty identity assertion', () => {
         const refused = parse(source.replaceAll('for "2026-11-10"', 'for'));

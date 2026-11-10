@@ -290,17 +290,17 @@ public sealed partial class SemanticModelBinder
                 @event.Contract.Id,
                 BindPropertyValues(value.Values, @event.Properties, "specification event"))
             {
-                EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type),
+                EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type, value.EventType),
                 Route = BindFixtureRoute(value),
                 Unrouted = value.NoStream is not null
             };
         }
 
-        SemanticEventSourceIdentity? BindEventSource(ExpressionSyntax expression, SemanticTypeReference? type)
+        SemanticEventSourceIdentity? BindEventSource(ExpressionSyntax expression, SemanticTypeReference? type, string? eventName = null)
         {
             if (type is null or { IsCollection: true } or { IsOptional: true })
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, "An event-source assertion needs one unambiguous required scalar command destination type.", expression.Location);
+                Error(DiagnosticCodes.InvalidSemanticBinding, FixtureEventSourceMessage(eventName), expression.Location);
                 return null;
             }
 

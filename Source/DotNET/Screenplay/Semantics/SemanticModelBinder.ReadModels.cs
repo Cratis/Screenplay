@@ -46,36 +46,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var explicitKeys = readModel.Properties.Where(property => property.IsKey).Select(property => property.Name).ToArray();
-            var identifierNames = owner.Queries
-                .Where(query => ShortName(query.ReturnType.Name) == readModel.Name && query.By is not null && !query.ReturnType.IsCollection)
-                .Select(query => query.By!.Name)
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
-            var collectionKeyNames = owner.Queries
-                .Where(query => ShortName(query.ReturnType.Name) == readModel.Name && query.By is not null && query.ReturnType.IsCollection)
-                .Select(query => query.By!.Name)
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
-            var hasAdmittedListQuery = owner.Queries.Any(query =>
-                ShortName(query.ReturnType.Name) == readModel.Name &&
-                query.ReturnType.IsCollection &&
-                query.By?.Source is null &&
-                query.Filters.All(filter => filter.Source is null) &&
-                query.Scope is null);
-            if (identifierNames.Length == 0 && hasAdmittedListQuery)
-            {
-                var conventionalIdentifiers = readModel.Properties
-                    .Select(property => property.Name)
-                    .Where(name => name.EndsWith("Id", StringComparison.Ordinal))
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray();
-                var identifiersOutsideCollectionKeys = conventionalIdentifiers
-                    .Except(collectionKeyNames, StringComparer.Ordinal)
-                    .ToArray();
-                identifierNames = identifiersOutsideCollectionKeys.Length == 1 ? identifiersOutsideCollectionKeys : conventionalIdentifiers;
-            }
-
-            if (explicitKeys.Length > 0) identifierNames = explicitKeys;
+            var identifierNames = ReadModelIdentity.IdentifierNames(owner, readModel);
 
             if (identifierNames.Length != 1 && explicitKeys.Length < 2)
             {

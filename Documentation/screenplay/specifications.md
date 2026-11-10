@@ -160,7 +160,7 @@ An unrouted event does not need a producing command to appear in `given … for`
 
 For example, a view that projects `DayOpened` and `SlotTaken` into a `DayView` keyed by a String day ID can establish both facts with `for "2026-11-10"`, even if neither event has a producing command. Both facts fold into that day's instance, so a `SlotTaken` transition that increments a counter updates the row established by `DayOpened`. Initialize required counter properties when establishing the row.
 
-One existing producer destination type still takes precedence; the projection does not reinterpret it. Named event examples use the same inference. This changes neither the `for` syntax nor the selected ESM version. TypeScript preserves the same syntax; execution and semantic identity validation remain the .NET compiler's responsibility.
+One existing producer destination type still takes precedence; the projection does not reinterpret it. Named event examples and `for case.<parameter>` use the same inference, including when a case overrides an example. Parameter-target validation checks the projected identity type before substituting concrete case values: an optional parameter cannot supply a required identity, even when a particular row contains non-null text. When no identity type can be determined, `PLAY0273` names the event and asks for a projection keyed on the event source or a producing command with a required scalar destination. This changes neither the `for` syntax nor the selected ESM version. TypeScript preserves the same syntax; execution and semantic identity validation remain the .NET compiler's responsibility.
 
 ### Givens without an event source
 

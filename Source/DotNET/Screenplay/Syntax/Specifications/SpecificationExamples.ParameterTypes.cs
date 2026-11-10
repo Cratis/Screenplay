@@ -144,7 +144,7 @@ public static partial class SpecificationExamples
             var key = (object?)local ?? _slices;
             if (!_destinationTypes.TryGetValue(key, out var events)) _destinationTypes[key] = events = new(ReferenceEqualityComparer.Instance);
             if (events.TryGetValue(eventDeclaration, out var cached)) return cached;
-            return events[eventDeclaration] = UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, []));
+            return events[eventDeclaration] = UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, [])) ?? ProjectedEventSourceIdentity.TypeFor(_application, eventDeclaration.Name);
         }
 
         IEnumerable<TypeRefSyntax> CommandDestinationTypesFor(EventSyntax eventDeclaration, SliceSyntax? local = null)

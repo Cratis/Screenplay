@@ -1162,6 +1162,8 @@ For read-model members, both compilers and editor validation share `PLAY0273` fo
 
 Executable binding reports independent semantic contract failures together as `PLAY0273`, at the nearest enclosing declaration with a source location. If no declaration location is available, it uses the application location. Identity registration and application-wide version checks still stop at their first failure.
 
+For an event-source assertion whose identity type cannot be determined, `PLAY0273` names the event and explains how to supply the missing contract: declare a read-model projection keyed on the event source (`$eventSourceId`) or a producing command with a required scalar destination. An unrouted producerless event can use one consistent required scalar projected key type; missing, conflicting or nonscalar keys remain refused. Case parameters and example overrides use that same projected identity type during parameter-target validation.
+
 Comparison operands must be required, including command properties and protected read-model properties on either side. An optional operand is refused with `PLAY0268` at the comparison rather than deferred to semantic contract validation.
 
 ### Specification event-source assertions

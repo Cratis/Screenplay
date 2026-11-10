@@ -10,6 +10,16 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 public class when_binding_producerless_event_source_fixtures : given.a_semantic_binder
 {
+    static string CaseSource(string type) => Source()
+        .Replace("specification CountingSlots", $"specification CountingSlots\n        parameter day {type}\n        case First day = \"2026-11-10\"")
+        .Replace("for \"2026-11-10\"", "for case.day");
+
+    static string Command(string name, string type) =>
+        $"\n    slice StateChange {name}\n      command {name}\n        id {type} identifier\n        dayId String\n        produces SlotTaken\n          for id\n          dayId = dayId\n";
+
+    static string Source([CallerFilePath] string path = "") => File.ReadAllText(Path.GetFullPath(
+        Path.Combine(Path.GetDirectoryName(path)!, "../../../../Screenplay/Compiler/Conformance/producerless-event-source.play")));
+
     [Fact]
     void should_bind_and_run_history_keyed_by_the_projected_read_model() => Run(Source());
 
@@ -33,6 +43,38 @@ public class when_binding_producerless_event_source_fixtures : given.a_semantic_
     [Fact]
     void should_refuse_a_fixture_without_an_identity_contract() =>
         Refuse(Source().Replace("from SlotTaken", "from SlotTaken key dayId"));
+
+    [Fact]
+    void should_name_the_undecidable_event_and_explain_how_to_supply_its_identity()
+    {
+        var result = Bind(Source().Replace("from SlotTaken", "from SlotTaken key dayId"));
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding &&
+            diagnostic.Message == "Event 'SlotTaken' needs one unambiguous required scalar event-source identity type. Declare a read-model projection keyed on the event source ($eventSourceId) or a producing command with a required scalar destination.");
+    }
+
+    [Fact]
+    void should_bind_a_case_parameter_as_a_producerless_event_source() => Run(CaseSource("String"));
+
+    [Fact]
+    void should_bind_a_case_parameter_overriding_an_event_example_source() =>
+        Run(CaseSource("String")
+            .Replace("      specification CountingSlots", "      example SavedSlot : SlotTaken\n        for \"2026-11-10\"\n        dayId = \"2026-11-10\"\n      specification CountingSlots")
+            .Replace("given SlotTaken", "given SavedSlot"));
+
+    [Fact]
+    void should_refuse_an_optional_case_parameter_for_the_required_projected_identity() =>
+        Bind(CaseSource("String?")).Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.OptionalSpecificationParameterTarget);
+
+    [Fact]
+    void should_refuse_an_optional_case_parameter_overriding_an_event_example_source() =>
+        Bind(CaseSource("String?")
+            .Replace("      specification CountingSlots", "      example SavedSlot : SlotTaken\n        for \"2026-11-10\"\n        dayId = \"2026-11-10\"\n      specification CountingSlots")
+            .Replace("given SlotTaken", "given SavedSlot"))
+            .Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.OptionalSpecificationParameterTarget);
+
+    [Fact]
+    void should_refuse_an_incompatible_case_parameter_for_the_projected_identity() =>
+        Bind(CaseSource("Date")).Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.IncompatibleSpecificationParameterType);
 
     [Fact]
     void should_refuse_a_noncanonical_scalar_literal() =>
@@ -82,9 +124,6 @@ public class when_binding_producerless_event_source_fixtures : given.a_semantic_
     void should_refuse_distinct_producer_types_without_a_projected_identity() =>
         Refuse(Source().Replace("from SlotTaken", "from SlotTaken key dayId") + Command("TakeSlot", "Int") + Command("ReserveSlot", "Uuid"));
 
-    static string Command(string name, string type) =>
-        $"\n    slice StateChange {name}\n      command {name}\n        id {type} identifier\n        dayId String\n        produces SlotTaken\n          for id\n          dayId = dayId\n";
-
     void Run(string source)
     {
         var result = Bind(source);
@@ -101,7 +140,4 @@ public class when_binding_producerless_event_source_fixtures : given.a_semantic_
 
     void Refuse(string source) =>
         Bind(source).Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding);
-
-    static string Source([CallerFilePath] string path = "") => File.ReadAllText(Path.GetFullPath(
-        Path.Combine(Path.GetDirectoryName(path)!, "../../../../Screenplay/Compiler/Conformance/producerless-event-source.play")));
 }
