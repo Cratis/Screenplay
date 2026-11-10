@@ -51,7 +51,7 @@ internal static class SemanticStringClassification
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",
-        "targetKind", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
+        "targetKind", "by", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
     };
 
     /// <summary>

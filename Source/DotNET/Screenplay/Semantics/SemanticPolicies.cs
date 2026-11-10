@@ -21,7 +21,27 @@ public enum SemanticClaimTargetKind
 /// <summary>Represents a named, declarative authorization rule.</summary>
 /// <param name="Name">The referenced name.</param>
 /// <param name="Condition">The condition that must hold.</param>
-public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Condition);
+public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Condition)
+{
+    /// <summary>
+    /// Gets the read models the policy decides from, empty for a policy that decides from the caller and the artifact alone.
+    /// </summary>
+    public ImmutableArray<SemanticPolicyRead> Reads { get; init; } = [];
+}
+
+/// <summary>
+/// A read model a policy consults, keyed by a property of the command or query it authorizes.
+/// </summary>
+/// <param name="Name">The alias state conditions use to name the read.</param>
+/// <param name="ReadModel">The read model that is read.</param>
+/// <param name="By">The name of the property of the authorized command or query that holds the read model's key.</param>
+public sealed record SemanticPolicyRead(string Name, SemanticId ReadModel, string By);
+
+/// <summary>
+/// A policy condition that compares recorded state, which is read through the policy's <see cref="SemanticPolicy.Reads"/>.
+/// </summary>
+/// <param name="Condition">The comparison, over read aliases and constants.</param>
+public sealed record SemanticStatePolicyCondition(SemanticCondition Condition) : SemanticPolicyCondition;
 
 /// <summary>Represents a portable authorization condition or an opaque implementation attachment.</summary>
 public abstract record SemanticPolicyCondition;

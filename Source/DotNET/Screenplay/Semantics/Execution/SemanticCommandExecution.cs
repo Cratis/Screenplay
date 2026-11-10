@@ -106,7 +106,7 @@ internal sealed partial class SemanticCommandExecution(
         var subject = command.Properties.Where(property => property.IsIdentifier && !property.IsGenerated)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
-        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties.Where(property => !property.IsGenerated), request.RunsAs, policies, request.Tenant, request.Occurrence?.Occurred, cancellationToken: cancellationToken);
+        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties.Where(property => !property.IsGenerated), request.RunsAs, policies, request.Tenant, request.Occurrence?.Occurred, readModels: world.ReadModels, cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {
             SemanticPolicyOutcome.Unsupported => new SemanticUnsupported(

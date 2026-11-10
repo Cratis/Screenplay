@@ -65,7 +65,8 @@ policy IsAuthor
 - `reads <Model> [as <alias>] [by <property>]`: `by` names a property of the command or query being authorized, resolved the same way `claim "x" matches invoice.department` resolves its path.
 - A state condition is the shared condition operand (`<path> <operator> <value>`) used by `produces when` and `validate require`. The path starts at a read alias, a property of the artifact being authorized or `$identity`. It combines with `authenticated`, `role`, `claim`, `not`, `and` and `or`.
 - A read that finds nothing denies. A policy never allows because state is missing.
-- The syntax is parsed, printed, validated for structure and carried in the syntax tree. The executable semantic model does not admit it yet, so binding a state policy reports `PLAY0268` until it does (Cratis/Screenplay#1233). The runtime meaning stays with Arc and Chronicle ([decision 0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md)).
+- A model that declares one selects ESM v44. The reference evaluator reads the given read-model state through `reads`: an absent instance denies, so a specification says "given this asset's plan and this caller, the command is refused" with a `given` read model and a `then` rejection of kind `Unauthorized`. The runtime meaning stays with Arc and Chronicle ([decision 0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md)).
+- The executable model admits a read property compared with a constant of its scalar type (text, enumeration, number, boolean). Comparing with `$identity` or a property of the authorized artifact parses and prints, and reports `PLAY0268` when bound until policy inputs arrive (Cratis/Screenplay#1231).
 - Existing models are unchanged: a policy without `reads` serializes exactly as before.
 
 ## Authorization scopes

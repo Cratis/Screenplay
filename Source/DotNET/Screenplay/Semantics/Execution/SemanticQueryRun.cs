@@ -153,6 +153,7 @@ sealed class SemanticQueryRun(
             tenant: tenant,
             occurred: occurred,
             hasPolicySubject: query.Argument is not null && query.KeyParts.IsEmpty,
+            readModels: tentative.ReadModels,
             cancellationToken: cancellationToken);
         return authorization.Outcome switch
         {

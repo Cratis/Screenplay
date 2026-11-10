@@ -13,6 +13,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        readonly Dictionary<string, SemanticPolicyRead> _policyReads = new(StringComparer.Ordinal);
+
         static SemanticLogicalOperator PolicyOperator(LogicalOperator op) => op == LogicalOperator.And
             ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or;
 
@@ -76,8 +78,9 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            var reads = BindPolicyReads(policy);
             var condition = policy.Condition is null ? null : BindPolicyCondition(policy.Condition);
-            return condition is null ? null : new SemanticPolicy(policy.Name, condition);
+            return condition is null ? null : new SemanticPolicy(policy.Name, condition) { Reads = reads };
         }).Where(policy => policy is not null).Select(policy => policy!)];
 
         SemanticPolicyCondition? BindPolicyCondition(PolicyConditionSyntax syntaxCondition) => syntaxCondition switch
@@ -92,14 +95,85 @@ public sealed partial class SemanticModelBinder
                 new SemanticClaimCondition(claim.Claim, SemanticClaimTargetKind.Artifact, path.Path),
             LogicalPolicyConditionSyntax logical => BindLogicalPolicy(logical),
             NotPolicyConditionSyntax not => BindNotPolicy(not),
-            StateConditionSyntax => UnsupportedStatePolicy(syntaxCondition),
+            StateConditionSyntax state => BindStatePolicyCondition(state),
             _ => UnsupportedPolicyCondition(syntaxCondition)
         };
 
-        SemanticPolicyCondition? UnsupportedStatePolicy(PolicyConditionSyntax condition)
+        ImmutableArray<SemanticPolicyRead> BindPolicyReads(PolicySyntax policy)
         {
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, "A policy that decides from recorded state ('reads' and a state condition) is not yet part of the executable semantic model.", condition.Location);
-            return null;
+            _policyReads.Clear();
+            var reads = ImmutableArray.CreateBuilder<SemanticPolicyRead>();
+            foreach (var read in policy.Reads ?? [])
+            {
+                if (read.ByParts.Any() || read.By is null)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' read '{read.ReadModel}' must name its key with a single 'by <property>'.", read.Location);
+                    continue;
+                }
+
+                if (!_readModels.TryGetValue(read.ReadModel, out var view))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' reads read model '{read.ReadModel}', which is unresolved.", read.Location);
+                    continue;
+                }
+
+                var bound = new SemanticPolicyRead(read.Alias ?? read.ReadModel, view.Model.Id, read.By);
+                if (_policyReads.TryAdd(bound.Name, bound)) reads.Add(bound);
+                else Error(DiagnosticCodes.DuplicateReadsAlias, $"Read alias '{bound.Name}' is duplicated in policy '{policy.Name}'.", read.Location);
+            }
+
+            return reads.ToImmutable();
+        }
+
+        SemanticStatePolicyCondition? BindStatePolicyCondition(StateConditionSyntax state)
+        {
+            var comparison = state.Comparison;
+            var parts = comparison.Left.Split('.');
+            if (comparison.LeftExpression is not null || parts.Length != 2 || !_policyReads.TryGetValue(parts[0], out var read))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition operand '{comparison.Left}' must be '<read alias>.<property>' of a read the policy declares; caller identity and artifact operands are not yet admitted.", comparison.Location);
+                return null;
+            }
+
+            var view = _readModels.Values.Single(candidate => candidate.Model.Id == read.ReadModel);
+            if (!view.Properties.TryGetValue(parts[1], out var property))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"State condition path '{comparison.Left}' does not resolve to a property of the read model.", comparison.Location);
+                return null;
+            }
+
+            var subject = CommandValidationSubject(property.Name, property.Type);
+            var ordering = comparison.Operator is ComparisonOperator.GreaterThan or ComparisonOperator.GreaterThanOrEqual or ComparisonOperator.LessThan or ComparisonOperator.LessThanOrEqual;
+            if (property.Type.IsOptional || subject.IsCollection || subject.IsDate ||
+                comparison.Operator is not (ComparisonOperator.Equal or ComparisonOperator.NotEqual or ComparisonOperator.GreaterThan or ComparisonOperator.GreaterThanOrEqual or ComparisonOperator.LessThan or ComparisonOperator.LessThanOrEqual) ||
+                (ordering ? !subject.IsNumber : !(subject.IsNumber || subject.Primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean)))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' is not admitted: ordering requires numbers; equality requires a required scalar text, enumeration, number or boolean.", comparison.Location);
+                return null;
+            }
+
+            var value = comparison.Right switch
+            {
+                LiteralExpressionSyntax literal => BindLiteral(literal),
+                PathExpressionSyntax path when subject.Values.Contains(path.Path, StringComparer.Ordinal) => SemanticValue.Text(path.Path),
+                _ => null
+            };
+            if (value is null || value is SemanticNullValue || OperandMismatch(value, SemanticValidationRuleKind.Equal, subject) is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' must compare with a constant of the property's scalar type; caller identity, artifact and read operands are not yet admitted.", comparison.Right.Location);
+                return null;
+            }
+
+            var op = comparison.Operator switch
+            {
+                ComparisonOperator.Equal => SemanticComparisonOperator.Equal,
+                ComparisonOperator.NotEqual => SemanticComparisonOperator.NotEqual,
+                ComparisonOperator.GreaterThan => SemanticComparisonOperator.GreaterThan,
+                ComparisonOperator.GreaterThanOrEqual => SemanticComparisonOperator.GreaterThanOrEqual,
+                ComparisonOperator.LessThan => SemanticComparisonOperator.LessThan,
+                _ => SemanticComparisonOperator.LessThanOrEqual
+            };
+            return new SemanticStatePolicyCondition(new SemanticComparison(new(property.Id, null) { Read = read.Name }, op, new(default, value)));
         }
 
         SemanticNotPolicyCondition? BindNotPolicy(NotPolicyConditionSyntax not)
@@ -182,6 +256,14 @@ public sealed partial class SemanticModelBinder
                         ? $"Policy '{policy.Name}' artifact path '{path}' names query filter '{path}'. Policies read only the query's 'by' argument, not filters. Declare '{path}' with 'by' to authorize by it."
                         : $"Policy '{policy.Name}' artifact path '{path}' does not resolve against the authorized command properties or query arguments.";
                     Error(DiagnosticCodes.InvalidSemanticBinding, message, reference.Location);
+                }
+            }
+
+            foreach (var read in policy.Reads ?? [])
+            {
+                if (read.By is null || !properties.TryGetValue(read.By, out var key) || key.IsGenerated)
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' read '{read.ReadModel}' takes its key from '{read.By}', which is not an input of the authorized command or query.", reference.Location);
                 }
             }
 

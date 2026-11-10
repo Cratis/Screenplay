@@ -48,7 +48,7 @@ internal static class SemanticArrayClassification
         "appends/mappings", "appends/tags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",
         "children/appends", "children/map", "nested/appends", "nested/map",
-        "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations",
+        "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations", "policies/reads",
         "concepts/numbers", "concepts/validations", "concepts/values",
         "constraints/releasedBy", "constraints/targets", "targets/properties",
         "events/priorRevisions", "events/tags", "priorRevisions/tags",
