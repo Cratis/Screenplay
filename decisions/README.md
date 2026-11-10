@@ -143,3 +143,4 @@
 | [0151](0151-policies-that-decide-from-recorded-state.md) | Policies decide from recorded state with reads and the shared condition operand | accepted | none | 2026-11-09 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
 | [0152](0152-text-and-membership-conditions-esm-v45.md) | Policy state conditions test text and collection membership in ESM v45 | accepted | none | 2026-11-09 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
 | [0153](0153-policy-inputs-esm-v46.md) | Policies declare typed inputs that an authorizing command or query maps in ESM v46 | accepted | none | 2026-11-09 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
+| [0154](0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md) | A collection query narrows its rows by a policy in ESM v47 | accepted | none | 2026-11-09 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |

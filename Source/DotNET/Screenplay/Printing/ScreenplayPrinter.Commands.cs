@@ -157,6 +157,11 @@ public partial class ScreenplayPrinter
                 WriteAuthorize(writer, query.Authorize);
             }
 
+            if (query.Narrow is not null)
+            {
+                writer.Line($"narrow {query.Narrow.Policy}", query.Narrow);
+            }
+
             if (query.Performer is not null)
             {
                 WritePerformer(writer, query.Performer);

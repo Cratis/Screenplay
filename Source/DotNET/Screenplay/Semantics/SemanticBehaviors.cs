@@ -531,6 +531,11 @@ public sealed record SemanticKeyedQuery(
     /// Gets the caller-supplied parts of a single-instance key, replacing Argument and KeyProperty when present.
     /// </summary>
     public ImmutableArray<SemanticQueryKeyPart> KeyParts { get; init; } = [];
+
+    /// <summary>
+    /// Gets the policy that narrows the rows of a collection result (ESM v47), <see langword="null"/> when every row is returned.
+    /// </summary>
+    public SemanticPolicyReference? Narrowing { get; init; }
 }
 
 /// <summary>

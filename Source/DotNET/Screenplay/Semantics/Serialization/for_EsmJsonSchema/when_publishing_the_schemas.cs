@@ -23,7 +23,7 @@ public class when_publishing_the_schemas(ITestOutputHelper output) : Specificati
     [Fact]
     void should_publish_a_schema_for_every_released_version()
     {
-        var expected = EsmSchemaV46Support.SemanticVersions.Where(version => EsmBaselineShapes.Majors.Contains(version.Major)).Select(EsmJsonSchema.FileName).Order(StringComparer.Ordinal).ToArray();
+        var expected = EsmSchemaV47Support.SemanticVersions.Where(version => EsmBaselineShapes.Majors.Contains(version.Major)).Select(EsmJsonSchema.FileName).Order(StringComparer.Ordinal).ToArray();
         var published = Directory.EnumerateFiles(published_esm_schemas.Folder, "esm-v*.schema.json").Select(Path.GetFileName).Order(StringComparer.Ordinal).ToArray();
         published.ShouldEqual(expected);
         output.WriteLine($"Checked {published.Length} published ESM schemas.");

@@ -95,6 +95,44 @@ policy DataQualityEnabled
 
 - Existing models are unchanged: a policy without `reads` serializes exactly as before.
 
+## Narrowing the rows of a list
+
+`authorize` admits or refuses the whole call. A list that shows each caller only the rows recorded state allows declares `narrow` instead:
+
+```screenplay
+policy VesselOnThePlan
+  reads VesselPlan as plan by vesselId
+  require plan.enabled == true
+
+module Fleet
+  feature Vessels
+    slice StateView VesselList
+      readmodel Vessel
+        vesselId String key
+        name String
+      readmodel VesselPlan
+        vesselId String key
+        enabled Bool
+      event VesselNamed
+        name String
+      event VesselPlanSet
+        enabled Bool
+      projection BuildVessel => Vessel
+        from VesselNamed
+          vesselId = $eventSourceId
+          name = name
+      projection BuildVesselPlan => VesselPlan
+        from VesselPlanSet
+          vesselId = $eventSourceId
+          enabled = enabled
+      query VesselsOnThePlan => Vessel[]
+        narrow VesselOnThePlan
+```
+
+The policy is evaluated once per row, with the row's own properties as the artifact, so `by vesselId` takes its key from the row's `vesselId`. A row the policy denies is dropped, never refused, and a row with no recorded plan is dropped too. A specification states the surviving rows with `result`; a query with no `result` states that none survive. `authorize` still refuses the whole call and composes with `narrow`.
+
+Only a collection result can be narrowed. A policy with an opaque predicate cannot narrow, and a read keyed by a policy input rather than a property of the row is refused at binding. A query declares one `narrow`; combine conditions in the policy. A model that declares `narrow` uses ESM v47 ([decision 0154](https://github.com/Cratis/Screenplay/blob/main/decisions/0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md)).
+
 ## Authorization scopes
 
 Declare `authorize <policy expression>` directly in a module or feature body, or on a command or query. Each gate can use policy names joined by `and` and `or`, with parentheses for grouping. Names written next to one another mean `and`. Every gate along the path to a command or query must pass: its own gate **and** every enclosing feature's gate (including nested features) **and** the module's gate. This is the same AND rule used for several policies on one construct. An `or` inside a gate does not bypass any enclosing gate.

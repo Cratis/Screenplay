@@ -50,6 +50,7 @@ internal static partial class QueryParser
         PerformerSyntax? performer = null;
         string? description = null;
         string? scope = null;
+        NarrowSyntax? narrow = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -121,6 +122,18 @@ internal static partial class QueryParser
                     }
 
                     break;
+                case "narrow":
+                    if (NarrowRegex().Match(line.Content) is { Success: true } narrowing)
+                    {
+                        if (narrow is not null) context.Error(DiagnosticCodes.UnknownQueryDirective, "A query declares at most one 'narrow' policy; combine the conditions in one policy.", line.Location);
+                        else narrow = new NarrowSyntax(narrowing.Groups[1].Value, line.Location);
+                    }
+                    else
+                    {
+                        context.Error(DiagnosticCodes.UnknownQueryDirective, $"Invalid narrow declaration '{line.Content}' - expected 'narrow <Policy>'", line.Location);
+                    }
+
+                    break;
                 case "performer":
                     performer = ParsePerformer(context, line, performer, name);
                     break;
@@ -133,7 +146,7 @@ internal static partial class QueryParser
 
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize, scoped or performer", line.Location);
+                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize, narrow, scoped or performer", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -142,6 +155,7 @@ internal static partial class QueryParser
         return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable)
         {
             Scope = scope,
+            Narrow = narrow,
             ByParts = byParts,
             DirectiveLocations = directiveLocations
         };
@@ -167,6 +181,9 @@ internal static partial class QueryParser
 
         return new(match.Groups[1].Value, type, line.Location, source);
     }
+
+    [GeneratedRegex(@"^narrow\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex NarrowRegex();
 
     static PerformerSyntax? ParsePerformer(ParserContext context, SourceLine line, PerformerSyntax? existing, string queryName)
     {

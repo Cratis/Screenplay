@@ -284,6 +284,7 @@ A policy condition using unary `not` also selects v7 under 0027. Its canonical v
 | Version | Selecting constructs | schemaVersion | Decision | Golden file | Corpus vector |
 | --- | --- | --- | --- | --- | --- |
 | 46.0 | Typed policy inputs and input mappings under `authorize` (`"inputs"` on a policy, `"mappings"` on a policy authorization) | 46 | [0153](https://github.com/Cratis/Screenplay/blob/main/decisions/0153-policy-inputs-esm-v46.md) | `full-esm-v46.json` | `EsmGoldenVectors.Get(46)` |
+| 47.0 | A collection query that narrows its rows by a policy (`"narrowing"` on a query) | 47 | [0154](https://github.com/Cratis/Screenplay/blob/main/decisions/0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md) | `full-esm-v47.json` | `EsmGoldenVectors.Get(47)` |
 
 A model that declares a `set once` projection mapping or a children `insert first` or `sort by` selects language/semantic `43.0` and `schemaVersion: 43`, also when its screens are admitted; the version number is provisional until it is admitted by consumers; see [decision 0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md). `insert last` is what a children block does without an ordering and keeps the model's version.
 

@@ -37,6 +37,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitAuthorize(syntax.Authorize);
         }
 
+        if (syntax.Narrow is not null)
+        {
+            VisitNode(syntax.Narrow);
+        }
+
         if (syntax.Performer is not null)
         {
             VisitPerformer(syntax.Performer);

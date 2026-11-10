@@ -178,6 +178,7 @@ internal static class SyntaxKinds
         typeof(NestedSyntax),
         typeof(NotPolicyConditionSyntax),
         typeof(StateConditionSyntax),
+        typeof(NarrowSyntax),
         typeof(PolicyInputSyntax),
         typeof(PolicyInputMappingSyntax),
         typeof(NotifyActionSyntax),

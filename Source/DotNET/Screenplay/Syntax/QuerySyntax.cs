@@ -56,7 +56,19 @@ public record QuerySyntax(
     /// Gets the named composite lookup parameters, mutually exclusive with <see cref="By"/>.
     /// </summary>
     public IEnumerable<QueryParameterSyntax> ByParts { get; init; } = [];
+
+    /// <summary>
+    /// Gets the policy that narrows the rows of a collection result, <see langword="null"/> when every row is returned.
+    /// </summary>
+    public NarrowSyntax? Narrow { get; init; }
 }
+
+/// <summary>
+/// <c>narrow &lt;Policy&gt;</c> on a collection query: only the rows the policy allows are returned.
+/// </summary>
+/// <param name="Policy">The policy name.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the directive.</param>
+public record NarrowSyntax(string Policy, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a parameter of a query.
