@@ -4,7 +4,6 @@
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Comparison;
 
@@ -16,26 +15,11 @@ sealed record AgentExposureSnapshot(bool HasErrors, bool HasBlock, AgentTokenKin
         var compilation = source.Compilation;
         var applications = compilation.Value is { } application ? [application] : source.Sources
             .Select(pair => new ScreenplayCompiler(source.Languages).Parse(pair.Value, pair.Key).Value).OfType<ApplicationSyntax>().ToArray();
-
-        // Physical documents retain evidence that singleton parsing and folder merging reject.
-        var blocks = ReadBlocks(source);
+        var blocks = applications.Select(value => value.Agents).OfType<AgentsSyntax>().ToArray();
         var targets = applications.SelectMany(AgentOperationCatalog.Of).ToArray();
         var operations = blocks.SelectMany(block => block.Operations).Select(operation => Resolve(operation, targets, source.Index, compilation.Success))
             .GroupBy(pair => pair.Key).ToDictionary(group => group.Key, group => group.First().Value);
-        return new(!compilation.Success, blocks.Count > 0, blocks.FirstOrDefault()?.Tokens?.Kind, operations);
-    }
-
-    static List<AgentsSyntax> ReadBlocks(AuthoringSnapshot source)
-    {
-        var blocks = new List<AgentsSyntax>();
-        foreach (var document in source.Sources.OrderBy(pair => pair.Key, StringComparer.Ordinal))
-        {
-            var lines = SourceLineSplitter.Split(document.Value);
-            var context = SourceOptionsParser.Create(lines, document.Key, source.Languages);
-            context.AgentBlockParsed = blocks.Add;
-            ScreenplayParser.Parse(context, lines);
-        }
-        return blocks;
+        return new(!compilation.Success, blocks.Length > 0, blocks.FirstOrDefault()?.Tokens?.Kind, operations);
     }
 
     static KeyValuePair<Key, Operation> Resolve(AgentOperationSyntax operation, IReadOnlyList<AgentOperationCatalog.Target> targets, AuthoringIndex index, bool sourceValid)
