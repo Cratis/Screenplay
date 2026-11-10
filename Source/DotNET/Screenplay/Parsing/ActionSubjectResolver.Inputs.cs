@@ -8,15 +8,15 @@ namespace Cratis.Screenplay.Parsing;
 
 internal sealed partial class ActionSubjectResolver
 {
-    static bool EligibleIdentifier(PropertySyntax input) => input.IsIdentifier && !input.IsGenerated && !input.Type.IsOptional && !input.Type.IsCollection;
-
     // An explicit 'for item' acts on the one collection data a table in scope shows; anything else keeps the nearest data.
-    static IReadOnlyList<ScreenDataSyntax> ItemSubjects(ScreenActionSubjectKind? authored, ActionSubjectVisibility visible)
+    internal static IReadOnlyList<ScreenDataSyntax> ItemSubjects(ScreenActionSubjectKind? authored, ActionSubjectVisibility visible)
     {
         if (authored != ScreenActionSubjectKind.Item || visible.Data.Count <= 1) return visible.Data;
         var shown = visible.Data.Where(data => data.Type.IsCollection && visible.Tables.Contains(data.Type.Name)).ToArray();
         return shown.Length == 1 ? shown : visible.Data;
     }
+
+    static bool EligibleIdentifier(PropertySyntax input) => input.IsIdentifier && !input.IsGenerated && !input.Type.IsOptional && !input.Type.IsCollection;
 
     static string UnresolvedMessage(IReadOnlyList<ScreenDataSyntax> subjects, bool guarded)
     {

@@ -5,7 +5,7 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import type { CompilationResult } from '../ScreenplayCompiler';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
-import { ScreenActionSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax, ToolbarItemSyntax } from '../Syntax/Screens';
+import { ScreenActionSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax, ToolbarItemSyntax } from '../Syntax/Screens';
 import { RefusalDeclarations } from './RefusalDeclarations';
 import { ActionSubjectContext, ActionSubjectInputs } from './ActionSubjectInputs';
 
@@ -14,6 +14,13 @@ export interface ActionSubjectEvidence {
     readonly effective: ScreenActionSyntax | ToolbarItemSyntax;
     readonly command: string;
     readonly context: ActionSubjectContext;
+}
+
+// An explicit 'for item' acts on the one collection data a table in scope shows; anything else keeps the nearest data.
+export function itemSubjects(authored: ScreenActionSyntax['subject'], data: readonly ScreenDataSyntax[], tables: readonly string[]): readonly ScreenDataSyntax[] {
+    if (authored !== 'Item' || data.length <= 1) return data;
+    const shown = data.filter(entry => entry.type.isCollection && tables.includes(entry.type.name));
+    return shown.length === 1 ? shown : data;
 }
 
 export function resolveActionSubjectApplication(application: ApplicationSyntax, observe?: (evidence: ActionSubjectEvidence) => void): CompilationResult<ApplicationSyntax> {
@@ -28,11 +35,9 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
         diagnostics.push({ severity: 'warning', code: DiagnosticCodes.UnresolvedActionSubject, message, location: context.location });
         return false;
     };
-    // An explicit 'for item' acts on the one collection data a table in scope shows; anything else keeps the nearest data.
     const itemContext = (authored: ScreenActionSyntax['subject'], visible: ActionSubjectContext): ActionSubjectContext => {
-        if (authored !== 'Item' || visible.data.length <= 1) return visible;
-        const shown = visible.data.filter(data => data.type.isCollection && visible.tables.includes(data.type.name));
-        return shown.length === 1 ? { ...visible, data: shown } : visible;
+        const data = itemSubjects(authored, visible.data, visible.tables);
+        return data === visible.data ? visible : { ...visible, data };
     };
     const toolbar = (item: ToolbarItemSyntax, visible: ActionSubjectContext): ToolbarItemSyntax => {
         if (item.syntaxKind !== 'Action') return item;
