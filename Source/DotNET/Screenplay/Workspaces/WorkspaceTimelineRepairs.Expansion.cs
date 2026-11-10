@@ -58,22 +58,10 @@ internal static partial class WorkspaceTimelineRepairs
             if (!paths.Remove(moved) || !paths.Contains(anchor)) continue;
             paths.Insert(paths.IndexOf(anchor) + (after ? 1 : 0), moved);
             var folder = document.Path.Contains('/') ? document.Path[..document.Path.LastIndexOf('/')] : ".";
-            var commented = new HashSet<TimelineImportPin>();
-            var imports = paths.Select(path =>
-            {
-                var original = expanded.Single(item => item.Path == path).Original;
-                var imported = new FileImportSyntax(Path.GetRelativePath(folder, path).Replace('\\', '/'), SourceLocation.Start);
-                return commented.Add(original) ? imported with { SourceComments = original.Import.SourceComments } : imported;
-            }).ToArray();
+            var imports = OrderedImports(expanded, paths, folder);
             var replacements = entries.Take(start).Select(entry => (FileImportSyntax)entry.Node).Concat(imports)
                 .Concat(entries.Skip(end + 1).Select(entry => (FileImportSyntax)entry.Node)).ToArray();
-            var replacement = parent.Node switch
-            {
-                ApplicationSyntax application => application with { FileImports = replacements },
-                ModuleSyntax module => module with { FileImports = replacements },
-                FeatureSyntax feature => feature with { FileImports = replacements },
-                _ => parent.Node
-            };
+            var replacement = WithFileImports(parent.Node, replacements);
             if (ReferenceEquals(replacement, parent.Node)) return null;
 
             return new(
@@ -90,4 +78,27 @@ internal static partial class WorkspaceTimelineRepairs
 
         return null;
     }
+
+    static FileImportSyntax[] OrderedImports(
+        (string Path, TimelineImportPin Original)[] expanded,
+        List<string> paths,
+        string folder)
+    {
+        var commented = new HashSet<TimelineImportPin>();
+
+        return [.. paths.Select(path =>
+        {
+            var original = expanded.Single(item => item.Path == path).Original;
+            var imported = new FileImportSyntax(Path.GetRelativePath(folder, path).Replace('\\', '/'), SourceLocation.Start);
+            return commented.Add(original) ? imported with { SourceComments = original.Import.SourceComments } : imported;
+        })];
+    }
+
+    static SyntaxNode WithFileImports(SyntaxNode parent, IEnumerable<FileImportSyntax> imports) => parent switch
+    {
+        ApplicationSyntax application => application with { FileImports = imports },
+        ModuleSyntax module => module with { FileImports = imports },
+        FeatureSyntax feature => feature with { FileImports = imports },
+        _ => parent
+    };
 }
