@@ -1,0 +1,31 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module Demo
+  feature Days
+    slice StateView Calendar
+      event DayOpened
+        dayId String
+      event SlotTaken
+        dayId String
+      readmodel DayView
+        dayId String
+        slots Int
+      query DayById => DayView optional
+        by dayId String
+      projection DayProjection => DayView
+        from DayOpened
+          dayId = dayId
+          slots = 0
+        from SlotTaken
+          increment slots
+      specification CountingSlots
+        given DayOpened
+          for "2026-11-10"
+          dayId = "2026-11-10"
+        given SlotTaken
+          for "2026-11-10"
+          dayId = "2026-11-10"
+        then readmodel DayView
+          dayId = "2026-11-10"
+          slots = 1

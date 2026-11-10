@@ -20,6 +20,7 @@
         { "name": "removal-key-parts", "path": "Source/Screenplay/Compiler/Conformance/removal-key-parts.play" },
         { "name": "reaction-identity", "path": "Source/Screenplay/Compiler/Conformance/reaction-identity.play" },
         { "name": "reaction-event-source", "path": "Source/Screenplay/Compiler/Conformance/reaction-event-source.play" },
+        { "name": "producerless-event-source", "path": "Source/Screenplay/Compiler/Conformance/producerless-event-source.play" },
         { "name": "identity", "path": "Source/Screenplay/Compiler/Conformance/identity.play" },
         { "name": "application-context", "path": "Source/Screenplay/Compiler/Conformance/application-context.play" },
         { "name": "public-events", "path": "Source/Screenplay/Compiler/Conformance/public-events.play" },
