@@ -138,7 +138,8 @@ public class when_proposing_whole_source : given.an_authoring_connection
         var opened = Open();
         var response = Call("propose-source", new
         {
-            expectedRevision = "wsrev1:" + new string('0', 64), expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            expectedRevision = "wsrev1:" + new string('0', 64),
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
             formatting = "CanonicalizeTouchedDocuments",
             documents = new[] { new { operation = "create-document", path = "bad.play", stableKey = "bad", source = "invalid" } }
         }).GetProperty("result").GetProperty("structuredContent");
@@ -223,7 +224,7 @@ public class when_proposing_whole_source : given.an_authoring_connection
         var severities = proposal.GetProperty("authoringDiagnosticSeverities");
 
         result.GetProperty("content")[1].GetProperty("text").GetString().ShouldEqual(summary);
-        JsonDocument.Parse(result.GetProperty("content")[0].GetProperty("text").GetString()!).RootElement.GetProperty("proposalId").GetString().ShouldEqual(proposal.GetProperty("proposalId").GetString());
+        JsonElement.Parse(result.GetProperty("content")[0].GetProperty("text").GetString()!).GetProperty("proposalId").GetString().ShouldEqual(proposal.GetProperty("proposalId").GetString());
         summary.ShouldContain($"Proposal {proposal.GetProperty("proposalId").GetString()} changes 1 document(s): 1 replaced.");
         summary.ShouldContain("Module Billing");
         summary.ShouldContain("Slice ");

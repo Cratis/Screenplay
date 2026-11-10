@@ -16,7 +16,7 @@ It is test support, not a Screenplay identity or wire-format replacement.
 
 For a Screenplay version without a suffix, replace `VERSION` with the version
 used by the renderer under test; the package adds the `-preview` suffix.
-The sources require C# 12 or later, nullable annotations, and .NET 8 or later.
+The sources require C# 12 or later, nullable annotations, and .NET 10 or later.
 No test framework is required by the packaged sources.
 
 ## Compare meaning rather than assigned identities

@@ -77,13 +77,13 @@ public class when_preserving_action_subject_contracts : Specification
     void should_refuse_unknown_subject_values()
     {
         var json = SyntaxJson.Serialize(_application).GetRawText().Replace("\"Item\"", "\"Row\"", StringComparison.Ordinal);
-        Assert.Throws<InvalidSyntaxJson>(() => SyntaxJson.Deserialize(JsonDocument.Parse(json).RootElement));
+        Assert.Throws<InvalidSyntaxJson>(() => SyntaxJson.Deserialize(JsonElement.Parse(json)));
     }
 
     [Fact]
     void should_refuse_subject_metadata_on_navigation_toolbar_items()
     {
         var json = SyntaxJson.Serialize(_application).GetRawText().Replace("\"syntaxKind\":\"Action\"", "\"syntaxKind\":\"Navigate\"", StringComparison.Ordinal);
-        Assert.Throws<InvalidSyntaxJson>(() => SyntaxJson.Deserialize(JsonDocument.Parse(json).RootElement));
+        Assert.Throws<InvalidSyntaxJson>(() => SyntaxJson.Deserialize(JsonElement.Parse(json)));
     }
 }

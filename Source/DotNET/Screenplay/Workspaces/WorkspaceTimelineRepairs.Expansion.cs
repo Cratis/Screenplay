@@ -42,7 +42,7 @@ internal static partial class WorkspaceTimelineRepairs
             .Where(target => target.Path != document.Path && PlayGlob.IsMatch(PlayGlob.Resolve(document.Path, import.Import.Pattern), target.Path))
             .OrderBy(target => target.Path, StringComparer.Ordinal).Select(target => (target.Path, Original: import))).ToArray();
         if (expanded.Length == 0 || expanded.Select(item => item.Path).Distinct(StringComparer.Ordinal).Count() != expanded.Length ||
-            expanded.Any(item => item.Path.IndexOfAny(['*', '?', '[', ']', '{', '}']) >= 0 ||
+            expanded.Any(item => GlobMetacharacters.AreIn(item.Path) ||
                 !timeline.Documents.Single(document => document.Path == item.Path).Placement.Equals(item.Original.Placement)))
         {
             return null;

@@ -223,6 +223,9 @@ and launches an Extension Development Host with full `.play` support, ready to t
 
 ## ✅ Quality gates
 
+Install the .NET 11 RC SDK selected by `global.json` before building from source.
+Library packages target .NET 10 and .NET 11; the standalone CLI and MCP executable require .NET 11.
+
 ```shell
 yarn build     # every workspace builds clean
 yarn lint      # zero lint errors
@@ -230,15 +233,19 @@ yarn compile   # zero TypeScript errors
 
 dotnet build Screenplay.slnx --configuration Release   # zero errors, zero warnings
 dotnet build --configuration Debug                    # build executable specifications
-bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay/Screenplay.csproj Debug
+bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj Debug
 bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Release
 ```
 
-Specifications run on .NET 10 through the xUnit v3 native executable. Run the launcher for every project in
+Specifications default to .NET 11 through the xUnit v3 native executable. Run the launcher for every project in
 `SPEC_SHARDS` in `.github/workflows/dotnet-build.yml`; the example above selects the compiler. The launcher
 requires a successful native exit and a fresh, nonempty passing TRX; a zero-test run fails. Native options
-such as `-filterVSTest 'FullyQualifiedName~YourNamespace'` are forwarded unchanged. Release libraries retain
-their existing target frameworks; only specification execution is .NET 10-only.
+such as `-filterVSTest 'FullyQualifiedName~YourNamespace'` are forwarded unchanged.
+
+CI also runs the library specifications on .NET 10. To select that compatibility target locally, install
+the .NET 10 runtime, build the library specification project with `-p:SpecTargetFramework=net10.0`, then
+set `SPEC_TARGET_FRAMEWORK=net10.0` when running the launcher. The CLI and Roslyn catalog specifications
+remain on .NET 11.
 
 Contract catalog specifications run in `Cratis.Screenplay.ContractCatalog.Specs.dll` instead of
 `Screenplay.ContractCatalog.dll`; their namespaces, methods and theory cases are unchanged. The generator

@@ -14,7 +14,11 @@ public record SpecificationCallerSyntax(
     bool Authenticated,
     IEnumerable<string> Roles,
     IEnumerable<SpecificationCallerClaimSyntax> Claims,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>Gets the caller's identifier - <c>id "alice"</c> - which <c>$identity.id</c> reads in a policy state condition, or <see langword="null"/> when the fixture names none.</summary>
+    public string? Id { get; init; }
+}
 
 /// <summary>Represents one claim value in a caller fixture.</summary>
 /// <param name="Type">The claim type.</param>

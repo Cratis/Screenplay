@@ -32,12 +32,12 @@ internal static class SemanticStringClassification
     // Scoped literals whose property name is an identity name elsewhere.
     static readonly HashSet<string> _literalsNamedLikeIdentities = new(StringComparer.Ordinal)
     {
-        "then/target", "mappings/property", "nodes/trigger", "timeZone/id", "navigation/trigger",
+        "then/target", "mappings/property", "nodes/trigger", "timeZone/id", "givenCaller/id", "navigation/trigger",
     };
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
-        "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "givenCaller/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
         "screens/title", "screens/description", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
         "layout/fits", "regions/shows", "regions/title", "regions/actions", "agents/tokenKind",
     };

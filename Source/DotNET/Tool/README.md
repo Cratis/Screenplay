@@ -12,7 +12,7 @@ unsaved what-if sketch.*
 
 ## Quickstart
 
-1. With .NET 10 installed, run `dotnet tool install --global Cratis.Screenplay.Tool`.
+1. With .NET 11 installed, run `dotnet tool install --global Cratis.Screenplay.Tool`.
 2. Validate your model: `screenplay ./specifications --warnaserror`.
 3. Configure your MCP host to launch `screenplay mcp ./specifications`, then ask it to call `visualize-model`.
 

@@ -4,7 +4,7 @@
         <RootNamespace>Cratis.Screenplay.CanonicalVectors.Specs</RootNamespace>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(SpecTargetFramework)</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <EnablePackageValidation>false</EnablePackageValidation>
         <!-- PublishedCorpus is a standalone tool that consumes the published corpus package; it is not part of these specs. -->
@@ -212,6 +212,14 @@
                           Link="Golden/full-esm-v45.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v45.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v48.json"
+                          Link="Golden/full-esm-v48.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v48.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v49.json"
+                          Link="Golden/full-esm-v49.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v49.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v47.json"
                           Link="Golden/full-esm-v47.json"
                           WithCulture="false"

@@ -39,5 +39,5 @@ public class when_serializing_nested_sample_rows : Specification
     [Fact] void should_preserve_recursive_children() => _roundtrip.Rows.Single().Fields.Last().Rows.Single().Fields.Single().Value.ShouldEqual("PEN");
     [Fact] void should_omit_rows_for_a_scalar() => _scalarJson.ShouldNotContain("\"rows\"");
     [Fact] void should_omit_rows_for_an_empty_collection() => _emptyJson.ShouldNotContain("\"rows\"");
-    [Fact] void should_default_missing_rows_to_empty() => ((SampleDataFieldSyntax)SyntaxJson.Deserialize(System.Text.Json.JsonDocument.Parse(_emptyJson).RootElement)).Rows.ShouldBeEmpty();
+    [Fact] void should_default_missing_rows_to_empty() => ((SampleDataFieldSyntax)SyntaxJson.Deserialize(System.Text.Json.JsonElement.Parse(_emptyJson))).Rows.ShouldBeEmpty();
 }

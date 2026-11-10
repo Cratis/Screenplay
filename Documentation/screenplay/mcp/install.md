@@ -123,7 +123,7 @@ The server ships in the `cratis/screenplay` Docker image, and in the .NET tool
 the MCP server and the event model board. Pick one:
 
 - Docker runs the server in a container and needs no .NET SDK on the host.
-- The .NET tool runs as a local process and needs the .NET 10 SDK. See
+- The .NET tool runs as a local process and needs the .NET 11 SDK. See
   [Use the .NET tool instead](#use-the-net-tool-instead).
 
 Pull the image once before you connect a client, so the first launch is not spent
@@ -501,7 +501,7 @@ both tools run. The server does not add its own human-confirmation step.
 ## Use the .NET tool instead
 
 If you would rather run the server as a local process, install the tool. It needs
-the .NET 10 SDK:
+the .NET 11 SDK:
 
 ```bash
 dotnet tool install --global Cratis.Screenplay.Tool
@@ -566,7 +566,7 @@ See [identity state and recovery](recovery.md).
 - **Permission denied on apply (Linux):** add `--user "$(id -u):$(id -g)"` before the image name.
 - **Root rejected:** the path passed to `mcp` must be an existing physical directory, or a missing directory whose parent exists, not a symlink or one `.play` file. Links in ancestors are also rejected. With Docker that is the container path `/model`, so check the host path on the left of `-v` instead.
 - **Empty model although files exist:** the host path on the left of `-v` does not exist, or is misspelled. Docker creates a missing host directory for a `-v` mount instead of failing, so the server opens an empty folder. Check the path exists before you start the client.
-- **Missing runtime (.NET tool):** install the .NET 10 SDK and retry `screenplay --version`.
+- **Missing runtime (.NET tool):** install the .NET 11 SDK and retry `screenplay --version`.
 - **Identity conflict:** retain the state file; do not bootstrap over it. Restore externally changed declaration names or paths before making an explicit refactoring proposal.
 - **Pending operation:** inspect recovery status before opening or editing the model.
 

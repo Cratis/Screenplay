@@ -1,6 +1,6 @@
 # Cratis.Screenplay.Matching
 
-BCL-only runtime matching for Screenplay's portable linear dialect on .NET 8, 9 and 10.
+BCL-only runtime matching for Screenplay's portable linear dialect on .NET 10 and .NET 11.
 It uses the same parser and linear matcher as the compiler, not a platform regex engine.
 
 ```csharp

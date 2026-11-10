@@ -248,7 +248,7 @@ internal static partial class WorkspaceTimelineRepairs
         string[] paths,
         IReadOnlyDictionary<string, int> ranks)
     {
-        if (paths.Any(path => path.IndexOfAny(['*', '?', '[', ']', '{', '}']) >= 0)) return null;
+        if (paths.Any(GlobMetacharacters.AreIn)) return null;
         var documentPath = index.Workspace.Documents.Single(document => document.Id == glob.Handle.Document).Path.Value;
         var folder = documentPath.Contains('/') ? documentPath[..documentPath.LastIndexOf('/')] : ".";
         var pins = paths.Select(path => new FileImportSyntax(Path.GetRelativePath(folder, path).Replace('\\', '/'), SourceLocation.Start)).ToArray();

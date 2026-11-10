@@ -40,6 +40,7 @@ public class when_adding_a_document_without_a_stable_key : given.a_connection
 
     [Fact] void should_accept_the_proposal() => _proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
     [Fact] void should_apply_the_document() => _applied.GetProperty("success").GetBoolean().ShouldBeTrue();
-    [Fact] void should_derive_the_stable_key_from_the_path() =>
-        JsonDocument.Parse(_identities).RootElement.GetProperty("documents")[0].GetProperty("stableKey").GetString().ShouldEqual("application");
+    [Fact]
+    void should_derive_the_stable_key_from_the_path() =>
+        JsonElement.Parse(_identities).GetProperty("documents")[0].GetProperty("stableKey").GetString().ShouldEqual("application");
 }

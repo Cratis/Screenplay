@@ -69,7 +69,7 @@ internal static class WorkspaceTimelineContentProof
 
     static bool PinsAlreadyPlaced(AuthoredTimeline before, AuthoredTimeline after, IReadOnlyList<TimelineImportPin> pins) => pins.All(pin =>
     {
-        if (pin.Import.Pattern.IndexOfAny(['*', '?', '[', ']', '{', '}']) >= 0) return false;
+        if (GlobMetacharacters.AreIn(pin.Import.Pattern)) return false;
         var path = PlayGlob.Resolve(pin.DocumentPath, pin.Import.Pattern);
         var original = before.Documents.SingleOrDefault(document => document.Path == path);
         var candidate = after.Documents.SingleOrDefault(document => document.Path == path);

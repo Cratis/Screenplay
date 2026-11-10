@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 output, version = Path(sys.argv[1]), sys.argv[2]
-frameworks = {"net8.0", "net9.0", "net10.0"}
+frameworks = {"net10.0", "net11.0"}
 
 
 def inspect(package):
@@ -47,4 +47,4 @@ for framework in frameworks:
     assert f"lib/{framework}/Cratis.Screenplay.dll" in compiler_files
     assert "Cratis.Screenplay.Contexts" in compiler_deps[framework]
     assert compiler_deps[framework]["Cratis.Screenplay.Matching"] == f"[{version}]", compiler_deps[framework]
-print("All context and matching package content and dependency assertions passed (3 frameworks each)")
+print("All context and matching package content and dependency assertions passed (2 frameworks each)")

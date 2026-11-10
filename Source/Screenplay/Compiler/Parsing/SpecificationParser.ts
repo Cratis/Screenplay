@@ -336,6 +336,7 @@ function parseGivenEvent(context: ParserContext, line: SourceLine, state: GivenS
     }
 }
 
+const callerIdPattern = pattern(`^id${dotNetWhitespace}+"(${stringBodyPattern})"$`);
 const callerRolePattern = pattern(`^role${dotNetWhitespace}+"(${stringBodyPattern})"$`);
 const callerClaimPattern = pattern(`^claim${dotNetWhitespace}+"(${stringBodyPattern})"${dotNetWhitespace}*=${dotNetWhitespace}*"(${stringBodyPattern})"$`);
 
@@ -347,14 +348,18 @@ function parseCaller(context: ParserContext, line: SourceLine): SpecificationCal
         return null;
     }
     let authenticated = false;
+    let id: string | undefined;
     const roles: string[] = [];
     const claims: SpecificationCallerClaimSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const role = callerRolePattern.exec(child.content);
         const claim = callerClaimPattern.exec(child.content);
+        const identifier = callerIdPattern.exec(child.content);
         if (child.content === 'authenticated' && !authenticated) {
             authenticated = true;
+        } else if (identifier !== null && id === undefined) {
+            id = unescapeString(identifier[1]);
         } else if (role !== null) {
             roles.push(unescapeString(role[1]));
         } else if (claim !== null) {
@@ -363,7 +368,7 @@ function parseCaller(context: ParserContext, line: SourceLine): SpecificationCal
             context.error(containsCaseReference(child.content) ? DiagnosticCodes.InvalidSpecificationCaseReference : DiagnosticCodes.InvalidSpecificationCaller, `Invalid caller fixture '${child.content}' - expected authenticated, role "...", or claim "..." = "...".`, locationOf(child));
         }
     }
-    return { kind: 'SpecificationCallerSyntax', authenticated, roles, claims, location: locationOf(line) };
+    return { kind: 'SpecificationCallerSyntax', authenticated, roles, claims, ...(id === undefined ? {} : { id }), location: locationOf(line) };
 }
 
 function parseWhen(context: ParserContext, line: SourceLine, body: SpecificationBody, name: string): void {

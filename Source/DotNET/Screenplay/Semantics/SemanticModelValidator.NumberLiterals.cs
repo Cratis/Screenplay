@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Globalization;
-
 namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
@@ -24,7 +22,7 @@ internal static partial class SemanticModelValidator
     {
         try
         {
-            return Convert.ToDecimal((double)value, CultureInfo.InvariantCulture) != value;
+            return LegacyNumberLowering.FromDouble(LegacyNumberLowering.ToDouble(value)) != value;
         }
         catch (OverflowException)
         {

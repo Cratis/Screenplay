@@ -8,11 +8,7 @@ namespace Cratis.Screenplay.Semantics.Generation;
 // Successful assessments only, bounded by entry count and authored-key length. Nothing serializes.
 internal sealed class GenerationAssessmentCache(int capacity = 128)
 {
-#if NET9_0_OR_GREATER
     readonly Lock _gate = new();
-#else
-    readonly object _gate = new();
-#endif
     readonly Dictionary<Key, (Lazy<BigInteger> Value, LinkedListNode<Key> Node)> _entries = [];
     readonly LinkedList<Key> _order = new();
 
