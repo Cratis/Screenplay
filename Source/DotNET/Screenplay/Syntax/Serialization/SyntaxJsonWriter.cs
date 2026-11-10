@@ -34,6 +34,7 @@ internal static class SyntaxJsonWriter
             if (node is Projections.RemoveWithSyntax && member.Name == "partsKey" && value is null) continue;
             if (node is Projections.GraphFromSyntax or Projections.GraphRemoveSyntax && member.Name == "forEach" && value is null) continue;
             if (node is Projections.ChildrenSyntax && member.Name == "ordering" && value is null) continue;
+            if (node is PolicySyntax && member.Name == "reads" && (value is null || (value is IEnumerable policyReads && !policyReads.Cast<object>().Any()))) continue;
             if (node is QuerySyntax or ReadsSyntax && member.Name == "byParts" && value is IEnumerable parts && !parts.Cast<object>().Any()) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
             if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;

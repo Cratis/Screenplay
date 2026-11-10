@@ -43,6 +43,12 @@ public record PolicySyntax(
     /// Gets the report-only description of this authorization rule.
     /// </summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the read models the policy decides from, declared with <c>reads &lt;Model&gt; [as alias] [by property]</c>.
+    /// <c>by</c> names a property of the command or query being authorized.
+    /// </summary>
+    public IEnumerable<ReadsSyntax>? Reads { get; init; }
 }
 
 /// <summary>
@@ -104,3 +110,11 @@ public record LogicalPolicyConditionSyntax(
     LogicalOperator Operator,
     PolicyConditionSyntax Right,
     SourceLocation Location) : PolicyConditionSyntax(Location);
+
+/// <summary>
+/// A policy condition that compares recorded state, a property of the artifact being authorized or the caller's
+/// <c>$identity</c> with a value, for example <c>plan.dataQuality == true</c>.
+/// </summary>
+/// <param name="Comparison">The shared comparison condition the operand is written as.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the condition.</param>
+public record StateConditionSyntax(ComparisonConditionSyntax Comparison, SourceLocation Location) : PolicyConditionSyntax(Location);

@@ -140,3 +140,4 @@
 | [0148](0148-storylines-and-two-way-value-lineage.md) | Name ordered paths through a model with `storyline`, and trace a value's lineage both ways from any property or screen field | accepted | none | 2026-11-09 | Accepted Screenplay#1189 and Screenplay#1190 (delegated) |
 | [0149](0149-screens-in-the-executable-model.md) | Screens are admitted to the executable model on request as ESM v42 | accepted | none | 2026-11-09 | Accepted Screenplay#1187 (delegated) |
 | [0150](0150-projection-parity-esm-v43.md) | Write once, key a dictionary by the event or its cause, remove a key and order children in projections (ESM v43) | accepted | none | 2026-11-09 | Einar Ingebrigtsen (cross-repository contract on Chronicle#5755) |
+| [0151](0151-policies-that-decide-from-recorded-state.md) | Policies decide from recorded state with reads and the shared condition operand | accepted | none | 2026-11-09 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |

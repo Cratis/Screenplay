@@ -92,8 +92,15 @@ public sealed partial class SemanticModelBinder
                 new SemanticClaimCondition(claim.Claim, SemanticClaimTargetKind.Artifact, path.Path),
             LogicalPolicyConditionSyntax logical => BindLogicalPolicy(logical),
             NotPolicyConditionSyntax not => BindNotPolicy(not),
+            StateConditionSyntax => UnsupportedStatePolicy(syntaxCondition),
             _ => UnsupportedPolicyCondition(syntaxCondition)
         };
+
+        SemanticPolicyCondition? UnsupportedStatePolicy(PolicyConditionSyntax condition)
+        {
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, "A policy that decides from recorded state ('reads' and a state condition) is not yet part of the executable semantic model.", condition.Location);
+            return null;
+        }
 
         SemanticNotPolicyCondition? BindNotPolicy(NotPolicyConditionSyntax not)
         {

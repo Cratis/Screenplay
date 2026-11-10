@@ -9,6 +9,9 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { nativePattern as pattern } from '../Text/patterns';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { parseCode, parseFile } from './ImplementationParser';
+import { parseReads } from './ReadsParser';
+import { parseCondition } from './ConditionParser';
+import { ReadsSyntax } from '../Syntax/ReadsSyntax';
 import { firstWord } from './LineText';
 import { parseDescription } from './DescriptionParser';
 import { ParserContext } from './ParserContext';
@@ -28,10 +31,14 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     let hasRequire = false;
     let depthExceeded = false;
     let description: string | null = null;
+    const reads: ReadsSyntax[] = [];
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (firstWord(line.content) === 'description') {
             description = parseDescription(diagnosticContext, line, description, `Policy '${name}'`);
+        } else if (firstWord(line.content) === 'reads') {
+            const read = parseReads(context, line);
+            if (read !== undefined) reads.push(read);
         } else if (firstWord(line.content) === 'require') {
             let text = line.content.substring('require'.length).trim();
             for (let continuation = context.peekChild(line.indent); continuation !== undefined; continuation = context.peekChild(line.indent)) {
@@ -57,18 +64,18 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
             if (code === null && file === null) code = parsed;
             else context.error(DiagnosticCodes.UnknownPolicyDirective, `Policy '${name}' must have only one implementation - a file reference or an inline code block, not both`, locationOf(line));
         } else {
-            context.error(DiagnosticCodes.UnknownPolicyDirective, `Unexpected '${line.content}' in policy body - expected 'require ...', 'file <path>' or an inline code block`, locationOf(line));
+            context.error(DiagnosticCodes.UnknownPolicyDirective, `Unexpected '${line.content}' in policy body - expected 'reads ...', 'require ...', 'file <path>' or an inline code block`, locationOf(line));
             context.skipOpaqueBlock(line.indent);
         }
     }
     if (condition !== null && (code !== null || file !== null)) context.error(DiagnosticCodes.MixedPolicyImplementation, `Policy '${name}' cannot combine 'require' with a file or inline code block`, locationOf(header));
     if (condition === null && code === null && file === null && !depthExceeded) context.error(DiagnosticCodes.PolicyWithoutRequirement, `Policy '${name}' must declare a 'require' condition, a file reference or an inline code block`, locationOf(header));
-    return { kind: 'PolicySyntax', name, condition, code, file, description, location: locationOf(header) };
+    return { kind: 'PolicySyntax', name, ...(reads.length === 0 ? {} : { reads }), condition, code, file, description, location: locationOf(header) };
 }
 
 function tokenizePolicyCondition(context: ParserContext, text: string): string[] {
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]' : '[\\w.$]+';
-    return [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
+    return [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
 }
 
 function parsePolicyCondition(context: ParserContext, tokens: string[], location: SourceLocation, expressionContext: ParserContext, budget: ConditionDepthBudget): PolicyConditionSyntax | null {
@@ -91,6 +98,12 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
                 else if (reportDiagnostics) context.error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
                 return result;
             } finally { budget.leave(); }
+        }
+        if (isStatePath(tokens[position]) && isComparisonOperator(tokens[position + 1], tokens[position + 2])) {
+            const start = position;
+            while (position < tokens.length && tokens[position] !== 'and' && tokens[position] !== 'or' && tokens[position] !== ')') position++;
+            const comparison = parseCondition(expressionContext, tokens.slice(start, position).join(' '), location, true);
+            return comparison !== null && comparison.kind === 'ComparisonConditionSyntax' ? { kind: 'StateConditionSyntax', comparison, location } : null;
         }
         const token = tokens[position++];
         if (token === 'authenticated') return { kind: 'AuthenticatedConditionSyntax', location };
@@ -139,6 +152,16 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
         if (condition !== null && position < tokens.length) context.error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, `Unexpected '${tokens[position]}' in policy condition`, location);
     }
     return condition;
+}
+
+const comparisonOperators = new Set(['==', '!=', '>', '>=', '<', '<=', 'contains']);
+
+function isStatePath(token: string | undefined): boolean {
+    return token !== undefined && /^[\p{L}_$]/u.test(token) && !['authenticated', 'anonymous', 'role', 'claim', 'not'].includes(token);
+}
+
+function isComparisonOperator(token: string | undefined, next: string | undefined): boolean {
+    return token !== undefined && (comparisonOperators.has(token) || (token === 'starts' && next === 'with'));
 }
 
 function validateAnonymous(context: ParserContext, condition: PolicyConditionSyntax | null, policy: string, location: SourceLocation): void {

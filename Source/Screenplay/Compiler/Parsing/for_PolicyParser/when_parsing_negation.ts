@@ -19,6 +19,7 @@ function describeCondition(node: PolicyConditionSyntax): string {
         case 'AuthenticatedConditionSyntax': return 'authenticated';
         case 'RoleConditionSyntax': return `role:${node.role}`;
         case 'ClaimConditionSyntax': return `claim:${node.claim}`;
+        case 'StateConditionSyntax': return `state:${node.comparison.left}`;
         case 'NotPolicyConditionSyntax': return `not ${describeCondition(node.operand)}`;
         case 'LogicalPolicyConditionSyntax': return `(${describeCondition(node.left)} ${node.operator} ${describeCondition(node.right)})`;
     }

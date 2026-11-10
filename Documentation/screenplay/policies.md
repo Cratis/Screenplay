@@ -48,6 +48,26 @@ Exceeding either limit reports `PLAY0861` at the owning condition or requirement
 and refuses that condition. Simplify it or split the requirement into named
 policies. Parentheses inside quoted values do not count toward nesting.
 
+## Policies that decide from recorded state
+
+A policy can also decide from state the application has recorded, such as the plan of the asset a command acts on, or the author recorded on an entity. It declares the read models it consults with `reads`, the same line commands use, and compares what they hold in `require`:
+
+```screenplay
+policy DataQualityEnabled
+  reads AssetPlan as plan by assetId
+  require authenticated and plan.dataQuality == true
+
+policy IsAuthor
+  reads ArticleView as article by slug
+  require article.author == $identity.id
+```
+
+- `reads <Model> [as <alias>] [by <property>]`: `by` names a property of the command or query being authorized, resolved the same way `claim "x" matches invoice.department` resolves its path.
+- A state condition is the shared condition operand (`<path> <operator> <value>`) used by `produces when` and `validate require`. The path starts at a read alias, a property of the artifact being authorized or `$identity`. It combines with `authenticated`, `role`, `claim`, `not`, `and` and `or`.
+- A read that finds nothing denies. A policy never allows because state is missing.
+- The syntax is parsed, printed, validated for structure and carried in the syntax tree. The executable semantic model does not admit it yet, so binding a state policy reports `PLAY0268` until it does (Cratis/Screenplay#1233). The runtime meaning stays with Arc and Chronicle ([decision 0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md)).
+- Existing models are unchanged: a policy without `reads` serializes exactly as before.
+
 ## Authorization scopes
 
 Declare `authorize <policy expression>` directly in a module or feature body, or on a command or query. Each gate can use policy names joined by `and` and `or`, with parentheses for grouping. Names written next to one another mean `and`. Every gate along the path to a command or query must pass: its own gate **and** every enclosing feature's gate (including nested features) **and** the module's gate. This is the same AND rule used for several policies on one construct. An `or` inside a gate does not bypass any enclosing gate.
@@ -87,6 +107,7 @@ The source compiler resolves policy names at all four positions and warns about 
 | `claim "<claim>" matches subject` | The claim must match the command's identifier or a keyed query's argument. |
 | `claim "<claim>" matches "<value>"` | The claim must equal that literal value. |
 | `claim "<claim>" matches <expression>` | The claim must equal the value the expression resolves to. |
+| `<path> <operator> <value>` | Recorded state, a property of the artifact or `$identity` compared with a value. Needs `reads` for state paths; see [Policies that decide from recorded state](#policies-that-decide-from-recorded-state). |
 
 Quote a literal target such as `"Finance"`. Leave a path such as `invoice.department`, or a `$`-rooted expression such as `$context.tenant`, unquoted so it names where to read the comparison value. These forms remain distinct in the syntax tree. `$`-rooted expressions are authoring syntax but do not bind to the portable ESM v1 profile described below.
 

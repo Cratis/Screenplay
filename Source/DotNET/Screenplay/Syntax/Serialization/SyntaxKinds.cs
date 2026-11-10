@@ -177,6 +177,7 @@ internal static class SyntaxKinds
         typeof(NavigateBackActionSyntax),
         typeof(NestedSyntax),
         typeof(NotPolicyConditionSyntax),
+        typeof(StateConditionSyntax),
         typeof(NotifyActionSyntax),
         typeof(OpenDialogActionSyntax),
         typeof(ObjectExpressionSyntax),
