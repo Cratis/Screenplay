@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text.Json.Serialization;
-
 namespace Cratis.Screenplay.Comparison;
 
 /// <summary>
@@ -44,10 +42,6 @@ public sealed record ModelDifference(
     /// Gets numeric identity changes within matched enumeration concepts.
     /// </summary>
     public IReadOnlyList<EnumerationMemberChange> Enumerations { get; init; } = [];
-
-    /// <summary>Gets the separate fail-closed agent exposure comparison; legacy sections do not include these rows.</summary>
-    [JsonIgnore]
-    public AgentExposureComparison AgentExposure { get; init; } = new(AgentExposureCoverage.Complete, []);
 
     /// <summary>
     /// Gets the changes grouped by the slice that owns them, with the slices that depend on each changed slice.
