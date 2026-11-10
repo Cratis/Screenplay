@@ -238,6 +238,12 @@ policy PersonOnly
 
 A caller with either the `Service` role or an `actorKind` value of `service` is denied. A missing claim has no match, so its negation is true. `not role "Service"` alone does **not** require authentication; keep `authenticated` when you need a signed-in caller. `not (role "Service" or claim "actorKind" matches "service")` negates the whole group, while `not not authenticated` restores the original condition. `not` belongs to policy conditions, not named-policy expressions in `authorize`, and cannot negate an inline or file implementation.
 
+## What a screen offers a caller
+
+The screen elements a caller is offered follow from the policies, so nothing is authored twice. An action is available when the caller satisfies the policy of its command, and data when the caller satisfies the policy of its query. A policy that decides from recorded state is evaluated against the data the screen is showing, so one asset's plan can show an action that another asset's plan withholds.
+
+`SemanticScreenAvailability.Evaluate` reports each element as available, unavailable or undecided, with the policies that gate it and why. A missing instance denies, and an opaque predicate is undecided rather than available. The report presents the fact; the command or query still decides when it runs, so hiding an element is never a substitute for enforcement.
+
 ## Public commands and queries
 
 Some things must work for someone who has not signed in: browsing a catalog, signing up, confirming an email address. Say so with a policy that requires `anonymous`, and authorize them with it:
