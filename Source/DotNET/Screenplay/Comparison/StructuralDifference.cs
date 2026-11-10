@@ -3,4 +3,7 @@
 
 namespace Cratis.Screenplay.Comparison;
 
-sealed record StructuralDifference(StructuralComparison.Change[] Changes, StructuralSection[] Sections, bool Complete, bool? HasSemanticChange, string[] Limits, int BeforeDeclarations, int AfterDeclarations);
+sealed record StructuralDifference(StructuralComparison.Change[] Changes, StructuralSection[] Sections, bool Complete, bool? HasSemanticChange, string[] Limits, int BeforeDeclarations, int AfterDeclarations)
+{
+    internal AgentExposureComparison AgentExposure { get; init; } = new(AgentExposureCoverage.Complete, []);
+}

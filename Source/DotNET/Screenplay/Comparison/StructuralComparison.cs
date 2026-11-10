@@ -122,9 +122,11 @@ internal static partial class StructuralComparison
             .ThenBy(change => change.Snapshot, StringComparer.Ordinal).ThenBy(change => change.DependantAddress, StringComparer.Ordinal)
             .ThenBy(change => change.Role, StringComparer.Ordinal).ThenBy(change => change.BeforeGeneration).ThenBy(change => change.AfterGeneration)
             .ThenBy(change => change.BeforeNumber).ToArray();
+        var exposure = AgentExposureComparison.Compare(ExposureSource(baseline, beforeSource), ExposureSource(candidate, afterSource));
         var limits = matchByAddress ? [.. _limits, "Declarations are matched by exact kind and address because at least one side has no persisted identities; renames and owner moves appear as a removal and an addition."] : _limits;
         if (before.HasEnumerations || after.HasEnumerations) limits = [.. limits, "Enumeration members are matched by name within a matched enum concept; a positional member rename appears as number reuse, and an explicit number held by a new name is reported as a rename, since rename and reuse are structurally indistinguishable."];
-        return new(ordered, sections, sections.All(section => section.Complete), SemanticChange(ordered, sections.All(section => section.Complete)), limits, before.Assignments.Count + before.Unassigned.Count, after.Assignments.Count + after.Unassigned.Count);
+        limits = ExposureLimits(limits, exposure);
+        return new(ordered, sections, sections.All(section => section.Complete), SemanticChange(ordered, sections.All(section => section.Complete)), limits, before.Assignments.Count + before.Unassigned.Count, after.Assignments.Count + after.Unassigned.Count) { AgentExposure = exposure };
 
         void Add(Change change)
         {
@@ -132,4 +134,8 @@ internal static partial class StructuralComparison
             changedIds.Add(change.SemanticId!);
         }
     }
+
+    static AuthoringSnapshot ExposureSource(ScreenplayWorkspace workspace, AuthoringSnapshot? source) => source ?? WorkspaceAuthoringAnalysis.For(workspace).Source;
+
+    static string[] ExposureLimits(string[] limits, AgentExposureComparison exposure) => exposure.RequiresLegacyLimit ? [.. limits, AgentExposureComparison.LegacyLimit] : limits;
 }
