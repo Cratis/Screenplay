@@ -173,6 +173,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitPolicy(syntax: PolicySyntax): void {
         this.visitNode(syntax);
+        syntax.reads?.forEach(reads => this.visitReads(reads));
         if (syntax.condition !== null) this.visitPolicyCondition(syntax.condition);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
@@ -181,6 +182,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitPolicyCondition(syntax: PolicyConditionSyntax): void {
         this.visitNode(syntax);
         if (syntax.kind === 'ClaimConditionSyntax' && syntax.matches !== null) this.visitExpression(syntax.matches);
+        if (syntax.kind === 'StateConditionSyntax') this.visitCondition(syntax.comparison);
         if (syntax.kind === 'NotPolicyConditionSyntax') this.visitPolicyCondition(syntax.operand);
         if (syntax.kind === 'LogicalPolicyConditionSyntax') { this.visitPolicyCondition(syntax.left); this.visitPolicyCondition(syntax.right); }
     }

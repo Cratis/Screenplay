@@ -21,6 +21,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileReference(syntax.File);
         }
 
+        foreach (var reads in syntax.Reads ?? [])
+        {
+            VisitReads(reads);
+        }
+
         if (syntax.Condition is not null)
         {
             VisitPolicyCondition(syntax.Condition);
@@ -55,6 +60,9 @@ public abstract partial class ScreenplaySyntaxWalker
                 break;
             case ClaimConditionSyntax claim:
                 VisitClaimCondition(claim);
+                break;
+            case StateConditionSyntax state:
+                VisitStateCondition(state);
                 break;
             case NotPolicyConditionSyntax not:
                 VisitNotPolicyCondition(not);
@@ -108,6 +116,16 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitExpression(syntax.Matches);
         }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="StateConditionSyntax"/> node and its comparison.
+    /// </summary>
+    /// <param name="syntax">The <see cref="StateConditionSyntax"/> to visit.</param>
+    public virtual void VisitStateCondition(StateConditionSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitComparisonCondition(syntax.Comparison);
     }
 
     /// <summary>

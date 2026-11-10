@@ -113,6 +113,7 @@ internal static partial class ScreenplaySyntaxText
             ? $"not ({PolicyCondition(not.Operand)})"
             : $"not {PolicyCondition(not.Operand)}",
         ClaimConditionSyntax claim => ClaimCondition(claim),
+        StateConditionSyntax state => Condition(state.Comparison),
         LogicalPolicyConditionSyntax logical => Combined(
             PolicyCondition(logical.Left),
             OperatorOf(logical.Left),
