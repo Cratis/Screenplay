@@ -75,6 +75,9 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// </summary>
     internal bool DeferIdentityValidation { get; set; }
 
+    // Exposure recovery observes every parsed block before singleton diagnostics discard duplicates.
+    internal Action<AgentsSyntax>? AgentBlockParsed { get; set; }
+
     /// <summary>
     /// Creates a context for work that produces diagnostics without reading source lines, such as merging
     /// and validating the documents of a folder.

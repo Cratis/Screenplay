@@ -1,7 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpSemanticDiff;
 
@@ -50,6 +53,47 @@ public class when_reading_agent_exposure : given.a_semantic_comparison
     [Fact] void should_keep_unknown_rows_on_every_incomplete_page() => new[] { _incompleteFirst, _incompleteSecond }.All(page => page.GetProperty("page").GetProperty("items").EnumerateArray().Single().GetProperty("change").GetString() == "Unknown").ShouldBeTrue();
     [Fact] void should_answer_the_requested_version_on_every_incomplete_page() => new[] { _incompleteFirst, _incompleteSecond }.All(page => page.GetProperty("version").GetInt32() == 2).ShouldBeTrue();
     [Fact] void should_keep_the_incomplete_revision_pin() => _incompleteSecond.GetProperty("page").GetProperty("revision").GetString().ShouldEqual(_incompleteFirst.GetProperty("sourceRevision").GetString());
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    void should_page_every_recovered_duplicate_candidate_as_unknown(bool baselineInvalid, bool sameFile)
+    {
+        const string firstBlock = "agents\n  tokens personal\n  query All\n    scope read\n    description \"Read\"\n";
+        const string secondBlock = "agents\n  tokens personal\n  command Register\n    scope write\n    description \"Register\"\n";
+        var valid = Create(Source + "\n" + firstBlock);
+        var invalid = sameFile ? Create(Source + "\n" + firstBlock + "\n" + secondBlock) : DuplicateWorkspace(firstBlock, secondBlock);
+        var before = baselineInvalid ? invalid : valid;
+        var after = baselineInvalid ? valid : invalid;
+        var first = ExposurePage(before, after, new { view = "agent-exposure", version = 2, limit = 1 });
+        var repeated = ExposurePage(before, after, new { view = "agent-exposure", version = 2, limit = 1 });
+        var revision = first.GetProperty("sourceRevision").GetString();
+        var second = ExposurePage(before, after, new { view = "agent-exposure", version = 2, offset = 1, limit = 1, expectedSourceRevision = revision });
+        first.GetRawText().ShouldEqual(repeated.GetRawText());
+        first.GetProperty("page").GetProperty("totalCount").GetInt32().ShouldEqual(2);
+        foreach (var page in new[] { first, second })
+        {
+            page.GetProperty("version").GetInt32().ShouldEqual(2);
+            page.GetProperty("coverage").GetString().ShouldEqual("Incomplete");
+            page.GetProperty("hasWidening").ValueKind.ShouldEqual(JsonValueKind.Null);
+            page.GetProperty("sourceRevision").GetString().ShouldEqual(revision);
+            page.GetProperty("page").GetProperty("items").EnumerateArray().Single().GetProperty("change").GetString().ShouldEqual("Unknown");
+        }
+        new[] { first, second }.SelectMany(page => page.GetProperty("page").GetProperty("items").EnumerateArray()).Select(item => item.GetRawText()).Distinct().Count().ShouldEqual(2);
+        var defaultView = JsonSerializer.SerializeToElement(McpSemanticDiff.Compare(before, after, JsonSerializer.SerializeToElement(new { limit = 200 })), McpJson.Options);
+        defaultView.GetProperty("limits").EnumerateArray().Count(limit => limit.GetString() == "Agent exposure was not compared; use the agent-exposure view.").ShouldEqual(1);
+    }
+
+    static ScreenplayWorkspace DuplicateWorkspace(string first, string second) => ScreenplayWorkspace.Create("Projects",
+        [WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes(Source)),
+         WorkspaceDocument.Create("first", PortablePlayPath.Parse("first.play"), Encoding.UTF8.GetBytes(first)),
+         WorkspaceDocument.Create("second", PortablePlayPath.Parse("second.play"), Encoding.UTF8.GetBytes(second))],
+        SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
+
+    static JsonElement ExposurePage(ScreenplayWorkspace before, ScreenplayWorkspace after, object arguments) =>
+        JsonSerializer.SerializeToElement(McpSemanticDiff.Compare(before, after, JsonSerializer.SerializeToElement(arguments)), McpJson.Options);
 
     static JsonElement ReadIncomplete(object arguments) => JsonSerializer.SerializeToElement(McpSemanticDiff.Compare(
         Create(Source + "\n" + Exposure),

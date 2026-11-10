@@ -40,13 +40,15 @@ internal static partial class AgentsParser
             }
         }
 
+        var parsed = new AgentsSyntax(operations, header.Location) { Tokens = tokens };
+        context.AgentBlockParsed?.Invoke(parsed);
         if (existing is not null)
         {
             context.Error(DiagnosticCodes.DuplicateAgentsDeclaration, "An application can declare only one agents block", header.Location);
             return existing;
         }
 
-        return new(operations, header.Location) { Tokens = tokens };
+        return parsed;
     }
 
     static void ValidateHeader(ParserContext context, SourceLine header)
