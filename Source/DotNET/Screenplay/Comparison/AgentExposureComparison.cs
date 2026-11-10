@@ -19,10 +19,6 @@ public sealed record AgentExposureComparison(AgentExposureCoverage Coverage, Imm
         ? Rows.Any(row => row.Change is AgentExposureChangeKind.Added or AgentExposureChangeKind.Widened)
         : null;
 
-    /// <summary>Gets whether either source declares an agents block, including recovered and duplicate blocks.</summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public bool HasDeclaredAgents { get; init; }
-
     internal bool RequiresLegacyLimit { get; init; }
 
     internal static AgentExposureComparison Compare(AuthoringSnapshot beforeSource, AuthoringSnapshot afterSource)
@@ -35,7 +31,6 @@ public sealed record AgentExposureComparison(AgentExposureCoverage Coverage, Imm
             .Select(key => Compare(key, baseline, candidate, sourceErrors)).ToImmutableArray();
         return new(sourceErrors ? AgentExposureCoverage.Incomplete : AgentExposureCoverage.Complete, rows)
         {
-            HasDeclaredAgents = baseline.HasBlock || candidate.HasBlock,
             RequiresLegacyLimit = sourceErrors || baseline.HasBlock || candidate.HasBlock
         };
     }

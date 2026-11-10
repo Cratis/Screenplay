@@ -47,7 +47,7 @@ public sealed record ModelDifference(
 
     /// <summary>Gets the separate fail-closed agent exposure comparison; legacy sections do not include these rows.</summary>
     [JsonIgnore]
-    public AgentExposureComparison AgentExposure { get; init; } = new(AgentExposureCoverage.Incomplete, []);
+    public AgentExposureComparison AgentExposure { get; init; } = new(AgentExposureCoverage.Complete, []);
 
     /// <summary>
     /// Gets the changes grouped by the slice that owns them, with the slices that depend on each changed slice.
