@@ -67,6 +67,14 @@ policy IsAuthor
 - A read that finds nothing denies. A policy never allows because state is missing.
 - A model that declares one selects ESM v44. The reference evaluator reads the given read-model state through `reads`: an absent instance denies, so a specification says "given this asset's plan and this caller, the command is refused" with a `given` read model and a `then` rejection of kind `Unauthorized`. The runtime meaning stays with Arc and Chronicle ([decision 0151](https://github.com/Cratis/Screenplay/blob/main/decisions/0151-policies-that-decide-from-recorded-state.md)).
 - The executable model admits a read property compared with a constant of its scalar type (text, enumeration, number, boolean). Comparing with `$identity` or a property of the authorized artifact parses and prints, and reports `PLAY0268` when bound until policy inputs arrive (Cratis/Screenplay#1231).
+- `contains` tests a required text collection for an element, or a required text property for a substring; `starts with` tests a text prefix. Both compare against a text constant, are ordinal and case-sensitive, and select ESM v45 ([decision 0152](https://github.com/Cratis/Screenplay/blob/main/decisions/0152-text-and-membership-conditions-esm-v45.md)). An absent value never matches.
+
+```screenplay
+policy DataQualityEnabled
+  reads AssetPlan as plan by assetId
+  require plan.features contains "DataQuality"
+```
+
 - Existing models are unchanged: a policy without `reads` serializes exactly as before.
 
 ## Authorization scopes

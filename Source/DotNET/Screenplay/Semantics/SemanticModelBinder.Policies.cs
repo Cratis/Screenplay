@@ -143,12 +143,27 @@ public sealed partial class SemanticModelBinder
             }
 
             var subject = CommandValidationSubject(property.Name, property.Type);
+            var textual = comparison.Operator is ComparisonOperator.Contains or ComparisonOperator.StartsWith;
+            if (textual)
+            {
+                var membership = comparison.Operator == ComparisonOperator.Contains && subject.IsCollection && !subject.IsDate && subject.Primitive is SemanticPrimitiveType.Text;
+                var text = !subject.IsCollection && subject.Primitive == SemanticPrimitiveType.Text && subject.Values.IsDefaultOrEmpty;
+                if (property.Type.IsOptional || !(membership || text) || comparison.Right is not LiteralExpressionSyntax { } needle || BindLiteral(needle) is not SemanticTextValue literal)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition '{comparison.Left} {(comparison.Operator == ComparisonOperator.Contains ? "contains" : "starts with")}' needs a required text property or a required text collection on the left and a text constant on the right.", comparison.Location);
+                    return null;
+                }
+
+                var textOperator = comparison.Operator == ComparisonOperator.Contains ? SemanticComparisonOperator.Contains : SemanticComparisonOperator.StartsWith;
+                return new SemanticStatePolicyCondition(new SemanticComparison(new(property.Id, null) { Read = read.Name }, textOperator, new(default, literal)));
+            }
+
             var ordering = comparison.Operator is ComparisonOperator.GreaterThan or ComparisonOperator.GreaterThanOrEqual or ComparisonOperator.LessThan or ComparisonOperator.LessThanOrEqual;
             if (property.Type.IsOptional || subject.IsCollection || subject.IsDate ||
                 comparison.Operator is not (ComparisonOperator.Equal or ComparisonOperator.NotEqual or ComparisonOperator.GreaterThan or ComparisonOperator.GreaterThanOrEqual or ComparisonOperator.LessThan or ComparisonOperator.LessThanOrEqual) ||
                 (ordering ? !subject.IsNumber : !(subject.IsNumber || subject.Primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean)))
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' is not admitted: ordering requires numbers; equality requires a required scalar text, enumeration, number or boolean.", comparison.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' is not admitted: ordering requires numbers; equality requires a required scalar text, enumeration, number or boolean; text conditions use 'contains' or 'starts with'.", comparison.Location);
                 return null;
             }
 

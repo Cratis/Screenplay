@@ -102,7 +102,7 @@ internal static partial class SemanticModelRead
             switch (property)
             {
                 case "kind": kind = String(ref reader, property); break;
-                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); state = Condition(ref reader, LanguageVersion.V44.Major); break;
+                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); state = Condition(ref reader, LanguageVersion.V45.Major); break;
                 case "role": role = String(ref reader, property); break;
                 case "claim": claim = String(ref reader, property); break;
                 case "targetKind": targetKind = String(ref reader, property); break;

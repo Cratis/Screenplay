@@ -20,6 +20,7 @@ public static partial class SemanticModelCanonicalJson
                     SemanticComparisonOperator.Equal => "==", SemanticComparisonOperator.NotEqual => "!=",
                     SemanticComparisonOperator.GreaterThan => ">", SemanticComparisonOperator.GreaterThanOrEqual => ">=",
                     SemanticComparisonOperator.LessThan => "<", SemanticComparisonOperator.LessThanOrEqual => "<=",
+                    SemanticComparisonOperator.Contains => "contains", SemanticComparisonOperator.StartsWith => "startsWith",
                     _ => throw new InvalidSemanticContract("Unknown condition comparison operator.")
                 });
                 WriteConditionOperand(writer, "right", comparison.Right);
@@ -116,6 +117,8 @@ internal static partial class SemanticModelRead
                 "==" => SemanticComparisonOperator.Equal, "!=" => SemanticComparisonOperator.NotEqual,
                 ">" => SemanticComparisonOperator.GreaterThan, ">=" => SemanticComparisonOperator.GreaterThanOrEqual,
                 "<" => SemanticComparisonOperator.LessThan, "<=" => SemanticComparisonOperator.LessThanOrEqual,
+                "contains" when schemaVersion >= LanguageVersion.V45.Major => SemanticComparisonOperator.Contains,
+                "startsWith" when schemaVersion >= LanguageVersion.V45.Major => SemanticComparisonOperator.StartsWith,
                 _ => throw new InvalidSemanticContract("Unknown condition comparison operator.")
             };
             return new SemanticComparison(comparisonLeft, comparison, comparisonRight);
