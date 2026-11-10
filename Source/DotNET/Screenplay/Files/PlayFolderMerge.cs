@@ -157,19 +157,6 @@ internal static partial class PlayFolderMerge
         return registrations.ToImmutableDictionary(StringComparer.Ordinal);
     }
 
-    /// <summary>
-    /// Keeps the first of a declaration the application can only have one of, reporting every later one.
-    /// </summary>
-    /// <typeparam name="TSyntax">The type of the declaration.</typeparam>
-    /// <param name="declarations">The declaration of each document, absent as <c>null</c>.</param>
-    /// <param name="location">Reads the <see cref="SourceLocation"/> of a declaration.</param>
-    /// <param name="keyword">The name of the construct, used in the diagnostic.</param>
-    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
-    /// <returns>The first declaration, or <c>null</c> when no document declares one.</returns>
-    /// <remarks>
-    /// Each document holds at most one already - the parser rejects a second within a document - so anything
-    /// found here came from another file.
-    /// </remarks>
     static AgentsSyntax? MergeAgents(IEnumerable<ApplicationSyntax> applications, ParserContext context)
     {
         AgentsSyntax? result = null;
@@ -188,6 +175,19 @@ internal static partial class PlayFolderMerge
         return result;
     }
 
+    /// <summary>
+    /// Keeps the first of a declaration the application can only have one of, reporting every later one.
+    /// </summary>
+    /// <typeparam name="TSyntax">The type of the declaration.</typeparam>
+    /// <param name="declarations">The declaration of each document, absent as <c>null</c>.</param>
+    /// <param name="location">Reads the <see cref="SourceLocation"/> of a declaration.</param>
+    /// <param name="keyword">The name of the construct, used in the diagnostic.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <returns>The first declaration, or <c>null</c> when no document declares one.</returns>
+    /// <remarks>
+    /// Each document holds at most one already - the parser rejects a second within a document - so anything
+    /// found here came from another file.
+    /// </remarks>
     static TSyntax? OnlyOne<TSyntax>(
         IEnumerable<TSyntax?> declarations,
         Func<TSyntax, SourceLocation> location,

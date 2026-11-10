@@ -26,7 +26,7 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 ## Agents
 
-The root `agents` block lets personal-token callers discover `ListInvoices` with `scope read` and `RegisterInvoice` with `scope write`. These are the only exposed operations, and the caller must still satisfy the module, feature and operation authorization gates. A write token also satisfies the read scope. The block selects ESM v44; the showcase's other executable-admission refusals remain unchanged. See [Agents](../../Documentation/screenplay/agents.md).
+The root `agents` block lets personal-token callers discover `ListInvoices` with `scope read` and `RegisterInvoice` with `scope write`. These are the only exposed operations, and the caller must still satisfy the module, feature and operation authorization gates. A write token also satisfies the read scope. The block selects ESM v48; the showcase's other executable-admission refusals remain unchanged. See [Agents](../../Documentation/screenplay/agents.md).
 
 ## Sketches, mockups and linked copies
 
