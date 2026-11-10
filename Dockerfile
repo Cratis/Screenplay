@@ -24,7 +24,6 @@ RUN yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 ####################################
 # Tool - compiled with the board embedded
 ####################################
-# At .NET 11 GA, move the preview tags to 11.0-resolute and 11.0-resolute-chiseled.
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0-resolute AS build
 ARG VERSION=0.0.0
 

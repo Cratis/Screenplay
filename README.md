@@ -223,7 +223,7 @@ and launches an Extension Development Host with full `.play` support, ready to t
 
 ## ✅ Quality gates
 
-Install the .NET 11 RC SDK selected by `global.json` before building from source.
+Install the .NET 11 SDK selected by `global.json` before building from source.
 Library packages target .NET 10 and .NET 11; the standalone CLI and MCP executable require .NET 11.
 
 ```shell
