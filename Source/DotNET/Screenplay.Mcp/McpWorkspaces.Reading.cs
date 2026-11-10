@@ -94,7 +94,7 @@ internal sealed partial class McpWorkspaces
     internal object ReadProposal(JsonElement arguments)
     {
         var view = McpJson.OptionalString(arguments, "view") ?? "changes";
-        var semanticDiff = view == "semantic-diff";
+        var semanticDiff = view == "semantic-diff" || view == "agent-exposure";
         if (semanticDiff)
         {
             // Report a pending recovery here or in an overlapping root before reading the proposal from disk.
@@ -177,7 +177,7 @@ internal sealed partial class McpWorkspaces
     {
         "production-destinations" => DestinationReport(proposal, arguments, false),
         "production-destination-identities" => DestinationReport(proposal, arguments, true),
-        "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
+        "semantic-diff" or "agent-exposure" => McpSemanticDiff.Read(proposal, arguments),
         "changes" => McpPaging.Page(proposal.WritePlan.Entries, DescribeChangeSummary, arguments, proposal.Workspace.Revision.ToString()),
         "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
         "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),

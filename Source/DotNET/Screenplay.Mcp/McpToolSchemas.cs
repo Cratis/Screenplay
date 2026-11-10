@@ -105,7 +105,7 @@ static class McpToolSchemas
 
     internal static JsonObject Argument(string tool, string property) =>
         (_describedArguments.TryGetValue((tool, property), out var description) ? new JsonObject { ["type"] = "string", ["description"] = description } : null) ??
-        McpNotesSchemas.Argument(tool, property) ?? PropertyArgument(tool, property) ?? StandardArgument(tool, property);
+        McpNotesSchemas.Argument(tool, property) ?? PropertyArgument(tool, property) ?? ComparisonArgument(tool, property) ?? StandardArgument(tool, property);
 
     internal static JsonObject Address()
     {
@@ -135,6 +135,13 @@ static class McpToolSchemas
             _ => _propertyAdditionArguments.TryGetValue(property, out var argument) ? argument() : null
         };
     }
+
+    static JsonObject? ComparisonArgument(string tool, string property) => property switch
+    {
+        "view" when tool == "semantic-diff" => McpAstSchemas.Choice("semantic-diff", "agent-exposure"),
+        "version" when tool == "semantic-diff" || tool == "read-proposal" => new() { ["type"] = "integer", ["const"] = 2, ["description"] = "Required with view=agent-exposure on every page. Must equal the answered version (2); never fall back to legacy coverage." },
+        _ => null
+    };
 
     static JsonObject StandardArgument(string tool, string property) => property switch
     {
@@ -172,7 +179,7 @@ static class McpToolSchemas
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "cases", "streams", "route", "dependencies", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
         "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "named-rule-intents", "named-rule-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics", "typed-contexts", "source-map", "repairs", "repair-intents", "executable-model", "api-description", "ui-contract"),
-        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff", "notes", "release-baseline", "production-destinations", "production-destination-identities"),
+        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff", "agent-exposure", "notes", "release-baseline", "production-destinations", "production-destination-identities"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };
