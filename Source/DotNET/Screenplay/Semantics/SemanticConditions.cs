@@ -107,6 +107,11 @@ public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue
     /// Gets a value indicating that the operand is the <c>Date</c> of the referenced <see cref="Property"/> (<c>date of createdAt</c>).
     /// </summary>
     public bool DateOf { get; init; }
+
+    /// <summary>
+    /// Gets whether the operand is the caller's identifier - <c>$identity.id</c> - which a policy state condition compares a read property with (ESM v48).
+    /// </summary>
+    public bool CallerId { get; init; }
 }
 
 /// <summary>

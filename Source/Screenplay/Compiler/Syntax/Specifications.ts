@@ -155,6 +155,8 @@ export interface SpecificationCallerSyntax extends SyntaxNode {
     readonly authenticated: boolean;
     readonly roles: readonly string[];
     readonly claims: readonly SpecificationCallerClaimSyntax[];
+    // The caller's identifier - 'id "alice"' - which $identity.id reads in a policy state condition.
+    readonly id?: string;
 }
 
 // One 'claim "<type>" = "<value>"' line of a caller.

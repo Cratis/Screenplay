@@ -18,6 +18,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "state-policies",
         "policy-inputs",
         "narrowed-queries",
+        "caller-identity",
         "graph-queries",
         "graph-foreach",
         "projection-parity",

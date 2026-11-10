@@ -133,6 +133,53 @@ The policy is evaluated once per row, with the row's own properties as the artif
 
 Only a collection result can be narrowed. A policy with an opaque predicate cannot narrow, and a read keyed by a policy input rather than a property of the row is refused at binding. A query declares one `narrow`; combine conditions in the policy. A model that declares `narrow` uses ESM v47 ([decision 0154](https://github.com/Cratis/Screenplay/blob/main/decisions/0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md)).
 
+## Comparing with who is asking
+
+A state condition can compare a recorded property with the caller's identifier, so a policy can say "only the author may edit":
+
+```screenplay
+policy IsAuthor
+  reads Article as article by slug
+  require authenticated and article.author == $identity.id
+
+module Publishing
+  feature Articles
+    slice StateChange EditArticle
+      event ArticleEdited
+        title String
+      command EditArticle
+        slug String identifier
+        title String
+        authorize IsAuthor
+        produces ArticleEdited
+          for slug
+          title = title
+      specification TheAuthorMayEdit
+        given readmodel Article
+          slug = "intro"
+          author = "alice"
+        given caller
+          authenticated
+          id "alice"
+        when EditArticle
+          slug = "intro"
+          title = "Hello"
+        then ArticleEdited
+          title = "Hello"
+    slice StateView Articles
+      readmodel Article
+        slug String key
+        author String
+      event ArticleWritten
+        author String
+      projection BuildArticle => Article
+        from ArticleWritten
+          slug = $eventSourceId
+          author = author
+```
+
+The property must be a required text value and the operator `==` or `!=`. A caller fixture names its identifier with `id "alice"`; a caller with no identifier is denied, because a policy that cannot tell who is asking must not allow. Other caller details and artifact operands are still refused. A model that uses `$identity.id` this way is ESM v49 ([decision 0157](https://github.com/Cratis/Screenplay/blob/main/decisions/0157-caller-identifier-in-policy-state-conditions-esm-v49.md)).
+
 ## Authorization scopes
 
 Declare `authorize <policy expression>` directly in a module or feature body, or on a command or query. Each gate can use policy names joined by `and` and `or`, with parentheses for grouping. Names written next to one another mean `and`. Every gate along the path to a command or query must pass: its own gate **and** every enclosing feature's gate (including nested features) **and** the module's gate. This is the same AND rule used for several policies on one construct. An `or` inside a gate does not bypass any enclosing gate.
