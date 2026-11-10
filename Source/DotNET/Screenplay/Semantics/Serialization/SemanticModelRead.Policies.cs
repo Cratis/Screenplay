@@ -13,6 +13,7 @@ internal static partial class SemanticModelRead
         Object(ref reader, "caller");
         var seen = NewSeen();
         bool? authenticated = null;
+        string? id = null;
         ImmutableArray<string> roles = default;
         ImmutableArray<SemanticCallerClaim> claims = default;
         while (NextProperty(ref reader, seen, "caller") is { } property)
@@ -20,13 +21,14 @@ internal static partial class SemanticModelRead
             switch (property)
             {
                 case "authenticated": authenticated = Boolean(ref reader, property); break;
+                case "id": id = String(ref reader, property); break;
                 case "roles": roles = StringArray(ref reader, property); break;
                 case "claims": claims = Array(ref reader, CallerClaim, property); break;
                 default: throw Unknown(property, "caller");
             }
         }
         Required(authenticated is not null && !roles.IsDefault && !claims.IsDefault, "caller");
-        return new(authenticated!.Value, roles, claims);
+        return new(authenticated!.Value, roles, claims) { Id = id };
     }
 
     internal static SemanticCallerClaim CallerClaim(ref Utf8JsonReader reader)
@@ -141,7 +143,7 @@ internal static partial class SemanticModelRead
             switch (property)
             {
                 case "kind": kind = String(ref reader, property); break;
-                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); state = Condition(ref reader, LanguageVersion.V45.Major); break;
+                case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); state = Condition(ref reader, LanguageVersion.V49.Major); break;
                 case "role": role = String(ref reader, property); break;
                 case "claim": claim = String(ref reader, property); break;
                 case "targetKind": targetKind = String(ref reader, property); break;

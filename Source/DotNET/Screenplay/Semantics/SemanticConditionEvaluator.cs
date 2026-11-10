@@ -85,6 +85,7 @@ public static class SemanticConditionEvaluator
         IReadOnlyDictionary<string, IReadOnlyDictionary<SemanticId, SemanticValue>>? reads) =>
         operand switch
         {
+            { CallerId: true } => throw new InvalidSemanticContract("A caller identifier operand is resolved before evaluation."),
             { Read: { } read } => reads![read].GetValueOrDefault(operand.Property, SemanticValue.Null),
             { Property.IsSet: true } => values[operand.Property],
             _ => operand.Value!

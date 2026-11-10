@@ -117,7 +117,7 @@ internal static class SemanticPolicyEvaluation
         SemanticNotPolicyCondition not => EvaluateCondition(not.Operand, plan, caller, artifact, subject, properties).Not(),
         SemanticRoleCondition role => new(caller.Caller.Roles.Contains(role.Role, StringComparer.Ordinal)),
         SemanticClaimCondition claim => MatchClaim(claim, plan, caller, artifact, subject, properties),
-        SemanticStatePolicyCondition state => new(caller.State is not null && SemanticConditionEvaluator.Evaluate(state.Condition, new Dictionary<SemanticId, SemanticValue>(), null, caller.State)),
+        SemanticStatePolicyCondition state => new(caller.State is not null && SemanticConditionEvaluator.Evaluate(WithCallerId(state.Condition, caller.Caller.Id), new Dictionary<SemanticId, SemanticValue>(), null, caller.State)),
         SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.And or SemanticLogicalOperator.Or } logical =>
             EvaluateLogicalCondition(logical, plan, caller, artifact, subject, properties),
         _ => throw new InvalidSemanticContract("Unknown policy condition node or operator.")
@@ -196,6 +196,18 @@ internal static class SemanticPolicyEvaluation
 
         return state;
     }
+
+    // The caller's identifier is resolved to a text value before the comparison. A caller with no identifier gives no value to compare, so the
+    // comparison is false rather than unknown: absence cannot grant access.
+    static SemanticCondition WithCallerId(SemanticCondition condition, string? id) => condition switch
+    {
+        SemanticComparison comparison => comparison with { Left = CallerId(comparison.Left, id), Right = CallerId(comparison.Right, id) },
+        SemanticLogicalCondition logical => logical with { Left = WithCallerId(logical.Left, id), Right = WithCallerId(logical.Right, id) },
+        _ => condition
+    };
+
+    static SemanticConditionOperand CallerId(SemanticConditionOperand operand, string? id) =>
+        operand.CallerId ? new SemanticConditionOperand(default, id is null ? SemanticValue.Null : SemanticValue.Text(id)) : operand;
 
     sealed record Principal(SemanticCaller Caller, bool IsSystem)
     {

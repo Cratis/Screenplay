@@ -11,6 +11,7 @@ public static partial class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         writer.WriteBoolean("authenticated", caller.Authenticated);
+        if (caller.Id is not null) CanonicalJson.WriteString(writer, "id", caller.Id);
         WriteStringArray(writer, "roles", caller.Roles);
         WriteArray(writer, "claims", caller.Claims, (json, claim) =>
         {

@@ -146,3 +146,4 @@
 | [0154](0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md) | A collection query narrows its rows by a policy in ESM v47 | accepted | none | 2026-11-09 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
 | [0155](0155-explicit-agent-exposure-default-deny.md) | Keep explicit agent exposure default-deny and portable in ESM v48 | proposed | none | — | — |
 | [0156](0156-capability-manifest-is-the-agent-allowlist.md) | Emit a capability manifest only from the explicit agents allowlist | accepted | none | 2026-11-10 | User's binding #1199 plan and contract decisions |
+| [0157](0157-caller-identifier-in-policy-state-conditions-esm-v49.md) | A policy state condition compares with the caller's identifier in ESM v49 | accepted | none | 2026-11-10 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
