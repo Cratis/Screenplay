@@ -50,6 +50,10 @@ public static partial class SemanticModelCanonicalJson
         {
             WriteClockOperand(writer, operand.Clock);
         }
+        else if (operand.CallerId)
+        {
+            writer.WriteBoolean("callerId", true);
+        }
         else if (operand.Property.IsSet)
         {
             if (operand.Read is not null) CanonicalJson.WriteString(writer, "read", operand.Read);
@@ -142,6 +146,7 @@ internal static partial class SemanticModelRead
         string? read = null;
         SemanticClockOperand? clock = null;
         var dateOf = false;
+        var callerId = false;
         while (NextProperty(ref reader, seen, "condition operand") is { } property)
         {
             switch (property)
@@ -149,6 +154,7 @@ internal static partial class SemanticModelRead
                 case "read" when schemaVersion >= LanguageVersion.V25.Major: read = String(ref reader, property); break;
                 case "clock" when schemaVersion >= LanguageVersion.V37.Major: clock = Nested(ref reader, ClockOperand, property); break;
                 case "dateOf" when schemaVersion >= LanguageVersion.V37.Major: dateOf = OnlyTrue(ref reader, property, "condition operand"); break;
+                case "callerId" when schemaVersion >= LanguageVersion.V48.Major: callerId = OnlyTrue(ref reader, property, "condition operand"); break;
                 case "property": propertyId = SemanticId.Parse(String(ref reader, property)); break;
                 case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "condition operand");
@@ -156,6 +162,12 @@ internal static partial class SemanticModelRead
         }
 
         var fields = new ConditionOperandFields(propertyId, value, valueRead, read, dateOf);
+        if (callerId)
+        {
+            Required(!propertyId.IsSet && !valueRead && read is null && !dateOf && clock is null, "condition operand");
+            return new(default, null) { CallerId = true };
+        }
+
         return clock is null ? fields.PropertyOperand() : fields.ClockOperand(clock);
     }
 

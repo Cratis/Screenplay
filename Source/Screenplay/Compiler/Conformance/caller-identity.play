@@ -1,0 +1,38 @@
+policy IsAuthor
+  reads Article as article by slug
+  require authenticated and article.author == $identity.id
+
+module Publishing
+  feature Articles
+    slice StateChange EditArticle
+      event ArticleEdited
+        title String
+      command EditArticle
+        slug String identifier
+        title String
+        authorize IsAuthor
+        produces ArticleEdited
+          for slug
+          title = title
+      specification TheAuthorMayEdit
+        given readmodel Article
+          slug = "intro"
+          author = "alice"
+        given caller
+          authenticated
+          id "alice"
+        when EditArticle
+          slug = "intro"
+          title = "Hello"
+        then ArticleEdited
+          title = "Hello"
+    slice StateView Articles
+      readmodel Article
+        slug String key
+        author String
+      event ArticleWritten
+        author String
+      projection BuildArticle => Article
+        from ArticleWritten
+          slug = $eventSourceId
+          author = author

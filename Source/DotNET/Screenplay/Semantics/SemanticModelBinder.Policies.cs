@@ -48,7 +48,7 @@ public sealed partial class SemanticModelBinder
                 var reference = specification.Authored.GivenCallerPersona!;
                 var persona = syntax.Personas!.Single(persona => persona.Name == reference.Name);
                 var fixture = specification.Effective.GivenCaller!;
-                var caller = new SemanticCaller(fixture.Authenticated, [.. fixture.Roles], [.. fixture.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]);
+                var caller = new SemanticCaller(fixture.Authenticated, [.. fixture.Roles], [.. fixture.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]) { Id = fixture.Id };
                 foreach (var name in persona.Policies)
                 {
                     var policy = policies.FirstOrDefault(policy => policy.Name == name);
@@ -156,7 +156,7 @@ public sealed partial class SemanticModelBinder
             var parts = comparison.Left.Split('.');
             if (comparison.LeftExpression is not null || parts.Length != 2 || !_policyReads.TryGetValue(parts[0], out var read))
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition operand '{comparison.Left}' must be '<read alias>.<property>' of a read the policy declares; caller identity and artifact operands are not yet admitted.", comparison.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition operand '{comparison.Left}' must be '<read alias>.<property>' of a read the policy declares; the caller's identifier is admitted on the right of a text comparison, and artifact operands are not yet admitted.", comparison.Location);
                 return null;
             }
 
@@ -192,6 +192,18 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            if (comparison.Right is IdentityExpressionSyntax identity && string.Equals(identity.Path, "id", StringComparison.Ordinal))
+            {
+                if (comparison.Operator is not (ComparisonOperator.Equal or ComparisonOperator.NotEqual) || property.Type.IsOptional || subject.IsCollection || subject.Primitive != SemanticPrimitiveType.Text || !subject.Values.IsDefaultOrEmpty)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' compares with the caller's identifier, which needs a required text property and '==' or '!='.", comparison.Right.Location);
+                    return null;
+                }
+
+                var identityOperator = comparison.Operator == ComparisonOperator.Equal ? SemanticComparisonOperator.Equal : SemanticComparisonOperator.NotEqual;
+                return new SemanticStatePolicyCondition(new SemanticComparison(new(property.Id, null) { Read = read.Name }, identityOperator, new(default, null) { CallerId = true }));
+            }
+
             var value = comparison.Right switch
             {
                 LiteralExpressionSyntax literal => BindLiteral(literal),
@@ -200,7 +212,7 @@ public sealed partial class SemanticModelBinder
             };
             if (value is null || value is SemanticNullValue || OperandMismatch(value, SemanticValidationRuleKind.Equal, subject) is not null)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' must compare with a constant of the property's scalar type; caller identity, artifact and read operands are not yet admitted.", comparison.Right.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"State condition on '{comparison.Left}' must compare with a constant of the property's scalar type or with $identity.id; other caller details, artifact and read operands are not yet admitted.", comparison.Right.Location);
                 return null;
             }
 

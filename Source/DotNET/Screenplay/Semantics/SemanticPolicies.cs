@@ -126,7 +126,13 @@ public sealed record SemanticLogicalAuthorization(
 /// <param name="Authenticated">Whether the caller is authenticated.</param>
 /// <param name="Roles">Roles held by the caller.</param>
 /// <param name="Claims">Multi-valued claims carried by the caller.</param>
-public sealed record SemanticCaller(bool Authenticated, ImmutableArray<string> Roles, ImmutableArray<SemanticCallerClaim> Claims);
+public sealed record SemanticCaller(bool Authenticated, ImmutableArray<string> Roles, ImmutableArray<SemanticCallerClaim> Claims)
+{
+    /// <summary>
+    /// Gets the caller's identifier (ESM v48), which <c>$identity.id</c> reads in a policy state condition, or <see langword="null"/> when the caller has none.
+    /// </summary>
+    public string? Id { get; init; }
+}
 
 /// <summary>Represents one caller claim, allowing repeated claim types.</summary>
 /// <param name="Type">The claim type.</param>

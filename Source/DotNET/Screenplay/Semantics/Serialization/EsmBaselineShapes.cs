@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -93,7 +93,7 @@ internal static class EsmBaselineShapes
         ["PropertyValue"] = "targetProperty value:Value",
         ["Requirement"] = "condition:Condition message severity",
         ["Condition"] = "kind left:ConditionOperand operator right:ConditionOperand",
-        ["ConditionOperand"] = "clock@37:ClockOperand read@25 property dateOf@37 value:Value",
+        ["ConditionOperand"] = "clock@37:ClockOperand read@25 property dateOf@37 callerId@48 value:Value",
         ["ClockOperand"] = "kind offset:ClockOffset dateOf",
         ["ClockOffset"] = "amount unit",
         ["CommandCalendar"] = "timeZone contextMember",
@@ -109,7 +109,7 @@ internal static class EsmBaselineShapes
         ["PolicyInputMapping"] = "input property",
         ["PolicyCondition"] = "kind role claim targetKind value condition@44:Condition operand:PolicyCondition operator left:PolicyCondition right:PolicyCondition",
         ["Authorization"] = "kind name mappings@46:PolicyInputMapping operator left:Authorization right:Authorization",
-        ["Caller"] = "authenticated roles claims:CallerClaim",
+        ["Caller"] = "authenticated id@48 roles claims:CallerClaim",
         ["CallerClaim"] = "type value",
         ["EventSourceDeclaration"] = "id name sourceKind identifierType:TypeReference streams:EventStream",
         ["EventStream"] = "id name streamKind streamIdType:TypeReference streamIdParts:StreamIdPart",

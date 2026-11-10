@@ -148,7 +148,10 @@ public sealed partial class SemanticModelBinder
                 GivenCaller = specification.GivenCaller is null ? null : new(
                     specification.GivenCaller.Authenticated,
                     [.. specification.GivenCaller.Roles],
-                    [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]),
+                    [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))])
+                {
+                    Id = specification.GivenCaller.Id
+                },
                 ThenDenied = specification.ThenDenied is not null,
                 ThenReturns = BindThenReturns(specification.ThenReturns, command),
                 WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),

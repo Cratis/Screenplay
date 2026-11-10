@@ -243,6 +243,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V47 = new(47, 0);
 
     /// <summary>
+    /// Gets the language version admitting the caller identifier in a policy state condition.
+    /// </summary>
+    public static readonly LanguageVersion V48 = new(48, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -506,6 +511,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version admitting row narrowing of a collection query by a policy.
     /// </summary>
     public static readonly SemanticVersion V47 = new(47, 0);
+
+    /// <summary>
+    /// Gets the semantic version admitting the caller identifier in a policy state condition.
+    /// </summary>
+    public static readonly SemanticVersion V48 = new(48, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1326,7 +1336,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV47Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV48Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1339,7 +1349,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV47Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV48Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;
