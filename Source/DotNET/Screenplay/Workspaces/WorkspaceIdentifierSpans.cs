@@ -26,6 +26,8 @@ internal static partial class WorkspaceIdentifierSpans
             (SpecificationCallerPersonaSyntax, "name") => line.StartsWith("given caller as ", StringComparison.Ordinal),
             (PersonaSyntax, "name") => keyword == "persona",
             (SinkSyntax, "name") => keyword == "sink",
+            (SecretSyntax, "name") => keyword == "secret",
+            (SystemSettingSyntax, "secret") => keyword == "setting" && line.Contains(" from secret ", StringComparison.Ordinal),
             (ReadModelSyntax or GraphSyntax, "sink") => keyword == "sink",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
