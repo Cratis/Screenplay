@@ -202,13 +202,17 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         return candidates;
     }
 
+    // A model that declares an ability admits its systems (ESM v50, #1250); operations stay syntax-only.
+    bool AbilitiesAdmitted() => application.Systems.Any(system => system.Abilities.Any());
+
     bool Operations(SyntaxNode node)
     {
         if (_operations.TryGetValue(node, out var cached)) return cached;
         var result = node switch
         {
-            SystemSyntax or OperationSyntax => true,
-            ApplicationSyntax => application.Systems.Any() || _owners.Keys.OfType<SliceSyntax>().Any(Operations),
+            SystemSyntax => !AbilitiesAdmitted(),
+            OperationSyntax => true,
+            ApplicationSyntax => (application.Systems.Any() && !AbilitiesAdmitted()) || _owners.Keys.OfType<SliceSyntax>().Any(Operations),
             CommandSyntax command => _owners.TryGetValue(command, out var slice) && command.Produces.Any(production => !_productions.IsEventProduction(production, slice)),
             SpecificationSyntax specification => specification.GivenOperationFailures.Any() || specification.ThenOperations.Any() || specification.ThenCompensated.Any() || ActionCommands(specification).Any(entry => Operations(entry.Command)),
             SliceSyntax slice => OperationDeclarations.In(slice).Any() || slice.Commands.Any(Operations) || slice.Specifications.Any(Operations) || slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Produces ?? []).Any(production => !_productions.IsEventProduction(production, slice)),
