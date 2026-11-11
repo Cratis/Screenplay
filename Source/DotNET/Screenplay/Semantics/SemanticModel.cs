@@ -160,6 +160,9 @@ public sealed record SemanticApplication(
     /// </summary>
     public SemanticTimeZone? TimeZone { get; init; }
 
+    /// <summary>Gets the external systems and the abilities they can be asked to perform (ESM v50, #1250), in declaration order.</summary>
+    public ImmutableArray<SemanticSystem> Systems { get; init; } = [];
+
     /// <summary>Gets the explicit agent exposure allowlist (ESM v42), or null when absent.</summary>
     public SemanticAgents? Agents { get; init; }
 

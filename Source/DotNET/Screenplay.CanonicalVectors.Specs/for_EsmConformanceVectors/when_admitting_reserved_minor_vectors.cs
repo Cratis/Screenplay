@@ -26,10 +26,10 @@ public class when_admitting_reserved_minor_vectors : Specification
     [Fact] void should_reemit_the_admitted_vector_byte_identically_after_opaque_canonical_reconstruction() => _document.CopyBytes().AsSpan().SequenceEqual(_vectors.Single(vector => vector.ShouldAdmit).Bytes.AsSpan()).ShouldBeTrue();
     [Fact] void should_refuse_misordered_opaque_members_and_unknown_discriminators() => _refusals.All(error => error is InvalidSemanticContract).ShouldBeTrue();
     [Fact] void should_never_admit_reserved_pairs_through_the_strict_reader() => _strictRefusals.All(error => error is InvalidSemanticContract).ShouldBeTrue();
-    [Fact] void should_keep_reserved_pairs_out_of_the_registered_version_sets() => (EsmSchemaV49Support.LanguageVersions.All(version => version.Minor != EsmConformanceVectors.ReservedMinor) && EsmSchemaV49Support.SemanticVersions.All(version => version.Minor != EsmConformanceVectors.ReservedMinor)).ShouldBeTrue();
+    [Fact] void should_keep_reserved_pairs_out_of_the_registered_version_sets() => (EsmSchemaV50Support.LanguageVersions.All(version => version.Minor != EsmConformanceVectors.ReservedMinor) && EsmSchemaV50Support.SemanticVersions.All(version => version.Minor != EsmConformanceVectors.ReservedMinor)).ShouldBeTrue();
     [Fact] void should_preserve_the_full_wire_revision() => _document.Revision.ShouldEqual(SemanticRevision.Parse("rev1:589acd95a27ca88df3a491b5e4306192a1a902680d989fdfc1a4a33b4ecbc090"));
     [Fact] void should_distinguish_ordinary_additions_from_known_identity_mapping_positions() => (_document.Unknowns.Count(member => member.IsSecurityRelevant) == 1 && _document.Unknowns.Length == 3).ShouldBeTrue();
-    [Fact] void should_not_add_reserved_pairs_to_the_real_golden_versions() => EsmGoldenVectors.Versions.SequenceEqual(Enumerable.Range(1, 38).Append(40).Append(41).Append(42).Append(43).Append(44).Append(45).Append(46).Append(47).Append(48).Append(49)).ShouldBeTrue();
+    [Fact] void should_not_add_reserved_pairs_to_the_real_golden_versions() => EsmGoldenVectors.Versions.SequenceEqual(Enumerable.Range(1, 38).Append(40).Append(41).Append(42).Append(43).Append(44).Append(45).Append(46).Append(47).Append(48).Append(49).Append(50)).ShouldBeTrue();
     [Fact]
     void should_freeze_all_conformance_fixture_bytes_on_first_publication() => _vectors.Select(vector => Convert.ToHexStringLower(SHA256.HashData(vector.Bytes.AsSpan()))).ShouldEqual(
     [

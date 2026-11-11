@@ -1377,11 +1377,11 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
+| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, a multiline description uses a bare fence, or a workflow or state machine uses a deprecated verb: `action ... sends`, `entering send`, `entering start` or `then sends`. The message names the replacement (`invokes` or `starts`; see the migration notes in [workflows](workflows.md) and [state machines](statemachines.md)). |
 
 A compiler-authored typed repair is offered only when `PLAY0397` identifies a
-`validate csharp` header. It uses an identity replacement and canonical printing
-to produce a tagged `` ```csharp `` fence. The entire file is reprinted; other
+`validate csharp` header or a deprecated `sends`, `send` or `start` lifecycle verb. It uses an identity replacement and canonical printing
+to produce a tagged `` ```csharp `` fence or the `invokes` and `starts` forms. The entire file is reprinted; other
 legacy forms and whitespace may change, but a repair that would drop any comment
 is refused. Preview it through the revision-checked AST authoring contract (or
 MCP `read-workspace` repairs / `propose-repair`); review the bytes before applying.
@@ -1602,7 +1602,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
-| `PLAY0495` | Error | An external system declaration is malformed or repeated. |
+| `PLAY0495` | Error | An external system declaration, or an ability, outcome or `returns` block inside one, is malformed or repeated. |
 | `PLAY0496` | Error | An operation declaration or phase is malformed, or supplies event-only metadata. |
 | `PLAY0497` | Error | A production reference is ambiguous, or a qualified production does not resolve to an explicit operation. |
 | `PLAY0498` | Error | An operation name collides with an event or another operation in its owning slice. |
@@ -1793,6 +1793,17 @@ An `agents` block is an explicit operation allowlist, not an authorization grant
 | `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
 | `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
 | `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+
+## Ability diagnostics
+
+Abilities declared on a `system`, see [Systems and abilities](systems.md). `PLAY0495` also covers a malformed ability, an outcome with a payload, an empty `returns` block, an identifier or generated input and a repeated `answers later`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0983` | Error | A system declares two abilities whose names are equal ignoring case. |
+| `PLAY0984` | Error | An ability's effect class is not `safe`, `idempotent` or `once`. |
+| `PLAY0985` | Error | An ability outcome is named `next`, `refused`, `failed`, `returned` or `expired`, which are reserved outlets. |
+| `PLAY0986` | Error | An ability input or returned field names a type that is not declared. |
 
 ## Screen visuals and slice placements
 

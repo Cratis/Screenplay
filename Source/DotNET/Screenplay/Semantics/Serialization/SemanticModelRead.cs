@@ -78,7 +78,8 @@ internal static partial class SemanticModelRead
             .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."))
             .Add("timeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.TimeZone = Nested(ref reader, ApplicationTimeZone, property))
             .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property))
-            .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property));
+            .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property))
+            .Add("systems", LanguageVersion.V50.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Systems = Array(ref reader, System, property));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 
@@ -112,6 +113,8 @@ internal static partial class SemanticModelRead
 
         public SemanticAgents? Agents { get; set; }
 
+        public ImmutableArray<SemanticSystem> Systems { get; set; }
+
         public ImmutableArray<string> ContextMembers { get; set; } = [];
 
         bool HasCollections => !Concepts.IsDefault && !Types.IsDefault && !Modules.IsDefault;
@@ -131,7 +134,7 @@ internal static partial class SemanticModelRead
         public SemanticApplication Build()
         {
             Required(HasIdentity && HasCollections && (SchemaVersion < LanguageVersion.V37.Major || TimeZone is not null), "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents };
+            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents, Systems = Systems.IsDefault ? [] : Systems };
         }
     }
 

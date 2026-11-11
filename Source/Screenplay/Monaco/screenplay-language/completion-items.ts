@@ -76,9 +76,9 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
-    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
+    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system. Declare abilities on it (ESM v50); a system without abilities is not admitted by any supported executable model (ESM) version.' },
     { label: 'statemachine', insertText: 'statemachine ${1:Name}\n    follows ${2:ReadModel}\n    state ${3:Placed} initial\n        on ${4:Event} -> ${5:Paid}\n    state ${5:Paid} final', documentation: 'Where a thing is in its lifecycle, derived from the read model it follows (ESM v36). Exactly one initial state; a transition is `on <Event> [when <condition>] -> <State>`; `entering send <Command>` or `entering start <Workflow>` says what entering a state does.' },
-    { label: 'workflow', insertText: 'workflow ${1:Name}\n    for ${2:ReadModel}\n    trigger on ${3:Event}\n        -> ${4:Step}\n    action ${4:Step} sends ${5:Command}', documentation: 'A durable process that runs one at a time per subject (ESM v36): trigger, action, decide, wait, approval, foreach and join nodes connected by outlets. An unconnected failed, rejected or expired outlet fails the run.' },
+    { label: 'workflow', insertText: 'workflow ${1:Name}\n    for ${2:ReadModel}\n    trigger on ${3:Event}\n        -> ${4:Step}\n    action ${4:Step} invokes ${5:Command}', documentation: 'A durable process that runs one at a time per subject (ESM v36): trigger, action, decide, wait, approval, foreach and join nodes connected by outlets. An unconnected failed, rejected or expired outlet fails the run.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import from', insertText: 'import ${1:Module}.${2:Event} from "${3:origin}"', documentation: 'Imports a public event contract with a nonblank opaque origin, not a file path. An import has no local shape, so executable binding still refuses it with PLAY0268.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
@@ -116,8 +116,8 @@ export const stateMachineItems: CompletionEntry[] = [
 export const stateItems: CompletionEntry[] = [
     { label: 'on', insertText: 'on ${1:Event} -> ${2:State}', documentation: 'The first transition on the event whose condition holds and whose target the current state allows is taken; anything else is ignored.' },
     { label: 'on … when', insertText: 'on ${1:Event} when ${2:property} == ${3:"value"} -> ${4:State}', documentation: 'A guarded transition; the condition is over the followed read model after the event.' },
-    { label: 'entering send', insertText: 'entering send ${1:Command}', documentation: 'Sends a command when the state is entered. It may run again on redelivery.' },
-    { label: 'entering start', insertText: 'entering start ${1:Workflow}', documentation: 'Starts a workflow when the state is entered. It may run again on redelivery.' },
+    { label: 'entering invokes', insertText: 'entering invokes ${1:Command}', documentation: 'Invokes a command when the state is entered. It may run again on redelivery.' },
+    { label: 'entering starts', insertText: 'entering starts ${1:Workflow}', documentation: 'Starts a workflow when the state is entered. It may run again on redelivery.' },
 ];
 
 export const workflowItems: CompletionEntry[] = [
@@ -127,7 +127,7 @@ export const workflowItems: CompletionEntry[] = [
     { label: 'trigger when … enters', insertText: 'trigger when ${1:StateMachine} enters ${2:State}\n    -> ${3:Node}', documentation: 'Starts a run when the state machine enters the state.' },
     { label: 'trigger every', insertText: 'trigger every ${1:1} ${2|minutes,hours,days|}\n    -> ${3:Node}', documentation: 'Starts a run on a schedule.' },
     { label: 'trigger manual', insertText: 'trigger manual\n    -> ${1:Node}', documentation: 'Starts a run by hand.' },
-    { label: 'action', insertText: 'action ${1:Name} sends ${2:Command}\n    next -> ${3:Node}\n    failed -> ${4:Node}', documentation: 'Sends a command. Optional `attempts n`, `timeout n unit`, `retry after n unit`. Outlets next and failed.' },
+    { label: 'action', insertText: 'action ${1:Name} invokes ${2:Command}\n    next -> ${3:Node}\n    failed -> ${4:Node}\n    refused -> ${5:Node}', documentation: 'Invokes a command. Optional `attempts n`, `timeout n unit`, `retry after n unit`. Outlets next, failed and refused.' },
     { label: 'decide', insertText: 'decide ${1:Name} when ${2:property} == ${3:true}\n    "${4:yes}" -> ${5:Node}\n    "${6:no}" -> ${7:Node}', documentation: 'Chooses between two outlets of your own: the first when the condition holds.' },
     { label: 'wait for', insertText: 'wait ${1:Name} for ${2:Event} expires after ${3:1} ${4|days,hours,minutes|}\n    resumed -> ${5:Node}\n    expired -> ${6:Node}', documentation: 'Waits for an event about the subject. Outlets resumed and expired.' },
     { label: 'approval', insertText: 'approval ${1:Name} by ${2:Persona} expires after ${3:1} ${4|days,hours,minutes|}\n    approved -> ${5:Node}\n    rejected -> ${6:Node}\n    expired -> ${7:Node}', documentation: 'Asks a persona or policy to approve.' },
@@ -148,6 +148,20 @@ export const operationImplementationItems: CompletionEntry[] = [
     { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered authoring guidance; not an executable implementation role.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects the phase’s sole source attachment.' },
     ...['csharp', 'java', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; not admitted by any supported executable model (ESM) version yet.' })),
+];
+
+export const systemItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:the external system}"', documentation: 'Describes the system.' },
+    { label: 'ability', insertText: 'ability ${1:Name} ${2|safe,idempotent,once|}\n    ${3:input} ${4:Type}\n    outcome ${5:Refusal}', documentation: 'One typed thing the system can be asked to do, with an effect class (default once).' },
+];
+
+export const abilityItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what it does}"', documentation: 'Describes the ability.' },
+    { label: 'input', insertText: '${1:input} ${2:Type}', documentation: 'Typed ability input; no identifier or generated modifier.' },
+    { label: 'returns', insertText: 'returns\n    ${1:field} ${2:Type}', documentation: 'The typed values the ability returns.' },
+    { label: 'outcome', insertText: 'outcome ${1:Name}\n    description "${2:business result}"', documentation: 'A named business result other than success; it carries no payload and cannot be named next, refused, failed, returned or expired.' },
+    { label: 'answers later', insertText: 'answers later', documentation: 'The answer arrives after the invocation returns.' },
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:how it is carried out}"', documentation: 'The AbilityEffect attachment: hints, a file or a tagged fence.' },
 ];
 
 export const operationPhaseItems: CompletionEntry[] = [

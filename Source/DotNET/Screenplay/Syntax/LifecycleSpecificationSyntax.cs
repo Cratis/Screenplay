@@ -17,7 +17,7 @@ public enum LifecycleExpectationKind
     State = 0,
 
     /// <summary>
-    /// A command is sent, in order: <c>then sends &lt;Command&gt;</c>.
+    /// A command is invoked, in order: <c>then invokes &lt;Command&gt;</c>.
     /// </summary>
     Sends = 1,
 

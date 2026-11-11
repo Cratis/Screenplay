@@ -21,7 +21,7 @@ public sealed partial class SemanticModelBinder
 
         static IEnumerable<string> LifecycleOutlets(WorkflowNodeSyntax node) => node.NodeKind switch
         {
-            WorkflowNodeKind.Action => ["next", "failed"],
+            WorkflowNodeKind.Action => ["next", "failed", "refused"],
             WorkflowNodeKind.Wait => ["resumed", "expired"],
             WorkflowNodeKind.Approval => ["approved", "rejected", "expired"],
             WorkflowNodeKind.ForEach => ["each", "completed"],

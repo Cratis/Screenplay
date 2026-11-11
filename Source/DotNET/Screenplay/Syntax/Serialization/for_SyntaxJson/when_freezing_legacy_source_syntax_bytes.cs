@@ -19,6 +19,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "policy-inputs",
         "narrowed-queries",
         "caller-identity",
+        "abilities",
         "graph-queries",
         "graph-foreach",
         "projection-parity",
@@ -593,6 +594,9 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
         // Storylines have their own parser, printer, compiler and conformance specs; the frozen bytes predate them.
         Storylines = [],
+
+        // Systems with abilities have their own parser, printer, binder and conformance specs; the frozen bytes predate them.
+        Systems = [],
 
         // The root template, appearance and new screen default have their own parser, printer and compiler specs;
         // the frozen bytes predate them and spell the shell the legacy way, as a layout.

@@ -238,13 +238,13 @@ For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then us
 
 ## Operation and system intent
 
-Systems and operations are **syntax-only**, not admitted by any supported executable model (ESM) version yet (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
+Operations, and systems that declare no ability, are **syntax-only**, not admitted by any supported executable model (ESM) version yet (`PLAY0268`). A system that declares [abilities](../systems.md) is admitted in ESM v50, but nothing invokes or runs an ability yet. After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
 
 | View | Contents |
 | --- | --- |
-| `system-intents` | Application-scoped systems, descriptions through details, kind/full-scope authoring keys and source occurrence handles |
+| `system-intents` | Application-scoped systems, ability counts, descriptions through details, kind/full-scope authoring keys and source occurrence handles |
 | `operation-intents` | Slice-owned operation keys, uses, input counts, execute/compensate state and selected source handles |
-| `system-intent-details`, `operation-intent-details` | Supply the inventory's `authoringKey`; pages contain declaration intent, typed inputs, phases and ordered hints |
+| `system-intent-details`, `operation-intent-details` | Supply the inventory's `authoringKey`; system pages list each ability with its effect class, `answers later`, outcomes, realization, typed inputs and returned values; operation pages contain declaration intent, typed inputs, phases and ordered hints |
 | `ordered-productions` | Command scope/handle and every production occurrence in authored order, including repeated events, resolved kind, candidates and mappings |
 
 Echo `expectedRevision` for every page. Stale snapshots, wrong declaration kinds, ambiguous keys and unresolved placement refuse details rather than selecting an occurrence. Inventory includes unresolved-placement document entries so you can repair conflicting/cyclic imports. Authoring keys are name-derived logical keys, **not** admitted `SemanticId` or `RequirementId`; use revision-local handles for physical edits. Attachment states describe model selection only; no source is executed or confirmed.

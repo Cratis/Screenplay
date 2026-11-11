@@ -10,11 +10,67 @@ public partial class ScreenplayPrinter
 {
     static readonly HashSet<string> _operationInputKeywords = new(StringComparer.Ordinal) { "uses", "description", "for", "tag", "generation", "origin", "documentation", "namespace", "sequence", "correlation", "causation", "causedBy", "occurred" };
 
+    static readonly HashSet<string> _abilityInputKeywords = new(StringComparer.Ordinal) { "description", "outcome", "implementation", "file" };
+
+    static readonly HashSet<string> _emptyKeywords = new(StringComparer.Ordinal);
+
     void WriteSystem(ScreenplayWriter writer, SystemSyntax system)
     {
         using var anchor = writer.Anchor(system);
         writer.Line($"system {system.Name}");
-        using (writer.Indent()) WriteDescription(writer, system.Description, system);
+        using (writer.Indent())
+        {
+            WriteDescription(writer, system.Description, system);
+            foreach (var ability in system.Abilities) WriteAbility(writer, ability);
+        }
+    }
+
+    void WriteAbility(ScreenplayWriter writer, AbilitySyntax ability)
+    {
+        using var anchor = writer.Anchor(ability);
+        writer.Line(ability.EffectClass is null ? $"ability {ability.Name}" : $"ability {ability.Name} {ability.EffectClass}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, ability.Description, ability);
+            if (ability.AnswersLater) writer.DirectiveLine("answers later", ability, "answersLater");
+            WriteProperties(writer, ability.Inputs, _abilityInputKeywords);
+            if (ability.Returns.Any())
+            {
+                writer.Line("returns");
+                using (writer.Indent()) WriteProperties(writer, ability.Returns, _emptyKeywords);
+            }
+            foreach (var outcome in ability.Outcomes)
+            {
+                using var outcomeAnchor = writer.Anchor(outcome);
+                writer.Line($"outcome {outcome.Name}");
+                using (writer.Indent()) WriteDescription(writer, outcome.Description, outcome);
+            }
+            WriteAbilityImplementation(writer, ability);
+        }
+    }
+
+    void WriteAbilityImplementation(ScreenplayWriter writer, AbilitySyntax ability)
+    {
+        if (ability.Implementation is { } implementation)
+        {
+            using var implementationAnchor = writer.Anchor(implementation);
+            writer.Line("implementation");
+            using (writer.Indent())
+            {
+                foreach (var hint in implementation.Hints)
+                {
+                    ImplementationInvariants.Validate(hint);
+                    writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
+                }
+                WriteFile(writer, ability.File);
+                if (ability.Code is not null) WriteCodeBlock(writer, ability.Code);
+            }
+        }
+        else
+        {
+            WriteFile(writer, ability.File);
+            if (ability.Code is not null) WriteCodeBlock(writer, ability.Code);
+        }
     }
 
     void WriteOperation(ScreenplayWriter writer, OperationSyntax operation)

@@ -7,14 +7,14 @@ statemachine OrderLifecycle
     on PaymentCaptured -> Paid
     on OrderWithdrawn -> Cancelled
   state Paid
-    entering start FulfilOrder
+    entering starts FulfilOrder
     on OrderPacked -> Packed
     on OrderWithdrawn -> Cancelled
     on RefundIssued -> Refunded
   state Packed
     on OrderHandedToCarrier -> Shipped
   state Shipped
-    entering send NotifyCustomer
+    entering invokes NotifyCustomer
     on DeliveryConfirmed -> Delivered
     on ParcelReturned when returnReason != "" -> Refunded
   state Delivered final
@@ -73,7 +73,7 @@ statemachine OrderLifecycle
     when append OrderHandedToCarrier
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     then is Shipped
-    then sends NotifyCustomer
+    then invokes NotifyCustomer
 
   specification AReturnWithAReasonRefundsTheOrder
     description "A returned parcel with a reason refunds the order"
@@ -174,13 +174,13 @@ workflow FulfilOrder
   for OrderProgress
   trigger when OrderLifecycle enters Paid
     -> ReserveStock
-  action ReserveStock sends HoldStock attempts 3 timeout 1 minute retry after 30 seconds
+  action ReserveStock invokes HoldStock attempts 3 timeout 1 minute retry after 30 seconds
     next -> InStock
     failed -> Escalate
   decide InStock when itemsInStock == true
     "in stock" -> CreateParcel
     "backorder" -> AcceptBackorder
-  action CreateParcel sends CreateParcel
+  action CreateParcel invokes CreateParcel
     next -> ParcelLeaves
   wait ParcelLeaves for OrderHandedToCarrier expires after 2 days
     resumed -> TellCustomer
@@ -189,11 +189,11 @@ workflow FulfilOrder
     approved -> PlaceBackorder
     rejected -> CancelOrder
     expired -> Escalate
-  action PlaceBackorder sends PlaceBackorder
+  action PlaceBackorder invokes PlaceBackorder
     next -> ParcelLeaves
-  action CancelOrder sends WithdrawOrder
-  action TellCustomer sends NotifyCustomer
-  action Escalate sends EscalateOrder
+  action CancelOrder invokes WithdrawOrder
+  action TellCustomer invokes NotifyCustomer
+  action Escalate invokes EscalateOrder
 
 
   specification AnInStockOrderIsShipped
@@ -219,9 +219,9 @@ workflow FulfilOrder
     when append PaymentCaptured
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     outcome ParcelLeaves resumed
-    then sends HoldStock
-    then sends CreateParcel
-    then sends NotifyCustomer
+    then invokes HoldStock
+    then invokes CreateParcel
+    then invokes NotifyCustomer
     then completes
 
   specification AFailedReservationIsEscalated
@@ -247,10 +247,10 @@ workflow FulfilOrder
     when append PaymentCaptured
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     outcome ReserveStock failed
-    then sends HoldStock
-    then sends HoldStock
-    then sends HoldStock
-    then sends EscalateOrder
+    then invokes HoldStock
+    then invokes HoldStock
+    then invokes HoldStock
+    then invokes EscalateOrder
     then completes
 
   specification TheRunWaitsForTheCarrier
@@ -275,8 +275,8 @@ workflow FulfilOrder
       total          = 98
     when append PaymentCaptured
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-    then sends HoldStock
-    then sends CreateParcel
+    then invokes HoldStock
+    then invokes CreateParcel
     then waits at ParcelLeaves
 
   specification ACarrierThatNeverComesEscalates
@@ -302,9 +302,9 @@ workflow FulfilOrder
     when append PaymentCaptured
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     outcome ParcelLeaves expired
-    then sends HoldStock
-    then sends CreateParcel
-    then sends EscalateOrder
+    then invokes HoldStock
+    then invokes CreateParcel
+    then invokes EscalateOrder
     then completes
 
   specification ABackorderIsPlacedOnceApproved
@@ -333,9 +333,9 @@ workflow FulfilOrder
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     outcome AcceptBackorder approved
     outcome ParcelLeaves resumed
-    then sends HoldStock
-    then sends PlaceBackorder
-    then sends NotifyCustomer
+    then invokes HoldStock
+    then invokes PlaceBackorder
+    then invokes NotifyCustomer
     then completes
 
   specification ARejectedBackorderWithdrawsTheOrder
@@ -363,8 +363,8 @@ workflow FulfilOrder
     when append PaymentCaptured
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     outcome AcceptBackorder rejected
-    then sends HoldStock
-    then sends WithdrawOrder
+    then invokes HoldStock
+    then invokes WithdrawOrder
     then completes
 
   specification AnUnansweredApprovalFailsTheRun
@@ -392,6 +392,6 @@ workflow FulfilOrder
     when append PaymentCaptured
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
     outcome AcceptBackorder expired
-    then sends HoldStock
-    then sends EscalateOrder
+    then invokes HoldStock
+    then invokes EscalateOrder
     then completes

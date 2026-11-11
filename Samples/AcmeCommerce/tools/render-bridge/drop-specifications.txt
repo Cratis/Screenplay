@@ -2,3 +2,10 @@
 # The rejection comes from the decision read of ApproveOrder; ApproveOrder's event triggers ConfirmApprovedOrder, whose command ConfirmOrder reads the same
 # view under the same key, so the expected message could also be the reaction's. Stage cannot tell the two apart statically (STAGE-ESM-011), and refuses it.
 Sales/model/approval.play|AnApprovedOrderCannotBeApprovedAgain
+# `then invokes` of a reaction with `on refused` branches (STAGE-ESM-016), and an appended event that is an append-time constraint target in a
+# reactor scenario (STAGE-ESM-011): Stage cannot render these yet (Cratis/Stage#1082). Remove these entries when it can.
+Purchasing/model/replenishment.play|AutoReplenishDraftsAnOrderForThePreferredSupplier
+Warehouse/model/overview.play|RaisingTheAlarmOnTheFirstCrossing
+Warehouse/model/overview.play|StayingSilentWhileTheAlarmIsOpen
+Warehouse/model/reservations.play|ReservingWhatTheShelfCovers
+Warehouse/model/dispatch.play|DispatchingTakesTheUnitsOffTheShelf

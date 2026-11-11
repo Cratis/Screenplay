@@ -140,7 +140,8 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs'],
     SliceSyntax: ['graphs', 'graphProjections', 'graphQueries'],
     InvokesSyntax: ['onRefused'],
-    ApplicationSyntax: ['sinks']
+    ApplicationSyntax: ['sinks'],
+    SystemSyntax: ['abilities']
 };
 
 // Members omitted when they hold their default value, by node kind.

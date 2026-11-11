@@ -44,7 +44,7 @@ import { EventStreamIdPartSyntax } from './EventStreamIdPartSyntax';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
 import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './Purposes';
-import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
+import { AbilityOutcomeSyntax, AbilitySyntax, OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { PossibleEventsSyntax } from './PossibleEventsSyntax';
 import { LifecycleSpecificationSyntax, StateEntrySyntax, StateMachineSyntax, StateSyntax, StateTransitionSyntax, WorkflowEdgeSyntax, WorkflowNodeSyntax, WorkflowSyntax } from './Lifecycles';
@@ -416,7 +416,20 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.propertyCandidate !== null) this.visitProperty(syntax.propertyCandidate);
     }
 
-    visitSystem(syntax: SystemSyntax): void { this.visitNode(syntax); }
+    visitSystem(syntax: SystemSyntax): void {
+        this.visitNode(syntax);
+        syntax.abilities.forEach(ability => this.visitAbility(ability));
+    }
+    visitAbility(syntax: AbilitySyntax): void {
+        this.visitNode(syntax);
+        syntax.inputs.forEach(input => this.visitProperty(input));
+        syntax.returns.forEach(returned => this.visitProperty(returned));
+        syntax.outcomes.forEach(outcome => this.visitAbilityOutcome(outcome));
+        if (syntax.implementation !== null) this.visitImplementation(syntax.implementation);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+    visitAbilityOutcome(syntax: AbilityOutcomeSyntax): void { this.visitNode(syntax); }
 
     visitStateMachine(syntax: StateMachineSyntax): void {
         this.visitNode(syntax);

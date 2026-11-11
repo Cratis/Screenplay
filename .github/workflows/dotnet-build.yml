@@ -1,32 +1,14 @@
 name: .NET Build
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: dotnet-build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - "**"
-    paths:
-      - "Source/DotNET/**"
-      # The C# compiler is held to the TypeScript compiler's golden syntax, so a change to it is a C# change.
-      - "Source/Screenplay/Compiler/Conformance/**"
-      # The MCP server embeds the event model board, which is built from these.
-      - "Source/Screenplay/McpApp/**"
-      - "Source/Screenplay/Compiler/**"
-      - "Source/Screenplay/EventModels/**"
-      - "Source/Screenplay/Views/**"
-      - "package.json"
-      - "Documentation/**"
-      - "*.props"
-      - "*.targets"
-      - "*.slnx"
-      - "global.json"
-      - ".github/workflows/dotnet-build.yml"
-      - ".github/scripts/run-specifications*"
-      - ".github/scripts/verify-specifications-trx.cs"
+  workflow_call:
 
 # One source of truth for both the coverage guard and the spec matrix. Most projects
 # carry inline specs in Debug; discovering only *.Specs.csproj would miss them.

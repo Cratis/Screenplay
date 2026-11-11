@@ -816,13 +816,13 @@ function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecAr
 
 const lifecycleWhenStart = pattern('^when\\s+start\\s+(.+)$');
 const lifecycleOutcome = pattern('^outcome\\s+([A-Za-z_]\\w*)\\s+([A-Za-z_]\\w*)$');
-const lifecycleThen = pattern('^then\\s+(is|sends|starts|completes|fails\\s+at|waits\\s+at)(?:\\s+([A-Za-z_]\\w*))?$');
+const lifecycleThen = pattern('^then\\s+(is|sends|invokes|starts|completes|fails\\s+at|waits\\s+at)(?:\\s+([A-Za-z_]\\w*))?$');
 
 function lifecycleExpectation(line: SourceLine): LifecycleExpectationSyntax | undefined {
     const match = lifecycleThen.exec(line.content);
     if (match === null) return undefined;
     const word = match[1].replace(/\s+/g, ' ');
-    const expectation: LifecycleExpectationKind = word === 'is' ? 'State' : word === 'sends' ? 'Sends' : word === 'starts' ? 'Starts' : word === 'completes' ? 'Completes' : word === 'fails at' ? 'Fails' : 'Waits';
+    const expectation: LifecycleExpectationKind = word === 'is' ? 'State' : word === 'sends' || word === 'invokes' ? 'Sends' : word === 'starts' ? 'Starts' : word === 'completes' ? 'Completes' : word === 'fails at' ? 'Fails' : 'Waits';
     if ((match[2] !== undefined) === (expectation === 'Completes')) return undefined;
     return { kind: 'LifecycleExpectationSyntax', expectation, target: match[2] ?? null, location: locationOf(line) };
 }
@@ -876,8 +876,11 @@ export function parseLifecycleSpecification(context: ParserContext, header: Sour
             rejectOperationChildren(context, line, code, 'An outcome cannot have children.');
         } else if (keyword === 'then') {
             const expectation = lifecycleExpectation(line);
-            if (expectation !== undefined) then.push(expectation);
-            else context.error(code, `Invalid '${line.content}' - expected 'then is <State>', 'then sends <Command>', 'then starts <Workflow>', 'then completes', 'then fails at <Node>' or 'then waits at <Node>'.`, locationOf(line));
+            if (expectation !== undefined) {
+                then.push(expectation);
+                if (expectation.expectation === 'Sends' && line.content.startsWith('then sends')) context.warning(DiagnosticCodes.LegacyInlineCodeFence, "'then sends' is deprecated - use 'then invokes <Command>'.", locationOf(line));
+            }
+            else context.error(code, `Invalid '${line.content}' - expected 'then is <State>', 'then invokes <Command>', 'then starts <Workflow>', 'then completes', 'then fails at <Node>' or 'then waits at <Node>'.`, locationOf(line));
             rejectOperationChildren(context, line, code, 'A then line cannot have children.');
         } else {
             context.error(code, `Unexpected '${line.content}' in specification '${name}' - expected description, given, when, outcome or then.`, locationOf(line));

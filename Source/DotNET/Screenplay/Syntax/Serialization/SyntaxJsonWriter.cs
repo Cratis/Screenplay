@@ -36,6 +36,7 @@ internal static class SyntaxJsonWriter
             if (node is Projections.ChildrenSyntax && member.Name == "ordering" && value is null) continue;
             if (node is QuerySyntax && member.Name == "narrow" && value is null) continue;
             if (node is Specifications.SpecificationCallerSyntax && member.Name == "id" && value is null) continue;
+            if (node is SystemSyntax && member.Name == "abilities" && value is IEnumerable abilities && !abilities.Cast<object>().Any()) continue;
             if (node is PolicySyntax && member.Name == "inputs" && (value is null || (value is IEnumerable policyInputs && !policyInputs.Cast<object>().Any()))) continue;
             if (node is AuthorizeSyntax && member.Name == "mappings" && (value is null || (value is IEnumerable authorizeMappings && !authorizeMappings.Cast<object>().Any()))) continue;
             if (node is PolicySyntax && member.Name == "reads" && (value is null || (value is IEnumerable policyReads && !policyReads.Cast<object>().Any()))) continue;

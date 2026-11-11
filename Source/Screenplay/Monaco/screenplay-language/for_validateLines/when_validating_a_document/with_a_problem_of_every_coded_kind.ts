@@ -11,6 +11,11 @@ import { ValidationIssue, validateLines } from '../../validation';
 // One document holding every condition the editor and the compiler both check, so a condition added
 // later without a code fails here rather than reaching a user as a codeless squiggle.
 const document = [
+    'system Carrier',
+    '  ability Send often',
+    '    parcel Parcel',
+    '    outcome Refused',
+    '  ability send',
     'time zone "UTC"',
     'time zone "Europe/Oslo"',
     'reaction batches atomic',

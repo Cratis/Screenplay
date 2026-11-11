@@ -18,6 +18,18 @@ internal static class OperationValidator
             context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"System '{duplicate.Name}' is declared more than once.", duplicate.Location);
         var knownTypes = ConceptSyntax.PrimitiveTypes.Concat(application.Concepts.Select(node => node.Name)).Concat((application.Types ?? []).Select(node => node.Name))
             .Concat(application.Imports.Select(node => node.Name)).ToHashSet(StringComparer.Ordinal);
+        foreach (var system in application.Systems)
+        {
+            foreach (var ability in system.Abilities)
+            {
+                foreach (var property in ability.Inputs.Concat(ability.Returns))
+                {
+                    if (!knownTypes.Contains(property.Type.Name))
+                        context.Error(DiagnosticCodes.UnknownAbilityType, $"Unknown type '{property.Type.Name}' on '{property.Name}' of ability '{system.Name}.{ability.Name}'.", property.Location);
+                }
+            }
+        }
+
         foreach (var (slice, scope) in declarations.Slices)
         {
             var operations = OperationDeclarations.In(slice).ToArray();

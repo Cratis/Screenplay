@@ -7,13 +7,13 @@ description: "Describe external-system work with Screenplay operations, includin
 
 An operation in Cratis Screenplay describes work a command asks an external system to do, with its inputs and optional execution and compensation intent. Use it to make that dependency visible in the model, not to run an integration.
 
-Systems, operations and their specification steps are syntax-only. Binding reports `PLAY0268` and returns no executable model: no supported executable semantic model (ESM) version admits them. Attaching code does not change that boundary, and the reference runner cannot execute their specifications.
+Operations and their specification steps are syntax-only, and so is a system that declares no ability. Binding reports `PLAY0268` and returns no executable model: no supported executable semantic model (ESM) version admits them. A system that declares [abilities](systems.md) is admitted in ESM v50; an operation that `uses` it is still refused. Attaching code does not change that boundary, and the reference runner cannot execute their specifications.
 
 For example, order fulfilment may need work from a carrier system. An operation can describe that work, but it does not provide a running carrier adapter or a durable wait. Use a [workflow](workflows.md) to describe the longer process and a [reaction](reactions.md) for event-driven follow-up. Neither makes an operation executable.
 
 ## Declare intent
 
-A `system` belongs to the application, including when its file is imported into a module or feature. It names the business system, not a provider interface. It accepts an optional description; abilities are not supported.
+A `system` belongs to the application, including when its file is imported into a module or feature. It names the business system, not a provider interface. It accepts an optional description and `ability` blocks, which say what the system can be asked and are described in [Systems and abilities](systems.md). An operation's `uses` names a system whether or not that system declares abilities, and it does not call an ability.
 
 An `operation` belongs to a slice. It declares exactly one `uses <System>`, typed inputs, an optional description and at most one `execute` and one `compensate` phase. Inputs support concepts, enums, composites, collections and `optional`. They cannot be `identifier` or `generated`.
 
