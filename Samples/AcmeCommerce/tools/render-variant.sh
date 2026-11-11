@@ -17,6 +17,9 @@
 #   6. A query a `performer` answers (Purchasing dashboard) is an opaque read Stage cannot render (STAGE-ESM-007): the figures are projected from the
 #      events instead. `add x by a * b` (ESM v29, Storefront BasketSize.addedValue) is refused by STAGE-ESM-050 (Chronicle adds one event property):
 #      the total is left out. Both in tools/render-bridge/stand_in_for_unrendered.py.
+#   7. A workflow with an `approval` step or a `decide` that reads the subject read model is refused (STAGE-LIFECYCLE-010: a rendered application has no
+#      approvals endpoint and its performer cannot read the subject yet). The Storefront workflow FulfilOrder is removed, with the state machine's
+#      `start FulfilOrder` entry action and the `then starts FulfilOrder` assertion; the state machine itself stays.
 #   4. The custom package Acme.Commerce needs `cratis render --package-set tools/packages/acme-commerce.package-set.json` and the
 #      built npm package _packages/scene.commerce. Without PACKAGE_SET=1 the three acme: components are replaced by core
 #      tables / the package is removed from the profile (render still works, the custom components are missing).
@@ -68,6 +71,16 @@ rm -rf "$V"/*/translation
 if [ "$STRIP_READS" = "1" ]; then python3 "$HERE/render-bridge/strip_reads.py" "$V"; fi
 # 1c. stand-ins for what Stage cannot render yet: a performer query (STAGE-ESM-007), a product operand in a projection (STAGE-ESM-050)
 python3 "$HERE/render-bridge/stand_in_for_unrendered.py" "$V"
+# 1d. workflows Stage cannot render yet (STAGE-LIFECYCLE-010): the Storefront FulfilOrder workflow and what starts it
+if [ -f "$V/Storefront/model/lifecycle.play" ]; then
+python3 - "$V/Storefront/model/lifecycle.play" <<'PY'
+import sys,re
+p=sys.argv[1]; t=open(p).read()
+t=re.sub(r'(?ms)^workflow FulfilOrder\n.*?(?=^\S|\Z)','',t)
+t=re.sub(r'(?m)^ *(?:entering start|then starts) FulfilOrder\n','',t)
+open(p,'w').write(t.rstrip('\n')+'\n')
+PY
+fi
 # 2. legacy text rules
 if [ "$LEGACY_TEXT_RULES" = "1" ]; then
 python3 - "$V" <<'PY'
