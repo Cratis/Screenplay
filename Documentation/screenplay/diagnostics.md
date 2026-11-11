@@ -1602,7 +1602,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
-| `PLAY0495` | Error | An external system declaration is malformed or repeated. |
+| `PLAY0495` | Error | An external system declaration, or an ability, outcome or `returns` block inside one, is malformed or repeated. |
 | `PLAY0496` | Error | An operation declaration or phase is malformed, or supplies event-only metadata. |
 | `PLAY0497` | Error | A production reference is ambiguous, or a qualified production does not resolve to an explicit operation. |
 | `PLAY0498` | Error | An operation name collides with an event or another operation in its owning slice. |
@@ -1793,6 +1793,17 @@ An `agents` block is an explicit operation allowlist, not an authorization grant
 | `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
 | `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
 | `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+
+## Ability diagnostics
+
+Abilities declared on a `system`, see [Systems and abilities](systems.md). `PLAY0495` also covers a malformed ability, an outcome with a payload, an empty `returns` block, an identifier or generated input and a repeated `answers later`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0983` | Error | A system declares two abilities whose names are equal ignoring case. |
+| `PLAY0984` | Error | An ability's effect class is not `safe`, `idempotent` or `once`. |
+| `PLAY0985` | Error | An ability outcome is named `next`, `refused`, `failed`, `returned` or `expired`, which are reserved outlets. |
+| `PLAY0986` | Error | An ability input or returned field names a type that is not declared. |
 
 ## Screen visuals and slice placements
 
