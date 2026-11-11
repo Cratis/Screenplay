@@ -37,6 +37,7 @@ internal static partial class ScreenplayParser
         new("persona", null, (context, line, state) => state.Personas.Add(ParsePersona(context, line))),
         new("user", null, (context, line, state) => state.Users.Add(ParseUser(context, line))),
         new("storyline", null, (context, line, state) => state.Storylines.Add(StorylineParser.Parse(context, line))),
+        new("secret", null, (context, line, state) => { if (SystemConfigurationParser.ParseSecret(context, line) is { } secret) state.Secrets.Add(secret); }),
         new("sink", null, (context, line, state) => { if (SinkParser.ParseDeclaration(context, line) is { } sink) state.Sinks.Add(sink); }),
         new("sticky", null, ParseRootStickyNote),
         new("context", null, (context, line, state) => state.ApplicationContext = ApplicationContextParser.Parse(context, line, state.ApplicationContext, state.Placement)),
@@ -267,6 +268,8 @@ internal static partial class ScreenplayParser
 
         public List<SinkSyntax> Sinks { get; } = [];
 
+        public List<SecretSyntax> Secrets { get; } = [];
+
         public List<StickyNoteSyntax> StickyNotes { get; } = [];
 
         public List<ModuleSyntax> Modules { get; } = [];
@@ -334,6 +337,7 @@ internal static partial class ScreenplayParser
                 Users = Users,
                 Storylines = Storylines,
                 Sinks = Sinks,
+                Secrets = Secrets,
                 ReactionProductionMode = ReactionProductionMode,
                 CommandReadMode = CommandReadMode,
                 TimeZone = TimeZone,

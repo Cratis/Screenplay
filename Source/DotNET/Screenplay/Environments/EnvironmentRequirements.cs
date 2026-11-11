@@ -20,6 +20,8 @@ namespace Cratis.Screenplay.Environments;
 /// <list type="bullet">
 /// <item><description><c>authentication.providers.&lt;Identity&gt;.clientId</c> and <c>.clientSecret</c> for every provider, where <c>Identity</c> is its alias when it has one and its name otherwise; <c>.tenantId</c> for <c>EntraId</c> and <c>.authority</c> for <c>OpenId</c>.</description></item>
 /// <item><description><c>onboarding.email.sender</c> and <c>onboarding.email.server.host</c>, <c>.port</c>, <c>.username</c> and <c>.password</c> when the model declares onboarding.</description></item>
+/// <item><description><c>secrets.&lt;Name&gt;</c> for every declared <c>secret</c>, once, however many systems map from it.</description></item>
+/// <item><description><c>systems.&lt;System&gt;.&lt;setting&gt;</c> for every setting an extension's contract declares and the model does not map, when the contracts are supplied.</description></item>
 /// </list>
 /// A key marked <see cref="EnvironmentKey.IsSecret"/> is referenced, never carried: only the key travels.
 /// </remarks>
@@ -31,6 +33,12 @@ public sealed record EnvironmentRequirements(ImmutableArray<EnvironmentKey> Keys
 
     /// <summary>The prefix of every onboarding key.</summary>
     public const string OnboardingPrefix = "onboarding.";
+
+    /// <summary>The prefix of every named secret key.</summary>
+    public const string SecretPrefix = "secrets.";
+
+    /// <summary>The prefix of every implicit system setting key.</summary>
+    public const string SystemPrefix = "systems.";
 
     /// <summary>
     /// Gets requirements that need nothing from the environment.
@@ -47,7 +55,15 @@ public sealed record EnvironmentRequirements(ImmutableArray<EnvironmentKey> Keys
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> of a successful compilation.</param>
     /// <returns>The <see cref="EnvironmentRequirements"/> of the model.</returns>
-    public static EnvironmentRequirements For(ApplicationSyntax application)
+    public static EnvironmentRequirements For(ApplicationSyntax application) => For(application, []);
+
+    /// <summary>
+    /// Derives the environment values a model needs from its syntax and the contracts of the extensions its systems name.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> of a successful compilation.</param>
+    /// <param name="contracts">The <see cref="ExtensionConfigurationContract"/> of each extension the model names; without one, a system's implicit settings cannot be listed.</param>
+    /// <returns>The <see cref="EnvironmentRequirements"/> of the model.</returns>
+    public static EnvironmentRequirements For(ApplicationSyntax application, IEnumerable<ExtensionConfigurationContract> contracts)
     {
         var keys = ImmutableArray.CreateBuilder<EnvironmentKey>();
         foreach (var provider in application.Authentication?.Providers ?? [])
@@ -60,6 +76,13 @@ public sealed record EnvironmentRequirements(ImmutableArray<EnvironmentKey> Keys
             AddOnboarding(keys, onboarding);
         }
 
+        foreach (var secret in application.Secrets)
+        {
+            keys.Add(new(SecretKey(secret.Name), EnvironmentKeySource.Secret, secret.Name, secret.Description ?? $"The secret '{secret.Name}'.", true, secret.Location));
+        }
+
+        AddSystemSettings(keys, application, contracts);
+
         return keys.Count == 0 ? None : new(keys.ToImmutable());
     }
 
@@ -70,6 +93,35 @@ public sealed record EnvironmentRequirements(ImmutableArray<EnvironmentKey> Keys
     /// <param name="setting">The name of the setting, for example <c>clientId</c>.</param>
     /// <returns>The key to ask the environment for.</returns>
     public static string ProviderKey(AuthenticationProviderSyntax provider, string setting) => $"{ProviderPrefix}{provider.Identity}.{setting}";
+
+    /// <summary>
+    /// Gets the key of a named secret.
+    /// </summary>
+    /// <param name="name">The name of the secret.</param>
+    /// <returns>The key to ask the environment for.</returns>
+    public static string SecretKey(string name) => $"{SecretPrefix}{name}";
+
+    /// <summary>
+    /// Gets the key of one setting of a system.
+    /// </summary>
+    /// <param name="system">The name of the system.</param>
+    /// <param name="setting">The name of the setting.</param>
+    /// <returns>The key to ask the environment for.</returns>
+    public static string SystemKey(string system, string setting) => $"{SystemPrefix}{system}.{setting}";
+
+    static void AddSystemSettings(ImmutableArray<EnvironmentKey>.Builder keys, ApplicationSyntax application, IEnumerable<ExtensionConfigurationContract> contracts)
+    {
+        var byReference = contracts.ToDictionary(contract => contract.Reference, StringComparer.Ordinal);
+        foreach (var system in application.Systems)
+        {
+            if (system.Extension is null || !byReference.TryGetValue(system.Extension.Reference, out var contract)) continue;
+            var mapped = system.Settings.Select(setting => setting.Name).ToHashSet(StringComparer.Ordinal);
+            foreach (var setting in contract.Settings.Where(setting => !mapped.Contains(setting.Name)))
+            {
+                keys.Add(new(SystemKey(system.Name, setting.Name), EnvironmentKeySource.SystemSetting, system.Name, setting.Description ?? $"The {setting.Name} setting of the {system.Name} system.", setting.IsSecret, system.Location));
+            }
+        }
+    }
 
     static void AddProvider(ImmutableArray<EnvironmentKey>.Builder keys, AuthenticationProviderSyntax provider)
     {

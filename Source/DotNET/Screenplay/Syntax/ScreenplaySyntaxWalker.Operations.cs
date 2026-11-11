@@ -15,7 +15,28 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var ability in syntax.Abilities) VisitAbility(ability);
+        if (syntax.Extension is not null) VisitSystemExtension(syntax.Extension);
+        foreach (var setting in syntax.Settings) VisitSystemSetting(setting);
+        if (syntax.Activation is not null) VisitSystemActivation(syntax.Activation);
     }
+
+    /// <summary>
+    /// Visits the extension line of a system.
+    /// </summary>
+    /// <param name="syntax">The extension line.</param>
+    public virtual void VisitSystemExtension(SystemExtensionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a setting line of a system.
+    /// </summary>
+    /// <param name="syntax">The setting line.</param>
+    public virtual void VisitSystemSetting(SystemSettingSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits the activation line of a system.
+    /// </summary>
+    /// <param name="syntax">The activation line.</param>
+    public virtual void VisitSystemActivation(SystemActivationSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits an ability, its inputs, returned values, outcomes and implementation.

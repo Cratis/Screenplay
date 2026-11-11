@@ -4252,6 +4252,30 @@ public static class DiagnosticCodes
     /// <summary>An ability input or returned field names a type that is not declared.</summary>
     public const string UnknownAbilityType = "PLAY0986";
 
+    /// <summary>A <c>secret</c> declaration is not <c>secret &lt;Name&gt;</c> with an optional description, or is not at the top level.</summary>
+    public const string InvalidSecretDeclaration = "PLAY0990";
+
+    /// <summary>Two <c>secret</c> declarations have names that are equal ignoring case.</summary>
+    public const string DuplicateSecret = "PLAY0991";
+
+    /// <summary>A system setting maps <c>from secret</c> a name that no <c>secret</c> declaration provides.</summary>
+    public const string UnknownSecret = "PLAY0992";
+
+    /// <summary>A declared <c>secret</c> is not mapped by any system setting.</summary>
+    public const string UnusedSecret = "PLAY0993";
+
+    /// <summary>A system maps the same setting more than once.</summary>
+    public const string DuplicateSystemSetting = "PLAY0994";
+
+    /// <summary>A system maps a setting that its extension's contract does not declare.</summary>
+    public const string UnknownSystemSetting = "PLAY0995";
+
+    /// <summary>A system gives a literal value to a setting its extension's contract declares as secret.</summary>
+    public const string SecretSettingLiteral = "PLAY0996";
+
+    /// <summary>A system maps a secret to a setting its extension's contract declares as public, which would reach the browser.</summary>
+    public const string SecretOnPublicSetting = "PLAY0997";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>

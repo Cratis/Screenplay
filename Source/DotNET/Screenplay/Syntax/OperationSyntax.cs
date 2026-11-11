@@ -17,6 +17,24 @@ public record SystemSyntax(string Name, string? Description, SourceLocation Loca
     /// Gets the abilities the system declares, in declaration order.
     /// </summary>
     public IEnumerable<AbilitySyntax> Abilities { get; init; } = [];
+
+    /// <summary>
+    /// Gets the extension package that realizes the system, or <see langword="null"/> when none is named. Realization
+    /// metadata, never part of the executable model.
+    /// </summary>
+    public SystemExtensionSyntax? Extension { get; init; }
+
+    /// <summary>
+    /// Gets the settings the model maps for the system, in declaration order. Realization metadata, never part of the
+    /// executable model.
+    /// </summary>
+    public IEnumerable<SystemSettingSyntax> Settings { get; init; } = [];
+
+    /// <summary>
+    /// Gets the activation override, or <see langword="null"/> when the system keeps the extension's default.
+    /// Realization metadata, never part of the executable model.
+    /// </summary>
+    public SystemActivationSyntax? Activation { get; init; }
 }
 
 /// <summary>

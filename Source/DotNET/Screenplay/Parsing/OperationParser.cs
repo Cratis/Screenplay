@@ -20,22 +20,42 @@ internal static partial class OperationParser
         if (!match.Success) context.Error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'system <Name>'.", header.Location);
         string? description = null;
         var abilities = new List<AbilitySyntax>();
+        var settings = new List<SystemSettingSyntax>();
+        SystemExtensionSyntax? extension = null;
+        SystemActivationSyntax? activation = null;
         var locations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(header.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "description")
+            var word = LineText.FirstWord(child.Content);
+            if (word == "description")
             {
                 description = DescriptionParser.Parse(context, child, description, $"System '{match.Groups[1].Value}'", out _);
                 locations.TryAdd("description", child.Location);
             }
-            else if (LineText.FirstWord(child.Content) == "ability")
+            else if (word == "ability")
             {
                 abilities.Add(ParseAbility(context, child));
             }
+            else if (word == "extension")
+            {
+                var parsed = SystemConfigurationParser.ParseExtension(context, child);
+                if (parsed is not null && extension is not null) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"System '{match.Groups[1].Value}' names an extension more than once.", child.Location);
+                else extension = parsed ?? extension;
+            }
+            else if (word == "setting")
+            {
+                if (SystemConfigurationParser.ParseSetting(context, child) is { } setting) settings.Add(setting);
+            }
+            else if (word == "activation")
+            {
+                var parsed = SystemConfigurationParser.ParseActivation(context, child);
+                if (parsed is not null && activation is not null) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"System '{match.Groups[1].Value}' states its activation more than once.", child.Location);
+                else activation = parsed ?? activation;
+            }
             else
             {
-                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "A system accepts a description and abilities.", child.Location);
+                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "A system accepts a description, abilities, an extension, settings and an activation.", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
@@ -43,7 +63,7 @@ internal static partial class OperationParser
         foreach (var duplicate in abilities.GroupBy(ability => ability.Name, StringComparer.OrdinalIgnoreCase).SelectMany(group => group.Skip(1)))
             context.Error(DiagnosticCodes.DuplicateAbility, $"System '{match.Groups[1].Value}' already declares ability '{duplicate.Name}'; ability names compare ignoring case.", duplicate.Location);
 
-        return new(match.Groups[1].Value, description, header.Location) { Abilities = abilities, DirectiveLocations = locations };
+        return new(match.Groups[1].Value, description, header.Location) { Abilities = abilities, Extension = extension, Settings = settings, Activation = activation, DirectiveLocations = locations };
     }
 
     internal static AbilitySyntax ParseAbility(ParserContext context, SourceLine header)
