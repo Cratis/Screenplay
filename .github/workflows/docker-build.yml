@@ -1,7 +1,9 @@
 name: Docker Build
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: docker-build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
@@ -10,19 +12,10 @@ on:
   # release. Pull requests build it only when the image's own inputs change shape.
   schedule:
     - cron: "43 2 * * *"
-  pull_request:
-    branches:
-      - "**"
-    paths:
-      - "Dockerfile"
-      - ".dockerignore"
-      - ".github/workflows/docker-build.yml"
-      - "**/*.csproj"
-      - "**/package.json"
-      - "**/*.props"
-      - "**/*.targets"
-      - "global.json"
-      - ".yarnrc.yml"
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   already-ran:

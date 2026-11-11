@@ -1,17 +1,12 @@
 name: Verify AI Corpus Impact
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 # Repository-local for now; promote this policy to Cratis/Workflows when shared.
 # No paths filter: every PR gets a check, and the script passes unrelated changes.
 # Only the PR identity comes from the event. Labels, draft status and evidence are read live.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review]
-    branches:
-      - main
+  workflow_call:
 
 permissions:
   contents: read

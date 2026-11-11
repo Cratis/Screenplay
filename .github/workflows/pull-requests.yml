@@ -1,0 +1,206 @@
+name: Pull Requests
+
+# One caller for every pull-request check so a single always-running `gate` job can require them all.
+# A path-filtered workflow that never starts never reports; here each callee is skipped by `changes`
+# instead, and a skipped job counts as passed in `gate`. Label and edit events re-run everything on
+# purpose (the policy check needs them); heavy jobs must not be skipped on those events, because a
+# cancelled code run would let a later run pass `gate` without having built anything.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ${{ vars.RUNNER_GATE || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      docker: ${{ steps.filter.outputs.docker }}
+      dotnet: ${{ steps.filter.outputs.dotnet }}
+      javascript: ${{ steps.filter.outputs.javascript }}
+      mcp-desktop: ${{ steps.filter.outputs.mcp-desktop }}
+      native-editor: ${{ steps.filter.outputs.native-editor }}
+      render: ${{ steps.filter.outputs.render }}
+    steps:
+      # The pull request files API lists at most 3,000 files, so a larger pull request could hide
+      # changed paths from the filter and skip checks. Fail closed instead of filtering a partial list.
+      - name: Refuse pull requests the filter cannot see in full
+        env:
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+        run: |
+          if [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
+            echo "::error title=changes::This pull request changes $CHANGED_FILES files; split it so path filtering sees every file."
+            exit 1
+          fi
+      - id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            docker:
+              - "Dockerfile"
+              - ".dockerignore"
+              - ".github/workflows/docker-build.yml"
+              - ".github/workflows/pull-requests.yml"
+              - "**/*.csproj"
+              - "**/package.json"
+              - "**/*.props"
+              - "**/*.targets"
+              - "global.json"
+              - ".yarnrc.yml"
+            dotnet:
+              - "Source/DotNET/**"
+              # The C# compiler is held to the TypeScript compiler's golden syntax, so a change to it is a C# change.
+              - "Source/Screenplay/Compiler/Conformance/**"
+              # The MCP server embeds the event model board, which is built from these.
+              - "Source/Screenplay/McpApp/**"
+              - "Source/Screenplay/Compiler/**"
+              - "Source/Screenplay/EventModels/**"
+              - "Source/Screenplay/Views/**"
+              - "package.json"
+              - "Documentation/**"
+              - "*.props"
+              - "*.targets"
+              - "*.slnx"
+              - "global.json"
+              - ".github/workflows/dotnet-build.yml"
+              - ".github/workflows/pull-requests.yml"
+              - ".github/scripts/run-specifications*"
+              - ".github/scripts/verify-specifications-trx.cs"
+            javascript:
+              - "Source/Screenplay/**"
+              - "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/**"
+              - "Source/DotNET/Screenplay/for_ScreenplayCompiler/*.play"
+              - "package.json"
+              - "eslint.config.mjs"
+              - ".yarnrc.yml"
+              - ".github/workflows/javascript-build.yml"
+              - ".github/workflows/pull-requests.yml"
+            mcp-desktop:
+              - "Source/DotNET/**"
+              - "Source/Screenplay/**"
+              - "*.props"
+              - "global.json"
+              # The board job runs `corepack enable && yarn install`, so the Yarn pin and root manifest belong here
+              # too (as in javascript-build.yml).
+              - "package.json"
+              - ".yarnrc.yml"
+              - ".github/workflows/mcp-desktop.yml"
+              - ".github/workflows/publish.yml"
+              - ".github/workflows/pull-requests.yml"
+            native-editor:
+              - "Source/Screenplay/VSCodeExtension/**"
+              - "Source/Screenplay/Views/**"
+              - "Source/DotNET/Screenplay.Mcp/**"
+              - "Source/DotNET/Screenplay/Workspaces/Workspace*Repair*.cs"
+              - "Source/DotNET/Tool/**"
+              - "package.json"
+              - ".yarnrc.yml"
+              - "*.props"
+              - "global.json"
+              - ".github/workflows/native-editor-repairs.yml"
+              - ".github/workflows/pull-requests.yml"
+            render:
+              - "Samples/**"
+              - "Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/render-blueprint-samples.*"
+              - ".github/workflows/render-blueprint-samples.yml"
+              - ".github/workflows/pull-requests.yml"
+
+  docker-build:
+    needs: changes
+    if: ${{ needs.changes.outputs.docker == 'true' }}
+    uses: ./.github/workflows/docker-build.yml
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+
+  dotnet-build:
+    needs: changes
+    if: ${{ needs.changes.outputs.dotnet == 'true' }}
+    uses: ./.github/workflows/dotnet-build.yml
+    permissions:
+      contents: read
+
+  javascript-build:
+    needs: changes
+    if: ${{ needs.changes.outputs.javascript == 'true' }}
+    uses: ./.github/workflows/javascript-build.yml
+    permissions:
+      contents: read
+
+  # Ceiling for the callee's `attach` (contents) and `nightly-failure` (issues) jobs, both skipped on pull requests.
+  mcp-desktop:
+    needs: changes
+    if: ${{ needs.changes.outputs.mcp-desktop == 'true' }}
+    uses: ./.github/workflows/mcp-desktop.yml
+    permissions:
+      contents: write
+      issues: write
+    with:
+      version: 0.0.0-desktop-ci
+      release: false
+
+  # `release: false` is mandatory: the input defaults to true (the Publish release gate), which would run the full matrix.
+  native-editor-repairs:
+    needs: changes
+    if: ${{ needs.changes.outputs.native-editor == 'true' }}
+    uses: ./.github/workflows/native-editor-repairs.yml
+    permissions:
+      actions: read
+      contents: read
+    with:
+      release: false
+
+  render-blueprint-samples:
+    needs: changes
+    if: ${{ needs.changes.outputs.render == 'true' }}
+    uses: ./.github/workflows/render-blueprint-samples.yml
+    permissions:
+      contents: read
+
+  ai-corpus:
+    if: ${{ github.event.pull_request.base.ref == 'main' }}
+    uses: ./.github/workflows/verify-ai-corpus-impact.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  # No filter: the policy check must always run (its old trigger had no paths).
+  policy:
+    uses: ./.github/workflows/verify-pull-request-policy.yml
+    permissions:
+      contents: read
+      pull-requests: write
+
+  # Every other job in this file MUST be listed in `needs`: a job left out is invisible to the gate.
+  gate:
+    name: gate
+    if: ${{ always() }}
+    needs: [changes, docker-build, dotnet-build, javascript-build, mcp-desktop, native-editor-repairs, render-blueprint-samples, ai-corpus, policy]
+    runs-on: ${{ vars.RUNNER_GATE || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every needed job passed or was skipped
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key)\t\(.value.result)"'
+          # Fail closed: anything other than success or skipped (failure, cancelled, or a result we do not know) fails.
+          bad=$(echo "$NEEDS" | jq -r 'to_entries[] | select(.value.result | IN("success","skipped") | not) | .key')
+          # `changes` is the only job that decides what is skipped, so it must have succeeded, never been skipped.
+          [ "$(echo "$NEEDS" | jq -r '.changes.result')" = "success" ] || bad="$bad changes"
+          if [ -n "${bad// /}" ]; then
+            echo "::error title=gate::Failed, cancelled or unknown: $bad"
+            exit 1
+          fi

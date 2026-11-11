@@ -1,22 +1,12 @@
 name: MCP desktop packages
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 on:
   workflow_dispatch:
   # Nightly on main: the full five-RID matrix, so PRs can keep a narrower native router.
   schedule:
     - cron: "23 2 * * *"
-  pull_request:
-    paths:
-      - 'Source/DotNET/**'
-      - 'Source/Screenplay/**'
-      - '*.props'
-      - 'global.json'
-      # The board job runs `corepack enable && yarn install`, so the Yarn pin and root manifest belong here
-      # too (as in javascript-build.yml).
-      - 'package.json'
-      - '.yarnrc.yml'
-      - '.github/workflows/mcp-desktop.yml'
-      - '.github/workflows/publish.yml'
   workflow_call:
     inputs:
       version:
@@ -29,6 +19,7 @@ on:
 permissions:
   contents: read
 
+# Left unchanged on purpose: in a call `github.workflow` is the caller's name, and Publish calls this too.
 concurrency:
   group: desktop-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
