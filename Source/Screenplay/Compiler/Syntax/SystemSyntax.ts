@@ -10,6 +10,43 @@ export interface SystemSyntax extends SyntaxNode {
     readonly name: string;
     readonly description: string | null;
     readonly abilities: readonly AbilitySyntax[];
+    /** The extension package realizing the system; written only when present. Realization metadata. */
+    readonly extension?: SystemExtensionSyntax;
+    /** The settings the model maps for the system; written only when there are any. Realization metadata. */
+    readonly settings?: readonly SystemSettingSyntax[];
+    /** The activation override; written only when present. Realization metadata. */
+    readonly activation?: SystemActivationSyntax;
+}
+
+/** A top-level named secret that system settings map from; the model never holds its value. */
+export interface SecretSyntax extends SyntaxNode {
+    readonly kind: 'SecretSyntax';
+    readonly name: string;
+    readonly description: string | null;
+}
+
+/** The `extension "<reference>" [version <range>]` line of a system. */
+export interface SystemExtensionSyntax extends SyntaxNode {
+    readonly kind: 'SystemExtensionSyntax';
+    readonly reference: string;
+    readonly version: string | null;
+}
+
+/** A `setting <name> from secret <Name>` or `setting <name> = <literal>` line of a system. */
+export interface SystemSettingSyntax extends SyntaxNode {
+    readonly kind: 'SystemSettingSyntax';
+    readonly name: string;
+    readonly secret: string | null;
+    readonly value: string | null;
+    readonly valueKind: string | null;
+}
+
+/** The `activation always` or `activation on demand [idle after <n> <unit>]` line of a system. */
+export interface SystemActivationSyntax extends SyntaxNode {
+    readonly kind: 'SystemActivationSyntax';
+    readonly always: boolean;
+    readonly idleAmount: number | null;
+    readonly idleUnit: string | null;
 }
 
 /** One typed ability a system can be asked to perform; `effectClass` is null when omitted, which means `once`. */

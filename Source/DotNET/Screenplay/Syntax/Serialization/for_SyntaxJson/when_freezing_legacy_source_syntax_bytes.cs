@@ -142,6 +142,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
             if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleGraphs(legacy);
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleSystemConfiguration(legacy);
 
             // Screen visuals and slice placements have their own conformance vector; the frozen bytes predate them.
             if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutVisualsAndPlacements(legacy);
@@ -372,6 +373,13 @@ public partial class when_freezing_legacy_source_syntax_bytes
     {
         Slices = feature.Slices.Select(slice => slice with { Placements = [], Screens = slice.Screens.Select(screen => screen with { Visuals = [] }) }),
         Features = feature.Features.Select(WithoutVisualsAndPlacements)
+    };
+
+    // System settings, secrets and activation (#1254) have shared vectors; the mail system the sample gained with them is projected out.
+    static ApplicationSyntax WithoutSampleSystemConfiguration(ApplicationSyntax application) => application with
+    {
+        Secrets = [],
+        Systems = application.Systems.Where(system => system.Name != "Mailer")
     };
 
     static ApplicationSyntax WithoutSampleGraphs(ApplicationSyntax application) => application with
