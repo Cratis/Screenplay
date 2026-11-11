@@ -30,7 +30,9 @@ env:
     ]}
 
 jobs:
-  dotnet-build:
+  # The shard guard and matrices need only the project files, so they run alongside the Debug build and
+  # let the net10.0 compatibility shards start without waiting for it.
+  shards:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -48,14 +50,6 @@ jobs:
           dotnet-version: |
             10.0.x
             11.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
 
       - name: Verify spec shard coverage
         id: specs
@@ -102,6 +96,30 @@ jobs:
               output.write(f'compatibility-matrix={json.dumps(compatibility, separators=(",", ":"))}\n')
           PY
 
+  dotnet-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: Setup node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -141,12 +159,12 @@ jobs:
 
   specs:
     name: Specs (${{ matrix.name }})
-    needs: dotnet-build
+    needs: [dotnet-build, shards]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.dotnet-build.outputs.spec-matrix) }}
+      matrix: ${{ fromJSON(needs.shards.outputs.spec-matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -177,12 +195,12 @@ jobs:
 
   compatibility-specs:
     name: Specs net10.0 (${{ matrix.name }})
-    needs: dotnet-build
+    needs: shards
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.dotnet-build.outputs.compatibility-matrix) }}
+      matrix: ${{ fromJSON(needs.shards.outputs.compatibility-matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -203,13 +221,22 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
-      - name: Download build output
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      # The net10.0 build compiles from source and never used the net11.0 binaries, only the board page the
+      # MCP server embeds, so the MCP shard builds that page itself instead of waiting for the Debug build.
+      - name: Setup node
+        if: matrix.name == 'mcp'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          name: dotnet-build-output
+          node-version: 24.22.2
+          package-manager-cache: false
 
-      - name: Extract build output
-        run: tar -xzf build-output.tar.gz
+      - name: Yarn install
+        if: matrix.name == 'mcp'
+        run: yarn
+
+      - name: Build event model board
+        if: matrix.name == 'mcp'
+        run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 
       - name: Build net10.0 library specifications
         env:
@@ -282,11 +309,11 @@ jobs:
   # turn the aggregate green. Release/package validation runs alongside the specs.
   build:
     if: always()
-    needs: [dotnet-build, specs, compatibility-specs, package-validation]
+    needs: [shards, dotnet-build, specs, compatibility-specs, package-validation]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Require all build, spec and package checks to pass
         env:
-          SUCCESS: ${{ needs.dotnet-build.result == 'success' && needs.specs.result == 'success' && needs.compatibility-specs.result == 'success' && needs.package-validation.result == 'success' }}
+          SUCCESS: ${{ needs.shards.result == 'success' && needs.dotnet-build.result == 'success' && needs.specs.result == 'success' && needs.compatibility-specs.result == 'success' && needs.package-validation.result == 'success' }}
         run: test "$SUCCESS" = true
