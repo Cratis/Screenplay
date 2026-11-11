@@ -11,6 +11,17 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 public class when_exporting_action_subject_fixture_packs : Specification
 {
     static readonly JsonSerializerOptions _indented = new() { WriteIndented = true };
+    static readonly HashSet<string> _relevantCodes = new(StringComparer.Ordinal)
+    {
+        DiagnosticCodes.InvalidInteractionArgument,
+        DiagnosticCodes.UnknownActionSubjectField,
+        DiagnosticCodes.UnresolvedActionSubject,
+        DiagnosticCodes.InvalidActionSubjectClause,
+        DiagnosticCodes.InferredActionSubject,
+        DiagnosticCodes.ChangedActionSubject,
+        DiagnosticCodes.AmbiguousActionInputBinding,
+        DiagnosticCodes.UnsupportedActionSubjectContext
+    };
     readonly Dictionary<string, JsonElement> _exports = [];
     ApplicationSyntax _raw;
     ApplicationSyntax _effective;
@@ -160,7 +171,7 @@ public class when_exporting_action_subject_fixture_packs : Specification
             : children;
     }
 
-    static bool Relevant(Diagnostic diagnostic) => string.Equals(diagnostic.Code, DiagnosticCodes.InvalidInteractionArgument, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnknownActionSubjectField, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnresolvedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InvalidActionSubjectClause, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InferredActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.ChangedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.AmbiguousActionInputBinding, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnsupportedActionSubjectContext, StringComparison.Ordinal);
+    static bool Relevant(Diagnostic diagnostic) => _relevantCodes.Contains(diagnostic.Code);
 
     static IEnumerable<(string Path, SyntaxNode Node)> Locations(SyntaxNode node, string path)
     {

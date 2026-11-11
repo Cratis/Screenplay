@@ -21,7 +21,7 @@ internal sealed class LifecycleValidator
         [WorkflowNodeKind.Join] = ["next"]
     };
 
-    static readonly HashSet<string> _reservedOutlets = new(StringComparer.Ordinal) { "next", "failed", "refused", "resumed", "expired", "approved", "rejected", "each", "completed" };
+    static readonly HashSet<string> _reservedOutlets = [with(StringComparer.Ordinal), "next", "failed", "refused", "resumed", "expired", "approved", "rejected", "each", "completed"];
 
     readonly ApplicationSyntax _application;
     readonly DocumentNames _names;

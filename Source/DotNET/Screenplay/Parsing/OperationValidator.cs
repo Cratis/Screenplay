@@ -160,7 +160,7 @@ internal static class OperationValidator
         if (!required) return;
         foreach (var input in operation.Inputs)
         {
-            if (!Covered(input.Type, input.Name, names, suppliedPaths, declarations, new HashSet<string>(StringComparer.Ordinal)))
+            if (!Covered(input.Type, input.Name, names, suppliedPaths, declarations, [with(StringComparer.Ordinal)]))
                 context.Error(DiagnosticCodes.InvalidOperationMapping, $"Production of operation '{operation.Name}' supplies no value for required input '{input.Name}'.", operation.Location);
         }
     }
