@@ -43,6 +43,9 @@ for d,m in modules.items():
     if d not in keep: shutil.rmtree(v+'/'+d,ignore_errors=True)
 for d in keep[1:]: shutil.rmtree(v+'/'+d+'/shell',ignore_errors=True)
 gone=[m for d,m in modules.items() if d not in keep]
+# the design system's default theme must be one the variant declares: the theme of the first kept domain (its shell is the one kept)
+ds=v+'/Shared/design-system.play'; t=open(ds).read()
+open(ds,'w').write(re.sub(r'(\n *default theme )Acme[A-Za-z]+',lambda m:m.group(1)+'Acme'+keep[0],t,count=1))
 p=v+'/'+keep[0]+'/shell/navigation.play'; lines=open(p).read().split('\n'); out=[]; skip=None
 for l in lines:
     ind=len(l)-len(l.lstrip())
