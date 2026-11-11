@@ -1,5 +1,5 @@
 // Ability invocations from reactions, workflows, state machines and approvals, with compute nodes and entering bodies (#1252).
-// They parse, print and validate; no supported ESM version carries their call sites yet, so binding refuses them with PLAY0268.
+// Reaction invocations bind (ESM v51); the workflow, state machine, compute and approval call sites parse, print and validate but no supported ESM version carries them yet, so binding refuses them with PLAY0268.
 domain Acme.Ship
 
 concept ParcelId : Uuid
