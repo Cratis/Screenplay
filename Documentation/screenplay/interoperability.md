@@ -287,6 +287,7 @@ A policy condition using unary `not` also selects v7 under 0027. Its canonical v
 | 47.0 | A collection query that narrows its rows by a policy (`"narrowing"` on a query) | 47 | [0154](https://github.com/Cratis/Screenplay/blob/main/decisions/0154-narrow-the-rows-of-a-list-query-by-a-policy-esm-v47.md) | `full-esm-v47.json` | `EsmGoldenVectors.Get(47)` |
 | 48.0 | An explicit application-root `agents` allowlist, including an empty one | 48 | [Agent exposure](agents.md#portable-contract) | `full-esm-v48.json` | `EsmGoldenVectors.Get(48)` |
 | 49.0 | The caller's identifier in a policy state condition (`"callerId"` on a condition operand, `"id"` on a caller fixture) | 49 | [0157](https://github.com/Cratis/Screenplay/blob/main/decisions/0157-caller-identifier-in-policy-state-conditions-esm-v49.md) | `full-esm-v49.json` | `EsmGoldenVectors.Get(49)` |
+| 50.0 | Systems with abilities (`"systems"` on the application, each with `"abilities"`, effect classes, typed inputs and returned values, outcomes and realization) | 50 | [0159](https://github.com/Cratis/Screenplay/blob/main/decisions/0159-systems-with-abilities-extensions-and-durable-invocations.md) | `full-esm-v50.json` | `EsmGoldenVectors.Get(50)` |
 
 A model that declares a `set once` projection mapping or a children `insert first` or `sort by` selects language/semantic `43.0` and `schemaVersion: 43`, also when its screens are admitted; the version number is provisional until it is admitted by consumers; see [decision 0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md). `insert last` is what a children block does without an ordering and keeps the model's version.
 
@@ -445,6 +446,8 @@ The source-recovery host and the rendering CLI are composition boundaries. They 
 ## Neutral extension catalog
 
 An extension catalog describes interoperability options. It is documentation, not a plugin loader, package-discovery mechanism, trust decision, compatibility guarantee, or CLI allowlist.
+
+A model reaches systems outside itself through [systems and abilities](systems.md): a `system` declares typed abilities with outcomes and effect classes, and the executable model (ESM v50) carries them in `application.systems`. Which extension or implementation realizes a system is realization metadata, kept beside the model rather than in its bytes. Packages and loading belong to Cratis Stage; see its [ESM feature matrix](https://github.com/Cratis/Stage/blob/main/Documentation/reference/esm-feature-matrix.md).
 
 | Extension level | Public entry point | Input | Output | Activation model |
 | --- | --- | --- | --- | --- |

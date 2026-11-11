@@ -82,13 +82,14 @@ static class McpSemanticAddresses
             return SemanticAddress.ForApplication(application);
         }
 
-        if (kind is SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource)
+        if (kind is SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource or SemanticKind.System)
         {
             return kind switch
             {
                 SemanticKind.Concept => SemanticAddress.ForConcept(application, parts[^1].Key),
                 SemanticKind.CompositeType => SemanticAddress.ForCompositeType(application, parts[^1].Key),
                 SemanticKind.EventSource => SemanticAddress.ForEventSource(application, parts[^1].Key),
+                SemanticKind.System => SemanticAddress.ForSystem(application, parts[^1].Key),
                 _ => SemanticAddress.ForTrigger(application, parts[^1].Key)
             };
         }

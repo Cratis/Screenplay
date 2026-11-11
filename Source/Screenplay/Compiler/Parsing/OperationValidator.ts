@@ -132,6 +132,9 @@ export function validateOperations(application: ApplicationSyntax, context: Pars
             if (!covered(input.type, input.name, names, suppliedPaths)) context.error(DiagnosticCodes.InvalidOperationMapping, `Production of operation '${operation.name}' supplies no value for required input '${input.name}'.`, operation.location);
         }
     };
+    for (const system of application.systems ?? []) for (const ability of system.abilities) for (const property of [...ability.inputs, ...ability.returns]) {
+        if (!known.has(property.type.name) && !imported.has(property.type.name)) context.error(DiagnosticCodes.UnknownAbilityType, `Unknown type '${property.type.name}' on '${property.name}' of ability '${system.name}.${ability.name}'.`, property.location);
+    }
     for (const { slice, scope } of resolver.slices) {
         const operations = operationDeclarations(slice);
         const names = new Set(eventDeclarations(slice).map(event => event.name));

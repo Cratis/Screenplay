@@ -16,13 +16,13 @@ public sealed partial class SemanticModelBinder
 
     static List<Diagnostic> CommandProductionAdmission(ApplicationSyntax syntax, out bool usesPublicEvents)
     {
-        var walker = new CommandProductionAdmissionWalker();
+        var walker = new CommandProductionAdmissionWalker(syntax.Systems.Any(system => system.Abilities.Any()));
         walker.VisitApplication(syntax);
         usesPublicEvents = walker.UsesPublicEvents || PublicEventUsageValidator.EventTargets(syntax).Count > 0;
         return walker.Diagnostics;
     }
 
-    sealed class CommandProductionAdmissionWalker : ScreenplaySyntaxWalker
+    sealed class CommandProductionAdmissionWalker(bool abilitiesAdmitted) : ScreenplaySyntaxWalker
     {
         internal List<Diagnostic> Diagnostics { get; } = [];
 
@@ -75,11 +75,13 @@ public sealed partial class SemanticModelBinder
                     node.Location,
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#462")));
             }
-            if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
+
+            // A model that declares an ability admits its systems (ESM v50, #1250); operations stay syntax-only until their own admission.
+            if ((node is SystemSyntax && !abilitiesAdmitted) || node is OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Operations and systems are not admitted by any supported executable model (ESM) version yet (#301).",
+                    "Operations are not admitted by any supported executable model (ESM) version yet (#301); a system executes only when the model declares an ability on it (#1250).",
                     node.Location,
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#301")));
             }

@@ -672,6 +672,15 @@
                     "captures": { "1": { "name": "variable.other.screenplay" } }
                 },
                 {
+                    "comment": "An ability under a system, with its optional effect class; 'answers later' is contextual so an input called answers keeps its name.",
+                    "match": "^\\s*(ability)\\s+([A-Za-z_]\\w*)(?:\\s+(safe|idempotent|once))?(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(answers)\\s+(later)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
                     "match": "^(system|eventsource)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
                 },

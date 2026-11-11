@@ -145,6 +145,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Construct | Where |
 | --- | --- |
 | `domain` with a qualified name, `import` | top of the file |
+| `system` with `ability` blocks: the three effect classes (`safe`, `idempotent`, the `once` default), `returns`, `outcome`, `answers later` and an `implementation` with a hint and a `file`; a model that declares abilities selects ESM v50 | PaymentGateway, after the composite types |
 | `storyline` with a title, a description, step notes and every step kind | GetPaid, at the end of the file |
 | `identity` with claim, keyed query, inline code and file sources | Caller metadata next to authentication; the details are not used in executable clauses pending #600 |
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |

@@ -56,6 +56,9 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Design system** — the one design contract of an application: modes, tokens, components, words and contrast rules, with no values. See [Design system](design-system.md).
 - **Theme** — an implementation of the design system: a palette and the values of its tokens per mode. A profile selects one; the design system names the default. See [Theme](theme.md).
 - **Package** — a named set of components a profile draws from, in override-priority order. `core` is the final fallback.
+- **System** — a named external system the model can ask for something. It declares abilities. See [Systems and abilities](systems.md).
+- **Ability** — one typed thing a system can be asked to do: inputs, an optional `returns` block, named outcomes, an effect class (`safe`, `idempotent` or `once`) and optionally `answers later`. See [Systems and abilities](systems.md).
+- **Outcome** — a named business result of an ability other than success, such as a refusal the external system gives. It carries no payload.
 - **Size class** — `compact`, `regular` or `expanded`, on the width and height axes. A class, not a pixel breakpoint.
 
 ### Interaction

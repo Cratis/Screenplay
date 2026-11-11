@@ -158,7 +158,9 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'workflow':
             return items.workflowItems;
         case 'system':
-            return items.operationItems.filter(item => item.label === 'description');
+            return items.systemItems;
+        case 'ability':
+            return items.abilityItems;
         case 'operation':
             return items.operationItems;
         case 'execute':
