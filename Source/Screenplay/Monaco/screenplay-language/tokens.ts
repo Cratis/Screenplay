@@ -26,7 +26,7 @@ const clockRules: MonarchTokenRules = [
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'ability', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow', 'agents']);
+const contextualConstructs = new Set(['operation', 'system', 'ability', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow', 'agents', 'extension', 'setting', 'activation']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -90,6 +90,11 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             // An ability sits under a system. Its effect class is a keyword; 'answers later' is contextual, so an input called answers keeps its name.
             [/^(\s*)(ability)(\s+)([A-Z]\w*)(\s+)(safe|idempotent|once)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
             [/^(\s*)(ability)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            // System configuration lines are contextual, so a property called setting keeps its name.
+            [/^(\s*)(extension)(\s+)(".*?")(?:(\s+)(version)(\s+)(\S+))?(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'string', 'white', 'keyword', 'white', 'number']],
+            [/^(\s*)(setting)(\s+)([A-Za-z_]\w*)(\s+)(from)(\s+)(secret)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword', 'white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(activation)(\s+)(always|on)(?:(\s+)(demand)(?:(\s+)(idle)(\s+)(after)(\s+)(\d+)(\s+)(seconds?|minutes?|hours?|days?))?)?(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'number', 'white', 'keyword']],
+            [/^(secret)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(\s*)(answers)(\s+)(later)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
             // 'runs' is contextual: only a reaction's identity line is a keyword; a property called runs keeps its name.
             [/^(\s*)(runs)(\s+)(as)(\s+)(system)\b/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],

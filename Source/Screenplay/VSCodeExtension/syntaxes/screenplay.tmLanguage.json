@@ -677,6 +677,23 @@
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
                 },
                 {
+                    "comment": "System configuration lines are contextual, so a property called setting keeps its name.",
+                    "match": "^\\s*(extension)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?:\\s+(version)\\s+(\\S+))?(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "string.quoted.double.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "constant.numeric.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(setting)\\s+([A-Za-z_]\\w*)\\s+(from)\\s+(secret)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(activation)\\s+(always|on\\s+demand(?:\\s+idle\\s+after\\s+\\d+\\s+(?:seconds?|minutes?|hours?|days?))?)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^(secret)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
                     "match": "^\\s*(answers)\\s+(later)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
                 },

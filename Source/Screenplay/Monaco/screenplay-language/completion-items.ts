@@ -66,6 +66,7 @@ export const applicationContextItems: CompletionEntry[] = [
 ];
 
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'secret', insertText: 'secret ${1:Name}\n    description "${2:what the secret is for}"', documentation: 'A named secret, declared once. The model never holds its value; a system setting maps to it with from secret.' },
     { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. At most one block per application.' },
     { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar using an IANA zone. Never falls back to the machine zone.' },
     { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar default. Command calendar, scenario zone and execution-context zone take precedence.' },
@@ -152,6 +153,10 @@ export const operationImplementationItems: CompletionEntry[] = [
 
 export const systemItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:the external system}"', documentation: 'Describes the system.' },
+    { label: 'extension', insertText: 'extension "${1:ghcr.io/org/extension}" version ${2:1}', documentation: 'The extension that realizes the system. Realization metadata; it changes no executable-model bytes.' },
+    { label: 'setting from secret', insertText: 'setting ${1:name} from secret ${2:SecretName}', documentation: 'Maps an extension setting to a named secret. The deployment binds the secret name to its store.' },
+    { label: 'setting', insertText: 'setting ${1:name} = ${2:"value"}', documentation: 'A literal value for a non-secret extension setting. A setting not mentioned is read from systems.<System>.<setting>.' },
+    { label: 'activation', insertText: 'activation ${1|always,on demand|}', documentation: 'Overrides how the extension is activated: always, or on demand with an optional idle after <n> <unit>.' },
     { label: 'ability', insertText: 'ability ${1:Name} ${2|safe,idempotent,once|}\n    ${3:input} ${4:Type}\n    outcome ${5:Refusal}', documentation: 'One typed thing the system can be asked to do, with an effect class (default once).' },
 ];
 
