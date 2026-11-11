@@ -182,10 +182,13 @@ jobs:
       pull-requests: write
 
   # Every other job in this file MUST be listed in `needs`: a job left out is invisible to the gate.
+  # The one deliberate exception is render-blueprint-samples: it installs published blueprint packages
+  # from npm, so a broken upstream publish fails it without any change here. It still runs and reports,
+  # but it does not block the gate.
   gate:
     name: gate
     if: ${{ always() }}
-    needs: [changes, docker-build, dotnet-build, javascript-build, mcp-desktop, native-editor-repairs, render-blueprint-samples, ai-corpus, policy]
+    needs: [changes, docker-build, dotnet-build, javascript-build, mcp-desktop, native-editor-repairs, ai-corpus, policy]
     runs-on: ${{ vars.RUNNER_GATE || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions: {}
