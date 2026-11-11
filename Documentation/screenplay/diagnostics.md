@@ -1602,7 +1602,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
-| `PLAY0495` | Error | An external system declaration, or an ability, outcome or `returns` block inside one, is malformed or repeated. |
+| `PLAY0495` | Error | An external system declaration, or an ability, outcome, `returns` block, `extension`, `setting` or `activation` line inside one, is malformed or repeated. |
 | `PLAY0496` | Error | An operation declaration or phase is malformed, or supplies event-only metadata. |
 | `PLAY0497` | Error | A production reference is ambiguous, or a qualified production does not resolve to an explicit operation. |
 | `PLAY0498` | Error | An operation name collides with an event or another operation in its owning slice. |
@@ -1804,6 +1804,21 @@ Abilities declared on a `system`, see [Systems and abilities](systems.md). `PLAY
 | `PLAY0984` | Error | An ability's effect class is not `safe`, `idempotent` or `once`. |
 | `PLAY0985` | Error | An ability outcome is named `next`, `refused`, `failed`, `returned` or `expired`, which are reserved outlets. |
 | `PLAY0986` | Error | An ability input or returned field names a type that is not declared. |
+
+## System configuration diagnostics
+
+Secrets and the settings a `system` maps, see [Environments](environments.md#system-settings-and-named-secrets). A malformed `extension`, `setting` or `activation` line is `PLAY0495`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0990` | Error | A `secret` declaration is not `secret <Name>` with an optional description, or is not at the top level. |
+| `PLAY0991` | Error | Two `secret` declarations have names that are equal ignoring case. |
+| `PLAY0992` | Error | A system setting maps `from secret` a name that no `secret` declaration provides. |
+| `PLAY0993` | Error | A declared `secret` is not mapped by any system setting. |
+| `PLAY0994` | Error | A system maps the same setting more than once. |
+| `PLAY0995` | Error | A system maps a setting that its extension's contract does not declare. Reported by the contract check, not by compiling the model alone. |
+| `PLAY0996` | Error | A system gives a literal value to a setting its extension's contract declares secret. Reported by the contract check. |
+| `PLAY0997` | Error | A system maps a secret to a setting its extension's contract declares public, which could reach the browser. Reported by the contract check. |
 
 ## Screen visuals and slice placements
 

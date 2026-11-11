@@ -120,6 +120,7 @@ sealed class WorkspaceReferenceBindings
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 PersonaSyntax => WorkspaceReferenceDomain.Persona,
                 SinkSyntax => WorkspaceReferenceDomain.Sink,
+                SecretSyntax => WorkspaceReferenceDomain.Secret,
                 SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 StateMachineSyntax => WorkspaceReferenceDomain.StateMachine,

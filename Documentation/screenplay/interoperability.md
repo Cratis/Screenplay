@@ -11,6 +11,8 @@ Screenplay extensions let you inspect a `.play` model, recover a model from exis
 | Recover a model from authored .NET code | [Source recovery](#level-2-source-to-screenplay-recovery) | Contribute framework evidence to Generation rather than printing syntax in the adapter |
 | Generate artifacts for a target framework | [Target rendering](#level-3-screenplay-to-artifact-rendering) | Compile the executable semantic model and explicitly admit the capabilities your target can realize |
 
+A system an extension realizes maps the extension's settings to configuration or named secrets and may override its activation; see [system settings and named secrets](environments.md#system-settings-and-named-secrets).
+
 ## Portable meaning and runtime authority
 
 The executable semantic model (ESM) carries portable model meaning, not permission to execute every construct on every target. Reading a version, evaluating its reference specifications, rendering it, and recovering it from source are separate admission decisions. Here, admission means that a consumer explicitly accepts the contract it can implement; a package update alone does not make that decision.

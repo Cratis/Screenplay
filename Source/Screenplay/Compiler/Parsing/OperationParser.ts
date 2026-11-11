@@ -5,10 +5,11 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
-import { AbilityOutcomeSyntax, AbilitySyntax, abilityEffectClasses, OperationPhaseSyntax, OperationSyntax, reservedOutcomeNames, SystemSyntax } from '../Syntax/Operations';
+import { AbilityOutcomeSyntax, AbilitySyntax, abilityEffectClasses, OperationPhaseSyntax, OperationSyntax, reservedOutcomeNames, SystemActivationSyntax, SystemExtensionSyntax, SystemSettingSyntax, SystemSyntax } from '../Syntax/Operations';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective, isFileDirectiveAmongProperties } from './FileReferences';
+import { parseActivation, parseExtension, parseSetting } from './SystemConfigurationParser';
 import { parseCode, parseFile, parseImplementationWrapper } from './ImplementationParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -37,12 +38,28 @@ export function parseSystem(context: ParserContext, header: SourceLine): SystemS
     if (match === null) context.error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'system <Name>'.", locationOf(header));
     let description: string | null = null;
     const abilities: AbilitySyntax[] = [];
+    const settings: SystemSettingSyntax[] = [];
+    let extension: SystemExtensionSyntax | null = null;
+    let activation: SystemActivationSyntax | null = null;
+    const systemName = match?.[1] ?? '';
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'description') description = parseDescription(context, child, description, `System '${match?.[1] ?? ''}'`);
-        else if (firstWord(child.content) === 'ability') abilities.push(parseAbility(context, child));
-        else {
-            context.error(DiagnosticCodes.InvalidSystemDeclaration, 'A system accepts a description and abilities.', locationOf(child));
+        const word = firstWord(child.content);
+        if (word === 'description') description = parseDescription(context, child, description, `System '${systemName}'`);
+        else if (word === 'ability') abilities.push(parseAbility(context, child));
+        else if (word === 'extension') {
+            const parsed = parseExtension(context, child);
+            if (parsed !== null && extension !== null) context.error(DiagnosticCodes.InvalidSystemDeclaration, `System '${systemName}' names an extension more than once.`, locationOf(child));
+            else extension = parsed ?? extension;
+        } else if (word === 'setting') {
+            const parsed = parseSetting(context, child);
+            if (parsed !== null) settings.push(parsed);
+        } else if (word === 'activation') {
+            const parsed = parseActivation(context, child);
+            if (parsed !== null && activation !== null) context.error(DiagnosticCodes.InvalidSystemDeclaration, `System '${systemName}' states its activation more than once.`, locationOf(child));
+            else activation = parsed ?? activation;
+        } else {
+            context.error(DiagnosticCodes.InvalidSystemDeclaration, 'A system accepts a description, abilities, an extension, settings and an activation.', locationOf(child));
             context.skipBlock(child.indent);
         }
     }
@@ -52,7 +69,7 @@ export function parseSystem(context: ParserContext, header: SourceLine): SystemS
         if (seen.has(key)) context.error(DiagnosticCodes.DuplicateAbility, `System '${match?.[1] ?? ''}' already declares ability '${ability.name}'; ability names compare ignoring case.`, ability.location);
         seen.add(key);
     }
-    return { kind: 'SystemSyntax', name: match?.[1] ?? '', description, abilities, location: locationOf(header) };
+    return { kind: 'SystemSyntax', name: systemName, description, abilities, ...(extension === null ? {} : { extension }), ...(settings.length === 0 ? {} : { settings }), ...(activation === null ? {} : { activation }), location: locationOf(header) };
 }
 
 function parseAbility(context: ParserContext, header: SourceLine): AbilitySyntax {
