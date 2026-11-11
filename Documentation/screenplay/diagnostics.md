@@ -1377,11 +1377,11 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
+| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, a multiline description uses a bare fence, or a workflow or state machine uses a deprecated verb: `action ... sends`, `entering send`, `entering start` or `then sends`. The message names the replacement (`invokes` or `starts`; see the migration notes in [workflows](workflows.md) and [state machines](statemachines.md)). |
 
 A compiler-authored typed repair is offered only when `PLAY0397` identifies a
-`validate csharp` header. It uses an identity replacement and canonical printing
-to produce a tagged `` ```csharp `` fence. The entire file is reprinted; other
+`validate csharp` header or a deprecated `sends`, `send` or `start` lifecycle verb. It uses an identity replacement and canonical printing
+to produce a tagged `` ```csharp `` fence or the `invokes` and `starts` forms. The entire file is reprinted; other
 legacy forms and whitespace may change, but a repair that would drop any comment
 is refused. Preview it through the revision-checked AST authoring contract (or
 MCP `read-workspace` repairs / `propose-repair`); review the bytes before applying.

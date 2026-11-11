@@ -754,6 +754,12 @@ Missing fixtures are bindable. If execution reaches generation without every gen
 
 For a generated identifier, `for` travels in the generated-value channel, not the legacy event-source allocation channel. It does not assert that explicitly routed productions use that identifier; expected events assert their own destinations. For commands without generated identifiers, `when … for` keeps its existing destination assertion. A generated identifier with a reached plain legacy allocated production needs two separate channels, which source specifications cannot supply together, so that combination is `Unsupported(IdentityAllocation)`. Source fixtures and return expectations on generated UUID-backed values normalize accepted UUID spellings to lowercase hyphenated form; existing non-generated values are unchanged. Relational assertions without concrete fixtures remain deferred.
 
+## Specifications inside state machines and workflows
+
+A `specification` inside a `statemachine` or `workflow` states what entering a state or running a node does. `then invokes <Command>` says a command was invoked, in order, and `then starts <Workflow>` says a workflow was started. A workflow `outcome <Node> <outlet>` picks the outlet an action takes: `next`, `failed` or `refused`.
+
+`then sends <Command>` still compiles and raises the deprecation warning `PLAY0397`; printing a document writes `then invokes`. See [State machines](statemachines.md) and [Workflows](workflows.md).
+
 ## Compiling specifications
 
 Specifications compile as part of a full application document via `IScreenplayCompiler.Compile`, or standalone — source rooted at a `specification` declaration — via `IScreenplayCompiler.CompileSpecification`, mirroring `CompileProjection` for the [Projection Declaration Language](projections/index.md).

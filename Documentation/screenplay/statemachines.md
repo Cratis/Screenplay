@@ -18,15 +18,15 @@ statemachine <Name>
   [description "<text>"]
   follows <ReadModel>
   state <Name> [initial] [final]
-    [entering send <Command>]
-    [entering start <Workflow>]
+    [entering invokes <Command>]
+    [entering starts <Workflow>]
     [on <Event> [when <condition>] -> <State>]
   [specification <Name> ...]
 ```
 
 - Exactly one state is `initial`. Any number are `final`, and a final state has no transitions.
 - `on <Event> [when <condition>] -> <State>` is a transition. The condition is the [condition grammar](commands.md) of `produces when`, over the properties of the followed read model, as the read model is after the event. A condition over an optional property is refused when the model is bound: optional properties have no portable comparison.
-- `entering send <Command>` and `entering start <Workflow>` say what entering the state does. Entering may run again on redelivery, so the command or workflow must be safe to repeat.
+- `entering invokes <Command>` and `entering starts <Workflow>` say what entering the state does. Entering may run again on redelivery, so the command or workflow must be safe to repeat.
 
 The following lifecycle is an excerpt: `OrderProgress`, its events, `NotifyCustomer` and `FulfilOrder` must be declared elsewhere in the application. Read it alongside the [fulfilment workflow](workflows.md#syntax), which uses the same order subject.
 
@@ -38,14 +38,14 @@ statemachine OrderLifecycle
     on PaymentCaptured -> Paid
     on OrderWithdrawn -> Cancelled
   state Paid
-    entering start FulfilOrder
+    entering starts FulfilOrder
     on OrderPacked -> Packed
     on OrderWithdrawn -> Cancelled
     on RefundIssued -> Refunded
   state Packed
     on OrderHandedToCarrier -> Shipped
   state Shipped
-    entering send NotifyCustomer
+    entering invokes NotifyCustomer
     on DeliveryConfirmed -> Delivered
     on ParcelReturned when returnReason != "" -> Refunded
   state Delivered final
@@ -55,7 +55,7 @@ statemachine OrderLifecycle
 
 ## What it means
 
-In the example, `PaymentCaptured` allows an order in Placed to move to Paid. Entering Paid starts `FulfilOrder`; entering Shipped sends `NotifyCustomer`. These entry effects may run again on redelivery, so their receivers must be safe to repeat.
+In the example, `PaymentCaptured` allows an order in Placed to move to Paid. Entering Paid starts `FulfilOrder`; entering Shipped invokes `NotifyCustomer`. These entry effects may run again on redelivery, so their receivers must be safe to repeat.
 
 Transition lookup has a detail worth checking when you add states. A state allows exactly the targets written under it, but the machine searches transitions for an event across the whole declaration, in declaration order. It takes the first transition whose condition holds and whose target the current state allows. The condition sees the followed read model after the event.
 
@@ -68,7 +68,7 @@ Write a specification inside the state machine to check a lifecycle outcome. Use
 | Line | Meaning |
 | --- | --- |
 | `then is <State>` | The instance is in the state after the event. |
-| `then sends <Command>` | Entering the new state sent the command. Every command sent is stated, in order. |
+| `then invokes <Command>` | Entering the new state invoked the command. Every command invoked is stated, in order. |
 | `then starts <Workflow>` | Entering the new state started the workflow. Every workflow started is stated, in order. |
 
 ```text
@@ -100,3 +100,13 @@ Here, `ParcelReturned` has an empty reason, so it does not move the paid order t
 | `PLAY0842` | Two unguarded transitions on one event leave the same state. |
 
 See [Workflows](workflows.md) for the process a state can start, and decision [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) for the full contract.
+
+## Migrating from `send` and `start`
+
+`invokes` is the one verb for asking a command to run. The old forms still compile and raise the deprecation warning `PLAY0397` with a repair; printing a document writes the new forms.
+
+| Before | After |
+| --- | --- |
+| `entering send <Command>` | `entering invokes <Command>` |
+| `entering start <Workflow>` | `entering starts <Workflow>` |
+| `then sends <Command>` | `then invokes <Command>` |
