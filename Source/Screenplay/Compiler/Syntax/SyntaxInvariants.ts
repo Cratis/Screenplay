@@ -9,7 +9,7 @@ import { PropertyMappingSyntax } from './Expressions';
 import { HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { publicEventMetadataError } from './PublicEventInvariants';
-import { OperationPhaseSyntax } from './Operations';
+import { AbilitySyntax, OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
@@ -81,6 +81,11 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
         const phase = node as OperationPhaseSyntax;
         if (phase.file != null && phase.code != null) refuse('An operation phase has at most one file or inline payload.');
         if (phase.implementation != null) validateSyntaxInvariants(phase.implementation);
+    }
+    if (node.kind === 'AbilitySyntax') {
+        const ability = node as AbilitySyntax;
+        if (ability.file != null && ability.code != null) refuse('An ability has at most one file or inline payload.');
+        if (ability.implementation != null) validateSyntaxInvariants(ability.implementation);
     }
     if (node.kind === 'HandlerSyntax') {
         const handler = node as HandlerSyntax;

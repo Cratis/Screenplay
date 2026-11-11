@@ -93,6 +93,13 @@ describe('when restoring exact syntax', () => {
         expect(() => read(operation({ kind: 'OperationPhaseSyntax', file: { kind: 'FileReferenceSyntax', path: 'send.cs' }, code: { kind: 'CodeBlockSyntax', language: 'csharp', code: 'Send();' } }))).toThrow(InvalidSyntaxJson);
     });
 
+    it('should reject conflicting ability payloads and blank hints at restoration', () => {
+        const system = (ability: unknown): unknown => ({ kind: 'ApplicationSyntax', sourceOptions: { numericMode: 'exact' }, systems: [{ kind: 'SystemSyntax', name: 'S', abilities: [ability] }] });
+        const base = { kind: 'AbilitySyntax', name: 'A', effectClass: null, inputs: [], returns: [], outcomes: [], description: null, answersLater: false, implementation: null, file: null, code: null };
+        expect(() => read(system({ ...base, file: { kind: 'FileReferenceSyntax', path: 'a.cs' }, code: { kind: 'CodeBlockSyntax', language: 'csharp', code: 'A();' } }))).toThrow(InvalidSyntaxJson);
+        expect(() => read(system({ ...base, implementation: { kind: 'ImplementationSyntax', hints: [{ kind: 'ImplementationHintSyntax', text: ' ' }] } }))).toThrow(InvalidSyntaxJson);
+    });
+
     it('should reject conflicting nested programmatic source options and unconverted object slots', () => {
         const value = read(root(exact('1')));
         const nested = { kind: 'CaptureSyntax', sourceOptions: { numericMode: 'legacy' }, location: { line: 1, column: 1 } };

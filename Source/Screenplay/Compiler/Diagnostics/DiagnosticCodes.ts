@@ -616,6 +616,10 @@ export const DiagnosticCodes = {
     UngatedAgentOperation: 'PLAY0980',
     AgentGlobalQueryRefused: 'PLAY0981',
     UnsupportedAgentQueryKind: 'PLAY0982',
+    DuplicateAbility: 'PLAY0983',
+    InvalidAbilityEffectClass: 'PLAY0984',
+    ReservedAbilityOutcomeName: 'PLAY0985',
+    UnknownAbilityType: 'PLAY0986',
     InvalidScreenVisual: 'PLAY0950',
     UnexpectedScreenVisualFile: 'PLAY0951',
     ScreenVisualMissing: 'PLAY0952', // C# only - the files are checked where a model root is opened
