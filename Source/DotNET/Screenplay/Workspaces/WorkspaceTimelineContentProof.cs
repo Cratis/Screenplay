@@ -36,10 +36,12 @@ internal static class WorkspaceTimelineContentProof
         var candidate = WorkspaceTimelineRepairs.Timeline(after);
         if (!CanCompare(original, candidate, pins, removedImports ?? [])) return false;
 
+        var left = ParsedApplication(original);
+        var right = ParsedApplication(candidate);
         var remaining = pins.ToList();
         var removed = (removedImports ?? []).ToList();
-        var left = NormalizedApplication(original, removed);
-        var right = NormalizedApplication(candidate, remaining);
+        Normalize(original.Application!, left, [], removed);
+        Normalize(candidate.Application!, right, [], remaining);
 
         return remaining.Count == 0 && removed.Count == 0 && JsonNode.DeepEquals(left, right);
     }
@@ -66,13 +68,7 @@ internal static class WorkspaceTimelineContentProof
 
     static bool HasSource(AuthoredTimeline timeline) => timeline.SourceValid && timeline.Application is not null;
 
-    static JsonObject NormalizedApplication(AuthoredTimeline timeline, List<TimelineImportPin> pins)
-    {
-        var node = ParseSyntax(timeline.Application!)!.AsObject();
-        Normalize(timeline.Application!, node, [], pins);
-
-        return node;
-    }
+    static JsonObject ParsedApplication(AuthoredTimeline timeline) => ParseSyntax(timeline.Application!)!.AsObject();
 
     static JsonNode? ParseSyntax(SyntaxNode syntax) => JsonNode.Parse(SyntaxJson.Serialize(syntax).GetRawText(), documentOptions: _documentOptions);
 

@@ -28,8 +28,9 @@ internal static partial class WorkspaceTimelineRepairs
         foreach (var after in new[] { false, true })
         {
             var ranks = SafeExpansionMove(scope, after);
+            if (ranks is null) continue;
             var paths = ExpandedOrder(expansion, after);
-            if (ranks is null || paths is null) continue;
+            if (paths is null) continue;
 
             return ExpandedRecipe(expansion, ranks, paths);
         }
