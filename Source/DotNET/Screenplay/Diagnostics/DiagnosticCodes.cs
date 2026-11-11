@@ -2031,7 +2031,7 @@ public static class DiagnosticCodes
     public const string FileConstraintOnlySupportsUniqueness = "PLAY0396";
 
     /// <summary>
-    /// An inline code block uses a legacy language line, or a description uses a bare fence.
+    /// A deprecated form is used: an inline code block with a legacy language line, a description with a bare fence, or a lifecycle verb that <c>invokes</c> and <c>starts</c> replace (<c>sends</c>, <c>entering send</c>, <c>entering start</c>).
     /// </summary>
     public const string LegacyInlineCodeFence = "PLAY0397";
 

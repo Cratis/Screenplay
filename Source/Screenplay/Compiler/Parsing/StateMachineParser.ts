@@ -17,7 +17,7 @@ import { parseLifecycleSpecification } from './SpecificationParser';
 const headerPattern = pattern('^statemachine\\s+([A-Za-z_]\\w*)$');
 const followsPattern = pattern('^follows\\s+([A-Za-z_]\\w*)$');
 const statePattern = pattern('^state\\s+([A-Za-z_]\\w*)((?:\\s+(?:initial|final))*)$');
-const enteringPattern = pattern('^entering\\s+(send|start)\\s+([A-Za-z_]\\w*)$');
+const enteringPattern = pattern('^entering\\s+(invokes|starts|send|start)\\s+([A-Za-z_]\\w*)$');
 const transitionPattern = pattern('^on\\s+([A-Za-z_][\\w.]*)(?:\\s+when\\s+(.+?))?\\s*->\\s*([A-Za-z_]\\w*)$');
 
 // The port of C# StateMachineParser.
@@ -88,8 +88,12 @@ function parseState(context: ParserContext, header: SourceLine, machine: string)
         switch (firstWord(line.content)) {
             case 'entering': {
                 const entry = enteringPattern.exec(line.content);
-                if (entry === null) context.error(DiagnosticCodes.InvalidStateMachineDeclaration, `Invalid entering '${line.content}' - expected 'entering send <Command>' or 'entering start <Workflow>'.`, locationOf(line));
-                else entering.push({ kind: 'StateEntrySyntax', entryKind: entry[1] === 'send' ? 'Send' : 'Start', target: entry[2], location: locationOf(line) });
+                if (entry === null) context.error(DiagnosticCodes.InvalidStateMachineDeclaration, `Invalid entering '${line.content}' - expected 'entering invokes <Command>' or 'entering starts <Workflow>'.`, locationOf(line));
+                else {
+                    const verb = entry[1];
+                    if (verb === 'send' || verb === 'start') context.warning(DiagnosticCodes.LegacyInlineCodeFence, `'entering ${verb}' is deprecated - use 'entering ${verb === 'send' ? 'invokes' : 'starts'}'.`, locationOf(line));
+                    entering.push({ kind: 'StateEntrySyntax', entryKind: verb === 'send' || verb === 'invokes' ? 'Send' : 'Start', target: entry[2], location: locationOf(line) });
+                }
                 rejectOperationChildren(context, line, DiagnosticCodes.InvalidStateMachineDeclaration, 'An entering line cannot have children.');
                 break;
             }

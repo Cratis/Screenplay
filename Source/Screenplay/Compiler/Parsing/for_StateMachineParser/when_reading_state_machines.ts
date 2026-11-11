@@ -17,8 +17,8 @@ describe('when reading state machines', () => {
             '  state Draft initial',
             '    on Sent when overdue == true -> Sent',
             '  state Sent',
-            '    entering send Charge',
-            '    entering start Collect',
+            '    entering invokes Charge',
+            '    entering starts Collect',
             '    on Paid -> Paid',
             '  state Paid final');
         expect(result).toMatchObject({ name: 'Life', follows: 'Invoice', description: 'Where it is' });
@@ -43,7 +43,7 @@ describe('when reading state machines', () => {
     });
     it('should refuse a repeated modifier', () => expect(codes('statemachine L', '  follows A', '  state S initial initial')).toEqual(['PLAY0834@3']));
     it('should refuse a malformed entering', () => expect(codes('statemachine L', '  follows A', '  state S initial', '    entering run X')).toEqual(['PLAY0834@4']));
-    it('should refuse an entering with children', () => expect(codes('statemachine L', '  follows A', '  state S initial', '    entering send X', '      more')).toEqual(['PLAY0834@5']));
+    it('should refuse an entering with children', () => expect(codes('statemachine L', '  follows A', '  state S initial', '    entering invokes X', '      more')).toEqual(['PLAY0834@5']));
     it('should refuse a malformed transition', () => expect(codes('statemachine L', '  follows A', '  state S initial', '    on E to S')).toEqual(['PLAY0834@4']));
     it('should refuse a transition with children', () => expect(codes('statemachine L', '  follows A', '  state S initial', '    on E -> S', '      more')).toEqual(['PLAY0834@5']));
     it('should drop a transition whose condition does not parse', () => {

@@ -19,6 +19,9 @@ public class when_migrating_the_screenplay_5_samples : Specification
     readonly List<string> _reviews = [];
     readonly List<string> _failures = [];
 
+    // Screenplay 6.x deprecates the lifecycle verbs sends, send and start (PLAY0397); printing a document migrates them, so the migration is not asked to rewrite them.
+    static bool IsDeprecatedLifecycleVerb(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.LegacyInlineCodeFence && (diagnostic.Message.Contains("invokes", StringComparison.Ordinal) || diagnostic.Message.Contains("'entering start'", StringComparison.Ordinal));
+
     // The Screenplay 5 samples set accent, corners and font on the profile; Screenplay 6.x deprecates those (PLAY0929) and the migration is not asked to move them into a theme.
     void Because()
     {
@@ -40,7 +43,7 @@ public class when_migrating_the_screenplay_5_samples : Specification
             _reports[name] = report;
             foreach (var file in report.Files)
             {
-                _diagnostics.AddRange(file.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.DeprecatedAppearanceMember).Select(diagnostic => $"{name}/{file.Path}({diagnostic.Location.Line},{diagnostic.Location.Column}): {diagnostic.Code} {diagnostic.Message}"));
+                _diagnostics.AddRange(file.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.DeprecatedAppearanceMember && !IsDeprecatedLifecycleVerb(diagnostic)).Select(diagnostic => $"{name}/{file.Path}({diagnostic.Location.Line},{diagnostic.Location.Column}): {diagnostic.Code} {diagnostic.Message}"));
                 _reviews.AddRange(file.Reviews.Select(review => $"{name}/{file.Path}({review.Location.Line}): {review.Message}"));
                 if (file.Failure is not null) _failures.Add($"{name}/{file.Path}: {file.Failure}");
             }

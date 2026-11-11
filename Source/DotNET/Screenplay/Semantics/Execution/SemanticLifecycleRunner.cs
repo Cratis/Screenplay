@@ -125,7 +125,7 @@ public static class SemanticLifecycleRunner
 
         string[] expectedSends = [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Sends).Select(expectation => CommandName(plan, expectation.Command))];
         string[] actualSends = [.. effects.Where(effect => effect.Kind == SemanticStateEntryKind.SendCommand).Select(effect => CommandName(plan, effect.Command))];
-        Compare(failures, "sends", expectedSends, actualSends);
+        Compare(failures, "invokes", expectedSends, actualSends);
         string[] expectedStarts = [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Starts).Select(expectation => expectation.Target!)];
         string[] actualStarts = [.. effects.Where(effect => effect.Kind == SemanticStateEntryKind.StartWorkflow).Select(effect => effect.Workflow!)];
         Compare(failures, "starts", expectedStarts, actualStarts);
@@ -178,7 +178,7 @@ public static class SemanticLifecycleRunner
         }
 
         string[] expectedSends = [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Sends).Select(expectation => CommandName(plan, expectation.Command))];
-        Compare(failures, "sends", expectedSends, [.. run.Sent.Select(command => CommandName(plan, command))]);
+        Compare(failures, "invokes", expectedSends, [.. run.Sent.Select(command => CommandName(plan, command))]);
         return failures.ToImmutable();
     }
 
@@ -310,7 +310,7 @@ public static class SemanticLifecycleRunner
                 var edge = workflow.Edges.FirstOrDefault(candidate => candidate.From == node.Name && candidate.Outlet == outlet);
                 if (edge is null)
                 {
-                    if (string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal))
+                    if (string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal))
                     {
                         End = RunEnd.Failed;
                         Node = node.Name;

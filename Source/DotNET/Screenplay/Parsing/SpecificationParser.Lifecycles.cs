@@ -80,8 +80,18 @@ internal static partial class SpecificationParser
             }
             else if (keyword == "then")
             {
-                if (ParseLifecycleExpectation(line) is { } expectation) then.Add(expectation);
-                else context.Error(code, $"Invalid '{line.Content}' - expected 'then is <State>', 'then sends <Command>', 'then starts <Workflow>', 'then completes', 'then fails at <Node>' or 'then waits at <Node>'.", line.Location);
+                if (ParseLifecycleExpectation(line) is { } expectation)
+                {
+                    then.Add(expectation);
+                    if (expectation.Expectation == LifecycleExpectationKind.Sends && line.Content.StartsWith("then sends", StringComparison.Ordinal))
+                    {
+                        context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "'then sends' is deprecated - use 'then invokes <Command>'.", line.Location);
+                    }
+                }
+                else
+                {
+                    context.Error(code, $"Invalid '{line.Content}' - expected 'then is <State>', 'then invokes <Command>', 'then starts <Workflow>', 'then completes', 'then fails at <Node>' or 'then waits at <Node>'.", line.Location);
+                }
                 OperationParser.RejectChildren(context, line, code, "A then line cannot have children.");
             }
             else
@@ -109,7 +119,7 @@ internal static partial class SpecificationParser
         var kind = match.Groups[1].Value switch
         {
             "is" => LifecycleExpectationKind.State,
-            "sends" => LifecycleExpectationKind.Sends,
+            "sends" or "invokes" => LifecycleExpectationKind.Sends,
             "starts" => LifecycleExpectationKind.Starts,
             "completes" => LifecycleExpectationKind.Completes,
             "fails at" => LifecycleExpectationKind.Fails,
@@ -124,6 +134,6 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^outcome\s+([A-Za-z_]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OutcomeRegex();
 
-    [GeneratedRegex(@"^then\s+(is|sends|starts|completes|fails\s+at|waits\s+at)(?:\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^then\s+(is|sends|invokes|starts|completes|fails\s+at|waits\s+at)(?:\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex LifecycleThenRegex();
 }

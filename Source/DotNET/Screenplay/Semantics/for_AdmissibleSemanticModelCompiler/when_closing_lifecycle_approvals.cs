@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.for_AdmissibleSemanticModelCompiler;
 
 public class when_closing_lifecycle_approvals : given.persona_documents
 {
-    const string _lifecycle = "statemachine CaseLifecycle\n  follows Case\n  state Pending initial\n    entering start Review\n";
+    const string _lifecycle = "statemachine CaseLifecycle\n  follows Case\n  state Pending initial\n    entering starts Review\n";
 
     void Establish()
     {

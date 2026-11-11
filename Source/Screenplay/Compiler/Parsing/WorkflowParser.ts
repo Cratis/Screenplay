@@ -23,7 +23,7 @@ const edgePattern = pattern('^(?:"([^"]+)"|([A-Za-z_]\\w*))(?:\\s*->\\s*([A-Za-z
 const triggerPattern = pattern('^trigger(?:\\s+(?!(?:on|when|every|at|manual)\\b)([A-Za-z_]\\w*))?\\s+(.+)$');
 const onEventPattern = pattern('^on\\s+([A-Za-z_][\\w.]*)$');
 const entersPattern = pattern('^when\\s+([A-Za-z_]\\w*)\\s+enters\\s+([A-Za-z_]\\w*)$');
-const actionPattern = pattern('^action\\s+([A-Za-z_]\\w*)\\s+sends\\s+([A-Za-z_]\\w*)((?:\\s+(?:attempts\\s+\\d+|timeout\\s+\\d+\\s+\\w+|retry\\s+after\\s+\\d+\\s+\\w+))*)$');
+const actionPattern = pattern('^action\\s+([A-Za-z_]\\w*)\\s+(sends|invokes)\\s+([A-Za-z_]\\w*)((?:\\s+(?:attempts\\s+\\d+|timeout\\s+\\d+\\s+\\w+|retry\\s+after\\s+\\d+\\s+\\w+))*)$');
 const actionOption = /attempts\s+(\d+)|timeout\s+(\d+)\s+(\w+)|retry\s+after\s+(\d+)\s+(\w+)/g;
 const decidePattern = pattern('^decide\\s+([A-Za-z_]\\w*)\\s+when\\s+(.+)$');
 const waitPattern = pattern(`^wait\\s+([A-Za-z_]\\w*)\\s+for\\s+(?:(\\d+)\\s+${unit}|([A-Za-z_][\\w.]*)(?:\\s+expires\\s+after\\s+(\\d+)\\s+${unit})?)$`);
@@ -151,13 +151,14 @@ function parseTrigger(context: ParserContext, line: SourceLine, ordinal: number)
 function parseAction(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {
     const match = actionPattern.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid action '${line.content}' - expected 'action <Name> sends <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid action '${line.content}' - expected 'action <Name> invokes <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.`, locationOf(line));
         return undefined;
     }
+    if (match[2] === 'sends') context.warning(DiagnosticCodes.LegacyInlineCodeFence, "'action ... sends' is deprecated - use 'action <Name> invokes <Command>'.", locationOf(line));
     let attempts: number | null = null;
     let timeout: WorkflowDurationSyntax | null = null;
     let retryAfter: WorkflowDurationSyntax | null = null;
-    for (const option of match[3].matchAll(actionOption)) {
+    for (const option of match[4].matchAll(actionOption)) {
         if (option[1] !== undefined) {
             const count = Number(option[1]);
             if (attempts !== null || !Number.isInteger(count) || count < 1) context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid or repeated attempts in '${line.content}'.`, locationOf(line));
@@ -172,7 +173,7 @@ function parseAction(context: ParserContext, line: SourceLine): WorkflowNodeSynt
             else retryAfter = parsed;
         }
     }
-    return empty('Action', match[1], locationOf(line), { command: match[2], attempts, timeout, retryAfter });
+    return empty('Action', match[1], locationOf(line), { command: match[3], attempts, timeout, retryAfter });
 }
 
 function parseDecide(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {
