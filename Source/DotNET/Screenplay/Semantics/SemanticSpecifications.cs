@@ -6,6 +6,21 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
+/// Names how an ability answers while a specification runs.
+/// </summary>
+public enum SemanticAbilityAnswerKind
+{
+    /// <summary>The ability returned values.</summary>
+    Returned = 0,
+
+    /// <summary>The ability answered with a declared outcome.</summary>
+    Outcome = 1,
+
+    /// <summary>The ability failed.</summary>
+    Failed = 2
+}
+
+/// <summary>
 /// Represents event values in a semantic specification.
 /// </summary>
 /// <param name="EventContract">The event declaration semantic identity.</param>
@@ -193,6 +208,11 @@ public sealed record SemanticSpecification(
     public ImmutableArray<SemanticSpecificationCapture> GivenCaptures { get; init; } = [];
 
     /// <summary>
+    /// Gets the answers the invoked abilities give while the specification runs (ESM v51).
+    /// </summary>
+    public ImmutableArray<SemanticAbilityAnswer> GivenAbilityAnswers { get; init; } = [];
+
+    /// <summary>
     /// Gets the values pinned for the generated properties of the commands that reactions invoke, in the order the invocations
     /// take them (ESM v30).
     /// </summary>
@@ -256,4 +276,51 @@ public sealed record SemanticSpecificationGeneratedValue(SemanticId Command, Sem
 /// </summary>
 /// <param name="Command">The invoked command.</param>
 /// <param name="Values">The stated non-generated command property values, canonically ordered by target identity; unstated properties are not compared.</param>
-public sealed record SemanticSpecificationInvocation(SemanticId Command, ImmutableArray<SemanticPropertyValue> Values);
+public sealed record SemanticSpecificationInvocation(SemanticId Command, ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>
+    /// Gets the system whose ability is expected to be invoked, when the invocation targets an ability (ESM v51).
+    /// </summary>
+    public SemanticId System { get; init; }
+
+    /// <summary>
+    /// Gets the name of the ability expected to be invoked, or <c>null</c> when the invocation targets a command.
+    /// </summary>
+    public string? Ability { get; init; }
+
+    /// <summary>
+    /// Gets the stated ability input values, in the order they were stated; unstated inputs are not compared.
+    /// </summary>
+    public ImmutableArray<SemanticAbilityFieldValue> Inputs { get; init; } = [];
+}
+
+/// <summary>
+/// A named value of an ability input or returned field.
+/// </summary>
+/// <param name="Name">The input or field name.</param>
+/// <param name="Value">The value.</param>
+public sealed record SemanticAbilityFieldValue(string Name, SemanticValue Value);
+
+/// <summary>
+/// The answer an ability gives while a specification runs (ESM v51).
+/// </summary>
+/// <param name="System">The system.</param>
+/// <param name="Ability">The ability name.</param>
+/// <param name="Kind">How the ability answers.</param>
+public sealed record SemanticAbilityAnswer(SemanticId System, string Ability, SemanticAbilityAnswerKind Kind)
+{
+    /// <summary>
+    /// Gets the declared outcome the ability answers with, for <see cref="SemanticAbilityAnswerKind.Outcome"/>.
+    /// </summary>
+    public string? Outcome { get; init; }
+
+    /// <summary>
+    /// Gets the failure reason, for <see cref="SemanticAbilityAnswerKind.Failed"/>.
+    /// </summary>
+    public string? Reason { get; init; }
+
+    /// <summary>
+    /// Gets the values the ability returns, for <see cref="SemanticAbilityAnswerKind.Returned"/>.
+    /// </summary>
+    public ImmutableArray<SemanticAbilityFieldValue> Values { get; init; } = [];
+}

@@ -122,6 +122,11 @@ public record SpecificationSyntax(
     public IEnumerable<SpecificationCaptureSyntax> GivenCaptures { get; init; } = [];
 
     /// <summary>
+    /// Gets the answers the invoked abilities give, stated with <c>given &lt;System&gt;.&lt;Ability&gt; returns|answers|fails</c>, in authored order (ESM v51).
+    /// </summary>
+    public IEnumerable<SpecificationAbilityAnswerSyntax> GivenAbilityAnswers { get; init; } = [];
+
+    /// <summary>
     /// Gets the values pinned for the generated properties of a command a reaction invokes, stated with
     /// <c>given generated &lt;Command&gt;.&lt;property&gt; = &lt;value&gt;</c>, in authored order (ESM v30).
     /// </summary>

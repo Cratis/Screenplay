@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -35,6 +36,11 @@ internal static class InvocationValidator
             }
         }
 
+        foreach (var (slice, _) in declarations.Slices)
+        {
+            foreach (var answer in slice.Specifications.SelectMany(specification => specification.GivenAbilityAnswers)) ValidateAnswer(answer, abilities, context);
+        }
+
         foreach (var machine in application.StateMachines)
         {
             foreach (var entry in machine.States.SelectMany(state => state.Entering).Where(entry => entry.EntryKind == StateEntryKind.Invoke))
@@ -52,6 +58,20 @@ internal static class InvocationValidator
         }
 
         new InvocationValueScopeWalker(context).VisitApplication(application);
+    }
+
+    static void ValidateAnswer(SpecificationAbilityAnswerSyntax answer, Dictionary<string, AbilitySyntax> abilities, ParserContext context)
+    {
+        if (!abilities.TryGetValue(answer.Ability, out var ability))
+        {
+            context.Error(DiagnosticCodes.UnknownInvocationTarget, $"'{answer.Ability}' is not a declared system ability.", answer.Location);
+            return;
+        }
+
+        if (answer.Answer == "answers" && !ability.Outcomes.Any(outcome => outcome.Name == answer.Outcome))
+            context.Error(DiagnosticCodes.UnknownInvocationOutcome, $"'{answer.Ability}' declares no outcome '{answer.Outcome}'.", answer.Location);
+        foreach (var value in answer.Values.Where(value => !ability.Returns.Any(field => field.Name == value.Property)))
+            context.Error(DiagnosticCodes.InvalidAbilityAnswer, $"'{answer.Ability}' returns no '{value.Property}'.", value.Location);
     }
 
     static void ValidateTrigger(ReactionTriggerSyntax trigger, Dictionary<string, AbilitySyntax> abilities, ParserContext context)

@@ -240,11 +240,47 @@ public static partial class SemanticModelCanonicalJson
             WriteArray(writer, "thenInvocations", specification.ThenInvocations, (output, invocation) =>
             {
                 output.WriteStartObject();
+                if (invocation.Ability is not null)
+                {
+                    output.WriteString("system", invocation.System.ToString());
+                    CanonicalJson.WriteString(output, "ability", invocation.Ability);
+                    WriteArray(output, "inputs", invocation.Inputs, WriteAbilityFieldValue);
+                    output.WriteEndObject();
+                    return;
+                }
+
                 output.WriteString("command", invocation.Command.ToString());
                 WriteArray(output, "values", invocation.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
                 output.WriteEndObject();
             });
         }
+    }
+
+    static void WriteAbilityFieldValue(Utf8JsonWriter writer, SemanticAbilityFieldValue field)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", field.Name);
+        writer.WritePropertyName("value");
+        WriteValue(writer, field.Value);
+        writer.WriteEndObject();
+    }
+
+    static void WriteAbilityAnswer(Utf8JsonWriter writer, SemanticAbilityAnswer answer)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("system", answer.System.ToString());
+        CanonicalJson.WriteString(writer, "ability", answer.Ability);
+        writer.WriteString("kind", answer.Kind switch
+        {
+            SemanticAbilityAnswerKind.Returned => "returned",
+            SemanticAbilityAnswerKind.Outcome => "outcome",
+            SemanticAbilityAnswerKind.Failed => "failed",
+            _ => throw Unknown(nameof(SemanticAbilityAnswerKind), answer.Kind)
+        });
+        if (answer.Outcome is not null) CanonicalJson.WriteString(writer, "outcome", answer.Outcome);
+        if (answer.Reason is not null) CanonicalJson.WriteString(writer, "reason", answer.Reason);
+        WriteArray(writer, "values", answer.Values, WriteAbilityFieldValue);
+        writer.WriteEndObject();
     }
 
     static void WriteSpecificationCapture(Utf8JsonWriter writer, SemanticSpecificationCapture capture)

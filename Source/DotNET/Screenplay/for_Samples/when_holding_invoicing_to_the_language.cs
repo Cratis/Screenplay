@@ -26,7 +26,7 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
         ("`invokes <System>.<Ability>`, `compute`, `entering` bodies, approval `via`", 1252,
-            [("Documentation/screenplay/fixtures/ability-invocations.play", [typeof(InvocationBranchSyntax), typeof(InvocationValueExpressionSyntax)])])
+            [("Documentation/screenplay/fixtures/ability-invocations.play", [typeof(InvocationBranchSyntax), typeof(InvocationValueExpressionSyntax), typeof(SpecificationAbilityAnswerSyntax)])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =

@@ -162,6 +162,7 @@ public sealed partial class SemanticModelBinder
                 GivenClock = specification.GivenClock is null ? null : BindClock(specification.GivenClock),
                 GivenTimeZone = specification.GivenTimeZone?.Id,
                 GivenCaptures = [.. specification.GivenCaptures.Select(BindSpecificationCapture).OfType<SemanticSpecificationCapture>()],
+                GivenAbilityAnswers = [.. specification.GivenAbilityAnswers.Select(BindAbilityAnswer).OfType<SemanticAbilityAnswer>()],
                 GivenGenerated = [.. specification.GivenGenerated.Select(BindSpecificationGenerated).OfType<SemanticSpecificationGeneratedValue>()],
                 WhenClock = specification.WhenClock is null ? null : BindClock(specification.WhenClock),
                 WhenTrigger = specification.WhenTrigger is null ? null : BindSpecificationTrigger(specification.WhenTrigger),

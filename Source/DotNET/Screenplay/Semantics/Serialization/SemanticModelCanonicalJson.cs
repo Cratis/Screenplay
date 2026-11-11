@@ -554,6 +554,7 @@ public static partial class SemanticModelCanonicalJson
         }
         WriteAutomationSpecification(writer, specification);
         if (specification.GivenTimeZone is not null) CanonicalJson.WriteString(writer, "givenTimeZone", specification.GivenTimeZone);
+        if (!specification.GivenAbilityAnswers.IsDefaultOrEmpty) WriteArray(writer, "givenAbilityAnswers", specification.GivenAbilityAnswers, WriteAbilityAnswer);
         writer.WriteEndObject();
     }
 

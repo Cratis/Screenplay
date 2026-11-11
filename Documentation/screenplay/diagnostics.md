@@ -1820,6 +1820,7 @@ Abilities declared on a `system`, see [Systems and abilities](systems.md). `PLAY
 | `PLAY1014` | Error | A reaction trigger combines `invokes` with an attached body. |
 | `PLAY1015` | Warning | A `once` ability is invoked with `attempts` greater than one. |
 | `PLAY1016` | Error | Result branches are not allowed on this invocation. |
+| `PLAY1017` | Error | A `given <System>.<Ability> returns`, `answers` or `fails` step names an ability, outcome or returned field the system does not declare. |
 
 ## Screen visuals and slice placements
 

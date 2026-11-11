@@ -138,6 +138,8 @@ internal enum EsmBaselineShape
     Invocation,
     RefusalBranch,
     AbilityInput,
+    AbilityFieldValue,
+    AbilityAnswer,
     InvocationBranch,
     Capture,
     CaptureChildren,

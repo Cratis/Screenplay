@@ -30,5 +30,7 @@ public class when_round_tripping_the_v51_golden : Specification
     [Fact] void should_write_the_branches() => _text.ShouldContain("\"branches\":[{\"selector\":\"returned\"");
     [Fact] void should_write_the_outcome_branch() => _text.ShouldContain("\"selector\":\"NoCapacity\"");
     [Fact] void should_write_the_returned_value() => _text.ShouldContain("\"kind\":\"invocationValue\"");
+    [Fact] void should_write_the_ability_answers() => _text.ShouldContain("\"givenAbilityAnswers\":[{\"system\":");
+    [Fact] void should_write_the_expected_ability_invocation() => _text.ShouldContain("\"thenInvocations\":[{\"system\":");
     [Fact] void should_leave_v50_unextended() => EsmSchemaV50Support.Supports(LanguageVersion.V51, SemanticVersion.V51).ShouldBeFalse();
 }

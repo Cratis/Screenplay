@@ -4,6 +4,7 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -19,6 +20,7 @@ internal static partial class SpecificationParser
         new(line => GivenTimeZonePrefixRegex().IsMatch(line.Content), ParseGivenTimeZone),
         new(line => GivenGeneratedPrefixRegex().IsMatch(line.Content), ParseGivenGeneratedValue),
         new(line => KeywordRegex("given", "capture").IsMatch(line.Content), ParseGivenCapture),
+        new(line => GivenAbilityAnswerPrefixRegex().IsMatch(line.Content), ParseGivenAbilityAnswer),
         new(line => line.Content.StartsWith("given caller", StringComparison.Ordinal), ParseGivenCaller),
         new(line => IsGraphStep(line.Content, "given"), ParseGivenGraph),
         new(line => ReadModelPrefixRegex().IsMatch(line.Content), ParseGivenReadModel),
@@ -77,6 +79,26 @@ internal static partial class SpecificationParser
         }
     }
 
+    static void ParseGivenAbilityAnswer(ParserContext context, SourceLine line, GivenBodyState state)
+    {
+        var match = GivenAbilityAnswerRegex().Match(line.Content);
+        var answerKind = match.Groups[2].Value;
+        if (!match.Success || (answerKind == "returns" && (match.Groups[3].Success || match.Groups[4].Success)) ||
+            (answerKind == "answers" && !match.Groups[3].Success) || (answerKind == "fails" && match.Groups[3].Success))
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationInvocation, $"Invalid ability answer '{line.Content}' - expected 'given <System>.<Ability> returns', 'answers <Outcome>' or 'fails [\"reason\"]'", line.Location);
+            SkipBody(context, line.Indent);
+            return;
+        }
+
+        var answer = answerKind;
+        var outcome = match.Groups[3].Success ? match.Groups[3].Value : null;
+        var reason = match.Groups[4].Success ? StringLiteral.Unescape(match.Groups[4].Value) : null;
+        var values = answer == "returns" ? ParseValues(context, line) : [];
+        if (answer != "returns") SkipBody(context, line.Indent);
+        state.AbilityAnswers.Add(new(match.Groups[1].Value, answer, outcome, reason, values, line.Location));
+    }
+
     static void ParseGivenCaller(ParserContext context, SourceLine line, GivenBodyState state)
     {
         if (state.Caller is not null || state.CallerPersona is not null)
@@ -123,6 +145,8 @@ internal static partial class SpecificationParser
         public SpecificationCallerPersonaSyntax? CallerPersona { get; set; }
 
         public List<SpecificationEventSyntax> Events { get; } = [];
+
+        public List<SpecificationAbilityAnswerSyntax> AbilityAnswers { get; } = [];
 
         public List<SpecificationReadModelSyntax> ReadModels { get; } = [];
 

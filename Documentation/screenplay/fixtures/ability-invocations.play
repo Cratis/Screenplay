@@ -106,3 +106,25 @@ module Shipping
             on failed
               produces PickupBookingFailed
                 reason = $failure.reason
+      specification TheCarrierReturnsATrackingNumber
+        given Carrier.BookPickup returns
+          trackingNumber = "TRK-1"
+        when append OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupBooked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          trackingNumber = "TRK-1"
+        then invokes Carrier.BookPickup
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          address = "1 Main Street"
+      specification TheCarrierHasNoCapacity
+        given Carrier.BookPickup answers NoCapacity
+        when append OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupUnavailable
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"

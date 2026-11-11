@@ -99,6 +99,17 @@ public partial class ScreenplayPrinter
                 WriteSpecificationBlock(writer, $"given capture {capture.Capture}", capture, capture.Record);
             }
 
+            foreach (var answer in specification.GivenAbilityAnswers)
+            {
+                var header = answer.Answer switch
+                {
+                    "answers" => $"given {answer.Ability} answers {answer.Outcome}",
+                    "fails" => answer.Reason is null ? $"given {answer.Ability} fails" : $"given {answer.Ability} fails {StringLiteral.Quote(answer.Reason)}",
+                    _ => $"given {answer.Ability} returns"
+                };
+                WriteSpecificationBlock(writer, header, answer, answer.Values);
+            }
+
             foreach (var generated in specification.GivenGenerated)
             {
                 writer.Assignment($"given generated {generated.Command}.{generated.Property}", generated.Source, generated);

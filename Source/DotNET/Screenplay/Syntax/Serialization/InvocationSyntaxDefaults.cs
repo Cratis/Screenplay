@@ -15,7 +15,8 @@ internal static class InvocationSyntaxDefaults
         [typeof(InvokesSyntax)] = ["branches"],
         [typeof(OperationPhaseSyntax)] = ["invocations"],
         [typeof(WorkflowNodeSyntax)] = ["mappings", "returns", "file", "code", "via"],
-        [typeof(StateEntrySyntax)] = ["mappings", "file", "code"]
+        [typeof(StateEntrySyntax)] = ["mappings", "file", "code"],
+        [typeof(Specifications.SpecificationSyntax)] = ["givenAbilityAnswers"]
     };
 
     internal static bool Omit(SyntaxNode node, string member, object? value) =>

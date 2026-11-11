@@ -64,6 +64,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationCapture(capture);
         }
 
+        foreach (var answer in syntax.GivenAbilityAnswers)
+        {
+            VisitSpecificationAbilityAnswer(answer);
+        }
+
         foreach (var generated in syntax.GivenGenerated)
         {
             VisitSpecificationGeneratedValue(generated);
@@ -123,6 +128,16 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitSpecificationInvocation(invocation);
         }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationAbilityAnswerSyntax"/> node and the values it returns.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationAbilityAnswerSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationAbilityAnswer(SpecificationAbilityAnswerSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var value in syntax.Values) VisitPropertyMapping(value);
     }
 
     /// <summary>

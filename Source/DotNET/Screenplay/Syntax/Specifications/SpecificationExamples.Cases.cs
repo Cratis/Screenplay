@@ -100,6 +100,7 @@ public static partial class SpecificationExamples
             SpecificationStreamSyntax item => item with { StreamId = item.StreamId is null ? null : item.StreamId with { Source = Value(item.StreamId.Source) }, StreamIdParts = Values(item.StreamIdParts) },
             SpecificationOperationSyntax item => item with { Values = Values(item.Values) },
             SpecificationInvocationSyntax item => item with { Values = Values(item.Values) },
+            SpecificationAbilityAnswerSyntax item => item with { Values = Values(item.Values) },
             ScalarSpecificationReturnSyntax item => item with { Value = Value(item.Value) },
             RecordSpecificationReturnSyntax item => item with { Fields = Values(item.Fields) },
             _ => step
@@ -110,6 +111,7 @@ public static partial class SpecificationExamples
             Given = [.. specification.Given.Select(step => (SpecificationEventSyntax)Step(step))],
             GivenReadModels = [.. (specification.GivenReadModels ?? []).Select(step => (SpecificationReadModelSyntax)Step(step))],
             GivenCaptures = [.. specification.GivenCaptures.Select(step => (SpecificationCaptureSyntax)Step(step))],
+            GivenAbilityAnswers = [.. specification.GivenAbilityAnswers.Select(step => (SpecificationAbilityAnswerSyntax)Step(step))],
             When = specification.When is null ? null : (SpecificationCommandSyntax)Step(specification.When),
             WhenAppended = specification.WhenAppended is null ? null : (SpecificationEventSyntax)Step(specification.WhenAppended),
             WhenTrigger = specification.WhenTrigger is null ? null : (SpecificationTriggerSyntax)Step(specification.WhenTrigger),

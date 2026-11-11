@@ -26,6 +26,24 @@ public static partial class canonical_serialization_golden_vectors
                 parcelId ParcelId
               event PickupBookingFailed
                 reason String
+              readmodel ParcelStatus
+                parcelId ParcelId
+                lastEvent String
+              query ParcelStatusById => ParcelStatus optional
+                by parcelId ParcelId
+              projection ParcelStatusProjection => ParcelStatus
+                from OrderPacked
+                  parcelId = $eventSourceId
+                  lastEvent = "packed"
+                from PickupBooked
+                  parcelId = $eventSourceId
+                  lastEvent = "booked"
+                from PickupUnavailable
+                  parcelId = $eventSourceId
+                  lastEvent = "unavailable"
+                from PickupBookingFailed
+                  parcelId = $eventSourceId
+                  lastEvent = "failed"
               reaction PickupBooking
                 runs as system
                 when OrderPacked
@@ -41,6 +59,33 @@ public static partial class canonical_serialization_golden_vectors
                     on failed
                       produces PickupBookingFailed
                         reason = $failure.reason
+              specification TheCarrierReturnsATrackingNumber
+                given Carrier.BookPickup returns
+                  trackingNumber = "TRK-1"
+                when append OrderPacked
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+                then PickupBooked
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  trackingNumber = "TRK-1"
+                then invokes Carrier.BookPickup
+                  parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+              specification TheCarrierHasNoCapacity
+                given Carrier.BookPickup answers NoCapacity
+                when append OrderPacked
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+                then PickupUnavailable
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+              specification TheCarrierFails
+                given Carrier.BookPickup fails "down"
+                when append OrderPacked
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+                then PickupBookingFailed
+                  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+                  reason = "down"
         """;
 
     /// <summary>

@@ -4300,6 +4300,9 @@ public static class DiagnosticCodes
     /// <summary>Result branches are not allowed on this invocation: a workflow node, state machine or operation phase handles results elsewhere.</summary>
     public const string InvocationBranchesNotAllowed = "PLAY1016";
 
+    /// <summary>A <c>given &lt;System&gt;.&lt;Ability&gt; returns|answers|fails</c> step names an ability, outcome or returned field the system does not declare.</summary>
+    public const string InvalidAbilityAnswer = "PLAY1017";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>

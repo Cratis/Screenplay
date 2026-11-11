@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax.Specifications;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -21,6 +22,12 @@ internal static partial class SpecificationParser
 
         return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
     }
+
+    [GeneratedRegex(@"^given\s+[A-Za-z_]\w*\.[A-Za-z_]\w*\s+(?:returns|answers|fails)\b", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenAbilityAnswerPrefixRegex();
+
+    [GeneratedRegex("^given\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*)\\s+(returns|answers|fails)(?:\\s+([A-Za-z_]\\w*)|\\s+\"(" + StringLiteral.BodyPattern + ")\")?$", RegexOptions.NonBacktracking)]
+    private static partial Regex GivenAbilityAnswerRegex();
 
     [GeneratedRegex(@"^then\s+invokes\b", RegexOptions.NonBacktracking)]
     private static partial Regex ThenInvokesPrefixRegex();

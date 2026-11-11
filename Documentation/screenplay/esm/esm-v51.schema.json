@@ -69,6 +69,33 @@
         }
       }
     },
+    "AbilityAnswer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "system": {
+          "type": "string"
+        },
+        "ability": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityFieldValue"
+          }
+        }
+      }
+    },
     "AbilityField": {
       "type": "object",
       "additionalProperties": false,
@@ -78,6 +105,18 @@
         },
         "type": {
           "$ref": "#/$defs/TypeReference"
+        }
+      }
+    },
+    "AbilityFieldValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Value"
         }
       }
     },
@@ -3067,6 +3106,12 @@
         },
         "givenTimeZone": {
           "type": "string"
+        },
+        "givenAbilityAnswers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityAnswer"
+          }
         }
       }
     },
@@ -3103,6 +3148,18 @@
         },
         "eventSource": {
           "$ref": "#/$defs/EventSource"
+        },
+        "system": {
+          "type": "string"
+        },
+        "ability": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityFieldValue"
+          }
         }
       }
     },

@@ -329,6 +329,7 @@ internal static partial class SpecificationParser
             GivenClock = givenState.Clock,
             GivenTimeZone = givenState.TimeZone,
             GivenCaptures = givenState.Captures,
+            GivenAbilityAnswers = givenState.AbilityAnswers,
             GivenGenerated = givenState.Generated,
             WhenClock = whenClock,
             WhenTrigger = whenTrigger,

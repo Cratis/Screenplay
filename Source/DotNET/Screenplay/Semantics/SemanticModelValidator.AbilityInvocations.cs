@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
@@ -8,7 +10,9 @@ internal static partial class SemanticModelValidator
     internal static bool UsesAbilityInvocations(SemanticApplication application) =>
         application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
             .SelectMany(slice => slice.Reactions).SelectMany(reaction => reaction.Triggers)
-            .SelectMany(trigger => trigger.Invokes).Any(invocation => invocation?.Ability is not null);
+            .SelectMany(trigger => trigger.Invokes).Any(invocation => invocation?.Ability is not null) ||
+        application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).SelectMany(slice => slice.Specifications)
+            .Any(specification => !specification.GivenAbilityAnswers.IsDefaultOrEmpty || specification.ThenInvocations.Any(invocation => invocation?.Ability is not null));
 
     private sealed partial class ValidationContext
     {
@@ -65,6 +69,55 @@ internal static partial class SemanticModelValidator
                     _invocationBranch = null;
                     _invocationAbility = null;
                 }
+            }
+        }
+
+        SemanticAbility ResolveAbility(SemanticId system, string? name, string owner)
+        {
+            var declared = _eventRoutesApplication.Systems.FirstOrDefault(candidate => candidate.Id == system)
+                ?? throw new InvalidSemanticContract($"{owner} names an unresolved system.");
+            return declared.Abilities.FirstOrDefault(candidate => candidate.Name == name)
+                ?? throw new InvalidSemanticContract($"{owner} names an ability its system does not declare.");
+        }
+
+        void ValidateAbilityValues(ImmutableArray<SemanticAbilityFieldValue> values, ImmutableArray<SemanticAbilityField> fields, string owner)
+        {
+            if (values.IsDefault) throw new InvalidSemanticContract($"{owner} requires initialized values.");
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var value in values)
+            {
+                if (!seen.Add(value.Name) || fields.FirstOrDefault(candidate => candidate.Name == value.Name) is not { } field)
+                    throw new InvalidSemanticContract($"{owner} states '{value.Name}' more than once or not at all declared.");
+                ValidateValue(value.Value, field.Type, owner, false);
+            }
+        }
+
+        void ValidateAbilityInvocationStep(SemanticSpecification specification, SemanticSpecificationInvocation invocation)
+        {
+            var owner = $"Specification '{specification.Name}' states an ability invocation that";
+            if (!_semanticVersion.IsAtLeast(SemanticVersion.V51)) throw new InvalidSemanticContract("Ability invocations require ESM v51 or later.");
+            if (invocation.Command.IsSet || !invocation.Values.IsDefaultOrEmpty) throw new InvalidSemanticContract($"{owner} also names a command.");
+            ValidateAbilityValues(invocation.Inputs, ResolveAbility(invocation.System, invocation.Ability, owner).Inputs, owner);
+        }
+
+        void ValidateAbilityAnswers(SemanticSpecification specification)
+        {
+            RequireObjects(specification.GivenAbilityAnswers, nameof(specification.GivenAbilityAnswers), "ability answer");
+            if (specification.GivenAbilityAnswers.IsDefaultOrEmpty) return;
+            if (!_semanticVersion.IsAtLeast(SemanticVersion.V51)) throw new InvalidSemanticContract("Ability answers require ESM v51 or later.");
+            var seen = new HashSet<(SemanticId, string)>();
+            foreach (var answer in specification.GivenAbilityAnswers)
+            {
+                var owner = $"Specification '{specification.Name}' gives an ability answer that";
+                var ability = ResolveAbility(answer.System, answer.Ability, owner);
+                if (!seen.Add((answer.System, answer.Ability))) throw new InvalidSemanticContract($"{owner} repeats an ability.");
+                if (!Enum.IsDefined(answer.Kind)) throw new InvalidSemanticContract($"{owner} has an unknown kind.");
+                var outcomeOnly = answer.Kind == SemanticAbilityAnswerKind.Outcome;
+                if (outcomeOnly != (answer.Outcome is not null) || (outcomeOnly && !ability.Outcomes.Contains(answer.Outcome!)))
+                    throw new InvalidSemanticContract($"{owner} names an outcome only when it answers one, and the ability must declare it.");
+                if (answer.Reason is not null && answer.Kind != SemanticAbilityAnswerKind.Failed) throw new InvalidSemanticContract($"{owner} states a reason without failing.");
+                if (answer.Kind != SemanticAbilityAnswerKind.Returned && !answer.Values.IsDefaultOrEmpty) throw new InvalidSemanticContract($"{owner} returns values without returning.");
+                ValidateAbilityValues(answer.Values, ability.Returns, owner);
             }
         }
 
