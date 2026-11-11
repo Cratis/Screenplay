@@ -28,6 +28,7 @@ internal static class SemanticArrayClassification
         "slices/specifications", "slices/reactions", "slices/captures", "slices/screens",
         "types/properties", "events/properties", "commands/properties", "readModels/properties", "triggers/properties",
         "priorRevisions/properties", "eventSources/streams", "queries/keyParts",
+        "application/systems",
     ];
 
     static readonly string[] _nameSets =
@@ -56,6 +57,7 @@ internal static class SemanticArrayClassification
         "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path", "ordering/sortBy",
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
+        "abilities/inputs", "abilities/returns", "abilities/outcomes",
         "handler/possibleEvents",
         "invokes/mappings", "invokes/onRefused", "onRefused/produces",
         "map/targets", "map/template", "map/translations", "mappings/target",
@@ -119,6 +121,9 @@ internal static class SemanticArrayClassification
 
         // Agent exposure is an allowlist; the canonical writer sorts it by operation kind and identity.
         rules.Add("agents/operations", new(SemanticArrayKind.ReferenceSet, "operation"));
+
+        // A system holds its abilities by name; the canonical writer sorts them by ordinal name.
+        rules.Add("systems/abilities", new(SemanticArrayKind.NameSet, "name"));
         rules.Add("reducers/transitions", new(SemanticArrayKind.ReferenceSet, "eventContract"));
         rules.Add("key/parts", new(SemanticArrayKind.ReferenceSet, "property"));
         rules.Add("parentKey/parts", new(SemanticArrayKind.ReferenceSet, "property"));

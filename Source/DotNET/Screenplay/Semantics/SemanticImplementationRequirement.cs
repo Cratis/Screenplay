@@ -42,7 +42,12 @@ public enum SemanticImplementationRole
     /// <summary>
     /// A concept's value generator; result version 1 is String, with Now/Tenant context only.
     /// </summary>
-    ValueGeneration
+    ValueGeneration,
+
+    /// <summary>
+    /// The effect of a system ability (ESM v50, decision 0159).
+    /// </summary>
+    AbilityEffect
 }
 
 /// <summary>Whether an attachment's content revision is known.</summary>

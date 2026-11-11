@@ -47,7 +47,7 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _literals = new(StringComparer.Ordinal)
     {
         "alphabet", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
-        "commandReadMode", "contextMember", "description", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
+        "commandReadMode", "contextMember", "description", "effect", "outcomes", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",

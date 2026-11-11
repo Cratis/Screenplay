@@ -208,6 +208,11 @@ sealed class SemanticCompilationIndex
             index.RegisterProperties(triggerAddress, trigger.Properties);
         }
 
+        foreach (var system in application.Systems)
+        {
+            index.Register(SemanticAddress.ForSystem(applicationIdentity, system.Name), system.Id);
+        }
+
         foreach (var source in application.EventSources)
         {
             var sourceAddress = SemanticAddress.ForEventSource(applicationIdentity, source.Name);

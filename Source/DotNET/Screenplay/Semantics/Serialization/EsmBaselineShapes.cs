@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -31,8 +31,12 @@ internal static class EsmBaselineShapes
     static readonly ImmutableDictionary<EsmBaselineShape, string> _definitions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema schemaVersion languageVersion semanticVersion revision application:Application",
-        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification graphQueries@40:GraphQuery eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember agents@48:Agents",
+        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification graphQueries@40:GraphQuery eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember agents@48:Agents systems@50:System",
         ["Agents"] = "tokenKind operations:AgentOperation",
+        ["System"] = "id name abilities:Ability",
+        ["Ability"] = "name effect inputs:AbilityField returns:AbilityField outcomes answersLater realization:AbilityRealization",
+        ["AbilityField"] = "name type:TypeReference",
+        ["AbilityRealization"] = "kind requirementId",
         ["AgentOperation"] = "kind operation scope description",
         ["Concept"] = "id name primitive values validations:Validation numbers@12 compliance@13:Compliance generation@15:Generation",
         ["Generation"] = "kind pattern checksum min max requirement size count encoding alphabet prefix case",
