@@ -1,0 +1,108 @@
+// Ability invocations from reactions, workflows, state machines and approvals, with compute nodes and entering bodies (#1252).
+// They parse, print and validate; no supported ESM version carries their call sites yet, so binding refuses them with PLAY0268.
+domain Acme.Ship
+
+concept ParcelId : Uuid
+concept TrackingNumber : String
+
+system Carrier
+  ability BookPickup idempotent
+    parcelId ParcelId
+    address String
+    returns
+      trackingNumber TrackingNumber
+    outcome NoCapacity
+  ability Ask once
+    answers later
+    parcelId ParcelId
+    outcome approved
+    outcome rejected
+
+policy Anyone
+  require authenticated
+
+system Chat
+  ability Post
+    channel String
+    text String
+
+statemachine ParcelFlow
+  follows ParcelView
+  state Packed initial
+    entering invokes Chat.Post
+      channel = "#dispatch"
+      text = "packed"
+    entering
+      ```csharp
+      return Empty;
+      ```
+    on PickupBooked -> Shipped
+  state Shipped final
+
+workflow Pickup
+  for ParcelView
+  trigger Manual manual
+    -> BookPickup
+  action BookPickup invokes Carrier.BookPickup attempts 3
+    parcelId = parcelId
+    address = "x"
+    next -> Risk
+    NoCapacity -> Done
+    failed -> Done
+  compute Risk
+    returns
+      score Int
+    ```csharp
+    return new { score = 1 };
+    ```
+    next -> Review
+  approval Review by Anyone via Carrier.Ask expires after 2 days
+    approved -> Tell
+    rejected -> Dec
+  action Tell invokes Chat.Post
+    channel = "#c"
+    text = BookPickup.trackingNumber
+    next -> Dec
+  decide Dec when Risk.score > 3
+    "a" -> Done2
+    "b" -> Done
+  action Done2 invokes Chat.Post
+    channel = $trigger.x
+    text = "t"
+    next -> Done
+  action Done invokes Chat.Post
+    channel = "c"
+    text = "x"
+
+module Shipping
+  feature Pickup
+    slice Automation PickupBooking
+      readmodel ParcelView
+        parcelId ParcelId
+        status String
+      event OrderPacked
+        parcelId ParcelId
+        shippingAddress String
+      event PickupBooked
+        trackingNumber TrackingNumber
+      event PickupUnavailable
+        parcelId ParcelId
+      event PickupBookingFailed
+        reason String
+      reaction PickupBooking
+        runs as system
+        when OrderPacked
+          parcelId
+          shippingAddress
+          invokes Carrier.BookPickup
+            parcelId = parcelId
+            address = shippingAddress
+            on returned
+              produces PickupBooked
+                trackingNumber = $result.trackingNumber
+            on NoCapacity
+              produces PickupUnavailable
+                parcelId = parcelId
+            on failed
+              produces PickupBookingFailed
+                reason = $failure.reason

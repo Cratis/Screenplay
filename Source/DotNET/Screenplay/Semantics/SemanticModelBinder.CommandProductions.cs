@@ -85,6 +85,19 @@ public sealed partial class SemanticModelBinder
                     node.Location,
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#301")));
             }
+
+            // Ability invocations, compute nodes and entering bodies parse, print and validate (#1252) but no supported ESM version carries their call sites yet.
+            if (node is InvokesSyntax { IsAbility: true } or InvocationBranchSyntax or InvocationValueExpressionSyntax or
+                WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Compute } or WorkflowNodeSyntax { Via: not null } or
+                StateEntrySyntax { EntryKind: StateEntryKind.Invoke or StateEntryKind.Body } ||
+                node is WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Action, Command: { } target } && target.Contains('.', StringComparison.Ordinal))
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Ability invocations, compute nodes and entering bodies are not admitted by any supported executable model (ESM) version yet (#1252).",
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#1252")));
+            }
         }
 
         // Intent has no production feature gates. Do not dereference malformed hint collections here;

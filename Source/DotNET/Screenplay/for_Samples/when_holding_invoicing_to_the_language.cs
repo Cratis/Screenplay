@@ -24,7 +24,9 @@ public class when_holding_invoicing_to_the_language : Specification
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
-            [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])])
+            [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
+        ("`invokes <System>.<Ability>`, `compute`, `entering` bodies, approval `via`", 1252,
+            [("Documentation/screenplay/fixtures/ability-invocations.play", [typeof(InvocationBranchSyntax), typeof(InvocationValueExpressionSyntax)])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
