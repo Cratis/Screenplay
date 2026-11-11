@@ -14,14 +14,14 @@ internal sealed class LifecycleValidator
     static readonly Dictionary<WorkflowNodeKind, string[]> _outlets = new()
     {
         [WorkflowNodeKind.Trigger] = ["next"],
-        [WorkflowNodeKind.Action] = ["next", "failed"],
+        [WorkflowNodeKind.Action] = ["next", "failed", "refused"],
         [WorkflowNodeKind.Wait] = ["resumed", "expired"],
         [WorkflowNodeKind.Approval] = ["approved", "rejected", "expired"],
         [WorkflowNodeKind.ForEach] = ["each", "completed"],
         [WorkflowNodeKind.Join] = ["next"]
     };
 
-    static readonly HashSet<string> _reservedOutlets = new(StringComparer.Ordinal) { "next", "failed", "resumed", "expired", "approved", "rejected", "each", "completed" };
+    static readonly HashSet<string> _reservedOutlets = new(StringComparer.Ordinal) { "next", "failed", "refused", "resumed", "expired", "approved", "rejected", "each", "completed" };
 
     readonly ApplicationSyntax _application;
     readonly DocumentNames _names;

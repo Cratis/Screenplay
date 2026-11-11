@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
-    static readonly string[] _decisionReserved = ["next", "failed", "resumed", "expired", "approved", "rejected", "each", "completed"];
+    static readonly string[] _decisionReserved = ["next", "failed", "refused", "resumed", "expired", "approved", "rejected", "each", "completed"];
 
     // ESM v36 constructs: state machines and workflows. A v36 model contains one; a model before v36 contains none.
     internal static bool UsesLifecycles(SemanticApplication application) =>
@@ -14,7 +14,7 @@ internal static partial class SemanticModelValidator
     internal static string[] Outlets(SemanticWorkflowNodeKind kind) => kind switch
     {
         SemanticWorkflowNodeKind.Trigger or SemanticWorkflowNodeKind.Join => ["next"],
-        SemanticWorkflowNodeKind.Action => ["next", "failed"],
+        SemanticWorkflowNodeKind.Action => ["next", "failed", "refused"],
         SemanticWorkflowNodeKind.Wait => ["resumed", "expired"],
         SemanticWorkflowNodeKind.Approval => ["approved", "rejected", "expired"],
         SemanticWorkflowNodeKind.ForEach => ["each", "completed"],

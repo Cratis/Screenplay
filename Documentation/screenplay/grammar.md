@@ -134,7 +134,8 @@ StateMachineDecl = "statemachine", Ident, NL,
 StateDecl      = "state", Ident, { "initial" | "final" }, NL,
                  [ INDENT, { EnteringDecl | TransitionDecl }, DEDENT ] ;
 
-EnteringDecl   = "entering", ( "send" | "start" ), Ident, NL ;       (* a command, or a workflow *)
+EnteringDecl   = "entering", ( "invokes" | "starts" ), Ident, NL ;     (* a command, or a workflow *)
+(* "entering send", "entering start", "action ... sends" and "then sends" are deprecated spellings of "invokes" and "starts" (PLAY0397). *)
 
 TransitionDecl = "on", QualifiedName, [ "when", Condition ], "->", Ident, NL ;
 
@@ -159,7 +160,7 @@ TriggerNode    = "trigger", [ Ident ], ( "on", QualifiedName
                                        | "when", Ident, "enters", Ident
                                        | TriggerSchedule                (* "every <n> <unit>" | "at HH:mm ..." *)
                                        | "manual" ) ;
-ActionNode     = "action", Ident, "sends", Ident,
+ActionNode     = "action", Ident, "invokes", Ident,
                  [ "attempts", Number ], [ "timeout", Duration ], [ "retry", "after", Duration ] ;
 DecideNode     = "decide", Ident, "when", Condition ;
 WaitNode       = "wait", Ident, "for", ( Duration | QualifiedName, [ "expires", "after", Duration ] ) ;
@@ -188,7 +189,7 @@ LifecycleSpecDecl = "specification", Ident, NL,
                               [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                             | "when", "start", Expression, NL
                             | "outcome", Ident, Ident, NL
-                            | "then", ( "is", Ident | "sends", Ident | "starts", Ident | "completes"
+                            | "then", ( "is", Ident | "invokes", Ident | "starts", Ident | "completes"
                                       | "fails", "at", Ident | "waits", "at", Ident ), NL }, DEDENT ;
 
 (* -------------------------------------------------------------- *)

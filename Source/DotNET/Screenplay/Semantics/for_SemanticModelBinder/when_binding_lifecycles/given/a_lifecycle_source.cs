@@ -99,8 +99,8 @@ internal static class a_lifecycle_source
           state Draft initial
             on InvoiceSent -> Sent
           state Sent
-            entering send ChargeFee
-            entering start Collect
+            entering invokes ChargeFee
+            entering starts Collect
             on InvoiceMarkedOverdue when overdue == true -> Overdue
             on InvoicePaid -> Paid
           state Overdue
@@ -119,7 +119,7 @@ internal static class a_lifecycle_source
             when append InvoiceSent
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             then is Sent
-            then sends ChargeFee
+            then invokes ChargeFee
             then starts Collect
 
           specification AnOverdueInvoiceIsOverdue
@@ -149,7 +149,7 @@ internal static class a_lifecycle_source
             -> ChargeLateFee
           trigger Started manual
             -> ChargeLateFee
-          action ChargeLateFee sends ChargeFee attempts 3 timeout 30 seconds retry after 5 seconds
+          action ChargeLateFee invokes ChargeFee attempts 3 timeout 30 seconds retry after 5 seconds
             next -> Pause
             failed -> Approve
           wait Pause for 2 days
@@ -160,7 +160,7 @@ internal static class a_lifecycle_source
           foreach EachLine over lines parallel 2
             each -> TagLine
             completed -> Await
-          action TagLine sends TagInvoice
+          action TagLine invokes TagInvoice
             next -> AllTagged
           join AllTagged all
           wait Await for InvoicePaid expires after 7 days
@@ -170,14 +170,14 @@ internal static class a_lifecycle_source
             approved -> Write
             rejected -> Plan
             expired -> Write
-          action Write sends WriteOff
+          action Write invokes WriteOff
             next -> Merge
-          action Plan sends OfferPlan
+          action Plan invokes OfferPlan
             next -> Merge
           join Merge any
             next -> Final
           join Final at least 2
-          action Done sends TagInvoice
+          action Done invokes TagInvoice
 
           specification APaidInvoiceIsTagged
             given InvoiceRegistered
@@ -192,10 +192,10 @@ internal static class a_lifecycle_source
             when append InvoiceMarkedOverdue
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             outcome Await resumed
-            then sends ChargeFee
-            then sends TagInvoice
-            then sends TagInvoice
-            then sends TagInvoice
+            then invokes ChargeFee
+            then invokes TagInvoice
+            then invokes TagInvoice
+            then invokes TagInvoice
             then completes
 
           specification NoPaymentIsWrittenOff
@@ -212,10 +212,10 @@ internal static class a_lifecycle_source
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             outcome Await expired
             outcome Approve approved
-            then sends ChargeFee
-            then sends TagInvoice
-            then sends TagInvoice
-            then sends WriteOff
+            then invokes ChargeFee
+            then invokes TagInvoice
+            then invokes TagInvoice
+            then invokes WriteOff
             then completes
 
           specification TheRunWaits
@@ -230,9 +230,9 @@ internal static class a_lifecycle_source
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             when append InvoiceMarkedOverdue
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
-            then sends ChargeFee
-            then sends TagInvoice
-            then sends TagInvoice
+            then invokes ChargeFee
+            then invokes TagInvoice
+            then invokes TagInvoice
             then waits at Await
 
           specification AFailedFeeFailsNothingButAsksForApproval
@@ -249,10 +249,10 @@ internal static class a_lifecycle_source
               for "9c858901-8a57-4791-81fe-4c455b099bc9"
             outcome ChargeLateFee failed
             outcome Approve rejected
-            then sends ChargeFee
-            then sends ChargeFee
-            then sends ChargeFee
-            then sends OfferPlan
+            then invokes ChargeFee
+            then invokes ChargeFee
+            then invokes ChargeFee
+            then invokes OfferPlan
             then completes
 
           specification AStartedRunFails
@@ -266,10 +266,10 @@ internal static class a_lifecycle_source
             when start "9c858901-8a57-4791-81fe-4c455b099bc9"
             outcome ChargeLateFee failed
             outcome Approve expired
-            then sends ChargeFee
-            then sends ChargeFee
-            then sends ChargeFee
-            then sends WriteOff
+            then invokes ChargeFee
+            then invokes ChargeFee
+            then invokes ChargeFee
+            then invokes WriteOff
             then completes
 
         """;

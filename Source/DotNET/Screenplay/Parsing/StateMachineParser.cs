@@ -100,8 +100,23 @@ internal static partial class StateMachineParser
             {
                 case "entering":
                     var entry = EnteringRegex().Match(line.Content);
-                    if (!entry.Success) context.Error(DiagnosticCodes.InvalidStateMachineDeclaration, $"Invalid entering '{line.Content}' - expected 'entering send <Command>' or 'entering start <Workflow>'.", line.Location);
-                    else entering.Add(new(entry.Groups[1].Value == "send" ? StateEntryKind.Send : StateEntryKind.Start, entry.Groups[2].Value, line.Location));
+                    if (!entry.Success)
+                    {
+                        context.Error(DiagnosticCodes.InvalidStateMachineDeclaration, $"Invalid entering '{line.Content}' - expected 'entering invokes <Command>' or 'entering starts <Workflow>'.", line.Location);
+                    }
+                    else
+                    {
+                        var verb = entry.Groups[1].Value;
+                        var legacy = string.Equals(verb, "send", StringComparison.Ordinal) || string.Equals(verb, "start", StringComparison.Ordinal);
+                        var sends = string.Equals(verb, "send", StringComparison.Ordinal) || string.Equals(verb, "invokes", StringComparison.Ordinal);
+                        if (legacy)
+                        {
+                            context.Warning(DiagnosticCodes.LegacyInlineCodeFence, $"'entering {verb}' is deprecated - use 'entering {(sends ? "invokes" : "starts")}'.", line.Location);
+                        }
+
+                        entering.Add(new(sends ? StateEntryKind.Send : StateEntryKind.Start, entry.Groups[2].Value, line.Location));
+                    }
+
                     OperationParser.RejectChildren(context, line, DiagnosticCodes.InvalidStateMachineDeclaration, "An entering line cannot have children.");
                     break;
                 case "on":
@@ -144,7 +159,7 @@ internal static partial class StateMachineParser
     [GeneratedRegex(@"^state\s+([A-Za-z_]\w*)((?:\s+(?:initial|final))*)$", RegexOptions.NonBacktracking)]
     private static partial Regex StateRegex();
 
-    [GeneratedRegex(@"^entering\s+(send|start)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^entering\s+(invokes|starts|send|start)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EnteringRegex();
 
     [GeneratedRegex(@"^on\s+([A-Za-z_][\w.]*)(?:\s+when\s+(.+?))?\s*->\s*([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]

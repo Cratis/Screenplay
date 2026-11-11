@@ -684,8 +684,8 @@ statemachine InvoiceLifecycle
     on InvoiceMarkedOverdue when status == "overdue" -> Overdue
     on InvoiceCancelled -> Cancelled
   state Overdue
-    entering send ApplyLateFee
-    entering start CollectOverdue
+    entering invokes ApplyLateFee
+    entering starts CollectOverdue
     on InvoicePaid -> Paid
     on InvoiceCancelled -> Cancelled
   state Paid final
@@ -702,7 +702,7 @@ statemachine InvoiceLifecycle
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
       overdueAt = "2026-10-02T09:00:00Z"
     then is Overdue
-    then sends ApplyLateFee
+    then invokes ApplyLateFee
     then starts CollectOverdue
 
   specification AnUnsentInvoiceCannotGoOverdue
@@ -724,7 +724,7 @@ workflow CollectOverdue
     -> ApplyFee
   trigger Manual manual
     -> ApplyFee
-  action ApplyFee sends ApplyLateFee attempts 2 timeout 30 seconds retry after 10 seconds
+  action ApplyFee invokes ApplyLateFee attempts 2 timeout 30 seconds retry after 10 seconds
     next -> Grace
     failed -> ApproveWriteOff
   wait Grace for 3 days
@@ -735,7 +735,7 @@ workflow CollectOverdue
   foreach TagEachLine over lineItems parallel 2
     each -> TagLine
     completed -> AwaitPayment
-  action TagLine sends TagInvoice
+  action TagLine invokes TagInvoice
     next -> AllTagged
   join AllTagged all
   wait AwaitPayment for InvoicePaid expires after 14 days
@@ -745,9 +745,9 @@ workflow CollectOverdue
     approved -> WriteOff
     rejected -> Plan
     expired -> WriteOff
-  action WriteOff sends WriteOffInvoice
-  action Plan sends RequestPaymentPlan
-  action Close sends TagInvoice
+  action WriteOff invokes WriteOffInvoice
+  action Plan invokes RequestPaymentPlan
+  action Close invokes TagInvoice
 
   specification APaidInvoiceEndsTheChase
     description "The invoice is paid while the process waits, so it only tags the invoice"
@@ -760,8 +760,8 @@ workflow CollectOverdue
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
       overdueAt = "2026-10-02T09:00:00Z"
     outcome AwaitPayment resumed
-    then sends ApplyLateFee
-    then sends TagInvoice
+    then invokes ApplyLateFee
+    then invokes TagInvoice
     then completes
 
   specification EveryLineIsTagged
@@ -784,9 +784,9 @@ workflow CollectOverdue
     when append InvoiceMarkedOverdue
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
       overdueAt = "2026-10-02T09:00:00Z"
-    then sends ApplyLateFee
-    then sends TagInvoice
-    then sends TagInvoice
+    then invokes ApplyLateFee
+    then invokes TagInvoice
+    then invokes TagInvoice
     then waits at AwaitPayment
 
   specification NoPaymentMeansAWriteOff
@@ -801,8 +801,8 @@ workflow CollectOverdue
       overdueAt = "2026-10-02T09:00:00Z"
     outcome AwaitPayment expired
     outcome ApproveWriteOff approved
-    then sends ApplyLateFee
-    then sends WriteOffInvoice
+    then invokes ApplyLateFee
+    then invokes WriteOffInvoice
     then completes
 
   specification ARejectedWriteOffBecomesAPaymentPlan
@@ -817,8 +817,8 @@ workflow CollectOverdue
       overdueAt = "2026-10-02T09:00:00Z"
     outcome AwaitPayment expired
     outcome ApproveWriteOff rejected
-    then sends ApplyLateFee
-    then sends RequestPaymentPlan
+    then invokes ApplyLateFee
+    then invokes RequestPaymentPlan
     then completes
 
   specification AFeeThatCannotBeAppliedGoesToApproval
@@ -833,9 +833,9 @@ workflow CollectOverdue
       overdueAt = "2026-10-02T09:00:00Z"
     outcome ApplyFee failed
     outcome ApproveWriteOff expired
-    then sends ApplyLateFee
-    then sends ApplyLateFee
-    then sends WriteOffInvoice
+    then invokes ApplyLateFee
+    then invokes ApplyLateFee
+    then invokes WriteOffInvoice
     then completes
 
 // ============================================================

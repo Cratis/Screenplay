@@ -11,7 +11,7 @@ public partial class ScreenplayPrinter
     static string NodeText(WorkflowNodeSyntax node) => node.NodeKind switch
     {
         WorkflowNodeKind.Trigger => $"trigger{TriggerName(node)} {TriggerText(node)}",
-        WorkflowNodeKind.Action => $"action {node.Name} sends {node.Command}{(node.Attempts is { } attempts ? $" attempts {attempts}" : string.Empty)}{(node.Timeout is { } timeout ? $" timeout {DurationText(timeout)}" : string.Empty)}{(node.RetryAfter is { } retry ? $" retry after {DurationText(retry)}" : string.Empty)}",
+        WorkflowNodeKind.Action => $"action {node.Name} invokes {node.Command}{(node.Attempts is { } attempts ? $" attempts {attempts}" : string.Empty)}{(node.Timeout is { } timeout ? $" timeout {DurationText(timeout)}" : string.Empty)}{(node.RetryAfter is { } retry ? $" retry after {DurationText(retry)}" : string.Empty)}",
         WorkflowNodeKind.Decide => $"decide {node.Name} when {ScreenplaySyntaxText.Condition(node.Condition!)}",
         WorkflowNodeKind.Wait => node.Duration is { } duration
             ? $"wait {node.Name} for {DurationText(duration)}"
@@ -60,7 +60,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"state {state.Name}{(state.IsInitial ? " initial" : string.Empty)}{(state.IsFinal ? " final" : string.Empty)}", state);
                 using (writer.Indent())
                 {
-                    foreach (var entry in state.Entering) writer.Line($"entering {(entry.EntryKind == StateEntryKind.Send ? "send" : "start")} {entry.Target}", entry);
+                    foreach (var entry in state.Entering) writer.Line($"entering {(entry.EntryKind == StateEntryKind.Send ? "invokes" : "starts")} {entry.Target}", entry);
                     foreach (var transition in state.Transitions)
                     {
                         var when = transition.When is null ? string.Empty : $" when {ScreenplaySyntaxText.Condition(transition.When)}";
@@ -116,7 +116,7 @@ public partial class ScreenplayPrinter
                 var text = expectation.Expectation switch
                 {
                     LifecycleExpectationKind.State => $"then is {expectation.Target}",
-                    LifecycleExpectationKind.Sends => $"then sends {expectation.Target}",
+                    LifecycleExpectationKind.Sends => $"then invokes {expectation.Target}",
                     LifecycleExpectationKind.Starts => $"then starts {expectation.Target}",
                     LifecycleExpectationKind.Fails => $"then fails at {expectation.Target}",
                     LifecycleExpectationKind.Waits => $"then waits at {expectation.Target}",
