@@ -76,7 +76,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
-    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
+    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system. Declare abilities on it (ESM v50); a system without abilities is not admitted by any supported executable model (ESM) version.' },
     { label: 'statemachine', insertText: 'statemachine ${1:Name}\n    follows ${2:ReadModel}\n    state ${3:Placed} initial\n        on ${4:Event} -> ${5:Paid}\n    state ${5:Paid} final', documentation: 'Where a thing is in its lifecycle, derived from the read model it follows (ESM v36). Exactly one initial state; a transition is `on <Event> [when <condition>] -> <State>`; `entering send <Command>` or `entering start <Workflow>` says what entering a state does.' },
     { label: 'workflow', insertText: 'workflow ${1:Name}\n    for ${2:ReadModel}\n    trigger on ${3:Event}\n        -> ${4:Step}\n    action ${4:Step} invokes ${5:Command}', documentation: 'A durable process that runs one at a time per subject (ESM v36): trigger, action, decide, wait, approval, foreach and join nodes connected by outlets. An unconnected failed, rejected or expired outlet fails the run.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
@@ -148,6 +148,20 @@ export const operationImplementationItems: CompletionEntry[] = [
     { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered authoring guidance; not an executable implementation role.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects the phase’s sole source attachment.' },
     ...['csharp', 'java', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; not admitted by any supported executable model (ESM) version yet.' })),
+];
+
+export const systemItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:the external system}"', documentation: 'Describes the system.' },
+    { label: 'ability', insertText: 'ability ${1:Name} ${2|safe,idempotent,once|}\n    ${3:input} ${4:Type}\n    outcome ${5:Refusal}', documentation: 'One typed thing the system can be asked to do, with an effect class (default once).' },
+];
+
+export const abilityItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what it does}"', documentation: 'Describes the ability.' },
+    { label: 'input', insertText: '${1:input} ${2:Type}', documentation: 'Typed ability input; no identifier or generated modifier.' },
+    { label: 'returns', insertText: 'returns\n    ${1:field} ${2:Type}', documentation: 'The typed values the ability returns.' },
+    { label: 'outcome', insertText: 'outcome ${1:Name}\n    description "${2:business result}"', documentation: 'A named business result other than success; it carries no payload and cannot be named next, refused, failed, returned or expired.' },
+    { label: 'answers later', insertText: 'answers later', documentation: 'The answer arrives after the invocation returns.' },
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:how it is carried out}"', documentation: 'The AbilityEffect attachment: hints, a file or a tagged fence.' },
 ];
 
 export const operationPhaseItems: CompletionEntry[] = [

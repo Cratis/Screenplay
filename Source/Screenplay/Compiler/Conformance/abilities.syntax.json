@@ -1,0 +1,365 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ParcelId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "TrackingNumber",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Channel",
+      "type": "Enum",
+      "values": [
+        "email",
+        "sms"
+      ]
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "abilities": [
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Books a pickup for one parcel",
+          "effectClass": "idempotent",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "parcelId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ParcelId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "address",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Address"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "notes",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": true,
+                "name": "String"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "stops",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": true,
+                "isOptional": false,
+                "name": "Address"
+              }
+            }
+          ],
+          "name": "BookPickup",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": "No pickup slot on the requested day",
+              "name": "NoCapacity"
+            },
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "AddressRefused"
+            }
+          ],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "trackingNumber",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "TrackingNumber"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "pickupAt",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "DateTime"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": null,
+          "effectClass": "idempotent",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "trackingNumber",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "TrackingNumber"
+              }
+            }
+          ],
+          "name": "CancelPickup",
+          "outcomes": [],
+          "returns": []
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": null,
+          "effectClass": "safe",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "address",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Address"
+              }
+            }
+          ],
+          "name": "Quote",
+          "outcomes": [],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "price",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Decimal"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Posts to the carrier's notice board",
+          "effectClass": null,
+          "file": {
+            "kind": "FileReferenceSyntax",
+            "path": "Adapters/PostNotice.cs"
+          },
+          "implementation": {
+            "kind": "ImplementationSyntax",
+            "hints": [
+              {
+                "kind": "ImplementationHintSyntax",
+                "text": "Use the existing notice adapter"
+              }
+            ]
+          },
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "channel",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Channel"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "description",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "outcome",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            }
+          ],
+          "name": "PostNotice",
+          "outcomes": [],
+          "returns": []
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": true,
+          "code": {
+            "kind": "CodeBlockSyntax",
+            "code": "return Pending(parcelId);",
+            "language": "csharp"
+          },
+          "description": null,
+          "effectClass": "once",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "parcelId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ParcelId"
+              }
+            }
+          ],
+          "name": "RequestApproval",
+          "outcomes": [],
+          "returns": []
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": null,
+          "effectClass": null,
+          "file": {
+            "kind": "FileReferenceSyntax",
+            "path": "Adapters/Withdraw.cs"
+          },
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "parcelId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ParcelId"
+              }
+            }
+          ],
+          "name": "Withdraw",
+          "outcomes": [],
+          "returns": []
+        }
+      ],
+      "description": "The parcel carrier's booking service",
+      "name": "Carrier"
+    },
+    {
+      "kind": "SystemSyntax",
+      "description": "The finance department's ledger",
+      "name": "Ledger"
+    }
+  ],
+  "types": [
+    {
+      "kind": "TypeSyntax",
+      "description": null,
+      "name": "Address",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "street",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "postalCode",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

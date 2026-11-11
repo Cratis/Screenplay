@@ -1,23 +1,19 @@
 name: Render Blueprint Samples
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 # Every domain blueprint sample has to render exactly as authored with the published CLI and the published blueprint packages. A sample that
 # needs simplifying to render is a defect of the sample or of the renderer; this finds it before a user does (Cratis/Stage#457).
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: render-blueprint-samples-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "17 5 * * *"
-  pull_request:
-    branches:
-      - "**"
-    paths:
-      - "Samples/**"
-      - "Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/render-blueprint-samples.*"
-      - ".github/workflows/render-blueprint-samples.yml"
+  workflow_call:
 
 permissions:
   contents: read

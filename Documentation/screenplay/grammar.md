@@ -112,16 +112,32 @@ ImportPattern  = ? a path or glob relative to the importing file's folder -
    imported once, at the deepest placement - see imports.md.                  *)
 
 (* -------------------------------------------------------------- *)
-(* External systems — syntax-only                                  *)
+(* External systems and their abilities — ESM v50                  *)
 (* -------------------------------------------------------------- *)
 
 SystemDecl     = "system", Ident, NL,
-                 [ INDENT, { DescriptionDecl }, DEDENT ] ;
+                 [ INDENT, { DescriptionDecl | AbilityDecl }, DEDENT ] ;
 
-(* Systems are application-scoped, including in placed files. They name external
-   systems without provider types or abilities. Systems, operations and their
-   specification steps are authoring-only: binding rejects them with PLAY0268;
-   these constructs are not admitted by any supported ESM version yet. *)
+AbilityDecl    = "ability", Ident, [ EffectClass ], NL,
+                 [ INDENT, { DescriptionDecl | AnswersLater | AbilityInput | AbilityReturns
+                           | AbilityOutcome | AbilityImplementation | FileDirective | InlineBlock }, DEDENT ] ;
+EffectClass    = "safe" | "idempotent" | "once" ;            (* omitted means "once" *)
+AnswersLater   = "answers", "later", NL ;
+AbilityInput   = [ "@" ], Ident, TypeRef, NL ;               (* not identifier or generated *)
+AbilityReturns = "returns", NL,
+                 INDENT, { [ "@" ], Ident, TypeRef, NL }, DEDENT ;
+AbilityOutcome = "outcome", Ident, NL,
+                 [ INDENT, { DescriptionDecl }, DEDENT ] ;   (* no payload; not next, refused, failed, returned or expired *)
+AbilityImplementation = "implementation", NL,
+                 [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+
+(* Systems are application-scoped, including in placed files. A system names an
+   external system and the abilities it can be asked to perform; see systems.md.
+   Ability names are unique within their system ignoring case. An ability owns at
+   most one file OR tagged fence, directly or in its implementation wrapper: the
+   AbilityEffect attachment. A model that declares an ability admits its systems in
+   ESM v50; a system without abilities, operations and their specification steps
+   stay authoring-only and bind with PLAY0268. *)
 
 (* -------------------------------------------------------------- *)
 (* State machines — ESM v36                                         *)
@@ -2087,7 +2103,7 @@ Descriptions on concepts, policies, constraints, projection headers, screens and
 The grammar includes authoring forms that are not executable. These notes describe which forms are
 admitted by the executable semantic model (ESM) and which diagnostics apply.
 
-> Systems, operations, operation phases and their specification forms in this grammar are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+> Operations, operation phases and their specification forms in this grammar, and systems that declare no ability, are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
 > [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths remain refused with `PLAY0268`, and attached file/inline handler routes require a constrained implementation attachment (`PLAY0800`). Pending command handler intents with unconditional `produces` select ESM v23: the body owns payload values and `produces` doubles as result contract v1 (`PLAY0695`). No productions and conditional productions refuse binding with `PLAY0696` and `PLAY0697`. Production route overrides and reaction/reducer observer filters select ESM v10. Flat composite read-model keys, complete caller-supplied optional single-instance queries by parts, and root projection/removal parts keys select ESM v27. Collection by-block queries, context-sourced parts and non-optional single-instance returns remain `PLAY0268`. New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 

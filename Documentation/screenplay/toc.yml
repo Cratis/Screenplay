@@ -61,6 +61,8 @@
   href: event-sources.md
 - name: Commands
   href: commands.md
+- name: Systems and abilities
+  href: systems.md
 - name: Operations and external systems
   href: operations.md
 - name: State machines

@@ -51,6 +51,7 @@ internal static class syntax_examples
             CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = null },
             HandlerSyntax handler => handler with { Code = null, PossibleEvents = WithPossibleEvent(handler.PossibleEvents) },
             OperationPhaseSyntax phase => phase with { Code = null },
+            AbilitySyntax ability => ability with { Code = null },
             ProducesSyntax { InlineOperation: { } operation } production => production with
             {
                 InlineEvent = null,

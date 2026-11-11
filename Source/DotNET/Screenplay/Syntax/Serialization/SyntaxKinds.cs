@@ -136,6 +136,8 @@ internal static class SyntaxKinds
         typeof(ImplementationSyntax),
         typeof(ImplementationHintSyntax),
         typeof(SystemSyntax),
+        typeof(AbilitySyntax),
+        typeof(AbilityOutcomeSyntax),
         typeof(StateMachineSyntax),
         typeof(LifecycleSpecificationSyntax),
         typeof(LifecycleOutcomeSyntax),

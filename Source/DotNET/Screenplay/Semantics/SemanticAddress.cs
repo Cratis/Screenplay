@@ -114,7 +114,12 @@ public enum SemanticKind
     /// <summary>
     /// A screen in a slice.
     /// </summary>
-    Screen = 19
+    Screen = 19,
+
+    /// <summary>
+    /// An application system.
+    /// </summary>
+    System = 20
 }
 
 /// <summary>
@@ -409,6 +414,15 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
         BuildApplicationDeclaration(SemanticKind.Trigger, application, name);
 
     /// <summary>
+    /// Creates an application system address.
+    /// </summary>
+    /// <param name="application">The application identity.</param>
+    /// <param name="name">The system name.</param>
+    /// <returns>The system address.</returns>
+    public static SemanticAddress ForSystem(ApplicationIdentity application, string name) =>
+        BuildApplicationDeclaration(SemanticKind.System, application, name);
+
+    /// <summary>
     /// Creates a reaction address in a slice.
     /// </summary>
     /// <param name="slice">The owning slice address.</param>
@@ -543,7 +557,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
             SemanticKind.Module => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Module),
             SemanticKind.Feature => IsFeature(parts),
             SemanticKind.Slice => IsSlice(parts),
-            SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
+            SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource or SemanticKind.System => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
             SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Projection or SemanticKind.Query or SemanticKind.Specification or
                 SemanticKind.Reaction or SemanticKind.Capture or SemanticKind.Screen => IsSliceDeclaration(parts),
             SemanticKind.Property => IsProperty(parts),

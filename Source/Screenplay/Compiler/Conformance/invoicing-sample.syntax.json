@@ -19729,7 +19729,209 @@
       "title": "An invoice from draft to payment"
     }
   ],
-  "systems": [],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "abilities": [
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Captures the payment for one invoice",
+          "effectClass": "idempotent",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "invoiceId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "amount",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Money"
+              }
+            }
+          ],
+          "name": "CapturePayment",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": "The card issuer declined the charge",
+              "name": "CardDeclined"
+            },
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "LimitExceeded"
+            }
+          ],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "paymentId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "PaymentId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "capturedAt",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "DateTime"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Reads today's exchange rate",
+          "effectClass": "safe",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "currency",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "CurrencyCode"
+              }
+            }
+          ],
+          "name": "LookUpRate",
+          "outcomes": [],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "rate",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ExchangeRate"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": true,
+          "code": null,
+          "description": "Asks a manager to approve a large write-off; the answer arrives later",
+          "effectClass": "once",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "invoiceId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            }
+          ],
+          "name": "RequestApproval",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "Rejected"
+            }
+          ],
+          "returns": []
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Mails the receipt through the existing mail adapter",
+          "effectClass": null,
+          "file": {
+            "kind": "FileReferenceSyntax",
+            "path": "Adapters/SendReceipt.cs"
+          },
+          "implementation": {
+            "kind": "ImplementationSyntax",
+            "hints": [
+              {
+                "kind": "ImplementationHintSyntax",
+                "text": "Use the existing mail adapter"
+              }
+            ]
+          },
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "invoiceId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "email",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "EmailAddress"
+              }
+            }
+          ],
+          "name": "SendReceipt",
+          "outcomes": [],
+          "returns": []
+        }
+      ],
+      "description": "The card payment gateway that charges invoices",
+      "name": "PaymentGateway"
+    }
+  ],
   "themes": [
     {
       "kind": "ThemeSyntax",

@@ -46,6 +46,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
         if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
         if (application.Agents is not null) return (LanguageVersion.V48, SemanticVersion.V48);
         if (SemanticModelValidator.UsesNarrowing(application)) return (LanguageVersion.V47, SemanticVersion.V47);
@@ -268,7 +269,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV49Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV50Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -445,6 +446,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var (stateMachines, workflows) = BindLifecycles(modules);
             var (graphs, graphProjections, graphSpecifications, graphQueries) = BindGraphs(modules);
+            var systems = BindSystems();
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
             ValidateReactionIdentities(modules, policies);
@@ -457,6 +459,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             {
                 Policies = policies,
                 Triggers = triggers,
+                Systems = systems,
                 StateMachines = stateMachines,
                 Workflows = workflows,
                 Graphs = graphs,

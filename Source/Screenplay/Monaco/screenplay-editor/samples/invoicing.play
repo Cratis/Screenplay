@@ -233,6 +233,44 @@ type InstallmentPlan
   firstDueDate Date
 
 // ------------------------------------------------------------
+// External systems - what the model can ask of the world outside it
+// ------------------------------------------------------------
+
+// A system names a business system and the abilities it can be asked to perform. An ability
+// has typed inputs, the values it returns, named outcomes other than success and an effect
+// class that says what a retry may do: safe (no effect), idempotent (the same key has the
+// effect once) or once (never retried; the default). Nothing invokes an ability yet.
+system PaymentGateway
+  description "The card payment gateway that charges invoices"
+  ability CapturePayment idempotent
+    description "Captures the payment for one invoice"
+    invoiceId InvoiceId
+    amount Money
+    returns
+      paymentId PaymentId
+      capturedAt DateTime
+    outcome CardDeclined
+      description "The card issuer declined the charge"
+    outcome LimitExceeded
+  ability LookUpRate safe
+    description "Reads today's exchange rate"
+    currency CurrencyCode
+    returns
+      rate ExchangeRate
+  ability RequestApproval once
+    description "Asks a manager to approve a large write-off; the answer arrives later"
+    answers later
+    invoiceId InvoiceId
+    outcome Rejected
+  ability SendReceipt
+    description "Mails the receipt through the existing mail adapter"
+    invoiceId InvoiceId
+    email EmailAddress
+    implementation
+      hint "Use the existing mail adapter"
+      file Adapters/SendReceipt.cs
+
+// ------------------------------------------------------------
 // Authorization - policies say what, personas say who
 // ------------------------------------------------------------
 

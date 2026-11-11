@@ -4240,6 +4240,18 @@ public static class DiagnosticCodes
     /// <summary>A performed or graph query has no portable operation identity for agent exposure yet.</summary>
     public const string UnsupportedAgentQueryKind = "PLAY0982";
 
+    /// <summary>A system declares two abilities whose names are equal ignoring case.</summary>
+    public const string DuplicateAbility = "PLAY0983";
+
+    /// <summary>An ability's effect class is not <c>safe</c>, <c>idempotent</c> or <c>once</c>.</summary>
+    public const string InvalidAbilityEffectClass = "PLAY0984";
+
+    /// <summary>An ability outcome is named like a reserved outlet (<c>next</c>, <c>refused</c>, <c>failed</c>, <c>returned</c> or <c>expired</c>).</summary>
+    public const string ReservedAbilityOutcomeName = "PLAY0985";
+
+    /// <summary>An ability input or returned field names a type that is not declared.</summary>
+    public const string UnknownAbilityType = "PLAY0986";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>

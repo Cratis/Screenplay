@@ -23,6 +23,11 @@ internal static class OperationInvariants
                     throw new InvalidSyntaxJson("Inline operation inputs and mappings must correspond in order.");
             }
         }
+        if (node is AbilitySyntax ability)
+        {
+            if (ability.File is not null && ability.Code is not null) throw new InvalidSyntaxJson("An ability has at most one file or inline payload.");
+            if (ability.Implementation is not null) ImplementationInvariants.Validate(ability.Implementation);
+        }
         if (node is OperationPhaseSyntax phase)
         {
             if (phase.File is not null && phase.Code is not null) throw new InvalidSyntaxJson("An operation phase has at most one file or inline payload.");

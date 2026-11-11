@@ -105,6 +105,7 @@ public static partial class SemanticModelCanonicalJson
         if (application.CommandReadMode is not null) writer.WriteString("commandReadMode", "protected");
         WriteApplicationTimeZone(writer, application, version);
         WriteAgents(writer, application.Agents);
+        WriteSystems(writer, application.Systems);
         writer.WriteEndObject();
     }
 
