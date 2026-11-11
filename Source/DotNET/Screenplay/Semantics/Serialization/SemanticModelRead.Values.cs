@@ -37,6 +37,12 @@ internal static partial class SemanticModelRead
     internal static SemanticValue? NullableValue(ref Utf8JsonReader reader, string name) =>
         NullableObject(ref reader, name, Value);
 
+    internal static SemanticInvocationValueExpression InvocationValue(string member, SemanticTypeReference type)
+    {
+        var dot = member.IndexOf('.', StringComparison.Ordinal);
+        return dot < 0 ? new(member, string.Empty, type) : new(member[..dot], member[(dot + 1)..], type);
+    }
+
     sealed class ExpressionState(uint schemaVersion, bool possibleEventDestination) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<ExpressionState> Fields = new FieldTable<ExpressionState>("expression")
@@ -117,6 +123,7 @@ internal static partial class SemanticModelRead
             SemanticExpressionKind.Value when IsValueShape && HasNoReadPath => new SemanticValueExpression(Content!),
             SemanticExpressionKind.Resolved when IsResolvedShape && HasNoReadPath => new SemanticResolvedExpression(Root!.Value, Source!.Value, Target),
             SemanticExpressionKind.EventContext when IsEventContextShape && HasNoReadPath => new SemanticEventContextExpression(ContextValue!.Value, Type!),
+            SemanticExpressionKind.InvocationValue when HasNoReadPath && !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is not null && Member is not null => InvocationValue(Member, Type),
             SemanticExpressionKind.Refusal when HasNoReadPath && !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is not null && Member is not null => new SemanticRefusalExpression(Member, Type),
             SemanticExpressionKind.ReadPath when Read is not null && ReadProperty.IsSet && !ContentRead && Root is null && Source is null && !TargetRead && ContextValue is null && Type is null && Member is null => new SemanticReadPathExpression(Read, ReadProperty),
             _ => throw Malformed("expression", "one exact expression variant")

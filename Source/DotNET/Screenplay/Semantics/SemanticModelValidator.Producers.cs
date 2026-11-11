@@ -48,7 +48,7 @@ internal static partial class SemanticModelValidator
         visited.Add(eventContract);
         foreach (var trigger in sources.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produced in trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces)).Where(produced => produced.EventContract == eventContract))
+            foreach (var produced in trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused.Select(refusal => refusal.Produces).Concat(invocation.Branches.Select(branch => branch.Produces))).SelectMany(produces => produces)).Where(produced => produced.EventContract == eventContract))
             {
                 types.AddRange(ReactionProducerTypes(sources, trigger, produced, visited));
             }
@@ -83,7 +83,7 @@ internal static partial class SemanticModelValidator
     static IEnumerable<SemanticId> ProducibleContracts(ProducerSources sources) =>
         sources.Commands.SelectMany(command => command.Produces)
             .Concat(sources.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger =>
-                trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces))))
+                trigger.Produces.Concat(trigger.Invokes.SelectMany(invocation => invocation.OnRefused.Select(refusal => refusal.Produces).Concat(invocation.Branches.Select(branch => branch.Produces))).SelectMany(produces => produces))))
             .Select(produced => produced.EventContract)
             .Concat(sources.Captures.SelectMany(CaptureAppends).Select(append => append.EventContract))
             .Concat(sources.Projections.Where(projection => projection.Target == SemanticProjectionTargetKind.Event).Select(projection => projection.ReadModel))

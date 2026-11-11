@@ -154,7 +154,10 @@ public enum SemanticExpressionKind
     ReadPath = 4,
 
     /// <summary>One destination selected from a required command-input collection.</summary>
-    OneOf = 5
+    OneOf = 5,
+
+    /// <summary>A value an ability invocation answered with, read inside the branch that handles it (ESM v51).</summary>
+    InvocationValue = 6
 }
 
 /// <summary>

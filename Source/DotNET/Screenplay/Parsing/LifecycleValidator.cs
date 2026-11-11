@@ -152,7 +152,7 @@ internal sealed class LifecycleValidator
         }
     }
 
-    void CheckCondition(ConditionSyntax condition, string readModel, SourceLocation location, ISet<string>? resultNodes = null)
+    void CheckCondition(ConditionSyntax condition, string readModel, SourceLocation location, HashSet<string>? resultNodes = null)
     {
         if (!_readModels.TryGetValue(readModel, out var model)) return;
         var known = model.Properties.Select(property => property.Name).ToHashSet(StringComparer.Ordinal);

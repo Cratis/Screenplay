@@ -117,7 +117,7 @@ internal static partial class ExpressionParser
     /// <param name="text">The trimmed expression text.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the expression.</param>
     /// <returns>The <see cref="InvocationValueExpressionSyntax"/>, or <c>null</c> when the text is not an invocation value.</returns>
-    internal static InvocationValueExpressionSyntax? TryParseInvocationValue(string text, SourceLocation location)
+    public static InvocationValueExpressionSyntax? TryParseInvocationValue(string text, SourceLocation location)
     {
         foreach (var source in new[] { "result", "outcome", "failure", "trigger" })
         {

@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -160,7 +160,9 @@ internal static class EsmBaselineShapes
         ["Reaction"] = "id name triggers:ReactionTrigger runsAs@10:ReactionIdentity from@10:ObserverFilter",
         ["ReactionIdentity"] = "kind roles",
         ["ReactionTrigger"] = "kind source every at onDayOfWeek onDayOfMonth where:Condition produces:ProducedEvent invokes:Invocation requirementId",
-        ["Invocation"] = "command mappings:Mapping onRefused@19:RefusalBranch",
+        ["Invocation"] = "command mappings:Mapping onRefused@19:RefusalBranch system@51 ability@51 inputs@51:AbilityInput branches@51:InvocationBranch",
+        ["AbilityInput"] = "input source:Expression",
+        ["InvocationBranch"] = "selector produces:ProducedEvent",
         ["RefusalBranch"] = "selector constraint produces:ProducedEvent",
         ["Capture"] = "id name key map:CaptureMap appends:CaptureAppend children:CaptureChildren nested:CaptureNested sourceEvents@9 keyIsEventSource@33",
         ["CaptureChildren"] = "field identifiedBy map:CaptureMap appends:CaptureAppend",

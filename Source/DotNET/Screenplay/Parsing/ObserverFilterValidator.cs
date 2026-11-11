@@ -64,7 +64,7 @@ internal static class ObserverFilterValidator
             {
                 routes.AddRange(command.Produces.Where(produced => ReferenceEquals(declarations.Event(produced.Event, scope), @event)).Select(produced => produced.Stream ?? command.Stream));
             }
-            foreach (var produced in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => ReactionProductions.In(trigger)))
+            foreach (var produced in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(ReactionProductions.In))
             {
                 if (ReferenceEquals(declarations.Event(produced.Event, scope), @event)) routes.Add(null);
             }

@@ -154,7 +154,10 @@ internal static partial class WorkflowParser
                 {
                     var parsedFile = FileReferenceParser.IsDirective(line) ? FileReferenceParser.Parse(context, line) : null;
                     var parsedCode = parsedFile is null ? CodeBlockParser.Parse(context, line) : null;
-                    if (file is not null || code is not null) context.Error(DiagnosticCodes.ConflictingImplementationSources, "A compute node has at most one file or inline payload.", line.Location);
+                    if (file is not null || code is not null)
+                    {
+                        context.Error(DiagnosticCodes.ConflictingImplementationSources, "A compute node has at most one file or inline payload.", line.Location);
+                    }
                     else
                     {
                         file = parsedFile;
@@ -238,6 +241,7 @@ internal static partial class WorkflowParser
         var hasTimeout = false;
         var hasRetry = false;
         WorkflowDurationSyntax? expires = null;
+        var hasExpiry = false;
         foreach (Match option in ActionOptionRegex().Matches(match.Groups[4].Value))
         {
             if (option.Groups[1].Success)
@@ -259,13 +263,14 @@ internal static partial class WorkflowParser
             }
             else if (option.Groups[6].Success)
             {
-                if (expires is not null || Duration(context, option.Groups[6].Value, option.Groups[7].Value, line) is not { } parsedExpiry)
+                if (hasExpiry || Duration(context, option.Groups[6].Value, option.Groups[7].Value, line) is not { } parsedExpiry)
                 {
                     context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid or repeated expiry in '{line.Content}'.", line.Location);
                 }
                 else
                 {
                     expires = parsedExpiry;
+                    hasExpiry = true;
                 }
             }
             else if (hasRetry || Duration(context, option.Groups[4].Value, option.Groups[5].Value, line) is not { } parsedRetry)

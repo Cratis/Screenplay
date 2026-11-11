@@ -137,6 +137,8 @@ internal enum EsmBaselineShape
     ReactionTrigger,
     Invocation,
     RefusalBranch,
+    AbilityInput,
+    InvocationBranch,
     Capture,
     CaptureChildren,
     CaptureNested,

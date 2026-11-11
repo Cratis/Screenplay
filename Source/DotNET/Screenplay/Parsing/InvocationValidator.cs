@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -13,7 +15,7 @@ namespace Cratis.Screenplay.Parsing;
 internal static class InvocationValidator
 {
     [ThreadStatic]
-    static Dictionary<string, string> _concepts = [];
+    static Dictionary<string, string>? _concepts;
 
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
@@ -38,7 +40,7 @@ internal static class InvocationValidator
             foreach (var entry in machine.States.SelectMany(state => state.Entering).Where(entry => entry.EntryKind == StateEntryKind.Invoke))
             {
                 if (!ValidateSite(entry.Target, entry.Mappings, entry.Location, abilities, context, out var ability)) continue;
-                if (ability!.AnswersLater)
+                if (ability.AnswersLater)
                     context.Error(DiagnosticCodes.AnswersLaterInStateMachine, $"'{entry.Target}' answers later; a state machine has no data to hold the answer - start a workflow instead.", entry.Location);
             }
         }
@@ -54,14 +56,14 @@ internal static class InvocationValidator
 
     static void ValidateTrigger(ReactionTriggerSyntax trigger, Dictionary<string, AbilitySyntax> abilities, ParserContext context)
     {
-        foreach (var invocation in trigger.Invokes)
+        foreach (var invocation in trigger.Invokes ?? [])
         {
             var dotted = invocation.Command.Contains('.', StringComparison.Ordinal);
             AbilitySyntax? ability = null;
             if (dotted)
             {
                 if (!ValidateSite(invocation.Command, invocation.Mappings, invocation.Location, abilities, context, out ability)) continue;
-                if (ability!.AnswersLater)
+                if (ability.AnswersLater)
                     context.Error(DiagnosticCodes.AnswersLaterInReaction, $"'{invocation.Command}' answers later; a reaction has no place to wait - invoke it from a workflow.", invocation.Location);
                 if (trigger.Code is not null || trigger.File is not null)
                     context.Error(DiagnosticCodes.InvocationWithAttachedBody, $"A trigger that invokes '{invocation.Command}' cannot also carry an attached body.", invocation.Location);
@@ -72,7 +74,7 @@ internal static class InvocationValidator
             {
                 if (!seen.Add(branch.Selector))
                     context.Error(DiagnosticCodes.DuplicateInvocationBranch, $"'{invocation.Command}' handles 'on {branch.Selector}' more than once.", branch.Location);
-                else if (branch.Selector is not ("returned" or "failed") && (ability is null || !ability.Outcomes.Any(outcome => outcome.Name == branch.Selector)))
+                else if (InvocationBranchScope.IsOutcome(branch.Selector) && ability?.Outcomes.Any(outcome => outcome.Name == branch.Selector) != true)
                     context.Error(DiagnosticCodes.UnknownInvocationOutcome, $"'{invocation.Command}' declares no outcome '{branch.Selector}'.", branch.Location);
             }
         }
@@ -100,7 +102,7 @@ internal static class InvocationValidator
     static void ValidateAction(WorkflowNodeSyntax node, Dictionary<string, AbilitySyntax> abilities, ParserContext context)
     {
         if (!ValidateSite(node.Command!, node.Mappings, node.Location, abilities, context, out var ability)) return;
-        if (node.Attempts > 1 && AbilityEffectClasses.Effective(ability!.EffectClass) == AbilityEffectClasses.Once)
+        if (node.Attempts > 1 && AbilityEffectClasses.Effective(ability.EffectClass) == AbilityEffectClasses.Once)
             context.Warning(DiagnosticCodes.OnceAbilityRetried, $"'{node.Command}' is a 'once' ability invoked with {node.Attempts} attempts; a repeated attempt can repeat its effect.", node.Location);
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var edge in node.Edges)
@@ -115,7 +117,7 @@ internal static class InvocationValidator
                 if (!ability.AnswersLater || node.ExpiresAfter is null)
                     context.Error(DiagnosticCodes.UnreachableInvocationOutlet, $"Outlet 'expired' of '{node.Name}' is never taken: '{node.Command}' must answer later and the action must say 'expires after'.", edge.Location);
             }
-            else if (edge.Outlet is not ("next" or "failed") && !ability.Outcomes.Any(outcome => outcome.Name == edge.Outlet))
+            else if (InvocationBranchScope.IsOutcome(edge.Outlet) && !InvocationBranchScope.Is(edge.Outlet, "next") && !ability.Outcomes.Any(outcome => outcome.Name == edge.Outlet))
             {
                 context.Error(DiagnosticCodes.UnknownInvocationOutcome, $"'{node.Command}' declares no outcome '{edge.Outlet}'.", edge.Location);
             }
@@ -143,7 +145,7 @@ internal static class InvocationValidator
             context.Error(DiagnosticCodes.InvalidComputeDeclaration, $"Compute '{node.Name}' has no body: add a tagged fence or a file.", node.Location);
         var outlets = node.Edges.Select(edge => edge.Outlet).Distinct(StringComparer.Ordinal).ToList();
         var single = outlets.Count == 1 && outlets[0] == "next";
-        var named = outlets.Count >= 2 && outlets.All(outlet => !AbilityOutcomes.ReservedOutlets.Contains(outlet));
+        var named = outlets.Count >= 2 && outlets.TrueForAll(outlet => !AbilityOutcomes.ReservedOutlets.Contains(outlet));
         if (!single && !named)
             context.Error(DiagnosticCodes.InvalidComputeDeclaration, $"Compute '{node.Name}' has either one 'next' outlet or two or more author-named outlets; reserved outlet names are not allowed.", node.Location);
     }
@@ -154,7 +156,7 @@ internal static class InvocationValidator
         SourceLocation location,
         Dictionary<string, AbilitySyntax> abilities,
         ParserContext context,
-        out AbilitySyntax? ability)
+        [NotNullWhen(true)] out AbilitySyntax? ability)
     {
         if (!abilities.TryGetValue(target, out ability))
         {
@@ -189,7 +191,7 @@ internal static class InvocationValidator
     static bool LiteralFits(ExpressionSyntax source, TypeRefSyntax type)
     {
         if (source is not LiteralExpressionSyntax { Value: { } value } || type.IsCollection) return true;
-        return (_concepts.GetValueOrDefault(type.Name) ?? type.Name) switch
+        return ((_concepts ?? []).GetValueOrDefault(type.Name) ?? type.Name) switch
         {
             "String" or "Uuid" or "Date" or "DateTime" => value is string,
             "Bool" => value is bool,

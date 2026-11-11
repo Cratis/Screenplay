@@ -57,6 +57,29 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "invokes", trigger.Invokes, (output, invocation) =>
         {
             output.WriteStartObject();
+            if (invocation.Ability is not null)
+            {
+                output.WriteString("system", invocation.System.ToString());
+                CanonicalJson.WriteString(output, "ability", invocation.Ability);
+                WriteArray(output, "inputs", invocation.Inputs, (inputOutput, input) =>
+                {
+                    inputOutput.WriteStartObject();
+                    CanonicalJson.WriteString(inputOutput, "input", input.Input);
+                    inputOutput.WritePropertyName("source");
+                    WriteExpression(inputOutput, input.Source);
+                    inputOutput.WriteEndObject();
+                });
+                WriteArray(output, "branches", invocation.Branches, (branchOutput, branch) =>
+                {
+                    branchOutput.WriteStartObject();
+                    CanonicalJson.WriteString(branchOutput, "selector", branch.Selector);
+                    WriteArray(branchOutput, "produces", branch.Produces, (productionOutput, produced) => WriteProducedEvent(productionOutput, produced, version, true));
+                    branchOutput.WriteEndObject();
+                });
+                output.WriteEndObject();
+                return;
+            }
+
             output.WriteString("command", invocation.Command.ToString());
             WriteArray(output, "mappings", invocation.Mappings, WriteMapping);
             if (!invocation.OnRefused.IsDefaultOrEmpty)

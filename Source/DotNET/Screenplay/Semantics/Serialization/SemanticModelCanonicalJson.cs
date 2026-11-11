@@ -716,6 +716,11 @@ public static partial class SemanticModelCanonicalJson
                 writer.WritePropertyName("type");
                 WriteTypeReference(writer, refusal.Type);
                 break;
+            case SemanticInvocationValueExpression invocationValue:
+                writer.WriteString("member", invocationValue.Member.Length == 0 ? invocationValue.Source : $"{invocationValue.Source}.{invocationValue.Member}");
+                writer.WritePropertyName("type");
+                WriteTypeReference(writer, invocationValue.Type);
+                break;
             case SemanticReadPathExpression readPath:
                 CanonicalJson.WriteString(writer, "read", readPath.Read);
                 writer.WriteString("property", readPath.PropertyId.ToString());
@@ -937,6 +942,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticExpressionKind.EventContext => "eventContext",
         SemanticExpressionKind.Refusal => "refusal",
         SemanticExpressionKind.ReadPath => "readPath",
+        SemanticExpressionKind.InvocationValue => "invocationValue",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

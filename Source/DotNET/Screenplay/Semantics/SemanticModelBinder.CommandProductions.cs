@@ -24,10 +24,20 @@ public sealed partial class SemanticModelBinder
 
     sealed class CommandProductionAdmissionWalker(bool abilitiesAdmitted) : ScreenplaySyntaxWalker
     {
+        bool _inReaction;
+
         internal List<Diagnostic> Diagnostics { get; } = [];
 
         /// <summary>Gets whether the model declares a public event, an origin, a direction or an events source.</summary>
         internal bool UsesPublicEvents { get; private set; }
+
+        public override void VisitReaction(ReactionSyntax syntax)
+        {
+            var previous = _inReaction;
+            _inReaction = true;
+            base.VisitReaction(syntax);
+            _inReaction = previous;
+        }
 
         public override void VisitNode(SyntaxNode node)
         {
@@ -86,11 +96,8 @@ public sealed partial class SemanticModelBinder
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#301")));
             }
 
-            // Ability invocations, compute nodes and entering bodies parse, print and validate (#1252) but no supported ESM version carries their call sites yet.
-            if (node is InvokesSyntax { IsAbility: true } or InvocationBranchSyntax or InvocationValueExpressionSyntax or
-                WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Compute } or WorkflowNodeSyntax { Via: not null } or
-                StateEntrySyntax { EntryKind: StateEntryKind.Invoke or StateEntryKind.Body } ||
-                node is WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Action, Command: { } target } && target.Contains('.', StringComparison.Ordinal))
+            // Reaction ability invocations are admitted (ESM v51, #1252); the other call sites parse, print and validate but no supported ESM version carries them yet.
+            if (IsUnadmittedInvocationSite(node))
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
@@ -103,5 +110,15 @@ public sealed partial class SemanticModelBinder
         // Intent has no production feature gates. Do not dereference malformed hint collections here;
         // named-rule binding reports their typed diagnostics while retaining partial attachments.
         public override void VisitImplementation(ImplementationSyntax syntax) => VisitNode(syntax);
+
+        bool IsUnadmittedInvocationSite(SyntaxNode node) => node switch
+        {
+            InvokesSyntax { IsAbility: true } or InvocationBranchSyntax => !_inReaction,
+            InvocationValueExpressionSyntax value => !_inReaction || value.Source == "trigger",
+            WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Compute } or WorkflowNodeSyntax { Via: not null } => true,
+            StateEntrySyntax { EntryKind: StateEntryKind.Invoke or StateEntryKind.Body } => true,
+            WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Action, Command: { } target } => target.Contains('.', StringComparison.Ordinal),
+            _ => false
+        };
     }
 }

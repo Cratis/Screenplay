@@ -148,6 +148,12 @@ internal static partial class SemanticModelValidator
 
                     foreach (var invocation in trigger.Invokes)
                     {
+                        if (invocation.Ability is not null)
+                        {
+                            ValidateAbilityInvocation(reaction, trigger, invocation, root, values);
+                            continue;
+                        }
+
                         if (!_commands.TryGetValue(invocation.Command, out var command))
                         {
                             throw new InvalidSemanticContract($"Reaction '{reaction.Name}' invokes an unresolved command.");
