@@ -266,24 +266,40 @@ internal static partial class ReactionParser
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>invokes</c> keyword.</param>
     /// <returns>The parsed <see cref="InvokesSyntax"/>, or <c>null</c> when the declaration is malformed.</returns>
-    static InvokesSyntax? ParseInvokes(ParserContext context, SourceLine line)
+    internal static InvokesSyntax? ParseInvokes(ParserContext context, SourceLine line, bool allowBranches = true)
     {
         var match = InvokesRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidInvokesDeclaration, $"Invalid invokes declaration '{line.Content}' - expected 'invokes <Command>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidInvokesDeclaration, $"Invalid invokes declaration '{line.Content}' - expected 'invokes <Command>' or 'invokes <System>.<Ability>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
 
         var mappings = new List<PropertyMappingSyntax>();
         var refusals = new List<InvocationRefusalSyntax>();
+        var branches = new List<InvocationBranchSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
             if (ReactionIdentityParser.IsDeclarationLine(child))
             {
                 ReactionIdentityParser.Misplaced(context, child);
+                continue;
+            }
+
+            if (BranchRegex().Match(child.Content) is { Success: true } branchMatch && !branchMatch.Groups[1].Value.StartsWith("refus", StringComparison.Ordinal))
+            {
+                if (!allowBranches)
+                {
+                    context.Error(DiagnosticCodes.InvocationBranchesNotAllowed, $"'{child.Content}' is not allowed here - this invocation takes no result branches.", child.Location);
+                    context.SkipBlock(child.Indent);
+                }
+                else if (ParseBranch(context, child, branchMatch.Groups[1].Value) is { } branch)
+                {
+                    branches.Add(branch);
+                }
+
                 continue;
             }
 
@@ -309,7 +325,35 @@ internal static partial class ReactionParser
             mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(mapping.Groups[1].Value), mapping.Groups[2], child));
         }
 
-        return new(match.Groups[1].Value, mappings, line.Location) { OnRefused = refusals };
+        return new(match.Groups[1].Value, mappings, line.Location) { OnRefused = refusals, Branches = branches };
+    }
+
+    static InvocationBranchSyntax? ParseBranch(ParserContext context, SourceLine line, string selector)
+    {
+        var produces = new List<ProducesSyntax>();
+        var reported = false;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "produces")
+            {
+                if (ProducesParser.Parse(context, child) is { } produced) produces.Add(produced);
+                else reported = true;
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.InvalidRefusalBranchBody, $"Expected 'produces <Event>' in the 'on {selector}' branch.", child.Location);
+                context.SkipBlock(child.Indent);
+                reported = true;
+            }
+        }
+
+        if (produces.Count == 0 && !reported)
+        {
+            context.Error(DiagnosticCodes.InvalidRefusalBranchBody, $"The 'on {selector}' branch must produce an event.", line.Location);
+        }
+
+        return new(selector, produces, line.Location);
     }
 
     static InvocationRefusalSyntax? ParseRefusal(ParserContext context, SourceLine line)
@@ -384,13 +428,16 @@ internal static partial class ReactionParser
     [GeneratedRegex(@"^on\s+refused(?:\s+by\s+(validation|constraint|authorization)(?:\s+([A-Za-z_]\w*(?:\.\w+)*))?)?$", RegexOptions.NonBacktracking)]
     private static partial Regex RefusalRegex();
 
+    [GeneratedRegex(@"^on\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex BranchRegex();
+
     [GeneratedRegex(@"^reaction\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
     [GeneratedRegex(@"^where\s+(\S.*)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhereRegex();
 
-    [GeneratedRegex(@"^invokes\s+([A-Z]\w*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^invokes\s+([A-Z]\w*(?:\.[A-Z]\w*)?)$", RegexOptions.NonBacktracking)]
     private static partial Regex InvokesRegex();
 
     [GeneratedRegex(@"^(@?[\w.]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]

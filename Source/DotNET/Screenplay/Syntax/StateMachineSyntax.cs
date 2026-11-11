@@ -18,7 +18,17 @@ public enum StateEntryKind
     /// <summary>
     /// Starts a workflow.
     /// </summary>
-    Start = 1
+    Start = 1,
+
+    /// <summary>
+    /// Invokes a <c>&lt;System&gt;.&lt;Ability&gt;</c>.
+    /// </summary>
+    Invoke = 2,
+
+    /// <summary>
+    /// Runs an attached body over the followed read model.
+    /// </summary>
+    Body = 3
 }
 
 /// <summary>
@@ -73,7 +83,23 @@ public record StateSyntax(
 /// <param name="EntryKind">Whether a command is sent or a workflow started.</param>
 /// <param name="Target">The name of the command or workflow.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record StateEntrySyntax(StateEntryKind EntryKind, string Target, SourceLocation Location) : SyntaxNode(Location);
+public record StateEntrySyntax(StateEntryKind EntryKind, string Target, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the input mappings of an ability invocation.
+    /// </summary>
+    public IEnumerable<PropertyMappingSyntax> Mappings { get; init; } = [];
+
+    /// <summary>
+    /// Gets the selected file of an entering body.
+    /// </summary>
+    public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the inline code of an entering body.
+    /// </summary>
+    public CodeBlockSyntax? Code { get; init; }
+}
 
 /// <summary>
 /// Represents <c>on &lt;Event&gt; [when &lt;condition&gt;] -&gt; &lt;State&gt;</c>.

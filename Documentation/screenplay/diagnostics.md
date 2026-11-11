@@ -1804,6 +1804,22 @@ Abilities declared on a `system`, see [Systems and abilities](systems.md). `PLAY
 | `PLAY0984` | Error | An ability's effect class is not `safe`, `idempotent` or `once`. |
 | `PLAY0985` | Error | An ability outcome is named `next`, `refused`, `failed`, `returned` or `expired`, which are reserved outlets. |
 | `PLAY0986` | Error | An ability input or returned field names a type that is not declared. |
+| `PLAY1001` | Error | An invocation names a system or ability that is not declared. |
+| `PLAY1002` | Error | An invocation branch or workflow outlet names an outcome the ability does not declare. |
+| `PLAY1003` | Error | An invocation leaves a declared ability input unmapped. |
+| `PLAY1004` | Error | An invocation maps an input the ability does not declare, or maps one twice. |
+| `PLAY1005` | Error | An invocation maps an input from a source whose type is incompatible. |
+| `PLAY1006` | Error | An invocation declares two branches or outlets for the same selector. |
+| `PLAY1007` | Error | An outlet or branch can never be taken, such as `expired` on an ability that does not answer later. |
+| `PLAY1008` | Error | `$result`, `$outcome` or `$failure` is read where no matching branch is in scope. |
+| `PLAY1009` | Error | A workflow reads a node's returned value through a path not guaranteed to have passed that node. |
+| `PLAY1010` | Error | An `answers later` ability is invoked from a reaction, which has no place to wait. |
+| `PLAY1011` | Error | An `answers later` ability is invoked from a state machine, which has no data to hold the answer. |
+| `PLAY1012` | Error | An approval's `via` ability does not answer later with `approved` and `rejected` outcomes. |
+| `PLAY1013` | Error | A `compute` node is malformed: it has no returns, no body, or an invalid outlet set. |
+| `PLAY1014` | Error | A reaction trigger combines `invokes` with an attached body. |
+| `PLAY1015` | Warning | A `once` ability is invoked with `attempts` greater than one. |
+| `PLAY1016` | Error | Result branches are not allowed on this invocation. |
 
 ## Screen visuals and slice placements
 

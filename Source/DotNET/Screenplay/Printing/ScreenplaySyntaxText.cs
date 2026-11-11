@@ -301,6 +301,7 @@ internal static partial class ScreenplaySyntaxText
         ContextExpressionSyntax context => $"$context.{context.Path}",
         IdentityExpressionSyntax identity => $"$identity.{identity.Path}",
         RefusalExpressionSyntax refusal => $"$refusal.{refusal.Member}",
+        InvocationValueExpressionSyntax value => value.Member.Length == 0 ? $"${value.Source}" : $"${value.Source}.{value.Member}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",

@@ -4252,6 +4252,54 @@ public static class DiagnosticCodes
     /// <summary>An ability input or returned field names a type that is not declared.</summary>
     public const string UnknownAbilityType = "PLAY0986";
 
+    /// <summary>An invocation names a system or ability that is not declared.</summary>
+    public const string UnknownInvocationTarget = "PLAY1001";
+
+    /// <summary>An invocation branch or workflow outlet names an outcome the ability does not declare.</summary>
+    public const string UnknownInvocationOutcome = "PLAY1002";
+
+    /// <summary>An invocation leaves a declared ability input unmapped.</summary>
+    public const string MissingAbilityInput = "PLAY1003";
+
+    /// <summary>An invocation maps an input the ability does not declare, or maps one twice.</summary>
+    public const string UnknownAbilityInput = "PLAY1004";
+
+    /// <summary>An invocation maps an input from a source whose type is incompatible.</summary>
+    public const string IncompatibleAbilityInputMapping = "PLAY1005";
+
+    /// <summary>An invocation declares two branches or outlets for the same selector.</summary>
+    public const string DuplicateInvocationBranch = "PLAY1006";
+
+    /// <summary>An outlet or branch can never be taken, such as <c>expired</c> on an ability that does not answer later.</summary>
+    public const string UnreachableInvocationOutlet = "PLAY1007";
+
+    /// <summary><c>$result</c>, <c>$outcome</c> or <c>$failure</c> is read where no matching branch is in scope.</summary>
+    public const string InvocationValueOutsideBranch = "PLAY1008";
+
+    /// <summary>A workflow reads a node's returned value through a path not guaranteed to have passed that node.</summary>
+    public const string NonDominatingNodeRead = "PLAY1009";
+
+    /// <summary>An <c>answers later</c> ability is invoked from a reaction, which has no place to wait.</summary>
+    public const string AnswersLaterInReaction = "PLAY1010";
+
+    /// <summary>An <c>answers later</c> ability is invoked from a state machine, which has no data to hold the answer.</summary>
+    public const string AnswersLaterInStateMachine = "PLAY1011";
+
+    /// <summary>An approval's <c>via</c> ability does not answer later with <c>approved</c> and <c>rejected</c> outcomes.</summary>
+    public const string ApprovalViaAbilityLacksOutcomes = "PLAY1012";
+
+    /// <summary>A <c>compute</c> node is malformed: it has no returns, no body, or an invalid outlet set.</summary>
+    public const string InvalidComputeDeclaration = "PLAY1013";
+
+    /// <summary>A reaction trigger combines <c>invokes</c> with an attached body.</summary>
+    public const string InvocationWithAttachedBody = "PLAY1014";
+
+    /// <summary>A <c>once</c> ability is invoked with <c>attempts</c> greater than one.</summary>
+    public const string OnceAbilityRetried = "PLAY1015";
+
+    /// <summary>Result branches are not allowed on this invocation: a workflow node, state machine or operation phase handles results elsewhere.</summary>
+    public const string InvocationBranchesNotAllowed = "PLAY1016";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>

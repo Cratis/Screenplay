@@ -123,7 +123,7 @@ internal static partial class ScreenplayValidator
                     produces.Location);
             }
 
-            foreach (var invokes in (trigger.Invokes ?? []).Where(invokes => !names.Commands.Contains(invokes.Command)))
+            foreach (var invokes in (trigger.Invokes ?? []).Where(invokes => !invokes.IsAbility && !names.Commands.Contains(invokes.Command)))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownCommand,
