@@ -82,12 +82,14 @@ fi
 # 3. specifications the renderer cannot take
 if [ -f "$HERE/render-bridge/drop-specifications.txt" ]; then
 python3 - "$V" "$HERE/render-bridge/drop-specifications.txt" <<'PY'
-import sys,re
+import sys,re,os
 root=sys.argv[1]
 for line in open(sys.argv[2]):
     line=line.strip()
     if not line or line.startswith('#'): continue
-    f,name=line.split('|'); p=root+'/'+f; t=open(p).read()
+    f,name=line.split('|'); p=root+'/'+f
+    if not os.path.exists(p): continue  # a domain that is not in the variant (DOMAINS)
+    t=open(p).read()
     m=re.search(r'\n( *)specification '+re.escape(name)+r'\n',t)
     if not m: print('not found:',line); continue
     ind=len(m.group(1)); a=m.start()+1; rest=t[m.end():]
