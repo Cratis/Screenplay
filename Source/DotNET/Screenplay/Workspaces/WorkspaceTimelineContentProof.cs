@@ -26,6 +26,29 @@ internal static class WorkspaceTimelineContentProof
     internal static bool Preserves(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin>? removedImports = null)
     {
         if (removedImports is { Count: > 0 } && !SameSourceModuloTimelinePermutation(before, after, pins, removedImports)) return false;
+
+        return SameModelOrAdmission(before, after, pins, removedImports);
+    }
+
+    internal static bool SameSourceModuloTimelinePermutation(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin>? removedImports = null)
+    {
+        var original = WorkspaceTimelineRepairs.Timeline(before);
+        var candidate = WorkspaceTimelineRepairs.Timeline(after);
+        if (!CanCompare(original, candidate, pins, removedImports ?? [])) return false;
+
+        var remaining = pins.ToList();
+        var removed = (removedImports ?? []).ToList();
+        var left = NormalizedApplication(original, removed);
+        var right = NormalizedApplication(candidate, remaining);
+
+        return remaining.Count == 0 && removed.Count == 0 && JsonNode.DeepEquals(left, right);
+    }
+
+    internal static bool SameAdmissionDiagnostics(IEnumerable<Diagnostic> before, IEnumerable<Diagnostic> after) =>
+        AdmissionDiagnostics(before).SequenceEqual(AdmissionDiagnostics(after));
+
+    static bool SameModelOrAdmission(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin>? removedImports)
+    {
         if (before.Compilation.Value is not null && after.Compilation.Value is not null)
         {
             return WorkspaceRepairVerification.SameModel(before, after);
@@ -38,28 +61,20 @@ internal static class WorkspaceTimelineContentProof
         return SameSourceModuloTimelinePermutation(before, after, pins, removedImports) && SameAdmissionDiagnostics(before.Compilation.Diagnostics, after.Compilation.Diagnostics);
     }
 
-    internal static bool SameSourceModuloTimelinePermutation(ScreenplayWorkspace before, ScreenplayWorkspace after, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin>? removedImports = null)
+    static bool CanCompare(AuthoredTimeline original, AuthoredTimeline candidate, IReadOnlyList<TimelineImportPin> pins, IReadOnlyList<TimelineImportPin> removed) =>
+        HasSource(original) && HasSource(candidate) && PinsAlreadyPlaced(original, candidate, pins) && CoversExpandedImports(original, pins, removed);
+
+    static bool HasSource(AuthoredTimeline timeline) => timeline.SourceValid && timeline.Application is not null;
+
+    static JsonObject NormalizedApplication(AuthoredTimeline timeline, List<TimelineImportPin> pins)
     {
-        var original = WorkspaceTimelineRepairs.Timeline(before);
-        var candidate = WorkspaceTimelineRepairs.Timeline(after);
-        if (!original.SourceValid || !candidate.SourceValid || original.Application is null || candidate.Application is null ||
-            !PinsAlreadyPlaced(original, candidate, pins) || !CoversExpandedImports(original, pins, removedImports ?? []))
-        {
-            return false;
-        }
+        var node = ParseSyntax(timeline.Application!)!.AsObject();
+        Normalize(timeline.Application!, node, [], pins);
 
-        var left = JsonNode.Parse(SyntaxJson.Serialize(original.Application).GetRawText(), documentOptions: _documentOptions)!.AsObject();
-        var right = JsonNode.Parse(SyntaxJson.Serialize(candidate.Application).GetRawText(), documentOptions: _documentOptions)!.AsObject();
-        var remaining = pins.ToList();
-        var removed = (removedImports ?? []).ToList();
-        Normalize(original.Application, left, [], removed);
-        Normalize(candidate.Application, right, [], remaining);
-
-        return remaining.Count == 0 && removed.Count == 0 && JsonNode.DeepEquals(left, right);
+        return node;
     }
 
-    internal static bool SameAdmissionDiagnostics(IEnumerable<Diagnostic> before, IEnumerable<Diagnostic> after) =>
-        AdmissionDiagnostics(before).SequenceEqual(AdmissionDiagnostics(after));
+    static JsonNode? ParseSyntax(SyntaxNode syntax) => JsonNode.Parse(SyntaxJson.Serialize(syntax).GetRawText(), documentOptions: _documentOptions);
 
     static IEnumerable<(string Code, DiagnosticSeverity Severity, int Count)> AdmissionDiagnostics(IEnumerable<Diagnostic> diagnostics) => diagnostics
         .Where(diagnostic => diagnostic.Code != DiagnosticCodes.EventFromLaterSlice && diagnostic.Code != DiagnosticCodes.TimelineCycleGroup)
@@ -86,9 +101,11 @@ internal static class WorkspaceTimelineContentProof
             .Select(document => (import.DocumentPath, document.Path, import.Placement))).ToArray();
         var actual = pins.Select(pin => (pin.DocumentPath, Path: PlayGlob.Resolve(pin.DocumentPath, pin.Import.Pattern), pin.Placement)).ToArray();
 
-        return expected.Length > 0 && expected.Length == actual.Length && expected.Distinct().Count() == expected.Length &&
-            expected.All(item => actual.Count(candidate => candidate == item) == 1);
+        return expected.Length > 0 && expected.Length == actual.Length && EachMatchedOnce(expected, actual);
     }
+
+    static bool EachMatchedOnce((string DocumentPath, string Path, PlayPlacement Placement)[] expected, (string DocumentPath, string Path, PlayPlacement Placement)[] actual) =>
+        expected.Distinct().Count() == expected.Length && expected.All(item => actual.Count(candidate => candidate == item) == 1);
 
     static void Normalize(SyntaxNode syntax, JsonObject node, string[] outer, List<TimelineImportPin> pins)
     {
@@ -118,19 +135,28 @@ internal static class WorkspaceTimelineContentProof
         // but it is data, never a declaration or permission to reorder one of its arrays.
         foreach (var member in _children[syntax.GetType()])
         {
-            var value = member.Property.GetValue(syntax);
-            if (value is SyntaxNode child && node[member.Name] is JsonObject childJson)
-            {
-                Normalize(child, childJson, scope, pins);
-            }
-            else if (value is IEnumerable children && node[member.Name] is JsonArray array)
-            {
-                var position = 0;
-                foreach (var element in children.OfType<SyntaxNode>())
-                {
-                    Normalize(element, array[position++]!.AsObject(), scope, pins);
-                }
-            }
+            NormalizeMember(member.Property.GetValue(syntax), node[member.Name], scope, pins);
+        }
+    }
+
+    static void NormalizeMember(object? value, JsonNode? json, string[] scope, List<TimelineImportPin> pins)
+    {
+        if (value is SyntaxNode child && json is JsonObject childJson)
+        {
+            Normalize(child, childJson, scope, pins);
+        }
+        else if (value is IEnumerable children && json is JsonArray array)
+        {
+            NormalizeElements(children, array, scope, pins);
+        }
+    }
+
+    static void NormalizeElements(IEnumerable children, JsonArray array, string[] scope, List<TimelineImportPin> pins)
+    {
+        var position = 0;
+        foreach (var element in children.OfType<SyntaxNode>())
+        {
+            Normalize(element, array[position++]!.AsObject(), scope, pins);
         }
     }
 
@@ -138,7 +164,7 @@ internal static class WorkspaceTimelineContentProof
     {
         foreach (var pin in pins.Where(pin => pin.Placement.Scope.SequenceEqual(scope)).ToArray())
         {
-            var expected = JsonNode.Parse(SyntaxJson.Serialize(pin.Import).GetRawText(), documentOptions: _documentOptions);
+            var expected = ParseSyntax(pin.Import);
             var position = Enumerable.Range(0, imports.Count).FirstOrDefault(position => JsonNode.DeepEquals(imports[position], expected), -1);
             if (position < 0) continue;
             imports.RemoveAt(position);
