@@ -23,22 +23,23 @@ const document = [
     'statemachine OrderLifecycle',
     '  follows OrderProgress',
     '  state Placed initial',
-    '    entering start FulfilOrder',
+    '    entering starts FulfilOrder',
     '    on PaymentCaptured -> Paid',
     '  state Paid final',
     'workflow FulfilOrder',
     '  for OrderProgress',
     '  trigger when OrderLifecycle enters Paid',
     '    -> Reserve',
-    '  action Reserve sends HoldStock attempts 3',
+    '  action Reserve invokes HoldStock attempts 3',
     '    failed -> Escalate',
+    '    refused -> Escalate',
     '  decide InStock when itemsInStock == true',
     '  wait Leaves for Handed expires after 2 days',
     '  approval Accept by Clerk expires after 1 day',
     '  foreach Each over lines parallel 2',
     '  join All all',
     '  specification Runs',
-    '    then sends HoldStock',
+    '    then invokes HoldStock',
     '    outcome Leaves resumed',
     'readmodel Order',
     '  state String',
@@ -75,7 +76,7 @@ describe('when highlighting state machines and workflows', () => {
     });
 
     it('should highlight the workflow nodes and their words', () => {
-        for (const line of [8, 10, 12, 13, 14, 15, 16]) isKeyword(line, 2).should.be.true;
+        for (const line of [8, 10, 13, 14, 15, 16, 17]) isKeyword(line, 2).should.be.true;
         isKeyword(10, 19).should.be.true;
         isName(10, 9).should.be.true;
     });
@@ -83,16 +84,17 @@ describe('when highlighting state machines and workflows', () => {
     it('should highlight the outlets and the arrow', () => {
         scopesAt(11, 4).some(scope => scope.startsWith('constant.')).should.be.true;
         isKeyword(11, 11).should.be.true;
+        scopesAt(12, 4).some(scope => scope.startsWith('constant.')).should.be.true;
     });
 
     it('should highlight the specification steps', () => {
-        isKeyword(18, 4).should.be.true;
-        isKeyword(18, 9).should.be.true;
         isKeyword(19, 4).should.be.true;
+        isKeyword(19, 9).should.be.true;
+        isKeyword(20, 4).should.be.true;
     });
 
     it('should leave a property named like a node word alone once the block has ended', () => {
-        isKeyword(21, 2).should.be.false;
         isKeyword(22, 2).should.be.false;
+        isKeyword(23, 2).should.be.false;
     });
 });

@@ -176,16 +176,17 @@ internal static partial class WorkflowParser
         var match = ActionRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid action '{line.Content}' - expected 'action <Name> sends <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.", line.Location);
+            context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid action '{line.Content}' - expected 'action <Name> invokes <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.", line.Location);
             return null;
         }
 
+        if (match.Groups[2].Value == "sends") context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "'action ... sends' is deprecated - use 'action <Name> invokes <Command>'.", line.Location);
         int? attempts = null;
         WorkflowDurationSyntax? timeout = null;
         WorkflowDurationSyntax? retry = null;
         var hasTimeout = false;
         var hasRetry = false;
-        foreach (Match option in ActionOptionRegex().Matches(match.Groups[3].Value))
+        foreach (Match option in ActionOptionRegex().Matches(match.Groups[4].Value))
         {
             if (option.Groups[1].Success)
             {
@@ -215,7 +216,7 @@ internal static partial class WorkflowParser
             }
         }
 
-        return new(WorkflowNodeKind.Action, match.Groups[1].Value, [], line.Location) { Command = match.Groups[2].Value, Attempts = attempts, Timeout = timeout, RetryAfter = retry };
+        return new(WorkflowNodeKind.Action, match.Groups[1].Value, [], line.Location) { Command = match.Groups[3].Value, Attempts = attempts, Timeout = timeout, RetryAfter = retry };
     }
 
     static WorkflowNodeSyntax? ParseDecide(ParserContext context, SourceLine line)
@@ -339,7 +340,7 @@ internal static partial class WorkflowParser
     [GeneratedRegex(@"^when\s+([A-Za-z_]\w*)\s+enters\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EntersRegex();
 
-    [GeneratedRegex(@"^action\s+([A-Za-z_]\w*)\s+sends\s+([A-Za-z_]\w*)((?:\s+(?:attempts\s+\d+|timeout\s+\d+\s+\w+|retry\s+after\s+\d+\s+\w+))*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^action\s+([A-Za-z_]\w*)\s+(sends|invokes)\s+([A-Za-z_]\w*)((?:\s+(?:attempts\s+\d+|timeout\s+\d+\s+\w+|retry\s+after\s+\d+\s+\w+))*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ActionRegex();
 
     [GeneratedRegex(@"attempts\s+(\d+)|timeout\s+(\d+)\s+(\w+)|retry\s+after\s+(\d+)\s+(\w+)", RegexOptions.NonBacktracking)]

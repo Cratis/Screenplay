@@ -19,7 +19,7 @@
 #      the total is left out. Both in tools/render-bridge/stand_in_for_unrendered.py.
 #   7. A workflow with an `approval` step or a `decide` that reads the subject read model is refused (STAGE-LIFECYCLE-010: a rendered application has no
 #      approvals endpoint and its performer cannot read the subject yet). The Storefront workflow FulfilOrder is removed, with the state machine's
-#      `start FulfilOrder` entry action and the `then starts FulfilOrder` assertion; the state machine itself stays.
+#      `starts FulfilOrder` entry action and the `then starts FulfilOrder` assertion; the state machine itself stays.
 #   4. The custom package Acme.Commerce needs `cratis render --package-set tools/packages/acme-commerce.package-set.json` and the
 #      built npm package _packages/scene.commerce. Without PACKAGE_SET=1 the three acme: components are replaced by core
 #      tables / the package is removed from the profile (render still works, the custom components are missing).
@@ -77,7 +77,7 @@ python3 - "$V/Storefront/model/lifecycle.play" <<'PY'
 import sys,re
 p=sys.argv[1]; t=open(p).read()
 t=re.sub(r'(?ms)^workflow FulfilOrder\n.*?(?=^\S|\Z)','',t)
-t=re.sub(r'(?m)^ *(?:entering start|then starts) FulfilOrder\n','',t)
+t=re.sub(r'(?m)^ *(?:entering starts?|then starts) FulfilOrder\n','',t)
 open(p,'w').write(t.rstrip('\n')+'\n')
 PY
 fi

@@ -591,7 +591,7 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "constant.language.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(entering)\\s+(send|start)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "match": "^\\s*(entering)\\s+(invokes|starts|send|start)\\s+([A-Za-z_]\\w*)\\s*$",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
                 },
                 {
@@ -603,7 +603,7 @@
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.function.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(action|decide|wait|approval|foreach|join)\\s+([A-Za-z_]\\w*)(?=\\s+(?:sends|when|for|by|over|all|any|at)\\b)",
+                    "match": "^\\s*(action|decide|wait|approval|foreach|join)\\s+([A-Za-z_]\\w*)(?=\\s+(?:sends|invokes|when|for|by|over|all|any|at)\\b)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.function.screenplay" } }
                 },
                 {
@@ -615,15 +615,15 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.function.screenplay" }, "3": { "name": "constant.language.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(then)\\s+(is|sends|starts|completes|fails\\s+at|waits\\s+at)\\b",
+                    "match": "^\\s*(then)\\s+(is|sends|invokes|starts|completes|fails\\s+at|waits\\s+at)\\b",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "match": "\\b(sends|enters|attempts|timeout|retry\\s+after|expires\\s+after|parallel|at\\s+least)\\b(?=\\s+[\\w\"]|\\s*$)",
+                    "match": "\\b(sends|invokes|enters|attempts|timeout|retry\\s+after|expires\\s+after|parallel|at\\s+least)\\b(?=\\s+[\\w\"]|\\s*$)",
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "^\\s*(next|failed|resumed|expired|approved|rejected|each|completed)(?=\\s*->)",
+                    "match": "^\\s*(next|failed|refused|resumed|expired|approved|rejected|each|completed)(?=\\s*->)",
                     "captures": { "1": { "name": "constant.language.screenplay" } }
                 },
                 {

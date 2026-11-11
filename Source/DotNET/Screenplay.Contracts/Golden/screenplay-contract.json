@@ -59440,6 +59440,10 @@
           "diagnostic": null,
           "diagnostics": [
             {
+              "code": "PLAY0397",
+              "severity": "warning"
+            },
+            {
               "code": "PLAY0469",
               "severity": "information"
             }
@@ -64244,7 +64248,7 @@
       "severities": [
         "warning"
       ],
-      "title": "An inline code block uses a legacy language line, or a description uses a bare fence.",
+      "title": "A deprecated form is used: an inline code block with a legacy language line, a description with a bare fence, or a lifecycle verb that invokes and starts replace (sends, entering send, entering start).",
       "reserved": false,
       "retired": false
     },
