@@ -298,22 +298,7 @@ public partial class ScreenplayPrinter
 
             foreach (var invokes in trigger.Invokes ?? [])
             {
-                writer.Line($"invokes {invokes.Command}", invokes);
-                using (writer.Indent())
-                {
-                    WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
-                    foreach (var refusal in invokes.OnRefused)
-                    {
-                        var selector = refusal.Selector == "any" ? string.Empty : $" by {refusal.Selector}";
-                        var constraint = refusal.Constraint is null ? string.Empty : $" {refusal.Constraint}";
-                        writer.Line($"on refused{selector}{constraint}", refusal);
-                        using (writer.Indent())
-                        {
-                            if (refusal.Acknowledge) writer.DirectiveLine("acknowledge", refusal, "acknowledge");
-                            foreach (var produced in refusal.Produces) WriteProduces(writer, produced);
-                        }
-                    }
-                }
+                WriteInvocation(writer, invokes);
             }
 
             if (trigger.File is not null)
@@ -324,6 +309,35 @@ public partial class ScreenplayPrinter
             if (trigger.Code is not null)
             {
                 WriteCodeBlock(writer, trigger.Code);
+            }
+        }
+    }
+
+    void WriteInvocation(ScreenplayWriter writer, InvokesSyntax invokes)
+    {
+        writer.Line($"invokes {invokes.Command}", invokes);
+        using (writer.Indent())
+        {
+            WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
+            foreach (var refusal in invokes.OnRefused)
+            {
+                var selector = refusal.Selector == "any" ? string.Empty : $" by {refusal.Selector}";
+                var constraint = refusal.Constraint is null ? string.Empty : $" {refusal.Constraint}";
+                writer.Line($"on refused{selector}{constraint}", refusal);
+                using (writer.Indent())
+                {
+                    if (refusal.Acknowledge) writer.DirectiveLine("acknowledge", refusal, "acknowledge");
+                    foreach (var produced in refusal.Produces) WriteProduces(writer, produced);
+                }
+            }
+
+            foreach (var branch in invokes.Branches)
+            {
+                writer.Line($"on {branch.Selector}", branch);
+                using (writer.Indent())
+                {
+                    foreach (var produced in branch.Produces) WriteProduces(writer, produced);
+                }
             }
         }
     }
