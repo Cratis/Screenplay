@@ -252,15 +252,29 @@ jobs:
         env:
           PROJECTS: ${{ needs.shards.outputs.compatibility-projects }}
         run: |
-          while IFS= read -r project; do
-            dotnet build "$project" --configuration Debug -p:SpecTargetFramework=net10.0
-          done < <(jq -r '.[]' <<< "$PROJECTS")
+          # One aggregate project builds every spec project in parallel and compiles shared libraries once.
+          aggregate="$RUNNER_TEMP/net10-specifications.proj"
+          # shellcheck disable=SC2016
+          {
+            echo '<Project><PropertyGroup><Shared>Configuration=Debug;SpecTargetFramework=net10.0</Shared></PropertyGroup><ItemGroup>'
+            while IFS= read -r project; do
+              echo "<Spec Include=\"$GITHUB_WORKSPACE/$project\" />"
+            done < <(jq -r '.[]' <<< "$PROJECTS")
+            echo '</ItemGroup>'
+            echo '<Target Name="RestoreAll"><MSBuild Projects="@(Spec)" Targets="Restore" Properties="$(Shared)" BuildInParallel="true" /></Target>'
+            echo '<Target Name="BuildAll"><MSBuild Projects="@(Spec)" Targets="Build" Properties="$(Shared);NoRestore=true" BuildInParallel="true" /></Target>'
+            echo '</Project>'
+          } > "$aggregate"
+          dotnet msbuild "$aggregate" -nologo -t:RestoreAll
+          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll
 
       # Only the net10.0 output is archived; the net11.0 binaries are a separate artifact.
       - name: Archive build output
         run: |
           {
             find Source/DotNET -type d -path '*/bin/Debug/net10.0' -print0
+            # The published-reader vector runs this net11.0 probe, which the specification project builds.
+            find Source/DotNET -type d -path '*/LegacyReader/bin/Debug/net11.0' -print0
             find Source/Screenplay -type d -name dist -not -path '*/node_modules/*' -print0
           } | tar --null -czf build-output-net10.tar.gz -T -
 
