@@ -30,6 +30,7 @@ static class McpCommand
                 // Only this explicit opt-in creates a new model; ordinary MCP startup is unchanged.
                 Directory.CreateDirectory(root!);
             }
+
             // An editor restores unresolved extension references and says "not restored" until it has, instead of failing the model.
             if (root is not null) Cratis.Screenplay.Extensions.ExtensionAutoRestore.UseRoot(root);
             else Cratis.Screenplay.Extensions.ExtensionContractResolver.Current = new(Cratis.Screenplay.Extensions.ExtensionCache.Default, Cratis.Screenplay.Extensions.ExtensionResolutionMode.Editor);
