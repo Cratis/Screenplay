@@ -15,6 +15,6 @@ describe('when highlighting an extension contract', () => {
     it('should highlight a requirement', () => expect(exec('  requires stage "^5"', 'requires')?.slice(1, 4)).toEqual(['requires', 'stage', '"^5"']));
     it('should highlight a secret setting', () => expect(exec('  setting secretKey secret', 'setting')?.slice(1, 4)).toEqual(['setting', 'secretKey', 'secret']));
     it('should highlight a component kind', () => expect(exec('    kind react', 'kind')?.slice(1, 3)).toEqual(['kind', 'react']));
-    it('should highlight a signal value an interaction reads', () => expect(exec('              with paymentIntentId from signal.paymentIntentId', 'signal')).not.toBeUndefined());
+    it('should highlight a signal value an interaction reads', () => expect(rules.some(rule => rule.includes('|component|signal|') && new RegExp(rule).test('from signal.paymentIntentId'))).toBe(true));
     it('should not highlight a property called icon', () => expect(exec('    icon String', 'icon')).toBeUndefined());
 });
