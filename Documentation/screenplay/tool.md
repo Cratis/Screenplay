@@ -513,7 +513,7 @@ The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the sa
 
 `--scope <Module>[.<Feature>...][.<Slice>]` keeps one module, feature or slice and drops every other module, feature and slice. Application-wide declarations (concepts, types, policies, triggers, event sources, lifecycles and graphs) stay, so references from the selected slices still resolve. The excerpt's `revision` identifies the excerpt, not the whole model. From .NET, use `ExecutableSemanticModelScope.Select(model, scope)`.
 
-`--screens` admits the model's screens to the exported model as ESM v42: each slice holds its screens' data, actions, navigation and layout, keyed to query, command and screen identities (see [UI contract](ui-contract.md#screens-in-the-executable-model)). Without it, screens stay deferred and the export keeps its version and bytes. `--screens` works only with `--format esm`.
+`--screens` admits the model's screens to the exported model as ESM v42: each slice holds its screens' data, actions, navigation and layout, keyed to query, command and screen identities (see [UI contract](ui-contract.md#screens-in-the-executable-model)). Without it, screens stay deferred and the export keeps its version and bytes. `--screens` works only with `--format esm`. A screen that places an [extension component](screens.md#extension-components) makes the exported model ESM v52, which also lists the extensions the screen needs; `--format ui` carries the same placements and the restored contract's `kind`, `platforms` and static placeholder when the extension is restored.
 
 ```bash
 screenplay export path/to/screenplays --screens --output model.esm.json
