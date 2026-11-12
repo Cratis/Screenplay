@@ -59,6 +59,13 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **System** — a named external system the model can ask for something. It declares abilities. See [Systems and abilities](systems.md).
 - **Ability** — one typed thing a system can be asked to do: inputs, an optional `returns` block, named outcomes, an effect class (`safe`, `idempotent` or `once`) and optionally `answers later`. See [Systems and abilities](systems.md).
 - **Outcome** — a named business result of an ability other than success, such as a refusal the external system gives. It carries no payload.
+- **Effect class** — `safe`, `idempotent` or `once`, written after an ability's name. It says what a retry may do when an attempt's result is unknown; `once` is the default and is never retried. See [Choose the effect class](systems.md#choose-the-effect-class).
+- **Extension** — the realization of a system: the code and assets that carry its abilities out, chosen by an `extension` line on the system rather than written into the model. See [Extensions](extensions.md).
+- **Extension package** — the distributable unit of an extension, an OCI artifact or an npm package. Its `contract.play` declares what it contributes and is the only part the compiler reads. See [Extension contracts](extension-contracts.md).
+- **Invocation** — one durable request to perform an ability, started by `invokes <System>.<Ability>`. It has an identity, is retried according to the effect class and ends in a recorded outcome. See [Invoke an ability](systems.md#invoke-an-ability).
+- **Activation** — when an extension's backend starts and stops: `always`, or `on demand` with an idle timeout. A system's `activation` line overrides the package's default. See [System settings and named secrets](environments.md#system-settings-and-named-secrets).
+- **Placeholder** — the static HTML file an extension component declares, drawn by design tools in place of the component. It has no script and no external references. See [Components](extension-contracts.md#components).
+- **Lock** — `screenplay.lock`, the committed plain-text file that pins each `extension` reference to a version, a package digest, a contract hash and a publisher. See [The lock](extension-contracts.md#the-lock).
 - **Size class** — `compact`, `regular` or `expanded`, on the width and height axes. A class, not a pixel breakpoint.
 
 ### Interaction

@@ -725,19 +725,28 @@ below. The verb change (#1251) is small and independent, so it may land as soon 
 
 ## Open questions
 
-1. **Stage services in version one.** Whether Stage's host services include a key-value state store scoped to
-   system and tenant, and an outbound credential proxy so secrets never enter the extension (Cratis/Stage#1065).
-2. **Where the SDKs live.** Where the backend SDKs and `.proto` files live (Cratis/Stage#1065).
-3. **Who runs the catalog** of short names, and the **lock's name and format** (#1253).
-4. **Activation trigger.** Whether a backend is activated on navigation to a screen or on component mount
-   (Cratis/Stage#1066).
-5. **Per-tenant credentials.** Whether `systems.<System>.` keys may vary by tenant, or a system is declared per
+Resolved by the work that landed under #1248. The resolutions are recorded here; the decision itself is unchanged.
+
+1. **Stage services in version one.** Resolved. Version one has `GetSetting`, `GetSecret`, `RaiseTrigger`, `Answer`, `Log`
+   and `RecordMetrics`. A key-value state store and an outbound credential proxy are deliberately left out and reserved
+   for a later minor version of the protocol (Cratis/Stage#1065, Stage `Documentation/extensions/index.md`). The
+   credential proxy needs a declarative way to name the hosts an extension may reach, which belongs in the contract and
+   is not yet specified.
+2. **Where the SDKs live.** Resolved. The protocol and the backend SDKs live in the Cratis/Stage repository
+   (Cratis/Stage#1065).
+3. **Who runs the catalog** of short names, and the **lock's name and format**. Resolved. The catalog is a naming
+   convention, not a service: `owner/name` resolves to `ghcr.io/owner/extension-name`. The lock is the plain-text
+   `screenplay.lock` (decision 0160, #1253).
+4. **Activation trigger.** Resolved. Reaching a screen that places a system's components activates its backend;
+   mounting a component does not, and the first call still activates a backend that nothing else started
+   (Cratis/Stage#1066, Stage `Documentation/extensions/execution-tiers.md`).
+5. **Per-tenant credentials.** Open. Whether `systems.<System>.` keys may vary by tenant, or a system is declared per
    tenant, is a host decision that may need a model hint later.
-6. **Outcome payloads.** A declared outcome could carry values (`outcome NoCapacity` with `nextSlot DateTime`).
-   Deferred until a sample needs it; adding it is additive.
-7. **Captures from extensions.** Whether a capture source can be an extension-provided feed (polling a REST
+6. **Outcome payloads.** Open. A declared outcome carries no payload in this version. Adding values (`outcome NoCapacity`
+   with `nextSlot DateTime`) is additive and waits for a sample that needs it.
+7. **Captures from extensions.** Open. Whether a capture source can be an extension-provided feed (polling a REST
    collection) belongs with the CDL, not here.
-8. **The marketplace.** It is not yet planned; the manifest carries the images now.
+8. **The marketplace.** Open. It is not yet planned; the manifest carries the images now.
 
 ## Delivery order
 

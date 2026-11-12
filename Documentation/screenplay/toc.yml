@@ -61,6 +61,12 @@
   href: event-sources.md
 - name: Commands
   href: commands.md
+- name: Extensions overview
+  href: extensions.md
+- name: Using an extension
+  href: using-an-extension.md
+- name: Building an extension
+  href: building-an-extension.md
 - name: Systems and abilities
   href: systems.md
 - name: Extension contracts and the lock
