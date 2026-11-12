@@ -642,7 +642,6 @@ export const DiagnosticCodes = {
     UnknownSystemSetting: 'PLAY0995',
     SecretSettingLiteral: 'PLAY0996',
     SecretOnPublicSetting: 'PLAY0997',
-<<<<<<< HEAD
     UnknownInvocationTarget: 'PLAY1001',
     UnknownInvocationOutcome: 'PLAY1002',
     MissingAbilityInput: 'PLAY1003',
@@ -660,7 +659,6 @@ export const DiagnosticCodes = {
     OnceAbilityRetried: 'PLAY1015',
     InvocationBranchesNotAllowed: 'PLAY1016',
     InvalidAbilityAnswer: 'PLAY1017',
-=======
     InvalidExtensionContract: 'PLAY0998',
     MissingExtensionManifestField: 'PLAY0999',
     UnknownComponentKind: 'PLAY1100',
@@ -677,5 +675,4 @@ export const DiagnosticCodes = {
     InvalidExtensionLock: 'PLAY1111',
     ExtensionIncompatibleUse: 'PLAY1112',
     InvalidExtensionPlaceholder: 'PLAY1113',
->>>>>>> origin/main
 } as const;
