@@ -17,7 +17,7 @@ const maximumItems = pageLimit * maximumPages;
  */
 export const verdictCodes: ReadonlySet<string> = new Set([
     'PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
-    'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606',
+    'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY1114', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606',
     'PLAY0652', 'PLAY0671',
 ]);
 
