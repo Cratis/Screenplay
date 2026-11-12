@@ -19,6 +19,9 @@ export const prototypeMetrics = {
     codeHeight: 140,
 } as const;
 
+// The placeholder the board draws for a component an extension provides.
+export const extensionComponentType = 'extension-component';
+
 // Slots that span the whole width of their template - everything else sits side by side in a row.
 const spanningSlots = new Set(['header', 'footer', 'title', 'toolbar', 'actions', 'body', 'content']);
 
@@ -75,6 +78,10 @@ function layoutDirective(canvas: PrototypeCanvas, directive: ScreenDirectiveSynt
             return layoutDirectives(canvas, directive.directives, region, y, presentsData);
         case 'ScreenTemplateReferenceSyntax':
             return layoutSlots(canvas, directive.slots, region, y, presentsData);
+        case 'ScreenComponentSyntax':
+            // <System>.<Component> comes from an extension. A host that holds the package draws its static HTML placeholder
+            // in this element's place; the board draws the named component.
+            return directive.component.split('.').length === 2 ? place(canvas, extensionComponentType, directive.component, region, y, metrics.panelHeight) : 0;
         default:
             return 0;
     }

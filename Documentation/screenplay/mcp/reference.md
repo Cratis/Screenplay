@@ -991,6 +991,11 @@ screen, exactly what `UiContractJson.Write(UiContractBuilder.For(workspace))` an
 executable model it is still available, with `modelRevision: null` and no
 identities or routes inside.
 
+A screen that places an extension component (`component <System>.<Component>`)
+carries it in the Scene layer with what the restored contract says about it, and
+lists the extensions it needs in `extensions`, so a host can activate their
+backends ahead of use. See [Extension components](../screens.md#extension-components).
+
 Both views page decoded bytes like `executable-model`: `limit` is 1–196608 bytes,
 the response carries `format` (`openapi-3.1.0` or `screenplay-ui/1`),
 `modelRevision`, `totalBytes` and `page`, and every later page passes
