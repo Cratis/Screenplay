@@ -3286,6 +3286,21 @@
         },
         "workflow": {
           "type": "string"
+        },
+        "system": {
+          "type": "string"
+        },
+        "ability": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityInput"
+          }
+        },
+        "requirement": {
+          "type": "string"
         }
       }
     },
@@ -3705,6 +3720,27 @@
         },
         "joinCount": {
           "type": "integer"
+        },
+        "system": {
+          "type": "string"
+        },
+        "ability": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityInput"
+          }
+        },
+        "returns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AbilityField"
+          }
+        },
+        "requirement": {
+          "type": "string"
         }
       }
     }

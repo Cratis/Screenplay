@@ -86,6 +86,56 @@ public static partial class canonical_serialization_golden_vectors
                 then PickupBookingFailed
                   for "9c858901-8a57-4791-81fe-4c455b099bc9"
                   reason = "down"
+
+        statemachine ParcelFlow
+          follows ParcelStatus
+          state Waiting initial
+            on OrderPacked -> Packed
+          state Packed final
+            entering invokes Carrier.BookPickup
+              parcelId = parcelId
+            entering
+              ```csharp
+              return Empty;
+              ```
+
+          specification PackingBooksAPickup
+            when append OrderPacked
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            then is Packed
+            then invokes Carrier.BookPickup
+
+        workflow Pickup
+          for ParcelStatus
+          trigger Packed on OrderPacked
+            -> Book
+          action Book invokes Carrier.BookPickup attempts 2
+            parcelId = parcelId
+            next -> Assess
+            NoCapacity -> Cancel
+            failed -> Cancel
+          compute Assess
+            returns
+              score String
+            ```csharp
+            return new { score = "low" };
+            ```
+            next -> Cancel
+          action Cancel invokes Carrier.CancelPickup expires after 1 days
+            trackingNumber = Book.trackingNumber
+            next -> Done
+            failed -> Done
+            expired -> Done
+          action Done invokes Carrier.BookPickup
+            parcelId = parcelId
+
+          specification BookingThenCancelling
+            when append OrderPacked
+              for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            then invokes Carrier.BookPickup
+            then invokes Carrier.CancelPickup
+            then invokes Carrier.BookPickup
+            then completes
         """;
 
     /// <summary>

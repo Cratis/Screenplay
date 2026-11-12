@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 #pragma warning disable IDE0350 // Explicit ref reader parameters keep version-aware parsing delegates clear.
 internal static partial class SemanticModelRead
 {
-    internal static SemanticStateMachine StateMachine(ref Utf8JsonReader reader)
+    internal static SemanticStateMachine StateMachine(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "state machine");
         var seen = NewSeen();
@@ -24,9 +24,9 @@ internal static partial class SemanticModelRead
             {
                 case "name": name = String(ref reader, property); break;
                 case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
-                case "states": states = Array(ref reader, State, property); break;
+                case "states": states = Array(ref reader, (ref Utf8JsonReader item) => State(ref item, schemaVersion), property); break;
                 case "transitions": transitions = Array(ref reader, StateTransition, property); break;
-                case "specifications": specifications = Array(ref reader, LifecycleSpecification, property); break;
+                case "specifications": specifications = Array(ref reader, (ref Utf8JsonReader item) => LifecycleSpecification(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "state machine");
             }
         }
@@ -35,7 +35,7 @@ internal static partial class SemanticModelRead
         return new(name!, readModel, states, transitions) { Specifications = specifications };
     }
 
-    internal static SemanticWorkflow Workflow(ref Utf8JsonReader reader)
+    internal static SemanticWorkflow Workflow(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "workflow");
         var seen = NewSeen();
@@ -50,9 +50,9 @@ internal static partial class SemanticModelRead
             {
                 case "name": name = String(ref reader, property); break;
                 case "subject": subject = SemanticId.Parse(String(ref reader, property)); break;
-                case "nodes": nodes = Array(ref reader, WorkflowNode, property); break;
+                case "nodes": nodes = Array(ref reader, (ref Utf8JsonReader item) => WorkflowNode(ref item, schemaVersion), property); break;
                 case "edges": edges = Array(ref reader, WorkflowEdge, property); break;
-                case "specifications": specifications = Array(ref reader, LifecycleSpecification, property); break;
+                case "specifications": specifications = Array(ref reader, (ref Utf8JsonReader item) => LifecycleSpecification(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "workflow");
             }
         }
@@ -61,7 +61,7 @@ internal static partial class SemanticModelRead
         return new(name!, subject, nodes, edges) { Specifications = specifications };
     }
 
-    static SemanticState State(ref Utf8JsonReader reader)
+    static SemanticState State(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "state");
         var seen = NewSeen();
@@ -76,7 +76,7 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "initial": initial = Boolean(ref reader, property); break;
                 case "final": final = Boolean(ref reader, property); break;
-                case "entering": entering = Array(ref reader, StateEntry, property); break;
+                case "entering": entering = Array(ref reader, (ref Utf8JsonReader item) => StateEntry(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "state");
             }
         }
@@ -85,13 +85,17 @@ internal static partial class SemanticModelRead
         return new(name!, initial!.Value, final!.Value, entering);
     }
 
-    static SemanticStateEntry StateEntry(ref Utf8JsonReader reader)
+    static SemanticStateEntry StateEntry(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "state entry");
         var seen = NewSeen();
         string? kind = null;
         SemanticId command = default;
         string? workflow = null;
+        SemanticId system = default;
+        string? ability = null;
+        ImmutableArray<SemanticAbilityInputMapping> inputs = [];
+        string? requirement = null;
         while (NextProperty(ref reader, seen, "state entry") is { } property)
         {
             switch (property)
@@ -99,12 +103,33 @@ internal static partial class SemanticModelRead
                 case "kind": kind = String(ref reader, property); break;
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
                 case "workflow": workflow = String(ref reader, property); break;
+                case "system" when schemaVersion >= 51: system = SemanticId.Parse(String(ref reader, property)); break;
+                case "ability" when schemaVersion >= 51: ability = String(ref reader, property); break;
+                case "inputs" when schemaVersion >= 51: inputs = Array(ref reader, (ref Utf8JsonReader item) => AbilityInput(ref item, schemaVersion), property); break;
+                case "requirement" when schemaVersion >= 51: requirement = String(ref reader, property); break;
                 default: throw Unknown(property, "state entry");
             }
         }
 
-        Required((kind == "send" && command.IsSet && workflow is null) || (kind == "start" && !command.IsSet && workflow is not null), "state entry");
-        return new(kind == "send" ? SemanticStateEntryKind.SendCommand : SemanticStateEntryKind.StartWorkflow, command, workflow);
+        var entryKind = kind switch
+        {
+            "send" => SemanticStateEntryKind.SendCommand,
+            "start" => SemanticStateEntryKind.StartWorkflow,
+            "invoke" when schemaVersion >= 51 => SemanticStateEntryKind.InvokeAbility,
+            "body" when schemaVersion >= 51 => SemanticStateEntryKind.RunBody,
+            _ => (SemanticStateEntryKind?)null
+        };
+        Required(
+            entryKind switch
+            {
+                SemanticStateEntryKind.SendCommand => command.IsSet && workflow is null,
+                SemanticStateEntryKind.StartWorkflow => !command.IsSet && workflow is not null,
+                SemanticStateEntryKind.InvokeAbility => !command.IsSet && workflow is null && system.IsSet && ability is not null,
+                SemanticStateEntryKind.RunBody => !command.IsSet && workflow is null && !system.IsSet && ability is null,
+                _ => false
+            },
+            "state entry");
+        return new(entryKind!.Value, command, workflow) { System = system, Ability = ability, Inputs = inputs, RequirementId = requirement };
     }
 
     static SemanticStateTransition StateTransition(ref Utf8JsonReader reader)
@@ -153,7 +178,7 @@ internal static partial class SemanticModelRead
         return new(from!, outlet!, to!);
     }
 
-    static SemanticWorkflowNode WorkflowNode(ref Utf8JsonReader reader)
+    static SemanticWorkflowNode WorkflowNode(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "workflow node");
         var seen = NewSeen();
@@ -182,6 +207,11 @@ internal static partial class SemanticModelRead
         int? maxParallel = null;
         SemanticJoinMode? joinMode = null;
         int? joinCount = null;
+        SemanticId system = default;
+        string? ability = null;
+        ImmutableArray<SemanticAbilityInputMapping> inputs = [];
+        ImmutableArray<SemanticAbilityField> returns = [];
+        string? requirement = null;
         while (NextProperty(ref reader, seen, "workflow node") is { } property)
         {
             switch (property)
@@ -211,6 +241,11 @@ internal static partial class SemanticModelRead
                 case "maxParallel": maxParallel = Int32(ref reader, property); break;
                 case "joinMode": joinMode = String(ref reader, property) switch { "all" => SemanticJoinMode.All, "any" => SemanticJoinMode.Any, "atLeast" => SemanticJoinMode.AtLeast, var other => throw DiscriminatorError(other, "join mode") }; break;
                 case "joinCount": joinCount = Int32(ref reader, property); break;
+                case "system" when schemaVersion >= 51: system = SemanticId.Parse(String(ref reader, property)); break;
+                case "ability" when schemaVersion >= 51: ability = String(ref reader, property); break;
+                case "inputs" when schemaVersion >= 51: inputs = Array(ref reader, (ref Utf8JsonReader item) => AbilityInput(ref item, schemaVersion), property); break;
+                case "returns" when schemaVersion >= 51: returns = Array(ref reader, AbilityField, property); break;
+                case "requirement" when schemaVersion >= 51: requirement = String(ref reader, property); break;
                 default: throw Unknown(property, "workflow node");
             }
         }
@@ -240,7 +275,12 @@ internal static partial class SemanticModelRead
             Items = items,
             MaxParallel = maxParallel,
             JoinMode = joinMode,
-            JoinCount = joinCount
+            JoinCount = joinCount,
+            System = system,
+            Ability = ability,
+            Inputs = inputs,
+            Returns = returns,
+            RequirementId = requirement
         };
     }
 
@@ -253,6 +293,7 @@ internal static partial class SemanticModelRead
         "approval" => SemanticWorkflowNodeKind.Approval,
         "forEach" => SemanticWorkflowNodeKind.ForEach,
         "join" => SemanticWorkflowNodeKind.Join,
+        "compute" => SemanticWorkflowNodeKind.Compute,
         _ => throw DiscriminatorError(value, "workflow node kind")
     };
 
@@ -265,7 +306,7 @@ internal static partial class SemanticModelRead
         _ => throw DiscriminatorError(value, "workflow trigger kind")
     };
 
-    static SemanticLifecycleSpecification LifecycleSpecification(ref Utf8JsonReader reader)
+    static SemanticLifecycleSpecification LifecycleSpecification(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "lifecycle specification");
         var seen = NewSeen();
@@ -284,7 +325,7 @@ internal static partial class SemanticModelRead
                 case "whenAppended": RequiredToken(ref reader, JsonTokenType.StartObject, property); whenAppended = SpecificationEvent(ref reader, 36, false); break;
                 case "whenStarted": whenStarted = Nested(ref reader, Value, property); break;
                 case "outcomes": outcomes = Array(ref reader, LifecycleOutcome, property); break;
-                case "then": then = Array(ref reader, LifecycleExpectation, property); break;
+                case "then": then = Array(ref reader, (ref Utf8JsonReader item) => LifecycleExpectation(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "lifecycle specification");
             }
         }
@@ -313,7 +354,7 @@ internal static partial class SemanticModelRead
         return new(node!, outlet!);
     }
 
-    static SemanticLifecycleExpectation LifecycleExpectation(ref Utf8JsonReader reader)
+    static SemanticLifecycleExpectation LifecycleExpectation(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "lifecycle expectation");
         var seen = NewSeen();
@@ -333,6 +374,7 @@ internal static partial class SemanticModelRead
                         "completes" => SemanticLifecycleExpectationKind.Completes,
                         "fails" => SemanticLifecycleExpectationKind.Fails,
                         "waits" => SemanticLifecycleExpectationKind.Waits,
+                        "invokes" when schemaVersion >= 51 => SemanticLifecycleExpectationKind.Invokes,
                         var other => throw DiscriminatorError(other, "lifecycle expectation kind")
                     };
                     break;

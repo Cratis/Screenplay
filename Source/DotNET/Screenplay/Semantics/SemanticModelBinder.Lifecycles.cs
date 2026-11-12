@@ -21,6 +21,8 @@ public sealed partial class SemanticModelBinder
 
         static IEnumerable<string> LifecycleOutlets(WorkflowNodeSyntax node) => node.NodeKind switch
         {
+            WorkflowNodeKind.Action when IsAbilityTarget(node.Command) => [.. node.Edges.Select(edge => edge.Outlet), "next", "failed"],
+            WorkflowNodeKind.Compute => [.. node.Edges.Select(edge => edge.Outlet)],
             WorkflowNodeKind.Action => ["next", "failed", "refused"],
             WorkflowNodeKind.Wait => ["resumed", "expired"],
             WorkflowNodeKind.Approval => ["approved", "rejected", "expired"],
@@ -81,6 +83,23 @@ public sealed partial class SemanticModelBinder
                             entering.Add(new(SemanticStateEntryKind.SendCommand, command, null));
                         }
                     }
+                    else if (entry.EntryKind == StateEntryKind.Invoke)
+                    {
+                        if (BindLifecycleAbility($"State '{state.Name}'", entry.Target, entry.Mappings, entry.Location, followed.Properties, null) is { } call)
+                        {
+                            entering.Add(new(SemanticStateEntryKind.InvokeAbility, default, null) { System = call.System, Ability = call.Ability, Inputs = call.Inputs });
+                        }
+                    }
+                    else if (entry.EntryKind == StateEntryKind.Body)
+                    {
+                        var requirement = RequireLifecycleBody(
+                            SemanticImplementationRole.StateEntryBody,
+                            followed.Address,
+                            $"{machine.Name}/{state.Name}/{entering.Count}",
+                            entry.File,
+                            entry.Code);
+                        entering.Add(new(SemanticStateEntryKind.RunBody, default, null) { RequirementId = requirement });
+                    }
                     else
                     {
                         entering.Add(new(SemanticStateEntryKind.StartWorkflow, default, entry.Target));
@@ -107,9 +126,10 @@ public sealed partial class SemanticModelBinder
             if (SubjectOf(workflow.Subject, workflow.Location) is not { } subject) return null;
             var nodes = new List<SemanticWorkflowNode>();
             var edges = new List<SemanticWorkflowEdge>();
+            var results = WorkflowNodeResults(workflow);
             foreach (var node in workflow.Nodes)
             {
-                if (BindWorkflowNode(node, subject, commands) is { } bound) nodes.Add(bound);
+                if (BindWorkflowNode(node, subject, commands, workflow, results) is { } bound) nodes.Add(bound);
                 edges.AddRange(node.Edges.Where(edge => edge.Target.Length > 0).Select(edge => new SemanticWorkflowEdge(node.Name, edge.Outlet, edge.Target)));
             }
 
@@ -117,7 +137,12 @@ public sealed partial class SemanticModelBinder
             return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before ? null : new(workflow.Name, subject.Model.Id, [.. nodes], [.. edges]) { Specifications = specifications };
         }
 
-        SemanticWorkflowNode? BindWorkflowNode(WorkflowNodeSyntax node, BoundReadModel subject, Dictionary<string, SemanticId> commands)
+        SemanticWorkflowNode? BindWorkflowNode(
+            WorkflowNodeSyntax node,
+            BoundReadModel subject,
+            Dictionary<string, SemanticId> commands,
+            WorkflowSyntax workflow,
+            Dictionary<string, ImmutableArray<SemanticAbilityField>> results)
         {
             switch (node.NodeKind)
             {
@@ -150,6 +175,25 @@ public sealed partial class SemanticModelBinder
                             return trigger with { TriggerKind = SemanticWorkflowTriggerKind.Manual };
                     }
 
+                case WorkflowNodeKind.Action when IsAbilityTarget(node.Command):
+                    return BindLifecycleAbility($"Workflow action '{node.Name}'", node.Command!, node.Mappings, node.Location, subject.Properties, results) is { } call
+                        ? new(node.Name, SemanticWorkflowNodeKind.Action)
+                        {
+                            System = call.System,
+                            Ability = call.Ability,
+                            Inputs = call.Inputs,
+                            MaxAttempts = node.Attempts,
+                            AttemptTimeout = node.Timeout is { } abilityTimeout ? Seconds(abilityTimeout) : null,
+                            RetryDelay = node.RetryAfter is { } abilityRetry ? Seconds(abilityRetry) : null,
+                            ExpiresAfter = node.ExpiresAfter is { } abilityExpiry ? Seconds(abilityExpiry) : null
+                        }
+                        : null;
+                case WorkflowNodeKind.Compute:
+                    return new(node.Name, SemanticWorkflowNodeKind.Compute)
+                    {
+                        Returns = results.GetValueOrDefault(node.Name, []),
+                        RequirementId = RequireLifecycleBody(SemanticImplementationRole.WorkflowCompute, subject.Address, $"{workflow.Name}/{node.Name}", node.File, node.Code)
+                    };
                 case WorkflowNodeKind.Action:
                     return CommandId(commands, node.Command!, node.Location) is { } command
                         ? new(node.Name, SemanticWorkflowNodeKind.Action)
@@ -160,6 +204,8 @@ public sealed partial class SemanticModelBinder
                             RetryDelay = node.RetryAfter is { } retry ? Seconds(retry) : null
                         }
                         : null;
+                case WorkflowNodeKind.Decide when ReadsNodeResult(node, workflow):
+                    return null;
                 case WorkflowNodeKind.Decide:
                     var edges = node.Edges.ToArray();
                     if (edges.Length != 2) Error(DiagnosticCodes.InvalidSemanticBinding, $"Decide '{node.Name}' needs exactly two outlets.", node.Location);
@@ -272,6 +318,18 @@ public sealed partial class SemanticModelBinder
                             _ => SemanticLifecycleExpectationKind.Waits
                         };
                         then.Add(new(expectationKind, expectation.Target));
+                        break;
+                    case LifecycleExpectationKind.Sends when IsAbilityTarget(expectation.Target):
+                        if (FindAbility(expectation.Target!) is null)
+                        {
+                            Fail($"'{expectation.Target}' is not one declared ability.", expectation.Location);
+                            failed = true;
+                        }
+                        else
+                        {
+                            then.Add(new(SemanticLifecycleExpectationKind.Invokes, expectation.Target));
+                        }
+
                         break;
                     case LifecycleExpectationKind.Sends:
                         if (CommandId(commands, expectation.Target!, expectation.Location) is { } command) then.Add(new(SemanticLifecycleExpectationKind.Sends, expectation.Target) { Command = command });

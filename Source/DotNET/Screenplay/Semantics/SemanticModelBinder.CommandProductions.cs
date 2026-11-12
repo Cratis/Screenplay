@@ -96,12 +96,12 @@ public sealed partial class SemanticModelBinder
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#301")));
             }
 
-            // Reaction ability invocations are admitted (ESM v51, #1252); the other call sites parse, print and validate but no supported ESM version carries them yet.
+            // Ability invocations from reactions, workflow actions, compute nodes and state entries are admitted (ESM v51, #1252); operation phases, approval via and $trigger values parse, print and validate but no supported ESM version carries them yet.
             if (IsUnadmittedInvocationSite(node))
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Ability invocations, compute nodes and entering bodies are not admitted by any supported executable model (ESM) version yet (#1252).",
+                    "Ability invocations from operations, approvals that answer through an ability (via) and $trigger values are not admitted by any supported executable model (ESM) version yet (#1252).",
                     node.Location,
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#1252")));
             }
@@ -115,9 +115,7 @@ public sealed partial class SemanticModelBinder
         {
             InvokesSyntax { IsAbility: true } or InvocationBranchSyntax => !_inReaction,
             InvocationValueExpressionSyntax value => !_inReaction || value.Source == "trigger",
-            WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Compute } or WorkflowNodeSyntax { Via: not null } => true,
-            StateEntrySyntax { EntryKind: StateEntryKind.Invoke or StateEntryKind.Body } => true,
-            WorkflowNodeSyntax { NodeKind: WorkflowNodeKind.Action, Command: { } target } => target.Contains('.', StringComparison.Ordinal),
+            WorkflowNodeSyntax { Via: not null } => true,
             _ => false
         };
     }

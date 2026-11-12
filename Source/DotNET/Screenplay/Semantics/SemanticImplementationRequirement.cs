@@ -47,7 +47,13 @@ public enum SemanticImplementationRole
     /// <summary>
     /// The effect of a system ability (ESM v50, decision 0159).
     /// </summary>
-    AbilityEffect
+    AbilityEffect,
+
+    /// <summary>The body of a workflow compute node.</summary>
+    WorkflowCompute,
+
+    /// <summary>The body a state machine state runs on entry.</summary>
+    StateEntryBody
 }
 
 /// <summary>Whether an attachment's content revision is known.</summary>

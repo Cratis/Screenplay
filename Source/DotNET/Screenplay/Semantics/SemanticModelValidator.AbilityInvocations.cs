@@ -12,7 +12,11 @@ internal static partial class SemanticModelValidator
             .SelectMany(slice => slice.Reactions).SelectMany(reaction => reaction.Triggers)
             .SelectMany(trigger => trigger.Invokes).Any(invocation => invocation?.Ability is not null) ||
         application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).SelectMany(slice => slice.Specifications)
-            .Any(specification => !specification.GivenAbilityAnswers.IsDefaultOrEmpty || specification.ThenInvocations.Any(invocation => invocation?.Ability is not null));
+            .Any(specification => !specification.GivenAbilityAnswers.IsDefaultOrEmpty || specification.ThenInvocations.Any(invocation => invocation?.Ability is not null)) ||
+        (!application.Workflows.IsDefaultOrEmpty && application.Workflows.SelectMany(workflow => workflow.Nodes)
+            .Any(node => node.Kind == SemanticWorkflowNodeKind.Compute || node.Ability is not null)) ||
+        (!application.StateMachines.IsDefaultOrEmpty && application.StateMachines.SelectMany(machine => machine.States).SelectMany(state => state.Entering)
+            .Any(entry => entry.Kind is SemanticStateEntryKind.InvokeAbility or SemanticStateEntryKind.RunBody));
 
     private sealed partial class ValidationContext
     {
