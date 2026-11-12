@@ -168,14 +168,17 @@ internal static class EsmSchemaMembers
         ["CaptureField"] = "name:s kind:s value:1 record:1 records:[]",
         ["PinnedValue"] = "command:s targetProperty:s value:1",
         ["WhenTrigger"] = "kind:s trigger:s? values:[]",
-        ["Screen"] = "id:s name:s title:s description:s data:[] actions:[] navigation:[] layout:1",
+        ["Screen"] = "id:s name:s title:s description:s data:[] actions:[] navigation:[] layout:1 extensions:[] components:[]",
         ["ScreenData"] = "query:s by:s fields:[]",
         ["ScreenField"] = "path:s label:s",
         ["ScreenAction"] = "command:s label:s subject:s inputs:[] when:s then:s",
         ["ScreenInput"] = "property:s from:s",
         ["ScreenNavigation"] = "screen:s trigger:s by:s opens:s",
         ["ScreenLayout"] = "fits:s[] regions:[]",
-        ["ScreenRegion"] = "kind:s name:s shows:s title:s actions:s[] regions:[]"
+        ["ScreenRegion"] = "kind:s name:s shows:s title:s actions:s[] regions:[]",
+        ["ScreenExtension"] = "system:s reference:s",
+        ["ScreenComponent"] = "name:s system:s component:s properties:s[] handles:[]",
+        ["ScreenSignalHandler"] = "signal:s commands:s[]"
     }.ToImmutableDictionary(
         pair => Enum.Parse<EsmBaselineShape>(pair.Key),
         pair => pair.Value.Split(' ').Select(member => member.Split(':')).Select(parts => (parts[0], parts[1])).ToImmutableArray());

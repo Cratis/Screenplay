@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 #pragma warning disable IDE0350 // Explicit ref reader parameters keep version-aware parsing delegates clear.
 internal static partial class SemanticModelRead
 {
-    internal static SemanticScreen Screen(ref Utf8JsonReader reader)
+    internal static SemanticScreen Screen(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "screen");
         var seen = NewSeen();
@@ -21,6 +21,8 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticScreenAction> actions = default;
         ImmutableArray<SemanticScreenNavigation> navigation = default;
         SemanticScreenLayout? layout = null;
+        ImmutableArray<SemanticScreenExtension> extensions = [];
+        ImmutableArray<SemanticScreenComponent> components = [];
         while (NextProperty(ref reader, seen, "screen") is { } property)
         {
             switch (property)
@@ -33,12 +35,80 @@ internal static partial class SemanticModelRead
                 case "actions": actions = Array(ref reader, ScreenAction, property); break;
                 case "navigation": navigation = Array(ref reader, ScreenNavigation, property); break;
                 case "layout": RequiredRead(ref reader, property); layout = ScreenLayout(ref reader); break;
+                case "extensions" when schemaVersion >= 52: extensions = Array(ref reader, ScreenExtension, property); break;
+                case "components" when schemaVersion >= 52: components = Array(ref reader, ScreenComponent, property); break;
                 default: throw Unknown(property, "screen");
             }
         }
 
         Required(id.IsSet && name is not null && title is not null && !data.IsDefault && !actions.IsDefault && !navigation.IsDefault && layout is not null, "screen");
-        return new(id, name!, title!, data, actions, navigation, layout!) { Description = description };
+        return new(id, name!, title!, data, actions, navigation, layout!) { Description = description, Extensions = extensions, Components = components };
+    }
+
+    static SemanticScreenExtension ScreenExtension(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen extension");
+        var seen = NewSeen();
+        SemanticId system = default;
+        string? extensionReference = null;
+        while (NextProperty(ref reader, seen, "screen extension") is { } property)
+        {
+            switch (property)
+            {
+                case "system": system = SemanticId.Parse(String(ref reader, property)); break;
+                case "reference": extensionReference = String(ref reader, property); break;
+                default: throw Unknown(property, "screen extension");
+            }
+        }
+
+        Required(system.IsSet && extensionReference is not null, "screen extension");
+        return new(system, extensionReference!);
+    }
+
+    static SemanticScreenComponent ScreenComponent(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen component");
+        var seen = NewSeen();
+        string? name = null;
+        SemanticId system = default;
+        string? component = null;
+        ImmutableArray<string> properties = default;
+        ImmutableArray<SemanticScreenSignalHandler> handles = default;
+        while (NextProperty(ref reader, seen, "screen component") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "system": system = SemanticId.Parse(String(ref reader, property)); break;
+                case "component": component = String(ref reader, property); break;
+                case "properties": properties = StringArray(ref reader, property); break;
+                case "handles": handles = Array(ref reader, ScreenSignalHandler, property); break;
+                default: throw Unknown(property, "screen component");
+            }
+        }
+
+        Required(name is not null && system.IsSet && component is not null && !properties.IsDefault && !handles.IsDefault, "screen component");
+        return new(name!, system, component!, properties, handles);
+    }
+
+    static SemanticScreenSignalHandler ScreenSignalHandler(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen signal handler");
+        var seen = NewSeen();
+        string? signal = null;
+        ImmutableArray<SemanticId> commands = default;
+        while (NextProperty(ref reader, seen, "screen signal handler") is { } property)
+        {
+            switch (property)
+            {
+                case "signal": signal = String(ref reader, property); break;
+                case "commands": commands = [.. StringArray(ref reader, property).Select(SemanticId.Parse)]; break;
+                default: throw Unknown(property, "screen signal handler");
+            }
+        }
+
+        Required(signal is not null && !commands.IsDefault, "screen signal handler");
+        return new(signal!, commands);
     }
 
     static SemanticScreenData ScreenData(ref Utf8JsonReader reader)

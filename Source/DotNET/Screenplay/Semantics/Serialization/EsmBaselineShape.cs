@@ -167,5 +167,8 @@ internal enum EsmBaselineShape
     ScreenInput,
     ScreenNavigation,
     ScreenLayout,
-    ScreenRegion
+    ScreenRegion,
+    ScreenExtension,
+    ScreenComponent,
+    ScreenSignalHandler
 }

@@ -15,6 +15,7 @@ public static partial class SemanticModelCanonicalJson
     {
         if (slice.Screens.IsDefaultOrEmpty) return;
         if (version.Major < 42) throw new InvalidSemanticContract("Screens require ESM v42 or later.");
+        if (version.Major < 52 && slice.Screens.Any(screen => !screen.Components.IsDefaultOrEmpty || !screen.Extensions.IsDefaultOrEmpty)) throw new InvalidSemanticContract("Extension components on screens require ESM v52 or later.");
         WriteArray(writer, "screens", slice.Screens.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteScreen);
     }
 
@@ -28,11 +29,40 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "data", screen.Data, WriteScreenData);
         WriteArray(writer, "actions", screen.Actions, WriteScreenAction);
         WriteArray(writer, "navigation", screen.Navigation, WriteScreenNavigation);
+        if (!screen.Extensions.IsDefaultOrEmpty) WriteArray(writer, "extensions", screen.Extensions, WriteScreenExtension);
+        if (!screen.Components.IsDefaultOrEmpty) WriteArray(writer, "components", screen.Components, WriteScreenComponent);
         writer.WritePropertyName("layout");
         writer.WriteStartObject();
         WriteStringArray(writer, "fits", screen.Layout.Fits);
         WriteArray(writer, "regions", screen.Layout.Regions, WriteScreenRegion);
         writer.WriteEndObject();
+        writer.WriteEndObject();
+    }
+
+    static void WriteScreenExtension(Utf8JsonWriter writer, SemanticScreenExtension extension)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("system", extension.System.ToString());
+        CanonicalJson.WriteString(writer, "reference", extension.Reference);
+        writer.WriteEndObject();
+    }
+
+    static void WriteScreenComponent(Utf8JsonWriter writer, SemanticScreenComponent component)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", component.Name);
+        writer.WriteString("system", component.System.ToString());
+        CanonicalJson.WriteString(writer, "component", component.Component);
+        WriteStringArray(writer, "properties", component.Properties);
+        WriteArray(writer, "handles", component.Handles, WriteScreenSignalHandler);
+        writer.WriteEndObject();
+    }
+
+    static void WriteScreenSignalHandler(Utf8JsonWriter writer, SemanticScreenSignalHandler handler)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "signal", handler.Signal);
+        WriteStringArray(writer, "commands", [.. handler.Commands.Select(command => command.ToString())]);
         writer.WriteEndObject();
     }
 

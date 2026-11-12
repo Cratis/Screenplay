@@ -95,7 +95,7 @@ internal static partial class SemanticModelRead
             .Add("reactions", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Reactions = Array(ref reader, (ref Utf8JsonReader item) => Reaction(ref item, state.SchemaVersion), property))
             .Add("captures", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Captures = Array(ref reader, (ref Utf8JsonReader item) => Capture(ref item, state.SchemaVersion), property))
             .Add("direction", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Direction = ParseDirection(String(ref reader, property)))
-            .Add("screens", LanguageVersion.V42.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Screens = Array(ref reader, Screen, property));
+            .Add("screens", LanguageVersion.V42.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Screens = Array(ref reader, (ref Utf8JsonReader item) => Screen(ref item, state.SchemaVersion), property));
 
         public SemanticSliceKind? Kind { get; set; }
 

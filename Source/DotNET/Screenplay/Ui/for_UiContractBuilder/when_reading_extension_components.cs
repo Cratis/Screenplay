@@ -48,7 +48,7 @@ public class when_reading_extension_components : Specification
 
     [Fact] void should_resolve_the_component_through_the_system() => (Extension.System, Extension.Reference, Extension.Component).ShouldEqual(("Payments", "cratis/stripe", "PaymentForm"));
     [Fact] void should_carry_what_the_contract_says_about_it() => (Extension.Kind, Extension.Placeholder).ShouldEqual(("react", "placeholders/payment-form.html"));
-    [Fact] void should_carry_the_signals_the_screen_handles() => Extension.Handles.ShouldContainOnly(["succeeded"]);
+    [Fact] void should_carry_the_signals_the_screen_handles() => Extension.Handles!.Select(handler => (handler.Signal, string.Join(",", handler.Commands!))).ShouldContainOnly([("succeeded", "ConfirmPayment")]);
     [Fact] void should_say_which_extensions_the_screen_needs() => _screen.Extensions.ShouldContainOnly([new UiExtensionNeed("Payments", "cratis/stripe")]);
     [Fact] void should_carry_the_static_placeholder_the_package_holds() => Extension.PlaceholderHtml.ShouldEqual("<p>Pay</p>");
 }

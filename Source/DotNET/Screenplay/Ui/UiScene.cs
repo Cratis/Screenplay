@@ -102,7 +102,19 @@ public sealed record UiExtensionComponent(string System, string Reference, strin
     /// <summary>
     /// Gets the signals the screen handles with <c>on</c>, in declaration order.
     /// </summary>
-    public IReadOnlyList<string>? Handles { get; init; }
+    public IReadOnlyList<UiSignalHandler>? Handles { get; init; }
+}
+
+/// <summary>
+/// The handling of one signal an extension component raises.
+/// </summary>
+/// <param name="Signal">The signal name in the extension's contract.</param>
+public sealed record UiSignalHandler(string Signal)
+{
+    /// <summary>
+    /// Gets the names of the commands the handler executes, in declaration order.
+    /// </summary>
+    public IReadOnlyList<string>? Commands { get; init; }
 }
 
 /// <summary>

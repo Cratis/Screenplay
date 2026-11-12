@@ -54,9 +54,7 @@ public static class ExecutableScreens
         var application = model.Application with { Modules = [.. model.Application.Modules.Select(module => module with { Features = WithScreens(module.Features, screens) })] };
         try
         {
-            var (languageVersion, semanticVersion) = model.SemanticVersion.IsAtLeast(SemanticVersion.V43)
-                ? (model.LanguageVersion, model.SemanticVersion)
-                : (LanguageVersion.V42, SemanticVersion.V42);
+            var (languageVersion, semanticVersion) = BoundVersions(model, screens);
             var admitted = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application, utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
             return new(SemanticCompilation.Create(admitted, compilation.Documents, compilation.SourceMap).WithSidecarsOf(compilation), []);
         }
@@ -64,6 +62,13 @@ public static class ExecutableScreens
         {
             return new(null, [exception.Message]);
         }
+    }
+
+    // A screen that places an extension component is an ESM v52 screen; every other screen stays at the model's own version, or v42.
+    static (LanguageVersion Language, SemanticVersion Semantic) BoundVersions(ExecutableSemanticModel model, IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens)
+    {
+        if (screens.Values.SelectMany(found => found).Any(screen => !screen.Components.IsDefaultOrEmpty) && !model.SemanticVersion.IsAtLeast(SemanticVersion.V52)) return (LanguageVersion.V52, SemanticVersion.V52);
+        return model.SemanticVersion.IsAtLeast(SemanticVersion.V43) ? (model.LanguageVersion, model.SemanticVersion) : (LanguageVersion.V42, SemanticVersion.V42);
     }
 
     static ImmutableArray<SemanticFeature> WithScreens(ImmutableArray<SemanticFeature> features, IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens) =>

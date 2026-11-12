@@ -28,9 +28,12 @@ internal sealed class UiExtensionIndex(ApplicationSyntax syntax, ExtensionResolu
         var reference = system.Extension!.Reference;
         var handles = component.Behaviors
             .SelectMany(behavior => behavior.Bindings)
-            .Select(binding => binding.Trigger)
-            .OfType<ApplicationTriggerInteractionTriggerSyntax>()
-            .Select(trigger => trigger.TriggerName)
+            .Where(binding => binding.Trigger is ApplicationTriggerInteractionTriggerSyntax)
+            .Select(binding =>
+            {
+                var commands = Commands(binding.Actions.Concat(binding.Alternatives.SelectMany(alternative => alternative.Actions)).Concat(binding.Otherwise?.Actions ?? [])).Distinct(StringComparer.Ordinal).ToArray();
+                return new UiSignalHandler(((ApplicationTriggerInteractionTriggerSyntax)binding.Trigger).TriggerName) { Commands = commands.Length == 0 ? null : commands };
+            })
             .ToArray();
         var placement = new UiExtensionComponent(systemName, reference, name) { Handles = handles.Length == 0 ? null : handles };
         if (resolution is null || !resolution.Contracts.TryGetValue(reference, out var contract)) return placement;
@@ -51,4 +54,8 @@ internal sealed class UiExtensionIndex(ApplicationSyntax syntax, ExtensionResolu
     /// <returns>The <see cref="UiExtensionNeed"/>, or <see langword="null"/> when the system names no extension.</returns>
     internal UiExtensionNeed? Need(string systemName) =>
         _systems.TryGetValue(systemName, out var system) ? new(systemName, system.Extension!.Reference) : null;
+
+    static IEnumerable<string> Commands(IEnumerable<InteractionActionSyntax> actions) =>
+        actions.SelectMany(action => (action is ExecuteCommandActionSyntax execute ? [execute.Command] : Enumerable.Empty<string>())
+            .Concat(Commands(action.OnSuccess.Concat(action.OnFailure).Concat(action.OnResult))));
 }

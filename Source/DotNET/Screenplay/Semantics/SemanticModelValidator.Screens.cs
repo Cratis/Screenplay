@@ -13,6 +13,10 @@ internal static partial class SemanticModelValidator
     internal static bool UsesScreens(SemanticApplication application) =>
         SlicesOf(application).Any(slice => !slice.Screens.IsDefaultOrEmpty);
 
+    // ESM v52 constructs: extension components placed on screens, and the extensions a screen needs because of them.
+    internal static bool UsesExtensionComponents(SemanticApplication application) =>
+        SlicesOf(application).SelectMany(slice => slice.Screens).Any(screen => !screen.Components.IsDefaultOrEmpty || !screen.Extensions.IsDefaultOrEmpty);
+
     static void ValidateScreenVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
             UsesScreens(application),
@@ -20,6 +24,14 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V42,
             "An ESM v42 model must declare a screen.",
             "Screens require ESM v42.");
+
+    static void ValidateExtensionComponentVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesExtensionComponents(application),
+            version,
+            SemanticVersion.V52,
+            "An ESM v52 model must place an extension component on a screen.",
+            "Extension components on screens require ESM v52.");
 
     private sealed partial class ValidationContext
     {
@@ -60,9 +72,44 @@ internal static partial class SemanticModelValidator
                 RequireText(navigation.Trigger, $"{owner} navigation trigger");
             }
 
+            ValidateScreenComponents(screen, owner);
             RequireArray(screen.Layout.Fits, "fits");
             foreach (var fit in screen.Layout.Fits) RequireText(fit, $"{owner} fit");
             ValidateRegions(screen.Layout.Regions, owner);
+        }
+
+        void ValidateScreenComponents(SemanticScreen screen, string owner)
+        {
+            if (screen.Components.IsDefaultOrEmpty && screen.Extensions.IsDefaultOrEmpty) return;
+            RequireObjects(screen.Extensions, nameof(screen.Extensions), "screen extension");
+            RequireObjects(screen.Components, nameof(screen.Components), "screen component");
+            RejectDuplicateNames(screen.Components.Select(_ => _.Name), $"component on screen '{screen.Name}'");
+            var needed = new HashSet<SemanticId>();
+            foreach (var extension in screen.Extensions)
+            {
+                RequireText(extension.Reference, $"{owner} extension reference");
+                if (!_eventRoutesApplication.Systems.Any(system => system.Id == extension.System)) throw new InvalidSemanticContract($"{owner} needs the extension of unknown system '{extension.System}'.");
+                if (!needed.Add(extension.System)) throw new InvalidSemanticContract($"{owner} lists the extension of system '{extension.System}' more than once.");
+            }
+
+            foreach (var component in screen.Components)
+            {
+                RequireText(component.Name, $"{owner} component name");
+                RequireText(component.Component, $"{owner} component");
+                if (!needed.Contains(component.System)) throw new InvalidSemanticContract($"{owner} places component '{component.Name}' through a system whose extension it does not list.");
+                RequireArray(component.Properties, "properties");
+                foreach (var property in component.Properties) RequireText(property, $"{owner} component property");
+                RequireObjects(component.Handles, nameof(component.Handles), "screen signal handler");
+                foreach (var handler in component.Handles)
+                {
+                    RequireText(handler.Signal, $"{owner} signal");
+                    RequireArray(handler.Commands, "commands");
+                    foreach (var command in handler.Commands)
+                    {
+                        if (!_commands.ContainsKey(command)) throw new InvalidSemanticContract($"{owner} handles signal '{handler.Signal}' with unknown command '{command}'.");
+                    }
+                }
+            }
         }
 
         void ValidateScreenData(SemanticScreenData data, string owner)
