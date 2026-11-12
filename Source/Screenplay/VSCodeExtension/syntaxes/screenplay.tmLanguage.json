@@ -655,6 +655,25 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
                 },
                 {
+                    "comment": "An invocation's outcome branches: on returned, on failed or on <Outcome>.",
+                    "match": "^\\s*(on)\\s+(returned|failed)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(on)\\s+([A-Z]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "comment": "An ability's scripted answer in a specification.",
+                    "match": "^\\s*(given)\\s+([A-Z]\\w*\\.[A-Z]\\w*)\\s+(returns|answers|fails)\\b",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "A workflow compute node.",
+                    "match": "^\\s*(compute)\\s+([A-Z]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
                     "match": "^\\s*(acknowledge)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" } }
                 },

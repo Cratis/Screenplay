@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -11,12 +12,13 @@ public partial class ScreenplayPrinter
     static string NodeText(WorkflowNodeSyntax node) => node.NodeKind switch
     {
         WorkflowNodeKind.Trigger => $"trigger{TriggerName(node)} {TriggerText(node)}",
-        WorkflowNodeKind.Action => $"action {node.Name} invokes {node.Command}{(node.Attempts is { } attempts ? $" attempts {attempts}" : string.Empty)}{(node.Timeout is { } timeout ? $" timeout {DurationText(timeout)}" : string.Empty)}{(node.RetryAfter is { } retry ? $" retry after {DurationText(retry)}" : string.Empty)}",
+        WorkflowNodeKind.Action => $"action {node.Name} invokes {node.Command}{(node.Attempts is { } attempts ? $" attempts {attempts}" : string.Empty)}{(node.Timeout is { } timeout ? $" timeout {DurationText(timeout)}" : string.Empty)}{(node.RetryAfter is { } retry ? $" retry after {DurationText(retry)}" : string.Empty)}{(node.ExpiresAfter is { } actionExpiry ? $" expires after {DurationText(actionExpiry)}" : string.Empty)}",
+        WorkflowNodeKind.Compute => $"compute {node.Name}",
         WorkflowNodeKind.Decide => $"decide {node.Name} when {ScreenplaySyntaxText.Condition(node.Condition!)}",
         WorkflowNodeKind.Wait => node.Duration is { } duration
             ? $"wait {node.Name} for {DurationText(duration)}"
             : $"wait {node.Name} for {node.Event}{(node.ExpiresAfter is { } expires ? $" expires after {DurationText(expires)}" : string.Empty)}",
-        WorkflowNodeKind.Approval => $"approval {node.Name} by {node.By}{(node.ExpiresAfter is { } expiry ? $" expires after {DurationText(expiry)}" : string.Empty)}",
+        WorkflowNodeKind.Approval => $"approval {node.Name} by {node.By}{(node.Via is null ? string.Empty : $" via {node.Via}")}{(node.ExpiresAfter is { } expiry ? $" expires after {DurationText(expiry)}" : string.Empty)}",
         WorkflowNodeKind.ForEach => $"foreach {node.Name} over {node.Items}{(node.Parallel is { } parallel ? $" parallel {parallel}" : string.Empty)}",
         _ => $"join {node.Name} {JoinText(node)}"
     };
@@ -46,6 +48,29 @@ public partial class ScreenplayPrinter
     [GeneratedRegex(@"^Trigger\d*$", RegexOptions.NonBacktracking)]
     private static partial Regex ImplicitTriggerNameRegex();
 
+    void WriteStateEntry(ScreenplayWriter writer, StateEntrySyntax entry)
+    {
+        switch (entry.EntryKind)
+        {
+            case StateEntryKind.Body:
+                writer.Line("entering", entry);
+                using (writer.Indent())
+                {
+                    WriteFile(writer, entry.File);
+                    if (entry.Code is not null) WriteCodeBlock(writer, entry.Code);
+                }
+
+                break;
+            case StateEntryKind.Invoke:
+                writer.Line($"entering invokes {entry.Target}", entry);
+                using (writer.Indent()) WriteMappings(writer, entry.Mappings, ReservedWords.MappingBlock);
+                break;
+            default:
+                writer.Line($"entering {(entry.EntryKind == StateEntryKind.Send ? "invokes" : "starts")} {entry.Target}", entry);
+                break;
+        }
+    }
+
     void WriteStateMachine(ScreenplayWriter writer, StateMachineSyntax machine)
     {
         using var anchor = writer.Anchor(machine);
@@ -60,7 +85,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"state {state.Name}{(state.IsInitial ? " initial" : string.Empty)}{(state.IsFinal ? " final" : string.Empty)}", state);
                 using (writer.Indent())
                 {
-                    foreach (var entry in state.Entering) writer.Line($"entering {(entry.EntryKind == StateEntryKind.Send ? "invokes" : "starts")} {entry.Target}", entry);
+                    foreach (var entry in state.Entering) WriteStateEntry(writer, entry);
                     foreach (var transition in state.Transitions)
                     {
                         var when = transition.When is null ? string.Empty : $" when {ScreenplaySyntaxText.Condition(transition.When)}";
@@ -87,6 +112,15 @@ public partial class ScreenplayPrinter
                 writer.Line(NodeText(node), node);
                 using (writer.Indent())
                 {
+                    WriteMappings(writer, node.Mappings, ReservedWords.MappingBlock);
+                    if (node.Returns.Any())
+                    {
+                        writer.Line("returns");
+                        using (writer.Indent()) WriteProperties(writer, node.Returns, _emptyKeywords);
+                    }
+
+                    WriteFile(writer, node.File);
+                    if (node.Code is not null) WriteCodeBlock(writer, node.Code);
                     foreach (var edge in node.Edges)
                     {
                         var outlet = node.NodeKind == WorkflowNodeKind.Decide || !SimpleOutletRegex().IsMatch(edge.Outlet) ? $"\"{edge.Outlet}\"" : edge.Outlet;

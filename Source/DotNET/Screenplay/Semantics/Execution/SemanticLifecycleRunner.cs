@@ -129,6 +129,7 @@ public static class SemanticLifecycleRunner
         string[] expectedStarts = [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Starts).Select(expectation => expectation.Target!)];
         string[] actualStarts = [.. effects.Where(effect => effect.Kind == SemanticStateEntryKind.StartWorkflow).Select(effect => effect.Workflow!)];
         Compare(failures, "starts", expectedStarts, actualStarts);
+        Compare(failures, "ability invocations", ExpectedAbilities(specification), [.. effects.Where(effect => effect.Kind == SemanticStateEntryKind.InvokeAbility).Select(effect => AbilityName(plan, effect.System, effect.Ability!))]);
         return failures.ToImmutable();
     }
 
@@ -179,6 +180,7 @@ public static class SemanticLifecycleRunner
 
         string[] expectedSends = [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Sends).Select(expectation => CommandName(plan, expectation.Command))];
         Compare(failures, "invokes", expectedSends, [.. run.Sent.Select(command => CommandName(plan, command))]);
+        Compare(failures, "ability invocations", ExpectedAbilities(specification), [.. run.Invoked.Select(call => AbilityName(plan, call.System, call.Ability))]);
         return failures.ToImmutable();
     }
 
@@ -188,6 +190,12 @@ public static class SemanticLifecycleRunner
         if (machine is null || machine.ReadModel != workflow.Subject) return false;
         return Derive(plan, machine, before, key).State != node.State && Derive(plan, machine, after, key).State == node.State;
     }
+
+    static string[] ExpectedAbilities(SemanticLifecycleSpecification specification) =>
+        [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Invokes).Select(expectation => expectation.Target!)];
+
+    static string AbilityName(SemanticExecutionPlan plan, SemanticId system, string ability) =>
+        $"{plan.Model.Application.Systems.FirstOrDefault(candidate => candidate.Id == system)?.Name ?? system.ToString()}.{ability}";
 
     static string CommandName(SemanticExecutionPlan plan, SemanticId command) => plan.Commands.TryGetValue(command, out var declared) ? declared.Name : command.ToString();
 
@@ -244,6 +252,8 @@ public static class SemanticLifecycleRunner
 
         public List<SemanticId> Sent { get; } = [];
 
+        public List<(SemanticId System, string Ability)> Invoked { get; } = [];
+
         public RunEnd End { get; private set; } = RunEnd.NotStarted;
 
         public string? Node { get; private set; }
@@ -276,6 +286,21 @@ public static class SemanticLifecycleRunner
                 {
                     case SemanticWorkflowNodeKind.Trigger:
                         outlet = "next";
+                        break;
+                    case SemanticWorkflowNodeKind.Action when node.Ability is not null:
+                        var abilityOutlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet ?? "next";
+                        for (var attempt = 0; attempt < (abilityOutlet == "failed" ? node.MaxAttempts ?? 1 : 1); attempt++) Invoked.Add((node.System, node.Ability));
+                        outlet = abilityOutlet;
+                        break;
+                    case SemanticWorkflowNodeKind.Compute:
+                        outlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet
+                            ?? (workflow.Edges.Any(edge => edge.From == node.Name && edge.Outlet == "next") ? "next" : null);
+                        if (outlet is null)
+                        {
+                            Suspend(node.Name);
+                            return false;
+                        }
+
                         break;
                     case SemanticWorkflowNodeKind.Action:
                         var taken = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet ?? "next";

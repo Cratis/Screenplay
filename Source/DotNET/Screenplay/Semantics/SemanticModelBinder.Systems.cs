@@ -36,7 +36,7 @@ public sealed partial class SemanticModelBinder
 
                 if (system.Description is not null) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"System '{system.Name}' description is authoring metadata.", system.Location);
                 var address = SemanticAddress.ForSystem(_applicationIdentity, system.Name);
-                var id = Resolve(address, system.Location);
+                var id = SystemId(system);
                 bound.Add(new(id, system.Name, [.. system.Abilities.Select(ability => BindAbility(address, system, ability))]));
             }
 

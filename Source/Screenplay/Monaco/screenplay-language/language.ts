@@ -309,6 +309,8 @@ export const clauseKeywords = [
     'at',
     'where',
     'invokes',
+    'compute',
+    'returned',
     'contains',
     'ends',
     'with',

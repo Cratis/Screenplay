@@ -81,6 +81,7 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Implementation is not null) VisitImplementation(syntax.Implementation);
         if (syntax.File is not null) VisitFileReference(syntax.File);
         if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
+        foreach (var invocation in syntax.Invocations) VisitInvokes(invocation);
     }
 
     /// <summary>

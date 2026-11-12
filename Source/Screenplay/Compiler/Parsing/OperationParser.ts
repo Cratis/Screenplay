@@ -11,6 +11,8 @@ import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective, isFileDirectiveAmongProperties } from './FileReferences';
 import { parseActivation, parseExtension, parseSetting } from './SystemConfigurationParser';
 import { parseCode, parseFile, parseImplementationWrapper } from './ImplementationParser';
+import { parseInvokes } from './ReactionParser';
+import { InvokesSyntax } from '../Syntax/Reactions';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProperty, tryParseProperty } from './PropertyLineParser';
@@ -134,7 +136,7 @@ export function parseAbility(context: ParserContext, header: SourceLine): Abilit
     return { kind: 'AbilitySyntax', name, effectClass, inputs, returns, outcomes, description, answersLater, implementation, file, code, location: locationOf(header) };
 }
 
-function parseAbilityReturns(context: ParserContext, header: SourceLine, abilityName: string, returns: PropertySyntax[]): void {
+export function parseAbilityReturns(context: ParserContext, header: SourceLine, abilityName: string, returns: PropertySyntax[]): void {
     const names = new Set<string>();
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
@@ -248,10 +250,16 @@ function parseOperationPhase(context: ParserContext, header: SourceLine): Operat
     let code: OperationPhaseSyntax['code'] = null;
     let implementation: OperationPhaseSyntax['implementation'] = null;
     let sourceSelected = false;
+    const invocations: InvokesSyntax[] = [];
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (firstWord(line.content) === 'description') {
             description = parseDescription(context, line, description, `Operation phase '${header.content}'`);
+            continue;
+        }
+        if (firstWord(line.content) === 'invokes') {
+            const invoked = parseInvokes(context, line, false);
+            if (invoked !== undefined) invocations.push(invoked);
             continue;
         }
         if (firstWord(line.content) === 'implementation') {
@@ -267,9 +275,9 @@ function parseOperationPhase(context: ParserContext, header: SourceLine): Operat
             sourceSelected = true;
             if (parsedFile !== null) rejectOperationChildren(context, line, DiagnosticCodes.InvalidImplementationBlock, 'A file directive cannot have children.');
         } else {
-            context.error(DiagnosticCodes.InvalidOperationDeclaration, 'A phase accepts description, file, a tagged fence or implementation.', locationOf(line));
+            context.error(DiagnosticCodes.InvalidOperationDeclaration, 'A phase accepts description, invokes, file, a tagged fence or implementation.', locationOf(line));
             context.skipBlock(line.indent);
         }
     }
-    return { kind: 'OperationPhaseSyntax', description, file, code, implementation, location: locationOf(header) };
+    return { kind: 'OperationPhaseSyntax', description, file, code, implementation, invocations, location: locationOf(header) };
 }

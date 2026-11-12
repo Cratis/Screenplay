@@ -146,6 +146,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, phase.Description, phase);
+            foreach (var invocation in phase.Invocations) WriteInvocation(writer, invocation);
             if (phase.Implementation is { } implementation)
             {
                 using var implementationAnchor = writer.Anchor(implementation);

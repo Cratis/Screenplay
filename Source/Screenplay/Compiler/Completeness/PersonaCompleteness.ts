@@ -68,6 +68,7 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'EventContextExpressionSyntax': return `$eventContext.${expression.path}`;
         case 'CausedByExpressionSyntax': return expression.property === null ? '$causedBy' : `$causedBy.${expression.property}`;
         case 'RefusalExpressionSyntax': return `$refusal.${expression.member}`;
+        case 'InvocationValueExpressionSyntax': return expression.member.length === 0 ? `$${expression.source}` : `$${expression.source}.${expression.member}`;
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'RawExpressionSyntax': return expression.text;
         case 'ClockOffsetExpressionSyntax': return `${expression.clock} ${expression.amount < 0 ? '-' : '+'} ${Math.abs(expression.amount)} ${expression.unit}`;

@@ -51,9 +51,17 @@ sealed class McpOperationInventory
         abilityCount = (entry.Node as SystemSyntax)?.Abilities.Count() ?? 0,
         executionAvailable = false,
         executionReadiness = entry.Node is SystemSyntax { Abilities: var abilities } && abilities.Any()
-            ? "A system with abilities is admitted in ESM v50 (#1250); nothing invokes or runs its abilities yet. Authoring intent is not an executable implementation role."
+            ? "A system with abilities is admitted in ESM v50 (#1250); reactions invoke its abilities from ESM v51 (#1252); workflows, state machines and approvals parse and validate but are not executable yet. Authoring intent is not an executable implementation role."
             : "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301). Authoring intent is not an executable implementation role."
     };
+
+    // The call sites that name this ability: reactions, workflow actions, state entries and operation phases.
+    internal object[] InvokedBy(string system, string ability) =>
+    [
+        .. _index.Entries
+            .Where(entry => entry.Node is InvokesSyntax { IsAbility: true } invokes && invokes.Command == $"{system}.{ability}")
+            .Select(entry => (object)new { entry.Location, handle = McpAstHandles.Describe(entry.Handle) })
+    ];
 
     internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry) => entry.Node is OperationSyntax operation &&
         McpWorkspaceAnalysis.For(_workspace).Source.Index.HasExactOwnershipCollision("Operation", operation.Name, Scope(entry));
@@ -75,6 +83,7 @@ sealed class McpOperationInventory
                     inputCount = ability.Inputs.Count(),
                     returnCount = ability.Returns.Count(),
                     outcomes = ability.Outcomes.Select(outcome => outcome.Name),
+                    invokedBy = InvokedBy(declaredSystem.Name, ability.Name),
                     realization = ability.Code is not null || ability.File is not null ? "code" : "none",
                     ability.Location,
                     handle = Handle(ability)

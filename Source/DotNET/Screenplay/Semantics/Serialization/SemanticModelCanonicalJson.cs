@@ -554,6 +554,7 @@ public static partial class SemanticModelCanonicalJson
         }
         WriteAutomationSpecification(writer, specification);
         if (specification.GivenTimeZone is not null) CanonicalJson.WriteString(writer, "givenTimeZone", specification.GivenTimeZone);
+        if (!specification.GivenAbilityAnswers.IsDefaultOrEmpty) WriteArray(writer, "givenAbilityAnswers", specification.GivenAbilityAnswers, WriteAbilityAnswer);
         writer.WriteEndObject();
     }
 
@@ -715,6 +716,11 @@ public static partial class SemanticModelCanonicalJson
                 writer.WriteString("member", refusal.Member);
                 writer.WritePropertyName("type");
                 WriteTypeReference(writer, refusal.Type);
+                break;
+            case SemanticInvocationValueExpression invocationValue:
+                writer.WriteString("member", invocationValue.Member.Length == 0 ? invocationValue.Source : $"{invocationValue.Source}.{invocationValue.Member}");
+                writer.WritePropertyName("type");
+                WriteTypeReference(writer, invocationValue.Type);
                 break;
             case SemanticReadPathExpression readPath:
                 CanonicalJson.WriteString(writer, "read", readPath.Read);
@@ -937,6 +943,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticExpressionKind.EventContext => "eventContext",
         SemanticExpressionKind.Refusal => "refusal",
         SemanticExpressionKind.ReadPath => "readPath",
+        SemanticExpressionKind.InvocationValue => "invocationValue",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

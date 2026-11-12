@@ -98,6 +98,16 @@ internal static partial class StateMachineParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "entering" when line.Content == "entering":
+                    entering.Add(ParseEnteringBody(context, line));
+                    break;
+                case "entering" when AbilityEnteringRegex().IsMatch(line.Content):
+                    if (ReactionParser.ParseInvokes(context, line with { Content = line.Content["entering ".Length..] }, allowBranches: false) is { } invoked)
+                    {
+                        entering.Add(new(StateEntryKind.Invoke, invoked.Command, line.Location) { Mappings = invoked.Mappings });
+                    }
+
+                    break;
                 case "entering":
                     var entry = EnteringRegex().Match(line.Content);
                     if (!entry.Success)
@@ -150,6 +160,42 @@ internal static partial class StateMachineParser
         return new(match.Groups[1].Value, isInitial, isFinal, entering, transitions, header.Location);
     }
 
+    static StateEntrySyntax ParseEnteringBody(ParserContext context, SourceLine header)
+    {
+        FileReferenceSyntax? file = null;
+        CodeBlockSyntax? code = null;
+        while (context.TryPeekChild(header.Indent, out var line))
+        {
+            context.Reader.TakeSignificant();
+            if (file is not null || code is not null)
+            {
+                context.Error(DiagnosticCodes.ConflictingImplementationSources, "An entering body has at most one file or inline payload.", line.Location);
+                context.SkipBlock(line.Indent);
+            }
+            else if (FileReferenceParser.IsDirective(line))
+            {
+                file = FileReferenceParser.Parse(context, line);
+                OperationParser.RejectChildren(context, line, DiagnosticCodes.InvalidImplementationBlock, "A file directive cannot have children.");
+            }
+            else if (line.Content.StartsWith("```", StringComparison.Ordinal))
+            {
+                code = CodeBlockParser.Parse(context, line);
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.InvalidStateMachineDeclaration, "An entering body accepts a file or a tagged fence.", line.Location);
+                context.SkipBlock(line.Indent);
+            }
+        }
+
+        if (file is null && code is null)
+        {
+            context.Error(DiagnosticCodes.InvalidStateMachineDeclaration, "An 'entering' line with no target needs a body: a file or a tagged fence.", header.Location);
+        }
+
+        return new(StateEntryKind.Body, string.Empty, header.Location) { File = file, Code = code };
+    }
+
     [GeneratedRegex(@"^statemachine\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
@@ -158,6 +204,9 @@ internal static partial class StateMachineParser
 
     [GeneratedRegex(@"^state\s+([A-Za-z_]\w*)((?:\s+(?:initial|final))*)$", RegexOptions.NonBacktracking)]
     private static partial Regex StateRegex();
+
+    [GeneratedRegex(@"^entering\s+invokes\s+[A-Za-z_]\w*\.[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]
+    private static partial Regex AbilityEnteringRegex();
 
     [GeneratedRegex(@"^entering\s+(invokes|starts|send|start)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EnteringRegex();

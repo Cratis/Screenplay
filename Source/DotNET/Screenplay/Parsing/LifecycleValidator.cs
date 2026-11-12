@@ -119,7 +119,7 @@ internal sealed class LifecycleValidator
             _context.Warning(DiagnosticCodes.StateWithNoWayOut, $"State '{state.Name}' of '{machine.Name}' is not final and has no transition out.", state.Location);
         }
 
-        foreach (var entry in state.Entering)
+        foreach (var entry in state.Entering.Where(entry => entry.EntryKind is StateEntryKind.Send or StateEntryKind.Start))
         {
             var known = entry.EntryKind == StateEntryKind.Send
                 ? _names.Commands.Contains(entry.Target) || _names.Commands.Contains(Short(entry.Target))
@@ -152,11 +152,11 @@ internal sealed class LifecycleValidator
         }
     }
 
-    void CheckCondition(ConditionSyntax condition, string readModel, SourceLocation location)
+    void CheckCondition(ConditionSyntax condition, string readModel, SourceLocation location, HashSet<string>? resultNodes = null)
     {
         if (!_readModels.TryGetValue(readModel, out var model)) return;
         var known = model.Properties.Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
-        foreach (var property in PropertiesOf(condition).Where(property => !known.Contains(property)).Distinct())
+        foreach (var property in PropertiesOf(condition).Where(property => !known.Contains(property) && !(resultNodes?.Contains(property.Split('.')[0]) ?? false)).Distinct())
         {
             _context.Error(DiagnosticCodes.UnknownConditionProperty, $"Condition reads '{property}', which read model '{readModel}' does not have.", location);
         }
@@ -218,6 +218,11 @@ internal sealed class LifecycleValidator
                 if (_reservedOutlets.Contains(edge.Outlet)) _context.Error(DiagnosticCodes.UnknownWorkflowOutlet, $"Outlet '{edge.Outlet}' is reserved for other node kinds; a decide node names its own outlets.", edge.Location);
                 if (edge.Target.Length == 0) _context.Error(DiagnosticCodes.WorkflowDecisionOutletWithoutTarget, $"Outlet '{edge.Outlet}' of decide node '{node.Name}' leads nowhere.", edge.Location);
             }
+            else if (node.NodeKind == WorkflowNodeKind.Compute || (node.NodeKind == WorkflowNodeKind.Action && node.Command?.Contains('.', StringComparison.Ordinal) == true))
+            {
+                // Ability outlets and compute outlets are checked by the InvocationValidator against the declared outcomes.
+                if (edge.Target.Length == 0) _context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Outlet '{edge.Outlet}' of node '{node.Name}' needs a target: '{edge.Outlet} -> <Node>'.", edge.Location);
+            }
             else if (!_outlets[node.NodeKind].Contains(edge.Outlet))
             {
                 _context.Error(DiagnosticCodes.UnknownWorkflowOutlet, $"A {node.NodeKind.ToString().ToLowerInvariant()} node has no outlet '{edge.Outlet}'; its outlets are {string.Join(", ", _outlets[node.NodeKind])}.", edge.Location);
@@ -256,7 +261,7 @@ internal sealed class LifecycleValidator
     {
         void Unknown(string kind, string name) => _context.Error(DiagnosticCodes.UnknownWorkflowReference, $"Node '{node.Name}' of workflow '{workflow.Name}' names {kind} '{name}', which is not declared.", node.Location);
         if (node.Event is { } @event && !KnownEvent(@event)) Unknown("event", @event);
-        if (node.Command is { } command && !_names.Commands.Contains(command) && !_names.Commands.Contains(Short(command))) Unknown("command", command);
+        if (node.Command is { } command && !command.Contains('.', StringComparison.Ordinal) && !_names.Commands.Contains(command) && !_names.Commands.Contains(Short(command))) Unknown("command", command);
         if (node.StateMachine is { } machineName)
         {
             var machine = _application.StateMachines.FirstOrDefault(candidate => candidate.Name == machineName);
@@ -284,5 +289,13 @@ internal sealed class LifecycleValidator
         }
     }
 
-    void CheckConditionReferences(ConditionSyntax condition, WorkflowSyntax workflow, WorkflowNodeSyntax node) => CheckCondition(condition, workflow.Subject, node.Location);
+    void CheckConditionReferences(ConditionSyntax condition, WorkflowSyntax workflow, WorkflowNodeSyntax node) =>
+        CheckCondition(
+            condition,
+            workflow.Subject,
+            node.Location,
+            workflow.Nodes
+                .Where(candidate => candidate.NodeKind == WorkflowNodeKind.Compute || (candidate.NodeKind == WorkflowNodeKind.Action && candidate.Command?.Contains('.', StringComparison.Ordinal) == true))
+                .Select(candidate => candidate.Name)
+                .ToHashSet(StringComparer.Ordinal));
 }

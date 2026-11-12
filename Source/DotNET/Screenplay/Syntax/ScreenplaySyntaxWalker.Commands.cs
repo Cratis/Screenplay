@@ -281,6 +281,17 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         foreach (var refusal in syntax.OnRefused) VisitInvocationRefusal(refusal);
+        foreach (var branch in syntax.Branches) VisitInvocationBranch(branch);
+    }
+
+    /// <summary>
+    /// Visits an invocation result branch and its event productions.
+    /// </summary>
+    /// <param name="syntax">The result branch.</param>
+    public virtual void VisitInvocationBranch(InvocationBranchSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var produced in syntax.Produces) VisitProduces(produced);
     }
 
     /// <summary>

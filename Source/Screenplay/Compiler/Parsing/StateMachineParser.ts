@@ -13,11 +13,16 @@ import { rejectOperationChildren } from './OperationParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 import { parseLifecycleSpecification } from './SpecificationParser';
+import { parseInvokes } from './ReactionParser';
+import { CodeBlockSyntax, FileReferenceSyntax } from '../Syntax/Implementations';
+import { isFileDirective } from './FileReferences';
+import { parseCode, parseFile } from './ImplementationParser';
 
 const headerPattern = pattern('^statemachine\\s+([A-Za-z_]\\w*)$');
 const followsPattern = pattern('^follows\\s+([A-Za-z_]\\w*)$');
 const statePattern = pattern('^state\\s+([A-Za-z_]\\w*)((?:\\s+(?:initial|final))*)$');
 const enteringPattern = pattern('^entering\\s+(invokes|starts|send|start)\\s+([A-Za-z_]\\w*)$');
+const abilityEnteringPattern = pattern('^entering\\s+invokes\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
 const transitionPattern = pattern('^on\\s+([A-Za-z_][\\w.]*)(?:\\s+when\\s+(.+?))?\\s*->\\s*([A-Za-z_]\\w*)$');
 
 // The port of C# StateMachineParser.
@@ -87,6 +92,15 @@ function parseState(context: ParserContext, header: SourceLine, machine: string)
         context.reader.takeSignificant();
         switch (firstWord(line.content)) {
             case 'entering': {
+                if (line.content === 'entering') {
+                    entering.push(parseEnteringBody(context, line));
+                    break;
+                }
+                if (abilityEnteringPattern.test(line.content)) {
+                    const invoked = parseInvokes(context, { ...line, content: line.content.substring('entering '.length) }, false);
+                    if (invoked !== undefined) entering.push({ kind: 'StateEntrySyntax', entryKind: 'Invoke', target: invoked.command, mappings: invoked.mappings ?? [], location: locationOf(line) });
+                    break;
+                }
                 const entry = enteringPattern.exec(line.content);
                 if (entry === null) context.error(DiagnosticCodes.InvalidStateMachineDeclaration, `Invalid entering '${line.content}' - expected 'entering invokes <Command>' or 'entering starts <Workflow>'.`, locationOf(line));
                 else {
@@ -118,4 +132,26 @@ function parseState(context: ParserContext, header: SourceLine, machine: string)
         }
     }
     return { kind: 'StateSyntax', name: match[1], isInitial: modifiers.includes('initial'), isFinal: modifiers.includes('final'), entering, transitions, location: locationOf(header) };
+}
+
+function parseEnteringBody(context: ParserContext, header: SourceLine): StateEntrySyntax {
+    let file: FileReferenceSyntax | null = null;
+    let code: CodeBlockSyntax | null = null;
+    for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        if (file !== null || code !== null) {
+            context.error(DiagnosticCodes.ConflictingImplementationSources, 'An entering body has at most one file or inline payload.', locationOf(line));
+            context.skipBlock(line.indent);
+        } else if (isFileDirective(line)) {
+            file = parseFile(context, line);
+            rejectOperationChildren(context, line, DiagnosticCodes.InvalidImplementationBlock, 'A file directive cannot have children.');
+        } else if (line.content.startsWith('```')) {
+            code = parseCode(context, line);
+        } else {
+            context.error(DiagnosticCodes.InvalidStateMachineDeclaration, 'An entering body accepts a file or a tagged fence.', locationOf(line));
+            context.skipBlock(line.indent);
+        }
+    }
+    if (file === null && code === null) context.error(DiagnosticCodes.InvalidStateMachineDeclaration, "An 'entering' line with no target needs a body: a file or a tagged fence.", locationOf(header));
+    return { kind: 'StateEntrySyntax', entryKind: 'Body', target: '', file, code, location: locationOf(header) };
 }

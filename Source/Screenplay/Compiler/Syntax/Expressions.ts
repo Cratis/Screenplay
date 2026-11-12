@@ -5,8 +5,10 @@ import { SyntaxNode } from './SyntaxNode';
 import { ExactNumber } from './ExactNumber';
 import { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
 import { CaseValueExpressionSyntax } from './CaseValueExpressionSyntax';
+import { InvocationValueExpressionSyntax } from './InvocationValueExpressionSyntax';
 export type { CaseValueExpressionSyntax } from './CaseValueExpressionSyntax';
 export type { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
+export type { InvocationValueExpressionSyntax } from './InvocationValueExpressionSyntax';
 
 // 'today - 7 days', 'now + 2 hours' - a clock keyword with a signed offset (decisions 0106/0107). A bare 'today' or 'now' stays a path.
 export interface ClockOffsetExpressionSyntax extends SyntaxNode {
@@ -115,6 +117,7 @@ export interface TemplateExpressionSyntax extends SyntaxNode {
 export type ExpressionSyntax =
     | CaseValueExpressionSyntax
     | RefusalExpressionSyntax
+    | InvocationValueExpressionSyntax
     | EventSourceIdExpressionSyntax
     | EventContextExpressionSyntax
     | CausedByExpressionSyntax

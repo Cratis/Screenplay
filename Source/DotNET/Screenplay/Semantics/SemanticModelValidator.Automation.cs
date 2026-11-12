@@ -148,6 +148,12 @@ internal static partial class SemanticModelValidator
 
                     foreach (var invocation in trigger.Invokes)
                     {
+                        if (invocation.Ability is not null)
+                        {
+                            ValidateAbilityInvocation(reaction, trigger, invocation, root, values);
+                            continue;
+                        }
+
                         if (!_commands.TryGetValue(invocation.Command, out var command))
                         {
                             throw new InvalidSemanticContract($"Reaction '{reaction.Name}' invokes an unresolved command.");
@@ -435,8 +441,15 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification '{specification.Name}' states invocations, which requires ESM v34.");
             }
 
+            ValidateAbilityAnswers(specification);
             foreach (var invocation in specification.ThenInvocations)
             {
+                if (invocation.Ability is not null)
+                {
+                    ValidateAbilityInvocationStep(specification, invocation);
+                    continue;
+                }
+
                 if (!_commands.TryGetValue(invocation.Command, out var invoked))
                 {
                     throw new InvalidSemanticContract($"Specification '{specification.Name}' states an invocation of an unresolved command.");

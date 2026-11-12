@@ -20,6 +20,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "narrowed-queries",
         "caller-identity",
         "abilities",
+        "ability-invocations",
         "graph-queries",
         "graph-foreach",
         "projection-parity",
@@ -390,7 +391,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
     static FeatureSyntax WithoutGraphSlices(FeatureSyntax feature) => feature with
     {
-        Slices = feature.Slices.Where(slice => !slice.Graphs.Any() && !slice.GraphProjections.Any()),
+        // The ability-invoking automation has its own parser, printer, binder and conformance specs; the frozen bytes predate it.
+        Slices = feature.Slices.Where(slice => !slice.Graphs.Any() && !slice.GraphProjections.Any() && slice.Name != "CapturePaymentsWithGateway"),
         Features = feature.Features.Select(WithoutGraphSlices)
     };
 

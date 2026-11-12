@@ -7,7 +7,7 @@ description: "Declare external systems in Cratis Screenplay with typed abilities
 
 A model often has to reach something outside itself: a carrier that books a pickup, a ledger that opens a cost center, a chat tool that asks someone to approve. A `system` names that business system. An `ability` says one thing the system can be asked to do, with typed inputs, the values it returns, the business outcomes other than success, and what a retry may do. With abilities declared, invocations of the system can be checked, specified and run.
 
-This page covers the declaration. Invoking an ability from a command, a reaction, a workflow or a state machine is described with each of those constructs; see [what is not here yet](#what-is-not-here-yet).
+This page covers the declaration. A reaction, a workflow action or a state's `entering` line invokes an ability; see [Invoke an ability](#invoke-an-ability).
 
 ## Declare a system with abilities
 
@@ -99,7 +99,7 @@ system Approvals
     outcome Declined
 ````
 
-Workflows and `approval ... via` use these abilities; see the invocation constructs listed under [what is not here yet](#what-is-not-here-yet).
+Workflows and `approval ... via` use these abilities; see [Invoke an ability](#invoke-an-ability).
 
 ## Attach an implementation
 
@@ -130,7 +130,7 @@ Ability names are unique within their system, compared ignoring case (`PLAY0983`
 
 ## What reaches the executable model
 
-A model that declares at least one ability selects [executable semantic model (ESM) v50](interoperability.md). Models without abilities keep their bytes and their version. In ESM v50, `application.systems` lists each system and its abilities:
+A model that declares at least one ability selects [executable semantic model (ESM) v50](interoperability.md). Models without abilities keep their bytes and their version. In ESM v50 and later, `application.systems` lists each system and its abilities:
 
 | Member | Meaning |
 | --- | --- |
@@ -149,11 +149,37 @@ The [executable model schema](executable-model-schema.md) and the published [ESM
 
 A system declared in a model that declares no ability anywhere, operations, and operation specification steps remain authoring-only: binding reports `PLAY0268`.
 
-## What is not here yet
+## Invoke an ability
 
-This page is the first slice of the extension design in [decision 0159](https://github.com/Cratis/Screenplay/blob/main/decisions/0159-systems-with-abilities-extensions-and-durable-invocations.md). Declaring an ability does not yet let a reaction, a workflow, a state machine or a command call it, and nothing runs it. Those arrive in the invocation issues of the same epic. Until then an ability is a checked, typed contract that tools and renderers can read.
+A reaction, a workflow action and a state's `entering` line ask a system for an ability with `invokes <System>.<Ability>`. The dotted name is what tells an ability from a command. Each input the ability declares is given a value, and the ability's answer is handled where the call is made.
 
-[Cratis Stage](https://github.com/Cratis/Stage/blob/main/Documentation/reference/esm-feature-matrix.md) lists which ESM features it renders and runs. Its [reaction rendering reference](https://github.com/Cratis/Stage/blob/main/Documentation/reference/reaction-rendering.md) describes how reactions are carried out today.
+```play
+reaction PickupBooking
+  runs as system
+  when OrderPacked
+    parcelId
+    shippingAddress
+    invokes Carrier.BookPickup
+      parcelId = parcelId
+      address = shippingAddress
+      on returned
+        produces PickupBooked
+          trackingNumber = $result.trackingNumber
+      on NoCapacity
+        produces PickupUnavailable
+      on failed
+        produces PickupBookingFailed
+          reason = $failure.reason
+```
+
+- Every declared input is mapped exactly once, with a value of a compatible type (`PLAY1003`, `PLAY1004`, `PLAY1005`). The system and ability must exist (`PLAY1001`).
+- `on returned` handles a normal answer and reads `$result.<field>` from the ability's `returns`. `on failed` handles a failed call and reads `$failure.reason`. `on <Outcome>` handles one of the ability's declared outcomes (`PLAY1002`). A branch is declared once (`PLAY1006`), and a branch value read outside its branch is `PLAY1008`.
+- A `once` ability is never retried, so `attempts` above one on its call site is the warning `PLAY1015`. A reaction has no place to wait, so an ability that `answers later` cannot be invoked from one (`PLAY1010`).
+- Specifications script the answer with `given <System>.<Ability> returns`, `answers` or `fails` and assert the call with `then invokes`; see [Specifications](specifications.md#ability-answers).
+
+Reactions, workflow actions and state entries that invoke an ability select [executable semantic model (ESM) v51](interoperability.md). Models that invoke no ability keep their bytes and their version. Operation phases that invoke an ability, an approval answered through an ability (`via`), a `compute` node, a `$trigger` value and a `decide` that reads an ability or compute result parse, print and validate but are not admitted yet; binding reports `PLAY0268` naming [#1252](https://github.com/Cratis/Screenplay/issues/1252).
+
+[Cratis Stage](https://github.com/Cratis/Stage/blob/main/Documentation/reference/esm-feature-matrix.md) lists which ESM features it renders and runs. The design is [decision 0159](https://github.com/Cratis/Screenplay/blob/main/decisions/0159-systems-with-abilities-extensions-and-durable-invocations.md).
 
 ## Related
 

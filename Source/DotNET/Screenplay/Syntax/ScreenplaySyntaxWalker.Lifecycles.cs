@@ -31,7 +31,13 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="StateEntrySyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="StateEntrySyntax"/> to visit.</param>
-    public virtual void VisitStateEntry(StateEntrySyntax syntax) => VisitNode(syntax);
+    public virtual void VisitStateEntry(StateEntrySyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var mapping in syntax.Mappings) VisitPropertyMapping(mapping);
+        if (syntax.File is not null) VisitFileReference(syntax.File);
+        if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
+    }
 
     /// <summary>
     /// Visits a <see cref="StateTransitionSyntax"/> node.
@@ -67,6 +73,10 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Condition is not null) VisitCondition(syntax.Condition);
         if (syntax.Duration is not null) VisitNode(syntax.Duration);
         if (syntax.ExpiresAfter is not null) VisitNode(syntax.ExpiresAfter);
+        foreach (var mapping in syntax.Mappings) VisitPropertyMapping(mapping);
+        foreach (var returned in syntax.Returns) VisitProperty(returned);
+        if (syntax.File is not null) VisitFileReference(syntax.File);
+        if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
         foreach (var edge in syntax.Edges) VisitWorkflowEdge(edge);
     }
 

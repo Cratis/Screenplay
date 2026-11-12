@@ -238,7 +238,7 @@ For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then us
 
 ## Operation and system intent
 
-Operations, and systems that declare no ability, are **syntax-only**, not admitted by any supported executable model (ESM) version yet (`PLAY0268`). A system that declares [abilities](../systems.md) is admitted in ESM v50, but nothing invokes or runs an ability yet. After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
+Operations, and systems that declare no ability, are **syntax-only**, not admitted by any supported executable model (ESM) version yet (`PLAY0268`). A system that declares [abilities](../systems.md) is admitted in ESM v50, and a reaction that invokes an ability is admitted in ESM v51; workflows, state machines and approvals that invoke one parse and validate but do not run yet. The `operations` view lists each ability's `invokedBy` call sites. After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
 
 | View | Contents |
 | --- | --- |

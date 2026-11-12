@@ -61,7 +61,7 @@ public class when_checking_protected_reads_in_the_samples : given.the_samples
     }
 
     [Fact] void should_compile_every_checked_folder() => _errors.ShouldBeEmpty();
-    [Fact] void should_check_the_migrated_samples() => _checked.ShouldEqual(17);
+    [Fact] void should_check_the_migrated_samples() => _checked.ShouldEqual(18);
     [Fact] void should_opt_in_every_admissible_sample() => _missingPreambles.ShouldBeEmpty();
     [Fact] void should_not_introduce_executable_errors() => _newErrors.ShouldBeEmpty();
     [Fact] void should_leave_the_inadmissible_samples_legacy() => _legacySamples.ShouldEqual(new[] { "Library", "TimeTracking" });

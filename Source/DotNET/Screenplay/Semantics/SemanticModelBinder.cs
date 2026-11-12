@@ -50,6 +50,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesAbilityInvocations(application)) return (LanguageVersion.V51, SemanticVersion.V51);
         if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
         if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
         if (application.Agents is not null) return (LanguageVersion.V48, SemanticVersion.V48);
@@ -273,7 +274,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV50Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV51Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)

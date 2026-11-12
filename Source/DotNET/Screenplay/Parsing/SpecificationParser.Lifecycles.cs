@@ -125,6 +125,7 @@ internal static partial class SpecificationParser
             "fails at" => LifecycleExpectationKind.Fails,
             _ => LifecycleExpectationKind.Waits
         };
+        if (match.Groups[2].Value.Contains('.', StringComparison.Ordinal) && kind != LifecycleExpectationKind.Sends) return null;
         return match.Groups[2].Success == (kind == LifecycleExpectationKind.Completes) ? null : new(kind, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location);
     }
 
@@ -134,6 +135,6 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^outcome\s+([A-Za-z_]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex OutcomeRegex();
 
-    [GeneratedRegex(@"^then\s+(is|sends|invokes|starts|completes|fails\s+at|waits\s+at)(?:\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^then\s+(is|sends|invokes|starts|completes|fails\s+at|waits\s+at)(?:\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?))?$", RegexOptions.NonBacktracking)]
     private static partial Regex LifecycleThenRegex();
 }

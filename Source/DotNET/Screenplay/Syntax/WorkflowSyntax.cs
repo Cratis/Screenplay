@@ -43,7 +43,12 @@ public enum WorkflowNodeKind
     /// <summary>
     /// Joins parallel branches back together.
     /// </summary>
-    Join = 6
+    Join = 6,
+
+    /// <summary>
+    /// Runs a pure inline body over the subject, the trigger values and earlier node results.
+    /// </summary>
+    Compute = 7
 }
 
 /// <summary>
@@ -230,4 +235,29 @@ public record WorkflowNodeSyntax(
     /// Gets how many branches an <see cref="WorkflowJoinMode.AtLeast"/> join needs.
     /// </summary>
     public int? JoinCount { get; init; }
+
+    /// <summary>
+    /// Gets the input mappings of an <c>action</c> that invokes an ability.
+    /// </summary>
+    public IEnumerable<PropertyMappingSyntax> Mappings { get; init; } = [];
+
+    /// <summary>
+    /// Gets the fields a <c>compute</c> node returns.
+    /// </summary>
+    public IEnumerable<PropertySyntax> Returns { get; init; } = [];
+
+    /// <summary>
+    /// Gets the selected file of a <c>compute</c> node.
+    /// </summary>
+    public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the inline body of a <c>compute</c> node.
+    /// </summary>
+    public CodeBlockSyntax? Code { get; init; }
+
+    /// <summary>
+    /// Gets the <c>&lt;System&gt;.&lt;Ability&gt;</c> an <c>approval</c> node is asked through.
+    /// </summary>
+    public string? Via { get; init; }
 }

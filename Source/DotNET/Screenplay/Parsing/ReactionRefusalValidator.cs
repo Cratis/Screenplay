@@ -22,7 +22,7 @@ internal static class ReactionRefusalValidator
                 context.Warning(DiagnosticCodes.UnusedReactionIdentity, $"Reaction '{reaction.Name}' declares an identity but has no invocations or implementation body.", reaction.RunsAs!.Location);
             }
 
-            foreach (var (reaction, invocation) in slice.Reactions.SelectMany(reaction => reaction.Triggers.SelectMany(trigger => trigger.Invokes ?? []).Select(invocation => (reaction, invocation))))
+            foreach (var (reaction, invocation) in slice.Reactions.SelectMany(reaction => reaction.Triggers.SelectMany(trigger => (trigger.Invokes ?? []).Where(invoked => !invoked.IsAbility)).Select(invocation => (reaction, invocation))))
             {
                 var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
                 var authorizationGated = command is { } invokedCommand && (authorizationGates ??= CollectAuthorizationGates(application))[invokedCommand.Node];

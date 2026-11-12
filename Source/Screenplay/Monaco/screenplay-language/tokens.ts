@@ -156,6 +156,13 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(on)(\s+)(refused)(\s+)(by)(\s+)(validation|constraint|authorization)\b/,
                 ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(on)(\s+)(refused)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            // An invocation's outcome branches: `on returned`, `on failed` or `on <Outcome>`.
+            [/^(\s*)(on)(\s+)(returned|failed)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(on)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            // An ability's scripted answer in a specification: `given Sys.Ability returns|answers <Outcome>|fails`.
+            [/^(\s*)(given)(\s+)([A-Z]\w*\.[A-Z]\w*)(\s+)(returns|answers|fails)\b/, ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            // A workflow compute node and an approval answered through an ability.
+            [/^(\s*)(compute)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
             [/^(\s*)(on)(\s+)([\w-]+)\b/, ['white', 'keyword', 'white', { token: 'keyword', next: '@interactionBody.$1' }]],
             [/^(\s*)(acknowledge)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.

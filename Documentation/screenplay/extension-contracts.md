@@ -69,7 +69,7 @@ The contents (abilities, triggers, components, settings and the backend tier) ar
 
 ### Abilities and triggers
 
-`ability` is the [ability](systems.md) grammar, unchanged. `trigger <Name>` declares an inbound occurrence with typed payload lines.
+`ability` is the [ability](systems.md) grammar, unchanged. A model calls a contributed ability the same way it calls any system's: from a reaction, workflow action or state entry, see [Invoke an ability](systems.md#invoke-an-ability). `trigger <Name>` declares an inbound occurrence with typed payload lines.
 
 Types in a contract resolve in the model's own scope, so a contract that says `Money` needs the model to declare a `Money` concept.
 

@@ -115,7 +115,13 @@ public record OperationSyntax(string Name, string Uses, IEnumerable<PropertySynt
 /// <param name="Code">The optional inline source.</param>
 /// <param name="Implementation">The optional implementation intent.</param>
 /// <param name="Location">The phase location.</param>
-public record OperationPhaseSyntax(string? Description, FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax? Implementation, SourceLocation Location) : SyntaxNode(Location);
+public record OperationPhaseSyntax(string? Description, FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax? Implementation, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the <c>invokes &lt;System&gt;.&lt;Ability&gt;</c> calls the phase makes, in order.
+    /// </summary>
+    public IEnumerable<InvokesSyntax> Invocations { get; init; } = [];
+}
 
 /// <summary>
 /// Enumerates standalone and inline declarations without treating references as declarations.

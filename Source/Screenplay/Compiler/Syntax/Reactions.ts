@@ -62,6 +62,14 @@ export interface InvokesSyntax extends SyntaxNode {
     readonly command: string;
     readonly onRefused?: readonly InvocationRefusalSyntax[];
     readonly mappings?: readonly PropertyMappingSyntax[];
+    readonly branches?: readonly InvocationBranchSyntax[];
+}
+
+// 'on returned', 'on <Outcome>' or 'on failed' under an ability invocation: the events produced when the ability answers that way.
+export interface InvocationBranchSyntax extends SyntaxNode {
+    readonly kind: 'InvocationBranchSyntax';
+    readonly selector: string;
+    readonly produces: readonly ProducesSyntax[];
 }
 
 // One trigger of a reaction: what sets it off, and the events it produces and commands it invokes. Its code,

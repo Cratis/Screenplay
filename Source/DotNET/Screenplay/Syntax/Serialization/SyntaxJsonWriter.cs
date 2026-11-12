@@ -76,7 +76,7 @@ internal static class SyntaxJsonWriter
         node is SampleDataFieldSyntax && name == "rows" && value is IEnumerable<SampleDataRowSyntax> rows && !rows.Any();
 
     static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
-        ClockSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||
+        ClockSyntaxDefaults.Omit(node, member, value) || InvocationSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||
         (node is ScreenActionSyntax or ScreenGuardedActionSyntax or ToolbarItemSyntax && member == "subject" && value is null) ||
         (node is ScreenActionSyntax && member == "inputs" && value is IEnumerable<InteractionArgumentSyntax> inputs && !inputs.Any());
 

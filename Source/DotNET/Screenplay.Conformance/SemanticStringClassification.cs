@@ -19,7 +19,12 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _identities = new(StringComparer.Ordinal)
     {
         "id", "contractId", "eventContract", "targetProperty", "property", "readModel", "event", "forEach", "command",
-        "keyProperty", "filter", "reaction", "query", "capture", "stream", "on", "trigger", "target", "sourceEvents", "releasedBy",
+        "keyProperty", "system", "filter", "reaction", "query", "capture", "stream", "on", "trigger", "target", "sourceEvents", "releasedBy",
+    };
+
+    static readonly HashSet<string> _requirementScopes = new(StringComparer.Ordinal)
+    {
+        "generation/requirement", "entering/requirement", "nodes/requirement",
     };
 
     static readonly HashSet<string> _scopedIdentities = new(StringComparer.Ordinal)
@@ -46,7 +51,7 @@ internal static class SemanticStringClassification
     // overloaded names are deliberately absent and resolved by schema context below.
     static readonly HashSet<string> _literals = new(StringComparer.Ordinal)
     {
-        "alphabet", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
+        "alphabet", "ability", "reason", "outcome", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
         "commandReadMode", "contextMember", "description", "effect", "outcomes", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
         "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
@@ -65,7 +70,7 @@ internal static class SemanticStringClassification
     public static SemanticStringKind Classify(JsonElement container, string owner, string property)
     {
         var scoped = $"{owner}/{property}";
-        if (property == "requirementId" || scoped == "generation/requirement")
+        if (property == "requirementId" || _requirementScopes.Contains(scoped))
         {
             return SemanticStringKind.Requirement;
         }

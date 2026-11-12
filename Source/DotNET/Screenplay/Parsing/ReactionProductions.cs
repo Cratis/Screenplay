@@ -10,6 +10,9 @@ internal static class ReactionProductions
     internal static IEnumerable<ProducesSyntax> Refusals(ReactionTriggerSyntax trigger) =>
         (trigger.Invokes ?? []).SelectMany(invocation => invocation.OnRefused).SelectMany(branch => branch.Produces);
 
+    internal static IEnumerable<ProducesSyntax> Branches(ReactionTriggerSyntax trigger) =>
+        (trigger.Invokes ?? []).SelectMany(invocation => invocation.Branches).SelectMany(branch => branch.Produces);
+
     internal static IEnumerable<ProducesSyntax> In(ReactionTriggerSyntax trigger) =>
-        (trigger.Produces ?? []).Concat(Refusals(trigger));
+        (trigger.Produces ?? []).Concat(Refusals(trigger)).Concat(Branches(trigger));
 }

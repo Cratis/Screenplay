@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -82,9 +82,11 @@ internal static class EsmBaselineShapes
         ["QueryKeyPart"] = "id name type:TypeReference keyProperty",
         ["QueryFilter"] = "id name type:TypeReference property",
         ["QueryFilterValue"] = "filter value:Value",
-        ["Specification"] = "id name givenEvents:SpecificationEvent givenReadModels:SpecificationReadModel givenCaller:Caller when:SpecificationCommand whenAppended:SpecificationEvent whenRedelivered@17:Redelivered thenEvents:SpecificationEvent thenNoEvents@17 thenEventsInAnyOrder thenReadModels:SpecificationReadModel thenAbsentReadModels@5:AbsentReadModel thenQueries:SpecificationQuery thenErrors:SpecificationError thenDenied thenReturns@7:ThenReturns givenClock@6 givenCaptures@6:SpecificationCapture givenGenerated@30:PinnedValue whenClock@6 whenTrigger@6:WhenTrigger whenCapture@6:SpecificationCapture thenInvocations@34:SpecificationCommand givenTimeZone@37",
+        ["Specification"] = "id name givenEvents:SpecificationEvent givenReadModels:SpecificationReadModel givenCaller:Caller when:SpecificationCommand whenAppended:SpecificationEvent whenRedelivered@17:Redelivered thenEvents:SpecificationEvent thenNoEvents@17 thenEventsInAnyOrder thenReadModels:SpecificationReadModel thenAbsentReadModels@5:AbsentReadModel thenQueries:SpecificationQuery thenErrors:SpecificationError thenDenied thenReturns@7:ThenReturns givenClock@6 givenCaptures@6:SpecificationCapture givenGenerated@30:PinnedValue whenClock@6 whenTrigger@6:WhenTrigger whenCapture@6:SpecificationCapture thenInvocations@34:SpecificationCommand givenTimeZone@37 givenAbilityAnswers@51:AbilityAnswer",
         ["SpecificationEvent"] = "eventContract values:PropertyValue eventSource:EventSource route@8:FixtureRoute unrouted@8",
-        ["SpecificationCommand"] = "command values:PropertyValue generatedValues@7:PropertyValue eventSource:EventSource",
+        ["SpecificationCommand"] = "command values:PropertyValue generatedValues@7:PropertyValue eventSource:EventSource system@51 ability@51 inputs@51:AbilityFieldValue",
+        ["AbilityFieldValue"] = "name value:Value",
+        ["AbilityAnswer"] = "system ability kind outcome reason values:AbilityFieldValue",
         ["SpecificationReadModel"] = "readModel key:Value values:PropertyValue exactly",
         ["AbsentReadModel"] = "readModel key:Value",
         ["SpecificationQuery"] = "query key:Value filters@14:QueryFilterValue results:SpecificationReadModel exactly",
@@ -149,18 +151,20 @@ internal static class EsmBaselineShapes
         ["GraphReturn"] = "property alias source",
         ["StateMachine"] = "name readModel states:State transitions:StateTransition specifications:LifecycleSpecification",
         ["State"] = "name initial final entering:StateEntry",
-        ["StateEntry"] = "kind command workflow",
+        ["StateEntry"] = "kind command workflow system@51 ability@51 inputs@51:AbilityInput requirement@51",
         ["StateTransition"] = "from event guard:Condition to",
         ["Workflow"] = "name subject nodes:WorkflowNode edges:WorkflowEdge specifications:LifecycleSpecification",
         ["LifecycleSpecification"] = "name given:SpecificationEvent whenAppended:SpecificationEvent whenStarted:Value outcomes:LifecycleOutcome then:LifecycleExpectation",
         ["LifecycleOutcome"] = "node outlet",
         ["LifecycleExpectation"] = "kind target command",
-        ["WorkflowNode"] = "name kind trigger event stateMachine state every at onDayOfWeek onDayOfMonth command maxAttempts attemptTimeout retryDelay condition:Condition whenTrue whenFalse duration expiresAfter approverKind approver items maxParallel joinMode joinCount",
+        ["WorkflowNode"] = "name kind trigger event stateMachine state every at onDayOfWeek onDayOfMonth command maxAttempts attemptTimeout retryDelay condition:Condition whenTrue whenFalse duration expiresAfter approverKind approver items maxParallel joinMode joinCount system@51 ability@51 inputs@51:AbilityInput returns@51:AbilityField requirement@51",
         ["WorkflowEdge"] = "from outlet to",
         ["Reaction"] = "id name triggers:ReactionTrigger runsAs@10:ReactionIdentity from@10:ObserverFilter",
         ["ReactionIdentity"] = "kind roles",
         ["ReactionTrigger"] = "kind source every at onDayOfWeek onDayOfMonth where:Condition produces:ProducedEvent invokes:Invocation requirementId",
-        ["Invocation"] = "command mappings:Mapping onRefused@19:RefusalBranch",
+        ["Invocation"] = "command mappings:Mapping onRefused@19:RefusalBranch system@51 ability@51 inputs@51:AbilityInput branches@51:InvocationBranch",
+        ["AbilityInput"] = "input source:Expression",
+        ["InvocationBranch"] = "selector produces:ProducedEvent",
         ["RefusalBranch"] = "selector constraint produces:ProducedEvent",
         ["Capture"] = "id name key map:CaptureMap appends:CaptureAppend children:CaptureChildren nested:CaptureNested sourceEvents@9 keyIsEventSource@33",
         ["CaptureChildren"] = "field identifiedBy map:CaptureMap appends:CaptureAppend",

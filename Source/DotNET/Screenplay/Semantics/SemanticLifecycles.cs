@@ -18,7 +18,13 @@ public enum SemanticStateEntryKind
     /// <summary>
     /// Starts a workflow.
     /// </summary>
-    StartWorkflow = 1
+    StartWorkflow = 1,
+
+    /// <summary>The state invokes an ability with mapped inputs.</summary>
+    InvokeAbility = 2,
+
+    /// <summary>The state runs an attached body.</summary>
+    RunBody = 3
 }
 
 /// <summary>
@@ -59,7 +65,10 @@ public enum SemanticWorkflowNodeKind
     /// <summary>
     /// Joins parallel branches back together.
     /// </summary>
-    Join = 6
+    Join = 6,
+
+    /// <summary>The node runs an attached body that returns declared fields and picks an outlet.</summary>
+    Compute = 7
 }
 
 /// <summary>
@@ -158,7 +167,10 @@ public enum SemanticLifecycleExpectationKind
     /// <summary>
     /// The run is suspended at a wait or an approval.
     /// </summary>
-    Waits = 5
+    Waits = 5,
+
+    /// <summary>The run or entry invokes the ability named by the target (<c>System.Ability</c>).</summary>
+    Invokes = 6
 }
 
 /// <summary>
@@ -197,7 +209,20 @@ public sealed record SemanticState(string Name, bool IsInitial, bool IsFinal, Im
 /// <param name="Kind">Whether a command is sent or a workflow started.</param>
 /// <param name="Command">The command sent; unset when a workflow is started.</param>
 /// <param name="Workflow">The name of the workflow started; null when a command is sent.</param>
-public sealed record SemanticStateEntry(SemanticStateEntryKind Kind, SemanticId Command, string? Workflow);
+public sealed record SemanticStateEntry(SemanticStateEntryKind Kind, SemanticId Command, string? Workflow)
+{
+    /// <summary>Gets the invoked system; unset unless the entry invokes an ability.</summary>
+    public SemanticId System { get; init; }
+
+    /// <summary>Gets the invoked ability name; null unless the entry invokes an ability.</summary>
+    public string? Ability { get; init; }
+
+    /// <summary>Gets the ability input mappings.</summary>
+    public ImmutableArray<SemanticAbilityInputMapping> Inputs { get; init; } = [];
+
+    /// <summary>Gets the implementation requirement id of the attached body; null unless the entry runs a body.</summary>
+    public string? RequirementId { get; init; }
+}
 
 /// <summary>
 /// Represents a transition: <c>on &lt;Event&gt; [when &lt;guard&gt;] -&gt; &lt;State&gt;</c> declared under <see cref="From"/>.
@@ -305,6 +330,21 @@ public sealed record SemanticWorkflowNode(string Name, SemanticWorkflowNodeKind 
 
     /// <summary>Gets how many branches an at-least join needs.</summary>
     public int? JoinCount { get; init; }
+
+    /// <summary>Gets the invoked system; unset unless the node invokes an ability.</summary>
+    public SemanticId System { get; init; }
+
+    /// <summary>Gets the invoked ability name; null unless the node invokes an ability.</summary>
+    public string? Ability { get; init; }
+
+    /// <summary>Gets the ability input mappings.</summary>
+    public ImmutableArray<SemanticAbilityInputMapping> Inputs { get; init; } = [];
+
+    /// <summary>Gets the fields a compute node returns.</summary>
+    public ImmutableArray<SemanticAbilityField> Returns { get; init; } = [];
+
+    /// <summary>Gets the implementation requirement id of a compute node's body; null for other nodes.</summary>
+    public string? RequirementId { get; init; }
 }
 
 /// <summary>

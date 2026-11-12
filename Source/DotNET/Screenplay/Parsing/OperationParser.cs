@@ -267,10 +267,17 @@ internal static partial class OperationParser
         CodeBlockSyntax? code = null;
         ImplementationSyntax? implementation = null;
         var sourceSelected = false;
+        var invocations = new List<InvokesSyntax>();
         var locations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(line.Content) == "invokes")
+            {
+                if (ReactionParser.ParseInvokes(context, line, allowBranches: false) is { } invoked) invocations.Add(invoked);
+                continue;
+            }
+
             if (LineText.FirstWord(line.Content) == "description")
             {
                 description = DescriptionParser.Parse(context, line, description, $"Operation phase '{header.Content}'", out _);
@@ -304,12 +311,12 @@ internal static partial class OperationParser
             }
             else
             {
-                context.Error(DiagnosticCodes.InvalidOperationDeclaration, "A phase accepts description, file, a tagged fence or implementation.", line.Location);
+                context.Error(DiagnosticCodes.InvalidOperationDeclaration, "A phase accepts description, invokes, file, a tagged fence or implementation.", line.Location);
                 context.SkipBlock(line.Indent);
             }
         }
 
-        return new(description, file, code, implementation, header.Location) { DirectiveLocations = locations };
+        return new(description, file, code, implementation, header.Location) { DirectiveLocations = locations, Invocations = invocations };
     }
 
     internal static void RejectChildren(ParserContext context, SourceLine line, string code, string message)
@@ -319,7 +326,7 @@ internal static partial class OperationParser
         context.SkipBlock(line.Indent);
     }
 
-    static void ParseAbilityReturns(ParserContext context, SourceLine header, string abilityName, List<PropertySyntax> returns)
+    internal static void ParseAbilityReturns(ParserContext context, SourceLine header, string abilityName, List<PropertySyntax> returns)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);
         while (context.TryPeekChild(header.Indent, out var line))
