@@ -162,6 +162,19 @@ module Fleet
   feature DataQuality
     slice StateView Vessels
       provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+      query VesselByKey => Vessel optional
+        by vesselId Uuid
+
+      readmodel Vessel
+        vesselId Uuid
+
+      event VesselRegistered
+        vesselId Uuid
+
+      projection Vessels => Vessel
+        from VesselRegistered key vesselId
+          vesselId = vesselId
 ```
 
 The slice reads the query result; every other slice of the module reads the host value.

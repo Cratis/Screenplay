@@ -5,6 +5,9 @@ import { describe, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { ProvideSyntax } from '../Syntax/ProvideSyntax';
+import { ParserContext } from '../Parsing/ParserContext';
+import { LineReader } from '../Parsing/LineReader';
+import { validateProvides } from '../Parsing/ProvideValidator';
 
 const sliceBody = [
     '      query VesselByKey => Vessel optional',
@@ -131,6 +134,51 @@ describe('when parsing provided values', () => {
 
     it('should withdraw the unknown context warning for a provided root', () => {
         codes('module Fleet\n  provide region String from host\n  provide copy String from $context.region\n').should.not.include('PLAY0153');
+    });
+
+    it('should reject a query source that names no query', () => {
+        codes('module Fleet\n  provide vessel Vessel from query\n').should.include('PLAY1120');
+    });
+
+    it('should reject a body that is neither a file nor a code block', () => {
+        codes('module Fleet\n  provide vessel Vessel\n    nonsense here\n').should.include('PLAY1120');
+    });
+
+    it('should split the key list around an escaped quote', () => {
+        codes(model('  provide vessel Vessel optional from query VesselByKey by "a\\"b, c"')).should.not.include('PLAY1120');
+    });
+
+    it('should reject a value provided twice at the application level', () => {
+        codes('provide region String from host\nprovide region String from host\n').should.include('PLAY1123');
+    });
+
+    it('should reject a duplicate that reaches the validator, as a merged folder delivers it', () => {
+        const application = parse('provide region String from host\n').value;
+        const provide = application.provides![0];
+        const context = new ParserContext(new LineReader([]));
+        validateProvides({ ...application, provides: [provide, provide] }, context);
+        context.diagnostics.map(diagnostic => diagnostic.code).should.include('PLAY1123');
+    });
+
+    it('should place a provide of a placed file in its module', () => {
+        const result = parse('provide region String from host\n', 'Fleet.play', ['Fleet']);
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([]);
+    });
+
+    it('should accept values that share a dependency without a cycle', () => {
+        codes('module Fleet\n  provide base String from host\n  provide left String from $context.base\n  provide right String from $context.base\n  provide both Vessel optional from query Missing by $context.left, $context.right\n').should.not.include('PLAY1129');
+    });
+
+    it('should resolve a query named with its slice', () => {
+        codes(model('  provide vessel Vessel optional from query Vessels.VesselByKey by "x"')).should.not.include('PLAY1126');
+    });
+
+    it('should keep a bracketed key together when splitting the key list', () => {
+        codes(model('  provide vessel Vessel optional from query VesselByKey by f("a", "b"), "c"')).should.not.include('PLAY1120');
+    });
+
+    it('should report a code block that never closes', () => {
+        codes('module Fleet\n  provide limit Int\n    ```csharp\n    return 10;\n').length.should.be.greaterThan(0);
     });
 
     it('should keep the unknown context warning for an unprovided root', () => {
