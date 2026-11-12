@@ -161,7 +161,7 @@ jobs:
         run: node --test .github/scripts/run-specifications.test.mjs
 
       - name: Build Debug
-        run: dotnet build --configuration Debug -bl:"$RUNNER_TEMP/debug-build.binlog"
+        run: dotnet build --configuration Debug -p:ReportAnalyzer=true -bl:"$RUNNER_TEMP/debug-build.binlog"
 
       # Short-lived evidence for build-time analysis; uploaded even when the build fails.
       - name: Upload Debug build binlog
