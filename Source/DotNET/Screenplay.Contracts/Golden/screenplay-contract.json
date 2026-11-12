@@ -72275,6 +72275,185 @@
       "title": "A system maps a secret to a setting its extension\u0027s contract declares as public, which would reach the browser.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0998",
+      "name": "InvalidExtensionContract",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An extension contract file is malformed: an unknown line, a bad shape or no extension declaration.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0999",
+      "name": "MissingExtensionManifestField",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An extension contract does not declare its display name, description or icon.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1100",
+      "name": "UnknownComponentKind",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component declares a kind other than react, mount or screenplay.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1101",
+      "name": "UnknownComponentPlatform",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component or requirement names a platform other than web, ios, android or desktop.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1102",
+      "name": "ComponentWithoutPlaceholder",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component with a frontend declares no placeholder for design tools to draw.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1103",
+      "name": "SettingBothPublicAndSecret",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A contract setting is declared both public and secret.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1104",
+      "name": "ComponentInvokesUnknownAbility",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component invokes an ability the contract does not declare.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1105",
+      "name": "DuplicateExtensionMember",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A contract declares two members of the same kind with the same name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1106",
+      "name": "SystemAbilitiesBesideExtension",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A system declares abilities beside an extension line; the contract is the only source of its abilities.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1107",
+      "name": "ExtensionNotLocked",
+      "severity": "error",
+      "severities": [
+        "error",
+        "warning"
+      ],
+      "title": "A system\u0027s extension reference has no entry in the lock file.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1108",
+      "name": "ExtensionNotRestored",
+      "severity": "error",
+      "severities": [
+        "error",
+        "warning"
+      ],
+      "title": "A locked extension\u0027s contract is not in the local cache yet, so its contract could not be read.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1109",
+      "name": "ExtensionContractHashMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A cached contract does not match the contract hash the lock pins.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1110",
+      "name": "ExtensionLockStale",
+      "severity": "error",
+      "severities": [
+        "error",
+        "warning"
+      ],
+      "title": "A lock entry was written for a different version range than the model now asks for.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1111",
+      "name": "InvalidExtensionLock",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The lock file is malformed.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1112",
+      "name": "ExtensionIncompatibleUse",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A system uses an ability, trigger or component its extension\u0027s contract does not offer, or offers with a different shape.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1113",
+      "name": "InvalidExtensionPlaceholder",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A placeholder is not a static HTML file: it has script, an external reference or an inline event handler.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
@@ -78648,6 +78827,17 @@
       "usage": "screenplay environment [\u003Cfile.play|folder\u003E] [--format text|json]",
       "options": [
         "--format"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "restore",
+      "usage": "screenplay restore [\u003Cfolder\u003E] [--locked] [--update] [--source \u003Cdirectory\u003E] [--vendor]",
+      "options": [
+        "--locked",
+        "--source",
+        "--update",
+        "--vendor"
       ],
       "aliases": []
     },

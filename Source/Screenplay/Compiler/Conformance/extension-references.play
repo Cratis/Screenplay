@@ -1,0 +1,24 @@
+// A system names an extension package; its contract supplies the abilities and triggers, and a reaction uses a trigger qualified by the system.
+secret StripeSecretKey
+  description "The live Stripe API key"
+
+system Payments
+  extension "cratis/stripe" version "^2.3"
+  setting secretKey from secret StripeSecretKey
+  setting statementDescriptor = "ACME"
+  activation on demand idle after 10 minutes
+
+system Carrier
+  extension "ghcr.io/acme/extension-ledger"
+
+module Orders
+  feature Checkout
+    slice Automation RecordSettlement
+      event SettlementRecorded
+        paymentIntentId String
+      reaction Settle
+        when Payments.PaymentSucceeded
+          paymentIntentId
+          produces SettlementRecorded
+            for paymentIntentId
+            paymentIntentId = paymentIntentId

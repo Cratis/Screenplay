@@ -87,6 +87,8 @@ if (compiled.Success)
 
 ## System settings and named secrets
 
+The settings a system can map are declared by its extension's [contract](extension-contracts.md#settings).
+
 A `system` realized by an extension declares settings in its contract. The model says where each value comes from:
 
 ```play

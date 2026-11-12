@@ -147,6 +147,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | `domain` with a qualified name, `import` | top of the file |
 | `system` with `ability` blocks: the three effect classes (`safe`, `idempotent`, the `once` default), `returns`, `outcome`, `answers later` and an `implementation` with a hint and a `file`; a model that declares abilities selects ESM v50 | PaymentGateway, after the composite types |
 | `secret` with a `description`; a `system` that names an `extension` and maps its settings `from secret` or to a literal, and overrides `activation` (`always`, or `on demand` with an `idle after` timeout) | `MailerApiKey`, `Mailer` |
+| The extension's contract and the lock that pins it: `screenplay.lock` records the version, digest, contract hash and publisher of `ghcr.io/cratis/extension-mail`, and the vendored `extensions/` folder holds the contract the compiler reads (see [extension contracts](../../Documentation/screenplay/extension-contracts.md)) | `screenplay.lock`, `extensions/` |
 | `storyline` with a title, a description, step notes and every step kind | GetPaid, at the end of the file |
 | `identity` with claim, keyed query, inline code and file sources | Caller metadata next to authentication; the details are not used in executable clauses pending #600 |
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |

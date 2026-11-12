@@ -74,7 +74,7 @@ export function parseSystem(context: ParserContext, header: SourceLine): SystemS
     return { kind: 'SystemSyntax', name: systemName, description, abilities, ...(extension === null ? {} : { extension }), ...(settings.length === 0 ? {} : { settings }), ...(activation === null ? {} : { activation }), location: locationOf(header) };
 }
 
-function parseAbility(context: ParserContext, header: SourceLine): AbilitySyntax {
+export function parseAbility(context: ParserContext, header: SourceLine): AbilitySyntax {
     const match = abilityHeader.exec(header.content);
     const name = match?.[1] ?? '';
     const effectClass = match?.[2] ?? null;

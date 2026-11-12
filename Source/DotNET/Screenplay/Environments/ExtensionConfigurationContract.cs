@@ -23,4 +23,4 @@ public sealed record ExtensionConfigurationContract(string Reference, ImmutableA
 /// <param name="Name">The setting name.</param>
 /// <param name="IsSecret">Whether the setting is secret; otherwise it is public and may reach the browser.</param>
 /// <param name="Description">The optional description the contract gives.</param>
-public sealed record ExtensionSettingContract(string Name, bool IsSecret, string? Description = null);
+public sealed record ExtensionSettingContract(string Name, bool IsSecret, string? Description = null, bool IsPublic = true);

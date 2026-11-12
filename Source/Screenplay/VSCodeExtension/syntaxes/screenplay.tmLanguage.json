@@ -677,6 +677,27 @@
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
                 },
                 {
+                    "comment": "Extension contract lines are contextual: a property called icon or kind keeps its name.",
+                    "match": "^\\s*(display)\\s+(name)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "string.quoted.double.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(icon|image|caption|placeholder|frontend)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "string.quoted.double.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(requires)\\s+(stage|screenplay|platform|runtime)\\s+(\\S.*?)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "string.quoted.double.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(setting)\\s+([A-Za-z_]\\w*)\\s+(public|secret)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(kind)\\s+(react|mount|screenplay)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
                     "comment": "System configuration lines are contextual, so a property called setting keeps its name.",
                     "match": "^\\s*(extension)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?:\\s+(version)\\s+(\\S+))?(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "string.quoted.double.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "constant.numeric.screenplay" } }

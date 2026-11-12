@@ -20,6 +20,8 @@ import { GuardedInteractionBinding, interactionAncestry } from './Parsing/Intera
 import { validateResponses } from './Parsing/ResponseValidator';
 import { validatePublicEventUsage } from './Parsing/PublicEventUsageValidator';
 import { sourceContext } from './Parsing/SourceOptionsParser';
+import { parseExtensionContractDocument } from './Parsing/ExtensionContractParser';
+import { ExtensionContract } from './Syntax/ExtensionContract';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
 import { validateInvocations } from './Parsing/InvocationValidator';
@@ -168,6 +170,13 @@ export function parseProjectionSource(source: string, path?: string, languages?:
 
 export function parseCaptureSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly CaptureSyntax[]> {
     return parseSourceFamily(source, 'capture', parseCapture, path, languages);
+}
+
+/** Parses the contract.play of an extension package, the TypeScript counterpart of the C# ExtensionContractParser.Parse. */
+export function parseExtensionContract(source: string, path?: string): CompilationResult<ExtensionContract | null> {
+    const context = sourceContext(splitLines(source, false, path), path);
+    const value = parseExtensionContractDocument(context, path);
+    return { value, diagnostics: context.diagnostics, success: value !== null && !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }
 
 export function parseSpecificationSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly SpecificationSyntax[]> {

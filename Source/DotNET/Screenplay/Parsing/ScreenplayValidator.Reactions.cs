@@ -69,6 +69,9 @@ internal static partial class ScreenplayValidator
             return;
         }
 
+        // A trigger qualified by a system that names an extension comes from the extension's contract, which is read when the model is bound.
+        if (named.Name.Split('.') is [var system, _] && catalog.ExtensionSystems.Contains(system)) return;
+
         ValidateRegisteredTrigger(trigger, named, context);
     }
 

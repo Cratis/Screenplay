@@ -208,7 +208,7 @@ internal static partial class TriggerParser
     [GeneratedRegex(@"^(@?[a-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex UntypedDataRegex();
 
-    [GeneratedRegex(@"^when\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^when\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)$", RegexOptions.NonBacktracking)]
     private static partial Regex WhenRegex();
 
     [GeneratedRegex(@"^every\s+(\d+)\s+(seconds?|minutes?|hours?|days?)$", RegexOptions.NonBacktracking)]

@@ -1833,9 +1833,32 @@ Secrets and the settings a `system` maps, see [Environments](environments.md#sys
 | `PLAY0992` | Error | A system setting maps `from secret` a name that no `secret` declaration provides. |
 | `PLAY0993` | Error | A declared `secret` is not mapped by any system setting. |
 | `PLAY0994` | Error | A system maps the same setting more than once. |
-| `PLAY0995` | Error | A system maps a setting that its extension's contract does not declare. Reported by the contract check, not by compiling the model alone. |
-| `PLAY0996` | Error | A system gives a literal value to a setting its extension's contract declares secret. Reported by the contract check. |
-| `PLAY0997` | Error | A system maps a secret to a setting its extension's contract declares public, which could reach the browser. Reported by the contract check. |
+| `PLAY0995` | Error | A system maps a setting that its extension's contract does not declare. Reported when the model is bound against the extension's [contract](extension-contracts.md). |
+| `PLAY0996` | Error | A system gives a literal value to a setting its extension's contract declares secret. Reported when the model is bound against the extension's [contract](extension-contracts.md). |
+| `PLAY0997` | Error | A system maps a secret to a setting its extension's contract declares public, which could reach the browser. Reported when the model is bound against the extension's [contract](extension-contracts.md). |
+
+## Extension contracts and the lock
+
+An extension package's `contract.play`, the `extension` line of a system and `screenplay.lock`, see [Extension contracts](extension-contracts.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0998` | Error | A contract file is malformed: it has an unknown line, a wrong shape, no `extension` declaration or more than one. |
+| `PLAY0999` | Error | A contract does not declare its `display name`, `description` or `icon`. |
+| `PLAY1100` | Error | A component declares a `kind` other than `react`, `mount` or `screenplay`. |
+| `PLAY1101` | Error | A component or `requires platform` line names a platform other than `web`, `ios`, `android` or `desktop`. |
+| `PLAY1102` | Error | A component with a frontend declares no `placeholder`. |
+| `PLAY1103` | Error | A contract setting is declared both `public` and `secret`. |
+| `PLAY1104` | Error | A component `invokes` an ability the contract does not declare. |
+| `PLAY1105` | Error | A contract declares two abilities, triggers, components or settings with the same name. |
+| `PLAY1106` | Error | A system names an `extension` and also declares abilities; the contract is the only source of its abilities. |
+| `PLAY1107` | Error | A system's `extension` reference has no entry in `screenplay.lock`. A warning in editors, which restore it. |
+| `PLAY1108` | Error | A locked extension's contract is not in the local cache or the vendored `extensions` folder yet, or restore could not fetch it. A warning ("extension not restored") in editors. |
+| `PLAY1109` | Error | A cached contract does not match the contract hash the lock pins. |
+| `PLAY1110` | Error | A lock entry was written for a different version range than the model now asks for. A warning in editors. |
+| `PLAY1111` | Error | `screenplay.lock` is malformed. |
+| `PLAY1112` | Error | A system uses a trigger its extension's contract does not offer, reported at each use. |
+| `PLAY1113` | Error | A component placeholder is not static HTML: it has script, an inline handler or an external reference. |
 
 ## Screen visuals and slice placements
 

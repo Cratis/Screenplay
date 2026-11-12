@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Extensions;
+
 namespace Cratis.Screenplay.Semantics.for_SemanticCompilation;
 
 public class when_carrying_system_configuration : for_SemanticModelBinder.given.a_semantic_binder
@@ -25,7 +27,6 @@ public class when_carrying_system_configuration : for_SemanticModelBinder.given.
           description "The key"
 
         system Mailer
-          ability Send idempotent
           extension "ghcr.io/x/mail" version 2
           setting apiKey from secret Key
           setting sender = "Acme"
@@ -39,9 +40,21 @@ public class when_carrying_system_configuration : for_SemanticModelBinder.given.
 
         """;
 
+    const string Contract = """
+        extension Mail
+          display name "Mail"
+          description "Sends mail"
+          icon "icon.svg"
+          setting apiKey secret
+          setting sender
+          ability Send idempotent
+        """;
+
     [Fact]
     void should_expose_the_configuration_without_changing_executable_bytes_or_revision()
     {
+        using var mail = ExtensionFixture.Locked("ghcr.io/x/mail", "2", Contract);
+        ExtensionContractResolver.Current = mail.Resolver();
         var plain = Bind(Bare + Source);
         var configured = Bind(Configured + Source);
         plain.Success.ShouldBeTrue();
@@ -63,6 +76,8 @@ public class when_carrying_system_configuration : for_SemanticModelBinder.given.
     [Fact]
     void should_carry_it_through_a_copy_of_the_sidecars()
     {
+        using var mail = ExtensionFixture.Locked("ghcr.io/x/mail", "2", Contract);
+        ExtensionContractResolver.Current = mail.Resolver();
         var compilation = Bind(Configured + Source).Value!;
         var copied = Cratis.Screenplay.Semantics.SemanticCompilation.Create(compilation.Model, compilation.Documents, compilation.SourceMap).WithSidecarsOf(compilation);
         copied.SystemConfigurations.Select(configuration => configuration.System).ShouldEqual(compilation.SystemConfigurations.Select(configuration => configuration.System));
