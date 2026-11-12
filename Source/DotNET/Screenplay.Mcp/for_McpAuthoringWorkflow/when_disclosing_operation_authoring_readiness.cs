@@ -9,6 +9,8 @@ public class when_disclosing_operation_authoring_readiness : given.an_authoring_
 {
     const string OperationSource = "system Mailer\nmodule Projects\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n      command C\n        produces event Recorded\n        produces Send\n      specification T\n        when C\n        then operation Send\n";
 
+    const string AbilitySource = "system Carrier\n  ability Book\n    parcelId String\n    returns\n      tracking String\nmodule Shipping\n  feature F\n    slice Automation S\n      event Packed\n        parcelId String\n      event Booked\n        tracking String\n      reaction R\n        runs as system\n        when Packed\n          parcelId\n          invokes Carrier.Book\n            parcelId = parcelId\n            on returned\n              produces Booked\n                tracking = $result.tracking\n";
+
     [Fact]
     void should_disclose_unadmitted_operations_for_commands_specifications_slices_and_systems()
     {
@@ -54,6 +56,17 @@ public class when_disclosing_operation_authoring_readiness : given.an_authoring_
         Start("module Projects\n  feature F\n    slice StateChange S\n      command C\n        name String\n        returns name\n");
         Response().GetProperty("executionReadiness").ValueKind.ShouldEqual(JsonValueKind.Null);
         Response().GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_list_the_call_sites_that_invoke_an_ability()
+    {
+        Start(AbilitySource);
+        var revision = Open().GetProperty("revision").GetString();
+        var items = Result("read-workspace", new { expectedRevision = revision, view = "system-intents" }).GetProperty("page").GetProperty("items");
+        var key = items[0].GetProperty("authoringKey").GetString();
+        var details = Result("read-workspace", new { expectedRevision = revision, view = "system-intent-details", authoringKey = key });
+        details.GetRawText().ShouldContain("\"invokedBy\":[{");
     }
 
     void Start(string source)
