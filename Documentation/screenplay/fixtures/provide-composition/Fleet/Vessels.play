@@ -1,0 +1,14 @@
+// Reads the module-level vessel: nothing is declared here, so $context.vessel is the host value.
+feature Vessels
+  slice StateView VesselList
+    readmodel Vessel
+      vesselId Uuid
+
+    event VesselRegistered
+      vesselId Uuid
+
+    query AllVessels => Vessel[]
+
+    projection VesselList => Vessel
+      from VesselRegistered key vesselId
+        vesselId = vesselId

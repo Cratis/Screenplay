@@ -1,0 +1,7 @@
+// Provided context values across files (#1300): a preview construct, so no sample under Samples/ may carry it.
+// The module file provides a value for every slice of Fleet; one slice overrides it with a value of the same type.
+domain Fleet
+
+provide region String from "Nordics"
+
+import "Fleet/Fleet.play"

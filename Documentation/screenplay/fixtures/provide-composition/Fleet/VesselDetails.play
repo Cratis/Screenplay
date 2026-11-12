@@ -1,0 +1,8 @@
+// The slice overrides the module's vessel with one looked up by the query's own key; the type stays Vessel.
+// The Vessel read model is the one the VesselList slice builds.
+feature VesselDetails
+  slice StateView VesselDetail
+    provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+    query VesselByKey => Vessel optional
+      by vesselId Uuid
