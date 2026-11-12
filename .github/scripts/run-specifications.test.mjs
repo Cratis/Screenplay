@@ -272,3 +272,13 @@ for (const [name, options] of [
         assert.notEqual(result.status, 0, result.stdout + result.stderr);
     });
 }
+
+test('net10.0 compatibility shards run a shared build without rebuilding', () => {
+    const build = workflow.match(/\n  dotnet-build-net10:\n([\s\S]*?)\n  compatibility-specs:/)[1];
+    assert.match(build, /-p:SpecTargetFramework=net10\.0/);
+    assert.match(build, /upload-artifact/);
+    const shards = workflow.match(/\n  compatibility-specs:\n([\s\S]*?)\n  package-validation:/)[1];
+    assert.match(shards, /needs: \[dotnet-build-net10, shards\]/);
+    assert.match(shards, /download-artifact/);
+    assert.doesNotMatch(shards, /dotnet build|yarn/);
+});
