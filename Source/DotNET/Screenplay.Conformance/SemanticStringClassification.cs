@@ -22,6 +22,11 @@ internal static class SemanticStringClassification
         "keyProperty", "system", "filter", "reaction", "query", "capture", "stream", "on", "trigger", "target", "sourceEvents", "releasedBy",
     };
 
+    static readonly HashSet<string> _requirementScopes = new(StringComparer.Ordinal)
+    {
+        "generation/requirement", "entering/requirement", "nodes/requirement",
+    };
+
     static readonly HashSet<string> _scopedIdentities = new(StringComparer.Ordinal)
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
@@ -65,7 +70,7 @@ internal static class SemanticStringClassification
     public static SemanticStringKind Classify(JsonElement container, string owner, string property)
     {
         var scoped = $"{owner}/{property}";
-        if (property == "requirementId" || scoped is "generation/requirement" or "entering/requirement" or "nodes/requirement")
+        if (property == "requirementId" || _requirementScopes.Contains(scoped))
         {
             return SemanticStringKind.Requirement;
         }
