@@ -4,16 +4,6 @@
 namespace Cratis.Screenplay.Extensions;
 
 /// <summary>
-/// Represents a resolved extension package as far as the compiler needs it.
-/// </summary>
-/// <param name="Resolved">The full reference.</param>
-/// <param name="Version">The version.</param>
-/// <param name="Digest">The package digest.</param>
-/// <param name="Publisher">The publisher identity.</param>
-/// <param name="Contract">The bytes of <c>contract.play</c>.</param>
-public record ExtensionPackage(string Resolved, string Version, string Digest, string Publisher, byte[] Contract);
-
-/// <summary>
 /// Defines where restore finds packages: an OCI registry, npm, or a vendored directory.
 /// </summary>
 public interface IExtensionPackageSource
@@ -37,6 +27,16 @@ public interface IExtensionPackageSource
 }
 
 /// <summary>
+/// Represents a resolved extension package as far as the compiler needs it.
+/// </summary>
+/// <param name="Resolved">The full reference.</param>
+/// <param name="Version">The version.</param>
+/// <param name="Digest">The package digest.</param>
+/// <param name="Publisher">The publisher identity.</param>
+/// <param name="Contract">The bytes of <c>contract.play</c>.</param>
+public record ExtensionPackage(string Resolved, string Version, string Digest, string Publisher, byte[] Contract);
+
+/// <summary>
 /// Reads packages vendored into a directory laid out <c>&lt;root&gt;/&lt;full reference&gt;/&lt;version&gt;/contract.play</c>.
 /// Its digest is the hash of the contract and its publisher is <c>vendored</c>.
 /// </summary>
@@ -55,7 +55,7 @@ public class DirectoryExtensionPackageSource(string root) : IExtensionPackageSou
             .Select(Path.GetFileName)
             .OfType<string>()
             .Where(candidate => ExtensionVersionRange.Satisfies(range, candidate) && File.Exists(Path.Combine(directory, candidate, "contract.play")))
-            .OrderByDescending(candidate => candidate, Comparer<string>.Create(ExtensionVersionRange.Compare))
+            .Order(Comparer<string>.Create((left, right) => ExtensionVersionRange.Compare(right, left)))
             .FirstOrDefault();
         return version is null ? null : Read(resolved, version);
     }

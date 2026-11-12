@@ -61,5 +61,5 @@ public static class ExtensionCompatibility
     }
 
     static string Shape(IEnumerable<PropertySyntax> properties) =>
-        string.Join(";", properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property => $"{property.Name}:{property.Type}"));
+        string.Join(';', properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property => $"{property.Name}:{property.Type}"));
 }

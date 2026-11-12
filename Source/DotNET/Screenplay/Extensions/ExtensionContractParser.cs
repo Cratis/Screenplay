@@ -15,6 +15,8 @@ namespace Cratis.Screenplay.Extensions;
 /// </summary>
 public static partial class ExtensionContractParser
 {
+    static readonly HashSet<string> _declaredOnce = new(StringComparer.Ordinal) { "display", "icon", "backend", "frontend", "activation", "description" };
+
     /// <summary>
     /// Parses the text of a contract file.
     /// </summary>
@@ -61,7 +63,7 @@ public static partial class ExtensionContractParser
         {
             context.Reader.TakeSignificant();
             var word = LineText.FirstWord(line.Content);
-            if (word is "display" or "icon" or "backend" or "frontend" or "activation" or "description" && !seen.Add(word))
+            if (_declaredOnce.Contains(word) && !seen.Add(word))
             {
                 context.Error(DiagnosticCodes.InvalidExtensionContract, $"A contract declares '{word}' once.", line.Location);
                 context.SkipBlock(line.Indent);
@@ -177,7 +179,10 @@ public static partial class ExtensionContractParser
         var isSecret = modifiers.Contains("secret");
         if (modifiers.Except(["public", "secret"]).Any()) context.Error(DiagnosticCodes.InvalidExtensionContract, "A setting is 'public', 'secret' or neither.", line.Location);
         if (isPublic && isSecret) context.Error(DiagnosticCodes.SettingBothPublicAndSecret, $"Setting '{match.Groups[1].Value}' cannot be both public and secret; a secret must never reach a browser.", line.Location);
-        return new(match.Groups[1].Value, isSecret ? ExtensionSettingExposure.Secret : isPublic ? ExtensionSettingExposure.Public : ExtensionSettingExposure.Backend, line.Location);
+        var exposure = ExtensionSettingExposure.Backend;
+        if (isPublic) exposure = ExtensionSettingExposure.Public;
+        if (isSecret) exposure = ExtensionSettingExposure.Secret;
+        return new(match.Groups[1].Value, exposure, line.Location);
     }
 
     static ExtensionTrigger? ParseTrigger(ParserContext context, SourceLine header)
@@ -302,8 +307,8 @@ public static partial class ExtensionContractParser
         var abilities = contract.Abilities.Select(ability => ability.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var component in contract.Components)
         {
-            if (contract.Frontend is not null && string.IsNullOrWhiteSpace(component.Placeholder)) context.Error(DiagnosticCodes.ComponentWithoutPlaceholder, $"Component '{component.Name}' has a frontend but declares no placeholder for design tools to draw.", component.Location);
-            if (contract.Frontend is null && component.Kind != "screenplay" && string.IsNullOrWhiteSpace(component.Placeholder)) context.Error(DiagnosticCodes.ComponentWithoutPlaceholder, $"Component '{component.Name}' has a frontend but declares no placeholder for design tools to draw.", component.Location);
+            if (component.Kind is null) context.Error(DiagnosticCodes.InvalidExtensionContract, $"Component '{component.Name}' declares no kind.", component.Location);
+            if (component.Kind is not null and not "screenplay" && string.IsNullOrWhiteSpace(component.Placeholder)) context.Error(DiagnosticCodes.ComponentWithoutPlaceholder, $"Component '{component.Name}' has a frontend but declares no placeholder for design tools to draw.", component.Location);
             foreach (var invoked in component.Invokes.Where(name => !abilities.Contains(name))) context.Error(DiagnosticCodes.ComponentInvokesUnknownAbility, $"Component '{component.Name}' invokes ability '{invoked}', which the contract does not declare.", component.Location);
         }
 

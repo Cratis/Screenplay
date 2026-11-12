@@ -149,3 +149,4 @@
 | [0157](0157-caller-identifier-in-policy-state-conditions-esm-v49.md) | A policy state condition compares with the caller's identifier in ESM v49 | accepted | none | 2026-11-10 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
 | [0158](0158-screen-element-availability-is-derived-and-reported.md) | Screen element availability is derived from command and query authorization and reported, not enforced | accepted | none | 2026-11-10 | Einar Ingebrigtsen (direct request for StudioIssues#1387) |
 | [0159](0159-systems-with-abilities-extensions-and-durable-invocations.md) | Systems declare abilities, extension packages realize them, and every behavior invokes them durably | proposed | none | — | — |
+| [0160](0160-extension-contract-file-the-lock-and-restore.md) | The extension contract file, the plain-text lock and restore | proposed | none | — | — |

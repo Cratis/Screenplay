@@ -177,7 +177,7 @@ internal static partial class ScreenplayValidator
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
-        var catalog = new TriggerCatalog(declaredTriggers, eventsByName);
+        var catalog = new TriggerCatalog(declaredTriggers, eventsByName, application.Systems.Where(system => system.Extension is not null).Select(system => system.Name).ToHashSet(StringComparer.Ordinal));
         var eventDeclarations = slices.SelectMany(EventDeclarations.In).ToLookup(@event => @event.Name, StringComparer.Ordinal);
         var productionResolver = new AuthoringProductionResolver(application);
         InlineEventValidator.Validate(application, slices, context);
@@ -253,5 +253,5 @@ internal static partial class ScreenplayValidator
         }
     }
 
-    internal sealed record TriggerCatalog(Dictionary<string, TriggerSyntax> Declared, Dictionary<string, EventSyntax> EventsByName);
+    internal sealed record TriggerCatalog(Dictionary<string, TriggerSyntax> Declared, Dictionary<string, EventSyntax> EventsByName, HashSet<string> ExtensionSystems);
 }

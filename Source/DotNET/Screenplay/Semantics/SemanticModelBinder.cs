@@ -44,7 +44,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var resolution = ExtensionContractResolver.Current.Resolve(syntax, documents.Documents.Select(document => document.DisplayPath));
         var effective = resolution.Apply(syntax);
         var result = BindCore(applicationName, effective, documents);
-        var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax));
+        var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax)).AddRange(resolution.CheckSettings(syntax));
         return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]) };
     }
 

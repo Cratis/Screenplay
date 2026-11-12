@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.Extensions;
 public sealed class ExtensionUseSites(ExtensionResolution resolution) : ScreenplaySyntaxWalker
 {
     readonly List<Diagnostic> _diagnostics = [];
-    IReadOnlyDictionary<string, SystemSyntax> _systems = new Dictionary<string, SystemSyntax>();
+    Dictionary<string, SystemSyntax> _systems = [];
 
     /// <summary>
     /// Checks a model.

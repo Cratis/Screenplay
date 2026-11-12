@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Environments;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Extensions;
@@ -32,6 +33,16 @@ public sealed record ExtensionResolution(ImmutableDictionary<string, ExtensionCo
     public static ExtensionResolution None { get; } = new(ImmutableDictionary<string, ExtensionContract>.Empty, []);
 
     /// <summary>
+    /// Checks each system's settings against the contract of the extension it names.
+    /// </summary>
+    /// <param name="application">The parsed model.</param>
+    /// <returns>The diagnostics for unknown settings and for secrets and literals on the wrong kind of setting.</returns>
+    public ImmutableArray<Diagnostic> CheckSettings(ApplicationSyntax application) =>
+        SystemConfigurationContracts.Check(application, Contracts.Select(pair => new ExtensionConfigurationContract(
+            pair.Key,
+            [.. pair.Value.Settings.Select(setting => new ExtensionSettingContract(setting.Name, setting.Exposure == ExtensionSettingExposure.Secret, null, setting.Exposure != ExtensionSettingExposure.Backend))])));
+
+    /// <summary>
     /// Returns the syntax as if the author had declared what each contract offers: the abilities on the system and the triggers,
     /// qualified by the system, after the declared ones. The printed source is not affected.
     /// </summary>
@@ -50,10 +61,11 @@ public sealed record ExtensionResolution(ImmutableDictionary<string, ExtensionCo
                 continue;
             }
 
-            systems.Add(system with { Abilities = contract.Abilities });
+            var at = system.Extension.Location;
+            systems.Add(system with { Abilities = SourceRelocator.Relocate<IEnumerable<AbilitySyntax>>(contract.Abilities, at) });
             foreach (var trigger in contract.Triggers)
             {
-                triggers.Add(new($"{system.Name}.{trigger.Name}", [.. trigger.Payload.Select(field => new TriggerDataSyntax(field.Name, field.Type, field.Location))], trigger.Location, null));
+                triggers.Add(new($"{system.Name}.{trigger.Name}", [.. trigger.Payload.Select(field => new TriggerDataSyntax(field.Name, field.Type is null ? null : SourceRelocator.Relocate(field.Type, at), at))], at, null));
             }
         }
 
@@ -70,7 +82,7 @@ public sealed record ExtensionResolution(ImmutableDictionary<string, ExtensionCo
 /// <param name="cache">The <see cref="ExtensionCache"/> to read from.</param>
 /// <param name="mode">How strictly to report unresolved references.</param>
 /// <param name="fixedLock">A lock to use instead of looking for one beside the documents, for hosts that hold the lock in memory.</param>
-/// <param name="root">The model root folder whose <see cref="ExtensionLock.FileName"/> to read; without it the lock is searched for from the document paths and then the working directory.</param>
+/// <param name="root">The model root folder; the lock is the first <see cref="ExtensionLock.FileName"/> in it or above it. Without a root the lock is searched for from the document paths and then the working directory.</param>
 public class ExtensionContractResolver(ExtensionCache cache, ExtensionResolutionMode mode = ExtensionResolutionMode.Strict, ExtensionLock? fixedLock = null, string? root = null)
 {
     /// <summary>The name of the vendored folder beside the lock.</summary>
@@ -119,9 +131,8 @@ public class ExtensionContractResolver(ExtensionCache cache, ExtensionResolution
     {
         var references = application.Systems.Where(system => system.Extension is not null).Select(system => system.Extension!).DistinctBy(extension => extension.Reference).ToArray();
         if (references.Length == 0) return ExtensionResolution.None;
-        var lockPath = fixedLock is not null ? null : root is not null ? Path.Combine(root, ExtensionLock.FileName) : FindLock(documentPaths.Append(Path.Combine(Directory.GetCurrentDirectory(), "model.play")));
-        if (lockPath is not null && !File.Exists(lockPath)) lockPath = null;
-        var vendorRoot = root ?? (lockPath is null ? null : Path.GetDirectoryName(lockPath));
+        var lockPath = fixedLock is not null ? null : FindLock(root is not null ? [Path.Combine(Path.GetFullPath(root), "model.play")] : documentPaths.Append(Path.Combine(Directory.GetCurrentDirectory(), "model.play")));
+        var vendorRoot = lockPath is null ? null : Path.GetDirectoryName(lockPath);
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var extensionLock = fixedLock ?? ExtensionLock.Empty;
         ExtensionCache[] caches = vendorRoot is null ? [cache] : [new(Path.Combine(vendorRoot, VendorFolder)), cache];

@@ -28,11 +28,18 @@ public class ExtensionCache(string root)
     public string Root => root;
 
     /// <summary>
+    /// Decodes cached contract bytes.
+    /// </summary>
+    /// <param name="contract">The bytes.</param>
+    /// <returns>The text.</returns>
+    public static string Decode(byte[] contract) => new UTF8Encoding(false).GetString(contract);
+
+    /// <summary>
     /// Gets the path of the cached contract for a digest.
     /// </summary>
     /// <param name="digest">The package digest.</param>
     /// <returns>The file path.</returns>
-    public string PathOf(string digest) => Path.Combine(root, digest.Replace(':', '-'), "contract.play");
+    public string PathOf(string digest) => Path.Combine(root, digest.Replace(':', '-'), "contract.extension");
 
     /// <summary>
     /// Reads the cached contract bytes for a digest.
@@ -55,11 +62,4 @@ public class ExtensionCache(string root)
         File.WriteAllBytes(temporary, contract);
         File.Move(temporary, path, overwrite: true);
     }
-
-    /// <summary>
-    /// Decodes cached contract bytes.
-    /// </summary>
-    /// <param name="contract">The bytes.</param>
-    /// <returns>The text.</returns>
-    public static string Decode(byte[] contract) => new UTF8Encoding(false).GetString(contract);
 }

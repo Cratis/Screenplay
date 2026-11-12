@@ -25,7 +25,8 @@ public record ExtensionLockEntry(string Reference, string Range, string Resolved
 /// <summary>
 /// Represents the plain-text <c>screenplay.lock</c> file beside the model root.
 /// </summary>
-public partial class ExtensionLock
+/// <param name="entries">The pinned entries.</param>
+public partial class ExtensionLock(IEnumerable<ExtensionLockEntry> entries)
 {
     /// <summary>The name of the lock file.</summary>
     public const string FileName = "screenplay.lock";
@@ -33,24 +34,17 @@ public partial class ExtensionLock
     /// <summary>The range recorded when a model names no version.</summary>
     public const string LatestRange = "latest";
 
+    static readonly string[] _fields = ["range", "resolved", "version", "digest", "contract", "publisher"];
+
     /// <summary>
     /// Gets an empty lock.
     /// </summary>
     public static ExtensionLock Empty { get; } = new([]);
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ExtensionLock"/> class.
-    /// </summary>
-    /// <param name="entries">The pinned entries.</param>
-    public ExtensionLock(IEnumerable<ExtensionLockEntry> entries)
-    {
-        Entries = [.. entries.OrderBy(entry => entry.Reference, StringComparer.Ordinal)];
-    }
-
-    /// <summary>
     /// Gets the pinned entries ordered by reference.
     /// </summary>
-    public ImmutableArray<ExtensionLockEntry> Entries { get; }
+    public ImmutableArray<ExtensionLockEntry> Entries { get; } = [.. entries.OrderBy(entry => entry.Reference, StringComparer.Ordinal)];
 
     /// <summary>
     /// Gets the range a model's <c>extension</c> line asks for, normalized for comparison with a lock entry.
@@ -59,20 +53,6 @@ public partial class ExtensionLock
     /// <returns>The normalized range.</returns>
     public static string RangeOf(SystemExtensionSyntax extension) =>
         extension.Version is null ? LatestRange : extension.Version.Trim('"');
-
-    /// <summary>
-    /// Finds the entry for a reference.
-    /// </summary>
-    /// <param name="reference">The reference as the model writes it.</param>
-    /// <returns>The entry, or <see langword="null"/> when the reference is not locked.</returns>
-    public ExtensionLockEntry? Find(string reference) => Entries.FirstOrDefault(entry => entry.Reference == reference);
-
-    /// <summary>
-    /// Returns this lock with an entry added or replaced.
-    /// </summary>
-    /// <param name="entry">The entry.</param>
-    /// <returns>The new lock.</returns>
-    public ExtensionLock With(ExtensionLockEntry entry) => new(Entries.Where(existing => existing.Reference != entry.Reference).Append(entry));
 
     /// <summary>
     /// Parses lock file text.
@@ -86,13 +66,13 @@ public partial class ExtensionLock
         var entries = new List<ExtensionLockEntry>();
         string? reference = null;
         var fields = new Dictionary<string, string>(StringComparer.Ordinal);
-        SourceLocation start = SourceLocation.Start.In(path);
+        var start = SourceLocation.Start.In(path);
         var versionSeen = false;
 
         void Flush()
         {
             if (reference is null) return;
-            var missing = Required.Where(key => !fields.ContainsKey(key)).ToArray();
+            var missing = _fields.Where(key => !fields.ContainsKey(key)).ToArray();
             if (missing.Length > 0)
             {
                 diagnostics.Add(Diagnostic.Error(DiagnosticCodes.InvalidExtensionLock, $"Lock entry '{reference}' is missing {string.Join(", ", missing)}.", start));
@@ -125,9 +105,9 @@ public partial class ExtensionLock
                 Flush();
                 reference = StringLiteral.Unescape(header.Groups[1].Value);
                 start = location;
-                if (entries.Any(entry => entry.Reference == reference)) diagnostics.Add(Diagnostic.Error(DiagnosticCodes.InvalidExtensionLock, $"The lock pins '{reference}' twice.", location));
+                if (entries.Exists(entry => entry.Reference == reference)) diagnostics.Add(Diagnostic.Error(DiagnosticCodes.InvalidExtensionLock, $"The lock pins '{reference}' twice.", location));
             }
-            else if (reference is not null && FieldRegex().Match(line) is { Success: true } field && Fields.Contains(field.Groups[1].Value))
+            else if (reference is not null && FieldRegex().Match(line) is { Success: true } field && _fields.Contains(field.Groups[1].Value))
             {
                 var value = field.Groups[2].Value.Trim();
                 fields[field.Groups[1].Value] = value.StartsWith('"') ? StringLiteral.Unescape(value[1..^1]) : value;
@@ -144,33 +124,43 @@ public partial class ExtensionLock
     }
 
     /// <summary>
+    /// Finds the entry for a reference.
+    /// </summary>
+    /// <param name="reference">The reference as the model writes it.</param>
+    /// <returns>The entry, or <see langword="null"/> when the reference is not locked.</returns>
+    public ExtensionLockEntry? Find(string reference) => Entries.FirstOrDefault(entry => entry.Reference == reference);
+
+    /// <summary>
+    /// Returns this lock with an entry added or replaced.
+    /// </summary>
+    /// <param name="entry">The entry.</param>
+    /// <returns>The new lock.</returns>
+    public ExtensionLock With(ExtensionLockEntry entry) => new(Entries.Where(existing => existing.Reference != entry.Reference).Append(entry));
+
+    /// <summary>
     /// Writes the lock as text. The output is deterministic so it diffs cleanly.
     /// </summary>
     /// <returns>The file text.</returns>
     public string Format()
     {
-        var builder = new StringBuilder();
-        builder.Append("# screenplay.lock: pins the extensions this model references. Written by 'screenplay restore'; commit it, do not edit it by hand.\n");
-        builder.Append("lock 1\n");
+        var builder = new StringBuilder()
+            .Append("# screenplay.lock: pins the extensions this model references. Written by 'screenplay restore'; commit it, do not edit it by hand.\n")
+            .Append("lock 1\n");
         foreach (var entry in Entries)
         {
-            builder.Append('\n').Append("extension \"").Append(StringLiteral.Escape(entry.Reference)).Append("\"\n");
-            builder.Append("  range ").Append(Quote(entry.Range)).Append('\n');
-            builder.Append("  resolved ").Append(Quote(entry.Resolved)).Append('\n');
-            builder.Append("  version ").Append(entry.Version).Append('\n');
-            builder.Append("  digest ").Append(entry.Digest).Append('\n');
-            builder.Append("  contract ").Append(entry.ContractHash).Append('\n');
-            builder.Append("  publisher ").Append(Quote(entry.Publisher)).Append('\n');
+            builder.Append("\nextension \"").Append(StringLiteral.Escape(entry.Reference)).Append("\"\n")
+                .Append("  range ").Append(Quote(entry.Range)).Append('\n')
+                .Append("  resolved ").Append(Quote(entry.Resolved)).Append('\n')
+                .Append("  version ").Append(entry.Version).Append('\n')
+                .Append("  digest ").Append(entry.Digest).Append('\n')
+                .Append("  contract ").Append(entry.ContractHash).Append('\n')
+                .Append("  publisher ").Append(Quote(entry.Publisher)).Append('\n');
         }
 
         return builder.ToString();
     }
 
     static string Quote(string value) => $"\"{StringLiteral.Escape(value)}\"";
-
-    static readonly string[] Fields = ["range", "resolved", "version", "digest", "contract", "publisher"];
-
-    static readonly string[] Required = Fields;
 
     [GeneratedRegex(@"^extension\s+""((?:[^""\\]|\\.)*)""\s*$", RegexOptions.NonBacktracking)]
     private static partial Regex ReferenceRegex();

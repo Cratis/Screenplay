@@ -429,6 +429,8 @@ static class ContractAdmission
 
     internal static CompilationResult<SemanticCompilation> Bind(string source, string? imported = null)
     {
+        // A probe is about the keyword, not about a lock on the machine that generates the contract: an unresolved extension reference is a warning here.
+        Extensions.ExtensionContractResolver.Current = new(new(Path.Combine(Path.GetTempPath(), "screenplay-contract-probe")), Extensions.ExtensionResolutionMode.Editor, Extensions.ExtensionLock.Empty);
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Contract"));
         var documents = new List<WorkspaceDocument>
         {

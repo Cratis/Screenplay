@@ -16,6 +16,7 @@ static class ToolCommands
         [CliCommandCatalog.Contract] = (args, output, error) => ContractCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Report] = (args, output, error) => ProcessingReportCommand.Run(args[1..], output, error),
         [CliCommandCatalog.EnvironmentKeys] = (args, output, error) => EnvironmentCommand.Run(args[1..], output, error),
+        [CliCommandCatalog.Restore] = (args, output, error) => RestoreCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Migrate] = (args, output, error) => MigrateCommand.Run(args[1..], output, error),
         [CliCommandCatalog.BaselineAdmit] = BaselineCommand.Run,
         [CliCommandCatalog.BaselineCheck] = BaselineCommand.Run,
@@ -31,6 +32,7 @@ static class ToolCommands
     {
         if (CommandLineInformation.TryPrint(args, output)) return 0;
         if (args.FirstOrDefault() == "baseline") return BaselineCommand.Run(args, output, error);
+        RestoreCommand.UseModelRoot(args);
 
         return Dispatch[CliCommandCatalog.Resolve(args)](args, output, error);
     }

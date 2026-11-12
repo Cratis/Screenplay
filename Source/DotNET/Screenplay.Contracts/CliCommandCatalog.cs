@@ -108,6 +108,23 @@ public static class CliCommandCatalog
     /// </summary>
     public static CliCommand EnvironmentKeys { get; } = new("environment", "[<file.play|folder>]", [Format]);
 
+    /// <summary>Gets the option that makes restore fail on any reference the lock does not pin instead of resolving it.</summary>
+    public static CliOption Locked { get; } = new("--locked");
+
+    /// <summary>Gets the option that makes restore re-resolve every reference to the newest release in its range.</summary>
+    public static CliOption Update { get; } = new("--update");
+
+    /// <summary>Gets the directory of vendored packages restore fetches from.</summary>
+    public static CliOption PackageSource { get; } = new("--source", "<directory>");
+
+    /// <summary>Gets the option that copies restored contracts into the model's vendored extensions folder.</summary>
+    public static CliOption Vendor { get; } = new("--vendor");
+
+    /// <summary>
+    /// Gets the command that pins the extensions a model references in <c>screenplay.lock</c> and restores their contracts.
+    /// </summary>
+    public static CliCommand Restore { get; } = new("restore", "[<folder>]", [Locked, Update, PackageSource, Vendor]);
+
     /// <summary>Gets the version a migration reads.</summary>
     public static CliOption MigrateFrom { get; } = new("--from", "<version>", Required: true);
 
@@ -172,7 +189,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Lineage, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Restore, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Lineage, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

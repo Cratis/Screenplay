@@ -7,6 +7,19 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Extensions;
 
+/// <summary>Says how far a setting's value travels.</summary>
+public enum ExtensionSettingExposure
+{
+    /// <summary>The value stays with the backend.</summary>
+    Backend,
+
+    /// <summary>The value may reach the browser.</summary>
+    Public,
+
+    /// <summary>The value comes from a secret store and never reaches the browser.</summary>
+    Secret
+}
+
 /// <summary>
 /// Represents the parsed <c>contract.play</c> of an extension package: its manifest and everything it contributes.
 /// </summary>
@@ -72,19 +85,6 @@ public record ExtensionRequirement(string Kind, string Value, SourceLocation Loc
 /// <param name="Exposure">How far the value travels.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> of the line.</param>
 public record ExtensionSetting(string Name, ExtensionSettingExposure Exposure, SourceLocation Location);
-
-/// <summary>Says how far a setting's value travels.</summary>
-public enum ExtensionSettingExposure
-{
-    /// <summary>The value stays with the backend.</summary>
-    Backend,
-
-    /// <summary>The value may reach the browser.</summary>
-    Public,
-
-    /// <summary>The value comes from a secret store and never reaches the browser.</summary>
-    Secret
-}
 
 /// <summary>Represents a <c>trigger</c> the extension raises into the model.</summary>
 /// <param name="Name">The trigger name.</param>

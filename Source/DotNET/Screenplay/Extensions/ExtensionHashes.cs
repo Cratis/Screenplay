@@ -27,7 +27,7 @@ public static class ExtensionHashes
 
     static bool IsHex(ReadOnlySpan<char> text)
     {
-        foreach (var c in text) if (!(c is >= '0' and <= '9' or >= 'a' and <= 'f')) return false;
+        foreach (var c in text) if (!(c is (>= '0' and <= '9') or (>= 'a' and <= 'f'))) return false;
         return true;
     }
 }
