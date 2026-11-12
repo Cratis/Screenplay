@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { validateIdentity } from './Parsing/IdentityValidator';
+import { validateProvides } from './Parsing/ProvideValidator';
 import { validateDesignSystem } from './Parsing/DesignSystemValidator';
 import { validateApplicationHandlers } from './Parsing/CommandHandlerValidator';
 import { recordStructuralInteractions } from './Parsing/StructuralInteractionSites';
@@ -92,6 +93,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     if (validateResponseContracts) {
         validateApplicationHandlers(value, context);
         validateIdentity(value, context);
+        validateProvides(value, context);
         validateDesignSystem(value, context);
         validatePurposes(value, context);
         validateSlicePlacements(value, context);
