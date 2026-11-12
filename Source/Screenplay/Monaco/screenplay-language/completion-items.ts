@@ -128,6 +128,8 @@ export const workflowItems: CompletionEntry[] = [
     { label: 'trigger when … enters', insertText: 'trigger when ${1:StateMachine} enters ${2:State}\n    -> ${3:Node}', documentation: 'Starts a run when the state machine enters the state.' },
     { label: 'trigger every', insertText: 'trigger every ${1:1} ${2|minutes,hours,days|}\n    -> ${3:Node}', documentation: 'Starts a run on a schedule.' },
     { label: 'trigger manual', insertText: 'trigger manual\n    -> ${1:Node}', documentation: 'Starts a run by hand.' },
+    { label: 'action ability', insertText: 'action ${1:Name} invokes ${2:System}.${3:Ability}\n    ${4:input} = ${5:value}\n    next -> ${6:Node}\n    failed -> ${7:Node}', documentation: 'Calls a system ability. Inputs come from literals, the trigger, the subject or an earlier node\'s result (`Node.field`); one edge per declared outcome, plus `next` and `failed`.' },
+    { label: 'compute', insertText: 'compute ${1:Name}\n    returns\n        ${2:field} ${3:Type}\n    ```csharp\n    return new { ${2:field} = 1 };\n    ```\n    next -> ${4:Node}', documentation: 'A workflow node that computes values in C# for later nodes to read as `Node.field`.' },
     { label: 'action', insertText: 'action ${1:Name} invokes ${2:Command}\n    next -> ${3:Node}\n    failed -> ${4:Node}\n    refused -> ${5:Node}', documentation: 'Invokes a command. Optional `attempts n`, `timeout n unit`, `retry after n unit`. Outlets next, failed and refused.' },
     { label: 'decide', insertText: 'decide ${1:Name} when ${2:property} == ${3:true}\n    "${4:yes}" -> ${5:Node}\n    "${6:no}" -> ${7:Node}', documentation: 'Chooses between two outlets of your own: the first when the condition holds.' },
     { label: 'wait for', insertText: 'wait ${1:Name} for ${2:Event} expires after ${3:1} ${4|days,hours,minutes|}\n    resumed -> ${5:Node}\n    expired -> ${6:Node}', documentation: 'Waits for an event about the subject. Outlets resumed and expired.' },
@@ -322,6 +324,7 @@ export const reactionTriggerItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What this particular reaction does — enough on its own, with no file to point at.' },
     { label: 'produces', insertText: 'produces ${1:EventType}', documentation: 'An event the reaction appends.' },
     { label: 'invokes', insertText: 'invokes ${1:Command}', documentation: 'A command the reaction hands on. A command is asked for, not produced — it may still be rejected.' },
+    { label: 'invokes ability', insertText: 'invokes ${1:System}.${2:Ability}\n    ${3:input} = ${4:value}\n    on returned\n        produces ${5:EventType}\n    on failed\n        produces ${6:EventType}', documentation: 'Calls a system ability. Inputs are mapped from the event; `on returned`, `on failed` and `on <Outcome>` branches say what to append for each answer, reading `$result.<field>`, `$outcome.<field>` or `$failure.reason`.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the reaction to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
 ];
@@ -379,6 +382,9 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'then result', insertText: 'then result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
     { label: 'then no result', insertText: 'then no result', documentation: 'The query performed by `when query` returns nothing.' },
     { label: 'then no events', insertText: 'then no events', documentation: 'Asserts the action appended no events, including after when append, where no reaction appended anything. Executable from ESM v17; cannot accompany event, error or denial expectations.' },
+    { label: 'given ability returns', insertText: 'given ${1:System}.${2:Ability} returns\n    ${3:field} = ${4:value}', documentation: 'Scripts what a system ability answers with in a reaction specification: the returned fields.' },
+    { label: 'given ability answers', insertText: 'given ${1:System}.${2:Ability} answers ${3:Outcome}', documentation: 'Scripts a declared outcome of a system ability for a reaction specification.' },
+    { label: 'given ability fails', insertText: 'given ${1:System}.${2:Ability} fails "${3:reason}"', documentation: 'Scripts a failed ability call for a reaction specification.' },
     { label: 'then invokes', insertText: 'then invokes ${1:Command}\n    ${2:property} = ${3:value}', documentation: 'An invocation the slice\'s own reactions make, with the values it passes; unstated values are not compared. Once stated, every invocation must match in count and order. Executable from ESM v34.' },
 ];
 

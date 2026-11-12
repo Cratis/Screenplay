@@ -9,6 +9,7 @@ export function expressionText(expression: ExpressionSyntax): string {
     switch (expression.kind) {
         case 'LiteralExpressionSyntax': return typeof expression.value === 'object' && expression.value !== null ? expression.value.value : JSON.stringify(expression.value);
         case 'RefusalExpressionSyntax': return expression.member === '' ? '$refusal' : `$refusal.${expression.member}`;
+        case 'InvocationValueExpressionSyntax': return `$${expression.source}.${expression.member}`;
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'PathExpressionSyntax': return expression.path;
         case 'ContextExpressionSyntax': return `$context.${expression.path}`;
