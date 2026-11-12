@@ -19,7 +19,7 @@ env:
   SPEC_SHARDS: >-
     {"include":[
       {"name":"compiler","split":["Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_i*","Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_t*","Cratis.Screenplay.Semantics*","Cratis.Screenplay.Workspaces*"],"compatibility-split":["Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_i*","Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_t*","Cratis.Screenplay.Semantics*","Cratis.Screenplay.Workspaces*"],"projects":["Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj"]},
-      {"name":"mcp","split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_p*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_r*"],"compatibility-split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_p*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_r*"],"projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
+      {"name":"mcp","split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pag*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pin*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_ref*","Cratis.Screenplay.Mcp.for_ModelNotes*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_p*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_r*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_e*"],"compatibility-split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pag*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pin*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_ref*","Cratis.Screenplay.Mcp.for_ModelNotes*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_p*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_r*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_e*"],"projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
       {"name":"contracts-tool-vectors","projects":[
         "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
         "Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj",
@@ -140,6 +140,16 @@ jobs:
           node-version: 24.22.2
           package-manager-cache: false
 
+      # yarn.lock is not committed, so the cache keys on package.json files, like mcp-desktop.yml.
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
       - name: Yarn install
         run: yarn
 
@@ -150,8 +160,20 @@ jobs:
       - name: Verify native specification launcher
         run: node --test .github/scripts/run-specifications.test.mjs
 
+      # Analyzers are off here only to keep them off the build -> specs path. Every rule is still enforced, with
+      # warnings as errors, by the Release build in package-validation, which is part of the required `build` check.
       - name: Build Debug
-        run: dotnet build --configuration Debug
+        run: dotnet build --configuration Debug -p:RunAnalyzers=false -bl:"$RUNNER_TEMP/debug-build.binlog"
+
+      # Short-lived evidence for build-time analysis; uploaded even when the build fails.
+      - name: Upload Debug build binlog
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: debug-build-binlog
+          path: ${{ runner.temp }}/debug-build.binlog
+          retention-days: 3
+          if-no-files-found: ignore
 
       # A tar preserves executable bits and relative paths, including the frontend output.
       # Do not cache compiled output across runs or require a cache hit to run specs.
@@ -242,6 +264,15 @@ jobs:
           node-version: 24.22.2
           package-manager-cache: false
 
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
       - name: Yarn install
         run: yarn
 
@@ -256,7 +287,7 @@ jobs:
           aggregate="$RUNNER_TEMP/net10-specifications.proj"
           # shellcheck disable=SC2016
           {
-            echo '<Project><PropertyGroup><Shared>Configuration=Debug;SpecTargetFramework=net10.0</Shared></PropertyGroup><ItemGroup>'
+            echo '<Project><PropertyGroup><Shared>Configuration=Debug;SpecTargetFramework=net10.0;RunAnalyzers=false</Shared></PropertyGroup><ItemGroup>'
             while IFS= read -r project; do
               echo "<Spec Include=\"$GITHUB_WORKSPACE/$project\" />"
             done < <(jq -r '.[]' <<< "$PROJECTS")
@@ -266,7 +297,16 @@ jobs:
             echo '</Project>'
           } > "$aggregate"
           dotnet msbuild "$aggregate" -nologo -t:RestoreAll
-          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll
+          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll -bl:"$RUNNER_TEMP/net10-build.binlog"
+
+      - name: Upload net10.0 build binlog
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: net10-build-binlog
+          path: ${{ runner.temp }}/net10-build.binlog
+          retention-days: 3
+          if-no-files-found: ignore
 
       # Only the net10.0 output is archived; the net11.0 binaries are a separate artifact.
       - name: Archive build output
@@ -356,6 +396,15 @@ jobs:
           node-version: 24.22.2
           package-manager-cache: false
 
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
       - name: Yarn install
         run: yarn
 
@@ -365,6 +414,7 @@ jobs:
       # The version is a sentinel, not a release. Package validation compares assembly versions, and one
       # below the baseline is rejected on that alone before the API surface is ever looked at - so it has to
       # be set on the build, since the pack below reuses what this produces.
+      # This is the all-rules analyzer gate (Release enables warnings as errors); the Debug builds run without analyzers.
       - name: Build Release
         run: dotnet build --configuration Release -p:Version=9999.0.0
 
