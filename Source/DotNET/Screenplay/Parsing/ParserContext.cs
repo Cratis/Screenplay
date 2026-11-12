@@ -25,6 +25,11 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     public IReadOnlyList<RetiredForm> RetiredForms => _retiredForms;
 
     /// <summary>
+    /// Gets or sets a value indicating whether an <c>on</c> line may name a signal an extension component raises, which is written in camel case.
+    /// </summary>
+    public bool AcceptsSignalTriggers { get; set; }
+
+    /// <summary>
     /// Gets the immutable options established before reading document values.
     /// </summary>
     public SourceOptions SourceOptions { get; internal set; } = SourceOptions.Legacy;

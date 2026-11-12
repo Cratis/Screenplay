@@ -675,4 +675,9 @@ export const DiagnosticCodes = {
     InvalidExtensionLock: 'PLAY1111',
     ExtensionIncompatibleUse: 'PLAY1112',
     InvalidExtensionPlaceholder: 'PLAY1113',
+    UnknownExtensionComponent: 'PLAY1114',
+    UnknownExtensionComponentProperty: 'PLAY1115',
+    UnknownExtensionSignal: 'PLAY1116',
+    UnknownExtensionSignalValue: 'PLAY1117',
+    ExtensionComponentPlatformUnsupported: 'PLAY1118',
 } as const;

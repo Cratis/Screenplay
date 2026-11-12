@@ -1859,6 +1859,11 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1111` | Error | `screenplay.lock` is malformed. |
 | `PLAY1112` | Error | A system uses a trigger its extension's contract does not offer, reported at each use. |
 | `PLAY1113` | Error | A component placeholder is not static HTML: it has script, an inline handler or an external reference. |
+| `PLAY1114` | Error | A screen places `<System>.<Component>`, but the extension's contract declares no component of that name. |
+| `PLAY1115` | Error | A screen gives an extension component a `property` its contract does not declare. |
+| `PLAY1116` | Error | An `on` line of an extension component names a signal its contract does not `raise`. |
+| `PLAY1117` | Error | A binding reads `signal.<value>` where the handled signal does not carry that value, or where the interaction handles no signal. |
+| `PLAY1118` | Warning | An extension component does not support a platform a `ui profile` targets. |
 
 ## Screen visuals and slice placements
 

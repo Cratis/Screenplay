@@ -73839,6 +73839,61 @@
       "title": "A placeholder is not a static HTML file: it has script, an external reference or an inline event handler.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY1114",
+      "name": "UnknownExtensionComponent",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen places \u003CSystem\u003E.\u003CComponent\u003E, but the extension\u0027s contract declares no component of that name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1115",
+      "name": "UnknownExtensionComponentProperty",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen gives an extension component a property its contract does not declare.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1116",
+      "name": "UnknownExtensionSignal",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An on line of an extension component names something its contract does not raise.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1117",
+      "name": "UnknownExtensionSignalValue",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A binding reads signal.\u003Cvalue\u003E from a signal that does not carry that value.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1118",
+      "name": "ExtensionComponentPlatformUnsupported",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An extension component does not support a platform a ui profile targets.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

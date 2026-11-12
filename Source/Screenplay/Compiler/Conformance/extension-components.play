@@ -1,0 +1,25 @@
+// A screen places a component a system's extension provides, handles its signals and reads the values they carry.
+system Payments
+  extension "cratis/stripe" version 2
+
+ui profile Web
+  target platform web
+  packages scene.web
+
+module Orders
+  feature Checkout
+    slice StateChange ConfirmPayment
+      event PaymentConfirmed
+        paymentIntentId String
+      command ConfirmPayment
+        paymentIntentId String
+        produces PaymentConfirmed
+    slice StateView CheckoutScreen
+      screen Checkout
+        component Payments.PaymentForm payment
+          property amount = "10"
+          on succeeded
+            execute ConfirmPayment
+              with paymentIntentId from signal.paymentIntentId
+          on failed
+            notify warning "The payment failed"

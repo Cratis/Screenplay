@@ -11,6 +11,7 @@ export * from './ScreenplayCompiler';
 export * from './Syntax/ExtensionContract';
 export * from './Parsing/ExtensionLock';
 export * from './Parsing/ExtensionContracts';
+export * from './Parsing/ExtensionUseSites';
 export { resolveActionSubjects } from './ScreenActionSubjects';
 export { checkPortableMatchPattern } from './Parsing/checkPortableMatchPattern';
 export { PortableMatchStatus } from './Parsing/PortableMatchStatus';
