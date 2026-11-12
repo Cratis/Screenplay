@@ -58,6 +58,8 @@ internal static class SemanticArrayClassification
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
         "abilities/inputs", "abilities/returns", "abilities/outcomes",
+        "invokes/inputs", "invokes/branches", "branches/produces", "entering/inputs", "nodes/inputs", "nodes/returns",
+        "specifications/givenAbilityAnswers", "givenAbilityAnswers/values", "thenInvocations/inputs",
         "handler/possibleEvents",
         "invokes/mappings", "invokes/onRefused", "onRefused/produces",
         "map/targets", "map/template", "map/translations", "mappings/target",
