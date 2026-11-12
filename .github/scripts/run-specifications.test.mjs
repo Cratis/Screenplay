@@ -275,7 +275,8 @@ for (const [name, options] of [
 
 test('net10.0 compatibility shards run a shared build without rebuilding', () => {
     const build = workflow.match(/\n  dotnet-build-net10:\n([\s\S]*?)\n  compatibility-specs:/)[1];
-    assert.match(build, /-p:SpecTargetFramework=net10\.0/);
+    assert.match(build, /SpecTargetFramework=net10\.0/);
+    assert.match(build, /LegacyReader\/bin\/Debug\/net11\.0/);
     assert.match(build, /upload-artifact/);
     const shards = workflow.match(/\n  compatibility-specs:\n([\s\S]*?)\n  package-validation:/)[1];
     assert.match(shards, /needs: \[dotnet-build-net10, shards\]/);
