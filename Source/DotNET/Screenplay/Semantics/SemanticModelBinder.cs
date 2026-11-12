@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Environments;
+using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -40,8 +41,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
-        var result = BindCore(applicationName, syntax, documents);
-        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, result.Diagnostics) };
+        var resolution = ExtensionContractResolver.Current.Resolve(syntax, documents.Documents.Select(document => document.DisplayPath));
+        var effective = resolution.Apply(syntax);
+        var result = BindCore(applicationName, effective, documents);
+        var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax));
+        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]) };
     }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)

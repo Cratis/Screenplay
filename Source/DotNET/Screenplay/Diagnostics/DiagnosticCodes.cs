@@ -4276,6 +4276,54 @@ public static class DiagnosticCodes
     /// <summary>A system maps a secret to a setting its extension's contract declares as public, which would reach the browser.</summary>
     public const string SecretOnPublicSetting = "PLAY0997";
 
+    /// <summary>An extension contract file is malformed: an unknown line, a bad shape or no <c>extension</c> declaration.</summary>
+    public const string InvalidExtensionContract = "PLAY0998";
+
+    /// <summary>An extension contract does not declare its <c>display name</c>, <c>description</c> or <c>icon</c>.</summary>
+    public const string MissingExtensionManifestField = "PLAY0999";
+
+    /// <summary>A component declares a <c>kind</c> other than <c>react</c>, <c>mount</c> or <c>screenplay</c>.</summary>
+    public const string UnknownComponentKind = "PLAY1100";
+
+    /// <summary>A component or requirement names a platform other than <c>web</c>, <c>ios</c>, <c>android</c> or <c>desktop</c>.</summary>
+    public const string UnknownComponentPlatform = "PLAY1101";
+
+    /// <summary>A component with a frontend declares no <c>placeholder</c> for design tools to draw.</summary>
+    public const string ComponentWithoutPlaceholder = "PLAY1102";
+
+    /// <summary>A contract setting is declared both <c>public</c> and <c>secret</c>.</summary>
+    public const string SettingBothPublicAndSecret = "PLAY1103";
+
+    /// <summary>A component <c>invokes</c> an ability the contract does not declare.</summary>
+    public const string ComponentInvokesUnknownAbility = "PLAY1104";
+
+    /// <summary>A contract declares two members of the same kind with the same name.</summary>
+    public const string DuplicateExtensionMember = "PLAY1105";
+
+    /// <summary>A system declares abilities beside an <c>extension</c> line; the contract is the only source of its abilities.</summary>
+    public const string SystemAbilitiesBesideExtension = "PLAY1106";
+
+    /// <summary>A system's <c>extension</c> reference has no entry in the lock file.</summary>
+    public const string ExtensionNotLocked = "PLAY1107";
+
+    /// <summary>A locked extension's contract is not in the local cache yet, so its contract could not be read.</summary>
+    public const string ExtensionNotRestored = "PLAY1108";
+
+    /// <summary>A cached contract does not match the contract hash the lock pins.</summary>
+    public const string ExtensionContractHashMismatch = "PLAY1109";
+
+    /// <summary>A lock entry was written for a different version range than the model now asks for.</summary>
+    public const string ExtensionLockStale = "PLAY1110";
+
+    /// <summary>The lock file is malformed.</summary>
+    public const string InvalidExtensionLock = "PLAY1111";
+
+    /// <summary>A system uses an ability, trigger or component its extension's contract does not offer, or offers with a different shape.</summary>
+    public const string ExtensionIncompatibleUse = "PLAY1112";
+
+    /// <summary>A placeholder is not a static HTML file: it has script, an external reference or an inline event handler.</summary>
+    public const string InvalidExtensionPlaceholder = "PLAY1113";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>
