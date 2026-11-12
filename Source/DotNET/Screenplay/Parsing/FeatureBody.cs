@@ -17,7 +17,7 @@ internal sealed class FeatureBody(string name)
     /// <summary>
     /// What a feature body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, outlet, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, provide, import, feature, slice, contribute, outlet, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<FeatureSyntax> _features = [];
     readonly List<SliceSyntax> _slices = [];
@@ -32,6 +32,7 @@ internal sealed class FeatureBody(string name)
     readonly List<OutletSyntax> _outlets = [];
     readonly List<RetiredForm> _retiredForms = [];
     readonly List<PurposeReferenceSyntax> _purposes = [];
+    readonly List<ProvideSyntax> _provides = [];
     string? _description;
     string? _documentation;
     AuthorizeSyntax? _authorize;
@@ -67,6 +68,9 @@ internal sealed class FeatureBody(string name)
                 return true;
             case "purpose":
                 PurposeParser.ParseReference(context, line, _purposes);
+                return true;
+            case "provide":
+                ProvideParser.Parse(context, line, _provides);
                 return true;
             case "authorize":
                 var diagnosticCount = context.Diagnostics.Count;
@@ -143,6 +147,7 @@ internal sealed class FeatureBody(string name)
             IsPlacement = isPlacement,
             Templates = _templates,
             Purposes = _purposes,
+            Provides = _provides,
             Outlets = _outlets,
             RetiredForms = _retiredForms.Count == 0 ? [] : [.. _retiredForms]
         };

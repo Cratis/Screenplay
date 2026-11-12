@@ -165,6 +165,11 @@ public record ApplicationSyntax(
     /// </summary>
     public IEnumerable<PurposeSyntax> Purposes { get; init; } = [];
 
+    /// <summary>
+    /// Gets the values this application adds to <c>$context</c> for everything beneath it.
+    /// </summary>
+    public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
+
     /// <summary>Gets every physical application-owned event source declaration.</summary>
     public IEnumerable<EventSourceSyntax> EventSources { get; init; } = [];
 

@@ -33,6 +33,8 @@ internal static partial class ScreenplayParser
         new("type", null, (context, line, state) => state.Types.Add(TypeParser.Parse(context, line))),
         new("purpose", (_, state) => state.HasPlacedBody, ParseRootPlacedLine),
         new("purpose", null, (context, line, state) => state.Purposes.Add(PurposeParser.Parse(context, line))),
+        new("provide", (_, state) => state.HasPlacedBody, ParseRootPlacedLine),
+        new("provide", null, (context, line, state) => ProvideParser.Parse(context, line, state.Provides)),
         new("policy", null, (context, line, state) => state.Policies.Add(PolicyParser.Parse(context, line))),
         new("persona", null, (context, line, state) => state.Personas.Add(ParsePersona(context, line))),
         new("user", null, (context, line, state) => state.Users.Add(ParseUser(context, line))),
@@ -260,6 +262,11 @@ internal static partial class ScreenplayParser
 
         public List<PurposeSyntax> Purposes { get; } = [];
 
+        /// <summary>
+        /// Gets the application-level provided values.
+        /// </summary>
+        public List<ProvideSyntax> Provides { get; } = [];
+
         public List<PersonaSyntax> Personas { get; } = [];
 
         public List<UserSyntax> Users { get; } = [];
@@ -310,7 +317,7 @@ internal static partial class ScreenplayParser
         /// Gets a value indicating whether any construct the domain must precede was declared before it.
         /// </summary>
         public bool DeclaredBeforeDomain =>
-            Imports.Count > 0 || Concepts.Count > 0 || Types.Count > 0 || Policies.Count > 0 || Purposes.Count > 0 || Personas.Count > 0 || Users.Count > 0 || Storylines.Count > 0 || Sinks.Count > 0 || Modules.Count > 0 || Seeds.Count > 0 || Authentication is not null || Identity is not null || ApplicationContext is not null || Onboarding is not null || Agents is not null || UiProfiles.Count > 0 || Themes.Count > 0 || DesignSystems.Count > 0 || Triggers.Count > 0 || Layouts.Count > 0 || Systems.Count > 0 || EventSources.Count > 0 || Examples.Count > 0;
+            Imports.Count > 0 || Concepts.Count > 0 || Types.Count > 0 || Policies.Count > 0 || Purposes.Count > 0 || Provides.Count > 0 || Personas.Count > 0 || Users.Count > 0 || Storylines.Count > 0 || Sinks.Count > 0 || Modules.Count > 0 || Seeds.Count > 0 || Authentication is not null || Identity is not null || ApplicationContext is not null || Onboarding is not null || Agents is not null || UiProfiles.Count > 0 || Themes.Count > 0 || DesignSystems.Count > 0 || Triggers.Count > 0 || Layouts.Count > 0 || Systems.Count > 0 || EventSources.Count > 0 || Examples.Count > 0;
 
         /// <summary>
         /// Builds the <see cref="ApplicationSyntax"/>, placing the module or feature a placed document opened.
@@ -344,6 +351,7 @@ internal static partial class ScreenplayParser
                 Context = ApplicationContext,
                 SourceOptions = context.SourceOptions,
                 Purposes = Purposes,
+                Provides = Provides,
                 StickyNotes = StickyNotes,
                 Examples = Examples,
                 Systems = Systems,

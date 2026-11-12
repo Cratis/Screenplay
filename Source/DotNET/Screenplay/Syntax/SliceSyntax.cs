@@ -143,6 +143,11 @@ public record SliceSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
+    /// Gets the values this slice adds to <c>$context</c> for everything beneath it.
+    /// </summary>
+    public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
+
+    /// <summary>
     /// Gets the <c>graph</c> declarations of the slice.
     /// </summary>
     public IEnumerable<GraphSyntax> Graphs { get; init; } = [];
