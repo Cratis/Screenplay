@@ -365,9 +365,26 @@ jobs:
             bash .github/scripts/run-specifications.sh "$project" Debug ${runner_args[@]+"${runner_args[@]}"}
           done < <(jq -r '.[]' <<< "$PROJECTS")
 
-  package-validation:
+  # Release builds with warnings as errors, so every analyzer rule is enforced here. The work is split in three
+  # parallel legs to keep it off the critical path: one all-rules build per runtime, and the pack, which
+  # builds both runtimes without analyzers (the binaries are the same) and verifies the package.
+  release-gate:
+    name: Release (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: net10.0 all rules
+            kind: analyze
+            properties: -p:TargetFrameworks=net10.0
+          - name: net11.0 all rules
+            kind: analyze
+            properties: -p:TargetFrameworks=net11.0
+          - name: pack
+            kind: pack
+            properties: -p:RunAnalyzers=false
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -414,21 +431,39 @@ jobs:
       # The version is a sentinel, not a release. Package validation compares assembly versions, and one
       # below the baseline is rejected on that alone before the API surface is ever looked at - so it has to
       # be set on the build, since the pack below reuses what this produces.
-      # This is the all-rules analyzer gate (Release enables warnings as errors); the Debug builds run without analyzers.
+      # The analyze legs are the all-rules analyzer gate (Release enables warnings as errors); the Debug builds
+      # and the pack leg run without analyzers.
       - name: Build Release
-        run: dotnet build --configuration Release -p:Version=9999.0.0
+        env:
+          BUILD_PROPERTIES: ${{ matrix.properties }}
+        run: dotnet build --configuration Release -p:Version=9999.0.0 "$BUILD_PROPERTIES"
 
       - name: Run canonical vector specifications on net11.0
+        if: ${{ matrix.name == 'net11.0 all rules' }}
         run: bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Release
 
       # Package validation only runs on pack, so a binary break was invisible until the release failed on
       # main - which is how eight versions came to be tagged with no package on NuGet. Packing here puts the
       # break in the pull request that causes it, which is what Directory.Build.props already claims happens.
       - name: Pack
+        if: ${{ matrix.kind == 'pack' }}
         run: dotnet pack --no-build --configuration Release -o ./Artifacts/NuGet -p:Version=9999.0.0
 
       - name: Verify context package dependencies
+        if: ${{ matrix.kind == 'pack' }}
         run: python3 Source/DotNET/Screenplay.Contexts/verify-package.py ./Artifacts/NuGet 9999.0.0
+
+  # Keeps the original package-validation check name resolving over the three legs above.
+  package-validation:
+    if: always()
+    needs: release-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every Release leg to pass
+        env:
+          SUCCESS: ${{ needs.release-gate.result == 'success' }}
+        run: test "$SUCCESS" = true
 
   # Preserve the original check name, and never let skipped/failed dependencies
   # turn the aggregate green. Release/package validation runs alongside the specs.

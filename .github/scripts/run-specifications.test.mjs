@@ -139,12 +139,25 @@ test('the expansion CLI emits the same matrix used by the coverage guard', () =>
 });
 
 test('package validation builds its own board and retains every Release validation step', () => {
-    const job = workflow.match(/\n  package-validation:\n([\s\S]*?)\n  # Preserve the original check name/)[1];
+    const job = workflow.match(/\n  release-gate:\n([\s\S]*?)\n  # Keeps the original package-validation check name/)[1];
     assert.doesNotMatch(job, /needs:|download-artifact|tar -xzf/);
     for (const step of ['Checkout code', 'Setup .Net', 'Cache NuGet packages', 'Setup node', 'Yarn install', 'Build event model board', 'Build Release', 'Run canonical vector specifications on net11.0', 'Pack', 'Verify context package dependencies']) {
         assert.ok(job.includes(`- name: ${step}\n`), step);
     }
     assert.ok(job.indexOf('- name: Build event model board') < job.indexOf('- name: Build Release'));
+});
+
+test('package validation keeps its check name over analyzer legs for both runtimes', () => {
+    const gate = workflow.match(/\n  release-gate:\n([\s\S]*?)\n  # Keeps the original package-validation check name/)[1];
+    for (const runtime of ['net10.0', 'net11.0']) {
+        assert.match(gate, new RegExp(`name: ${runtime} all rules\\n\\s+kind: analyze\\n\\s+properties: -p:TargetFrameworks=${runtime.replace('.', '\\.')}\\n`));
+    }
+    assert.match(gate, /kind: pack\n\s+properties: -p:RunAnalyzers=false/);
+    assert.equal((gate.match(/RunAnalyzers=false/g) ?? []).length, 1, 'only the pack leg may skip analyzers');
+    const aggregate = workflow.match(/\n  package-validation:\n([\s\S]*?)\n  # Preserve the original check name/)[1];
+    assert.match(aggregate, /needs: release-gate/);
+    assert.match(aggregate, /if: always\(\)/);
+    assert.match(workflow, /needs: \[shards, dotnet-build, dotnet-build-net10, specs, compatibility-specs, package-validation\]/);
 });
 
 test('forwards ordered split filters to the native runner without changing them', () => {
@@ -278,7 +291,7 @@ test('net10.0 compatibility shards run a shared build without rebuilding', () =>
     assert.match(build, /SpecTargetFramework=net10\.0/);
     assert.match(build, /LegacyReader\/bin\/Debug\/net11\.0/);
     assert.match(build, /upload-artifact/);
-    const shards = workflow.match(/\n  compatibility-specs:\n([\s\S]*?)\n  package-validation:/)[1];
+    const shards = workflow.match(/\n  compatibility-specs:\n([\s\S]*?)\n  release-gate:/)[1];
     assert.match(shards, /needs: \[dotnet-build-net10, shards\]/);
     assert.match(shards, /download-artifact/);
     assert.doesNotMatch(shards, /dotnet build|yarn/);
