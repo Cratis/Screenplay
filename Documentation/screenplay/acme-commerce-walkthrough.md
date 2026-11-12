@@ -478,12 +478,20 @@ outlet topbarActions of actions
     authorize CanCurateCatalog
 ```
 
-A screen's toolbar belongs to that screen. Catalog's product list carries a primary button that opens the slice's dialog:
+A screen's toolbar belongs to that screen. Catalog's product list carries a primary button that opens the slice's dialog, and two
+buttons that act on the product selected in the list. They run their slice for that product, and only when its status allows:
 
 ```text
 toolbar
   toolbar actions
     button new title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
+    button approve title "Approve for sale" slice Merchandising.Publication.ApproveProductForSale for item icon check
+      runs
+      enabled when item.status == "draft"
+    button withdraw title "Withdraw" slice Merchandising.Publication.WithdrawProduct for item icon ban
+      runs
+      enabled when item.status == "approved"
+      confirm "Withdraw this product?"
 ```
 
 Compare the application-level button with the screen's button before adding another action: the first is available across
@@ -525,7 +533,8 @@ To find how a person reaches a command, look for these surfaces:
 | --- | --- | --- |
 | toolbar button that opens the command's dialog | Catalog "New product", Purchasing "New purchase order", "Register supplier", Warehouse "Register SKU" | `button new title "New product" slice Merchandising.Products.DraftProduct` |
 | action on the selected row of a list | Warehouse "Adjust stock", "Count", "Dispatch"; Purchasing "Choose supplier" | `action AdjustStock label "Adjust stock"` under a `toolbar` |
-| state-dependent action on the selected row | Catalog "Approve for sale" and "Withdraw" on the product lists; Warehouse "Pick order", "Pack", "Cancel shipment" | `action "Approve for sale"` with `when item.status == "draft" execute ApproveProductForSale` and `otherwise hidden` |
+| toolbar button that runs its slice for the selected row | Catalog "Approve for sale" and "Withdraw" on the product list | `button approve title "Approve for sale" slice Merchandising.Publication.ApproveProductForSale for item` with `runs` and `enabled when item.status == "draft"` |
+| state-dependent action on the selected row | Catalog "Approve for sale" and "Withdraw" on the product page; Warehouse "Pick order", "Pack", "Cancel shipment" | `action "Approve for sale"` with `when item.status == "draft" execute ApproveProductForSale` and `otherwise hidden` |
 | state-dependent action on a record page | product page, order page ("Release hold" only while on hold, "Mark fulfilled" once shipped), purchase order ("Archive" once received or cancelled) | the same guarded `action`, beside the `data` of the one record |
 | reaction | confirm an order after approval, clear the basket after checkout | `reaction ... invokes Command` |
 
