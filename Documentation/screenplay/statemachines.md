@@ -53,6 +53,19 @@ statemachine OrderLifecycle
   state Refunded final
 ```
 
+## Invoking an ability
+
+A state's `entering` line can ask a [system](systems.md#invoke-an-ability) for an ability: `entering invokes <System>.<Ability>` with the inputs mapped on the lines under it. Like every `entering` effect it may run again on redelivery, and a state machine holds no data to wait for an answer, so an ability that `answers later` is `PLAY1011`.
+
+```play
+state Paid final
+  entering invokes PaymentGateway.SendReceipt
+    invoiceId = invoiceId
+    email = "accounts@example.com"
+```
+
+A bare `entering` followed by a C# fence or a `file` line attaches a body instead of a call. It parses and validates but is not executable yet (`PLAY0268`, #1252). A specification asserts the call with `then invokes <System>.<Ability>`.
+
 ## What it means
 
 In the example, `PaymentCaptured` allows an order in Placed to move to Paid. Entering Paid starts `FulfilOrder`; entering Shipped invokes `NotifyCustomer`. These entry effects may run again on redelivery, so their receivers must be safe to repeat.

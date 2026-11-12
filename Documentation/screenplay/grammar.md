@@ -156,8 +156,27 @@ AbilityImplementation = "implementation", NL,
    Ability names are unique within their system ignoring case. An ability owns at
    most one file OR tagged fence, directly or in its implementation wrapper: the
    AbilityEffect attachment. A model that declares an ability admits its systems in
-   ESM v50; a system without abilities, operations and their specification steps
+   ESM v50 (ESM v51 when something invokes one); a system without abilities, operations and their specification steps
    stay authoring-only and bind with PLAY0268. *)
+
+(* -------------------------------------------------------------- *)
+(* Invoking an ability — ESM v51 (reactions, workflow actions, state entries) *)
+(* -------------------------------------------------------------- *)
+
+AbilityInvocation = "invokes", Ident, ".", Ident, NL,           (* System.Ability; a dotted name is an ability *)
+                 [ INDENT, { InputMapping }, { InvocationBranch }, DEDENT ] ;
+InputMapping   = Ident, "=", Expression, NL ;                  (* every declared input exactly once *)
+InvocationBranch = "on", ( "returned" | "failed" | Ident ), NL, (* Ident is a declared outcome *)
+                 INDENT, { "produces", Ident, NL, [ INDENT, { Ident, "=", Expression, NL }, DEDENT ] }, DEDENT ;
+InvocationValue = ( "$result" | "$outcome" | "$failure" | "$trigger" ), ".", Ident ;
+AbilityAnswer  = "given", Ident, ".", Ident, ( "returns", NL, INDENT, { InputMapping }, DEDENT
+                 | "answers", Ident, NL | "fails", [ String ], NL ) ;
+(* Workflow: "action" Ident "invokes" System.Ability [ "attempts" Integer ] with mapping lines and one
+   outlet per answer ("next", "failed", or a declared outcome); "compute" Ident with "returns" and a C# body;
+   "approval" Ident "by" Ident "via" System.Ability "expires after" Integer Unit. State machine:
+   "entering invokes" System.Ability with mapping lines, or a bare "entering" with a C# fence or a file.
+   Compute nodes, approval via, entering bodies, operation-phase invocations and $trigger values parse
+   and validate but bind with PLAY0268 (#1252). *)
 
 (* -------------------------------------------------------------- *)
 (* State machines — ESM v36                                         *)

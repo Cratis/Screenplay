@@ -729,6 +729,19 @@ The run records every invocation the slice's reactions make, in order, whether t
 
 The command must exist, every value must name one of its non-generated properties with a literal of that property's type, and a reaction declared in the specification's own slice must invoke the command; otherwise the compiler reports `PLAY0816`. The statement selects language/semantic `34.0`.
 
+## Ability answers
+
+A reaction specification scripts what a [system's ability](systems.md#invoke-an-ability) answers while the reaction runs, then asserts the events and the call.
+
+```play
+given Carrier.BookPickup returns
+  trackingNumber = "TRK-1"
+given Carrier.BookPickup answers NoCapacity
+given Carrier.BookPickup fails "carrier unavailable"
+```
+
+`returns` gives the returned fields, `answers` names a declared outcome and `fails` supplies the failure reason. An answer that names an ability, outcome or returned field the system does not declare is `PLAY1017`. When a branch reads a value the specification did not script, the specification is unsupported rather than guessing. `then invokes <System>.<Ability>` with the inputs asserts the call. Specifications of workflows and state machines assert `then invokes <System>.<Ability>` without values.
+
 ## Generated fixtures and return expectations
 
 Generated fixtures and `then returns` select **ESM v7** and execute in the reference runner. They pin [generated values and responses](commands.md#generated-values-and-responses) separately from request inputs and emitted events. See the [complete fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).

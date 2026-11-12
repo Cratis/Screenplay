@@ -329,6 +329,10 @@ The first matching branch wins. Classification gives authorization precedence ov
 
 Infrastructure failures, exceptions, contract errors, Unsupported outcomes and concurrency conflicts are never refusals. There is no `by concurrency` form: transient concurrency must fail and retry, not be acknowledged. Refusal handling promises neither a cascade-wide transaction nor once-only external effects. To describe recovery of an existing observed fact, see [redelivery specifications](specifications.md#redelivery-specifications).
 
+## Invoking an ability
+
+A reaction can ask an external system for an [ability](systems.md#invoke-an-ability) instead of a command: `invokes <System>.<Ability>`, the inputs, then one branch per answer. `on returned` reads `$result.<field>`, `on failed` reads `$failure.reason` and `on <Outcome>` handles a declared outcome. Each branch says which events to append. A reaction specification scripts the answer with `given <System>.<Ability> returns|answers|fails`.
+
 ## Atomic production batches
 
 Declare `reaction batches atomic` at the application root to prevent a rejected later production from leaving an accepted prefix. Imported reactions inherit this mode. It selects ESM v22 and the optional final application member `reactionProductionMode: "atomic"`. Duplicate or conflicting declarations report `PLAY0693`; unknown modes are invalid.

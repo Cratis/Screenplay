@@ -44,6 +44,10 @@ Here, `RegisterProject` describes a request to open a provisional cost center in
 
 The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) covers inline and standalone operations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is outside `Samples/` because these constructs prevent an executable model from being produced. Invoicing is also a syntax showcase with individual binding dispositions, not a runnable model. The samples policy lists operations among its [syntax-only constructs](https://github.com/Cratis/Screenplay/blob/main/.cratis/ai/rules/project/samples.md#preview-constructs); neither example demonstrates an executable integration.
 
+## Invoke an ability from a phase
+
+A phase of an operation can name the ability it calls with `invokes <System>.<Ability>`, with its inputs. Operation phases do not handle answers, so a branch there is `PLAY1016`. They are authoring intent: binding reports `PLAY0268` naming #1252. Use a reaction, workflow action or state entry to [invoke an ability](systems.md#invoke-an-ability) that runs.
+
 ## Declare inline or reference a declaration
 
 `produces operation <Name>` declares a slice-owned operation. Each input is a typed mapping, `<input> <Type> = <source>`. Plain `produces <Name>` only references an existing event or operation; a typo never creates one. Referenced operations use untyped target mappings, `<input> = <source>`.

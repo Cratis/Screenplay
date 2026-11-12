@@ -25,8 +25,8 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
-        ("`invokes <System>.<Ability>`, `compute`, `entering` bodies, approval `via`", 1252,
-            [("Documentation/screenplay/fixtures/ability-invocations.play", [typeof(InvocationBranchSyntax), typeof(InvocationValueExpressionSyntax), typeof(SpecificationAbilityAnswerSyntax)])])
+        ("`compute`, `entering` bodies, approval `via`, operation-phase `invokes`, `$trigger` values", 1252,
+            [("Documentation/screenplay/fixtures/ability-invocations.play", [])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
@@ -53,7 +53,6 @@ public class when_holding_invoicing_to_the_language : Specification
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(SpecificationGeneratedValueSyntax), "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play", "Pinned generated values need a reaction that invokes a command with a generated identifier; the conformance vector and the Acme Commerce sample show it."),
-        (typeof(SpecificationInvocationSyntax), "Samples/AcmeCommerce/Sales/model/approval.play", "Invocation expectations state what an automation slice's own reaction invokes; the Acme Commerce automations show it, where each slice is specified on its own."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
         (typeof(TemplateSlotSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),

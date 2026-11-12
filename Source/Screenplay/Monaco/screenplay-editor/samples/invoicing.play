@@ -244,7 +244,8 @@ type InstallmentPlan
 // A system names a business system and the abilities it can be asked to perform. An ability
 // has typed inputs, the values it returns, named outcomes other than success and an effect
 // class that says what a retry may do: safe (no effect), idempotent (the same key has the
-// effect once) or once (never retried; the default). Nothing invokes an ability yet.
+// effect once) or once (never retried; the default). A reaction, a workflow action or a
+// state's entry invokes an ability as <System>.<Ability>.
 system PaymentGateway
   description "The card payment gateway that charges invoices"
   ability CapturePayment idempotent
@@ -745,6 +746,10 @@ statemachine InvoiceLifecycle
     on InvoicePaid -> Paid
     on InvoiceCancelled -> Cancelled
   state Paid final
+    // A state's entry can ask a system for an ability, mapping its inputs from the subject.
+    entering invokes PaymentGateway.SendReceipt
+      invoiceId = invoiceId
+      email     = "accounts@example.com"
   state Cancelled final
 
   specification AnOverdueInvoiceIsChased
@@ -760,6 +765,17 @@ statemachine InvoiceLifecycle
     then is Overdue
     then invokes ApplyLateFee
     then starts CollectOverdue
+
+  specification APaidInvoiceGetsItsReceipt
+    description "Entering Paid asks the gateway to mail the receipt"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    when append InvoicePaid
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      paidAt = "2026-10-02T09:00:00Z"
+    then is Paid
+    then invokes PaymentGateway.SendReceipt
 
   specification AnUnsentInvoiceCannotGoOverdue
     description "A draft that is reported overdue stays a draft: Draft allows no such transition"
@@ -790,10 +806,17 @@ workflow CollectOverdue
     "settled" -> Close
   foreach TagEachLine over lineItems parallel 2
     each -> TagLine
-    completed -> AwaitPayment
+    completed -> ChargeCard
   action TagLine invokes TagInvoice
     next -> AllTagged
   join AllTagged all
+  // A workflow action asks a system for an ability; an edge per declared outcome says where each answer goes.
+  action ChargeCard invokes PaymentGateway.CapturePayment
+    invoiceId = invoiceId
+    amount = 100
+    next -> AwaitPayment
+    CardDeclined -> ApproveWriteOff
+    failed -> ApproveWriteOff
   wait AwaitPayment for InvoicePaid expires after 14 days
     resumed -> Close
     expired -> ApproveWriteOff
@@ -3450,6 +3473,87 @@ module Invoicing
           method     = "transfer"
           receivedAt = "2026-10-02T09:00:00Z"
         then no events
+
+    // A reaction calls an ability of a system outside the model. The ability answers with what it returns, with one
+    // of its declared outcomes, or fails; each answer has a branch that says which event records it.
+    slice Automation CapturePaymentsWithGateway
+      description "Asks the card payment gateway to capture a payment once it is recorded"
+
+      event PaymentCaptured
+        paymentId  PaymentId
+        capturedAt DateTime
+
+      event PaymentCardDeclined
+        invoiceId InvoiceId
+
+      event PaymentCaptureFailed
+        invoiceId InvoiceId
+        reason    String
+
+      reaction GatewayCapturer
+        description "Captures each recorded payment with the gateway"
+        from Payment.Transactions
+        runs as system
+        when PaymentRecorded
+          invoiceId
+          amount
+          invokes PaymentGateway.CapturePayment
+            invoiceId = invoiceId
+            amount    = amount
+            on returned
+              produces PaymentCaptured
+                for invoiceId
+                paymentId  = $result.paymentId
+                capturedAt = $result.capturedAt
+            on CardDeclined
+              produces PaymentCardDeclined
+                for invoiceId
+                invoiceId = invoiceId
+            on failed
+              produces PaymentCaptureFailed
+                for invoiceId
+                invoiceId = invoiceId
+                reason    = $failure.reason
+
+      specification TheGatewayCapturesThePayment
+        given PaymentGateway.CapturePayment returns
+          paymentId  = "5d0b2a77-3c1e-4e4f-9a5b-7c6d8e9f0a1b"
+          capturedAt = "2026-10-02T09:00:00Z"
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then PaymentCaptured
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          paymentId  = "5d0b2a77-3c1e-4e4f-9a5b-7c6d8e9f0a1b"
+          capturedAt = "2026-10-02T09:00:00Z"
+        then invokes PaymentGateway.CapturePayment
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+
+      specification TheCardIsDeclined
+        given PaymentGateway.CapturePayment answers CardDeclined
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then PaymentCardDeclined
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+      specification TheGatewayIsDown
+        given PaymentGateway.CapturePayment fails "gateway unavailable"
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then PaymentCaptureFailed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason    = "gateway unavailable"
 
     slice Automation ChaseOverdueInvoices
       description "Reminds the billing contact while an invoice is late"

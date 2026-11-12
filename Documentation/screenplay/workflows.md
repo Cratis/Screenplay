@@ -65,6 +65,21 @@ Connect each negative outcome you want to recover from. An unconnected `failed`,
 
 An action's command receives the subject key and subject properties with matching names. The executor defines how to fill any remaining inputs. The reference evaluator records that the command was sent; it does not execute that command's business effects.
 
+## Invoking an ability
+
+An action asks a [system](systems.md#invoke-an-ability) for an ability with `action <Name> invokes <System>.<Ability>`. Its inputs are mapped on the lines under it from a literal, a property of the workflow's subject or an earlier node's result (`Node.field`). The node has a `next` edge for a normal answer, a `failed` edge and one edge per outcome the ability declares (an outlet that can never be taken, such as `expired` on an ability that does not answer later, is `PLAY1007`, and an outcome the ability does not declare is `PLAY1002`).
+
+```play
+action BookPickup invokes Carrier.BookPickup attempts 3
+  parcelId = parcelId
+  address = "1 Main Street"
+  next -> Risk
+  NoCapacity -> Done
+  failed -> Done
+```
+
+A `compute <Name>` node, with its `returns` fields and a C# body, and an approval answered through an ability (`approval <Name> by <Policy> via <System>.<Ability> expires after 2 days`) parse and validate. They are not executable yet; binding reports `PLAY0268` naming #1252. A node may only read the result of a node that always ran before it (`PLAY1009`).
+
 ## Specifications
 
 Write specifications inside the workflow to check its paths before relying on an executor. Establish the history, append the triggering event or start the run, then state the outcomes needed for that path.
