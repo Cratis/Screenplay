@@ -160,6 +160,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case StorylineSyntax value: Declare("Storyline", value.Name, value, value.Description); break;
             case SinkSyntax value: Declare("Sink", value.Name, value, details: new { kind = value.Stores == SinkKind.Graphs ? "graphs" : "readmodels", realizationMetadata = true }); break;
             case ContextMemberSyntax value: Declare("ContextMember", value.Name, value, details: new { type = "time zone", syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value) }); break;
+            case ProvideSyntax value: Declare("Provide", value.Name, value, details: new { value.Type, source = value.Source switch { QueryProvideSourceSyntax => "query", HostProvideSourceSyntax => "host", ValueProvideSourceSyntax => "value", CodeProvideSourceSyntax => "code", _ => "file" }, opaque = value.Source is HostProvideSourceSyntax or CodeProvideSourceSyntax or FileProvideSourceSyntax, syntaxOnly = true, authoringMetadata = true }); break;
             case IdentityDetailSyntax value: Declare("IdentityDetail", value.Name, value, details: new { value.Type, value.Source, syntaxOnly = true, authoringMetadata = true }); break;
             case LayoutSyntax value: Declare("Layout", value.Name, value); break;
             case ScreenTemplateSyntax value: Declare("ScreenTemplate", value.Name, value); break;

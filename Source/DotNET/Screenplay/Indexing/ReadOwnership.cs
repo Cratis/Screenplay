@@ -35,6 +35,9 @@ sealed class ReadOwnership : ScreenplaySyntaxWalker
     public override void VisitIdentityDetail(IdentityDetailSyntax syntax) => Owned(syntax, () => base.VisitIdentityDetail(syntax));
 
     /// <inheritdoc/>
+    public override void VisitProvide(ProvideSyntax syntax) => Owned(syntax, () => base.VisitProvide(syntax));
+
+    /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax) => Owned(syntax, () => base.VisitModule(syntax));
 
     /// <inheritdoc/>
