@@ -1,0 +1,277 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "DataQuality",
+          "provides": [
+            {
+              "kind": "ProvideSyntax",
+              "name": "vessel",
+              "source": {
+                "kind": "QueryProvideSourceSyntax",
+                "by": [
+                  {
+                    "kind": "ContextExpressionSyntax",
+                    "path": "arguments.vesselId"
+                  }
+                ],
+                "query": "VesselByKey"
+              },
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": true,
+                "name": "Vessel"
+              }
+            }
+          ],
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "VesselRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "vesselId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "Vessels",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "VesselRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "vesselId"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "Vessels",
+                  "readModel": "Vessel",
+                  "sequence": null
+                }
+              ],
+              "provides": [
+                {
+                  "kind": "ProvideSyntax",
+                  "name": "score",
+                  "source": {
+                    "kind": "FileProvideSourceSyntax",
+                    "file": {
+                      "kind": "FileReferenceSyntax",
+                      "path": "Score.cs"
+                    }
+                  },
+                  "type": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "Int"
+                  }
+                },
+                {
+                  "kind": "ProvideSyntax",
+                  "name": "limit",
+                  "source": {
+                    "kind": "CodeProvideSourceSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "return 10;",
+                      "language": "csharp"
+                    }
+                  },
+                  "type": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "Int"
+                  }
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "vesselId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "Uuid"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "VesselByKey",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Vessel"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Vessel",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "vesselId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Fleet",
+      "provides": [
+        {
+          "kind": "ProvideSyntax",
+          "name": "vessel",
+          "source": {
+            "kind": "QueryProvideSourceSyntax",
+            "by": [
+              {
+                "kind": "ContextExpressionSyntax",
+                "path": "arguments.vesselId"
+              }
+            ],
+            "query": "VesselByKey"
+          },
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": true,
+            "name": "Vessel"
+          }
+        },
+        {
+          "kind": "ProvideSyntax",
+          "name": "entitlements",
+          "source": {
+            "kind": "HostProvideSourceSyntax"
+          },
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "personas": [],
+  "provides": [
+    {
+      "kind": "ProvideSyntax",
+      "name": "region",
+      "source": {
+        "kind": "ValueProvideSourceSyntax",
+        "value": {
+          "kind": "LiteralExpressionSyntax",
+          "value": "Nordics"
+        }
+      },
+      "type": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "String"
+      }
+    },
+    {
+      "kind": "ProvideSyntax",
+      "name": "roles",
+      "source": {
+        "kind": "ValueProvideSourceSyntax",
+        "value": {
+          "kind": "ContextExpressionSyntax",
+          "path": "identity.roles"
+        }
+      },
+      "type": {
+        "kind": "TypeRefSyntax",
+        "isCollection": true,
+        "isOptional": false,
+        "name": "String"
+      }
+    }
+  ],
+  "systems": [],
+  "types": []
+}

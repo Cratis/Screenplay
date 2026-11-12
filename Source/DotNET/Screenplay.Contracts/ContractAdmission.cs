@@ -278,6 +278,7 @@ static class ContractAdmission
         new("sink", "sink Reporting for readmodels\n" + Slice + Event + ReadModel.Replace("      readmodel View\n", "      readmodel View\n        sink Reporting\n", StringComparison.Ordinal) + Projection + KeyedQuery, Baseline: Slice + Event + ReadModel + Projection + KeyedQuery),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("public", Slice + "      public event Recorded\n        value String\n"),
+        new("provide", "provide region String from host\n", [Slice.Replace("module M\n", "module M\n  provide region String from host\n", StringComparison.Ordinal)], Baseline: ""),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
         new("shows", Slice + Event + "    slice StateView V\n      shows event Recorded\n", Baseline: Slice + Event),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
