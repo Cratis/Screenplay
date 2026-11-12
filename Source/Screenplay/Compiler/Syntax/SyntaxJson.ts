@@ -129,7 +129,9 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     SpecificationSyntax: ['description', 'whenRedelivered', 'givenTimeZone'],
     SpecificationErrorSyntax: ['caseValue'],
     SpecificationExampleSyntax: ['stream', 'noStream'],
-    SpecificationRedeliverySyntax: ['stream', 'noStream']
+    SpecificationRedeliverySyntax: ['stream', 'noStream'],
+    WorkflowNodeSyntax: ['file', 'code', 'via'],
+    StateEntrySyntax: ['file', 'code']
 };
 
 // Members omitted from the wire form when empty arrays, by node kind.
@@ -137,9 +139,12 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     ScreenActionSyntax: ['inputs'],
     ModuleSyntax: ['dependsOn'],
     FeatureSyntax: ['dependsOn'],
-    SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs'],
+    SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs', 'givenAbilityAnswers'],
     SliceSyntax: ['graphs', 'graphProjections', 'graphQueries'],
-    InvokesSyntax: ['onRefused'],
+    InvokesSyntax: ['onRefused', 'branches'],
+    OperationPhaseSyntax: ['invocations'],
+    WorkflowNodeSyntax: ['mappings', 'returns'],
+    StateEntrySyntax: ['mappings'],
     ApplicationSyntax: ['sinks'],
     SystemSyntax: ['abilities']
 };

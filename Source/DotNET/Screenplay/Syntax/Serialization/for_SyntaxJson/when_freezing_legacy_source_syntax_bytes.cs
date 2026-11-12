@@ -20,6 +20,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "narrowed-queries",
         "caller-identity",
         "abilities",
+        "ability-invocations",
         "graph-queries",
         "graph-foreach",
         "projection-parity",

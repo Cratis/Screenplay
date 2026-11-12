@@ -2,18 +2,23 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ConditionSyntax } from './Conditions';
-import { ExpressionSyntax } from './Expressions';
+import { PropertySyntax } from './Declarations';
+import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { CodeBlockSyntax, FileReferenceSyntax } from './Implementations';
 import { IntervalUnit, TriggerSourceSyntax } from './Reactions';
 import { SpecificationEventSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 
-export type StateEntryKind = 'Send' | 'Start';
+export type StateEntryKind = 'Send' | 'Start' | 'Invoke' | 'Body';
 
 // 'entering send <Command>' or 'entering start <Workflow>'.
 export interface StateEntrySyntax extends SyntaxNode {
     readonly kind: 'StateEntrySyntax';
     readonly entryKind: StateEntryKind;
     readonly target: string;
+    readonly mappings?: readonly PropertyMappingSyntax[];
+    readonly file?: FileReferenceSyntax | null;
+    readonly code?: CodeBlockSyntax | null;
 }
 
 // 'on <Event> [when <condition>] -> <State>'.
@@ -68,7 +73,7 @@ export interface StateMachineSyntax extends SyntaxNode {
     readonly specifications: readonly LifecycleSpecificationSyntax[];
 }
 
-export type WorkflowNodeKind = 'Trigger' | 'Action' | 'Decide' | 'Wait' | 'Approval' | 'ForEach' | 'Join';
+export type WorkflowNodeKind = 'Trigger' | 'Action' | 'Decide' | 'Wait' | 'Approval' | 'ForEach' | 'Join' | 'Compute';
 export type WorkflowTriggerKind = 'Event' | 'StateEntered' | 'Schedule' | 'Manual';
 export type WorkflowJoinMode = 'All' | 'Any' | 'AtLeast';
 
@@ -107,6 +112,11 @@ export interface WorkflowNodeSyntax extends SyntaxNode {
     readonly parallel: number | null;
     readonly joinMode: WorkflowJoinMode | null;
     readonly joinCount: number | null;
+    readonly mappings?: readonly PropertyMappingSyntax[];
+    readonly returns?: readonly PropertySyntax[];
+    readonly file?: FileReferenceSyntax | null;
+    readonly code?: CodeBlockSyntax | null;
+    readonly via?: string | null;
 }
 
 export interface WorkflowSyntax extends SyntaxNode {

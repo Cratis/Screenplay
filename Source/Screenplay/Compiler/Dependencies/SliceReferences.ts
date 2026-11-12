@@ -115,7 +115,7 @@ export class SliceReferenceCollector extends ScreenplaySyntaxWalker {
             case 'UniquePropertyConstraintSyntax': add((node as Extract<ConstraintSyntax, { kind: 'UniquePropertyConstraintSyntax' }>).event, 'Event', 'uniqueProperty'); break;
             case 'NamedTriggerSourceSyntax': add((node as NamedTriggerSourceSyntax).name, 'Event', 'trigger'); break;
             case 'ReadsSyntax': add((node as ReadsSyntax).readModel, 'ReadModel', 'reads'); break;
-            case 'InvokesSyntax': add((node as InvokesSyntax).command, 'Command', 'invokes'); break;
+            case 'InvokesSyntax': if (!(node as InvokesSyntax).command.includes('.')) add((node as InvokesSyntax).command, 'Command', 'invokes'); break;
             case 'ScreenActionSyntax': add((node as ScreenActionSyntax).command, 'Command', 'action'); break;
             case 'ScreenActionAlternativeSyntax': add((node as ScreenActionAlternativeSyntax).command, 'Command', 'actionAlternative'); break;
             case 'ScreenActionOtherwiseSyntax': {

@@ -59,7 +59,7 @@ export function privilegeDiagnostics(application: ApplicationSyntax): readonly D
         }
         for (const reaction of slice.reactions) {
             for (const trigger of reaction.triggers) {
-                const produced = [...trigger.produces, ...trigger.invokes.flatMap(invocation => invocation.onRefused?.flatMap(branch => branch.produces) ?? [])];
+                const produced = [...trigger.produces, ...trigger.invokes.flatMap(invocation => invocation.onRefused?.flatMap(branch => branch.produces) ?? []), ...trigger.invokes.flatMap(invocation => invocation.branches?.flatMap(branch => branch.produces) ?? [])];
                 for (const production of produced) add(production.event, `reaction '${reaction.name}'`, reaction.location);
             }
         }

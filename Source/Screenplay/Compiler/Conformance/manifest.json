@@ -12,6 +12,7 @@
         { "name": "narrowed-queries", "path": "Source/Screenplay/Compiler/Conformance/narrowed-queries.play" },
         { "name": "caller-identity", "path": "Source/Screenplay/Compiler/Conformance/caller-identity.play" },
         { "name": "abilities", "path": "Source/Screenplay/Compiler/Conformance/abilities.play" },
+        { "name": "ability-invocations", "path": "Source/Screenplay/Compiler/Conformance/ability-invocations.play" },
         { "name": "reaction-batches", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/AtomicReactionBatches/v22/source/declarations.play" },
         { "name": "generation", "path": "Source/Screenplay/Compiler/Conformance/generation.play" },
         { "name": "generation-rule-bodies", "path": "Source/Screenplay/Compiler/Conformance/generation-rule-bodies.play" },

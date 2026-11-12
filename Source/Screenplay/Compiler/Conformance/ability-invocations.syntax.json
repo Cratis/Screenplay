@@ -1,0 +1,1083 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ParcelId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "TrackingNumber",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Acme.Ship"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Pickup",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderPacked",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "parcelId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ParcelId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "shippingAddress",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PickupBooked",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "trackingNumber",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "TrackingNumber"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PickupUnavailable",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "parcelId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ParcelId"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PickupBookingFailed",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reason",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "PickupBooking",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "PickupBooking",
+                  "runsAs": {
+                    "kind": "ReactionIdentitySyntax",
+                    "roles": [],
+                    "syntaxKind": "system"
+                  },
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "branches": [
+                            {
+                              "kind": "InvocationBranchSyntax",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PickupBooked",
+                                  "for": null,
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "trackingNumber",
+                                      "source": {
+                                        "kind": "InvocationValueExpressionSyntax",
+                                        "member": "trackingNumber",
+                                        "source": "result"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "returned"
+                            },
+                            {
+                              "kind": "InvocationBranchSyntax",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PickupUnavailable",
+                                  "for": null,
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "parcelId",
+                                      "source": {
+                                        "kind": "PathExpressionSyntax",
+                                        "path": "parcelId"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "NoCapacity"
+                            },
+                            {
+                              "kind": "InvocationBranchSyntax",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PickupBookingFailed",
+                                  "for": null,
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "reason",
+                                      "source": {
+                                        "kind": "InvocationValueExpressionSyntax",
+                                        "member": "reason",
+                                        "source": "failure"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "failed"
+                            }
+                          ],
+                          "command": "Carrier.BookPickup"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "OrderPacked"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "ParcelView",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "parcelId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ParcelId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenAbilityAnswers": [
+                    {
+                      "kind": "SpecificationAbilityAnswerSyntax",
+                      "ability": "Carrier.BookPickup",
+                      "answer": "returns",
+                      "outcome": null,
+                      "reason": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "trackingNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "TRK-1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "TheCarrierReturnsATrackingNumber",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PickupBooked",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "trackingNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "TRK-1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenInvocations": [
+                    {
+                      "kind": "SpecificationInvocationSyntax",
+                      "command": "Carrier.BookPickup",
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "parcelId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "address",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "1 Main Street"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "OrderPacked",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "parcelId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "shippingAddress",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "1 Main Street"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenAbilityAnswers": [
+                    {
+                      "kind": "SpecificationAbilityAnswerSyntax",
+                      "ability": "Carrier.BookPickup",
+                      "answer": "answers",
+                      "outcome": "NoCapacity",
+                      "reason": null,
+                      "values": []
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "TheCarrierHasNoCapacity",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PickupUnavailable",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "parcelId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "OrderPacked",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "parcelId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "shippingAddress",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "1 Main Street"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "Automation"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shipping"
+    }
+  ],
+  "personas": [],
+  "stateMachines": [
+    {
+      "kind": "StateMachineSyntax",
+      "description": null,
+      "follows": "ParcelView",
+      "name": "ParcelFlow",
+      "specifications": [],
+      "states": [
+        {
+          "kind": "StateSyntax",
+          "entering": [
+            {
+              "kind": "StateEntrySyntax",
+              "entryKind": "Invoke",
+              "mappings": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "channel",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "#dispatch"
+                  }
+                },
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "text",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "packed"
+                  }
+                }
+              ],
+              "target": "Chat.Post"
+            },
+            {
+              "kind": "StateEntrySyntax",
+              "code": {
+                "kind": "CodeBlockSyntax",
+                "code": "return Empty;",
+                "language": "csharp"
+              },
+              "entryKind": "Body",
+              "target": ""
+            }
+          ],
+          "isFinal": false,
+          "isInitial": true,
+          "name": "Packed",
+          "transitions": [
+            {
+              "kind": "StateTransitionSyntax",
+              "event": "PickupBooked",
+              "target": "Shipped",
+              "when": null
+            }
+          ]
+        },
+        {
+          "kind": "StateSyntax",
+          "entering": [],
+          "isFinal": true,
+          "isInitial": false,
+          "name": "Shipped",
+          "transitions": []
+        }
+      ]
+    }
+  ],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "abilities": [
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": null,
+          "effectClass": "idempotent",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "parcelId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ParcelId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "address",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            }
+          ],
+          "name": "BookPickup",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "NoCapacity"
+            }
+          ],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "trackingNumber",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "TrackingNumber"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": true,
+          "code": null,
+          "description": null,
+          "effectClass": "once",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "parcelId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ParcelId"
+              }
+            }
+          ],
+          "name": "Ask",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "approved"
+            },
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "rejected"
+            }
+          ],
+          "returns": []
+        }
+      ],
+      "description": null,
+      "name": "Carrier"
+    },
+    {
+      "kind": "SystemSyntax",
+      "abilities": [
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": null,
+          "effectClass": null,
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "channel",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "text",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            }
+          ],
+          "name": "Post",
+          "outcomes": [],
+          "returns": []
+        }
+      ],
+      "description": null,
+      "name": "Chat"
+    }
+  ],
+  "types": [],
+  "workflows": [
+    {
+      "kind": "WorkflowSyntax",
+      "description": null,
+      "name": "Pickup",
+      "nodes": [
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "BookPickup"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Manual",
+          "nodeKind": "Trigger",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": "Manual"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": 3,
+          "by": null,
+          "command": "Carrier.BookPickup",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Risk"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "NoCapacity",
+              "target": "Done"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "failed",
+              "target": "Done"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "mappings": [
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "parcelId",
+              "source": {
+                "kind": "PathExpressionSyntax",
+                "path": "parcelId"
+              }
+            },
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "address",
+              "source": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "x"
+              }
+            }
+          ],
+          "name": "BookPickup",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "code": {
+            "kind": "CodeBlockSyntax",
+            "code": "return new { score = 1 };",
+            "language": "csharp"
+          },
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Review"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Risk",
+          "nodeKind": "Compute",
+          "parallel": null,
+          "retryAfter": null,
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "score",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Int"
+              }
+            }
+          ],
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": "Anyone",
+          "command": null,
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "approved",
+              "target": "Tell"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "rejected",
+              "target": "Dec"
+            }
+          ],
+          "event": null,
+          "expiresAfter": {
+            "kind": "WorkflowDurationSyntax",
+            "amount": 2,
+            "unit": "Days"
+          },
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Review",
+          "nodeKind": "Approval",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null,
+          "via": "Carrier.Ask"
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "Chat.Post",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Dec"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "mappings": [
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "channel",
+              "source": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "#c"
+              }
+            },
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "text",
+              "source": {
+                "kind": "PathExpressionSyntax",
+                "path": "BookPickup.trackingNumber"
+              }
+            }
+          ],
+          "name": "Tell",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": null,
+          "condition": {
+            "kind": "ComparisonConditionSyntax",
+            "left": "Risk.score",
+            "operator": "GreaterThan",
+            "right": {
+              "kind": "LiteralExpressionSyntax",
+              "value": 3
+            }
+          },
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "a",
+              "target": "Done2"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "b",
+              "target": "Done"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "name": "Dec",
+          "nodeKind": "Decide",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "Chat.Post",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "Done"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "mappings": [
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "channel",
+              "source": {
+                "kind": "InvocationValueExpressionSyntax",
+                "member": "x",
+                "source": "trigger"
+              }
+            },
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "text",
+              "source": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "t"
+              }
+            }
+          ],
+          "name": "Done2",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "Chat.Post",
+          "condition": null,
+          "duration": null,
+          "edges": [],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "mappings": [
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "channel",
+              "source": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "c"
+              }
+            },
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "text",
+              "source": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "x"
+              }
+            }
+          ],
+          "name": "Done",
+          "nodeKind": "Action",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        }
+      ],
+      "specifications": [],
+      "subject": "ParcelView"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
-import { ExpressionSyntax, LiteralExpressionSyntax } from '../Syntax/Expressions';
+import { ExpressionSyntax, InvocationValueExpressionSyntax, LiteralExpressionSyntax } from '../Syntax/Expressions';
 import { ExactNumber, isExactNumberToken, parseExactNumber } from '../Syntax/ExactNumber';
 import { nativePattern, pattern } from '../Text/patterns';
 import { unescapeString } from '../Text/StringLiteral';
@@ -22,6 +22,17 @@ export const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 
 // unknown $context path, and an inline structured value that is not valid JSON.
 export const inlineJsonMessage = "Screenplay has no JSON values - write the object or list as an indented block: one 'member = value' line per member, one 'item' line per list element, and '<name> none' for an empty list";
 
+// Parses '$result.<field>', '$outcome', '$failure.<member>' and '$trigger.<value>'.
+export function tryParseInvocationValue(text: string, location: SourceLocation): InvocationValueExpressionSyntax | undefined {
+    for (const source of ['result', 'outcome', 'failure', 'trigger']) {
+        const prefix = `$${source}`;
+        if (text === prefix) return { kind: 'InvocationValueExpressionSyntax', source, member: '', location };
+        if (text.startsWith(`${prefix}.`) && text.length > prefix.length + 1) return { kind: 'InvocationValueExpressionSyntax', source, member: text.substring(prefix.length + 1), location };
+    }
+
+    return undefined;
+}
+
 export function parseModeledMappingSource(text: string, location: SourceLocation, context: ParserContext): ExpressionSyntax {
     return parseMappingSource(text, location, context, true);
 }
@@ -31,6 +42,8 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
     if (text === '$refusal' || text.startsWith('$refusal.')) {
         return { kind: 'RefusalExpressionSyntax', member: text === '$refusal' ? '' : text.substring('$refusal.'.length), location };
     }
+    const invocationValue = tryParseInvocationValue(text, location);
+    if (invocationValue !== undefined) return invocationValue;
     if (text === '$eventSourceId') {
         return { kind: 'EventSourceIdExpressionSyntax', location };
     }

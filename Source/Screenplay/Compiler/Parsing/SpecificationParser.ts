@@ -6,7 +6,7 @@ import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
-    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationAbilityAnswerSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
     SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
@@ -57,6 +57,8 @@ const givenCapturePrefix = pattern('^given\\s+capture\\b');
 const thenInvokesPrefix = pattern('^then\\s+invokes\\b');
 const thenInvokesPattern = pattern('^then\\s+invokes\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
 const givenGeneratedPrefix = pattern('^given\\s+generated\\b');
+const givenAbilityAnswerPrefix = pattern('^given\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*\\s+(?:returns|answers|fails)\\b');
+const givenAbilityAnswerPattern = pattern(`^given\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*)\\s+(returns|answers|fails)(?:\\s+([A-Za-z_]\\w*)|\\s+"(${stringBodyPattern})")?$`);
 const givenGeneratedPattern = pattern('^given\\s+generated\\s+([A-Z]\\w*)\\.([a-z_]\\w*)\\s*=(?!=|>)\\s*(.+)$');
 const givenGeneratedBlockPattern = pattern('^given\\s+generated\\s+([A-Z]\\w*)\\.([a-z_]\\w*)(?:\\s+(none|empty))?$');
 const whenClockPrefix = pattern('^when\\s+clock\\b');
@@ -101,6 +103,7 @@ interface SpecificationBody {
     givenTimeZone: SpecificationTimeZoneSyntax | null;
     givenCaptures: SpecificationCaptureSyntax[];
     givenGenerated?: SpecificationGeneratedValueSyntax[];
+    givenAbilityAnswers?: SpecificationAbilityAnswerSyntax[];
     whenClock: SpecificationClockSyntax | null;
     whenTrigger: SpecificationTriggerSyntax | null;
     whenCapture: SpecificationCaptureSyntax | null;
@@ -234,7 +237,7 @@ function parseOperationStep(context: ParserContext, line: SourceLine, body: Spec
 }
 
 // The Given state the rules read and write: a narrow view of the specification body, so null versus undefined and lazy initialization stay the body's own.
-type GivenState = Pick<SpecificationBody, 'given' | 'givenReadModels' | 'givenGraphs' | 'givenClock' | 'givenTimeZone' | 'givenCaptures' | 'givenGenerated' | 'givenCaller' | 'givenCallerPersona'>;
+type GivenState = Pick<SpecificationBody, 'given' | 'givenReadModels' | 'givenGraphs' | 'givenClock' | 'givenTimeZone' | 'givenCaptures' | 'givenGenerated' | 'givenAbilityAnswers' | 'givenCaller' | 'givenCallerPersona'>;
 
 interface GivenRule {
     readonly matches: (line: SourceLine) => boolean;
@@ -246,6 +249,7 @@ const givenRules: readonly GivenRule[] = [
     { matches: line => givenClockPrefix.test(line.content), parse: parseGivenClock },
     { matches: line => givenTimeZonePrefix.test(line.content), parse: parseGivenTimeZone },
     { matches: line => givenGeneratedPrefix.test(line.content), parse: parseGivenGeneratedValue },
+    { matches: line => givenAbilityAnswerPrefix.test(line.content), parse: parseGivenAbilityAnswer },
     { matches: line => givenCapturePrefix.test(line.content), parse: parseGivenCapture },
     { matches: line => line.content.startsWith('given caller'), parse: parseGivenCaller },
     { matches: line => givenGraphPrefix.test(line.content), parse: parseGivenGraph },
@@ -286,6 +290,28 @@ function parseGivenGeneratedValue(context: ParserContext, line: SourceLine, stat
     if (pinned !== null) {
         (state.givenGenerated ??= []).push(pinned);
     }
+}
+
+function parseGivenAbilityAnswer(context: ParserContext, line: SourceLine, state: GivenState): void {
+    const match = givenAbilityAnswerPattern.exec(line.content);
+    const answerKind = match?.[2];
+    if (match === null || (answerKind === 'returns' && (match[3] !== undefined || match[4] !== undefined)) ||
+        (answerKind === 'answers' && match[3] === undefined) || (answerKind === 'fails' && match[3] !== undefined)) {
+        context.error(DiagnosticCodes.InvalidSpecificationInvocation, `Invalid ability answer '${line.content}' - expected 'given <System>.<Ability> returns', 'answers <Outcome>' or 'fails ["reason"]'`, locationOf(line));
+        skipBody(context, line.indent);
+        return;
+    }
+    const values = answerKind === 'returns' ? parseValues(context, line) : [];
+    if (answerKind !== 'returns') skipBody(context, line.indent);
+    (state.givenAbilityAnswers ??= []).push({
+        kind: 'SpecificationAbilityAnswerSyntax',
+        ability: match[1],
+        answer: answerKind!,
+        outcome: match[3] ?? null,
+        reason: match[4] !== undefined ? unescapeString(match[4]) : null,
+        values,
+        location: locationOf(line),
+    });
 }
 
 function parseGivenCapture(context: ParserContext, line: SourceLine, state: GivenState): void {
@@ -816,13 +842,14 @@ function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecAr
 
 const lifecycleWhenStart = pattern('^when\\s+start\\s+(.+)$');
 const lifecycleOutcome = pattern('^outcome\\s+([A-Za-z_]\\w*)\\s+([A-Za-z_]\\w*)$');
-const lifecycleThen = pattern('^then\\s+(is|sends|invokes|starts|completes|fails\\s+at|waits\\s+at)(?:\\s+([A-Za-z_]\\w*))?$');
+const lifecycleThen = pattern('^then\\s+(is|sends|invokes|starts|completes|fails\\s+at|waits\\s+at)(?:\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?))?$');
 
 function lifecycleExpectation(line: SourceLine): LifecycleExpectationSyntax | undefined {
     const match = lifecycleThen.exec(line.content);
     if (match === null) return undefined;
     const word = match[1].replace(/\s+/g, ' ');
     const expectation: LifecycleExpectationKind = word === 'is' ? 'State' : word === 'sends' || word === 'invokes' ? 'Sends' : word === 'starts' ? 'Starts' : word === 'completes' ? 'Completes' : word === 'fails at' ? 'Fails' : 'Waits';
+    if (match[2]?.includes('.') === true && expectation !== 'Sends') return undefined;
     if ((match[2] !== undefined) === (expectation === 'Completes')) return undefined;
     return { kind: 'LifecycleExpectationSyntax', expectation, target: match[2] ?? null, location: locationOf(line) };
 }

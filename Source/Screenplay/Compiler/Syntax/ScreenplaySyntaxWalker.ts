@@ -32,10 +32,10 @@ import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
 import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
-import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
+import { InvocationBranchSyntax, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationExampleSyntax, SpecificationAbilityAnswerSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationInvocationSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -451,7 +451,12 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.transitions.forEach(node => this.visitStateTransition(node));
     }
 
-    visitStateEntry(syntax: StateEntrySyntax): void { this.visitNode(syntax); }
+    visitStateEntry(syntax: StateEntrySyntax): void {
+        this.visitNode(syntax);
+        syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
+        if (syntax.file != null) this.visitFileReference(syntax.file);
+        if (syntax.code != null) this.visitCodeBlock(syntax.code);
+    }
 
     visitStateTransition(syntax: StateTransitionSyntax): void {
         this.visitNode(syntax);
@@ -466,6 +471,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitWorkflowNode(syntax: WorkflowNodeSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
+        syntax.returns?.forEach(node => this.visitProperty(node));
+        if (syntax.file != null) this.visitFileReference(syntax.file);
+        if (syntax.code != null) this.visitCodeBlock(syntax.code);
         if (syntax.schedule !== null) this.visitNode(syntax.schedule);
         if (syntax.timeout !== null) this.visitNode(syntax.timeout);
         if (syntax.retryAfter !== null) this.visitNode(syntax.retryAfter);
@@ -496,6 +505,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.implementation !== null) this.visitImplementation(syntax.implementation);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+        syntax.invocations?.forEach(node => this.visitInvokes(node));
     }
     visitSpecificationOperationFailure(syntax: SpecificationOperationFailureSyntax): void { this.visitNode(syntax); }
     visitSpecificationCompensated(syntax: SpecificationCompensatedSyntax): void { this.visitNode(syntax); }
@@ -797,6 +807,12 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
         syntax.onRefused?.forEach(node => this.visitInvocationRefusal(node));
+        syntax.branches?.forEach(node => this.visitInvocationBranch(node));
+    }
+
+    visitInvocationBranch(syntax: InvocationBranchSyntax): void {
+        this.visitNode(syntax);
+        syntax.produces.forEach(node => this.visitProduces(node));
     }
 
     visitInvocationRefusal(syntax: InvocationRefusalSyntax): void {
@@ -982,6 +998,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.parameters?.forEach(node => { this.visitNode(node); this.visitTypeRef(node.type); });
         syntax.cases?.forEach(node => { this.visitNode(node); node.values.forEach(value => this.visitPropertyMapping(value)); });
+        syntax.givenAbilityAnswers?.forEach(node => this.visitSpecificationAbilityAnswer(node));
         if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
         if (syntax.givenTimeZone != null) this.visitSpecificationTimeZone(syntax.givenTimeZone);
         syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
@@ -1031,6 +1048,11 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.for !== null) this.visitExpression(syntax.for);
         if (syntax.stream != null) this.visitSpecificationStream(syntax.stream);
         if (syntax.noStream != null) this.visitSpecificationNoStream(syntax.noStream);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationAbilityAnswer(syntax: SpecificationAbilityAnswerSyntax): void {
+        this.visitNode(syntax);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
     }
 

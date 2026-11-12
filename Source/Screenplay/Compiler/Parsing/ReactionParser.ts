@@ -10,7 +10,7 @@ import { parseCondition } from './ConditionParser';
 import { ObserverFilterSyntax } from '../Syntax/ObserverFilterSyntax';
 import { parseObserverFilter } from './ObserverFilterParser';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
-import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
+import { DayOfWeek, IntervalUnit, InvocationBranchSyntax, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { nativePattern, pattern } from '../Text/patterns';
 import { ReactionIdentitySyntax } from '../Syntax/ReactionIdentitySyntax';
 import { isReactionIdentityLine, misplacedReactionIdentity, parseReactionIdentity } from './ReactionIdentityParser';
@@ -31,7 +31,8 @@ const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*)$');
 const everyPattern = pattern('^every\\s+(\\d+)\\s+(seconds?|minutes?|hours?|days?)$');
 const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\\s+(\\d{1,2})))?$');
 const clauseKeywords = new Set(['when', 'every', 'at']);
-const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*)$');
+const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*(?:\\.[A-Z]\\w*)?)$');
+const branchPattern = nativePattern('^on\\s+([A-Za-z_]\\w*)$');
 const mappingPattern = nativePattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const refusalPrefix = nativePattern('^on\\s+refused\\b(?=$|\\s+by\\b)');
 const refusalHeader = nativePattern('^on\\s+refused(?:\\s+by\\s+(validation|constraint|authorization)(?:\\s+([A-Za-z_]\\w*(?:\\.\\w+)*))?)?$');
@@ -131,37 +132,15 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                 produces.push(produced);
             }
         } else if (keyword === 'invokes') {
-            const match = invokesPattern.exec(child.content);
-            if (match === null) {
-                context.error(DiagnosticCodes.InvalidInvokesDeclaration, `Invalid invokes declaration '${child.content}' - expected 'invokes <Command>'`, locationOf(child));
-                context.skipBlock(child.indent);
-            } else {
+            if (invokesPattern.test(child.content)) {
                 const uses = new ParserContext(context.reader.fork(), context.path, context.languages);
                 uses.scope = context.scope;
                 uses.sourceOptions = context.sourceOptions;
                 collectInputUses(uses, child);
                 context.inputUses.push(...uses.inputUses);
-                const mappings: PropertyMappingSyntax[] = [];
-                const onRefused: InvocationRefusalSyntax[] = [];
-                for (let value = context.peekChild(child.indent); value !== undefined; value = context.peekChild(child.indent)) {
-                    context.reader.takeSignificant();
-                    if (isReactionIdentityLine(value)) {
-                        misplacedReactionIdentity(context, value);
-                        continue;
-                    }
-                    if (refusalPrefix.test(value.content)) {
-                        const refusal = parseRefusal(context, value);
-                        if (refusal !== undefined) onRefused.push(refusal);
-                        continue;
-                    }
-                    const mapped = mappingPattern.exec(value.content);
-                    const structured = mapped === null ? tryParseStructuredMapping(context.valueContext, value) : undefined;
-                    if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
-                    else if (structured !== undefined) mappings.push(structured);
-                    else context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid property mapping '${value.content}' - expected '<property> = <source>'`, locationOf(value), diagnosticText('text', value.content));
-                }
-                invokes.push({ kind: 'InvokesSyntax', command: match[1], mappings, onRefused, location: locationOf(child) });
             }
+            const invoked = parseInvokes(context, child, true);
+            if (invoked !== undefined) invokes.push(invoked);
         } else if (refusalPrefix.test(child.content)) {
             context.error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", locationOf(child));
             context.skipBlock(child.indent);
@@ -307,4 +286,62 @@ function unitOf(text: string): IntervalUnit {
         default:
             return 'Days';
     }
+}
+
+// The port of C# ReactionParser.ParseInvokes: 'invokes <Command>' or 'invokes <System>.<Ability>' with its mappings, refusal branches and result branches.
+export function parseInvokes(context: ParserContext, child: SourceLine, allowBranches: boolean): InvokesSyntax | undefined {
+    const match = invokesPattern.exec(child.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidInvokesDeclaration, `Invalid invokes declaration '${child.content}' - expected 'invokes <Command>' or 'invokes <System>.<Ability>'`, locationOf(child));
+        context.skipBlock(child.indent);
+        return undefined;
+    }
+        const mappings: PropertyMappingSyntax[] = [];
+        const onRefused: InvocationRefusalSyntax[] = [];
+    const branches: InvocationBranchSyntax[] = [];
+        for (let value = context.peekChild(child.indent); value !== undefined; value = context.peekChild(child.indent)) {
+            context.reader.takeSignificant();
+            if (isReactionIdentityLine(value)) {
+                misplacedReactionIdentity(context, value);
+                continue;
+            }
+            const branch = branchPattern.exec(value.content);
+        if (branch !== null && !branch[1].startsWith('refus')) {
+            if (!allowBranches) {
+                context.error(DiagnosticCodes.InvocationBranchesNotAllowed, `'${value.content}' is not allowed here - this invocation takes no result branches.`, locationOf(value));
+                context.skipBlock(value.indent);
+            } else branches.push(parseBranch(context, value, branch[1]));
+            continue;
+        }
+        if (refusalPrefix.test(value.content)) {
+                const refusal = parseRefusal(context, value);
+                if (refusal !== undefined) onRefused.push(refusal);
+                continue;
+            }
+            const mapped = mappingPattern.exec(value.content);
+            const structured = mapped === null ? tryParseStructuredMapping(context.valueContext, value) : undefined;
+            if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
+            else if (structured !== undefined) mappings.push(structured);
+            else context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid property mapping '${value.content}' - expected '<property> = <source>'`, locationOf(value), diagnosticText('text', value.content));
+        }
+    return { kind: 'InvokesSyntax', command: match[1], mappings, onRefused, branches, location: locationOf(child) };
+}
+
+function parseBranch(context: ParserContext, line: SourceLine, selector: string): InvocationBranchSyntax {
+    const produces: ProducesSyntax[] = [];
+    let reported = false;
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        if (firstWord(child.content) === 'produces') {
+            const produced = parseProduces(context, child);
+            if (produced !== undefined) produces.push(produced);
+            else reported = true;
+        } else {
+            context.error(DiagnosticCodes.InvalidRefusalBranchBody, `Expected 'produces <Event>' in the 'on ${selector}' branch.`, locationOf(child));
+            context.skipBlock(child.indent);
+            reported = true;
+        }
+    }
+    if (produces.length === 0 && !reported) context.error(DiagnosticCodes.InvalidRefusalBranchBody, `The 'on ${selector}' branch must produce an event.`, locationOf(line));
+    return { kind: 'InvocationBranchSyntax', selector, produces, location: locationOf(line) };
 }
