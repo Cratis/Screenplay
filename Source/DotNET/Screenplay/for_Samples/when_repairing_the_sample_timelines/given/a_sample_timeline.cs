@@ -11,19 +11,9 @@ namespace Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.give
 // One class per sample, so the samples' repairs run in parallel instead of one after another in a single theory.
 public class a_sample_timeline(Xunit.ITestOutputHelper output) : for_Samples.given.the_samples
 {
-    protected void RepairsOnlyTheFindingsInThePlanTable(string name, int findings, int repairable)
+    protected void OffersOnlyThePlannedRepairs(string name, int findings, int repairable)
     {
-        var folder = _samples.Single(sample => Path.GetFileName(sample) == name);
-        var documents = Directory.GetFiles(folder, "*.play", SearchOption.AllDirectories).Select(path =>
-            WorkspaceDocument.Create(Path.GetRelativePath(folder, path).Replace('/', '_'), PortablePlayPath.Parse(Path.GetRelativePath(folder, path)), File.ReadAllBytes(path))).ToArray();
-
-        // Source-only workspaces still have established document identities, independent of ESM admission.
-        var catalog = SemanticIdentityCatalog.Create(
-            ApplicationIdentity.Create(name),
-            [.. documents.Select(document => new DocumentIdentityAssignment(document.StableKey, document.Id, SemanticIdentityOrigin.Persisted))],
-            [],
-            []);
-        var workspace = ScreenplayWorkspace.Create(name, [.. documents], catalog);
+        var workspace = CreateWorkspace(name);
         var diagnostics = workspace.Compilation.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice || diagnostic.Code == DiagnosticCodes.TimelineCycleGroup).ToArray();
         diagnostics.Length.ShouldEqual(findings);
         var index = WorkspaceSyntaxIndex.Create(workspace);
@@ -66,7 +56,11 @@ public class a_sample_timeline(Xunit.ITestOutputHelper output) : for_Samples.giv
         }
 
         offered.ShouldEqual(repairable);
-        var remaining = workspace;
+    }
+
+    protected void RediscoversTheRepairsStepByStep(string name, int findings)
+    {
+        var remaining = CreateWorkspace(name);
         for (var step = 0; step < findings; step++)
         {
             var current = WorkspaceSyntaxIndex.Create(remaining);
@@ -82,6 +76,21 @@ public class a_sample_timeline(Xunit.ITestOutputHelper output) : for_Samples.giv
         }
 
         remaining.Compilation.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice).All(diagnostic => Expected(name, diagnostic) is null).ShouldBeTrue();
+    }
+
+    ScreenplayWorkspace CreateWorkspace(string name)
+    {
+        var folder = _samples.Single(sample => Path.GetFileName(sample) == name);
+        var documents = Directory.GetFiles(folder, "*.play", SearchOption.AllDirectories).Select(path =>
+            WorkspaceDocument.Create(Path.GetRelativePath(folder, path).Replace('/', '_'), PortablePlayPath.Parse(Path.GetRelativePath(folder, path)), File.ReadAllBytes(path))).ToArray();
+
+        // Source-only workspaces still have established document identities, independent of ESM admission.
+        var catalog = SemanticIdentityCatalog.Create(
+            ApplicationIdentity.Create(name),
+            [.. documents.Select(document => new DocumentIdentityAssignment(document.StableKey, document.Id, SemanticIdentityOrigin.Persisted))],
+            [],
+            []);
+        return ScreenplayWorkspace.Create(name, [.. documents], catalog);
     }
 
     static string? Expected(string sample, Diagnostic diagnostic)

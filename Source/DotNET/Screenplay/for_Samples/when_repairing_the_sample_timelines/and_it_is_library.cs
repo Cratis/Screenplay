@@ -5,5 +5,5 @@ namespace Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines;
 
 public class and_it_is_library(Xunit.ITestOutputHelper output) : given.a_sample_timeline(output)
 {
-    [Fact] void should_repair_only_the_findings_in_the_plan_table() => RepairsOnlyTheFindingsInThePlanTable("Library", 2, 2);
+    [Fact] void should_offer_only_the_planned_repairs() => OffersOnlyThePlannedRepairs("Library", 2, 2);
 }
