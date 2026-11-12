@@ -159,5 +159,6 @@ This page is the first slice of the extension design in [decision 0159](https://
 
 - [Operations and external systems](operations.md) describes slice-owned operation intent that uses a system.
 - [Reactions](reactions.md), [workflows](workflows.md) and [state machines](statemachines.md) are where invocations belong.
+- [Extension contracts](extension-contracts.md) is the reference for the contract file, the `extension` reference, the lock and restore.
 - [Environments](environments.md#system-settings-and-named-secrets) covers extension settings, named secrets and activation.
 - [Grammar](grammar.md) holds the productions.

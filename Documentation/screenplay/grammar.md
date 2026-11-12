@@ -122,6 +122,18 @@ SecretDecl     = "secret", Ident, NL,
                  [ INDENT, { DescriptionDecl }, DEDENT ] ;     (* top level; named once, never holds a value *)
 ExtensionDecl  = "extension", String, [ "version", Token ], NL ;
 SettingDecl    = "setting", Ident, ( "from", "secret", Ident | "=", Literal ), NL ;
+(* The contract file of an extension package is its own document: extension-contracts.md *)
+ContractFile   = "extension", Ident, NL,
+                 INDENT, { "display", "name", String, NL | DescriptionLine | "icon", String, NL
+                         | "image", String, NL, [ INDENT, "caption", String, NL, DEDENT ]
+                         | "requires", ( "stage" | "screenplay" ), String, NL | "requires", "platform", Ident, NL
+                         | "requires", "runtime", Token, Token, NL | ActivationDecl
+                         | "setting", Ident, [ "public" | "secret" ], NL | AbilityDecl | TriggerDecl | ComponentDecl
+                         | "backend", "runtime", Token, Token, "assembly", String, NL | "frontend", String, NL }, DEDENT ;
+ComponentDecl  = "component", Ident, NL,
+                 INDENT, { "kind", ( "react" | "mount" | "screenplay" ), NL | "platform", { Ident }, NL
+                         | "placeholder", String, NL | "property", Ident, TypeRef, NL
+                         | "raises", Ident, NL, [ INDENT, { Ident, TypeRef, NL }, DEDENT ] | "invokes", Ident, NL }, DEDENT ;
 ActivationDecl = "activation", ( "always"
                  | "on", "demand", [ "idle", "after", Integer, ( "second" | "minute" | "hour" | "day" ), "s"? ] ), NL ;
                  (* realization metadata, outside the ESM bytes; see environments.md *)
@@ -1831,6 +1843,7 @@ TriggerClause  = TriggerSource, NL,
                    DEDENT ] ;
 
 TriggerSource  = "when", Ident                      (* event, declared or registered trigger *)
+               | "when", Ident, ".", Ident          (* a trigger of a system's extension; extension-contracts.md *)
                | "every", Integer, IntervalUnit     (* every 15 minutes                      *)
                | "at", Time, [ "on", ( Weekday | "day", Integer ) ] ;
 
