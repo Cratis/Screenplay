@@ -78,8 +78,21 @@ An interaction trigger is never declared. It exists only as the `on` clause of a
 | `on event <Event>` | a modeled domain event is observed | the event's payload |
 | `on interval <n> <unit>` | a timer elapses | — |
 | `on <ApplicationTrigger>` | a declared application trigger fires | that trigger's declared payload |
+| `on <signal>` | an [extension component](screens.md#extension-components) raises a signal its contract declares | the signal's typed values, read as `signal.<value>` |
+| `on <System>.<Trigger>` | an extension raises a trigger its contract declares | that trigger's payload |
 
 Use `on event` to respond to a modeled domain event, or `on <ApplicationTrigger>` for a signal declared with `trigger <Name>`. That application trigger has a payload shape and can also be consumed by a `reaction ... when`; see [Triggers](triggers.md). You do not declare the interaction's `on` clause separately.
+
+Under an [extension component](screens.md#extension-components), `on <signal>` handles a signal the component's contract `raises`, written in camel case, and the actions below it read the signal's values as `signal.<value>`:
+
+```screenplay
+component Payments.PaymentForm payment
+  on succeeded
+    execute ConfirmPayment
+      with paymentIntentId from signal.paymentIntentId
+```
+
+A name the contract does not raise is `PLAY1116`, and a value the signal does not carry is `PLAY1117`. `on <System>.<Trigger>` handles a trigger the extension's contract offers anywhere on a screen, qualified by the system as in a reaction; one the contract does not offer is `PLAY1112`.
 
 Built-in names such as `click`, `submit` and `enter` are reserved only inside an `on` clause. They remain ordinary identifiers elsewhere, but an application trigger cannot use one of those names: `on <Name>` would resolve to the built-in interaction instead of the declared trigger.
 

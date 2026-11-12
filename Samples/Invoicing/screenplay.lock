@@ -5,6 +5,6 @@ extension "ghcr.io/cratis/extension-mail"
   range "2"
   resolved "ghcr.io/cratis/extension-mail"
   version 2.1.0
-  digest sha256:13c80dcd4a66d597361ee1cd67a7f51489635691b3a8f33066b9894d024c2dfe
-  contract sha256:13c80dcd4a66d597361ee1cd67a7f51489635691b3a8f33066b9894d024c2dfe
+  digest sha256:a4851656a07745a6b2e6ace05a02df09a96a2786b03f298125c8197e96f476f7
+  contract sha256:a4851656a07745a6b2e6ace05a02df09a96a2786b03f298125c8197e96f476f7
   publisher "https://github.com/cratis"

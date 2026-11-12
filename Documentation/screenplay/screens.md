@@ -398,6 +398,48 @@ A binding may carry `mode oneWay`, `mode twoWay`, `null propagate`, `null clear`
 
 These nodes are authoring syntax. The compilers preserve them, the MCP schema exposes them, and Stage decides whether a package/profile combination can execute them. An older renderer must reject unsupported components, packages or binding kinds explicitly instead of silently dropping the modeled UI.
 
+## Extension components
+
+A screen places a component an [extension](extension-contracts.md) provides through the system that names the extension, not through the package. Write `component <System>.<Component> <name>`: the part before the dot is a `system` with an `extension` line, the part after it a `component` in that extension's contract. Swapping a compatible provider changes nothing on the screen.
+
+```screenplay
+system Payments
+  extension "cratis/stripe" version 2
+
+module Orders
+  feature Checkout
+    slice StateChange ConfirmPayment
+      event PaymentConfirmed
+        paymentIntentId String
+      command ConfirmPayment
+        paymentIntentId String
+        produces PaymentConfirmed
+    slice StateView Checkout
+      screen Checkout
+        component Payments.PaymentForm payment
+          property amount = "10"
+          on succeeded
+            execute ConfirmPayment
+              with paymentIntentId from signal.paymentIntentId
+          on failed
+            notify warning "The payment failed"
+```
+
+The component takes the same `property` lines as a [package component](#package-components-and-typed-bindings), and they are checked against the contract:
+
+| You write | Checked against | Reported as |
+| --- | --- | --- |
+| `component <System>.<Component>` | The `component` lines of the system's contract. | `PLAY1114` when the contract declares no such component. |
+| `property <name> ...` | The contract component's typed `property` lines. | `PLAY1115` for a property the contract does not declare. |
+| `on <signal>` | The signals the component `raises`. | `PLAY1116` for a signal it does not raise. |
+| `with <input> from signal.<value>` | The typed values the handled signal carries. | `PLAY1117` for a value the signal does not carry, or when the interaction handles no signal. |
+| `on <System>.<Trigger>` | The `trigger` lines of the contract, as for a [reaction](triggers.md#how-a-name-resolves). | `PLAY1112` for a trigger the contract does not offer. |
+| The component's `platform` lines | The `target platform` of every [ui profile](ui-profile.md#extension-components). | `PLAY1118`, a warning, for a platform a profile targets that the component does not support. |
+
+`on <signal>` takes a camel-case name; `signal.<value>` reads a value the signal carries, as `item.<field>` reads the activated row. The component, its properties and its signal values are only checked once the extension's contract is restored (see [restore](extension-contracts.md#the-cache-vendoring-and-restore)); a contract that is not restored is reported where the system names the extension.
+
+Placing an extension component marks the screen as needing that extension. The [UI contract](ui-contract.md#extension-components) lists the extensions each screen needs, so a host can start the extension's backend before the first call from the browser. In the executable model, a screen that places an extension component is an ESM v52 screen.
+
 ## Navigation metadata
 
 A navigation can carry an authored route and named parameters without turning a screen into a router implementation:
