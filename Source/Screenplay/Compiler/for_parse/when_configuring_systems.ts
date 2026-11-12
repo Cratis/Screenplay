@@ -8,7 +8,6 @@ const source = `secret Key
   description "The key"
 
 system Mailer
-  ability Send
   extension "ghcr.io/x/mail" version 2
   setting apiKey from secret Key
   setting sender = "Acme"

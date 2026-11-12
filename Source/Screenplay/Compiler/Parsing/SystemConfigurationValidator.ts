@@ -18,6 +18,9 @@ export function validateSystemConfiguration(application: ApplicationSyntax, cont
     const used = new Set<string>();
     for (const system of application.systems ?? []) {
         const mapped = new Set<string>();
+        if (system.extension !== undefined && system.abilities.length > 0) {
+            context.error(DiagnosticCodes.SystemAbilitiesBesideExtension, `System '${system.name}' names extension '${system.extension.reference}' and declares abilities; the extension's contract is the only source of its abilities.`, system.abilities[0].location);
+        }
         for (const setting of system.settings ?? []) {
             if (mapped.has(setting.name)) {
                 context.error(DiagnosticCodes.DuplicateSystemSetting, `System '${system.name}' maps setting '${setting.name}' more than once.`, setting.location);
