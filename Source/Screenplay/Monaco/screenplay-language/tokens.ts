@@ -90,6 +90,14 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             // An ability sits under a system. Its effect class is a keyword; 'answers later' is contextual, so an input called answers keeps its name.
             [/^(\s*)(ability)(\s+)([A-Z]\w*)(\s+)(safe|idempotent|once)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
             [/^(\s*)(ability)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            // Extension contract lines are contextual: a property called icon or kind keeps its name.
+            [/^(\s*)(display)(\s+)(name)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'string']],
+            [/^(\s*)(icon|image|caption|placeholder|frontend)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'string']],
+            [/^(\s*)(requires)(\s+)(stage|screenplay|platform|runtime)(\s+)(.+?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'string']],
+            [/^(\s*)(setting)(\s+)([A-Za-z_]\w*)(\s+)(public|secret)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword']],
+            [/^(\s*)(component)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(kind)(\s+)(react|mount|screenplay)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(backend)(\s+)(runtime)(\s+)(\S+)(\s+)(\S+)(\s+)(assembly)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'identifier', 'white', 'number', 'white', 'keyword', 'white', 'string']],
             // System configuration lines are contextual, so a property called setting keeps its name.
             [/^(\s*)(extension)(\s+)(".*?")(?:(\s+)(version)(\s+)(\S+))?(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'string', 'white', 'keyword', 'white', 'number']],
             [/^(\s*)(setting)(\s+)([A-Za-z_]\w*)(\s+)(from)(\s+)(secret)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword', 'white', 'keyword', 'white', 'type.identifier']],
