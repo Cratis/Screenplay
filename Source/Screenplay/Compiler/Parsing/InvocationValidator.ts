@@ -3,6 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { TypeRefSyntax } from '../Syntax/Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
@@ -83,6 +84,9 @@ function validateTrigger(trigger: ReactionTriggerSyntax, abilities: ReadonlyMap<
             if (ability === undefined) continue;
             if (ability.answersLater) {
                 context.error(DiagnosticCodes.AnswersLaterInReaction, `'${invocation.command}' answers later; a reaction has no place to wait - invoke it from a workflow.`, invocation.location);
+            }
+            if (dependencySourcesOf(trigger)?.implementation === true) {
+                context.error(DiagnosticCodes.InvocationWithAttachedBody, `A trigger that invokes '${invocation.command}' cannot also carry an attached body.`, invocation.location);
             }
         }
         const seen = new Set<string>();
