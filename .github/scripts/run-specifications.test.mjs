@@ -283,3 +283,12 @@ test('net10.0 compatibility shards run a shared build without rebuilding', () =>
     assert.match(shards, /download-artifact/);
     assert.doesNotMatch(shards, /dotnet build|yarn/);
 });
+
+test('package validation builds and packs only the packable projects plus the canonical vector specifications', () => {
+    const job = workflow.match(/\n  package-validation:\n([\s\S]*?)\n  # Preserve the original check name/)[1];
+    assert.match(job, /<IsPackable>true<\/IsPackable>/);
+    assert.match(job, /Screenplay\.CanonicalVectors\.Specs\.csproj/);
+    assert.match(job, /dotnet pack "\$project" --no-build/);
+    assert.doesNotMatch(job, /dotnet build --configuration Release/);
+    assert.ok(job.indexOf('- name: Select packable projects') < job.indexOf('- name: Build Release'));
+});

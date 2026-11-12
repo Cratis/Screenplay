@@ -365,8 +365,30 @@ jobs:
       # The version is a sentinel, not a release. Package validation compares assembly versions, and one
       # below the baseline is rejected on that alone before the API surface is ever looked at - so it has to
       # be set on the build, since the pack below reuses what this produces.
+      # Only what is packed or run here is built: every packable project plus the canonical vector specs, in
+      # parallel with shared libraries compiled once. The other specification projects only build in Debug.
+      - name: Select packable projects
+        run: |
+          git ls-files 'Source/DotNET/*.csproj' | xargs grep -l '<IsPackable>true</IsPackable>' | sort > "$RUNNER_TEMP/packable.txt"
+          test -s "$RUNNER_TEMP/packable.txt"
+          cat "$RUNNER_TEMP/packable.txt"
+
       - name: Build Release
-        run: dotnet build --configuration Release -p:Version=9999.0.0
+        run: |
+          aggregate="$RUNNER_TEMP/release-projects.proj"
+          # shellcheck disable=SC2016
+          {
+            echo '<Project><PropertyGroup><Shared>Configuration=Release;Version=9999.0.0</Shared></PropertyGroup><ItemGroup>'
+            while IFS= read -r project; do
+              echo "<Release Include=\"$GITHUB_WORKSPACE/$project\" />"
+            done < <(cat "$RUNNER_TEMP/packable.txt"; echo Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj)
+            echo '</ItemGroup>'
+            echo '<Target Name="RestoreAll"><MSBuild Projects="@(Release)" Targets="Restore" Properties="$(Shared)" BuildInParallel="true" /></Target>'
+            echo '<Target Name="BuildAll"><MSBuild Projects="@(Release)" Targets="Build" Properties="$(Shared);NoRestore=true" BuildInParallel="true" /></Target>'
+            echo '</Project>'
+          } > "$aggregate"
+          dotnet msbuild "$aggregate" -nologo -t:RestoreAll
+          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll
 
       - name: Run canonical vector specifications on net11.0
         run: bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Release
@@ -375,7 +397,10 @@ jobs:
       # main - which is how eight versions came to be tagged with no package on NuGet. Packing here puts the
       # break in the pull request that causes it, which is what Directory.Build.props already claims happens.
       - name: Pack
-        run: dotnet pack --no-build --configuration Release -o ./Artifacts/NuGet -p:Version=9999.0.0
+        run: |
+          while IFS= read -r project; do
+            dotnet pack "$project" --no-build --configuration Release -o ./Artifacts/NuGet -p:Version=9999.0.0
+          done < "$RUNNER_TEMP/packable.txt"
 
       - name: Verify context package dependencies
         run: python3 Source/DotNET/Screenplay.Contexts/verify-package.py ./Artifacts/NuGet 9999.0.0
