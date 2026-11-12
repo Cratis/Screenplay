@@ -64,7 +64,53 @@ public sealed record UiSceneComponent(
     /// Gets the icon, when the component has one.
     /// </summary>
     public string? Icon { get; init; }
+
+    /// <summary>
+    /// Gets what the extension's contract says about the component, when it comes from an extension.
+    /// </summary>
+    public UiExtensionComponent? Extension { get; init; }
 }
+
+/// <summary>
+/// A component placed through a system's extension: resolved through the system, so a compatible provider can replace the package.
+/// </summary>
+/// <param name="System">The system that names the extension.</param>
+/// <param name="Reference">The extension reference the system writes.</param>
+/// <param name="Component">The component name in the extension's contract.</param>
+public sealed record UiExtensionComponent(string System, string Reference, string Component)
+{
+    /// <summary>
+    /// Gets how the contract says the component is delivered: <c>react</c>, <c>mount</c> or <c>screenplay</c>.
+    /// </summary>
+    public string? Kind { get; init; }
+
+    /// <summary>
+    /// Gets the platforms the contract says the component supports.
+    /// </summary>
+    public IReadOnlyList<string>? Platforms { get; init; }
+
+    /// <summary>
+    /// Gets the package-relative path of the placeholder a design tool draws in place of the component.
+    /// </summary>
+    public string? Placeholder { get; init; }
+
+    /// <summary>
+    /// Gets the static HTML of the placeholder, when the restored package holds it and it is safe to draw.
+    /// </summary>
+    public string? PlaceholderHtml { get; init; }
+
+    /// <summary>
+    /// Gets the signals the screen handles with <c>on</c>, in declaration order.
+    /// </summary>
+    public IReadOnlyList<string>? Handles { get; init; }
+}
+
+/// <summary>
+/// An extension a screen needs, so a host can activate its backend ahead of use.
+/// </summary>
+/// <param name="System">The system that names the extension.</param>
+/// <param name="Reference">The extension reference the system writes.</param>
+public sealed record UiExtensionNeed(string System, string Reference);
 
 /// <summary>
 /// A toolbar a screen declares.

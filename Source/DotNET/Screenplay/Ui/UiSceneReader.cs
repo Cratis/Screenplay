@@ -28,7 +28,8 @@ sealed class UiSceneReader
     /// Adds a component the screen places.
     /// </summary>
     /// <param name="component">The component.</param>
-    internal void Component(ScreenComponentSyntax component)
+    /// <param name="extension">What the extension's contract says about the component, when it comes from one.</param>
+    internal void Component(ScreenComponentSyntax component, UiExtensionComponent? extension = null)
     {
         var properties = new SortedDictionary<string, JsonNode?>(StringComparer.Ordinal);
         foreach (var property in component.Properties)
@@ -42,7 +43,8 @@ sealed class UiSceneReader
         {
             StableId = component.StableId,
             Context = component.Context is { } context ? Binding(context) : null,
-            Icon = component.Icon
+            Icon = component.Icon,
+            Extension = extension
         });
     }
 

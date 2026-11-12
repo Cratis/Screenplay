@@ -25,6 +25,23 @@ public static partial class ExtensionPlaceholder
         return found;
     }
 
+    /// <summary>
+    /// Reads a placeholder the restored package holds, when it lies inside the package folder and is safe to draw.
+    /// </summary>
+    /// <param name="folder">The folder that holds the restored package.</param>
+    /// <param name="path">The package-relative path the contract declares.</param>
+    /// <returns>The static HTML, or <see langword="null"/> when the package does not hold it or it is not static.</returns>
+    public static string? TryRead(string folder, string path)
+    {
+        const int maximumBytes = 256 * 1024;
+        var root = Path.GetFullPath(folder);
+        var file = Path.GetFullPath(Path.Combine(root, path));
+        if (Path.IsPathRooted(path) || !file.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal) || !File.Exists(file)) return null;
+        if (new FileInfo(file).Length > maximumBytes) return null;
+        var html = File.ReadAllText(file);
+        return Violations(html).Count == 0 ? html : null;
+    }
+
     [GeneratedRegex(@"<\s*(script|iframe|object|embed)\b", RegexOptions.IgnoreCase | RegexOptions.NonBacktracking)]
     private static partial Regex ScriptRegex();
 

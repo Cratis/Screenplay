@@ -28,6 +28,11 @@ public enum ExtensionResolutionMode
 public sealed record ExtensionResolution(ImmutableDictionary<string, ExtensionContract> Contracts, ImmutableArray<Diagnostic> Diagnostics)
 {
     /// <summary>
+    /// Gets the folder that holds each restored contract, by the reference the model writes. A package's own files, such as placeholders, sit beside it.
+    /// </summary>
+    public ImmutableDictionary<string, string> Folders { get; init; } = ImmutableDictionary<string, string>.Empty;
+
+    /// <summary>
     /// Gets a resolution that found nothing and reported nothing.
     /// </summary>
     public static ExtensionResolution None { get; } = new(ImmutableDictionary<string, ExtensionContract>.Empty, []);
@@ -159,6 +164,7 @@ public class ExtensionContractResolver(ExtensionCache cache, ExtensionResolution
         caches ??= [cache];
         diagnostics ??= ImmutableArray.CreateBuilder<Diagnostic>();
         var contracts = ImmutableDictionary.CreateBuilder<string, ExtensionContract>(StringComparer.Ordinal);
+        var folders = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
         foreach (var reference in references)
         {
             var entry = extensionLock.Find(reference.Reference);
@@ -194,9 +200,10 @@ public class ExtensionContractResolver(ExtensionCache cache, ExtensionResolution
             }
 
             contracts[reference.Reference] = parsed.Value;
+            if (caches.FirstOrDefault(candidate => candidate.TryRead(entry.Digest) is not null) is { } holder && Path.GetDirectoryName(holder.PathOf(entry.Digest)) is { } folder) folders[reference.Reference] = folder;
         }
 
-        return new(contracts.ToImmutable(), diagnostics.ToImmutable());
+        return new(contracts.ToImmutable(), diagnostics.ToImmutable()) { Folders = folders.ToImmutable() };
     }
 
     Diagnostic Unresolved(string code, string message, SourceLocation location) =>

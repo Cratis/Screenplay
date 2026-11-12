@@ -17,6 +17,7 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
     readonly List<UiNavigation> _navigation = [];
     readonly Dictionary<string, List<UiField>> _fields = new(StringComparer.Ordinal);
     readonly UiSceneReader _scene = new();
+    readonly Dictionary<string, UiExtensionNeed> _extensions = new(StringComparer.Ordinal);
     string? _title;
     string? _template;
 
@@ -36,7 +37,8 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
         {
             SliceId = index.SliceId(slice),
             Description = screen.Description,
-            Scene = _scene.Build()
+            Scene = _scene.Build(),
+            Extensions = _extensions.Count == 0 ? null : [.. _extensions.Values]
         };
     }
 
@@ -92,7 +94,9 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
             case ScreenShowSyntax show:
                 return new("embed", []) { Shows = show.Screen, Name = show.Element };
             case ScreenComponentSyntax component:
-                _scene.Component(component);
+                var extension = index.Extensions.Component(component);
+                _scene.Component(component, extension);
+                if (extension is not null) _extensions.TryAdd(extension.System, index.Extensions.Need(extension.System)!);
                 Behaviors(component.Behaviors, null);
                 return new("component", [.. component.Slots.Select(slot => Container("slot", slot.Name, slot.Directives))]) { Name = component.Name };
             case ScreenToolbarSyntax toolbar:
