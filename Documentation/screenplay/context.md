@@ -116,6 +116,41 @@ Declare at most one block per application folder, across all its files, as with 
 
 The printer places `context` immediately after an application `time zone` declaration when one exists. The block declares names, not runtime values or time-zone defaults. See the [grammar](grammar.md) and [context diagnostics](diagnostics.md#application-declared-context-members).
 
+## Provided values
+
+A `provide` line adds a named value to `$context`. Write it in the body of the application, a module, a feature or a slice; everything beneath that level reads it as `$context.<name>`.
+
+```screenplay
+module Fleet
+  provide region String from "Nordics"
+
+  feature DataQuality
+    provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+    slice StateView Vessels
+      query VesselByKey => Vessel optional
+        by vesselId Uuid
+
+      readmodel Vessel
+        vesselId Uuid
+
+      event VesselRegistered
+        vesselId Uuid
+
+      projection Vessels => Vessel
+        from VesselRegistered key vesselId
+          vesselId = vesselId
+```
+
+The source is one of:
+
+- `query <Query> [by <expression>, ...]` - a snapshot read model query, run once per request.
+- `host` - a value of the declared name and type that the host supplies.
+- a literal or an expression over other `$context` values.
+- a `file` reference or an inline code block under the line, which compile against `ProvideContext`.
+
+Inheritance is by name and the nearest declaration wins; an override keeps the type. The built-in names `tenant`, `identity`, `causedBy`, `causation`, `occurred`, `audiences`, `command` and `arguments` are reserved. Provided values may not read each other in a cycle, and an observable query cannot be a source. A value declared with `optional` may be absent; any other value is required. Executable use is not admitted yet and reports `PLAY0268` ([#1300](https://github.com/Cratis/Screenplay/issues/1300)).
+
 ## Implementation wrapper support
 
 | Owner | Authoring wrapper | Executable contract |

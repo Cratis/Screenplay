@@ -25,6 +25,8 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
+        ("`provide`", 1300,
+            [("Documentation/screenplay/fixtures/provide.play", [typeof(ProvideSyntax), typeof(QueryProvideSourceSyntax), typeof(HostProvideSourceSyntax), typeof(ValueProvideSourceSyntax), typeof(CodeProvideSourceSyntax), typeof(FileProvideSourceSyntax)])]),
         ("`compute`, `entering` bodies, approval `via`, operation-phase `invokes`, `$trigger` values", 1252,
             [("Documentation/screenplay/fixtures/ability-invocations.play", [])])
     ];

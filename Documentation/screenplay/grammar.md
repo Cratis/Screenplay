@@ -24,7 +24,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl | ProvideDecl
                | PersonaDecl | UserDecl | StorylineDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | SecretDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
@@ -291,6 +291,16 @@ PurposeDecl    = "purpose", Ident, NL,
                  | "transfer", QuotedString, "safeguard", QuotedString, NL
                  | "erasure", "exception", ErasureException, NL }, DEDENT ] ;
 PurposeReference = "purpose", Ident, NL ;
+ProvideDecl    = "provide", Ident, TypeRef,
+                 ( "from", "query", QualifiedName, [ "by", Expression, { ",", Expression } ], NL
+                 | "from", "host", NL
+                 | "from", ( Literal | Expression ), NL
+                 | NL, INDENT, ( InlineBlock | FileDirective ), DEDENT ) ;
+(* Adds a named value to $context for everything beneath the application, module, feature or slice
+   that declares it. Inheritance is by name and the nearest declaration wins; an override keeps the
+   type. The built-in names tenant, identity, causedBy, causation, occurred, audiences, command and
+   arguments are reserved. A query source must be a keyed snapshot query whose result type matches.
+   Provided values may not read each other in a cycle. Executable use reports PLAY0268 (#1300). *)
 PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
                | "publicTask" | "legitimateInterests" ;
 PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
@@ -738,7 +748,7 @@ SampleLiteral  = StringLiteral | Number | "true" | "false" | "null" ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | PurposeReference
+                   { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -1034,7 +1044,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | PurposeReference
+                   { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -1053,7 +1063,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | SlicePlacementDecl | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl | SlicePlacementDecl | FileDirective | SliceBody }, DEDENT ;
 
 (* A linked copy of an event or read model declared in another slice, drawn again on this slice of the
    timeline. Presentation only: the executable model never sees it. PLAY0953 malformed, PLAY0954 unknown
