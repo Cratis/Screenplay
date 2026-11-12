@@ -98,7 +98,7 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                         word.endColumn,
                     );
                     return {
-                        suggestions: contextVariableEntries(symbols).map((entry) => ({
+                        suggestions: contextVariableEntries(symbols, lines, lineIndex).map((entry) => ({
                             ...snippet(entry),
                             range: variableRange,
                         })),

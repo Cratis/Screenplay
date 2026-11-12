@@ -7,6 +7,7 @@ import { validateInlineEvents } from './inline-event-validation';
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
 import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { providedValueAt } from './provided-values';
 import { eventAnalysisSource } from './event-analysis-source';
 import { resolveEventContextPath } from './event-context';
 import {
@@ -353,7 +354,8 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         // Every $context. path must name something CommandContext or QueryContext carries.
         for (const path of line.match(/\$context\.[\w.]+/g) ?? []) {
             const segments = path.substring('$context.'.length).split('.');
-            if (!contextRoots.includes(segments[0])) {
+            // A provide in scope (or the reserved audiences) names the root, so it is not unknown.
+            if (!contextRoots.includes(segments[0]) && segments[0] !== 'audiences' && !providedValueAt(lines, index, segments[0])) {
                 issues.push(
                     tokenIssue(
                         'warning',

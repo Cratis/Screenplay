@@ -4,6 +4,7 @@
 import { actionSubjectHover } from './action-subject-authoring';
 import { continuationResponseHover } from './continuation-responses';
 import { reactionReferenceAt } from './reaction-authoring';
+import { providedValueHover } from './provided-values';
 import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { eventSourceHover } from './event-source-authoring';
@@ -115,6 +116,8 @@ export function hoverContent(
                 const detail = symbolsForBuffer(lines, application).identityDetails?.find(detail => detail.name === name);
                 if (detail) return `**$identity.${detail.name}** — ${detail.type}. Declared caller detail; authoring metadata only, not executable until admitted (#600).`;
             }
+            const provided = providedValueHover(lines, lineIndex, variable);
+            if (provided) return provided;
             const doc =
                 contextVariableDocs[variable] ??
                 (variable.startsWith('$env') ? contextVariableDocs['$env'] : undefined);

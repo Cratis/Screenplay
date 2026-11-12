@@ -73,7 +73,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
                 });
             }
             case 'contextVariables':
-                return contextVariableEntries(symbols).map((entry) => {
+                return contextVariableEntries(symbols, lines, position.line).map((entry) => {
                     const item = snippetItem(entry);
                     item.range = new vscode.Range(
                         position.line,
