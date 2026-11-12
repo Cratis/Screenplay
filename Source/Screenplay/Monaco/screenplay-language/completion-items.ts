@@ -4,6 +4,8 @@
 import { parse } from '@cratis/screenplay-compiler';
 import type { DocumentSymbols } from './symbols';
 import { documentationItem } from './documentation-item';
+import { provideItems } from './provide-items';
+import { providedValuesAt } from './provided-values';
 import { purposeReferenceItem } from './purpose-items';
 
 import { eventContextPaths } from './event-context';
@@ -46,9 +48,10 @@ export const identityItems: CompletionEntry[] = [
     { label: 'detail from file', insertText: '${1:detail} ${2:Type}\n    file ${3:Path}', documentation: 'One file source; no refresh or cache directives.' },
 ];
 
-export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntry[] {
+export function contextVariableEntries(symbols: DocumentSymbols, lines: string[] = [], lineIndex = 0): CompletionEntry[] {
     const details = [...new Map((symbols.identityDetails ?? []).map(detail => [detail.name, detail])).values()];
-    return [...contextVariableItems, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
+    const provided = providedValuesAt(lines, lineIndex).map(value => ({ label: `$context.${value.name}`, insertText: `\\$context.${value.name}`, detail: value.type, documentation: `Provided at the ${value.level} level${value.isOpaque ? '; opaque, the model never evaluates it' : ''}.` }));
+    return [...contextVariableItems, ...provided, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
 }
 
 export function calendarContextEntries(lines: string[], prefix = ''): CompletionEntry[] {
@@ -66,6 +69,7 @@ export const applicationContextItems: CompletionEntry[] = [
 ];
 
 export const topLevelItems: CompletionEntry[] = [
+    ...provideItems,
     { label: 'secret', insertText: 'secret ${1:Name}\n    description "${2:what the secret is for}"', documentation: 'A named secret, declared once. The model never holds its value; a system setting maps to it with from secret.' },
     { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. At most one block per application.' },
     { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar using an IANA zone. Never falls back to the machine zone.' },
@@ -206,6 +210,7 @@ export const typeItems: CompletionEntry[] = [
 
 export const sliceItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...provideItems,
     documentationItem,
     { label: 'shows event', insertText: 'shows event ${1:EventName}', documentation: 'A linked copy of an event declared in another slice.' },
     { label: 'shows readmodel', insertText: 'shows readmodel ${1:ReadModelName}', documentation: 'A linked copy of a read model declared in another slice.' },
@@ -548,6 +553,7 @@ export const contextVariableItems: CompletionEntry[] = [
     })),
     { label: '$context.occurred', insertText: '$context.occurred', documentation: 'When the command or query was received.' },
     { label: '$context.tenant', insertText: '$context.tenant', documentation: 'The tenant the command or query is executing for.' },
+    { label: '$context.audiences', insertText: '$context.audiences', documentation: 'The audiences the caller belongs to, supplied by the host.' },
     { label: '$context.command.', insertText: '$context.command.${1:property}', documentation: 'A property of the command being handled.' },
     { label: '$context.arguments.', insertText: '$context.arguments.${1:name}', documentation: 'An argument of the query being performed.' },
     { label: '$context.causedBy.subject', insertText: '$context.causedBy.subject', documentation: 'Subject of the identity that caused the command or query.' },
@@ -580,5 +586,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label.startsWith('shows ') || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label.startsWith('provide ') || item.label.startsWith('shows ') || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
 }

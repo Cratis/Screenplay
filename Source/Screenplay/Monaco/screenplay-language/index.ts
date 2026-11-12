@@ -161,6 +161,8 @@ export { eventContextMemberAt, eventContextMembers, eventContextMembersAfter, ev
 export type { EventContextMember, EventContextPath } from './event-context';
 export { contextVariableEntries, contextVariableItems, producesItems, specificationStepItems } from './completion-items';
 export type { CompletionEntry } from './completion-items';
+export { providedValueAt, providedValuesAt } from './provided-values';
+export type { ProvidedValueDeclaration } from './provided-values';
 export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { responseTokens, responseTokenTypes } from './response-tokens';

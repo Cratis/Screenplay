@@ -52,6 +52,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "reaction-refusals-redelivery",
         "specification-streams",
         "public-events",
+        "provide",
         "public-events-admission",
         "event-translations",
         "read-model-keys",

@@ -66,6 +66,7 @@ internal static partial class SliceParser
         var reducers = new List<ReducerSyntax>();
         var templates = new List<TemplateAssignmentSyntax>();
         var purposes = new List<PurposeReferenceSyntax>();
+        var provides = new List<ProvideSyntax>();
         var placements = new List<SlicePlacementSyntax>();
         FileReferenceSyntax? file = null;
 
@@ -103,6 +104,9 @@ internal static partial class SliceParser
                     break;
                 case "purpose":
                     PurposeParser.ParseReference(context, line, purposes);
+                    break;
+                case "provide":
+                    ProvideParser.Parse(context, line, provides);
                     break;
                 case "shows":
                     if (SlicePlacementParser.Parse(context, line) is { } placement) placements.Add(placement);
@@ -205,6 +209,7 @@ internal static partial class SliceParser
             DescriptionRawLength = descriptionRawLength,
             Templates = templates,
             Purposes = purposes,
+            Provides = provides,
             Placements = placements,
             Graphs = graphs,
             GraphProjections = graphProjections,

@@ -15,6 +15,8 @@ import { parseDocumentation } from './DocumentationParser';
 import { parseDependsOn } from './DependsOnParser';
 import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
+import { parseProvide } from './ProvideParser';
+import { ProvideSyntax } from '../Syntax/ProvideSyntax';
 import { reportFeatureToolbar } from './ScreenParser';
 import { addOutletOverride, isNavigationRegion, reportNavigationRegion } from './OutletParser';
 import type { OutletSyntax } from '../Syntax/Outlets';
@@ -31,7 +33,7 @@ export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
-export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, provide, import, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a module - written beneath a 'module' header, or at the top level of a file imported
 // into the module. The port of the C# ModuleBody.
@@ -42,6 +44,7 @@ export class ModuleBody {
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
+    readonly #provides: ProvideSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -84,6 +87,9 @@ export class ModuleBody {
                 if (this.#authorizationDepthExceeded) recordAuthorizationRefusal(this.#fileImports);
                 return true;
             }
+            case 'provide':
+                parseProvide(context, line, this.#provides);
+                return true;
             case 'import':
                 parseFileImport(context, line, this.#fileImports);
                 return true;
@@ -133,6 +139,7 @@ export class ModuleBody {
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
             purposes: this.#purposes,
+            ...(this.#provides.length > 0 ? { provides: this.#provides } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             features: this.#features,
             examples: this.#examples,

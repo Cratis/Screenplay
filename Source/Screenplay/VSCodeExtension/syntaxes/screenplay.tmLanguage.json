@@ -922,7 +922,7 @@
                     }
                 },
                 {
-                    "match": "^\\s*(domain|import|concept|type|policy|persona|user|storyline|sink|sticky|authentication|onboarding|identity|module|layout|theme|ui|sample|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|graph|node|edge|trigger|screen|dialog|form|contribute|navigation|constraint|specification|example|seed|behavior|exposure|instance)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|user|storyline|sink|sticky|authentication|onboarding|identity|provide|module|layout|theme|ui|sample|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|graph|node|edge|trigger|screen|dialog|form|contribute|navigation|constraint|specification|example|seed|behavior|exposure|instance)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }
@@ -967,6 +967,11 @@
                 {
                     "match": "\\bnot\\b(?=\\s+(?:role\\b|claim\\b|authenticated\\b|not\\b|\\())",
                     "name": "keyword.operator.logical.screenplay"
+                },
+                {
+                    "comment": "A provide value the host supplies.",
+                    "match": "(?<=\\sfrom )host(?=\\s*(?://.*)?$)",
+                    "name": "keyword.other.screenplay"
                 },
                 {
                     "match": "^(\\s*)(context)(\\s+)(from)\\b",

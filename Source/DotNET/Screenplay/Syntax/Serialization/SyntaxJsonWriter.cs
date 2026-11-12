@@ -49,6 +49,7 @@ internal static class SyntaxJsonWriter
             if (node is Specifications.SpecificationErrorSyntax && member.Name == "caseValue" && value is null) continue;
             if (((node is SliceSyntax && (member.Name == "graphs" || member.Name == "graphProjections" || member.Name == "graphQueries")) || (node is Specifications.SpecificationSyntax && (member.Name == "givenGraphs" || member.Name == "thenGraphs"))) && value is IEnumerable graphs && !graphs.Cast<object>().Any()) continue;
             if (member.Name == "purposes" && value is IEnumerable purposes && !purposes.Cast<object>().Any()) continue;
+            if (member.Name == "provides" && value is IEnumerable provides && !provides.Cast<object>().Any()) continue;
             if (OmitSampleRows(node, member.Name, value)) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
             if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;

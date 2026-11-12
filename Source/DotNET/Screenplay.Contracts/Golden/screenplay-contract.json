@@ -32,6 +32,7 @@
     "at",
     "atomic",
     "attempts",
+    "audiences",
     "authenticated",
     "authentication",
     "authorization",
@@ -223,6 +224,7 @@
     "hide",
     "hint",
     "home",
+    "host",
     "hour",
     "hours",
     "icon",
@@ -379,6 +381,7 @@
     "propagate",
     "property",
     "protected",
+    "provide",
     "provider",
     "public",
     "publicHealth",
@@ -580,6 +583,7 @@
     "onboarding",
     "persona",
     "policy",
+    "provide",
     "purpose",
     "reaction",
     "runs",
@@ -39548,6 +39552,958 @@
       ]
     },
     {
+      "name": "provide",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "provide region String from host\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0268",
+          "diagnostics": [
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 22,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 23,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 24,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 25,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 26,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 27,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 28,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 29,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 30,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 31,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 32,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 33,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 34,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 35,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 36,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 37,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 38,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 40,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 41,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 42,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 43,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 44,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 45,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 46,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 47,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 48,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 49,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 50,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 51,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 52,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            }
+          ]
+        },
+        {
+          "source": "module M\n  provide region String from host\n  feature F\n    slice StateChange S\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0268",
+          "diagnostics": [
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 11,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 12,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 13,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 14,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 15,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 16,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 17,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 18,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 19,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 20,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 21,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 22,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 23,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 24,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 25,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 26,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 27,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 28,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 29,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 30,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 31,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 32,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 33,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 34,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 35,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 36,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 37,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 38,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 40,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 41,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 42,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 43,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 44,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 45,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 46,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 47,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 48,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 49,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 50,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 51,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            },
+            {
+              "esmVersion": 52,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 11,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 12,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 13,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 14,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 15,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 16,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 17,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 18,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 19,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 20,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 21,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 22,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 23,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 24,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 25,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 26,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 27,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 28,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 29,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 30,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 31,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 32,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 33,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 34,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 35,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 36,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 37,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 38,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 40,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 41,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 42,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 43,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 44,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 45,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 46,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 47,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 48,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 49,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 50,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 51,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        },
+        {
+          "esmVersion": 52,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/1300"
+        }
+      ]
+    },
+    {
       "name": "public",
       "parseStatus": "accepted",
       "probes": [
@@ -75087,6 +76043,127 @@
         "warning"
       ],
       "title": "An extension component does not support a platform a ui profile targets.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1119",
+      "name": "InvalidProvideDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide line is not provide \u003Cname\u003E \u003CType\u003E [optional] from \u003Csource\u003E.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1120",
+      "name": "InvalidProvideSource",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide source is not query, host, a literal, an expression over $context values, a file reference or an inline code block.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1121",
+      "name": "ProvideWithoutSource",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide has neither from \u003Csource\u003E nor a file reference or inline code block beneath it.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1122",
+      "name": "ProvideSourceWithBody",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide that states from \u003Csource\u003E also has a body beneath it.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1123",
+      "name": "DuplicateProvide",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The same value is provided twice at one level (application, module, feature or slice).",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1124",
+      "name": "ReservedProvideName",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide redeclares a built-in $context name, which no level may change.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1125",
+      "name": "ProvideTypeMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide overrides a value declared higher up with a different type; an override keeps the type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1126",
+      "name": "UnknownProvideQuery",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide ... from query names a query that is not declared, or is declared more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1127",
+      "name": "ObservableProvideQuery",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A provide ... from query names an observable query; a value is resolved once per request.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1128",
+      "name": "ProvideQueryTypeMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The type of a provide ... from query differs from what the query returns, or the query key is missing.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1129",
+      "name": "ProvideCycle",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Provided values read each other in a cycle.",
       "reserved": false,
       "retired": false
     }

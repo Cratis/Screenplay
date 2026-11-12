@@ -1,0 +1,31 @@
+// Provided context values (#1300): parses, prints and is reported, but no executable model version carries it yet.
+provide region String from "Nordics"
+provide roles String[] from $context.identity.roles
+
+module Fleet
+  provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+  provide entitlements String from host
+
+  feature DataQuality
+    provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+    slice StateView Vessels
+      provide score Int
+        file Score.cs
+      provide limit Int
+        ```csharp
+        return 10;
+        ```
+
+      query VesselByKey => Vessel optional
+        by vesselId Uuid
+
+      readmodel Vessel
+        vesselId Uuid
+
+      event VesselRegistered
+        vesselId Uuid
+
+      projection Vessels => Vessel
+        from VesselRegistered key vesselId
+          vesselId = vesselId

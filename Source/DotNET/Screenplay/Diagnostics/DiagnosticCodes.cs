@@ -4459,4 +4459,59 @@ public static class DiagnosticCodes
     /// A <c>clear</c> line names a target with a dynamic dictionary key; clearing would keep the entry with no value, so the entry is removed with <c>remove</c>.
     /// </summary>
     public const string ClearDynamicKey = "PLAY0963";
+
+    /// <summary>
+    /// A <c>provide</c> line is not <c>provide &lt;name&gt; &lt;Type&gt; [optional] from &lt;source&gt;</c>.
+    /// </summary>
+    public const string InvalidProvideDeclaration = "PLAY1119";
+
+    /// <summary>
+    /// A <c>provide</c> source is not <c>query</c>, <c>host</c>, a literal, an expression over <c>$context</c> values, a <c>file</c> reference or an inline code block.
+    /// </summary>
+    public const string InvalidProvideSource = "PLAY1120";
+
+    /// <summary>
+    /// A <c>provide</c> has neither <c>from &lt;source&gt;</c> nor a <c>file</c> reference or inline code block beneath it.
+    /// </summary>
+    public const string ProvideWithoutSource = "PLAY1121";
+
+    /// <summary>
+    /// A <c>provide</c> that states <c>from &lt;source&gt;</c> also has a body beneath it.
+    /// </summary>
+    public const string ProvideSourceWithBody = "PLAY1122";
+
+    /// <summary>
+    /// The same value is provided twice at one level (application, module, feature or slice).
+    /// </summary>
+    public const string DuplicateProvide = "PLAY1123";
+
+    /// <summary>
+    /// A <c>provide</c> redeclares a built-in <c>$context</c> name, which no level may change.
+    /// </summary>
+    public const string ReservedProvideName = "PLAY1124";
+
+    /// <summary>
+    /// A <c>provide</c> overrides a value declared higher up with a different type; an override keeps the type.
+    /// </summary>
+    public const string ProvideTypeMismatch = "PLAY1125";
+
+    /// <summary>
+    /// A <c>provide ... from query</c> names a query that is not declared, or is declared more than once.
+    /// </summary>
+    public const string UnknownProvideQuery = "PLAY1126";
+
+    /// <summary>
+    /// A <c>provide ... from query</c> names an observable query; a value is resolved once per request.
+    /// </summary>
+    public const string ObservableProvideQuery = "PLAY1127";
+
+    /// <summary>
+    /// The type of a <c>provide ... from query</c> differs from what the query returns, or the query key is missing.
+    /// </summary>
+    public const string ProvideQueryTypeMismatch = "PLAY1128";
+
+    /// <summary>
+    /// Provided values read each other in a cycle.
+    /// </summary>
+    public const string ProvideCycle = "PLAY1129";
 }

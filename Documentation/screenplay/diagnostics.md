@@ -1864,6 +1864,17 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1116` | Error | An `on` line of an extension component names a signal its contract does not `raise`. |
 | `PLAY1117` | Error | A binding reads `signal.<value>` where the handled signal does not carry that value, or where the interaction handles no signal. |
 | `PLAY1118` | Warning | An extension component does not support a platform a `ui profile` targets. |
+| `PLAY1119` | Error | A `provide` line is not `provide <name> <Type> [optional] from <source>`. |
+| `PLAY1120` | Error | A `provide` source is not `query`, `host`, a literal, an expression over `$context` values, a `file` reference or an inline code block. |
+| `PLAY1121` | Error | A `provide` has neither `from <source>` nor a `file` reference or inline code block beneath it. |
+| `PLAY1122` | Error | A `provide` that states `from <source>` also has a body beneath it. |
+| `PLAY1123` | Error | The same value is provided twice at one level (application, module, feature or slice). |
+| `PLAY1124` | Error | A `provide` redeclares a built-in `$context` name, which no level may change. |
+| `PLAY1125` | Error | A `provide` overrides a value declared higher up with a different type; an override keeps the type. |
+| `PLAY1126` | Error | A `provide ... from query` names a query that is not declared, or is declared more than once. |
+| `PLAY1127` | Error | A `provide ... from query` names an observable query; a value is resolved once per request. |
+| `PLAY1128` | Error | The type of a `provide ... from query` differs from what the query returns, or the query key is missing or surplus. |
+| `PLAY1129` | Error | Provided values read each other in a cycle. |
 
 ## Screen visuals and slice placements
 

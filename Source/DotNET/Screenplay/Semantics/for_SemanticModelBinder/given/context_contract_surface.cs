@@ -48,7 +48,9 @@ public static class context_contract_surface
         }
 
         var derived = descriptor.Members.Where(member => member.IsDerived).ToArray();
-        var properties = context.GetProperties().Where(property => !parameters.Any(parameter => parameter.Name == property.Name)).ToArray();
+        // 'Values' carries what a 'provide' adds to $context. The executable model refuses 'provide' until an ESM revision
+        // admits it (#1300), so the typed-contexts vector does not describe it yet and the runtime-only member is left out.
+        var properties = context.GetProperties().Where(property => property.Name != "Values" && !parameters.Any(parameter => parameter.Name == property.Name)).ToArray();
         properties.Length.ShouldEqual(derived.Length);
         for (var index = 0; index < properties.Length; index++)
         {

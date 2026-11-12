@@ -1,0 +1,6 @@
+// The Fleet module provides the vessel its slices read, from the host, unless a slice supplies its own.
+module Fleet
+  provide vessel Vessel optional from host
+
+  import "Vessels.play"
+  import "VesselDetails.play"

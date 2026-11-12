@@ -24,6 +24,7 @@ export const keywordDocs: Record<string, string> = {
     optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
+    provide: 'Declares a named value that `$context.<name>` carries for everything beneath this level (application, module, feature or slice). The nearest declaration wins; an override must keep the type. It reads from a query (`from query Q by ...`), a literal, `$context`, `$identity` or template value, or the host (`from host`). Host, code and file sources are opaque: the model never evaluates them. A preview construct (#1300), not yet admitted by any ESM version.',
     purpose: 'A report-only processing declaration (GDPR Art. 30), referenced on modules, features and slices. Coverage is their union, not an authorization gate. Generated declarations are not legal advice.',
     basis: 'One declared Art. 6(1) basis: consent, contract, legalObligation, vitalInterests, publicTask or legitimateInterests; an optional quoted reference may follow.',
     interest: 'The legitimate-interest statement for basis legitimateInterests (Art. 13(1)(d)).',
@@ -304,6 +305,7 @@ export const attributeDocs: Record<string, string> = {
 export const contextVariableDocs: Record<string, string> = {
     '$context.timeZone': 'Execution-context IANA time zone. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. Not an arbitrary condition path. Selection order: command calendar, scenario zone, execution-context zone, application default.',
     '$context.occurred': 'When the command or query was received.',
+    '$context.audiences': 'The audiences the caller belongs to, supplied by the host. A reserved name: a `provide` cannot declare it.',
     '$context.tenant': 'The tenant the command or query is executing for.',
     '$context.command': 'The command being handled, shaped by its `command` declaration.',
     '$context.arguments': 'The arguments of the query being performed.',

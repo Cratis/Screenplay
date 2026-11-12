@@ -134,6 +134,15 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     public void Add(Diagnostic diagnostic) => _diagnostics.Add(diagnostic);
 
     /// <summary>
+    /// Withdraws the diagnostics of a code reported at a location, once a later check knows the report was premature.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="location">The <see cref="SourceLocation"/> the diagnostics were reported at.</param>
+    /// <param name="quoted">The text the message must quote, so a sibling report at the same location stays.</param>
+    public void Withdraw(string code, SourceLocation location, string quoted) =>
+        _diagnostics.RemoveAll(diagnostic => diagnostic.Code == code && diagnostic.Location == location && diagnostic.Message.Contains(quoted, StringComparison.Ordinal));
+
+    /// <summary>
     /// Keeps a form an earlier Screenplay version wrote, after it has been reported, so a migration can rewrite it.
     /// </summary>
     /// <param name="form">The <see cref="RetiredForm"/> read.</param>

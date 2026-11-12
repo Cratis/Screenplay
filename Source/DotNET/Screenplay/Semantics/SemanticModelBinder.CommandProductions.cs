@@ -57,6 +57,15 @@ public sealed partial class SemanticModelBinder
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#481")));
             }
 
+            if (node is ProvideSyntax)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "A 'provide' adds a value to $context that no supported executable model (ESM) version carries yet (#1300).",
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#1300")));
+            }
+
             if (node is SliceSyntax { Direction: not null })
             {
                 UsesPublicEvents = true;

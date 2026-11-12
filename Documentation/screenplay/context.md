@@ -116,6 +116,87 @@ Declare at most one block per application folder, across all its files, as with 
 
 The printer places `context` immediately after an application `time zone` declaration when one exists. The block declares names, not runtime values or time-zone defaults. See the [grammar](grammar.md) and [context diagnostics](diagnostics.md#application-declared-context-members).
 
+## Provided values
+
+A `provide` line adds a named value to `$context`. Write it in the body of the application, a module, a feature or a slice; everything beneath that level reads it as `$context.<name>`.
+
+```screenplay
+module Fleet
+  provide region String from "Nordics"
+
+  feature DataQuality
+    provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+    slice StateView Vessels
+      query VesselByKey => Vessel optional
+        by vesselId Uuid
+
+      readmodel Vessel
+        vesselId Uuid
+
+      event VesselRegistered
+        vesselId Uuid
+
+      projection Vessels => Vessel
+        from VesselRegistered key vesselId
+          vesselId = vesselId
+```
+
+The source is one of:
+
+- `query <Query> [by <expression>, ...]` - a snapshot read model query, run once per request.
+- `host` - a value of the declared name and type that the host supplies.
+- a literal or an expression over other `$context` values.
+- a `file` reference or an inline code block under the line, which compile against `ProvideContext`.
+
+Inheritance is by name and the nearest declaration wins; an override keeps the type. The built-in names `tenant`, `identity`, `causedBy`, `causation`, `occurred`, `audiences`, `command` and `arguments` are reserved. Provided values may not read each other in a cycle, and an observable query cannot be a source. A value declared with `optional` may be absent; any other value is required. Executable use is not admitted yet and reports `PLAY0268` ([#1300](https://github.com/Cratis/Screenplay/issues/1300)).
+
+### Levels, inheritance and override
+
+There are four levels: application, module, feature (features nest) and slice. A slice can state the key for its own job - `$context.command.vesselId` for a command, `$context.arguments.vesselId` for a query - which a feature-level provider cannot do for both. A value declared at one level is visible beneath it; a nearer declaration of the same name wins and must keep the type (`PLAY1125`). Declaring the same name twice at one level is `PLAY1123`.
+
+```screenplay
+module Fleet
+  provide vessel Vessel optional from host
+
+  feature DataQuality
+    slice StateView Vessels
+      provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+      query VesselByKey => Vessel optional
+        by vesselId Uuid
+
+      readmodel Vessel
+        vesselId Uuid
+
+      event VesselRegistered
+        vesselId Uuid
+
+      projection Vessels => Vessel
+        from VesselRegistered key vesselId
+          vesselId = vesselId
+```
+
+The slice reads the query result; every other slice of the module reads the host value.
+
+### Reserved names, cycles and sources
+
+The built-in names `tenant`, `identity`, `causedBy`, `causation`, `occurred`, `audiences`, `command` and `arguments` cannot be provided (`PLAY1124`). A query source must be a declared, keyed snapshot query whose result type matches the provided type (`PLAY1126`, `PLAY1127`, `PLAY1128`). Values that read each other in a cycle are `PLAY1129`. A `$context.<name>` that no level provides is refused like any unknown context path.
+
+### Absence and failure
+
+Absence - a missing key, no matching row, a host value that was not supplied - is unknown, not an error. A gate that reads an unknown value denies, because unknown never opens a gate. A `produces` mapping refuses the command, so no event is appended. Code sees `null` for an `optional` value; a value declared without `optional` is required, and the request is refused with a clear reason when it is absent.
+
+Failure - the store is unavailable, a code body throws, a timeout - fails the request as a retryable, logged error. It is never reported as a denial, so an outage is not shown as "not available".
+
+### Reading provided values in code
+
+Every context the code behind a model receives - `CommandContext`, `QueryContext`, `RuleContext`, `PolicyContext` and `ProvideContext` - has a `Values` property holding the provided values by name (`context.Values.Vessel`), empty when the model provides none, and a typed `ValuesAs<T>()`. In `ProvideContext`, `Values` holds only the values already resolved for this request that this one reads.
+
+### The reference evaluator
+
+`host`, inline code and `file` sources are opaque: the reference evaluator cannot run them. A gate that reads one is reported as unsupported, never as allowed or denied, as for an opaque policy predicate.
+
 ## Implementation wrapper support
 
 | Owner | Authoring wrapper | Executable contract |

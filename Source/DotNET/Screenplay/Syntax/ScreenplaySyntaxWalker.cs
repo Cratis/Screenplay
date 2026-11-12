@@ -93,6 +93,7 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         foreach (var purpose in syntax.Purposes) VisitPurpose(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
 
         foreach (var policy in syntax.Policies)
         {
@@ -257,6 +258,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
@@ -669,6 +671,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
@@ -713,6 +716,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
         foreach (var placement in syntax.Placements) VisitNode(placement);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
 
