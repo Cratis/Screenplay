@@ -14,12 +14,12 @@ on:
 # carry inline specs in Debug; discovering only *.Specs.csproj would miss them.
 # Split patterns select ordered, disjoint groups of classes plus a final remainder. Each group
 # excludes every earlier pattern, so even overlapping patterns select every spec exactly once.
-# Compatibility splits retain their existing jobs; net11.0 reuses binaries and can split more cheaply.
+# Both runtimes build once and fan out to run-only shards; the compatibility split may differ from the net11.0 one.
 env:
   SPEC_SHARDS: >-
     {"include":[
       {"name":"compiler","split":["Cratis.Screenplay.Semantics*","Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring*","Cratis.Screenplay.Workspaces*"],"compatibility-split":"Cratis.Screenplay.Semantics*","projects":["Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj"]},
-      {"name":"mcp","split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow*"],"compatibility-split":null,"projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
+      {"name":"mcp","split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow*"],"compatibility-split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow*"],"projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
       {"name":"contracts-tool-vectors","projects":[
         "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
         "Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj",
@@ -41,6 +41,7 @@ jobs:
     outputs:
       spec-matrix: ${{ steps.specs.outputs.matrix }}
       compatibility-matrix: ${{ steps.specs.outputs.compatibility-matrix }}
+      compatibility-projects: ${{ steps.specs.outputs.compatibility-projects }}
 
     steps:
       - name: Checkout code
@@ -105,6 +106,8 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               output.write(f'matrix={json.dumps(expand(matrix), separators=(",", ":"))}\n')
               output.write(f'compatibility-matrix={json.dumps(expand(compatibility), separators=(",", ":"))}\n')
+              projects = sorted({project for shard in compatibility['include'] for project in shard['projects']})
+              output.write(f'compatibility-projects={json.dumps(projects, separators=(",", ":"))}\n')
           PY
 
   dotnet-build:
@@ -205,14 +208,13 @@ jobs:
             bash .github/scripts/run-specifications.sh "$project" Debug ${runner_args[@]+"${runner_args[@]}"}
           done < <(jq -r '.[]' <<< "$PROJECTS")
 
-  compatibility-specs:
-    name: Specs net10.0 (${{ matrix.name }})
+  # The net10.0 library specifications compile from source, never from the net11.0 binaries, so they get
+  # their own single build. The shards below only run what it produced, as the net11.0 shards do.
+  dotnet-build-net10:
+    name: Build net10.0 library specifications
     needs: shards
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.shards.outputs.compatibility-matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -233,32 +235,86 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
-      # The net10.0 build compiles from source and never used the net11.0 binaries, only the board page the
-      # MCP server embeds, so the MCP shard builds that page itself instead of waiting for the Debug build.
+      # The MCP server embeds the event model board page.
       - name: Setup node
-        if: matrix.name == 'mcp'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.2
           package-manager-cache: false
 
       - name: Yarn install
-        if: matrix.name == 'mcp'
         run: yarn
 
       - name: Build event model board
-        if: matrix.name == 'mcp'
         run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 
       - name: Build net10.0 library specifications
         env:
-          PROJECTS: ${{ toJSON(matrix.projects) }}
+          PROJECTS: ${{ needs.shards.outputs.compatibility-projects }}
         run: |
-          while IFS= read -r project; do
-            dotnet build "$project" --configuration Debug -p:SpecTargetFramework=net10.0
-          done < <(jq -r '.[]' <<< "$PROJECTS")
+          # One aggregate project builds every spec project in parallel and compiles shared libraries once.
+          aggregate="$RUNNER_TEMP/net10-specifications.proj"
+          # shellcheck disable=SC2016
+          {
+            echo '<Project><PropertyGroup><Shared>Configuration=Debug;SpecTargetFramework=net10.0</Shared></PropertyGroup><ItemGroup>'
+            while IFS= read -r project; do
+              echo "<Spec Include=\"$GITHUB_WORKSPACE/$project\" />"
+            done < <(jq -r '.[]' <<< "$PROJECTS")
+            echo '</ItemGroup>'
+            echo '<Target Name="RestoreAll"><MSBuild Projects="@(Spec)" Targets="Restore" Properties="$(Shared)" BuildInParallel="true" /></Target>'
+            echo '<Target Name="BuildAll"><MSBuild Projects="@(Spec)" Targets="Build" Properties="$(Shared);NoRestore=true" BuildInParallel="true" /></Target>'
+            echo '</Project>'
+          } > "$aggregate"
+          dotnet msbuild "$aggregate" -nologo -t:RestoreAll
+          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll
 
-      - name: Run net10.0 library specifications
+      # Only the net10.0 output is archived; the net11.0 binaries are a separate artifact.
+      - name: Archive build output
+        run: |
+          {
+            find Source/DotNET -type d -path '*/bin/Debug/net10.0' -print0
+            # The published-reader vector runs this net11.0 probe, which the specification project builds.
+            find Source/DotNET -type d -path '*/LegacyReader/bin/Debug/net11.0' -print0
+            find Source/Screenplay -type d -name dist -not -path '*/node_modules/*' -print0
+          } | tar --null -czf build-output-net10.tar.gz -T -
+
+      - name: Upload build output
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dotnet-build-output-net10
+          path: build-output-net10.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  compatibility-specs:
+    name: Specs net10.0 (${{ matrix.name }})
+    needs: [dotnet-build-net10, shards]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.shards.outputs.compatibility-matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
+      - name: Download build output
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dotnet-build-output-net10
+
+      - name: Extract build output
+        run: tar -xzf build-output-net10.tar.gz
+
+      - name: Run net10.0 library specifications without rebuilding
         env:
           PROJECTS: ${{ toJSON(matrix.projects) }}
           RUNNER_ARGS: ${{ toJSON(matrix.args) }}
@@ -328,11 +384,11 @@ jobs:
   # turn the aggregate green. Release/package validation runs alongside the specs.
   build:
     if: always()
-    needs: [shards, dotnet-build, specs, compatibility-specs, package-validation]
+    needs: [shards, dotnet-build, dotnet-build-net10, specs, compatibility-specs, package-validation]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Require all build, spec and package checks to pass
         env:
-          SUCCESS: ${{ needs.shards.result == 'success' && needs.dotnet-build.result == 'success' && needs.specs.result == 'success' && needs.compatibility-specs.result == 'success' && needs.package-validation.result == 'success' }}
+          SUCCESS: ${{ needs.shards.result == 'success' && needs.dotnet-build.result == 'success' && needs.dotnet-build-net10.result == 'success' && needs.specs.result == 'success' && needs.compatibility-specs.result == 'success' && needs.package-validation.result == 'success' }}
         run: test "$SUCCESS" = true
