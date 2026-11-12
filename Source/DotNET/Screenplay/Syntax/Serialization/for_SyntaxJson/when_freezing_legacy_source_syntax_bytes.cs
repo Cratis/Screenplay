@@ -87,6 +87,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "event-source-capture-keys",
         "then-invokes",
         "lifecycles",
+        "extension-references",
     ];
 
     [Fact]

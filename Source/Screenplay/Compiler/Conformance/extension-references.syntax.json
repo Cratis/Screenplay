@@ -1,0 +1,167 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Checkout",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "SettlementRecorded",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "paymentIntentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RecordSettlement",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "Settle",
+                  "runsAs": null,
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "SettlementRecorded",
+                          "for": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "paymentIntentId"
+                          },
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "paymentIntentId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "paymentIntentId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Payments.PaymentSucceeded"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Automation"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Orders"
+    }
+  ],
+  "personas": [],
+  "secrets": [
+    {
+      "kind": "SecretSyntax",
+      "description": "The live Stripe API key",
+      "name": "StripeSecretKey"
+    }
+  ],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "activation": {
+        "kind": "SystemActivationSyntax",
+        "always": false,
+        "idleAmount": 10,
+        "idleUnit": "minute"
+      },
+      "description": null,
+      "extension": {
+        "kind": "SystemExtensionSyntax",
+        "reference": "cratis/stripe",
+        "version": "\"^2.3\""
+      },
+      "name": "Payments",
+      "settings": [
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "secretKey",
+          "secret": "StripeSecretKey",
+          "value": null,
+          "valueKind": null
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "statementDescriptor",
+          "secret": null,
+          "value": "ACME",
+          "valueKind": "string"
+        }
+      ]
+    },
+    {
+      "kind": "SystemSyntax",
+      "description": null,
+      "extension": {
+        "kind": "SystemExtensionSyntax",
+        "reference": "ghcr.io/acme/extension-ledger",
+        "version": null
+      },
+      "name": "Carrier"
+    }
+  ],
+  "types": []
+}
