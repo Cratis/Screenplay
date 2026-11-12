@@ -41,10 +41,10 @@ static class PersonaCompleteness
         {
             var bindings = ScreenContainers.All(screen.Directives).Select(directive => directive switch
             {
-                ScreenDataSyntax data => ("Query", data.Query),
-                ScreenActionSyntax action => ("Command", action.Command),
+                ScreenDataSyntax data => (Kind: "Query", Name: data.Query),
+                ScreenActionSyntax action => (Kind: "Command", Name: action.Command),
                 _ => (Kind: string.Empty, Name: string.Empty)
-            }).Where(binding => binding.Item1.Length > 0 && byName.ContainsKey(binding)).ToArray();
+            }).Where(binding => binding.Kind.Length > 0 && byName.ContainsKey(binding)).ToArray();
             if (bindings.Length == 0) continue;
             var unusable = personas.All(persona => persona.Result.Caller is { } caller
                 && (Evaluate(inherited, caller, application) == false || bindings.All(binding => Evaluate([.. inherited, .. byName[binding]], caller, application) == false)));
