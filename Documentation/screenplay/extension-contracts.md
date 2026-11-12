@@ -104,7 +104,7 @@ system Payments
 
 - Without a version the reference means the latest release. `version 2` means the latest 2.x, `version 2.3` the latest 2.3.x, `version 2.3.1` exactly that release, `version "^2.3"` from 2.3 below 3 and `version "~2.3"` from 2.3 below 2.4.
 - A reference is a catalog short name (`"cratis/stripe"`), a full OCI reference (`"ghcr.io/acme/extension-ledger"`) or an npm package for frontend-only packages (`"npm:@acme/charts"`).
-- The catalog is a naming convention, not a service: `owner/name` resolves to `ghcr.io/owner/extension-name`. Only [restore](#restore) resolves a reference.
+- The catalog is a naming convention, not a service: `owner/name` resolves to `ghcr.io/owner/extension-name`. Only [restore](#the-cache-vendoring-and-restore) resolves a reference.
 
 A system that names an extension declares no abilities of its own, so the contract and the model cannot drift (`PLAY1106`). When the model is bound the system gets the contract's abilities, and the contract's triggers become application triggers qualified by the system, after the declared ones. A reaction uses one as `when Payments.PaymentSucceeded`. The printed source is unchanged: nothing from the contract is written into your files.
 
@@ -136,7 +136,7 @@ extension "cratis/stripe"
 
 Entries are ordered by reference so a diff shows only real changes. Naming a package in a model is not trusting it: the publisher identity in the lock is what a host checks. A malformed lock is `PLAY1111`.
 
-## The cache, vendoring and restore {#restore}
+## The cache, vendoring and restore
 
 The compiler never resolves a range. It reads each contract by the locked digest from two places, in order: the `extensions` folder beside the lock (vendored, committed), then the user cache. Both are laid out `<digest with ':' as '-'>/contract.extension`. The user cache is the folder in `SCREENPLAY_EXTENSION_CACHE`, or a folder in the user's local application data. The file is not named `.play`, so a model folder never mistakes a vendored contract for a model file.
 
