@@ -140,6 +140,16 @@ jobs:
           node-version: 24.22.2
           package-manager-cache: false
 
+      # yarn.lock is not committed, so the cache keys on package.json files, like mcp-desktop.yml.
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
       - name: Yarn install
         run: yarn
 
@@ -151,7 +161,17 @@ jobs:
         run: node --test .github/scripts/run-specifications.test.mjs
 
       - name: Build Debug
-        run: dotnet build --configuration Debug
+        run: dotnet build --configuration Debug -bl:"$RUNNER_TEMP/debug-build.binlog"
+
+      # Short-lived evidence for build-time analysis; uploaded even when the build fails.
+      - name: Upload Debug build binlog
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: debug-build-binlog
+          path: ${{ runner.temp }}/debug-build.binlog
+          retention-days: 3
+          if-no-files-found: ignore
 
       # A tar preserves executable bits and relative paths, including the frontend output.
       # Do not cache compiled output across runs or require a cache hit to run specs.
@@ -242,6 +262,15 @@ jobs:
           node-version: 24.22.2
           package-manager-cache: false
 
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
       - name: Yarn install
         run: yarn
 
@@ -266,7 +295,16 @@ jobs:
             echo '</Project>'
           } > "$aggregate"
           dotnet msbuild "$aggregate" -nologo -t:RestoreAll
-          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll
+          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll -bl:"$RUNNER_TEMP/net10-build.binlog"
+
+      - name: Upload net10.0 build binlog
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: net10-build-binlog
+          path: ${{ runner.temp }}/net10-build.binlog
+          retention-days: 3
+          if-no-files-found: ignore
 
       # Only the net10.0 output is archived; the net11.0 binaries are a separate artifact.
       - name: Archive build output
@@ -355,6 +393,15 @@ jobs:
         with:
           node-version: 24.22.2
           package-manager-cache: false
+
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
 
       - name: Yarn install
         run: yarn
