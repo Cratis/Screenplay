@@ -319,7 +319,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks);
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -383,6 +383,17 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal ImmutableHashSet<SemanticId> PassiveReadModels => [.. _passiveReadModels];
 
         internal ImmutableArray<SemanticSink> Sinks => [.. syntax.Sinks.Select(sink => new SemanticSink(sink.Name, sink.Stores == SinkKind.Graphs ? SemanticSinkKind.Graphs : SemanticSinkKind.ReadModels))];
+
+        internal ImmutableArray<SemanticSecretDeclaration> Secrets => [.. syntax.Secrets.Select(secret => new SemanticSecretDeclaration(secret.Name, secret.Description))];
+
+        internal ImmutableArray<SemanticSystemConfiguration> SystemConfigurations => [.. syntax.Systems
+            .Where(system => system.Extension is not null || system.Settings.Any() || system.Activation is not null)
+            .Select(system => new SemanticSystemConfiguration(
+                system.Name,
+                system.Extension?.Reference,
+                system.Extension?.Version,
+                [.. system.Settings.Select(setting => new SemanticSystemSetting(setting.Name, setting.Secret, setting.Value))],
+                system.Activation is { } activation ? new SemanticSystemActivation(activation.Always, activation.IdleAmount, activation.IdleUnit) : null))];
 
         internal ImmutableDictionary<SemanticId, string> ReadModelSinks => _readModelSinks.ToImmutableDictionary();
 

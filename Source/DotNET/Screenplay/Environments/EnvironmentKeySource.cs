@@ -12,5 +12,11 @@ public enum EnvironmentKeySource
     AuthenticationProvider,
 
     /// <summary>The <c>onboarding</c> block, which sends mail.</summary>
-    Onboarding
+    Onboarding,
+
+    /// <summary>A <c>secret</c> declaration, which a deployment binds to its store.</summary>
+    Secret,
+
+    /// <summary>A setting of a <c>system</c> the model does not map, read from configuration under <c>systems.&lt;System&gt;.&lt;setting&gt;</c>.</summary>
+    SystemSetting
 }

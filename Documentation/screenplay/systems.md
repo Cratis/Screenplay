@@ -143,7 +143,7 @@ A model that declares at least one ability selects [executable semantic model (E
 | `abilities[].answersLater` | Whether the answer arrives after the invocation returns. |
 | `abilities[].realization` | `{ kind: none \| code \| extension, requirementId? }`. `code` carries the `AbilityEffect` implementation requirement. |
 
-Descriptions are authoring metadata and stay out of the model. Which extension package, version, setting or activation realizes a system does not change what an invocation means, so it is realization metadata, not part of the ESM bytes. The `extension` line and realization blocks arrive with their own issues.
+Descriptions are authoring metadata and stay out of the model. Which extension package, version, setting or activation realizes a system does not change what an invocation means, so it is realization metadata, not part of the ESM bytes. The `extension`, `setting` and `activation` lines are described in [Environments](environments.md#system-settings-and-named-secrets).
 
 The [executable model schema](executable-model-schema.md) and the published [ESM v50 schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/esm/esm-v50.schema.json) describe the JSON.
 
@@ -159,4 +159,5 @@ This page is the first slice of the extension design in [decision 0159](https://
 
 - [Operations and external systems](operations.md) describes slice-owned operation intent that uses a system.
 - [Reactions](reactions.md), [workflows](workflows.md) and [state machines](statemachines.md) are where invocations belong.
+- [Environments](environments.md#system-settings-and-named-secrets) covers extension settings, named secrets and activation.
 - [Grammar](grammar.md) holds the productions.

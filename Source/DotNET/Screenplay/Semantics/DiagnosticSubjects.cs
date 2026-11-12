@@ -99,6 +99,9 @@ sealed class DiagnosticSubjects(bool includeImports = false) : ScreenplaySyntaxW
     public override void VisitSink(SinkSyntax syntax) => Scoped(syntax, "sink", syntax.Name, false, () => base.VisitSink(syntax));
 
     /// <inheritdoc/>
+    public override void VisitSecret(SecretSyntax syntax) => Scoped(syntax, "secret", syntax.Name, false, () => base.VisitSecret(syntax));
+
+    /// <inheritdoc/>
     public override void VisitPersona(PersonaSyntax syntax) => Scoped(syntax, "persona", syntax.Name, false, () => base.VisitPersona(syntax));
 
     /// <inheritdoc/>

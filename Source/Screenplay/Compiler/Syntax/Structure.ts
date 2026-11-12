@@ -11,6 +11,7 @@ import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
 import { AuthorizeSyntax, PersonaSyntax, StickyNoteSyntax, UserSyntax } from './Authorization';
 import { SinkSyntax } from './Sinks';
+import { SecretSyntax } from './Operations';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -175,6 +176,8 @@ export interface ApplicationSyntax extends SyntaxNode {
 
     // The named sinks read models and graphs may choose - written only when present.
     readonly sinks?: readonly SinkSyntax[];
+    // The named secrets system settings map from - written only when present.
+    readonly secrets?: readonly SecretSyntax[];
 
     // The sticky notes on the personas canvas - written only when present.
     readonly stickyNotes?: readonly StickyNoteSyntax[];

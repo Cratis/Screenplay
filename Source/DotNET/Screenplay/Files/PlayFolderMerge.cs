@@ -91,6 +91,9 @@ internal static partial class PlayFolderMerge
             // Sink names are compared ignoring case across the whole application, so the validator reports duplicates.
             Sinks = [.. applications.SelectMany(application => application.Sinks)],
 
+            // Secret names are compared ignoring case across the whole application, so the validator reports duplicates.
+            Secrets = [.. applications.SelectMany(application => application.Secrets)],
+
             // Preserve physical parents; a duplicate source makes every child scope ambiguous.
             EventSources = [.. applications.SelectMany(application => application.EventSources)],
             Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),

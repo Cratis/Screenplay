@@ -27,7 +27,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | UserDecl | StorylineDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
-               | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
+               | SystemDecl | SecretDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
 (* At most one domain, authentication block, onboarding block and identity block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -116,7 +116,15 @@ ImportPattern  = ? a path or glob relative to the importing file's folder -
 (* -------------------------------------------------------------- *)
 
 SystemDecl     = "system", Ident, NL,
-                 [ INDENT, { DescriptionDecl | AbilityDecl }, DEDENT ] ;
+                 [ INDENT, { DescriptionDecl | ExtensionDecl | SettingDecl | ActivationDecl | AbilityDecl }, DEDENT ] ;
+
+SecretDecl     = "secret", Ident, NL,
+                 [ INDENT, { DescriptionDecl }, DEDENT ] ;     (* top level; named once, never holds a value *)
+ExtensionDecl  = "extension", String, [ "version", Token ], NL ;
+SettingDecl    = "setting", Ident, ( "from", "secret", Ident | "=", Literal ), NL ;
+ActivationDecl = "activation", ( "always"
+                 | "on", "demand", [ "idle", "after", Integer, ( "second" | "minute" | "hour" | "day" ), "s"? ] ), NL ;
+                 (* realization metadata, outside the ESM bytes; see environments.md *)
 
 AbilityDecl    = "ability", Ident, [ EffectClass ], NL,
                  [ INDENT, { DescriptionDecl | AnswersLater | AbilityInput | AbilityReturns

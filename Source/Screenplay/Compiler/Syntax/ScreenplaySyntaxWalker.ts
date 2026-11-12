@@ -44,7 +44,7 @@ import { EventStreamIdPartSyntax } from './EventStreamIdPartSyntax';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
 import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './Purposes';
-import { AbilityOutcomeSyntax, AbilitySyntax, OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
+import { AbilityOutcomeSyntax, AbilitySyntax, OperationSyntax, OperationPhaseSyntax, SecretSyntax, SystemActivationSyntax, SystemExtensionSyntax, SystemSettingSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { PossibleEventsSyntax } from './PossibleEventsSyntax';
 import { LifecycleSpecificationSyntax, StateEntrySyntax, StateMachineSyntax, StateSyntax, StateTransitionSyntax, WorkflowEdgeSyntax, WorkflowNodeSyntax, WorkflowSyntax } from './Lifecycles';
@@ -74,6 +74,7 @@ export abstract class ScreenplaySyntaxWalker {
         (syntax.users ?? []).forEach(node => this.visitUser(node));
         (syntax.storylines ?? []).forEach(node => this.visitStoryline(node));
         (syntax.sinks ?? []).forEach(node => this.visitSink(node));
+        (syntax.secrets ?? []).forEach(node => this.visitSecret(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
         syntax.stickyNotes?.forEach(node => this.visitStickyNote(node));
         syntax.exposures?.forEach(node => {
@@ -419,7 +420,14 @@ export abstract class ScreenplaySyntaxWalker {
     visitSystem(syntax: SystemSyntax): void {
         this.visitNode(syntax);
         syntax.abilities.forEach(ability => this.visitAbility(ability));
+        if (syntax.extension !== undefined) this.visitSystemExtension(syntax.extension);
+        (syntax.settings ?? []).forEach(setting => this.visitSystemSetting(setting));
+        if (syntax.activation !== undefined) this.visitSystemActivation(syntax.activation);
     }
+    visitSecret(syntax: SecretSyntax): void { this.visitNode(syntax); }
+    visitSystemExtension(syntax: SystemExtensionSyntax): void { this.visitNode(syntax); }
+    visitSystemSetting(syntax: SystemSettingSyntax): void { this.visitNode(syntax); }
+    visitSystemActivation(syntax: SystemActivationSyntax): void { this.visitNode(syntax); }
     visitAbility(syntax: AbilitySyntax): void {
         this.visitNode(syntax);
         syntax.inputs.forEach(input => this.visitProperty(input));

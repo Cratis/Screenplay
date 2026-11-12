@@ -26,6 +26,11 @@ domain Acme.Invoicing
 reaction batches atomic
 command reads protected
 
+// A secret is named once and described here; the model never holds its value. A
+// deployment binds the name to its store, and several systems may map settings from it.
+secret MailerApiKey
+  description "The API key of the transactional mail service"
+
 // Reports are stored apart from the operational read models. 'Reporting' is a
 // logical sink the deployment maps to real storage; every read model that names
 // no sink stays in the default one.
@@ -269,6 +274,19 @@ system PaymentGateway
     implementation
       hint "Use the existing mail adapter"
       file Adapters/SendReceipt.cs
+
+// A system an extension realizes says where each of the extension's settings gets its
+// value. A setting the model does not mention is read from configuration under
+// systems.<System>.<setting>. Settings and activation are realization metadata: changing
+// them never changes the executable model.
+system Mailer
+  description "The transactional mail service that sends invoices and receipts"
+  extension "ghcr.io/cratis/extension-mail" version 2
+  setting apiKey from secret MailerApiKey
+  setting senderName = "Invoicing"
+  setting retries = 3
+  setting trackOpens = false
+  activation on demand idle after 10 minutes
 
 // ------------------------------------------------------------
 // Authorization - policies say what, personas say who

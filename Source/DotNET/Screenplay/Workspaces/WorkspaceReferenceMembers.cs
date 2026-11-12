@@ -35,6 +35,7 @@ enum WorkspaceReferenceDomain
     StateMachine,
     Workflow,
     Sink,
+    Secret,
     Slice
 }
 
@@ -270,6 +271,7 @@ static class WorkspaceReferenceMembers
         SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
         SlicePlacementSyntax { Kind: SlicePlacementKind.ReadModel } => [("name", WorkspaceReferenceDomain.View)],
         ReadModelSyntax or GraphSyntax => [("sink", WorkspaceReferenceDomain.Sink)],
+        SystemSettingSyntax => [("secret", WorkspaceReferenceDomain.Secret)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         _ => null
     };

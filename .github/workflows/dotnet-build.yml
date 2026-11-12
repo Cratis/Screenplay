@@ -12,10 +12,12 @@ on:
 
 # One source of truth for both the coverage guard and the spec matrix. Most projects
 # carry inline specs in Debug; discovering only *.Specs.csproj would miss them.
+# A shard with `split` runs as two jobs over the same projects: one runs the classes matching the
+# pattern (`-class`), the other everything else (`-class-`), so together they always run every spec.
 env:
   SPEC_SHARDS: >-
     {"include":[
-      {"name":"compiler","projects":["Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj"]},
+      {"name":"compiler","split":"Cratis.Screenplay.Semantics*","projects":["Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj"]},
       {"name":"mcp","projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
       {"name":"contracts-tool-vectors","projects":[
         "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
@@ -86,14 +88,27 @@ jobs:
               'Source/DotNET/Screenplay.ContractCatalog.Specs/Screenplay.ContractCatalog.Specs.csproj'
           }
           compatibility = {'include': [
-              {'name': shard['name'], 'projects': [project for project in shard['projects'] if project not in sdk_bound]}
+              {**shard, 'projects': [project for project in shard['projects'] if project not in sdk_bound]}
               for shard in matrix['include']
           ]}
           if any(not shard['projects'] for shard in compatibility['include']):
               raise SystemExit('A net10.0 compatibility shard has no library specifications')
+
+          # Expand split shards into two complementary runs; unsplit shards run with no runner arguments.
+          def expand(shards):
+              jobs = []
+              for shard in shards['include']:
+                  pattern = shard.get('split')
+                  if pattern is None:
+                      jobs.append({'name': shard['name'], 'projects': shard['projects'], 'args': []})
+                      continue
+                  jobs.append({'name': f"{shard['name']}, part 1", 'projects': shard['projects'], 'args': ['-class', pattern]})
+                  jobs.append({'name': f"{shard['name']}, part 2", 'projects': shard['projects'], 'args': ['-class-', pattern]})
+              return {'include': jobs}
+
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write(f'matrix={json.dumps(matrix, separators=(",", ":"))}\n')
-              output.write(f'compatibility-matrix={json.dumps(compatibility, separators=(",", ":"))}\n')
+              output.write(f'matrix={json.dumps(expand(matrix), separators=(",", ":"))}\n')
+              output.write(f'compatibility-matrix={json.dumps(expand(compatibility), separators=(",", ":"))}\n')
           PY
 
   dotnet-build:
@@ -188,9 +203,11 @@ jobs:
       - name: Run specs without rebuilding
         env:
           PROJECTS: ${{ toJSON(matrix.projects) }}
+          RUNNER_ARGS: ${{ toJSON(matrix.args) }}
         run: |
+          mapfile -t runner_args < <(jq -r '.[]' <<< "$RUNNER_ARGS")
           while IFS= read -r project; do
-            bash .github/scripts/run-specifications.sh "$project" Debug
+            bash .github/scripts/run-specifications.sh "$project" Debug ${runner_args[@]+"${runner_args[@]}"}
           done < <(jq -r '.[]' <<< "$PROJECTS")
 
   compatibility-specs:
@@ -249,10 +266,12 @@ jobs:
       - name: Run net10.0 library specifications
         env:
           PROJECTS: ${{ toJSON(matrix.projects) }}
+          RUNNER_ARGS: ${{ toJSON(matrix.args) }}
           SPEC_TARGET_FRAMEWORK: net10.0
         run: |
+          mapfile -t runner_args < <(jq -r '.[]' <<< "$RUNNER_ARGS")
           while IFS= read -r project; do
-            bash .github/scripts/run-specifications.sh "$project" Debug
+            bash .github/scripts/run-specifications.sh "$project" Debug ${runner_args[@]+"${runner_args[@]}"}
           done < <(jq -r '.[]' <<< "$PROJECTS")
 
   package-validation:

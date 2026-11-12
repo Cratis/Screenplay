@@ -22,6 +22,7 @@ import { validatePublicEventUsage } from './Parsing/PublicEventUsageValidator';
 import { sourceContext } from './Parsing/SourceOptionsParser';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
+import { validateSystemConfiguration } from './Parsing/SystemConfigurationValidator';
 import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
 import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
@@ -94,6 +95,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);
+        validateSystemConfiguration(value, context);
         validatePublicEventUsage(value, context);
         validateSpecificationCases(value, context);
         validateSpecificationExampleTypes(value, context, true);

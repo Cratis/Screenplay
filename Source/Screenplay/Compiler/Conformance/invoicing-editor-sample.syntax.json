@@ -19355,6 +19355,13 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "secrets": [
+    {
+      "kind": "SecretSyntax",
+      "description": "The API key of the transactional mail service",
+      "name": "MailerApiKey"
+    }
+  ],
   "sinks": [
     {
       "kind": "SinkSyntax",
@@ -19930,6 +19937,52 @@
       ],
       "description": "The card payment gateway that charges invoices",
       "name": "PaymentGateway"
+    },
+    {
+      "kind": "SystemSyntax",
+      "activation": {
+        "kind": "SystemActivationSyntax",
+        "always": false,
+        "idleAmount": 10,
+        "idleUnit": "minute"
+      },
+      "description": "The transactional mail service that sends invoices and receipts",
+      "extension": {
+        "kind": "SystemExtensionSyntax",
+        "reference": "ghcr.io/cratis/extension-mail",
+        "version": "2"
+      },
+      "name": "Mailer",
+      "settings": [
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "apiKey",
+          "secret": "MailerApiKey",
+          "value": null,
+          "valueKind": null
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "senderName",
+          "secret": null,
+          "value": "Invoicing",
+          "valueKind": "string"
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "retries",
+          "secret": null,
+          "value": "3",
+          "valueKind": "number"
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "trackOpens",
+          "secret": null,
+          "value": "false",
+          "valueKind": "boolean"
+        }
+      ]
     }
   ],
   "themes": [

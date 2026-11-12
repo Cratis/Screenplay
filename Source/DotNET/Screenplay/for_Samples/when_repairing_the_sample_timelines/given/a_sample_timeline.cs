@@ -6,16 +6,12 @@ using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
-namespace Cratis.Screenplay.for_Samples;
+namespace Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.given;
 
-public class when_repairing_the_sample_timelines(Xunit.ITestOutputHelper output) : given.the_samples
+// One class per sample, so the samples' repairs run in parallel instead of one after another in a single theory.
+public class a_sample_timeline(Xunit.ITestOutputHelper output) : for_Samples.given.the_samples
 {
-    [Theory]
-    [InlineData("Library", 2, 2)]
-    [InlineData("Invoicing", 4, 2)]
-    [InlineData("Commerce", 8, 5)]
-    [InlineData("TimeTracking", 8, 7)]
-    void should_repair_only_the_findings_in_the_plan_table(string name, int findings, int repairable)
+    protected void RepairsOnlyTheFindingsInThePlanTable(string name, int findings, int repairable)
     {
         var folder = _samples.Single(sample => Path.GetFileName(sample) == name);
         var documents = Directory.GetFiles(folder, "*.play", SearchOption.AllDirectories).Select(path =>

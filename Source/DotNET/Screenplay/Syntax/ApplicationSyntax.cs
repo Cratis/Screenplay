@@ -130,6 +130,12 @@ public record ApplicationSyntax(
     public IEnumerable<SinkSyntax> Sinks { get; init; } = [];
 
     /// <summary>
+    /// Gets the named secrets systems map settings from. Realization metadata, never part of the executable model: the
+    /// model names a secret and a deployment binds the name to its store.
+    /// </summary>
+    public IEnumerable<SecretSyntax> Secrets { get; init; } = [];
+
+    /// <summary>
     /// Gets the sticky notes placed on the personas canvas: authoring metadata around the personas, never part of the executable model.
     /// </summary>
     public IEnumerable<StickyNoteSyntax> StickyNotes { get; init; } = [];

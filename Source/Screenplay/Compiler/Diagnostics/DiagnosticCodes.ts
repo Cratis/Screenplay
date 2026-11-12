@@ -634,4 +634,12 @@ export const DiagnosticCodes = {
     UnknownEventContentKey: 'PLAY0961',
     DynamicKeyOnNonDictionaryProperty: 'PLAY0962',
     ClearDynamicKey: 'PLAY0963',
+    InvalidSecretDeclaration: 'PLAY0990',
+    DuplicateSecret: 'PLAY0991',
+    UnknownSecret: 'PLAY0992',
+    UnusedSecret: 'PLAY0993',
+    DuplicateSystemSetting: 'PLAY0994',
+    UnknownSystemSetting: 'PLAY0995',
+    SecretSettingLiteral: 'PLAY0996',
+    SecretOnPublicSetting: 'PLAY0997',
 } as const;

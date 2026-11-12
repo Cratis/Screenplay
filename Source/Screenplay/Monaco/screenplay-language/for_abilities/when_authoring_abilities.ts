@@ -9,7 +9,7 @@ import { validateLines } from '../validation';
 const labels = (chain: string[]) => completionEntriesFor(chain).map(entry => entry.label);
 
 describe('when authoring abilities', () => {
-    it('should offer abilities and a description under a system', () => expect(labels(['system'])).toEqual(['description', 'ability']));
+    it('should offer abilities and a description under a system', () => expect(labels(['system'])).toEqual(['description', 'extension', 'setting from secret', 'setting', 'activation', 'ability']));
     it('should offer the ability lines under an ability', () => expect(labels(['ability', 'system'])).toEqual(['description', 'input', 'returns', 'outcome', 'answers later', 'implementation']));
     it('should explain the ability keyword and its effect classes', () => expect(keywordDocs.ability).toContain('once'));
     it('should report a reserved outcome name with its code', () => {

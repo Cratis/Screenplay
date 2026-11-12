@@ -210,6 +210,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteApplicationDeclarations(ScreenplayWriter writer, ApplicationSyntax application)
     {
+        WriteSection(writer, application.Secrets, WriteSecret);
         WriteSection(writer, application.Systems, WriteSystem);
         WriteSection(writer, application.EventSources, WriteEventSource);
         WriteSection(writer, application.Concepts, WriteConcept);
