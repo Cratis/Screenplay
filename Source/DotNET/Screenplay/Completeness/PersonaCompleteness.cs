@@ -35,6 +35,24 @@ static class PersonaCompleteness
         {
             yield return Diagnostic.Warning(DiagnosticCodes.GateWithoutPersona, $"{gate.Kind} '{gate.Name}' is definitely denied to every declared persona's synthesized caller.", gate.Location);
         }
+
+        var byName = gates.Where(gate => gate.Kind != "Screen").GroupBy(gate => (gate.Kind, gate.Name)).ToDictionary(group => group.Key, group => group.First().Gates);
+        foreach (var (screen, inherited) in Screens(application))
+        {
+            var bindings = ScreenContainers.All(screen.Directives).Select(directive => directive switch
+            {
+                ScreenDataSyntax data => ("Query", data.Query),
+                ScreenActionSyntax action => ("Command", action.Command),
+                _ => (Kind: string.Empty, Name: string.Empty)
+            }).Where(binding => binding.Item1.Length > 0 && byName.ContainsKey(binding)).ToArray();
+            if (bindings.Length == 0) continue;
+            var unusable = personas.All(persona => persona.Result.Caller is { } caller
+                && (Evaluate(inherited, caller, application) == false || bindings.All(binding => Evaluate([.. inherited, .. byName[binding]], caller, application) == false)));
+            if (unusable)
+            {
+                yield return Diagnostic.Warning(DiagnosticCodes.ScreenWithoutPersona, $"Screen '{screen.Name}' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", screen.Location);
+            }
+        }
     }
 
     static IEnumerable<(string Kind, string Name, SourceLocation Location, IReadOnlyList<AuthorizeSyntax> Gates)> Gates(IEnumerable<FeatureSyntax> features, IReadOnlyList<AuthorizeSyntax> inherited)
@@ -51,6 +69,19 @@ static class PersonaCompleteness
                 // Screens inherit the containing module and feature gates; they have no own authorize directive.
                 foreach (var screen in slice.Screens) yield return ("Screen", screen.Name, screen.Location, gates);
             }
+        }
+    }
+
+    static IEnumerable<(ScreenSyntax Screen, IReadOnlyList<AuthorizeSyntax> Gates)> Screens(ApplicationSyntax application) =>
+        application.Modules.SelectMany(module => Screens(module.Features, module.Authorize is null ? [] : [module.Authorize]));
+
+    static IEnumerable<(ScreenSyntax Screen, IReadOnlyList<AuthorizeSyntax> Gates)> Screens(IEnumerable<FeatureSyntax> features, IReadOnlyList<AuthorizeSyntax> inherited)
+    {
+        foreach (var feature in features)
+        {
+            var gates = feature.Authorize is null ? inherited : [.. inherited, feature.Authorize];
+            foreach (var nested in Screens(feature.Features, gates)) yield return nested;
+            foreach (var screen in feature.Slices.SelectMany(slice => slice.Screens)) yield return (screen, gates);
         }
     }
 

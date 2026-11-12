@@ -21,7 +21,7 @@ public class when_reading_shared_vectors : Specification
                 .Select(diagnostic => $"{vector.GetProperty("name").GetString()}: {diagnostic.Code} {diagnostic.Message}").ShouldBeEmpty();
             compilation.Success.ShouldBeTrue();
             compilation.Diagnostics.Where(IsSelected).ShouldBeEmpty();
-            foreach (var selection in new[] { "personas", "PLAY0574", "PLAY0575", "PLAY0576", "all" })
+            foreach (var selection in new[] { "personas", "PLAY0574", "PLAY0575", "PLAY0576", "PLAY1114", "all" })
             {
                 CompletenessChecks.TryParse(selection, out var checks).ShouldBeTrue();
                 var findings = ModelCompleteness.Check(compilation, checks).Where(IsSelected).ToArray();
@@ -50,7 +50,7 @@ public class when_reading_shared_vectors : Specification
         findings.All(finding => finding.Location.Path == "model.play").ShouldBeTrue();
     }
 
-    static bool IsSelected(Diagnostic diagnostic) => new[] { "PLAY0574", "PLAY0575", "PLAY0576" }.Contains(diagnostic.Code);
+    static bool IsSelected(Diagnostic diagnostic) => new[] { "PLAY0574", "PLAY0575", "PLAY0576", "PLAY1114" }.Contains(diagnostic.Code);
 
     static string Source(JsonElement vector) => string.Join('\n', vector.GetProperty("source").EnumerateArray().Select(line => line.GetString()));
 

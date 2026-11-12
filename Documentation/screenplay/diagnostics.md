@@ -1859,6 +1859,7 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1111` | Error | `screenplay.lock` is malformed. |
 | `PLAY1112` | Error | A system uses a trigger its extension's contract does not offer, reported at each use. |
 | `PLAY1113` | Error | A component placeholder is not static HTML: it has script, an inline handler or an external reference. |
+| `PLAY1114` | Warning | Opt-in `personas` check: every command and query a screen binds is definitely denied to every declared persona's synthesized caller, so the screen offers them nothing. |
 
 ## Screen visuals and slice placements
 

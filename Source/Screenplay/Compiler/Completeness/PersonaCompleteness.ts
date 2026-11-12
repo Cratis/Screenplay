@@ -9,6 +9,7 @@ import { ExpressionSyntax } from '../Syntax/Expressions';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
 import { AnonymousConditionSyntax, AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax, StateConditionSyntax } from '../Syntax/Policies';
 import { SpecificationCallerSyntax } from '../Syntax/Specifications';
+import { ScreenDirectiveSyntax, ScreenSyntax } from '../Syntax/Screens';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
 import { combine, conditionTruth, requirementTruth, Truth } from './AuthorizationFacts';
 import { ordinalClaimKey, personaAmbiguities } from './PersonaWitness';
@@ -29,6 +30,19 @@ function gatesIn(features: readonly FeatureSyntax[], inherited: readonly Authori
             ...slice.screens.map(screen => ({ kind: 'Screen', name: screen.name, location: screen.location, gates })),
         ])];
     });
+}
+
+function screensIn(features: readonly FeatureSyntax[], inherited: readonly AuthorizeSyntax[]): readonly { readonly screen: ScreenSyntax; readonly gates: readonly AuthorizeSyntax[] }[] {
+    return features.flatMap(feature => {
+        const gates = feature.authorize === null ? inherited : [...inherited, feature.authorize];
+        return [...screensIn(feature.features, gates), ...feature.slices.flatMap(slice => slice.screens.map(screen => ({ screen, gates })))];
+    });
+}
+
+function directivesIn(directives: readonly ScreenDirectiveSyntax[]): readonly ScreenDirectiveSyntax[] {
+    return directives.flatMap(directive => [directive, ...directivesIn(
+        directive.kind === 'ScreenTemplateReferenceSyntax' ? directive.slots.flatMap(slot => slot.directives)
+            : directive.kind === 'ScreenSectionSyntax' ? directive.directives : [])]);
 }
 
 function references(requirement: PolicyRequirementSyntax): readonly string[] {
@@ -129,6 +143,17 @@ export function personaDiagnostics(application: ApplicationSyntax): readonly Dia
     for (const gate of gates.filter(gate => gate.kind !== 'Screen' && gate.gates.length > 0 && personas.every(({ result }) => result.caller !== null && evaluate(gate.gates, result.caller, application) === false))) {
         diagnostics.push({ severity: 'warning', code: DiagnosticCodes.GateWithoutPersona,
             message: `${gate.kind} '${gate.name}' is definitely denied to every declared persona's synthesized caller.`, location: gate.location });
+    }
+    const byName = new Map<string, readonly AuthorizeSyntax[]>(gates.filter(gate => gate.kind !== 'Screen').map(gate => [`${gate.kind}:${gate.name}`, gate.gates] as const));
+    for (const { screen, gates: inherited } of application.modules.flatMap(module => screensIn(module.features, module.authorize === null ? [] : [module.authorize]))) {
+        const bindings = directivesIn(screen.directives).flatMap(directive =>
+            directive.kind === 'ScreenDataSyntax' ? [`Query:${directive.query}`] : directive.kind === 'ScreenActionSyntax' ? [`Command:${directive.command}`] : []).filter(key => byName.has(key));
+        if (bindings.length === 0) continue;
+        if (personas.every(({ result }) => result.caller !== null && (evaluate(inherited, result.caller, application) === false
+            || bindings.every(key => evaluate([...inherited, ...byName.get(key)!], result.caller!, application) === false)))) {
+            diagnostics.push({ severity: 'warning', code: DiagnosticCodes.ScreenWithoutPersona,
+                message: `Screen '${screen.name}' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.`, location: screen.location });
+        }
     }
     return diagnostics;
 }

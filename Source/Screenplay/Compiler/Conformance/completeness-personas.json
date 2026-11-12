@@ -1052,6 +1052,67 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "screen whose bindings are all denied",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted",
+                "      readmodel Rm",
+                "        value String",
+                "      query Q => Rm",
+                "        authorize Restricted",
+                "      screen Locked",
+                "        data Rm via query Q",
+                "        action C"
+            ],
+            "diagnostics": [
+                {
+                    "code": "PLAY0574",
+                    "severity": "warning",
+                    "message": "Persona 'Person' has no policy used by a command, query, or inherited screen gate.",
+                    "location": {
+                        "line": 5,
+                        "column": 1
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 10,
+                        "column": 7
+                    }
+                },
+                {
+                    "code": "PLAY0575",
+                    "severity": "warning",
+                    "message": "Query 'Q' is definitely denied to every declared persona's synthesized caller.",
+                    "location": {
+                        "line": 14,
+                        "column": 7
+                    }
+                },
+                {
+                    "code": "PLAY1114",
+                    "severity": "warning",
+                    "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.",
+                    "location": {
+                        "line": 16,
+                        "column": 7
+                    }
+                }
+            ]
         }
     ]
 }

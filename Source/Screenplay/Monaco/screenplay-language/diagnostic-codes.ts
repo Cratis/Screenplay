@@ -180,6 +180,7 @@ export const diagnosticCodes = {
     unsynthesizablePersonaCaller: 'PLAY0573',
     personaWithoutGate: 'PLAY0574',
     gateWithoutPersona: 'PLAY0575',
+    screenWithoutPersona: 'PLAY1114',
     ambiguousPersonaCaller: 'PLAY0576',
     invalidSpecificationParameter: 'PLAY0577',
     invalidSpecificationCase: 'PLAY0578',

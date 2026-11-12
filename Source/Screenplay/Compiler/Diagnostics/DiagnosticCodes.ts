@@ -675,4 +675,5 @@ export const DiagnosticCodes = {
     InvalidExtensionLock: 'PLAY1111',
     ExtensionIncompatibleUse: 'PLAY1112',
     InvalidExtensionPlaceholder: 'PLAY1113',
+    ScreenWithoutPersona: 'PLAY1114',
 } as const;
