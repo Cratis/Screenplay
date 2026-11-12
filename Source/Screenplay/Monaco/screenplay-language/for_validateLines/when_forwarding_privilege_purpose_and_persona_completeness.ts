@@ -7,7 +7,7 @@ import { completenessDiagnostics, parse } from '@cratis/screenplay-compiler';
 import { describe, expect, it } from 'vitest';
 import { validateLines } from '../validation';
 
-const codes = new Set(['PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0574', 'PLAY0575', 'PLAY0576']);
+const codes = new Set(['PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY1114']);
 
 describe('when forwarding privilege, purpose and persona completeness', () => {
     for (const selection of ['privilege', 'purposes', 'personas']) {
