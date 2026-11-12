@@ -32,6 +32,10 @@ Typed source and AST proposals retain read-model key marks, named query/read key
 
 `PLAY0661` repairs command reads only when missing parts have unique same-named compatible inputs. Queries and trigger reads are not repaired. `PLAY0664` removes an identical production route through a typed proposal. Both require canonical formatting consent and explicit Apply. The saved-file attachment-evidence pin contract remains limited to PLAY0166 and PLAY0478. See [Authoring tools](authoring-tools.md).
 
+## Extension contracts
+
+A system that names an extension (`extension "<reference>" [version <range>]`) gets its abilities and triggers from the package's contract, read from `screenplay.lock` beside the model root and the local contract cache (see [extension contracts](../extension-contracts.md)). The MCP server is an editor: on opening a model root it restores references the lock does not pin, when `SCREENPLAY_EXTENSION_SOURCE` names a package source, and reports a reference that is not restored yet as a warning (`PLAY1107`, `PLAY1108`, `PLAY1110`) instead of an error, so the model stays readable until restore has run. The tools' counts and revisions include the contract's abilities; a lock that pins another contract changes them.
+
 ## Installation and scope
 
 The server is included in the `cratis/screenplay` Docker image and in the

@@ -36,7 +36,7 @@ public static class SystemConfigurationContracts
                 {
                     diagnostics.Add(Diagnostic.Error(DiagnosticCodes.SecretSettingLiteral, $"System '{system.Name}' gives setting '{setting.Name}' a literal value, but extension '{contract.Reference}' declares it secret; map it from a secret.", setting.Location));
                 }
-                else if (setting.Secret is not null && !found.IsSecret)
+                else if (setting.Secret is not null && !found.IsSecret && found.IsPublic)
                 {
                     diagnostics.Add(Diagnostic.Error(DiagnosticCodes.SecretOnPublicSetting, $"System '{system.Name}' maps secret '{setting.Secret}' to setting '{setting.Name}', which extension '{contract.Reference}' declares public and may reach the browser.", setting.Location));
                 }

@@ -27,7 +27,7 @@ import { locationOf, SourceLine } from './SourceLine';
 import { tryParseStructuredMapping } from './StructuredBlockParser';
 
 const header = pattern('^reaction\\s+([A-Za-z_]\\w*)$');
-const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*)$');
+const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?)$');
 const everyPattern = pattern('^every\\s+(\\d+)\\s+(seconds?|minutes?|hours?|days?)$');
 const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\\s+(\\d{1,2})))?$');
 const clauseKeywords = new Set(['when', 'every', 'at']);

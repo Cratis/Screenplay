@@ -25,6 +25,9 @@ internal static class SystemConfigurationValidator
         foreach (var system in application.Systems)
         {
             var mapped = new HashSet<string>(StringComparer.Ordinal);
+            if (system.Extension is not null && system.Abilities.Any())
+                context.Error(DiagnosticCodes.SystemAbilitiesBesideExtension, $"System '{system.Name}' names extension '{system.Extension.Reference}' and declares abilities; the extension's contract is the only source of its abilities.", system.Abilities.First().Location);
+
             foreach (var setting in system.Settings)
             {
                 if (!mapped.Add(setting.Name))

@@ -444,6 +444,12 @@ Do not parse the file's JSON yourself.
 
 `screenplay environment [<file.play|folder>] [--format text|json]` lists the keys a model needs from the [environment](environments.md) it runs in — each authentication provider's `clientId` and `clientSecret`, the mail settings of onboarding — and marks the ones that must be secrets. The default path is the current directory and the default format is text, one key per line. Source errors exit `1` and list nothing; bad arguments, unavailable paths and empty model directories exit `2`. A model that needs nothing prints a single line saying so.
 
+## Restore extensions
+
+`screenplay restore [<folder>] [--locked] [--update] [--source <directory>] [--vendor]` pins the extensions a model's systems reference in [`screenplay.lock`](extension-contracts.md#the-lock) and restores their contracts into the cache. Without a flag it resolves the references the lock does not pin yet and restores everything the lock pins. `--update` re-resolves every reference to the newest release in its range. `--locked` is for CI: it never resolves a range and exits 1 on a reference the lock does not pin. `--source` names a directory of packages laid out `<full reference>/<version>/contract.play`, or set `SCREENPLAY_EXTENSION_SOURCE`; OCI and npm sources come from Stage and the Cratis CLI. `--vendor` also copies the restored contracts into the model's `extensions` folder so they can be committed. Exit codes: 0 restored, 1 a reference could not be resolved or restored, 2 could not run.
+
+Every other command that compiles a model is strict about extensions: a reference missing from the lock, or whose contract is not restored, is an error (`PLAY1107`, `PLAY1108`). `screenplay mcp` restores unresolved references on opening a model root and reports them as warnings until it has.
+
 ## Migrate files written for an earlier version
 
 `screenplay migrate <file.play|folder> --from <version> [--to <version>] [--dry-run] [--report <file>]` rewrites files written for an earlier Screenplay version - for example `--from 5` for the forms Screenplay 6 split into slots and outlets - and compiles the result. `--to` defaults to the version the compiler reads. It exits `0` when every file migrated, `2` when a file needs review and `1` when it could not run. See [Migrate a model to a new version](migration.md).

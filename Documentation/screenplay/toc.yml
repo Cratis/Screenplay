@@ -63,6 +63,8 @@
   href: commands.md
 - name: Systems and abilities
   href: systems.md
+- name: Extension contracts and the lock
+  href: extension-contracts.md
 - name: Operations and external systems
   href: operations.md
 - name: State machines

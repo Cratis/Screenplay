@@ -11,7 +11,7 @@ Screenplay extensions let you inspect a `.play` model, recover a model from exis
 | Recover a model from authored .NET code | [Source recovery](#level-2-source-to-screenplay-recovery) | Contribute framework evidence to Generation rather than printing syntax in the adapter |
 | Generate artifacts for a target framework | [Target rendering](#level-3-screenplay-to-artifact-rendering) | Compile the executable semantic model and explicitly admit the capabilities your target can realize |
 
-A system an extension realizes maps the extension's settings to configuration or named secrets and may override its activation; see [system settings and named secrets](environments.md#system-settings-and-named-secrets).
+A system an extension realizes maps the extension's settings to configuration or named secrets and may override its activation; see [system settings and named secrets](environments.md#system-settings-and-named-secrets). The package contract, its manifest and the lock that pins it are specified in [extension contracts](extension-contracts.md).
 
 ## Portable meaning and runtime authority
 
