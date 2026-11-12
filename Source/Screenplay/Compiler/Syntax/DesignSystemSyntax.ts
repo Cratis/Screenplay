@@ -94,6 +94,8 @@ export type DeprecatedAppearanceMember = 'accent' | 'corners' | 'font';
 export interface DesignProfileFacts {
     readonly name: string;
     readonly theme: string | null;
+    // The platforms the profile targets, from 'target platform'.
+    readonly platforms?: readonly string[];
     readonly deprecatedAppearance: readonly { readonly member: DeprecatedAppearanceMember; readonly location: SyntaxNode['location'] }[];
     readonly location: SyntaxNode['location'];
 }

@@ -24,7 +24,12 @@ internal sealed class InteractionReferenceValidator(ApplicationSyntax applicatio
     // one is always a reference to something declared rather than to a parameter.
     static readonly IReadOnlySet<string> _noParameters = new HashSet<string>(StringComparer.Ordinal);
 
+    // The systems that name an extension: what their contracts offer (triggers, component signals) is read when the model is bound.
+    readonly HashSet<string> _extensionSystems = application.Systems.Where(system => system.Extension is not null).Select(system => system.Name).ToHashSet(StringComparer.Ordinal);
+
     readonly Dictionary<string, BehaviorSyntax> _behaviors = application.Behaviors.ToDictionary(behavior => behavior.Name ?? string.Empty, StringComparer.Ordinal);
+
+    bool _inExtensionComponent;
 
     /// <summary>
     /// Validates the interactions of the application.
@@ -109,6 +114,8 @@ internal sealed class InteractionReferenceValidator(ApplicationSyntax applicatio
 
     void ValidateComponentInteractions(ScreenComponentSyntax component, DeclarationScope scope)
     {
+        _inExtensionComponent = component.Component.Split('.') is [var system, _] && _extensionSystems.Contains(system);
+
         // Preserve plain component interactions' existing reference-validation behavior.
         foreach (var behavior in component.Behaviors)
         {
@@ -119,6 +126,8 @@ internal sealed class InteractionReferenceValidator(ApplicationSyntax applicatio
         {
             ValidateUses(uses);
         }
+
+        _inExtensionComponent = false;
     }
 
     void ValidateAttachments(IEnumerable<BehaviorSyntax> attached, IEnumerable<UsesBehaviorSyntax> used, DeclarationScope scope)
@@ -190,7 +199,7 @@ internal sealed class InteractionReferenceValidator(ApplicationSyntax applicatio
                     $"Unknown event '{@event.EventName}' - nothing in scope declares it",
                     @event.Location);
                 break;
-            case ApplicationTriggerInteractionTriggerSyntax applicationTrigger when !references.Triggers.Contains(applicationTrigger.TriggerName):
+            case ApplicationTriggerInteractionTriggerSyntax applicationTrigger when !references.Triggers.Contains(applicationTrigger.TriggerName) && !ComesFromExtension(applicationTrigger.TriggerName):
                 context.Warning(
                     DiagnosticCodes.UnknownActionTrigger,
                     $"Unknown trigger '{applicationTrigger.TriggerName}' - nothing in the document declares it, and it is not a built-in interaction kind",
@@ -198,6 +207,9 @@ internal sealed class InteractionReferenceValidator(ApplicationSyntax applicatio
                 break;
         }
     }
+
+    bool ComesFromExtension(string trigger) =>
+        _inExtensionComponent || (trigger.Split('.') is [var system, _] && _extensionSystems.Contains(system));
 
     void ValidateActions(IEnumerable<InteractionActionSyntax> actions, DeclarationScope scope, IReadOnlySet<string> parameters)
     {

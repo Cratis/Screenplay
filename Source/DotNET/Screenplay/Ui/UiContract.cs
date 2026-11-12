@@ -57,6 +57,11 @@ public sealed record UiScreen(
     /// Gets the Scene presentation of the screen, when it uses Scene vocabulary. A builder for another stack may ignore it.
     /// </summary>
     public UiScene? Scene { get; init; }
+
+    /// <summary>
+    /// Gets the extensions the screen needs because it places their components, so a host can activate their backends ahead of use.
+    /// </summary>
+    public IReadOnlyList<UiExtensionNeed>? Extensions { get; init; }
 }
 
 /// <summary>

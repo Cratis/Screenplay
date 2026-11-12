@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -22,7 +23,9 @@ public static class UiContractBuilder
     {
         ArgumentNullException.ThrowIfNull(workspace);
         var model = workspace.Compilation.Success ? workspace.Compilation.Value?.Model : null;
-        return For(MergedSyntax(workspace), model, workspace.ApplicationName);
+        var syntax = MergedSyntax(workspace);
+        var documents = workspace.Compilation.Success ? workspace.Compilation.Value!.Documents.Documents.Select(document => document.DisplayPath) : [];
+        return For(syntax, model, workspace.ApplicationName, ExtensionContractResolver.Current.Resolve(syntax, documents));
     }
 
     /// <summary>
@@ -31,11 +34,12 @@ public static class UiContractBuilder
     /// <param name="syntax">The merged application syntax.</param>
     /// <param name="model">The executable model of the same sources, or null when there is none.</param>
     /// <param name="application">The application name.</param>
+    /// <param name="extensions">The restored extension contracts, or null when none were resolved.</param>
     /// <returns>The UI contract.</returns>
-    public static UiContract For(ApplicationSyntax syntax, ExecutableSemanticModel? model, string application)
+    public static UiContract For(ApplicationSyntax syntax, ExecutableSemanticModel? model, string application, ExtensionResolution? extensions = null)
     {
         ArgumentNullException.ThrowIfNull(syntax);
-        var index = new UiModelIndex(syntax, model);
+        var index = new UiModelIndex(syntax, model, extensions);
         var screens = index.Slices
             .SelectMany(entry => entry.Slice.Screens.Select(screen => new UiScreenReader(index, entry.Path).Read(screen)))
             .ToArray();

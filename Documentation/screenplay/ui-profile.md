@@ -202,6 +202,10 @@ Use a qualified name such as `Internal.Widgets.TrendChart` when you want that pa
 
 These rules use the consumer's component catalog. Screenplay's compiler cannot inspect the widgets that PrimeReact or an internal library implements. It checks the declaration, including duplicate profile names and duplicate packages within a profile; package resolution belongs to the consuming host and Scene engine.
 
+## Extension components
+
+A [component an extension provides](screens.md#extension-components) is placed as `component <System>.<Component>`, so a profile does not list the extension as a package: the system names it. The component's contract says which platforms it supports. A `target platform` of the profile that the component does not list is reported as `PLAY1118`, a warning, at each placement, so a screen that must run on `ios` does not quietly place a web-only component. A component whose contract declares no `platform` line is not checked.
+
 ## Checking a shell against the installed blueprints
 
 For an own shell, the compiler can inspect the document's template and exposure declarations. A blueprint shell needs an additional check against what is installed: its template kinds, slots, options and version.

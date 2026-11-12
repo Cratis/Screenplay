@@ -4375,6 +4375,21 @@ public static class DiagnosticCodes
     /// <summary>A placeholder is not a static HTML file: it has script, an external reference or an inline event handler.</summary>
     public const string InvalidExtensionPlaceholder = "PLAY1113";
 
+    /// <summary>A screen places <c>&lt;System&gt;.&lt;Component&gt;</c>, but the extension's contract declares no component of that name.</summary>
+    public const string UnknownExtensionComponent = "PLAY1114";
+
+    /// <summary>A screen gives an extension component a property its contract does not declare.</summary>
+    public const string UnknownExtensionComponentProperty = "PLAY1115";
+
+    /// <summary>An <c>on</c> line of an extension component names something its contract does not raise.</summary>
+    public const string UnknownExtensionSignal = "PLAY1116";
+
+    /// <summary>A binding reads <c>signal.&lt;value&gt;</c> from a signal that does not carry that value.</summary>
+    public const string UnknownExtensionSignalValue = "PLAY1117";
+
+    /// <summary>An extension component does not support a platform a <c>ui profile</c> targets.</summary>
+    public const string ExtensionComponentPlatformUnsupported = "PLAY1118";
+
     /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>

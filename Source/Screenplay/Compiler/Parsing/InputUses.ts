@@ -29,7 +29,7 @@ const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)(?:\\s+([\\w.]+(?:\\[\\]
 const actionBoundaries = new Set(['refresh', 'navigate', 'open', 'close', 'set', 'notify', 'confirm', 'raise', 'on', 'when', 'otherwise']);
 
 // A single forward walk, tracking owners by indentation and skipping fences as opaque text.
-export function collectInputUses(context: ParserContext, header: SourceLine): void {
+export function collectInputUses(context: ParserContext, header: SourceLine): readonly SourceLine[] {
     const owners: InputOwner[] = [];
     const parameters = new Set<string>();
     const inputs: InputUse[] = [];
@@ -68,4 +68,5 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
     context.continuationValues.push(...collectContinuationValues(lines, context.scope));
     // Parameters may be declared after their bindings; commit facts once their scope is complete.
     for (const input of inputs) context.inputUses.push(parameters.has(input.command) ? { ...input, isParameter: true } : input);
+    return lines;
 }

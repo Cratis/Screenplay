@@ -96,6 +96,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(requires)(\s+)(stage|screenplay|platform|runtime)(\s+)(.+?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'string']],
             [/^(\s*)(setting)(\s+)([A-Za-z_]\w*)(\s+)(public|secret)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword']],
             [/^(\s*)(component)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(component)(\s+)([A-Za-z_]\w*)(\.)([A-Z]\w*)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'delimiter', 'type.identifier', 'white', 'variable']],
+            [/^(\s*)(with)(\s+)([A-Za-z_]\w*)(\s+)(from)(\s+)(signal)(\.)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword', 'white', 'keyword', 'delimiter', 'variable']],
             [/^(\s*)(kind)(\s+)(react|mount|screenplay)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(backend)(\s+)(runtime)(\s+)(\S+)(\s+)(\S+)(\s+)(assembly)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'identifier', 'white', 'number', 'white', 'keyword', 'white', 'string']],
             // System configuration lines are contextual, so a property called setting keeps its name.

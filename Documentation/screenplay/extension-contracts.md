@@ -151,6 +151,10 @@ The language server and MCP restore unresolved references on opening a model roo
 
 `screenplay restore [<folder>]` pins and restores by hand; see [the command line](tool.md#restore-extensions). OCI and npm fetching is provided by Stage and the Cratis CLI; this tool reads packages from a directory laid out `<full reference>/<version>/contract.play`.
 
+## Components on screens
+
+A screen places a component with `component <System>.<Component> <name>`. The component, its `property` lines, the signals handled with `on <signal>` and the values read as `signal.<value>` are checked against this contract (`PLAY1114` to `PLAY1117`), and a `ui profile` platform the component does not list is a warning (`PLAY1118`). See [Extension components](screens.md#extension-components), [Interaction triggers](interactions.md#interaction-triggers) and [the UI contract](ui-contract.md#extension-components). The frontend side of the contract, how a package implements the component, is the Scene [extension component contract](https://github.com/Cratis/Scene/blob/main/Documentation/extensions/contract.md); how Stage serves one is [Run extension components](https://github.com/Cratis/Stage/blob/main/Documentation/extensions/components.md).
+
 ## Provider compatibility
 
 An extension replaces another only when it offers the same abilities, triggers, components, properties and raised signals, with the same typed shape. It may offer more. When a swap leaves a use of something the new extension does not offer, the use is reported at each place: a reaction that listens to a trigger the extension no longer raises is `PLAY1112`, and an invocation of an ability it no longer offers is reported as an unknown ability. The same comparison is available as `ExtensionCompatibility.Mismatches`.
@@ -159,5 +163,6 @@ An extension replaces another only when it offers the same abilities, triggers, 
 
 - [Systems and abilities](systems.md) declares abilities in a model.
 - [Environments](environments.md#system-settings-and-named-secrets) covers settings, named secrets and activation.
+- [Screens](screens.md#extension-components) place the components a contract declares.
 - [Grammar](grammar.md) holds the productions.
 - [Diagnostics](diagnostics.md#extension-contracts-and-the-lock) lists the codes.

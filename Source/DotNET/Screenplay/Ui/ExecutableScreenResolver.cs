@@ -77,8 +77,38 @@ sealed class ExecutableScreenResolver(ApplicationSyntax syntax, SemanticCompilat
             [.. screen.Navigation.Select(navigation => new SemanticScreenNavigation(Target(declaring, owner, navigation.Screen), navigation.Trigger) { By = navigation.By, Opens = navigation.Opens })],
             new([.. screen.Layout.Fits], Regions(screen.Layout.Regions)))
         {
-            Description = screen.Description
+            Description = screen.Description,
+            Extensions = [.. (screen.Extensions ?? []).Select(need => new SemanticScreenExtension(System(owner, need.System), need.Reference))],
+            Components = [.. (screen.Scene?.Components ?? []).Where(component => component.Extension is not null).Select(component => ExtensionComponent(declaring, owner, component))]
         };
+    }
+
+    SemanticScreenComponent ExtensionComponent(SliceSyntax declaring, string owner, UiSceneComponent component)
+    {
+        var extension = component.Extension!;
+        return new(
+            component.Name,
+            System(owner, extension.System),
+            extension.Component,
+            [.. component.Properties.Keys],
+            [.. (extension.Handles ?? []).Select(handler => new SemanticScreenSignalHandler(handler.Signal, [.. (handler.Commands ?? []).Select(command => HandledCommand(declaring, owner, command))]))]);
+    }
+
+    SemanticId System(string owner, string name)
+    {
+        var systems = compilation.Model.Application.Systems.Where(system => system.Name == name).ToArray();
+        if (systems.Length == 1) return systems[0].Id;
+        _refusals.Add($"{owner} places a component through system '{name}', which the executable model does not declare.");
+        return default;
+    }
+
+    SemanticId HandledCommand(SliceSyntax declaring, string owner, string name)
+    {
+        var inSlice = _slices.Values.Where(entry => entry.Slice.Name == declaring.Name).SelectMany(entry => entry.Slice.Commands).Where(command => command.Name == name).ToArray();
+        var candidates = inSlice.Length > 0 ? inSlice : [.. _commands.Values.Where(command => command.Name == name)];
+        if (candidates.Length == 1) return candidates[0].Id;
+        _refusals.Add($"{owner} handles a signal with command '{name}', which {(candidates.Length == 0 ? "no slice declares" : "more than one slice declares")}.");
+        return default;
     }
 
     SemanticScreenAction Action(SliceSyntax slice, string owner, UiAction action)

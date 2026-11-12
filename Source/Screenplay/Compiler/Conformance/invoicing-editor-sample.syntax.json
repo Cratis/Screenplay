@@ -12837,6 +12837,28 @@
                             }
                           ],
                           "name": "recordPaymentInput"
+                        },
+                        {
+                          "kind": "ScreenComponentSyntax",
+                          "component": "Mailer.MailPreview",
+                          "context": null,
+                          "exposes": [],
+                          "icon": null,
+                          "name": "statement",
+                          "presentation": [],
+                          "properties": [
+                            {
+                              "kind": "ComponentPropertySyntax",
+                              "binding": null,
+                              "property": "subject",
+                              "value": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Your balance statement"
+                              }
+                            }
+                          ],
+                          "slots": [],
+                          "stableId": null
                         }
                       ],
                       "name": "balance"

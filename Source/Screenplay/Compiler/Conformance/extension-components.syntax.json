@@ -1,0 +1,170 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Checkout",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "ConfirmPayment",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "PaymentConfirmed",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "paymentIntentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentConfirmed",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "paymentIntentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "ConfirmPayment",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "CheckoutScreen",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenComponentSyntax",
+                      "component": "Payments.PaymentForm",
+                      "context": null,
+                      "exposes": [],
+                      "icon": null,
+                      "name": "payment",
+                      "presentation": [],
+                      "properties": [
+                        {
+                          "kind": "ComponentPropertySyntax",
+                          "binding": null,
+                          "property": "amount",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "10"
+                          }
+                        }
+                      ],
+                      "slots": [],
+                      "stableId": null
+                    }
+                  ],
+                  "name": "Checkout"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Orders"
+    }
+  ],
+  "personas": [],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "description": null,
+      "extension": {
+        "kind": "SystemExtensionSyntax",
+        "reference": "cratis/stripe",
+        "version": "2"
+      },
+      "name": "Payments"
+    }
+  ],
+  "types": []
+}

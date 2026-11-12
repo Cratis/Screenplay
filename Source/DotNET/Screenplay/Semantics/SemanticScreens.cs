@@ -29,7 +29,46 @@ public sealed record SemanticScreen(
     /// Gets the screen description, when it has one.
     /// </summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the extensions the screen needs because it places their components, so a host can activate their backends ahead of use. ESM v52.
+    /// </summary>
+    public ImmutableArray<SemanticScreenExtension> Extensions { get; init; } = [];
+
+    /// <summary>
+    /// Gets the components the screen places through a system's extension, in declaration order. ESM v52.
+    /// </summary>
+    public ImmutableArray<SemanticScreenComponent> Components { get; init; } = [];
 }
+
+/// <summary>
+/// Represents an extension a screen needs.
+/// </summary>
+/// <param name="System">The system that names the extension.</param>
+/// <param name="Reference">The extension reference the system writes.</param>
+public sealed record SemanticScreenExtension(SemanticId System, string Reference);
+
+/// <summary>
+/// Represents a component a screen places through a system's extension: resolved through the system, never through the package.
+/// </summary>
+/// <param name="Name">The name the screen gives the placement.</param>
+/// <param name="System">The system that names the extension.</param>
+/// <param name="Component">The component name in the extension's contract.</param>
+/// <param name="Properties">The names of the properties the screen gives the component, in declaration order.</param>
+/// <param name="Handles">The signals the screen handles, in declaration order, with the commands each executes.</param>
+public sealed record SemanticScreenComponent(
+    string Name,
+    SemanticId System,
+    string Component,
+    ImmutableArray<string> Properties,
+    ImmutableArray<SemanticScreenSignalHandler> Handles);
+
+/// <summary>
+/// Represents the handling of one signal a component raises.
+/// </summary>
+/// <param name="Signal">The signal name in the extension's contract.</param>
+/// <param name="Commands">The commands the handler executes, in declaration order.</param>
+public sealed record SemanticScreenSignalHandler(string Signal, ImmutableArray<SemanticId> Commands);
 
 /// <summary>
 /// Represents the data a screen shows through one query.

@@ -80,7 +80,7 @@ internal static class SemanticArrayClassification
         "specifications/thenEvents", "specifications/thenInvocations", "specifications/thenQueries", "specifications/thenReadModels",
         "thenQueries/filters", "thenQueries/results", "when/fields",
         "value/values", "key/values", "streamId/values", "operand/values", "values/values",
-        "screens/data", "screens/actions", "screens/navigation", "data/fields", "actions/inputs", "layout/fits", "layout/regions", "regions/regions", "regions/actions",
+        "screens/data", "screens/actions", "screens/navigation", "screens/extensions", "screens/components", "components/properties", "components/handles", "handles/commands", "data/fields", "actions/inputs", "layout/fits", "layout/regions", "regions/regions", "regions/actions",
     ];
 
     static readonly ImmutableDictionary<string, SemanticArrayRule> _rules = BuildRules();

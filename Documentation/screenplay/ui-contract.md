@@ -70,6 +70,36 @@ values, the toolbars and the outlets a screen offers to lower levels. A
 component property keeps its binding (`query AllBooks`) or its value; lists
 and objects stay JSON.
 
+## Extension components
+
+A [component an extension provides](screens.md#extension-components) is a `scene` component with an `extension` member, and the screen lists the extensions it needs:
+
+```json
+{
+  "extensions": [{ "system": "Payments", "reference": "cratis/stripe" }],
+  "scene": {
+    "components": [{
+      "component": "Payments.PaymentForm",
+      "name": "payment",
+      "extension": {
+        "system": "Payments",
+        "reference": "cratis/stripe",
+        "component": "PaymentForm",
+        "kind": "react",
+        "platforms": ["web"],
+        "placeholder": "placeholders/payment-form.html",
+        "placeholderHtml": "<p>Pay</p>",
+        "handles": ["succeeded"]
+      }
+    }]
+  }
+}
+```
+
+`system` and `component` name the placement; a host resolves it through the system's extension, never through a package, so swapping a compatible provider changes nothing here. `kind`, `platforms` and `placeholder` come from the restored contract and are left out when it is not restored. `placeholderHtml` is the static placeholder a design tool draws in place of the component, present only when the restored package holds the file and it has no script or external reference. `handles` lists the signals the screen handles with `on`.
+
+A screen's `extensions` lists each extension it needs, so a host can start the backend before the first call from the browser. The member is left out of a screen that places no extension component.
+
 ## Versions and round trips
 
 `contract` names the version, `screenplay-ui/1`. The same model always gives

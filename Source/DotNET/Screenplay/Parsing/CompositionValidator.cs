@@ -375,11 +375,13 @@ internal static class CompositionValidator
             return;
         }
 
+        // A component of a system that names an extension comes from the extension, not from a profile's package.
+        var extensionSystems = application.Systems.Where(system => system.Extension is not null).Select(system => system.Name).ToHashSet(StringComparer.Ordinal);
         foreach (var component in collector.Components)
         {
             var separator = component.Component.LastIndexOf('.');
             var package = separator < 0 ? component.Component : component.Component[..separator];
-            if (!packages.Contains(package))
+            if (!packages.Contains(package) && !extensionSystems.Contains(package))
             {
                 context.Error(
                     DiagnosticCodes.IncompatibleComponentPackage,

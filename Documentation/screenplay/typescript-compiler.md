@@ -111,6 +111,10 @@ The bare `passive` read-model directive is retained as optional `isPassive: true
 
 Sinks are read like the C# compiler reads them: `ApplicationSyntax.sinks` holds the `sink <Name> for readmodels|graphs` declarations, and `ReadModelSyntax.sink` and `GraphSyntax.sink` the bare `sink <Name>` directives; each is omitted when absent. Both compilers settle a read model's `sink <Name>` line the same way, once the declared sinks are known, and report every sink diagnostic, `PLAY0931` to `PLAY0939`. See [Sinks](sinks.md).
 
+## Extension components
+
+`checkExtensionUseSites(application, contracts)` checks every component a screen places as `<System>.<Component>` against the contracts a host restored, as the C# binder does: an unknown component (`PLAY1114`), property (`PLAY1115`), signal (`PLAY1116`) or signal value (`PLAY1117`), and a `ui profile` platform the component does not support (`PLAY1118`). Interaction bodies stay opaque in the syntax tree, so the `on` lines and `signal.<value>` reads it checks come from a parser-owned side table that the wire projection never carries. The profile platforms are parser-owned facts on `designProfiles`. Reading and restoring the contracts is the host's job: the compiler only checks what it is given.
+
 ## Keys and routed observers
 
 Both source parsers retain trailing read-model `key` marks, query and reads `by` blocks, production `stream` overrides and reaction/reducer `from` filters. Structural JSON uses `isKey`, `byParts`, `stream` and `from`. The narrow parser exposes reducer evidence through `dependencySourcesOf(slice).reducers` and command/trigger reads through `dependencySourcesOf(node).reads`. Full typed AST transport carries `ReducerSyntax` and `ReadsSyntax`.

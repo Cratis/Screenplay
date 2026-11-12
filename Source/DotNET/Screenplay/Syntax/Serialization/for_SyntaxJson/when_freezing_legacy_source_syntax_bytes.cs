@@ -89,6 +89,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "then-invokes",
         "lifecycles",
         "extension-references",
+        "extension-components",
     ];
 
     [Fact]

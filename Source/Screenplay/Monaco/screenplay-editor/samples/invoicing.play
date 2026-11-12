@@ -3125,6 +3125,12 @@ module Invoicing
             table InvoiceBalanceReadModel
               column outstanding label "Outstanding"
               on row-click navigate to RecordPaymentScreen by invoiceId
+          // A component the Mailer system's extension provides, placed through the system: the screen
+          // names Mailer.MailPreview, never the package, and handles the signal the contract raises.
+          component Mailer.MailPreview statement
+            property subject = "Your balance statement"
+            on sent
+              notify info "The balance statement was sent"
 
       specification ReducingTheBalanceByAPayment
         given caller

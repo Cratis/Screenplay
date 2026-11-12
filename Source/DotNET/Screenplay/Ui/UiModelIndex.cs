@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Api;
+using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
@@ -22,8 +23,10 @@ sealed class UiModelIndex
     /// </summary>
     /// <param name="syntax">The merged application syntax.</param>
     /// <param name="model">The executable model, or null when the model has none.</param>
-    internal UiModelIndex(ApplicationSyntax syntax, ExecutableSemanticModel? model)
+    /// <param name="extensions">The restored extension contracts, or null when none were resolved.</param>
+    internal UiModelIndex(ApplicationSyntax syntax, ExecutableSemanticModel? model, ExtensionResolution? extensions = null)
     {
+        Extensions = new(syntax, extensions);
         foreach (var module in syntax.Modules)
         {
             foreach (var feature in module.Features) AddFeature(feature, module.Name);
@@ -33,6 +36,11 @@ sealed class UiModelIndex
         foreach (var operation in ApiDescription.For(model).Operations) _operations[(operation.Slice, operation.Name)] = operation;
         foreach (var (path, slice) in ApiSlices.All(model.Application)) _sliceIds[string.Join('.', path)] = slice.Id.ToString();
     }
+
+    /// <summary>
+    /// Gets the components that come from extensions.
+    /// </summary>
+    internal UiExtensionIndex Extensions { get; }
 
     /// <summary>
     /// Gets every slice with its dotted path, in declaration order.

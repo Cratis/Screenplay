@@ -12,7 +12,7 @@ extension Mail
 
   component MailPreview
     kind react
-    platform web
+    platform web ios android
     placeholder "placeholders/mail-preview.html"
     property subject String
     raises sent

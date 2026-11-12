@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.Json.Nodes;
 using Cratis.Screenplay.Api;
 using Cratis.Screenplay.Semantics;
 
@@ -72,8 +73,27 @@ sealed class UiExecutableReader
             new([.. screen.Layout.Fits], [.. screen.Layout.Regions.Select(Region)]))
         {
             SliceId = sliceId.ToString(),
-            Description = screen.Description
+            Description = screen.Description,
+            Extensions = screen.Extensions.IsDefaultOrEmpty ? null : [.. screen.Extensions.Select(extension => new UiExtensionNeed(SystemName(extension.System), extension.Reference))],
+            Scene = screen.Components.IsDefaultOrEmpty ? null : new([], [.. screen.Components.Select(component => ExtensionComponent(screen, component))], [], [])
         };
+
+    UiSceneComponent ExtensionComponent(SemanticScreen screen, SemanticScreenComponent component)
+    {
+        var system = SystemName(component.System);
+        var reference = screen.Extensions.First(extension => extension.System == component.System).Reference;
+        return new($"{system}.{component.Component}", component.Name, component.Properties.ToDictionary(property => property, _ => (JsonNode?)null, StringComparer.Ordinal), new Dictionary<string, string>())
+        {
+            Extension = new(system, reference, component.Component)
+            {
+                Handles = component.Handles.IsDefaultOrEmpty
+                    ? null
+                    : [.. component.Handles.Select(handler => new UiSignalHandler(handler.Signal) { Commands = handler.Commands.IsDefaultOrEmpty ? null : [.. handler.Commands.Select(command => _commands[command].Name)] })]
+            }
+        };
+    }
+
+    string SystemName(SemanticId system) => _model.Application.Systems.First(candidate => candidate.Id == system).Name;
 
     UiData Data(SemanticScreenData data)
     {
