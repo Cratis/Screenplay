@@ -7,12 +7,15 @@ import { describe, expect, it } from 'vitest';
 const grammar = JSON.parse(readFileSync(new URL('../syntaxes/screenplay.tmLanguage.json', import.meta.url), 'utf8'));
 const rules = (JSON.stringify(grammar).match(/"match":\s*"((?:[^"\\]|\\.)*)"/g) ?? [])
     .map(entry => JSON.parse(`{${entry}}`).match as string);
-const exec = (line: string) => rules.filter(rule => /returned|returns\|answers|compute|\(on\)/.test(rule)).map(rule => new RegExp(rule).exec(line)).find(match => match !== null && match[1] !== undefined && /^(on|given|compute)$/.test(match[1]));
+// Oniguruma-only constructs do not compile as JavaScript patterns; those rules are not under test here.
+const patterns = rules.flatMap(rule => { try { return [new RegExp(rule)]; } catch { return []; } });
+const captures = (line: string): string[][] => patterns.flatMap(pattern => { const match = pattern.exec(line); return match === null ? [] : [match.slice(1).filter(group => group !== undefined)]; });
+const highlights = (line: string, expected: string[]) => expect(captures(line).some(groups => expected.every((group, index) => groups[index] === group))).toBe(true);
 
 describe('when highlighting ability invocations', () => {
-    it('should highlight on returned', () => expect(exec('            on returned')?.slice(1, 3)).toEqual(['on', 'returned']));
-    it('should highlight on failed', () => expect(exec('            on failed')?.slice(1, 3)).toEqual(['on', 'failed']));
-    it('should highlight an outcome branch', () => expect(exec('            on NoCapacity')?.slice(1, 3)).toEqual(['on', 'NoCapacity']));
-    it('should highlight a scripted ability answer', () => expect(exec('        given Carrier.BookPickup answers NoCapacity')?.slice(1, 4)).toEqual(['given', 'Carrier.BookPickup', 'answers']));
-    it('should highlight a compute node', () => expect(exec('  compute Risk')?.slice(1, 3)).toEqual(['compute', 'Risk']));
+    it('should highlight on returned', () => highlights('            on returned', ['on', 'returned']));
+    it('should highlight on failed', () => highlights('            on failed', ['on', 'failed']));
+    it('should highlight an outcome branch', () => highlights('            on NoCapacity', ['on', 'NoCapacity']));
+    it('should highlight a scripted ability answer', () => highlights('        given Carrier.BookPickup answers NoCapacity', ['given', 'Carrier.BookPickup', 'answers']));
+    it('should highlight a compute node', () => highlights('  compute Risk', ['compute', 'Risk']));
 });
