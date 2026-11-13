@@ -4,6 +4,8 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate } from './AvailabilityParser';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
@@ -33,7 +35,7 @@ export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
-export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, provide, import, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a module - written beneath a 'module' header, or at the top level of a file imported
 // into the module. The port of the C# ModuleBody.
@@ -45,6 +47,7 @@ export class ModuleBody {
     readonly #purposes: PurposeReferenceSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
     readonly #provides: ProvideSyntax[] = [];
+    readonly #available: AvailableSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -87,6 +90,9 @@ export class ModuleBody {
                 if (this.#authorizationDepthExceeded) recordAuthorizationRefusal(this.#fileImports);
                 return true;
             }
+            case 'available':
+                addAvailabilityGate(context, line, this.#available);
+                return true;
             case 'provide':
                 parseProvide(context, line, this.#provides);
                 return true;
@@ -140,6 +146,7 @@ export class ModuleBody {
             dependsOn: this.#dependsOn,
             purposes: this.#purposes,
             ...(this.#provides.length > 0 ? { provides: this.#provides } : {}),
+            ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             features: this.#features,
             examples: this.#examples,

@@ -3,6 +3,7 @@
 
 import type { CommandCalendarSyntax } from './Calendar';
 import { AuthorizeSyntax } from './Authorization';
+import type { AvailableSyntax } from './Availability';
 import { PropertySyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
 import { RequirementSyntax } from './Conditions';
@@ -53,6 +54,8 @@ export type ValidateSyntax = DeclarativeValidateSyntax | CodeValidateSyntax | Fi
 
 export interface CommandSyntax extends SyntaxNode {
     readonly kind: 'CommandSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
     readonly name: string;
     readonly description: string | null;

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { AuthorizeSyntax } from './Authorization';
+import type { AvailableSyntax } from './Availability';
 import { ConditionSyntax } from './Conditions';
 import type { FileReferenceSyntax } from './Constraints';
 import { TypeRefSyntax } from './Declarations';
@@ -33,6 +34,8 @@ export interface UiBindingSyntax extends SyntaxNode {
 export interface ScreenSyntax extends SyntaxNode {
     readonly description?: string | null;
     readonly kind: 'ScreenSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
     readonly contributions?: readonly ScreenContributionSyntax[];

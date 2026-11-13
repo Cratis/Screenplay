@@ -6,6 +6,7 @@ import { validateAgents } from '../Parsing/AgentsValidator';
 import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
 import { validateProvides } from '../Parsing/ProvideValidator';
+import { validateAvailability, validateAvailabilityInvocations } from '../Parsing/AvailabilityValidator';
 import { validateDesignSystem } from '../Parsing/DesignSystemValidator';
 import { validateApplicationHandlers } from '../Parsing/CommandHandlerValidator';
 import { ParserContext } from '../Parsing/ParserContext';
@@ -103,6 +104,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...(applications.some(application => (application.workflows?.length ?? 0) > 0) ? { workflows: applications.flatMap(application => application.workflows ?? []) } : {}),
         purposes: declaredInOneFile(applications.flatMap(application => application.purposes ?? []), 'purpose', diagnostics),
         ...presentOnly('provides', applications.flatMap(application => application.provides ?? [])),
+        ...presentOnly('audiences', declaredInOneFile(applications.flatMap(application => application.audiences ?? []), 'audience', diagnostics)),
+        ...presentOnly('availabilities', declaredInOneFile(applications.flatMap(application => application.availabilities ?? []), 'availability', diagnostics)),
         eventSources: applications.flatMap(application => application.eventSources ?? []),
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
         modules,
@@ -126,6 +129,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
     validateProvides(value, identityContext);
+    validateAvailability(value, identityContext);
+    validateAvailabilityInvocations(value, identityContext);
     validateDesignSystem(value, identityContext);
     validateAgents(value, identityContext);
     diagnostics.push(...identityContext.diagnostics);
@@ -137,7 +142,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.agents != null || application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.storylines?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.provides?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.agents != null || application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.storylines?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.provides?.length ?? 0) > 0 || (application.audiences?.length ?? 0) > 0 || (application.availabilities?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }
@@ -152,6 +157,7 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
             examples: parts.flatMap(part => part.examples ?? []),
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
             ...presentOnly('provides', parts.flatMap(part => part.provides ?? [])),
+            ...presentOnly('available', parts.flatMap(part => part.available ?? [])),
             description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
             authorize: parts.some(part => authorizationWasRefused(part.fileImports))
@@ -173,6 +179,7 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
             examples: parts.flatMap(part => part.examples ?? []),
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
             ...presentOnly('provides', parts.flatMap(part => part.provides ?? [])),
+            ...presentOnly('available', parts.flatMap(part => part.available ?? [])),
             description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
             authorize: parts.some(part => authorizationWasRefused(part.fileImports))

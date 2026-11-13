@@ -3,6 +3,7 @@
 
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { validateProvides } from './Parsing/ProvideValidator';
+import { validateAvailability, validateAvailabilityInvocations } from './Parsing/AvailabilityValidator';
 import { validateDesignSystem } from './Parsing/DesignSystemValidator';
 import { validateApplicationHandlers } from './Parsing/CommandHandlerValidator';
 import { recordStructuralInteractions } from './Parsing/StructuralInteractionSites';
@@ -94,6 +95,8 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateApplicationHandlers(value, context);
         validateIdentity(value, context);
         validateProvides(value, context);
+        validateAvailability(value, context);
+        validateAvailabilityInvocations(value, context);
         validateDesignSystem(value, context);
         validatePurposes(value, context);
         validateSlicePlacements(value, context);

@@ -24,6 +24,8 @@ import { parseEvent, parseReadModel } from './DeclarationParsers';
 import { parseDescription } from './DescriptionParser';
 import { PurposeReferenceSyntax } from '../Syntax/Purposes';
 import { parseProvide } from './ProvideParser';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate } from './AvailabilityParser';
 import { ProvideSyntax } from '../Syntax/ProvideSyntax';
 import { parsePurposeReference } from './PurposeParser';
 import { parseDocumentation } from './DocumentationParser';
@@ -83,6 +85,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const examples: SpecificationExampleSyntax[] = [];
     const purposes: PurposeReferenceSyntax[] = [];
     const provides: ProvideSyntax[] = [];
+    const available: AvailableSyntax[] = [];
     const placements: SlicePlacementSyntax[] = [];
     const readModels: ReadModelSyntax[] = [];
     const graphs: GraphSyntax[] = [];
@@ -103,6 +106,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             documentation = parseDocumentation(context, child, documentation, `Slice '${name}'`);
         } else if (keyword === 'purpose') {
             parsePurposeReference(context, child, purposes);
+        } else if (keyword === 'available') {
+            addAvailabilityGate(context, child, available);
         } else if (keyword === 'provide') {
             parseProvide(context, child, provides);
         } else if (keyword === 'shows') {
@@ -156,7 +161,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     const syntax: SliceSyntax = {
-        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, ...(provides.length > 0 ? { provides } : {}), ...(placements.length > 0 ? { placements } : {}), events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, ...(graphs.length > 0 ? { graphs } : {}), ...(graphProjections.length > 0 ? { graphProjections } : {}), ...(graphQueries.length > 0 ? { graphQueries } : {}), screens,
+        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, ...(provides.length > 0 ? { provides } : {}), ...(available.length > 0 ? { available } : {}), ...(placements.length > 0 ? { placements } : {}), events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, ...(graphs.length > 0 ? { graphs } : {}), ...(graphProjections.length > 0 ? { graphProjections } : {}), ...(graphQueries.length > 0 ? { graphQueries } : {}), screens,
         location: locationOf(line),
     };
     dependencySources.set(syntax, { reducers });

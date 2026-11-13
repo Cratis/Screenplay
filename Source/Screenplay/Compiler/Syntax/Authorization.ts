@@ -43,6 +43,8 @@ export interface PersonaSyntax extends SyntaxNode {
     readonly description: string | null;
     readonly policies: readonly string[];
 
+    // The audiences the persona is always in - authoring metadata, written only when present.
+    readonly audiences?: readonly string[];
     // Authoring metadata for the personas canvas, written only when present.
     readonly goals?: readonly string[];
     readonly x?: number;

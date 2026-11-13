@@ -9,6 +9,7 @@ import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import type { OutletItemSyntax, OutletSyntax } from './Outlets';
 import { IdentitySyntax } from './IdentitySyntax';
 import type { ProvideSourceSyntax, ProvideSyntax } from './ProvideSyntax';
+import type { AudienceSyntax, AvailabilityRequirementSyntax, AvailabilitySyntax, AvailableSyntax } from './Availability';
 import { DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
@@ -99,6 +100,8 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.identity != null) this.visitIdentity(syntax.identity);
         syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.audiences?.forEach(node => this.visitAudience(node));
+        syntax.availabilities?.forEach(node => this.visitAvailability(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
         if (syntax.agents != null) this.visitAgents(syntax.agents);
         syntax.designSystems?.forEach(node => this.visitDesignSystem(node));
@@ -177,6 +180,34 @@ export abstract class ScreenplaySyntaxWalker {
     visitQueryIdentitySource(syntax: QueryIdentitySourceSyntax): void { this.visitNode(syntax); this.visitExpression(syntax.by); }
     visitCodeIdentitySource(syntax: CodeIdentitySourceSyntax): void { this.visitNode(syntax); this.visitCodeBlock(syntax.code); }
     visitFileIdentitySource(syntax: FileIdentitySourceSyntax): void { this.visitNode(syntax); this.visitFileReference(syntax.file); }
+
+    visitAudience(syntax: AudienceSyntax): void { this.visitNode(syntax); }
+
+    visitAvailability(syntax: AvailabilitySyntax): void {
+        this.visitNode(syntax);
+        syntax.requirements.forEach(requirement => this.visitAvailabilityRequirement(requirement));
+    }
+
+    visitAvailable(syntax: AvailableSyntax): void {
+        this.visitNode(syntax);
+        this.visitAvailabilityRequirement(syntax.requirement);
+    }
+
+    visitAvailabilityRequirement(syntax: AvailabilityRequirementSyntax): void {
+        switch (syntax.kind) {
+            case 'ConditionAvailabilityRequirementSyntax':
+                this.visitNode(syntax);
+                this.visitCondition(syntax.condition);
+                break;
+            case 'LogicalAvailabilityRequirementSyntax':
+                this.visitNode(syntax);
+                this.visitAvailabilityRequirement(syntax.left);
+                this.visitAvailabilityRequirement(syntax.right);
+                break;
+            default:
+                this.visitNode(syntax);
+        }
+    }
 
     visitProvide(syntax: ProvideSyntax): void {
         this.visitNode(syntax);
@@ -303,6 +334,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
         syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
@@ -315,6 +347,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
         syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
@@ -328,6 +361,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
         syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.placements?.forEach(node => this.visitNode(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.commands.forEach(node => this.visitCommand(node));
@@ -405,6 +439,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitCommand(syntax: CommandSyntax): void {
         this.visitNode(syntax);
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         if (syntax.stream != null) this.visitCommandStream(syntax.stream);
@@ -712,6 +747,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitQuery(syntax: QuerySyntax): void {
         this.visitNode(syntax);
+        syntax.available?.forEach(node => this.visitAvailable(node));
         this.visitTypeRef(syntax.returnType);
         if (syntax.by !== null) this.visitQueryParameter(syntax.by);
         syntax.byParts?.forEach(part => this.visitQueryParameter(part));
@@ -891,6 +927,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitScreen(syntax: ScreenSyntax): void {
         this.visitNode(syntax);
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.visuals?.forEach(visual => {
             this.visitNode(visual);
             this.visitFileReference(visual.file);
