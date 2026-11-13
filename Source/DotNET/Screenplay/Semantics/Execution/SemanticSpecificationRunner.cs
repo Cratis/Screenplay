@@ -240,6 +240,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
                 {
                     Context = value.EventSource is null ? null : new(value.EventSource),
+
+                    // Facts given before the scenario happened at its clock, by the specification's audit identity, so a projection that reads occurred or causedBy can run over them.
+                    Occurred = specification.GivenClock is { } clock ? SemanticScenario.GivenInstant(clock) : null,
+                    CausedBy = specification.GivenClock is null ? null : SemanticScenario.SpecificationIdentity,
                     Route = plan.FormatFixtureRoute(value.Route)
                 })
                 .Select(fact => SemanticCaptureEvaluation.TakeEventSourceKey(plan, fact))];

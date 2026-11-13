@@ -144,6 +144,19 @@ internal sealed partial class SemanticScopedProjection
 
                 Fail($"Projection '{projection.Name}' reads occurred but this fact carries no occurrence time.");
                 return null;
+            case SemanticProjectionEventContextValue context when readsOccurrence && IsCausedByPath(context.Path):
+                if (fact.CausedBy is { } causedBy)
+                {
+                    return SemanticValue.Text(context.Path switch
+                    {
+                        "causedBy.subject" => causedBy.Subject,
+                        "causedBy.name" => causedBy.Name,
+                        _ => causedBy.UserName
+                    });
+                }
+
+                Fail($"Projection '{projection.Name}' reads causedBy but this fact carries no caller identity.");
+                return null;
             case SemanticProjectionEventProperty property:
                 var values = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
                 var current = values.GetValueOrDefault(property.Path[0], SemanticValue.Null);

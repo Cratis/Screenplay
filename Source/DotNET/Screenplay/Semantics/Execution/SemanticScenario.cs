@@ -18,6 +18,11 @@ namespace Cratis.Screenplay.Semantics.Execution;
 internal static class SemanticScenario
 {
     /// <summary>
+    /// Gets the audit identity a specification attributes the facts it gives to; a real caller identity is a runtime matter.
+    /// </summary>
+    internal static SemanticCausedBy SpecificationIdentity { get; } = new("specification", "specification", "specification");
+
+    /// <summary>
     /// Performs the specification's action.
     /// </summary>
     /// <param name="evaluator">The evaluator commands run through.</param>
@@ -42,6 +47,8 @@ internal static class SemanticScenario
         invocations = loop.Invocations;
         return result;
     }
+
+    internal static DateTimeOffset GivenInstant(string value) => Instant(value);
 
     static SemanticExecutionResult Perform(
         SemanticExecutionPlan plan,

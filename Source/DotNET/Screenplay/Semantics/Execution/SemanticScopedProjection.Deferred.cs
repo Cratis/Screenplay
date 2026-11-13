@@ -8,13 +8,22 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 internal sealed partial class SemanticScopedProjection
 {
+    internal static bool IsCausedByPath(string path) =>
+        string.Equals(path, "causedBy.subject", StringComparison.Ordinal) ||
+        string.Equals(path, "causedBy.name", StringComparison.Ordinal) ||
+        string.Equals(path, "causedBy.userName", StringComparison.Ordinal);
+
     // Every mapping a deferred child applies on replay: its own from and every mappings, unless it is a removal, and the
     // 'every include children' mappings of the ancestors ApplyAncestors applies. Deferring and replay both run with the
     // deferred fact as the current fact, so both select those ancestors through the same predicate.
-    bool ReadsOccurrence(DeferredChild deferred) =>
+    bool ReadsOccurrence(DeferredChild deferred) => ReadsContext(deferred, _ => string.Equals(_, "occurred", StringComparison.Ordinal));
+
+    bool ReadsCausedBy(DeferredChild deferred) => ReadsContext(deferred, IsCausedByPath);
+
+    bool ReadsContext(DeferredChild deferred, Func<string, bool> path) =>
         (deferred.Removal is null ? deferred.From!.Mappings.Concat(deferred.Scope.Every?.Mappings ?? []) : [])
             .Concat(AncestorsAppliedForCurrentFact(deferred.Level).SelectMany(_ => _.Scope.Every!.Mappings))
-            .Any(_ => _.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce && _.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal));
+            .Any(_ => _.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce && _.Source is SemanticProjectionEventContextValue context && path(context.Path));
 
     // The single place a child is deferred: one that will read an occurrence its fact lacks fails now, so no pending state
     // is published for it.
@@ -23,6 +32,12 @@ internal sealed partial class SemanticScopedProjection
         if (deferred.Fact.Occurred is null && ReadsOccurrence(deferred))
         {
             Fail($"Projection '{projection.Name}' reads occurred but this fact carries no occurrence time.");
+            return;
+        }
+
+        if (deferred.Fact.CausedBy is null && ReadsCausedBy(deferred))
+        {
+            Fail($"Projection '{projection.Name}' reads causedBy but this fact carries no caller identity.");
             return;
         }
 
