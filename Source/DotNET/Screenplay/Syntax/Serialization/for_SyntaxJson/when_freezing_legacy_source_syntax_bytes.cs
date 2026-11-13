@@ -53,6 +53,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "specification-streams",
         "public-events",
         "provide",
+        "availability",
         "public-events-admission",
         "event-translations",
         "read-model-keys",

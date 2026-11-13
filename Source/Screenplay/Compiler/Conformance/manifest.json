@@ -11,6 +11,7 @@
         { "name": "policy-inputs", "path": "Source/Screenplay/Compiler/Conformance/policy-inputs.play" },
         { "name": "narrowed-queries", "path": "Source/Screenplay/Compiler/Conformance/narrowed-queries.play" },
         { "name": "provide", "path": "Source/Screenplay/Compiler/Conformance/provide.play" },
+        { "name": "availability", "path": "Source/Screenplay/Compiler/Conformance/availability.play" },
         { "name": "caller-identity", "path": "Source/Screenplay/Compiler/Conformance/caller-identity.play" },
         { "name": "abilities", "path": "Source/Screenplay/Compiler/Conformance/abilities.play" },
         { "name": "ability-invocations", "path": "Source/Screenplay/Compiler/Conformance/ability-invocations.play" },

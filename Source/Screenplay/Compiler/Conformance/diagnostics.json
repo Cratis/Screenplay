@@ -5403,6 +5403,22 @@
         {"name": "A provide from a query that does not exist", "validate": true, "source": ["module M", "  provide vessel String from query Missing by \"x\""], "diagnostics": ["PLAY1126@2"]},
         {"name": "Provided values that read each other", "validate": true, "source": ["module M", "  provide a String from $context.b", "  provide b String from $context.a"], "diagnostics": ["PLAY1129@2", "PLAY1129@3"]},
         {"name": "A context root that a provide names", "validate": true, "source": ["module M", "  provide region String from host", "  provide copy String from $context.region"], "diagnostics": []},
-        {"name": "A context root that no provide names", "validate": true, "source": ["module M", "  provide copy String from $context.region"], "diagnostics": ["PLAY0153@2"]}
+        {"name": "A context root that no provide names", "validate": true, "source": ["module M", "  provide copy String from $context.region"], "diagnostics": ["PLAY0153@2"]},
+        {"name": "An audience without a name", "validate": true, "source": ["audience"], "diagnostics": ["PLAY1130@1"]},
+        {"name": "An availability without a name", "validate": true, "source": ["availability"], "diagnostics": ["PLAY1131@1"]},
+        {"name": "A gate without a requirement", "validate": true, "source": ["module M", "  available for"], "diagnostics": ["PLAY1132@2"]},
+        {"name": "An audience declared twice", "validate": true, "source": ["audience A", "audience A"], "diagnostics": ["PLAY1133@2"]},
+        {"name": "An availability declared twice", "validate": true, "source": ["audience A", "availability V", "  for A", "availability V"], "diagnostics": ["PLAY1134@4"]},
+        {"name": "A gate naming an audience nothing declares", "validate": true, "source": ["module M", "  available for Ghost"], "diagnostics": ["PLAY1135@2"]},
+        {"name": "A gate naming an availability nothing declares", "validate": true, "source": ["module M", "  available with Ghost"], "diagnostics": ["PLAY1136@2"]},
+        {"name": "Availabilities that build on each other", "validate": true, "source": ["availability A", "  with B", "availability B", "  with A"], "diagnostics": ["PLAY1137@1"]},
+        {"name": "A gate reading a value nothing provides", "validate": true, "source": ["module M", "  available when $context.vessel.hasReported == true"], "diagnostics": ["PLAY1138@2"]},
+        {"name": "A gate reading a provided value", "validate": true, "source": ["module M", "  provide vessel String from host", "  available when $context.vessel == \"x\""], "diagnostics": []},
+        {"name": "An availability reading a value provided elsewhere", "validate": true, "source": ["provide vessel String from host", "availability V", "  when $context.vessel == \"x\""], "diagnostics": []},
+        {"name": "Two audiences side by side", "validate": true, "source": ["audience A", "audience B", "module M", "  available for A B"], "diagnostics": ["PLAY1140@4"]},
+        {"name": "An unclosed group in a gate", "validate": true, "source": ["audience A", "module M", "  available for (A"], "diagnostics": ["PLAY1141@3"]},
+        {"name": "A persona in an audience nothing declares", "validate": true, "source": ["persona P", "  audience Ghost"], "diagnostics": ["PLAY1135@2"]},
+        {"name": "A persona in a declared audience", "validate": true, "source": ["audience A", "persona P", "  audience A"], "diagnostics": []},
+        {"name": "A screen action invoking a command that can be off while the screen is on", "validate": true, "source": ["audience A", "audience B", "module M", "  feature F", "    slice StateChange S", "      available for A", "      event E", "        x String", "      command C", "        available for B", "        x String", "        produces E", "          x = x", "      screen Sc", "        available for A or B", "        action C for screen"], "diagnostics": ["PLAY1139@16"]}
     ]
 }

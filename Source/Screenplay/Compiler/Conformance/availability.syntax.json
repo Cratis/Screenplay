@@ -1,0 +1,457 @@
+{
+  "kind": "ApplicationSyntax",
+  "audiences": [
+    {
+      "kind": "AudienceSyntax",
+      "description": "Customers on the Plus commercial package",
+      "name": "Plus"
+    },
+    {
+      "kind": "AudienceSyntax",
+      "description": "Tenants taking part in the preview",
+      "name": "Preview"
+    }
+  ],
+  "availabilities": [
+    {
+      "kind": "AvailabilitySyntax",
+      "description": "Sold with the Plus package, once the vessel has reported",
+      "name": "DataQuality",
+      "requirements": [
+        {
+          "kind": "AudienceAvailabilityRequirementSyntax",
+          "audience": "Plus"
+        },
+        {
+          "kind": "ConditionAvailabilityRequirementSyntax",
+          "condition": {
+            "kind": "ComparisonConditionSyntax",
+            "left": "$context.vessel.hasReported",
+            "operator": "Equal",
+            "right": {
+              "kind": "LiteralExpressionSyntax",
+              "value": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "AvailabilitySyntax",
+      "description": "Anything sold or being previewed",
+      "name": "Everything",
+      "requirements": [
+        {
+          "kind": "LogicalAvailabilityRequirementSyntax",
+          "left": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "Plus"
+          },
+          "operator": "Or",
+          "right": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "Preview"
+          }
+        }
+      ]
+    }
+  ],
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "available": [
+        {
+          "kind": "AvailableSyntax",
+          "requirement": {
+            "kind": "AvailabilityReferenceSyntax",
+            "availability": "Everything"
+          }
+        }
+      ],
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "available": [
+            {
+              "kind": "AvailableSyntax",
+              "requirement": {
+                "kind": "AvailabilityReferenceSyntax",
+                "availability": "DataQuality"
+              }
+            }
+          ],
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "DataQuality",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "available": [
+                {
+                  "kind": "AvailableSyntax",
+                  "requirement": {
+                    "kind": "LogicalAvailabilityRequirementSyntax",
+                    "left": {
+                      "kind": "AudienceAvailabilityRequirementSyntax",
+                      "audience": "Plus"
+                    },
+                    "operator": "And",
+                    "right": {
+                      "kind": "LogicalAvailabilityRequirementSyntax",
+                      "left": {
+                        "kind": "AudienceAvailabilityRequirementSyntax",
+                        "audience": "Preview"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "AudienceAvailabilityRequirementSyntax",
+                        "audience": "Plus"
+                      }
+                    }
+                  }
+                }
+              ],
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "available": [
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "ConditionAvailabilityRequirementSyntax",
+                        "condition": {
+                          "kind": "ComparisonConditionSyntax",
+                          "left": "$context.vessel.hasReported",
+                          "operator": "Equal",
+                          "right": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": true
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "description": null,
+                  "handler": null,
+                  "name": "ReportVessel",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "VesselReported",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "vesselId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "note",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "note"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "vesselId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "note",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "VesselReported",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "note",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "ReportVessel",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "available": [
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "AudienceAvailabilityRequirementSyntax",
+                        "audience": "Plus"
+                      }
+                    }
+                  ],
+                  "directives": [
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "ReportVessel",
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Screen"
+                    }
+                  ],
+                  "name": "ReportScreen"
+                }
+              ],
+              "specifications": [],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "VesselRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "vesselId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "Vessels",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "VesselRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "vesselId"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "Vessels",
+                  "readModel": "Vessel",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "available": [
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "AudienceAvailabilityRequirementSyntax",
+                        "audience": "Plus"
+                      }
+                    }
+                  ],
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "vesselId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "Uuid"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "VesselByKey",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Vessel"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Vessel",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "vesselId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "hasReported",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "available": [
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "AudienceAvailabilityRequirementSyntax",
+                        "audience": "Preview"
+                      }
+                    }
+                  ],
+                  "directives": [],
+                  "name": "VesselScreen"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Fleet"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "audiences": [
+        "Plus"
+      ],
+      "description": null,
+      "name": "FleetManager",
+      "policies": []
+    }
+  ],
+  "provides": [
+    {
+      "kind": "ProvideSyntax",
+      "name": "vessel",
+      "source": {
+        "kind": "QueryProvideSourceSyntax",
+        "by": [
+          {
+            "kind": "ContextExpressionSyntax",
+            "path": "arguments.vesselId"
+          }
+        ],
+        "query": "VesselByKey"
+      },
+      "type": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": true,
+        "name": "Vessel"
+      }
+    }
+  ],
+  "systems": [],
+  "types": []
+}
