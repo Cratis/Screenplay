@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { planCompletions } from '../completion-planner';
 import { scanDocument } from '../symbols';
 import { validateLines } from '../validation';
+import { declarationHeaders } from '../declarations';
 import { keywordDocs } from '../keyword-docs';
 import { clauseKeywords, constructKeywords } from '../language';
 
@@ -63,6 +64,11 @@ describe('when authoring availability', () => {
             expect(constructKeywords).toContain(word);
             expect(keywordDocs[word]).toBeTruthy();
         }
+    });
+
+    it('should find the declarations but not a persona audience line', () => {
+        expect(declarationHeaders(source).filter(header => header.keyword === 'audience' || header.keyword === 'availability').map(header => `${header.keyword} ${header.name}`))
+            .toEqual(['audience Staff', 'audience Customers', 'availability StaffOnly']);
     });
 
     it('should highlight the clause words', () => {

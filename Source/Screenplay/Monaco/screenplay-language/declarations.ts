@@ -26,7 +26,7 @@ const header = new RegExp(
         'screen\\s+template', 'dialog\\s+template', 'slice\\s+\\w+', 'ui\\s+profile', 'sample\\s+data', 'toolbar',
         'concept', 'type', 'policy', 'purpose', 'persona', 'user', 'storyline', 'module', 'layout', 'theme', 'feature', 'event', 'system', 'eventsource',
         'operation', 'command', 'query', 'projection', 'reaction', 'reducer', 'readmodel', 'trigger', 'screen', 'dialog', 'form',
-        'constraint', 'specification', 'behavior', 'exposure', 'instance',
+        'constraint', 'specification', 'behavior', 'exposure', 'instance', 'audience', 'availability',
     ].join('|') + ')\\s+)([A-Za-z_][\\w.]*)');
 
 /**
@@ -43,6 +43,8 @@ export function declarationHeaders(lines: readonly string[]): DeclarationHeader[
         const match = header.exec(text);
         if (match === null) return;
         const keyword = match[1].trim().replace(/^public\s+/, '').replace(/\s+/g, ' ');
+        // An indented 'audience' names an audience a persona belongs to; only the top-level one declares it.
+        if (keyword === 'audience' && /^\s/.test(text)) return;
         headers.push({ keyword, name: match[2], line, column: match[1].length });
     });
 
