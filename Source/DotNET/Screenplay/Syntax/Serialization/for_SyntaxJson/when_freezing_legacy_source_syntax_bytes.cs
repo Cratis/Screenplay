@@ -53,6 +53,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "specification-streams",
         "public-events",
         "provide",
+        "availability",
         "public-events-admission",
         "event-translations",
         "read-model-keys",
@@ -145,7 +146,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
-            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleGraphs(legacy);
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleAvailability(WithoutSampleGraphs(legacy));
             if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleSystemConfiguration(legacy);
 
             // Screen visuals and slice placements have their own conformance vector; the frozen bytes predate them.
@@ -384,6 +385,34 @@ public partial class when_freezing_legacy_source_syntax_bytes
     {
         Secrets = [],
         Systems = application.Systems.Where(system => system.Name != "Mailer")
+    };
+
+    // Audiences, availabilities, available gates and provided values have their own parser, printer, binder and conformance specs; the frozen bytes predate them.
+    static ApplicationSyntax WithoutSampleAvailability(ApplicationSyntax application) => application with
+    {
+        Audiences = [],
+        Availabilities = [],
+        Provides = [],
+        Personas = application.Personas.Select(persona => persona with { Audiences = [] }),
+        Modules = application.Modules.Select(module => module with
+        {
+            Available = [],
+            Provides = [],
+            Features = module.Features.Select(WithoutAvailableFeature)
+        })
+    };
+
+    static FeatureSyntax WithoutAvailableFeature(FeatureSyntax feature) => feature with
+    {
+        Available = [],
+        Provides = [],
+        Slices = feature.Slices.Select(slice => slice with
+        {
+            Available = [],
+            Provides = [],
+            Queries = slice.Queries.Select(query => query with { Available = [] })
+        }),
+        Features = feature.Features.Select(WithoutAvailableFeature)
     };
 
     static ApplicationSyntax WithoutSampleGraphs(ApplicationSyntax application) => application with

@@ -8,6 +8,10 @@ module Fulfillment
     ```
   authorize IsAuthenticated
 
+  // Scope-driven: every slice of the module reads $context.warehouse, which the host supplies.
+  provide warehouse String from "Oslo"
+  available with FulfillmentService
+
   screen template WarehouseBoard
     fits slot content
     category Workspace

@@ -4514,4 +4514,64 @@ public static class DiagnosticCodes
     /// Provided values read each other in a cycle.
     /// </summary>
     public const string ProvideCycle = "PLAY1129";
+
+    /// <summary>
+    /// An <c>audience</c> declaration is not <c>audience &lt;Name&gt;</c>, or its body holds a line other than <c>description</c>.
+    /// </summary>
+    public const string InvalidAudienceDeclaration = "PLAY1130";
+
+    /// <summary>
+    /// An <c>availability</c> declaration is not <c>availability &lt;Name&gt;</c>, or its body holds a line other than <c>description</c>, <c>for</c>, <c>when</c> or <c>with</c>.
+    /// </summary>
+    public const string InvalidAvailabilityDeclaration = "PLAY1131";
+
+    /// <summary>
+    /// An <c>available</c> gate is not <c>available for &lt;audiences&gt;</c>, <c>available when &lt;condition&gt;</c> or <c>available with &lt;Availability&gt;</c>, or an <c>availability</c> line is not <c>for</c>, <c>when</c> or <c>with</c> with something after it.
+    /// </summary>
+    public const string InvalidAvailableGate = "PLAY1132";
+
+    /// <summary>
+    /// The same audience is declared more than once.
+    /// </summary>
+    public const string DuplicateAudience = "PLAY1133";
+
+    /// <summary>
+    /// The same availability is declared more than once.
+    /// </summary>
+    public const string DuplicateAvailability = "PLAY1134";
+
+    /// <summary>
+    /// An <c>available for</c> gate, an <c>availability</c> or a persona names an audience that is not declared.
+    /// </summary>
+    public const string UnknownAudience = "PLAY1135";
+
+    /// <summary>
+    /// An <c>available with</c> gate or an <c>availability</c> names an availability that is not declared.
+    /// </summary>
+    public const string UnknownAvailability = "PLAY1136";
+
+    /// <summary>
+    /// Availabilities build on each other with <c>with</c> in a cycle.
+    /// </summary>
+    public const string AvailabilityCycle = "PLAY1137";
+
+    /// <summary>
+    /// An <c>available when</c> condition reads a <c>$context</c> value that nothing provides at that place.
+    /// </summary>
+    public const string UnprovidedAvailabilityValue = "PLAY1138";
+
+    /// <summary>
+    /// A screen action, form or reaction <c>invokes</c> a command whose audiences can be off while the invoker's are on; the invocation can be refused as not available.
+    /// </summary>
+    public const string AvailabilityHidesInvokedCommand = "PLAY1139";
+
+    /// <summary>
+    /// An <c>available for</c> or <c>available with</c> line holds a token that is not an audience or availability name, <c>and</c>, <c>or</c> or a parenthesis.
+    /// </summary>
+    public const string UnexpectedTokenInAvailable = "PLAY1140";
+
+    /// <summary>
+    /// A parenthesis in an <c>available</c> line is never closed.
+    /// </summary>
+    public const string UnclosedAvailableGroup = "PLAY1141";
 }

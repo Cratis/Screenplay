@@ -12,6 +12,8 @@ import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseAuthorize } from './AuthorizeParser';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
 import { parsePlainActionInput, parseSubjectClause } from './ActionSubjectClause';
 import { InteractionArgumentSyntax, ScreenVisualSyntax } from '../Syntax/Screens';
 import { parseScreenVisual } from './ScreenVisualParser';
@@ -93,10 +95,13 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
     let description: string | null = null;
     let fits: ScreenFit[] | undefined;
     const visuals: ScreenVisualSyntax[] = [];
+    const available: AvailableSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (parseScreenVisual(context, child, visuals)) continue;
-        if (firstWord(child.content) === 'fits') {
+        if (firstWord(child.content) === 'available' && isAvailabilityGate(child.content)) {
+            addAvailabilityGate(context, child, available);
+        } else if (firstWord(child.content) === 'fits') {
             fits = parseFits(context, child, match?.[1] ?? '', fits);
         } else if (firstWord(child.content) === 'contribute') {
             const parsed = parseScreenContribution(context, child);
@@ -109,7 +114,7 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
             pushDirective(context, child, directives);
         }
     }
-    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), ...(fits !== undefined && fits.length > 0 ? { fits } : {}), ...(visuals.length > 0 ? { visuals } : {}), location: locationOf(line) };
+    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(available.length > 0 ? { available } : {}), ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), ...(fits !== undefined && fits.length > 0 ? { fits } : {}), ...(visuals.length > 0 ? { visuals } : {}), location: locationOf(line) };
 }
 
 // 'fits <role>, ...' - the places a slice's screen fits, in order of preference (PLAY0906).

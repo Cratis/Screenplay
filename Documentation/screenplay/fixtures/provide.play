@@ -1,4 +1,4 @@
-// Provided context values (#1300): parses, prints and is reported, but no executable model version carries it yet.
+// Provided context values (#1300): bound into ESM v53 with literal, host and query sources.
 provide region String from "Nordics"
 provide roles String[] from $context.identity.roles
 
@@ -10,12 +10,7 @@ module Fleet
     provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
 
     slice StateView Vessels
-      provide score Int
-        file Score.cs
-      provide limit Int
-        ```csharp
-        return 10;
-        ```
+      provide limit Int from 10
 
       query VesselByKey => Vessel optional
         by vesselId Uuid

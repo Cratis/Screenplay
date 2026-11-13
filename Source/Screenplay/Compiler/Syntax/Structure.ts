@@ -3,6 +3,7 @@
 
 import { StorylineSyntax } from './Storylines';
 import type { AgentsSyntax } from './Agents';
+import type { AudienceSyntax, AvailabilitySyntax, AvailableSyntax } from './Availability';
 import type { TimeZoneSyntax } from './Calendar';
 import { CommandReadMode } from './CommandReadMode';
 import type { DesignProfileFacts, DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
@@ -53,6 +54,8 @@ export interface SliceSyntax extends SyntaxNode {
     readonly provides?: readonly ProvideSyntax[];
     readonly placements?: readonly SlicePlacementSyntax[];
     readonly kind: 'SliceSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly direction?: TranslationDirection | null;
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
@@ -93,6 +96,8 @@ export interface FeatureSyntax extends SyntaxNode {
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
@@ -113,6 +118,8 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
@@ -140,6 +147,9 @@ export interface ContextMemberSyntax extends SyntaxNode {
 
 export interface ApplicationSyntax extends SyntaxNode {
     readonly agents?: AgentsSyntax | null;
+    // The 'audience' and 'availability' declarations, written only when present.
+    readonly audiences?: readonly AudienceSyntax[];
+    readonly availabilities?: readonly AvailabilitySyntax[];
     readonly reactionProductionMode?: ReactionProductionMode | null;
     readonly commandReadMode?: CommandReadMode | null;
     readonly timeZone?: TimeZoneSyntax | null;

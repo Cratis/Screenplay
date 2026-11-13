@@ -15,6 +15,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitQuery(QuerySyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
         VisitTypeRef(syntax.ReturnType);
 
         if (syntax.By is not null)

@@ -1,0 +1,63 @@
+// Audiences, availabilities and available gates (#1301): bound into ESM v53.
+audience Plus
+  description "Customers on the Plus commercial package"
+
+audience Preview
+  description "Tenants taking part in the preview"
+
+availability DataQuality
+  description "Sold with the Plus package, once the vessel has reported"
+  for Plus
+  when $context.vessel.hasReported == true
+
+availability Everything
+  description "Anything sold or being previewed"
+  for Plus or Preview
+
+persona FleetManager
+  audience Plus
+
+provide vessel Vessel optional from query VesselByKey by $context.arguments.vesselId
+
+module Fleet
+  available with Everything
+
+  feature DataQuality
+    available with DataQuality
+
+    slice StateChange ReportVessel
+      available for Plus and (Preview or Plus)
+
+      event VesselReported
+        note String
+
+      command ReportVessel
+        available when $context.vessel.hasReported == true
+        vesselId Uuid identifier
+        note String
+        produces VesselReported
+          for vesselId
+          note = note
+
+      screen ReportScreen
+        available for Plus
+        action ReportVessel for screen
+
+    slice StateView Vessels
+      query VesselByKey => Vessel optional
+        available for Plus
+        by vesselId Uuid
+
+      readmodel Vessel
+        vesselId Uuid
+        hasReported Bool
+
+      event VesselRegistered
+        vesselId Uuid
+
+      projection Vessels => Vessel
+        from VesselRegistered key vesselId
+          vesselId = vesselId
+
+      screen VesselScreen
+        available for Preview

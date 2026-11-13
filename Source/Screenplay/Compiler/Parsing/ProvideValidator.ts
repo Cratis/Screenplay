@@ -4,6 +4,9 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { dependencySourcesOf } from '../Syntax/DependencySources';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { AvailabilityRequirementSyntax, AvailabilitySyntax, AvailableSyntax } from '../Syntax/Availability';
+import { ComparisonConditionSyntax, ConditionSyntax } from '../Syntax/Conditions';
 import { ContextExpressionSyntax, ExpressionSyntax } from '../Syntax/Expressions';
 import { contextRoots } from './ExpressionParser';
 import { ProvideSourceSyntax, ProvideSyntax, QueryProvideSourceSyntax } from '../Syntax/ProvideSyntax';
@@ -155,14 +158,54 @@ class Validation {
     }
 }
 
+const comparisonsOf = (condition: ConditionSyntax): readonly ComparisonConditionSyntax[] =>
+    condition.kind === 'ComparisonConditionSyntax' ? [condition] : [...comparisonsOf(condition.left), ...comparisonsOf(condition.right)];
+
+// Every name any provide in the application declares, at any level.
+function providedEverywhere(application: ApplicationSyntax): ReadonlySet<string> {
+    const names = new Set<string>();
+    new class extends ScreenplaySyntaxWalker {
+        override visitProvide(syntax: ProvideSyntax): void {
+            names.add(syntax.name);
+            super.visitProvide(syntax);
+        }
+    }().visitApplication(application);
+    return names;
+}
+
 // Withdraws the parser's unknown $context.<root> warning for a root that a provide in scope names, once the whole
 // application is assembled and every level's provided values are known.
 class ContextPathValidator extends ScreenplaySyntaxWalker {
     readonly #scopes: ReadonlySet<string>[] = [];
+    #everywhere: ReadonlySet<string> = new Set();
+    #gateOwner: string | null = null;
 
     constructor(readonly context: ParserContext) { super(); }
 
-    override visitApplication(syntax: ApplicationSyntax): void { this.#scoped(syntax.provides, () => super.visitApplication(syntax)); }
+    override visitApplication(syntax: ApplicationSyntax): void {
+        this.#everywhere = providedEverywhere(syntax);
+        this.#scoped(syntax.provides, () => super.visitApplication(syntax));
+    }
+
+    override visitAvailable(syntax: AvailableSyntax): void {
+        this.#gateOwner = 'available when';
+        super.visitAvailable(syntax);
+        this.#gateOwner = null;
+    }
+
+    // A reusable block is read wherever it is used, so a value it reads has to be provided somewhere.
+    override visitAvailability(syntax: AvailabilitySyntax): void {
+        this.#gateOwner = `availability '${syntax.name}'`;
+        super.visitAvailability(syntax);
+        this.#gateOwner = null;
+    }
+
+    override visitAvailabilityRequirement(syntax: AvailabilityRequirementSyntax): void {
+        super.visitAvailabilityRequirement(syntax);
+        if (syntax.kind === 'ConditionAvailabilityRequirementSyntax') {
+            for (const comparison of comparisonsOf(syntax.condition)) this.#checkLeft(comparison);
+        }
+    }
     override visitModule(syntax: ModuleSyntax): void { this.#scoped(syntax.provides, () => super.visitModule(syntax)); }
     override visitFeature(syntax: FeatureSyntax): void { this.#scoped(syntax.provides, () => super.visitFeature(syntax)); }
     override visitSlice(syntax: SliceSyntax): void { this.#scoped(syntax.provides, () => super.visitSlice(syntax)); }
@@ -173,9 +216,37 @@ class ContextPathValidator extends ScreenplaySyntaxWalker {
         const root = contextRoot(syntax);
         if (contextRoots.includes(root)) return;
         // The parser warned about every root it did not know; a root a provide in scope names is withdrawn here, once every level is known.
-        if (reservedContextRoots.includes(root) || this.#scopes.some(scope => scope.has(root))) {
+        if (this.#isProvided(root)) {
             this.context.withdraw(DiagnosticCodes.UnknownContextPath, syntax.location, `'${syntax.path}'`);
+            return;
         }
+        if (this.#gateOwner !== null) {
+            this.context.withdraw(DiagnosticCodes.UnknownContextPath, syntax.location, `'${syntax.path}'`);
+            this.#reportUnprovided(this.#gateOwner, root, syntax.path, syntax.location);
+        }
+    }
+
+    #isProvided(root: string): boolean {
+        return reservedContextRoots.includes(root)
+            || this.#scopes.some(scope => scope.has(root))
+            || (this.#gateOwner?.startsWith('availability') === true && this.#everywhere.has(root));
+    }
+
+    #checkLeft(comparison: ComparisonConditionSyntax): void {
+        const prefix = '$context.';
+        if (!comparison.left.startsWith(prefix)) return;
+        const path = comparison.left.substring(prefix.length);
+        const root = path.split('.')[0];
+        if (this.#gateOwner !== null && !contextRoots.includes(root) && !this.#isProvided(root)) this.#reportUnprovided(this.#gateOwner, root, path, comparison.location);
+    }
+
+    // A condition that reads a value nothing provides can never be decided, and an undecided gate stays closed.
+    #reportUnprovided(owner: string, root: string, path: string, location: SourceLocation): void {
+        const where = owner.startsWith('availability') ? 'anywhere in the application' : 'here';
+        this.context.warning(
+            DiagnosticCodes.UnprovidedAvailabilityValue,
+            `'${owner}' reads '$context.${path}' but nothing provides '${root}' ${where} - declare it with 'provide ${root} <Type> ...'`,
+            location);
     }
 
     #scoped(provides: readonly ProvideSyntax[] | undefined, visit: () => void): void {

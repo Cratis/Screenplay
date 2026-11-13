@@ -1875,6 +1875,18 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1127` | Error | A `provide ... from query` names an observable query; a value is resolved once per request. |
 | `PLAY1128` | Error | The type of a `provide ... from query` differs from what the query returns, or the query key is missing or surplus. |
 | `PLAY1129` | Error | Provided values read each other in a cycle. |
+| `PLAY1130` | Error | An `audience` declaration is not `audience <Name>`, or its body holds a line other than `description`. |
+| `PLAY1131` | Error | An `availability` declaration is not `availability <Name>`, or its body holds a line other than `description`, `for`, `when` or `with`. |
+| `PLAY1132` | Error | An `available` gate is not `available for <audiences>`, `available when <condition>` or `available with <Availability>`, or its operand is missing or is not a PascalCase name. |
+| `PLAY1133` | Error | The same audience is declared more than once. |
+| `PLAY1134` | Error | The same availability is declared more than once. |
+| `PLAY1135` | Warning | An `available for` gate, an `availability` or a persona names an audience that is not declared. Nothing grants it, so the gate stays closed. |
+| `PLAY1136` | Warning | An `available with` gate or an `availability` names an availability that is not declared. The gate stays closed. |
+| `PLAY1137` | Error | Availabilities build on each other with `with` in a cycle. |
+| `PLAY1138` | Warning | An `available when` condition reads a `$context` value that nothing provides at that place. An undecided gate stays closed. |
+| `PLAY1139` | Warning | A screen action, form or reaction `invokes` a command whose audiences can be off while the invoker's are on, so the invocation can be refused as not available. `when` conditions are opaque and skipped; a reaction is never gated. |
+| `PLAY1140` | Error | An `available for` or `available with` line holds a token that is not a name, `and`, `or` or a parenthesis. |
+| `PLAY1141` | Error | A parenthesis in an `available for` or `available with` line is never closed. |
 
 ## Screen visuals and slice placements
 

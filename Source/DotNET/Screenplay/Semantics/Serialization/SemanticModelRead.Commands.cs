@@ -65,7 +65,8 @@ internal static partial class SemanticModelRead
             .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Route = Nested(ref reader, CommandRoute, property))
             .Add("handler", LanguageVersion.V23.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Handler = Nested(ref reader, (ref Utf8JsonReader item) => CommandHandler(ref item, state.SchemaVersion), property))
             .Add("reads", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Reads = Array(ref reader, DecisionRead, property))
-            .Add("calendar", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Calendar = Nested(ref reader, CommandCalendar, property));
+            .Add("calendar", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Calendar = Nested(ref reader, CommandCalendar, property))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, CommandState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
 
         public ImmutableArray<SemanticProperty> Properties { get; set; }
 
@@ -91,6 +92,8 @@ internal static partial class SemanticModelRead
 
         public SemanticCommandCalendar? Calendar { get; set; }
 
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
+
         public SemanticCommand Build()
         {
             Required(HasIdentity && !Properties.IsDefault && !Validations.IsDefault && !Produces.IsDefault, "command");
@@ -104,7 +107,8 @@ internal static partial class SemanticModelRead
                 Route = Route,
                 Handler = Handler,
                 Reads = Reads,
-                Calendar = Calendar
+                Calendar = Calendar,
+                Available = Available
             };
         }
     }

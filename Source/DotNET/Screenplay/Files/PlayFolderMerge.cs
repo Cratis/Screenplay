@@ -88,6 +88,8 @@ internal static partial class PlayFolderMerge
             SampleDataPacks = DeclaredInOneFile(applications.SelectMany(application => application.SampleDataPacks), pack => pack.Name, pack => pack.Location, "sample data pack", context),
             Purposes = DeclaredInOneFile(applications.SelectMany(application => application.Purposes), purpose => purpose.Name, purpose => purpose.Location, "purpose", context),
             Provides = [.. applications.SelectMany(application => application.Provides)],
+            Audiences = DeclaredInOneFile(applications.SelectMany(application => application.Audiences), audience => audience.Name, audience => audience.Location, "audience", context),
+            Availabilities = DeclaredInOneFile(applications.SelectMany(application => application.Availabilities), availability => availability.Name, availability => availability.Location, "availability", context),
 
             // Sink names are compared ignoring case across the whole application, so the validator reports duplicates.
             Sinks = [.. applications.SelectMany(application => application.Sinks)],

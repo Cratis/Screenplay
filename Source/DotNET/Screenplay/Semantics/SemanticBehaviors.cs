@@ -390,6 +390,11 @@ public sealed record SemanticCommand(
     public SemanticCommandHandler? Handler { get; init; }
 
     /// <summary>
+    /// Gets the availability gates of this command; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the transient response contract, or null when the command has no response.
     /// </summary>
     public SemanticCommandResponse? Response { get; init; }
@@ -521,6 +526,11 @@ public sealed record SemanticKeyedQuery(
 {
     /// <summary>Gets the effective authorization, or null for unrestricted queries.</summary>
     public SemanticAuthorization? Authorization { get; init; }
+
+    /// <summary>
+    /// Gets the availability gates of this query; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
 
     /// <summary>
     /// Gets caller-supplied equality filters in declaration order.

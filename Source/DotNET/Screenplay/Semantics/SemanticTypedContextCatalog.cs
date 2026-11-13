@@ -72,7 +72,7 @@ internal static class SemanticTypedContextCatalog
                 case SemanticImplementationRole.CommandHandler:
                     foreach (var command in commands.Where(value => value.Id == requirement.Source.SemanticId))
                     {
-                        matches.Add(HandlerDescriptor(requirement, command, events));
+                        matches.Add(HandlerDescriptor(application, requirement, command, events, readModels));
                     }
                     break;
                 case SemanticImplementationRole.ValueGeneration:
@@ -242,7 +242,7 @@ internal static class SemanticTypedContextCatalog
 
     static string Pascal(string name) => string.Concat(char.ToUpperInvariant(name[0]).ToString(), name[1..]);
 
-    static SemanticTypedContextDescriptor HandlerDescriptor(SemanticImplementationRequirement requirement, SemanticCommand command, IEnumerable<SemanticEventContract> events) => Descriptor(
+    static SemanticTypedContextDescriptor HandlerDescriptor(SemanticApplication application, SemanticImplementationRequirement requirement, SemanticCommand command, IEnumerable<SemanticEventContract> events, IEnumerable<SemanticReadModel> readModels) => Descriptor(
         requirement,
         command.Id,
         [
@@ -252,11 +252,58 @@ internal static class SemanticTypedContextCatalog
             Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
             Fixed("Causation", SemanticContextRuntimeTokens.Causation),
             Fixed("Occurred", SemanticContextRuntimeTokens.DateTime),
-            .. CalendarMembers(command)
+            .. CalendarMembers(command),
+            .. ProvidedMembers(application, command, readModels)
         ]) with
     {
         Result = HandlerResult(command, events)
     };
+
+    // A provided value is read as context.<name>; the nearest declaration above the command wins, and every one is nullable
+    // because a value that cannot be resolved for a request is absent, never a default.
+    static IEnumerable<SemanticTypedContextMember> ProvidedMembers(SemanticApplication application, SemanticCommand command, IEnumerable<SemanticReadModel> readModels)
+    {
+        var effective = new Dictionary<string, SemanticProvidedValue>(StringComparer.Ordinal);
+        foreach (var provided in application.Provides) effective[provided.Name] = provided;
+        foreach (var module in application.Modules)
+        {
+            if (!Contains(module.Features, command.Id)) continue;
+            foreach (var provided in module.Provides) effective[provided.Name] = provided;
+            Walk(module.Features, command.Id, effective);
+        }
+
+        foreach (var provided in effective.Values.OrderBy(value => value.Name, StringComparer.Ordinal))
+        {
+            if (provided.ReadModel is { } readModelId)
+            {
+                var readModel = readModels.SingleOrDefault(value => value.Id == readModelId)
+                    ?? throw new InvalidSemanticContract($"Provided value '{provided.Name}' names an unresolved read model.");
+                yield return Shaped(provided.Name, readModelId, SemanticContextSourceKinds.Provided, readModel.Properties, nullable: true) with { Source = new(SemanticContextSourceKinds.Provided, null, provided.Name) };
+            }
+            else
+            {
+                yield return new(provided.Name, Model(provided.Type!), true, false, new(SemanticContextSourceKinds.Provided, null, provided.Name));
+            }
+        }
+    }
+
+    static bool Contains(ImmutableArray<SemanticFeature> features, SemanticId command) =>
+        features.Any(feature => feature.Slices.Any(slice => slice.Commands.Any(value => value.Id == command)) || Contains(feature.Features, command));
+
+    static void Walk(ImmutableArray<SemanticFeature> features, SemanticId command, Dictionary<string, SemanticProvidedValue> effective)
+    {
+        foreach (var feature in features)
+        {
+            if (!feature.Slices.Any(slice => slice.Commands.Any(value => value.Id == command)) && !Contains(feature.Features, command)) continue;
+            foreach (var provided in feature.Provides) effective[provided.Name] = provided;
+            foreach (var slice in feature.Slices.Where(slice => slice.Commands.Any(value => value.Id == command)))
+            {
+                foreach (var provided in slice.Provides) effective[provided.Name] = provided;
+            }
+
+            Walk(feature.Features, command, effective);
+        }
+    }
 
     static SemanticHandlerResultDescriptor? HandlerResult(SemanticCommand command, IEnumerable<SemanticEventContract> events) => command.Handler?.ResultVersion == 2 ? new(
         2,

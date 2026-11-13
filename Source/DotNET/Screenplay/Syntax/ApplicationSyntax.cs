@@ -170,6 +170,16 @@ public record ApplicationSyntax(
     /// </summary>
     public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
 
+    /// <summary>
+    /// Gets the <c>audience</c> declarations - the groups a tenant, user or system caller can be in at runtime.
+    /// </summary>
+    public IEnumerable<AudienceSyntax> Audiences { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>availability</c> declarations - the reusable rules <c>available with</c> names.
+    /// </summary>
+    public IEnumerable<AvailabilitySyntax> Availabilities { get; init; } = [];
+
     /// <summary>Gets every physical application-owned event source declaration.</summary>
     public IEnumerable<EventSourceSyntax> EventSources { get; init; } = [];
 

@@ -18,6 +18,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["authentication"] = ("AuthenticationDecl", "authentication.md"),
             ["onboarding"] = ("OnboardingDecl", "onboarding.md"),
             ["authorize"] = ("AuthorizeDecl", "policies.md"),
+            ["available"] = ("AvailableDecl", "availability.md"),
             ["behavior"] = ("BehaviorDecl", "interactions.md"),
             ["capture"] = ("CaptureDecl", "captures.md"),
             ["command"] = ("CommandDecl", "commands.md"),

@@ -59,7 +59,7 @@ outside `Samples/` so Invoicing continues to exercise its individual binding dis
 | --- | --- | --- |
 | `numbers exact` | #285 | `Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play` |
 | `system`, `operation`, operation specifications | #301 | `Documentation/screenplay/fixtures/operations.play` |
-| `provide` | #1300 | `Documentation/screenplay/fixtures/provide.play` |
+| `provide` from a file or code block | #1300 | `Documentation/screenplay/fixtures/provide-implementation.play` |
 | `compute`, `entering` bodies, approval `via`, operation-phase `invokes`, `$trigger` values | #1252 | `Documentation/screenplay/fixtures/ability-invocations.play` |
 
 `for_Samples/when_holding_invoicing_to_the_language` reflects over concrete syntax nodes and requires every

@@ -24,6 +24,12 @@ public record PersonaSyntax(
     public IEnumerable<string> Goals { get; init; } = [];
 
     /// <summary>
+    /// Gets the audiences the persona is always in, one entry per <c>audience</c> line. Authoring metadata for the board,
+    /// documentation and Studio; it never changes who a part is available to at runtime.
+    /// </summary>
+    public IEnumerable<string> Audiences { get; init; } = [];
+
+    /// <summary>
     /// Gets where the persona sits on the personas canvas (<c>position &lt;x&gt; &lt;y&gt;</c>), or <see langword="null"/> when no placement was authored.
     /// </summary>
     public int? X { get; init; }

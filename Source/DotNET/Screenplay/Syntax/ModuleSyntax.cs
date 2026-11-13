@@ -82,6 +82,11 @@ public record ModuleSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this module; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the values this module adds to <c>$context</c> for everything beneath it.
     /// </summary>
     public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
@@ -168,6 +173,11 @@ public record FeatureSyntax(
     /// Gets the processing purposes covering this feature and its descendants.
     /// </summary>
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>available</c> gates of this feature; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
 
     /// <summary>
     /// Gets the values this feature adds to <c>$context</c> for everything beneath it.

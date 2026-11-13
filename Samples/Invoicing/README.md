@@ -159,6 +159,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
+| `audience` and `availability` (`for`, `when`), persona `audience` lines, a module `provide` and `available for` / `available when` / `available with` gates, which [decide before `authorize`](../../Documentation/screenplay/availability.md) | Authorization; Auditing |
 | `onboarding` with open self-signup, tenant and member invitations, legal terms, an offering and email templates; the sender and mail server are [environment values](../../Documentation/screenplay/environments.md) | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `design system` with `modes`, `default theme`, `tokens`, `components` (`parts`, `variant`, `state`), `words` and a `contrast` rule; two `theme`s that `implements` it with `palette`, `values` and per-mode blocks; a `ui profile` that selects a theme | `InvoicingDesign`, `Nordic`, `NordicDark` |

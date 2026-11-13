@@ -50,6 +50,11 @@ public record ScreenSyntax(
     public string? Description { get; init; }
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this screen; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets what this screen contributes to contribution points elsewhere in the tree.
     /// </summary>
     public IEnumerable<ScreenContributionSyntax> Contributions { get; init; } = [];

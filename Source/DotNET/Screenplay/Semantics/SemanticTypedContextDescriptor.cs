@@ -33,6 +33,9 @@ public static class SemanticContextSourceKinds
     /// <summary>A time-zone member the application declares in its <c>context</c> block (decision 0132); its path names the member.</summary>
     public const string ApplicationContext = "application-context";
     public const string Unavailable = "unavailable";
+
+    /// <summary>A value a <c>provide</c> adds to the context for everything beneath the level that declares it (ESM v53); its path names the provided value.</summary>
+    public const string Provided = "provided";
 }
 
 /// <summary>Portable tokens for non-model values supplied by the runtime.</summary>
@@ -90,6 +93,9 @@ public sealed record SemanticTypedContextDescriptor(
 
     /// <summary>The sidecar contract revision written when any descriptor reads a declared application context member (decision 0132); it adds the <c>application-context</c> source kind and the top-level <c>contextMembers</c> registry.</summary>
     public const uint ContextMembersContractRevision = 3;
+
+    /// <summary>Gets the revision that adds the <c>provided</c> source kind for a value a <c>provide</c> adds to the context (ESM v53).</summary>
+    public const uint ProvidedContractRevision = 4;
 
     /// <summary>Gets the result-v2 handler contract; null for legacy contexts.</summary>
     public SemanticHandlerResultDescriptor? Result { get; init; }

@@ -54,7 +54,10 @@ export function checkRuntimeBudget(files) {
     // the bundled compiler; no package dependency changed and no dependency was bundled.
     // Raised again from 1_200_000 when the runtime reached 1_202_623 bytes: the extension contract and lock parsers
     // in the bundled compiler; no package dependency changed and no dependency was bundled.
-    if (runtimeBytes > 1_250_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
+    // Raised again from 1_250_000 when the runtime reached 1_259_154 bytes: availability (audience, availability
+    // and available gates) in the bundled compiler, completions and keyword docs; no package dependency changed
+    // and no dependency was bundled.
+    if (runtimeBytes > 1_300_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
     return { modules, runtimeBytes };
 }
 

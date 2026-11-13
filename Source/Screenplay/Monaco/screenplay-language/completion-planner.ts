@@ -35,6 +35,8 @@ export type CompletionPlan =
     | { kind: 'contextVariables'; replaceLength: number }
     | { kind: 'playFiles'; replaceLength: number }
     | { kind: 'policies' }
+    | { kind: 'audiences' }
+    | { kind: 'availabilities' }
     | { kind: 'events' }
     | { kind: 'triggers' }
     | { kind: 'commands' }
@@ -359,6 +361,16 @@ export function planCompletions(
     ];
     if (modifierEntries.length > 0) return { kind: 'entries', entries: modifierEntries };
 
+    // Gates and availabilities name audiences after `for` and availabilities after `with`; a persona lists the audiences it holds.
+    if (/^\s*(?:available\s+)?for\b[\w\s()]*$/.test(textBefore) && (/^\s*available\b/.test(textBefore) || chain[0] === 'availability')) {
+        return { kind: 'audiences' };
+    }
+    if (/^\s*(?:available\s+)?with\b[\w\s()]*$/.test(textBefore) && (/^\s*available\b/.test(textBefore) || chain[0] === 'availability')) {
+        return { kind: 'availabilities' };
+    }
+    if (/^\s+audience\s+\w*$/.test(textBefore) && chain[0] === 'persona') {
+        return { kind: 'audiences' };
+    }
     if (/\bauthorize\s+[\w\s]*$/.test(textBefore) || chain[0] === 'authorize') {
         return { kind: 'policies' };
     }

@@ -23,6 +23,7 @@ internal static partial class SemanticModelRead
         SemanticScreenLayout? layout = null;
         ImmutableArray<SemanticScreenExtension> extensions = [];
         ImmutableArray<SemanticScreenComponent> components = [];
+        ImmutableArray<SemanticAvailabilityRequirement> available = [];
         while (NextProperty(ref reader, seen, "screen") is { } property)
         {
             switch (property)
@@ -36,13 +37,14 @@ internal static partial class SemanticModelRead
                 case "navigation": navigation = Array(ref reader, ScreenNavigation, property); break;
                 case "layout": RequiredRead(ref reader, property); layout = ScreenLayout(ref reader); break;
                 case "extensions" when schemaVersion >= 52: extensions = Array(ref reader, ScreenExtension, property); break;
+                case "available" when schemaVersion >= 53: available = Array(ref reader, AvailabilityRequirement, property); break;
                 case "components" when schemaVersion >= 52: components = Array(ref reader, ScreenComponent, property); break;
                 default: throw Unknown(property, "screen");
             }
         }
 
         Required(id.IsSet && name is not null && title is not null && !data.IsDefault && !actions.IsDefault && !navigation.IsDefault && layout is not null, "screen");
-        return new(id, name!, title!, data, actions, navigation, layout!) { Description = description, Extensions = extensions, Components = components };
+        return new(id, name!, title!, data, actions, navigation, layout!) { Description = description, Extensions = extensions, Components = components, Available = available };
     }
 
     static SemanticScreenExtension ScreenExtension(ref Utf8JsonReader reader)

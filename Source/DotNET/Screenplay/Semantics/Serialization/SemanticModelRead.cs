@@ -79,7 +79,10 @@ internal static partial class SemanticModelRead
             .Add("timeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.TimeZone = Nested(ref reader, ApplicationTimeZone, property))
             .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property))
             .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property))
-            .Add("systems", LanguageVersion.V50.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Systems = Array(ref reader, System, property));
+            .Add("systems", LanguageVersion.V50.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Systems = Array(ref reader, System, property))
+            .Add("audiences", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Audiences = Array(ref reader, Audience, property))
+            .Add("availabilities", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Availabilities = Array(ref reader, Availability, property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 
@@ -115,6 +118,12 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticSystem> Systems { get; set; }
 
+        public ImmutableArray<SemanticAudience> Audiences { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailability> Availabilities { get; set; } = [];
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
         public ImmutableArray<string> ContextMembers { get; set; } = [];
 
         bool HasCollections => !Concepts.IsDefault && !Types.IsDefault && !Modules.IsDefault;
@@ -134,7 +143,7 @@ internal static partial class SemanticModelRead
         public SemanticApplication Build()
         {
             Required(HasIdentity && HasCollections && (SchemaVersion < LanguageVersion.V37.Major || TimeZone is not null), "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents, Systems = Systems.IsDefault ? [] : Systems };
+            return new(Id, Name!, Concepts, Types, Modules) { Audiences = Audiences, Availabilities = Availabilities, Provides = Provides, Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents, Systems = Systems.IsDefault ? [] : Systems };
         }
     }
 
@@ -170,14 +179,20 @@ internal static partial class SemanticModelRead
     sealed class ModuleState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<ModuleState> Fields = TableFor<ModuleState>("module")
-            .Add("features", (ref Utf8JsonReader reader, ModuleState state, string property) => state.Features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, state.SchemaVersion), property));
+            .Add("features", (ref Utf8JsonReader reader, ModuleState state, string property) => state.Features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, state.SchemaVersion), property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ModuleState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ModuleState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
 
         public ImmutableArray<SemanticFeature> Features { get; set; }
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
 
         public SemanticModule Build()
         {
             Required(HasIdentity && !Features.IsDefault, "module");
-            return new(Id, Name!, Features);
+            return new(Id, Name!, Features) { Provides = Provides, Available = Available };
         }
     }
 
@@ -185,7 +200,13 @@ internal static partial class SemanticModelRead
     {
         public static readonly FieldTable<FeatureState> Fields = TableFor<FeatureState>("feature")
             .Add("features", (ref Utf8JsonReader reader, FeatureState state, string property) => state.Features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, state.SchemaVersion), property))
-            .Add("slices", (ref Utf8JsonReader reader, FeatureState state, string property) => state.Slices = Array(ref reader, (ref Utf8JsonReader item) => Slice(ref item, state.SchemaVersion), property));
+            .Add("slices", (ref Utf8JsonReader reader, FeatureState state, string property) => state.Slices = Array(ref reader, (ref Utf8JsonReader item) => Slice(ref item, state.SchemaVersion), property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, FeatureState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, FeatureState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
 
         public ImmutableArray<SemanticFeature> Features { get; set; }
 
@@ -194,7 +215,7 @@ internal static partial class SemanticModelRead
         public SemanticFeature Build()
         {
             Required(HasIdentity && !Features.IsDefault && !Slices.IsDefault, "feature");
-            return new(Id, Name!, Features, Slices);
+            return new(Id, Name!, Features, Slices) { Provides = Provides, Available = Available };
         }
     }
 }

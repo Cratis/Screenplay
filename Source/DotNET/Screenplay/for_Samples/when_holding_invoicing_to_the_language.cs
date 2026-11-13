@@ -25,14 +25,16 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
-        ("`provide`", 1300,
-            [("Documentation/screenplay/fixtures/provide.play", [typeof(ProvideSyntax), typeof(QueryProvideSourceSyntax), typeof(HostProvideSourceSyntax), typeof(ValueProvideSourceSyntax), typeof(CodeProvideSourceSyntax), typeof(FileProvideSourceSyntax)])]),
+        ("`provide` from a file or code block", 1300,
+            [("Documentation/screenplay/fixtures/provide-implementation.play", [typeof(CodeProvideSourceSyntax), typeof(FileProvideSourceSyntax)])]),
         ("`compute`, `entering` bodies, approval `via`, operation-phase `invokes`, `$trigger` values", 1252,
             [("Documentation/screenplay/fixtures/ability-invocations.play", [])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
+        (typeof(QueryProvideSourceSyntax), "Documentation/screenplay/fixtures/provide.play", "Provided values (ESM v53, decision 0161) are shown by the bound provide fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(HostProvideSourceSyntax), "Documentation/screenplay/fixtures/provide.play", "Provided values (ESM v53, decision 0161) are shown by the bound provide fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(ApplicationContextSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(ContextMemberSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(TimeZoneSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
@@ -118,6 +120,17 @@ public class when_holding_invoicing_to_the_language : Specification
             SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Clock")));
         _fixtureFindings.AddRange(clockWorkspace.Compilation.Diagnostics.Select(diagnostic => $"Documentation/screenplay/fixtures/clock-preview.play: must bind, but {diagnostic.Code} {diagnostic.Message}"));
         _clockPreviewCalendar = SyntaxNodes.Under(clockFixture.Value!).OfType<CommandCalendarSyntax>().Single();
+
+        foreach (var bound in new[] { "provide", "availability" })
+        {
+            var boundPath = $"Documentation/screenplay/fixtures/{bound}.play";
+            var boundSource = File.ReadAllText(Path.Combine(root, boundPath));
+            _fixtureFindings.AddRange(compiler.Compile(boundSource).Diagnostics.Select(diagnostic => $"{boundPath}: {diagnostic.Code} {diagnostic.Message}"));
+            var boundWorkspace = ScreenplayWorkspace.Create("Bound",
+                [WorkspaceDocument.Create("bound", PortablePlayPath.Parse("bound.play"), Encoding.UTF8.GetBytes(boundSource))],
+                SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Bound")));
+            _fixtureFindings.AddRange(boundWorkspace.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity is DiagnosticSeverity.Error).Select(diagnostic => $"{boundPath}: must bind, but {diagnostic.Code} {diagnostic.Message}"));
+        }
 
         var calendarExample = File.ReadAllText(Path.Combine(root, "Documentation/screenplay/commands.md"))
             .Split('`').First(example => example.StartsWith("calendar from $context.", StringComparison.Ordinal));

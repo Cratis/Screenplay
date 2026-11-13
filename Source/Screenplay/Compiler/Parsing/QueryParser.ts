@@ -3,6 +3,8 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
 import { NarrowSyntax, QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
@@ -50,6 +52,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     let scope: string | null = null;
     let narrow: NarrowSyntax | undefined;
     let authorize: AuthorizeSyntax | null = null;
+    const available: AvailableSyntax[] = [];
     let authorizationDepthExceeded = false;
     let performed = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -93,6 +96,8 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
                 authorize = combineAuthorize(authorize, next, context);
                 authorizationDepthExceeded = previous !== null && authorize === null;
             }
+        } else if (keyword === 'available' && isAvailabilityGate(child.content)) {
+            addAvailabilityGate(context, child, available);
         } else if (keyword === 'narrow') {
             const narrowing = /^narrow\s+([A-Z]\w*)$/.exec(child.content);
             if (narrowing === null) {
@@ -108,7 +113,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
             performed = true;
             context.skipOpaqueBlock(child.indent);
         } else {
-            context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, narrow, scoped or performer`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, available, narrow, scoped or performer`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
@@ -123,6 +128,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         isObservable: match[2] !== undefined,
         scope,
         authorize,
+        ...(available.length > 0 ? { available } : {}),
         ...(narrow === undefined ? {} : { narrow }),
         location: locationOf(line),
     };

@@ -46,6 +46,7 @@ internal static partial class QueryParser
         var byParts = new List<QueryParameterSyntax>();
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
+        var available = new List<AvailableSyntax>();
         var authorizationDepthExceeded = false;
         PerformerSyntax? performer = null;
         string? description = null;
@@ -105,6 +106,9 @@ internal static partial class QueryParser
                     }
 
                     break;
+                case "available" when AvailabilityParser.IsGate(line.Content):
+                    AvailabilityParser.AddGate(context, line, available);
+                    break;
                 case "filter":
                     if (ParseParameter(context, line, "filter") is { } filter)
                     {
@@ -146,7 +150,7 @@ internal static partial class QueryParser
 
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize, narrow, scoped or performer", line.Location);
+                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize, available, narrow, scoped or performer", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -157,7 +161,8 @@ internal static partial class QueryParser
             Scope = scope,
             Narrow = narrow,
             ByParts = byParts,
-            DirectiveLocations = directiveLocations
+            DirectiveLocations = directiveLocations,
+            Available = available
         };
     }
 

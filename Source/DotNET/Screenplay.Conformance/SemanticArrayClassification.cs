@@ -33,7 +33,7 @@ internal static class SemanticArrayClassification
 
     static readonly string[] _nameSets =
     [
-        "application/policies", "application/contextMembers", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
+        "application/audiences", "application/availabilities", "application/policies", "application/contextMembers", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
         "stateMachines/specifications", "workflows/specifications", "slices/reducers", "slices/constraints", "record/fields", "records/fields", "thenReturns/fields",
     ];
 
@@ -46,6 +46,9 @@ internal static class SemanticArrayClassification
 
     static readonly string[] _ordered =
     [
+        "application/provides", "modules/provides", "features/provides", "slices/provides",
+        "modules/available", "features/available", "slices/available", "commands/available", "queries/available", "screens/available",
+        "availabilities/requirements", "source/by",
         "appends/mappings", "appends/tags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",
         "children/appends", "children/map", "nested/appends", "nested/map",

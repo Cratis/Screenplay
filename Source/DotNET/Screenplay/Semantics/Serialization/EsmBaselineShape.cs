@@ -170,5 +170,12 @@ internal enum EsmBaselineShape
     ScreenRegion,
     ScreenExtension,
     ScreenComponent,
-    ScreenSignalHandler
+    ScreenSignalHandler,
+    Audience,
+    Availability,
+    AvailabilityRequirement,
+    AvailabilityCondition,
+    ContextOperand,
+    Provide,
+    ProvideSource
 }

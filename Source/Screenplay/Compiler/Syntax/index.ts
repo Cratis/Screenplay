@@ -53,6 +53,7 @@ export * from './Captures';
 export * from './CaptureEventsSource';
 export { dependencySourcesOf } from './DependencySources';
 export * from './Authorization';
+export * from './Availability';
 export * from './Sinks';
 export * from './Constraints';
 export * from './Specifications';

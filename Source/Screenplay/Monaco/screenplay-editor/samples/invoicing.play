@@ -398,12 +398,26 @@ persona Customer
   policy IsAdultCustomer
   policy IsWithinCreditLimit
 
+// Audiences say who a part of the application is available to; the model never says who is in them.
+// Personas carry audiences for authoring only, so the board draws the audit screens for the Auditor.
+audience AuditTrail
+  description "Customers who bought the audit trail"
+
+audience Preview
+  description "Tenants taking part in the preview"
+
+availability AuditTrailEnabled
+  description "Sold with the audit trail, in the preview region"
+  for AuditTrail or Preview
+  when $context.region == "Nordics"
+
 persona Auditor
   description "Reviews what happened, never changes it"
   goal "Review what happened without changing it"
   policy IsAuthenticated
   policy IsPerson
   policy IsAuditor
+  audience AuditTrail
 
 authentication
   provider EntraId
@@ -923,6 +937,7 @@ workflow CollectOverdue
 
 module Invoicing
   purpose Billing
+  provide region String from "Nordics"
   documentation
     ```markdown
     Invoicing owns billing decisions. Payment-provider facts enter through translation slices.
@@ -3823,6 +3838,7 @@ module Invoicing
     purpose Bookkeeping
     description "What auditors look at - nothing here changes anything"
     authorize IsAuditor
+    available with AuditTrailEnabled
 
     contribute to Navigation
       navigate to CancelledInvoices
@@ -3848,6 +3864,7 @@ module Invoicing
       query ListCancelledInvoices => CancelledInvoiceReadModel[]
         description "Cancelled invoices, kept for audit"
         authorize IsAuditor
+        available for AuditTrail or Preview
 
       // AutoMap is on by default and copies every matching property.
       projection CancelledInvoices => CancelledInvoiceReadModel
