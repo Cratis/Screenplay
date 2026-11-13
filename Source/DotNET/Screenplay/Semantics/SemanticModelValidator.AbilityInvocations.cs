@@ -115,7 +115,7 @@ internal static partial class SemanticModelValidator
                 var owner = $"Specification '{specification.Name}' gives an ability answer that";
                 var ability = ResolveAbility(answer.System, answer.Ability, owner);
                 if (!seen.Add((answer.System, answer.Ability))) throw new InvalidSemanticContract($"{owner} repeats an ability.");
-                if (!Enum.IsDefined(answer.Kind)) throw new InvalidSemanticContract($"{owner} has an unknown kind.");
+                if (!Enum.IsDefined(answer.Kind) || answer.Kind == SemanticAbilityAnswerKind.Pending) throw new InvalidSemanticContract($"{owner} has an unknown kind.");
                 var outcomeOnly = answer.Kind == SemanticAbilityAnswerKind.Outcome;
                 if (outcomeOnly != (answer.Outcome is not null) || (outcomeOnly && !ability.Outcomes.Contains(answer.Outcome!)))
                     throw new InvalidSemanticContract($"{owner} names an outcome only when it answers one, and the ability must declare it.");

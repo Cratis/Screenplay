@@ -26,7 +26,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// </summary>
     internal const int MaximumFacts = 1_000;
 
-    readonly Queue<(SemanticFact Fact, DateTimeOffset? Occurred)> _pending = new();
+    readonly Queue<(SemanticFact Fact, DateTimeOffset? Occurred, long Sequence)> _pending = new();
+    readonly List<SemanticPendingAbilityInvocation> _pendingInvocations = [];
     readonly Dictionary<(SemanticId Command, SemanticId Property), Queue<SemanticValue>> _pinned = [];
     readonly List<SemanticFact> _facts = [];
     readonly List<SemanticRecordedInvocation> _invocations = [];
@@ -50,6 +51,16 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Gets the answers the invoked abilities give, stated by the specification (ESM v51).
     /// </summary>
     public ImmutableArray<SemanticAbilityAnswer> AbilityAnswers { get; init; } = [];
+
+    /// <summary>
+    /// Gets the optional live host invoker. Specification evaluation leaves this unset.
+    /// </summary>
+    public ISemanticAbilityInvoker? AbilityInvoker { get; init; }
+
+    /// <summary>
+    /// Gets the invocations awaiting later host answers.
+    /// </summary>
+    public ImmutableArray<SemanticPendingAbilityInvocation> PendingInvocations => [.. _pendingInvocations];
 
     /// <summary>
     /// Gets every fact appended through the loop, in order.
@@ -84,7 +95,9 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// <returns>An unsupported result when the scenario appends too many facts; otherwise <see langword="null"/>.</returns>
     public SemanticExecutionResult? Observe(IEnumerable<SemanticFact> facts, DateTimeOffset? occurred)
     {
-        foreach (var fact in facts)
+        var observed = facts.ToArray();
+        var sequence = World.Facts.Length - observed.Length;
+        foreach (var fact in observed)
         {
             if (_facts.Count >= MaximumFacts)
             {
@@ -92,7 +105,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
             }
 
             _facts.Add(fact);
-            _pending.Enqueue((fact, occurred));
+            _pending.Enqueue((fact, occurred, sequence++));
         }
 
         return null;
@@ -145,20 +158,23 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// <returns>The rejected or unsupported result, or <see langword="null"/> when the reactions settled.</returns>
     public SemanticExecutionResult? Settle()
     {
-        var captures = new List<(SemanticFact Fact, DateTimeOffset? Occurred)>();
+        var settlement = SettleAsync(CancellationToken.None);
+        if (!settlement.IsCompleted) throw new InvalidOperationException("Synchronous settlement must complete without awaiting host work.");
+        return settlement.GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Settles reactions while awaiting live host ability answers.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A failure, or <see langword="null"/> when settled.</returns>
+    public async ValueTask<SemanticExecutionResult?> SettleAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var captures = new List<(SemanticFact Fact, DateTimeOffset? Occurred, long Sequence)>();
         while (_pending.TryDequeue(out var item))
         {
-            var values = item.Fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
-            foreach (var reaction in plan.RunningReactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
-            {
-                foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == item.Fact.EventContract))
-                {
-                    if (Fire(reaction, trigger, values, SemanticExpressionRootKind.Event, item.Fact, item.Occurred) is { } failure)
-                    {
-                        return failure;
-                    }
-                }
-            }
+            if (await ReactAsync(item, cancellationToken).ConfigureAwait(false) is { } failure) return failure;
             captures.Add(item);
         }
 
@@ -208,6 +224,65 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         SemanticFact? cause,
         DateTimeOffset? occurred)
     {
+        var firing = FireAsync(reaction, trigger, values, root, cause, occurred, 0, reaction.Triggers.IndexOf(trigger), CancellationToken.None);
+        if (!firing.IsCompleted) throw new InvalidOperationException("Synchronous reactions must complete without awaiting host work.");
+        return firing.GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Applies one deferred answer, then settles only the facts its branch appends.
+    /// </summary>
+    /// <param name="pending">The persisted invocation.</param>
+    /// <param name="answer">The host's completed answer.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A failure, or <see langword="null"/> when settled.</returns>
+    public async ValueTask<SemanticExecutionResult?> SettleAnswerAsync(SemanticPendingAbilityInvocation pending, SemanticAbilityAnswer answer, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var failure = ApplyPendingAnswer(pending, answer);
+        return failure ?? await SettleAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    static bool IsCompletedAnswer(SemanticPendingAbilityInvocation pending, SemanticAbilityAnswer answer) =>
+        answer.Kind != SemanticAbilityAnswerKind.Pending && answer.System == pending.System && answer.Ability == pending.Ability &&
+        pending.Identity.TriggerIndex == pending.TriggerIndex && pending.Identity.Index == pending.InvocationIndex;
+
+    static SemanticInvocation LocatePendingInvocation(SemanticReaction reaction, SemanticPendingAbilityInvocation pending)
+    {
+        var trigger = reaction.Triggers.ElementAtOrDefault(pending.TriggerIndex);
+        if (trigger?.Kind != SemanticReactionTriggerKind.Event || trigger.Source != pending.Cause.EventContract)
+        {
+            throw new InvalidSemanticContract("The pending invocation's trigger is not in the execution plan.");
+        }
+        return trigger.Invokes.ElementAtOrDefault(pending.InvocationIndex)
+            ?? throw new InvalidSemanticContract("The pending invocation is not in the execution plan.");
+    }
+
+    async ValueTask<SemanticExecutionResult?> ReactAsync((SemanticFact Fact, DateTimeOffset? Occurred, long Sequence) item, CancellationToken cancellationToken)
+    {
+        var values = item.Fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
+        foreach (var reaction in plan.RunningReactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
+        {
+            foreach (var (trigger, triggerIndex) in reaction.Triggers.Select((trigger, index) => (trigger, index)).Where(itemTrigger => itemTrigger.trigger.Kind == SemanticReactionTriggerKind.Event && itemTrigger.trigger.Source == item.Fact.EventContract))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (await FireAsync(reaction, trigger, values, SemanticExpressionRootKind.Event, item.Fact, item.Occurred, item.Sequence, triggerIndex, cancellationToken).ConfigureAwait(false) is { } failure) return failure;
+            }
+        }
+        return null;
+    }
+
+    async ValueTask<SemanticExecutionResult?> FireAsync(
+        SemanticReaction reaction,
+        SemanticReactionTrigger trigger,
+        IReadOnlyDictionary<SemanticId, SemanticValue> values,
+        SemanticExpressionRootKind root,
+        SemanticFact? cause,
+        DateTimeOffset? occurred,
+        long causeSequence,
+        int triggerIndex,
+        CancellationToken cancellationToken)
+    {
         if (trigger.Where is not null && !SemanticConditionEvaluator.Evaluate(trigger.Where, values))
         {
             return null;
@@ -218,26 +293,48 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         {
             return FireBody(reaction, trigger, cause, occurrence);
         }
-        var lookup = values.ToDictionary(pair => pair.Key, pair => pair.Value);
-        try
+        var evaluation = new ReactionEvaluation(reaction, values.ToDictionary(pair => pair.Key, pair => pair.Value), root, cause, occurrence, causeSequence, triggerIndex);
+        var failure = Evaluate(() => ProduceAll(reaction, trigger.Produces, evaluation.Values, root, cause, occurrence));
+        return failure ?? await RunInvocationsAsync(evaluation, trigger, cancellationToken).ConfigureAwait(false);
+    }
+
+    async ValueTask<SemanticExecutionResult?> RunInvocationsAsync(ReactionEvaluation evaluation, SemanticReactionTrigger trigger, CancellationToken cancellationToken)
+    {
+        for (var index = 0; index < trigger.Invokes.Length; index++)
         {
-            if (ProduceAll(reaction, trigger.Produces, lookup, root, cause, occurrence) is { } productionFailure) return productionFailure;
-
-            foreach (var invocation in trigger.Invokes)
+            var invocation = trigger.Invokes[index];
+            cancellationToken.ThrowIfCancellationRequested();
+            if (invocation.Ability is not null)
             {
-                if (invocation.Ability is not null)
-                {
-                    if (InvokeAbility(reaction, invocation, lookup, root, cause, occurrence) is { } abilityFailure) return abilityFailure;
-                    continue;
-                }
-
-                if (Invoke(reaction, invocation, lookup, root, cause, occurrence, out var handled) is { } failure)
-                {
-                    return failure;
-                }
-                if (handled) break;
+                if (await InvokeAbilityAsync(evaluation with { InvocationIndex = index }, invocation, cancellationToken).ConfigureAwait(false) is { } failure) return failure;
+                continue;
             }
+            var handled = false;
+            var commandFailure = Evaluate(() => Invoke(evaluation.Reaction, invocation, evaluation.Values, evaluation.Root, evaluation.Cause, evaluation.Occurrence, out handled));
+            if (commandFailure is not null) return commandFailure;
+            if (handled) break;
         }
+        return null;
+    }
+
+    async ValueTask<SemanticExecutionResult?> InvokeAbilityAsync(ReactionEvaluation evaluation, SemanticInvocation invocation, CancellationToken cancellationToken)
+    {
+        SemanticAbilityInvocationContext context = null!;
+        var failure = Evaluate(() =>
+        {
+            context = AbilityContext(evaluation, invocation);
+            return null;
+        });
+        if (failure is not null) return failure;
+        _invocations.Add(new(default, [], true) { System = invocation.System, Ability = invocation.Ability, Inputs = context.Inputs });
+        var answer = AbilityInvoker is null ? null : await AbilityInvoker.InvokeAsync(context, cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        return Evaluate(() => InvokeAbility(evaluation, invocation, context, answer));
+    }
+
+    SemanticExecutionResult? Evaluate(Func<SemanticExecutionResult?> action)
+    {
+        try { return action(); }
         catch (InvalidSemanticContract exception)
         {
             return new SemanticRejected(World, SemanticRejectionCategory.Contract, null, exception.Message);
@@ -246,25 +343,34 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         {
             return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, missing.Message);
         }
+    }
 
-        return null;
+    SemanticAbilityInvocationContext AbilityContext(ReactionEvaluation evaluation, SemanticInvocation invocation)
+    {
+        var inputs = invocation.Inputs.Select(input => new SemanticAbilityFieldValue(input.Input, SemanticEvaluator.Evaluate(input.Source, evaluation.Root, evaluation.Values, evaluation.Occurrence, evaluation.Cause))).ToImmutableArray();
+        return new(invocation.System, invocation.Ability!, inputs, evaluation.Reaction.Id, evaluation.Cause!, evaluation.Occurrence?.Occurred, new(evaluation.Reaction.Id, evaluation.CauseSequence, evaluation.TriggerIndex, evaluation.InvocationIndex));
     }
 
     // An ability runs outside the model: the specification supplies its answer ('given <System>.<Ability> returns|answers|fails');
     // without one the ability returns nothing, so a branch that reads what it returned cannot be proved and reports unsupported.
     SemanticExecutionResult? InvokeAbility(
-        SemanticReaction reaction,
+        ReactionEvaluation evaluation,
         SemanticInvocation invocation,
-        Dictionary<SemanticId, SemanticValue> values,
-        SemanticExpressionRootKind root,
-        SemanticFact? cause,
-        SemanticCommandOccurrence? occurrence)
+        SemanticAbilityInvocationContext context,
+        SemanticAbilityAnswer? hostAnswer)
     {
-        var inputs = invocation.Inputs
-            .Select(input => new SemanticAbilityFieldValue(input.Input, SemanticEvaluator.Evaluate(input.Source, root, values, occurrence, cause)))
-            .ToImmutableArray();
-        _invocations.Add(new(default, [], true) { System = invocation.System, Ability = invocation.Ability, Inputs = inputs });
-        var answer = AbilityAnswers.FirstOrDefault(candidate => candidate.System == invocation.System && string.Equals(candidate.Ability, invocation.Ability, StringComparison.Ordinal));
+        var inputs = context.Inputs;
+        var answer = hostAnswer ?? AbilityAnswers.FirstOrDefault(candidate => candidate.System == invocation.System && string.Equals(candidate.Ability, invocation.Ability, StringComparison.Ordinal));
+        if (answer?.Kind == SemanticAbilityAnswerKind.Pending)
+        {
+            _pendingInvocations.Add(new(context.Identity, context.Identity.TriggerIndex, context.Identity.Index, context.System, context.Ability, inputs, context.Cause, context.Occurred));
+            return null;
+        }
+        return ProduceAbilityAnswer(evaluation, invocation, answer);
+    }
+
+    SemanticExecutionResult? ProduceAbilityAnswer(ReactionEvaluation evaluation, SemanticInvocation invocation, SemanticAbilityAnswer? answer)
+    {
         var selector = answer?.Kind switch
         {
             SemanticAbilityAnswerKind.Outcome => answer.Outcome,
@@ -277,13 +383,25 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         _abilityAnswer = answer ?? new SemanticAbilityAnswer(invocation.System, invocation.Ability!, SemanticAbilityAnswerKind.Returned);
         try
         {
-            return ProduceAll(reaction, branch.Produces, values, root, cause, occurrence);
+            return ProduceAll(evaluation.Reaction, branch.Produces, evaluation.Values, evaluation.Root, evaluation.Cause, evaluation.Occurrence);
         }
         finally
         {
             _abilityAnswer = previous;
         }
     }
+
+    SemanticExecutionResult? ApplyPendingAnswer(SemanticPendingAbilityInvocation pending, SemanticAbilityAnswer answer) => Evaluate(() =>
+    {
+        if (!IsCompletedAnswer(pending, answer)) throw new InvalidSemanticContract("A pending invocation must be resumed with its completed ability answer.");
+        var reaction = plan.RunningReactions.FirstOrDefault(candidate => candidate.Id == pending.Identity.Reaction)
+            ?? throw new InvalidSemanticContract("The pending invocation's reaction is not in the execution plan.");
+        var values = pending.Cause.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
+        var invocation = LocatePendingInvocation(reaction, pending);
+        if (invocation.System != pending.System || invocation.Ability != pending.Ability) throw new InvalidSemanticContract("The pending invocation does not match the execution plan.");
+        var evaluation = new ReactionEvaluation(reaction, values, SemanticExpressionRootKind.Event, pending.Cause, Occurrence(pending.Cause, pending.Occurred), pending.Identity.CauseSequence, pending.TriggerIndex, pending.InvocationIndex);
+        return ProduceAbilityAnswer(evaluation, invocation, answer);
+    });
 
     SemanticValue AbilityValue(SemanticInvocationValueExpression expression)
     {
@@ -448,4 +566,6 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     ImmutableArray<SemanticPropertyValue> TakePinned(SemanticCommand command) =>
         [.. command.Properties.Where(property => property.IsGenerated && _pinned.TryGetValue((command.Id, property.Id), out var queue) && queue.Count > 0)
             .Select(property => new SemanticPropertyValue(property.Id, _pinned[(command.Id, property.Id)].Dequeue()))];
+
+    sealed record ReactionEvaluation(SemanticReaction Reaction, Dictionary<SemanticId, SemanticValue> Values, SemanticExpressionRootKind Root, SemanticFact? Cause, SemanticCommandOccurrence? Occurrence, long CauseSequence, int TriggerIndex, int InvocationIndex = 0);
 }

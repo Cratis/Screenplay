@@ -356,6 +356,11 @@ public sealed record SemanticAccepted(
     /// World establishment and read-only execution have no command response.
     /// </summary>
     public SemanticExecutionResponse? Response { get; init; }
+
+    /// <summary>
+    /// Gets the ability invocations the host must persist with the accepted batch and answer later.
+    /// </summary>
+    public ImmutableArray<SemanticPendingAbilityInvocation> PendingInvocations { get; init; } = [];
 }
 
 /// <summary>
