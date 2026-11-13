@@ -183,6 +183,11 @@ public record CommandSyntax(
     IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the <c>available</c> gates of this command; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the authoring-only markdown explaining this command.
     /// </summary>
     public string? Documentation { get; init; }

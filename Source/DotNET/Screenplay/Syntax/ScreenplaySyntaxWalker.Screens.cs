@@ -15,6 +15,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreen(ScreenSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
 
         if (syntax.File is not null)
         {

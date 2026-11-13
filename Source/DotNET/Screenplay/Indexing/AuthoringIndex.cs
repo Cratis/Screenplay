@@ -155,6 +155,8 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case PurposeSyntax value: Declare("Purpose", value.Name, value, value.Description, new { reportOnly = true }); break;
             case TypeSyntax value: Declare("Type", value.Name, value); break;
             case PolicySyntax value: Declare("Policy", value.Name, value, value.Description); break;
+            case AudienceSyntax value: Declare("Audience", value.Name, value, value.Description); break;
+            case AvailabilitySyntax value: Declare("Availability", value.Name, value, value.Description); break;
             case PersonaSyntax value: Declare("Persona", value.Name, value); break;
             case UserSyntax value: Declare("User", value.Name, value); break;
             case StorylineSyntax value: Declare("Storyline", value.Name, value, value.Description); break;

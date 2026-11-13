@@ -31,6 +31,8 @@ public partial class ScreenplayPrinter
                 WriteReads(writer, reads);
             }
 
+            WriteAvailable(writer, command.Available);
+
             if (command.Authorize is not null)
             {
                 WriteAuthorize(writer, command.Authorize);
@@ -151,6 +153,8 @@ public partial class ScreenplayPrinter
             {
                 writer.DirectiveLine($"scoped to {query.Scope}", query, "scoped to");
             }
+
+            WriteAvailable(writer, query.Available);
 
             if (query.Authorize is not null)
             {

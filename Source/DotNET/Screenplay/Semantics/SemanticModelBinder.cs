@@ -50,6 +50,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesAvailability(application)) return (LanguageVersion.V53, SemanticVersion.V53);
         if (SemanticModelValidator.UsesAbilityInvocations(application)) return (LanguageVersion.V51, SemanticVersion.V51);
         if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
         if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
@@ -274,7 +275,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV52Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV53Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -474,6 +475,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || UsesPublicEvents || UsesV10 || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
+                Audiences = SemanticAvailabilityBinder.Audiences(syntax.Audiences),
+                Availabilities = SemanticAvailabilityBinder.Availabilities(syntax.Availabilities),
+                Provides = BindProvides(syntax.Provides),
                 Triggers = triggers,
                 Systems = systems,
                 StateMachines = stateMachines,
@@ -697,7 +701,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                             SemanticQueryArguments.KeyProperties(bound),
                             module,
                             featurePath,
-                            queryFilterNames: query.Filters.Select(filter => filter.Name))
+                            queryFilterNames: query.Filters.Select(filter => filter.Name)),
+                        Available = SemanticAvailabilityBinder.Gates(query.Available)
                     });
                 }
             }

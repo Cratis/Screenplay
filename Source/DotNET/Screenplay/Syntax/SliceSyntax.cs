@@ -143,6 +143,11 @@ public record SliceSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this slice; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the values this slice adds to <c>$context</c> for everything beneath it.
     /// </summary>
     public IEnumerable<ProvideSyntax> Provides { get; init; } = [];

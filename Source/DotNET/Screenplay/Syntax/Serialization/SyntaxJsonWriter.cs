@@ -7,6 +7,8 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 
 internal static class SyntaxJsonWriter
 {
+    static readonly HashSet<string> _availabilityMembers = new(StringComparer.Ordinal) { "audiences", "availabilities", "available" };
+
     internal static Dictionary<string, object?> Write(SyntaxNode node, string path, int depth)
     {
         SyntaxJson.CheckDepth(depth, path);
@@ -43,13 +45,14 @@ internal static class SyntaxJsonWriter
             if (node is QuerySyntax or ReadsSyntax && member.Name == "byParts" && value is IEnumerable parts && !parts.Cast<object>().Any()) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
             if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;
-            if (member.Name == "description" && value is null && node is ConceptSyntax or PolicySyntax or ConstraintSyntax or Projections.ProjectionSyntax or Projections.GraphProjectionSyntax or ScreenSyntax or FormSyntax) continue;
+            if (member.Name == "description" && value is null && node is ConceptSyntax or PolicySyntax or ConstraintSyntax or Projections.ProjectionSyntax or Projections.GraphProjectionSyntax or ScreenSyntax or FormSyntax or AudienceSyntax or AvailabilitySyntax) continue;
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
             if ((member.Name == "examples" || (node is Specifications.SpecificationSyntax && (member.Name == "parameters" || member.Name == "cases"))) && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
             if (node is Specifications.SpecificationErrorSyntax && member.Name == "caseValue" && value is null) continue;
             if (((node is SliceSyntax && (member.Name == "graphs" || member.Name == "graphProjections" || member.Name == "graphQueries")) || (node is Specifications.SpecificationSyntax && (member.Name == "givenGraphs" || member.Name == "thenGraphs"))) && value is IEnumerable graphs && !graphs.Cast<object>().Any()) continue;
             if (member.Name == "purposes" && value is IEnumerable purposes && !purposes.Cast<object>().Any()) continue;
             if (member.Name == "provides" && value is IEnumerable provides && !provides.Cast<object>().Any()) continue;
+            if (_availabilityMembers.Contains(member.Name) && value is IEnumerable gates && !gates.Cast<object>().Any()) continue;
             if (OmitSampleRows(node, member.Name, value)) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
             if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;

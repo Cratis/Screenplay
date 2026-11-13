@@ -29,6 +29,8 @@
   href: structured-values.md
 - name: Policies
   href: policies.md
+- name: Audiences and availability
+  href: availability.md
 - name: Personas
   href: personas.md
 - name: Storylines

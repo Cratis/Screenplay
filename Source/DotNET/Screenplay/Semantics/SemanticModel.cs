@@ -109,6 +109,17 @@ public sealed record SemanticApplication(
     /// <summary>Gets the named declarative policies of the application.</summary>
     public ImmutableArray<SemanticPolicy> Policies { get; init; } = [];
 
+    /// <summary>Gets the audiences the application declares; empty for models before ESM v53.</summary>
+    public ImmutableArray<SemanticAudience> Audiences { get; init; } = [];
+
+    /// <summary>Gets the reusable availabilities the application declares; empty for models before ESM v53.</summary>
+    public ImmutableArray<SemanticAvailability> Availabilities { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this application adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+
     /// <summary>
     /// Gets the application triggers the document declares; empty for models before ESM v6.
     /// </summary>
@@ -178,7 +189,18 @@ public sealed record SemanticApplication(
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="Features">The module features.</param>
-public sealed record SemanticModule(SemanticId Id, string Name, ImmutableArray<SemanticFeature> Features);
+public sealed record SemanticModule(SemanticId Id, string Name, ImmutableArray<SemanticFeature> Features)
+{
+    /// <summary>
+    /// Gets the availability gates of this module; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this module adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a semantic feature, optionally containing nested features.
@@ -191,7 +213,18 @@ public sealed record SemanticFeature(
     SemanticId Id,
     string Name,
     ImmutableArray<SemanticFeature> Features,
-    ImmutableArray<SemanticSlice> Slices);
+    ImmutableArray<SemanticSlice> Slices)
+{
+    /// <summary>
+    /// Gets the availability gates of this feature; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this feature adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+}
 
 /// <summary>
 /// Represents the initial executable vertical slice.
@@ -220,6 +253,16 @@ public sealed record SemanticSlice(
     /// Gets the append-time constraints the slice declares.
     /// </summary>
     public ImmutableArray<SemanticConstraint> Constraints { get; init; } = [];
+
+    /// <summary>
+    /// Gets the availability gates of this slice; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this slice adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
 
     /// <summary>Gets opaque reducer contracts; empty for models without reducer bodies.</summary>
     public ImmutableArray<SemanticReducer> Reducers { get; init; } = [];

@@ -31,6 +31,11 @@ public sealed record SemanticScreen(
     public string? Description { get; init; }
 
     /// <summary>
+    /// Gets the availability gates of this screen; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the extensions the screen needs because it places their components, so a host can activate their backends ahead of use. ESM v52.
     /// </summary>
     public ImmutableArray<SemanticScreenExtension> Extensions { get; init; } = [];

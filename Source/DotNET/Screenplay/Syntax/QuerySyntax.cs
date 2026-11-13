@@ -40,6 +40,11 @@ public record QuerySyntax(
     public const string ObservableModifier = "observable";
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this query; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets what the query's results are narrowed to, and <c>null</c> when they are narrowed to the tenant
     /// the query runs for - the default, which a document leaves unstated.
     /// </summary>

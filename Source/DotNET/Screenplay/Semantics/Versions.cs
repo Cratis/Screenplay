@@ -257,6 +257,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets language v52, with extension components on screens.</summary>
     public static readonly LanguageVersion V52 = new(52, 0);
 
+    /// <summary>Gets language v53, with provided values and availability gates.</summary>
+    public static readonly LanguageVersion V53 = new(53, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -536,6 +539,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>Gets semantic v52, with extension components on screens.</summary>
     public static readonly SemanticVersion V52 = new(52, 0);
+
+    /// <summary>Gets semantic v53, with provided values and availability gates.</summary>
+    public static readonly SemanticVersion V53 = new(53, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1356,7 +1362,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV52Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV53Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1369,7 +1375,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV52Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV53Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

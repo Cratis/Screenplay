@@ -17,7 +17,7 @@ public class when_checking_frozen_full_goldens(ITestOutputHelper output) : Speci
 
         // Minor admission freezes the same major's already published .0 golden too.
         var current = frozen_esm_goldens.CurrentVersion;
-        var expected = EsmSchemaV52Support.SemanticVersions.Where(version => version.Minor == 0 && (version.Major < current.Major || (version.Major == current.Major && current.Minor > 0))).Select(version => (int)version.Major).Order().ToArray();
+        var expected = EsmSchemaV53Support.SemanticVersions.Where(version => version.Minor == 0 && (version.Major < current.Major || (version.Major == current.Major && current.Minor > 0))).Select(version => (int)version.Major).Order().ToArray();
         expected.ShouldNotBeEmpty();
         manifest.Keys.Order().ShouldEqual(expected);
         foreach (var version in expected)

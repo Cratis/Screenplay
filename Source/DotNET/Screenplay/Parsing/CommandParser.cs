@@ -54,6 +54,7 @@ internal static partial class CommandParser
         {
             Documentation = state.Documentation,
             DirectiveLocations = state.DirectiveLocations,
+            Available = state.Available,
             Response = response,
             Stream = state.Stream,
             Calendar = state.Calendar,

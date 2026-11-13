@@ -160,6 +160,8 @@ internal static partial class ScreenplayValidator
         ValidateTypes(application, names.Types, context);
         IdentityValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);
         ProvideValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);
+        AvailabilityValidator.Validate(application, context);
+        AvailabilityInvocationValidator.Validate(application, context);
 
         ValidatePersonaPolicies(application, names.Policies, allowUnresolvedPersonaPolicies, context);
         ValidateUsers(application, context);

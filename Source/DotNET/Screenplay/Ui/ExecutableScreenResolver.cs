@@ -37,12 +37,12 @@ sealed class ExecutableScreenResolver(ApplicationSyntax syntax, SemanticCompilat
         var index = new UiModelIndex(syntax, model);
         var read = index.Slices
             .Where(entry => _slices.ContainsKey(entry.Path))
-            .SelectMany(entry => entry.Slice.Screens.Select(screen => (entry.Path, entry.Slice, Screen: new UiScreenReader(index, entry.Path).Read(screen), Id: ScreenId(entry.Path, screen))))
+            .SelectMany(entry => entry.Slice.Screens.Select(screen => (entry.Path, entry.Slice, Screen: new UiScreenReader(index, entry.Path).Read(screen), Id: ScreenId(entry.Path, screen), Syntax: screen)))
             .ToArray();
 
         return read
             .GroupBy(entry => _slices[entry.Path].Slice.Id)
-            .ToDictionary(group => group.Key, group => group.Select(entry => Screen(entry.Path, entry.Slice, entry.Id, entry.Screen)).ToImmutableArray());
+            .ToDictionary(group => group.Key, group => group.Select(entry => Screen(entry.Path, entry.Slice, entry.Id, entry.Screen, entry.Syntax)).ToImmutableArray());
     }
 
     static ImmutableArray<SemanticScreenRegion> Regions(IEnumerable<UiRegion> regions) =>
@@ -65,7 +65,7 @@ sealed class ExecutableScreenResolver(ApplicationSyntax syntax, SemanticCompilat
         return id;
     }
 
-    SemanticScreen Screen(string slice, SliceSyntax declaring, SemanticId id, UiScreen screen)
+    SemanticScreen Screen(string slice, SliceSyntax declaring, SemanticId id, UiScreen screen, ScreenSyntax screenSyntax)
     {
         var owner = $"Screen '{screen.Name}' in '{slice}'";
         return new(
@@ -78,6 +78,7 @@ sealed class ExecutableScreenResolver(ApplicationSyntax syntax, SemanticCompilat
             new([.. screen.Layout.Fits], Regions(screen.Layout.Regions)))
         {
             Description = screen.Description,
+            Available = SemanticAvailabilityBinder.Gates(screenSyntax.Available),
             Extensions = [.. (screen.Extensions ?? []).Select(need => new SemanticScreenExtension(System(owner, need.System), need.Reference))],
             Components = [.. (screen.Scene?.Components ?? []).Where(component => component.Extension is not null).Select(component => ExtensionComponent(declaring, owner, component))]
         };

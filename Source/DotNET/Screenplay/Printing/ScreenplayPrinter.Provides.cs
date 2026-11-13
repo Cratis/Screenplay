@@ -13,6 +13,35 @@ public partial class ScreenplayPrinter
         foreach (var provide in provides) WriteProvide(writer, provide);
     }
 
+    void WriteAvailable(ScreenplayWriter writer, IEnumerable<AvailableSyntax> gates)
+    {
+        foreach (var gate in gates) writer.Line($"available {ScreenplaySyntaxText.AvailabilityRequirement(gate.Requirement)}", gate);
+    }
+
+    void WriteAudience(ScreenplayWriter writer, AudienceSyntax audience)
+    {
+        using var anchor = writer.Anchor(audience);
+        writer.Line($"audience {audience.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, audience.Description, audience);
+        }
+    }
+
+    void WriteAvailability(ScreenplayWriter writer, AvailabilitySyntax availability)
+    {
+        using var anchor = writer.Anchor(availability);
+        writer.Line($"availability {availability.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, availability.Description, availability);
+            foreach (var requirement in availability.Requirements)
+            {
+                writer.Line(ScreenplaySyntaxText.AvailabilityRequirement(requirement), requirement);
+            }
+        }
+    }
+
     void WriteProvide(ScreenplayWriter writer, ProvideSyntax provide)
     {
         using var anchor = writer.Anchor(provide);

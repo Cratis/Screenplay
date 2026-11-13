@@ -39,6 +39,8 @@ static class ReferenceKinds
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),
         PolicyReferenceSyntax value => [(value.Name, ["Policy"], "authorizes")],
+        AudienceAvailabilityRequirementSyntax value => [(value.Audience, ["Audience"], "availableFor")],
+        AvailabilityReferenceSyntax value => [(value.Availability, ["Availability"], "availableWith")],
         PurposeReferenceSyntax value => [(value.Name, ["Purpose"], "purpose")],
         SlicePlacementSyntax { Kind: SlicePlacementKind.Event } value => [(value.Name, _eventKinds, "shows")],
         SlicePlacementSyntax value => [(value.Name, ["ReadModel"], "shows")],

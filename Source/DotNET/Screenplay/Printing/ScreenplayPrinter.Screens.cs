@@ -20,6 +20,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, screen.Description, screen);
+            WriteAvailable(writer, screen.Available);
             if (screen.File is not null)
             {
                 writer.Line($"file {screen.File.Path}", screen.File);

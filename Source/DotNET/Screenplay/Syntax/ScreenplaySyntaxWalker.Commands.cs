@@ -15,6 +15,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitCommand(CommandSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
 
         foreach (var property in syntax.Properties)
         {

@@ -16,10 +16,10 @@ public static partial class SemanticModelCanonicalJson
         if (slice.Screens.IsDefaultOrEmpty) return;
         if (version.Major < 42) throw new InvalidSemanticContract("Screens require ESM v42 or later.");
         if (version.Major < 52 && slice.Screens.Any(screen => !screen.Components.IsDefaultOrEmpty || !screen.Extensions.IsDefaultOrEmpty)) throw new InvalidSemanticContract("Extension components on screens require ESM v52 or later.");
-        WriteArray(writer, "screens", slice.Screens.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteScreen);
+        WriteArray(writer, "screens", slice.Screens.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, screen) => WriteScreen(output, screen, version));
     }
 
-    static void WriteScreen(Utf8JsonWriter writer, SemanticScreen screen)
+    static void WriteScreen(Utf8JsonWriter writer, SemanticScreen screen, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, screen.Id);
@@ -31,6 +31,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "navigation", screen.Navigation, WriteScreenNavigation);
         if (!screen.Extensions.IsDefaultOrEmpty) WriteArray(writer, "extensions", screen.Extensions, WriteScreenExtension);
         if (!screen.Components.IsDefaultOrEmpty) WriteArray(writer, "components", screen.Components, WriteScreenComponent);
+        WriteAvailable(writer, screen.Available, version);
         writer.WritePropertyName("layout");
         writer.WriteStartObject();
         WriteStringArray(writer, "fits", screen.Layout.Fits);

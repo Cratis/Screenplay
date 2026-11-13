@@ -24,7 +24,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl | ProvideDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | AudienceDecl | AvailabilityDecl | PurposeDecl | ProvideDecl
                | PersonaDecl | UserDecl | StorylineDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | SecretDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
@@ -438,7 +438,7 @@ ClaimTarget    = "subject"
 
 PersonaDecl    = "persona", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | "goal", String, NL | "policy", Ident, NL
+                   { DescriptionDecl | "goal", String, NL | "policy", Ident, NL | "audience", Ident, NL
                    | "position", Integer, Integer, NL | "size", Integer, Integer, NL },
                  DEDENT ;
 
@@ -749,7 +749,7 @@ SampleLiteral  = StringLiteral | Number | "true" | "false" | "null" ;
 Module         = "module", Ident, NL,
                  INDENT,
                    { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl
-                   | AuthorizeDecl
+                   | AvailableDecl | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
                    | ScreenTemplateDecl
@@ -1045,7 +1045,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 Feature        = "feature", Ident, NL,
                  INDENT,
                    { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl
-                   | AuthorizeDecl
+                   | AvailableDecl | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
                    | Feature
@@ -1063,7 +1063,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl | SlicePlacementDecl | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl | AvailableDecl | SlicePlacementDecl | FileDirective | SliceBody }, DEDENT ;
 
 (* A linked copy of an event or read model declared in another slice, drawn again on this slice of the
    timeline. Presentation only: the executable model never sees it. PLAY0953 malformed, PLAY0954 unknown
@@ -1212,7 +1212,7 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 
 CommandDecl    = "command", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | PropertyLine | ReadsDecl | AuthorizeDecl
+                   { DescriptionDecl | DocumentationDecl | PropertyLine | ReadsDecl | AvailableDecl | AuthorizeDecl
                    | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl | CommandCalendarDecl },
                  DEDENT ;
 
@@ -1282,6 +1282,25 @@ ConcurrencyDim = "eventSource", NL
                | "events", Ident, { ",", Ident }, NL ;
 
 AuthorizeDecl  = "authorize", PolicyRequirement, NL ;
+
+AudienceDecl   = "audience", Ident, NL,
+                 [ INDENT, [ DescriptionDecl ], DEDENT ] ;
+AvailabilityDecl = "availability", Ident, NL,
+                 [ INDENT, { DescriptionDecl | AvailabilityLine }, DEDENT ] ;
+AvailabilityLine = "for", AudienceRequirement, NL
+                 | "when", Condition, NL
+                 | "with", AvailabilityRequirement, NL ;
+AvailableDecl  = "available", AvailabilityLine ;
+AudienceRequirement     = AudienceTerm, { ( "and" | "or" ), AudienceTerm } ;
+AudienceTerm            = Ident | "(", AudienceRequirement, ")" ;
+AvailabilityRequirement = AvailabilityTerm, { ( "and" | "or" ), AvailabilityTerm } ;
+AvailabilityTerm        = Ident | "(", AvailabilityRequirement, ")" ;
+(* Audiences and availabilities decide whether a part of the model is there at all, before 'authorize'
+   decides who may use it. A gate takes one form per line: 'for' names audiences, 'when' reads $context,
+   'with' names a reusable availability; several 'available' lines on one construct all have to hold, and
+   gates AND down the module, feature, slice and construct. A persona's 'audience' lines are authoring
+   metadata only. $context.audiences holds the audiences of the tenant, the user and the system caller,
+   and an unknown value never opens a gate. PLAY1130 to PLAY1141. *)
 
 PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
 
@@ -1542,7 +1561,7 @@ ImplementationHint = "hint", StringLiteral, NL ;
 QueryDecl      = "query", Ident, "=>", [ "observable" ], TypeRef, NL,
                  [ INDENT,
                      { DescriptionDecl | ByClause | FilterClause | ScopeDecl
-                     | AuthorizeDecl | PerformerDecl },
+                     | AvailableDecl | AuthorizeDecl | PerformerDecl },
                    DEDENT ] ;
 
 (* "observable" qualifies the return type as a live read - the query keeps
@@ -1943,7 +1962,7 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, [ DescriptionDecl ], { ScreenVisualDecl }, ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { AvailableDecl }, { ScreenVisualDecl }, ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
 
 (* A sketch, an HTML/CSS mockup page or an image the screen carries, stored beside the model and named by a
    path relative to the model root. Authoring metadata: kept, printed and exported, never executable.
