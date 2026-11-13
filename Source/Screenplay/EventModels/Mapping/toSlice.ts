@@ -30,7 +30,7 @@ const sliceTypes: Record<SliceSyntax['type'], number> = {
 // and shows its read model; every slice that is not a State Change also shows the events it produces through
 // its reactions and captures, and the events it consumes, pointing back at the slice that produces each. An
 // automation shows the command it invokes, and a translation what its captures read.
-export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number, owners: EventOwners, audience: readonly string[]): SliceDocument {
+export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number, owners: EventOwners, audience: readonly string[], gateNote: string | null = null): SliceDocument {
     const sliceType = sliceTypes[slice.type];
     const isStateView = slice.type === 'StateView';
     const command = isStateView ? undefined : commandOf(slice, scope, owners);
@@ -57,7 +57,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         commentCount: 0,
     };
     if (slice.direction != null) document.direction = slice.direction;
-    const annotations = [...specificationRouteAnnotations(slice.specifications, document.specifications), ...readModelPlacementAnnotations(slice)];
+    const annotations = [...specificationRouteAnnotations(slice.specifications, document.specifications), ...readModelPlacementAnnotations(slice), ...(gateNote === null ? [] : [{ severity: 'information' as const, message: gateNote }])];
     if (annotations.length > 0) document.annotations = annotations;
     if (command !== undefined) {
         document.command = command;

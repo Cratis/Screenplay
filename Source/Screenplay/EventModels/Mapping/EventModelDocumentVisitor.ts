@@ -23,7 +23,7 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
     constructor(private readonly name: string) {}
 
     visit(syntax: ApplicationSyntax): EventModelDocument {
-        const audience = Audience.of(syntax.personas);
+        const audience = Audience.of(syntax.personas, syntax.availabilities ?? []);
         const order = authoredOrderOf(syntax);
         // Expand against the whole declaration inventory, but retain the authored order sidecar.
         const effective = expandSpecificationExamples(syntax);
@@ -64,7 +64,7 @@ function hasSystemSlices(modules: readonly ModuleSyntax[]): boolean {
 
 function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners, audience: Audience, order: ReadonlyMap<string, number>): ModuleDocument {
     const scope = SliceScope.module(module.name);
-    const within = audience.within(module.authorize);
+    const within = audience.within(module.authorize, module.available);
     return {
         id: scope.id,
         name: module.name,
@@ -77,13 +77,13 @@ function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners, 
 }
 
 function toFeature(feature: FeatureSyntax, scope: SliceScope, owners: EventOwners, audience: Audience, path: readonly string[], order: ReadonlyMap<string, number>): FeatureDocument {
-    const within = audience.within(feature.authorize);
+    const within = audience.within(feature.authorize, feature.available);
     return {
         id: scope.id,
         name: feature.name,
         ...proseOf(feature),
         subFeatures: ordered(feature.features, path, order).map(child => toFeature(child, scope.feature(child.name), owners, within, [...path, child.name], order)),
-        slices: ordered(feature.slices, path, order).map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners, within.actorsFor(slice))),
+        slices: ordered(feature.slices, path, order).map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners, within.actorsFor(slice), within.gateNoteFor(slice))),
         collapsed: false,
         rowCollapsed: false,
         enabled: true,
