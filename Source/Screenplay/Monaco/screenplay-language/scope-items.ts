@@ -6,6 +6,7 @@ import { provideItems } from './provide-items';
 import { exampleDeclarationItems } from './example-declaration-items';
 import { documentationItem } from './documentation-item';
 import { purposeReferenceItem } from './purpose-items';
+import { availableItems, personaAudienceItems } from './availability-items';
 
 const interactions = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave'];
 
@@ -16,6 +17,7 @@ const interactionItems: CompletionEntry[] = [
 
 export const moduleScopeItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...availableItems,
     documentationItem,
     ...provideItems,
     ...exampleDeclarationItems,
@@ -35,6 +37,7 @@ export const moduleScopeItems: CompletionEntry[] = [
 
 export const featureScopeItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...availableItems,
     documentationItem,
     ...provideItems,
     ...exampleDeclarationItems,
@@ -111,6 +114,7 @@ export const outcomeItems: CompletionEntry[] = [
 ];
 
 export const personaItems: CompletionEntry[] = [
+    ...personaAudienceItems,
     { label: 'description', insertText: 'description "${1:who they are}"', documentation: 'A human-readable description.' },
     { label: 'goal', insertText: 'goal "${1:what they want to achieve}"', documentation: 'A goal of this persona.' },
     { label: 'policy', insertText: 'policy ${1:PolicyName}', documentation: 'A policy this persona holds.' },

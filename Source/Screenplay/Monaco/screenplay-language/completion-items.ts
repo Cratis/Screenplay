@@ -7,6 +7,7 @@ import { documentationItem } from './documentation-item';
 import { provideItems } from './provide-items';
 import { providedValuesAt } from './provided-values';
 import { purposeReferenceItem } from './purpose-items';
+import { availabilityDeclarationItems, availableItems } from './availability-items';
 
 import { eventContextPaths } from './event-context';
 import { identityProperties } from './language';
@@ -69,6 +70,7 @@ export const applicationContextItems: CompletionEntry[] = [
 ];
 
 export const topLevelItems: CompletionEntry[] = [
+    ...availabilityDeclarationItems,
     ...provideItems,
     { label: 'secret', insertText: 'secret ${1:Name}\n    description "${2:what the secret is for}"', documentation: 'A named secret, declared once. The model never holds its value; a system setting maps to it with from secret.' },
     { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. At most one block per application.' },
@@ -210,6 +212,7 @@ export const typeItems: CompletionEntry[] = [
 
 export const sliceItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...availableItems,
     ...provideItems,
     documentationItem,
     { label: 'shows event', insertText: 'shows event ${1:EventName}', documentation: 'A linked copy of an event declared in another slice.' },
@@ -238,6 +241,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    ...availableItems,
     { label: 'calendar', insertText: 'calendar "${1:Europe/Oslo}"', documentation: 'ESM v37 command calendar using an IANA zone; takes precedence over scenario zone, execution-context zone and application default.' },
     { label: 'calendar from', insertText: 'calendar from \\$context.timeZone', documentation: 'ESM v37 admits $context.timeZone or a member declared in the context block; other context paths remain refused.' },
     documentationItem,
@@ -290,6 +294,7 @@ export const handlerItems: CompletionEntry[] = [
 ];
 
 export const queryItems: CompletionEntry[] = [
+    ...availableItems,
     { label: 'description', insertText: 'description "${1:what this query is trying to accomplish}"', documentation: 'What the query is for, in prose — what a generator or reviewer works from.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
     { label: 'by parts', insertText: 'by\n  ${1:part} ${2:Type}\n  ${3:part} ${4:Type}', documentation: 'Declares a composite lookup. Supply every key part for a single instance.' },
@@ -472,6 +477,7 @@ export const validateItems: CompletionEntry[] = [
 ];
 
 export const screenItems: CompletionEntry[] = [
+    ...availableItems,
     { label: 'description', insertText: 'description "${1:screen intent}"', documentation: 'Report-only description, not a localizable screen title.' },
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
     { label: 'action', insertText: 'action ${1:CommandName} for ${2|item,screen|}', documentation: 'Makes a command available for the selected item or for the screen as a whole.' },
@@ -586,5 +592,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label.startsWith('provide ') || item.label.startsWith('shows ') || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label.startsWith('provide ') || item.label.startsWith('available ') || item.label.startsWith('shows ') || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
 }

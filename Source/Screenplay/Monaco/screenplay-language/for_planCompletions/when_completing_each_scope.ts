@@ -55,11 +55,24 @@ const scopes: Record<string, [string, string[]]> = {
     'a layout': ['layout L\n  ', ['arrangement', 'outlet', 'outlet of navigation', 'slot']],
 };
 
+const gates = ['available for', 'available when', 'available with'];
+const availabilityEntries: Record<string, string[]> = {
+    'the root': ['audience', 'availability'],
+    'a domain': ['audience', 'availability'],
+    'a module': gates,
+    'a feature': gates,
+    'a persona': ['audience'],
+    'a state change slice': gates,
+    'a state view slice': gates,
+    'an automation slice': gates,
+    'a translate slice': gates,
+};
+
 describe('when completing an empty line in each scope', () => {
     for (const [scope, [text, expected]] of Object.entries(scopes)) {
         const supportsPurpose = ['the root', 'a domain', 'a module', 'a feature', 'a state change slice', 'a state view slice', 'an automation slice', 'a translate slice'].includes(scope);
         it(`should offer only what ${scope} can hold`, () => {
-            offered(text).should.deep.equal([...expected, ...supportsPurpose ? ['purpose', 'provide from query', 'provide from value', 'provide from host', 'provide with code'] : [], ...['the root', 'a domain'].includes(scope) ? ['command reads protected', 'reaction batches atomic'] : []].sort());
+            offered(text).should.deep.equal([...expected, ...availabilityEntries[scope] ?? [], ...supportsPurpose ? ['purpose', 'provide from query', 'provide from value', 'provide from host', 'provide with code'] : [], ...['the root', 'a domain'].includes(scope) ? ['command reads protected', 'reaction batches atomic'] : []].sort());
         });
     }
 

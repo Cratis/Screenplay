@@ -110,6 +110,18 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                             symbolItem(policy.name, kinds.Reference, 'policy'),
                         ),
                     };
+                case 'audiences':
+                    return {
+                        suggestions: symbols.audiences.map((audience) =>
+                            symbolItem(audience.name, kinds.Reference, 'audience'),
+                        ),
+                    };
+                case 'availabilities':
+                    return {
+                        suggestions: symbols.availabilities.map((availability) =>
+                            symbolItem(availability.name, kinds.Reference, 'availability'),
+                        ),
+                    };
                 case 'events':
                     return { suggestions: eventNames() };
                 case 'triggers':

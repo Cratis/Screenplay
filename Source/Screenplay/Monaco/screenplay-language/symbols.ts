@@ -42,6 +42,12 @@ export interface TypeSymbol {
     line: number;
 }
 
+/** A named application-level declaration (an audience or an availability) and the line it sits on. */
+export interface NamedLineSymbol {
+    name: string;
+    line: number;
+}
+
 export interface PolicySymbol {
     name: string;
     requires: string[];
@@ -103,6 +109,8 @@ export interface DocumentSymbols {
     concepts: ConceptSymbol[];
     types: TypeSymbol[];
     policies: PolicySymbol[];
+    audiences: NamedLineSymbol[];
+    availabilities: NamedLineSymbol[];
     events: EventSymbol[];
     commands: CommandSymbol[];
     queries: QuerySymbol[];
@@ -205,6 +213,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         concepts: [],
         types: [],
         policies: [],
+        audiences: [],
+        availabilities: [],
         events: [],
         commands: [],
         queries: [],
@@ -273,6 +283,18 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 properties: propertiesIn(lines, collectBody(lines, fences, index, indent), clauseKeywords),
                 line: index,
             });
+            continue;
+        }
+
+        const audienceMatch = trimmed.match(/^audience\s+(\w+)\s*$/);
+        if (audienceMatch && indent === 0) {
+            symbols.audiences.push({ name: audienceMatch[1], line: index });
+            continue;
+        }
+
+        const availabilityMatch = trimmed.match(/^availability\s+(\w+)\s*$/);
+        if (availabilityMatch && indent === 0) {
+            symbols.availabilities.push({ name: availabilityMatch[1], line: index });
             continue;
         }
 
@@ -416,6 +438,8 @@ export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
         concepts: documents.flatMap((document) => document.concepts),
         types: documents.flatMap((document) => document.types),
         policies: documents.flatMap((document) => document.policies),
+        audiences: documents.flatMap((document) => document.audiences),
+        availabilities: documents.flatMap((document) => document.availabilities),
         events: documents.flatMap((document) => document.events),
         commands: documents.flatMap((document) => document.commands),
         queries: documents.flatMap((document) => document.queries),
