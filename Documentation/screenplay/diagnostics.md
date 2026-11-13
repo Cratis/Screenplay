@@ -478,6 +478,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0075` | Error | A mapping line in a projection is not one the language can read. |
 | `PLAY0452` | Warning | More than one `automap` or `no automap` appears in the same projection scope. The last setting wins; printing preserves the authored settings and their individual comments. |
 | `PLAY0514` | Warning | A projection mapping, `children`, or `nested` target is absent from the declared read-model or element shape. Unknown or imported shapes are not guessed. |
+| `PLAY1142` | Warning | A projection or reducer copies a value whose concept is marked `secret` (including `pii secret`) into a read-model property, so the value becomes part of the read model and its query results. Reported for an explicit mapping whose target or source event property has a secret concept, for a property AutoMap fills from a same-named secret event property, and for a reducer that builds a read-model property with a secret concept. Metadata, literal and aggregate sources are not reported. The message names the projection or reducer, the concept and the read-model property path. There is no automatic repair: decide whether the read model needs the value at all. |
 
 ### Reducer instance identity
 

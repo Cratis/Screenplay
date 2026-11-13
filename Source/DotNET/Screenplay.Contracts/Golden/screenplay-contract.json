@@ -79426,6 +79426,17 @@
       "title": "A parenthesis in an available line is never closed.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY1142",
+      "name": "SecretConceptProjected",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked secret into a read-model property, so the value becomes part of the read model and its query results.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

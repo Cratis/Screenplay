@@ -703,4 +703,5 @@ export const DiagnosticCodes = {
     AvailabilityHidesInvokedCommand: 'PLAY1139',
     UnexpectedTokenInAvailable: 'PLAY1140',
     UnclosedAvailableGroup: 'PLAY1141',
+    SecretConceptProjected: 'PLAY1142',
 } as const;

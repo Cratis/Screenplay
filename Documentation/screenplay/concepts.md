@@ -55,6 +55,8 @@ Compliance markers select executable semantic model (ESM) v13 under [decision 00
 
 Use `pii` when the value is personal data, such as a person's name or email address. Use `secret` for a credential or operational secret that needs encryption without enrollment in personal-data erasure. If both apply, declare both: the executable model retains both markers, but personal-data protection takes precedence. Do not use compliance to classify an enum or an event-source/stream identity; use a surrogate identity and a separate protected value instead.
 
+A `secret` value belongs on the event, not in a read model. When a projection mapping, AutoMap or a reducer copies a secret value into a read-model property, the compiler warns with `PLAY1142`: the value would become part of the read model and every query result over it. Keep the read model to what its readers need, for example a flag that the value is set or a masked form computed elsewhere.
+
 ## Examples
 
 ```screenplay
