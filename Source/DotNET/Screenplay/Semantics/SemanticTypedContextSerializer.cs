@@ -54,8 +54,10 @@ public static class SemanticTypedContextSerializer
         string[] runtimeTokens = [.. _runtimeTokens, .. usesTimeZone ? [SemanticContextRuntimeTokens.TimeZone] : Array.Empty<string>()];
         var written = descriptors.Select(descriptor => WithResult(descriptor, Descriptor(descriptor)));
         var usesProvided = members.Any(member => member.Source.Kind == SemanticContextSourceKinds.Provided);
-        object contract = usesProvided
-            ? new
+        object contract;
+        if (usesProvided)
+        {
+            contract = new
             {
                 contractRevision = SemanticTypedContextDescriptor.ProvidedContractRevision,
                 typeKinds = _typeKinds,
@@ -63,9 +65,11 @@ public static class SemanticTypedContextSerializer
                 runtimeTokens,
                 contextMembers,
                 descriptors = written
-            }
-            : contextMembers.Length > 0
-            ? new
+            };
+        }
+        else if (contextMembers.Length > 0)
+        {
+            contract = new
             {
                 contractRevision = SemanticTypedContextDescriptor.ContextMembersContractRevision,
                 typeKinds = _typeKinds,
@@ -73,8 +77,11 @@ public static class SemanticTypedContextSerializer
                 runtimeTokens,
                 contextMembers,
                 descriptors = written
-            }
-            : new
+            };
+        }
+        else
+        {
+            contract = new
             {
                 contractRevision = usesTimeZone ? SemanticTypedContextDescriptor.TimeZoneContractRevision : SemanticTypedContextDescriptor.ContractRevision,
                 typeKinds = _typeKinds,
@@ -82,6 +89,8 @@ public static class SemanticTypedContextSerializer
                 runtimeTokens,
                 descriptors = written
             };
+        }
+
         return JsonSerializer.SerializeToUtf8Bytes(contract, contract.GetType(), _options);
     }
 
