@@ -139,6 +139,14 @@ public enum SemanticRejectionCategory
 }
 
 /// <summary>
+/// Represents the audit identity recorded as having caused an event.
+/// </summary>
+/// <param name="Subject">The identity subject.</param>
+/// <param name="Name">The identity name.</param>
+/// <param name="UserName">The identity user name.</param>
+public sealed record SemanticCausedBy(string Subject, string Name, string UserName);
+
+/// <summary>
 /// Represents one fact produced by portable execution.
 /// </summary>
 /// <param name="EventContract">The event declaration semantic identity.</param>
@@ -167,6 +175,12 @@ public sealed record SemanticFact(
     /// Gets the controlled occurrence time, when supplied by the execution host.
     /// </summary>
     public DateTimeOffset? Occurred { get; init; }
+
+    /// <summary>
+    /// Gets the audit identity recorded as having caused the event, when the execution host supplied one.
+    /// <see langword="null"/> means the fact carries no caller identity (a given fixture, a reaction or an unauthenticated append).
+    /// </summary>
+    public SemanticCausedBy? CausedBy { get; init; }
 
     /// <summary>
     /// Gets the reaction that directly produced or invoked the command producing this fact.

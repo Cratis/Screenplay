@@ -150,6 +150,7 @@ static class SemanticEventPublication
                     Context = fact.Context,
                     Tags = target.Tags,
                     Occurred = fact.Occurred,
+                    CausedBy = fact.CausedBy,
                     ReactionOrigin = fact.ReactionOrigin,
                     Route = fact.Route
                 };

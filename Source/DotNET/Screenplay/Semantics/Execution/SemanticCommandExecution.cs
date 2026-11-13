@@ -334,6 +334,7 @@ internal sealed partial class SemanticCommandExecution(
                 : null,
             Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags),
             Occurred = request.Occurrence?.Occurred,
+            CausedBy = request.Occurrence?.CausedBy,
             ReactionOrigin = request.ReactionOrigin,
             Route = (produced.Route ?? command.Route) is { } effectiveRoute ? _routes[effectiveRoute] : null
         };

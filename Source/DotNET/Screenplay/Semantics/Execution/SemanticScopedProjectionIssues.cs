@@ -74,7 +74,7 @@ static class SemanticScopedProjectionIssues
             yield return new(
                 projection.Id,
                 SemanticPlanIssueKind.UnsupportedEventContext,
-                "Event context is supported only for event source identity and occurred property assignments in from, every and children scopes; occurred is unsupported in keys, joins, arithmetic, every mappings with joins and nested objects.");
+                "Event context is supported only for event source identity, occurred and causedBy subject, name and userName property assignments in from, every and children scopes; occurred and causedBy are unsupported in keys, joins, arithmetic, every mappings with joins and nested objects.");
         }
 
         foreach (var issue in scope.Children.SelectMany(_ => Walk(projection, _.Scope, nested, true)).Concat(scope.Nested.SelectMany(_ => Walk(projection, _.Scope, true, hasParent))))
@@ -86,7 +86,7 @@ static class SemanticScopedProjectionIssues
     static bool UnsupportedMapping(SemanticProjectionMapping mapping, bool allowOccurred) =>
         UnsupportedContext(mapping.Factor) ||
         (UnsupportedContext(mapping.Source) && !(allowOccurred && mapping.Operation is SemanticProjectionOperation.Set or SemanticProjectionOperation.SetOnce &&
-            mapping.Source is SemanticProjectionEventContextValue context && string.Equals(context.Path, "occurred", StringComparison.Ordinal) && mapping.Factor is null));
+            mapping.Source is SemanticProjectionEventContextValue context && (string.Equals(context.Path, "occurred", StringComparison.Ordinal) || SemanticScopedProjection.IsCausedByPath(context.Path)) && mapping.Factor is null));
 
     static bool UsesEventContext(SemanticProjectionKey? key) => key switch
     {
