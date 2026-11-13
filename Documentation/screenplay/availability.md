@@ -77,6 +77,24 @@ A screen action, a form or a reaction that `invokes` a command whose audiences c
 | `PLAY1139` | An invocation of a command that can be unavailable |
 | `PLAY1140`, `PLAY1141` | An unexpected token or an unclosed parenthesis in a gate |
 
+## How a refusal reads
+
+A part that is not available is refused with the reason `NotAvailable`, distinct from an authorization denial, so a client can hide an entry or explain that the capability is not part of the package. A failure to decide (a lookup that errors) is an error, never a denial. An undecided result counts as unavailable.
+
+## Relation to Chronicle audiences and tokens
+
+Chronicle routes events with its own audience label, which stays in event options and is unrelated. A token's `aud` claim says who the token is for and is read as `$context.identity.claims.aud`. A Screenplay audience is neither.
+
+## Who does what at runtime
+
+| Piece | Owns |
+| --- | --- |
+| Choreography | The engine that evaluates an availability for a request: available, unavailable with a reason, or unknown, which denies |
+| Showrunner | The audience contracts: public events that grant and withdraw an audience for a tenant, a user or the system; the newest wins |
+| Arc | Enforcement at the command and query boundary, before authorization |
+
+Applications never call these directly; the model says what is gated and the runtime enforces it.
+
 ## Relation to Box Office
 
 Audiences are a separate mechanism beside Box Office module entitlements, which keep owning tenant-level commercial modules. A gate that needs both can read a host-provided value in `available when`, for example `provide entitlements from host`.

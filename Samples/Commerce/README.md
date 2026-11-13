@@ -32,7 +32,7 @@ Commerce/
   Shared/
     concepts.play              the values several modules share: ids, Money, Sku, statuses
     types.play                 the composite shapes: Address, OrderLine
-    access.play                policies, the four personas and the identity providers
+    access.play                policies, the four personas, the Fulfillment audience and availability, and the identity providers
   Shell/
     look.play                  theme, the Storefront layout with its Navigation slot, the Web ui profile
     behaviors.play             ConfirmDestructive, attached wherever a command cannot be undone

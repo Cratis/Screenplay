@@ -29,6 +29,8 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Read-model key**: one or more top-level properties marked with trailing `key`. Explicit marks replace inferred identity. Single-instance lookups supply every part by name.
 - **Production route override**: a command event production's `stream Source.Stream` and key mappings. It replaces the whole command route for that event.
 - **Observer filter**: a reaction or reducer's `from Source[.Stream]`. It observes matching routed facts, without filtering stream ids.
+- **Audience** — a named group of tenants, users or the system that a part of the application is available to. Unrelated to a token's `aud` claim. See [availability](availability.md).
+- **Availability** — a reusable rule (`for`, `when`, `with`) deciding whether a part of the model is there at all, applied with an `available` gate before `authorize`. See [availability](availability.md).
 - **Policy** — a named authorization rule (role-based, claim-based, or custom) that commands and queries reference by name via `authorize`.
 - **Command** — an imperative intent with properties, `authorize`, `validate`, and a `produces` block declaring the events it appends.
 - **Event** — a past-tense fact declaration: a named type and its properties.

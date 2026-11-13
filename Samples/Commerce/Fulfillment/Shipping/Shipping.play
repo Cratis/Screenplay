@@ -1,6 +1,7 @@
 feature Shipping
   description "Packing paid orders and handing them to a carrier"
   authorize IsWarehouseClerk
+  available when $context.warehouse == "Oslo"
 
   contribute to Navigation
     navigate to ShipmentQueue

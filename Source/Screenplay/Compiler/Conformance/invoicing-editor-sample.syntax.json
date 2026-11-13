@@ -23,6 +23,51 @@
       "syntaxKind": "Personal"
     }
   },
+  "audiences": [
+    {
+      "kind": "AudienceSyntax",
+      "description": "Customers who bought the audit trail",
+      "name": "AuditTrail"
+    },
+    {
+      "kind": "AudienceSyntax",
+      "description": "Tenants taking part in the preview",
+      "name": "Preview"
+    }
+  ],
+  "availabilities": [
+    {
+      "kind": "AvailabilitySyntax",
+      "description": "Sold with the audit trail, in the preview region",
+      "name": "AuditTrailEnabled",
+      "requirements": [
+        {
+          "kind": "LogicalAvailabilityRequirementSyntax",
+          "left": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "AuditTrail"
+          },
+          "operator": "Or",
+          "right": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "Preview"
+          }
+        },
+        {
+          "kind": "ConditionAvailabilityRequirementSyntax",
+          "condition": {
+            "kind": "ComparisonConditionSyntax",
+            "left": "$context.region",
+            "operator": "Equal",
+            "right": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "Nordics"
+            }
+          }
+        }
+      ]
+    }
+  ],
   "commandReadMode": "Protected",
   "concepts": [
     {
@@ -17011,6 +17056,15 @@
               "name": "IsAuditor"
             }
           },
+          "available": [
+            {
+              "kind": "AvailableSyntax",
+              "requirement": {
+                "kind": "AvailabilityReferenceSyntax",
+                "availability": "AuditTrailEnabled"
+              }
+            }
+          ],
           "description": "What auditors look at - nothing here changes anything",
           "features": [],
           "fileImports": [],
@@ -17099,6 +17153,23 @@
                       "name": "IsAuditor"
                     }
                   },
+                  "available": [
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "LogicalAvailabilityRequirementSyntax",
+                        "left": {
+                          "kind": "AudienceAvailabilityRequirementSyntax",
+                          "audience": "AuditTrail"
+                        },
+                        "operator": "Or",
+                        "right": {
+                          "kind": "AudienceAvailabilityRequirementSyntax",
+                          "audience": "Preview"
+                        }
+                      }
+                    }
+                  ],
                   "by": null,
                   "description": "Cancelled invoices, kept for audit",
                   "filters": [],
@@ -19550,6 +19621,25 @@
           "name": "sidebar"
         }
       ],
+      "provides": [
+        {
+          "kind": "ProvideSyntax",
+          "name": "region",
+          "source": {
+            "kind": "ValueProvideSourceSyntax",
+            "value": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "Nordics"
+            }
+          },
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ],
       "purposes": [
         {
           "kind": "PurposeReferenceSyntax",
@@ -19867,6 +19957,9 @@
     },
     {
       "kind": "PersonaSyntax",
+      "audiences": [
+        "AuditTrail"
+      ],
       "description": "Reviews what happened, never changes it",
       "goals": [
         "Review what happened without changing it"
