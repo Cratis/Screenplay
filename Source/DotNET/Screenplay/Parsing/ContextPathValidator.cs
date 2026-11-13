@@ -24,7 +24,7 @@ internal sealed class ContextPathValidator(ParserContext context) : ScreenplaySy
     /// <inheritdoc/>
     public override void VisitApplication(ApplicationSyntax syntax)
     {
-        _scopes.Push(Names(syntax.Provides));
+        _scopes.Push(ContextConditions.Names(syntax.Provides));
         _everywhere = new ProvidedNames().Collect(syntax);
         base.VisitApplication(syntax);
         _scopes.Pop();
@@ -33,7 +33,7 @@ internal sealed class ContextPathValidator(ParserContext context) : ScreenplaySy
     /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax)
     {
-        _scopes.Push(Names(syntax.Provides));
+        _scopes.Push(ContextConditions.Names(syntax.Provides));
         base.VisitModule(syntax);
         _scopes.Pop();
     }
@@ -41,7 +41,7 @@ internal sealed class ContextPathValidator(ParserContext context) : ScreenplaySy
     /// <inheritdoc/>
     public override void VisitFeature(FeatureSyntax syntax)
     {
-        _scopes.Push(Names(syntax.Provides));
+        _scopes.Push(ContextConditions.Names(syntax.Provides));
         base.VisitFeature(syntax);
         _scopes.Pop();
     }
@@ -49,7 +49,7 @@ internal sealed class ContextPathValidator(ParserContext context) : ScreenplaySy
     /// <inheritdoc/>
     public override void VisitSlice(SliceSyntax syntax)
     {
-        _scopes.Push(Names(syntax.Provides));
+        _scopes.Push(ContextConditions.Names(syntax.Provides));
         base.VisitSlice(syntax);
         _scopes.Pop();
     }
@@ -77,7 +77,7 @@ internal sealed class ContextPathValidator(ParserContext context) : ScreenplaySy
         base.VisitAvailabilityRequirement(syntax);
         if (syntax is ConditionAvailabilityRequirementSyntax condition)
         {
-            foreach (var comparison in Comparisons(condition.Condition))
+            foreach (var comparison in ContextConditions.Comparisons(condition.Condition))
             {
                 CheckLeft(comparison);
             }
@@ -137,14 +137,17 @@ internal sealed class ContextPathValidator(ParserContext context) : ScreenplaySy
             location);
     }
 
-    static IEnumerable<ComparisonConditionSyntax> Comparisons(ConditionSyntax condition) => condition switch
+    static class ContextConditions
     {
-        ComparisonConditionSyntax comparison => [comparison],
-        LogicalConditionSyntax logical => Comparisons(logical.Left).Concat(Comparisons(logical.Right)),
-        _ => []
-    };
+        public static IEnumerable<ComparisonConditionSyntax> Comparisons(ConditionSyntax condition) => condition switch
+        {
+            ComparisonConditionSyntax comparison => [comparison],
+            LogicalConditionSyntax logical => Comparisons(logical.Left).Concat(Comparisons(logical.Right)),
+            _ => []
+        };
 
-    static HashSet<string> Names(IEnumerable<ProvideSyntax> provides) => [.. provides.Select(provide => provide.Name)];
+        public static HashSet<string> Names(IEnumerable<ProvideSyntax> provides) => [.. provides.Select(provide => provide.Name)];
+    }
 
     sealed class ProvidedNames : ScreenplaySyntaxWalker
     {
