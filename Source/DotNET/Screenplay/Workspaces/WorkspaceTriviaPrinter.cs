@@ -174,6 +174,16 @@ static class WorkspaceTriviaPrinter
             }
         }
 
+        if (owner is PersonaSyntax persona && member.StartsWith("audiences/", StringComparison.Ordinal))
+        {
+            var named = persona.Audiences.ToArray();
+            if (!int.TryParse(member["audiences/".Length..], out var position) || position < 0 || position >= named.Length ||
+                !persona.DirectiveLocations.TryGetValue(DirectiveLocationKeys.ForValue("audience", named, position), out location))
+            {
+                throw Unsupported(original, change.Path);
+            }
+        }
+
         var token = tokensByLine[location.Line].SingleOrDefault();
         if (token is null || !WorkspaceIdentifierSpans.Supports(owner, member, token.Text))
         {

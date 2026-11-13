@@ -36,7 +36,9 @@ enum WorkspaceReferenceDomain
     Workflow,
     Sink,
     Secret,
-    Slice
+    Slice,
+    Audience,
+    Availability
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -308,7 +310,9 @@ static class WorkspaceReferenceMembers
     {
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
-        PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
+        PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy), ("audiences", WorkspaceReferenceDomain.Audience)],
+        AudienceAvailabilityRequirementSyntax => [("audience", WorkspaceReferenceDomain.Audience)],
+        AvailabilityReferenceSyntax => [("availability", WorkspaceReferenceDomain.Availability)],
         UserSyntax => [("personas", WorkspaceReferenceDomain.Persona)],
         StorylineStepSyntax step => [("target", StorylineDomain(step.ElementKind))],
         SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
