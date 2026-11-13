@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
         <ImplicitUsings>true</ImplicitUsings>
-        <LangVersion>14.0</LangVersion>
+        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
 
         <!-- Debuggability -->
@@ -60,11 +60,16 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)'=='Release'">
-        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+        <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <SpecTargetFramework Condition="'$(SpecTargetFramework)' == ''">net11.0</SpecTargetFramework>
+    </PropertyGroup>
+
+    <!-- Compatibility specs also build their referenced Debug libraries for the same framework. -->
     <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(SpecTargetFramework)</TargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)'=='Debug'">

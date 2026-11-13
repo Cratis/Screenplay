@@ -30,7 +30,7 @@ internal static partial class SemanticModelValidator
         SlicesOf(application).SelectMany(slice => slice.ReadModels).Any(model => model.Properties.Count(property => property.IsIdentifier) > 1);
 
     internal static bool UsesDateComparisons(SemanticApplication application) =>
-        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticDateComparisons.Participants(application, command).Any());
+        SlicesOf(application).SelectMany(slice => slice.Commands).Any(command => SemanticDateComparisons.Participants(application, command).Count > 0);
 
     internal static bool UsesUuidComparisons(SemanticApplication application)
     {
@@ -42,23 +42,24 @@ internal static partial class SemanticModelValidator
 
         bool IsUuid(SemanticCommand command, SemanticConditionOperand operand)
         {
-            SemanticTypeReference? type = null;
-            if (operand.Read is { } read)
-            {
-                var view = command.Reads.FirstOrDefault(value => value.Name == read) is { } declared && readModels.TryGetValue(declared.ReadModel, out var model) ? model : null;
-                type = view?.Properties.FirstOrDefault(property => property.Id == operand.Property)?.Type;
-            }
-            else if (operand.Property.IsSet)
-            {
-                type = command.Properties.FirstOrDefault(property => property.Id == operand.Property)?.Type;
-            }
-
+            var type = OperandType(command, operand);
             return type switch
             {
                 { Kind: SemanticTypeReferenceKind.Primitive } => type.Primitive == SemanticPrimitiveType.Uuid,
                 { Kind: SemanticTypeReferenceKind.Concept } => concepts.GetValueOrDefault(type.Target) == SemanticPrimitiveType.Uuid,
                 _ => false
             };
+        }
+
+        SemanticTypeReference? OperandType(SemanticCommand command, SemanticConditionOperand operand)
+        {
+            if (operand.Read is { } read)
+            {
+                var view = command.Reads.FirstOrDefault(value => value.Name == read) is { } declared && readModels.TryGetValue(declared.ReadModel, out var model) ? model : null;
+                return view?.Properties.FirstOrDefault(property => property.Id == operand.Property)?.Type;
+            }
+
+            return operand.Property.IsSet ? command.Properties.FirstOrDefault(property => property.Id == operand.Property)?.Type : null;
         }
     }
 

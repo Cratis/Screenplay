@@ -109,6 +109,17 @@ public sealed record SemanticApplication(
     /// <summary>Gets the named declarative policies of the application.</summary>
     public ImmutableArray<SemanticPolicy> Policies { get; init; } = [];
 
+    /// <summary>Gets the audiences the application declares; empty for models before ESM v53.</summary>
+    public ImmutableArray<SemanticAudience> Audiences { get; init; } = [];
+
+    /// <summary>Gets the reusable availabilities the application declares; empty for models before ESM v53.</summary>
+    public ImmutableArray<SemanticAvailability> Availabilities { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this application adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+
     /// <summary>
     /// Gets the application triggers the document declares; empty for models before ESM v6.
     /// </summary>
@@ -160,6 +171,12 @@ public sealed record SemanticApplication(
     /// </summary>
     public SemanticTimeZone? TimeZone { get; init; }
 
+    /// <summary>Gets the external systems and the abilities they can be asked to perform (ESM v50, #1250), in declaration order.</summary>
+    public ImmutableArray<SemanticSystem> Systems { get; init; } = [];
+
+    /// <summary>Gets the explicit agent exposure allowlist (ESM v42), or null when absent.</summary>
+    public SemanticAgents? Agents { get; init; }
+
     /// <summary>
     /// Gets the time-zone members the application declares in its <c>context</c> block, in declaration order (ESM v37, decision 0132).
     /// </summary>
@@ -172,7 +189,18 @@ public sealed record SemanticApplication(
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="Features">The module features.</param>
-public sealed record SemanticModule(SemanticId Id, string Name, ImmutableArray<SemanticFeature> Features);
+public sealed record SemanticModule(SemanticId Id, string Name, ImmutableArray<SemanticFeature> Features)
+{
+    /// <summary>
+    /// Gets the availability gates of this module; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this module adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a semantic feature, optionally containing nested features.
@@ -185,7 +213,18 @@ public sealed record SemanticFeature(
     SemanticId Id,
     string Name,
     ImmutableArray<SemanticFeature> Features,
-    ImmutableArray<SemanticSlice> Slices);
+    ImmutableArray<SemanticSlice> Slices)
+{
+    /// <summary>
+    /// Gets the availability gates of this feature; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this feature adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+}
 
 /// <summary>
 /// Represents the initial executable vertical slice.
@@ -215,6 +254,16 @@ public sealed record SemanticSlice(
     /// </summary>
     public ImmutableArray<SemanticConstraint> Constraints { get; init; } = [];
 
+    /// <summary>
+    /// Gets the availability gates of this slice; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this slice adds to the request context for everything beneath it. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticProvidedValue> Provides { get; init; } = [];
+
     /// <summary>Gets opaque reducer contracts; empty for models without reducer bodies.</summary>
     public ImmutableArray<SemanticReducer> Reducers { get; init; } = [];
 
@@ -233,4 +282,9 @@ public sealed record SemanticSlice(
     /// translation that declares none, which keeps its historical inbound meaning.
     /// </summary>
     public SemanticTranslationDirection? Direction { get; init; }
+
+    /// <summary>
+    /// Gets the screens of the slice. Screens are admitted from ESM v42 when binding opts in to them.
+    /// </summary>
+    public ImmutableArray<SemanticScreen> Screens { get; init; } = [];
 }

@@ -14,6 +14,14 @@ public partial class ScreenplayPrinter
 {
     static string Factor(ScreenplayWriter writer, ExpressionSyntax? factor) => factor is null ? string.Empty : $" * {writer.Expression(factor)}";
 
+    static string ChildrenOrdering(ChildrenOrderingSyntax ordering) => ordering.Placement switch
+    {
+        ChildrenPlacement.Prepend => "insert first",
+        ChildrenPlacement.Append => "insert last",
+        ChildrenPlacement.Sorted => $"sort by {ordering.SortBy}{(ordering.Direction == ChildrenSortDirection.Descending ? " descending" : string.Empty)}",
+        _ => throw new UnsupportedSyntaxForPrinting("children ordering", ordering.Placement.ToString())
+    };
+
     void WriteProjection(ScreenplayWriter writer, ProjectionSyntax projection)
     {
         using var anchor = writer.Anchor(projection);
@@ -74,6 +82,11 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteAutoMap(writer, children.AutoMap, children);
+                    if (children.Ordering is { } ordering)
+                    {
+                        writer.Line(ChildrenOrdering(ordering), ordering);
+                    }
+
                     foreach (var nested in children.Blocks)
                     {
                         WriteProjectionBlock(writer, nested);
@@ -280,6 +293,8 @@ public partial class ScreenplayPrinter
                 mapping switch
                 {
                     SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {writer.Expression(set.Source)}",
+                    SetOnceMappingSyntax setOnce => $"set once {setOnce.Property} = {writer.Expression(setOnce.Source)}",
+                    RemoveKeyMappingSyntax remove => $"remove {ReservedWords.Escape(remove.Property, ReservedWords.RemoveKeyMapping)}",
                     ClearMappingSyntax clear => $"clear {ReservedWords.Escape(clear.Property, ReservedWords.ClearMapping)}",
                     IncrementMappingSyntax increment => $"increment {increment.Property}",
                     DecrementMappingSyntax decrement => $"decrement {decrement.Property}",

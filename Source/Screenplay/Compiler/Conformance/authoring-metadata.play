@@ -51,3 +51,11 @@ module Billing
           This example explains a case over multiple lines.
           It is not an executable condition.
           ```
+
+    slice StateView ReviewInvoices
+      shows event InvoiceIssued
+      shows readmodel InvoiceStatus
+      screen ReviewInvoices
+        sketch Screens/review-invoices.sketch.json
+        mockup Screens/review-invoices.html
+        image Screens/review-invoices.png

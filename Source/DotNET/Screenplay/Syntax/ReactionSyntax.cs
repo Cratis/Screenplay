@@ -93,4 +93,14 @@ public record InvokesSyntax(
     /// Gets the ordered refusal branches. Bare refusal excludes authorization.
     /// </summary>
     public IEnumerable<InvocationRefusalSyntax> OnRefused { get; init; } = [];
+
+    /// <summary>
+    /// Gets the ordered result branches of an ability invocation: <c>on returned</c>, <c>on &lt;Outcome&gt;</c> and <c>on failed</c>.
+    /// </summary>
+    public IEnumerable<InvocationBranchSyntax> Branches { get; init; } = [];
+
+    /// <summary>
+    /// Gets a value indicating whether the target is a <c>&lt;System&gt;.&lt;Ability&gt;</c> rather than a command.
+    /// </summary>
+    public bool IsAbility => Command.Contains('.', StringComparison.Ordinal);
 }

@@ -143,6 +143,16 @@ public record SliceSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this slice; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this slice adds to <c>$context</c> for everything beneath it.
+    /// </summary>
+    public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
+
+    /// <summary>
     /// Gets the <c>graph</c> declarations of the slice.
     /// </summary>
     public IEnumerable<GraphSyntax> Graphs { get; init; } = [];
@@ -156,4 +166,9 @@ public record SliceSyntax(
     /// Gets the queries that read a graph, declared <c language="screenplay">query &lt;Name&gt; =&gt; &lt;ReadModel&gt;[] graph &lt;Graph&gt;</c>.
     /// </summary>
     public IEnumerable<GraphQuerySyntax> GraphQueries { get; init; } = [];
+
+    /// <summary>
+    /// Gets the linked copies of elements declared elsewhere that the slice shows - <c>shows event &lt;Name&gt;</c>.
+    /// </summary>
+    public IEnumerable<SlicePlacementSyntax> Placements { get; init; } = [];
 }

@@ -4,7 +4,10 @@
 import { parse } from '@cratis/screenplay-compiler';
 import type { DocumentSymbols } from './symbols';
 import { documentationItem } from './documentation-item';
+import { provideItems } from './provide-items';
+import { providedValuesAt } from './provided-values';
 import { purposeReferenceItem } from './purpose-items';
+import { availabilityDeclarationItems, availableItems } from './availability-items';
 
 import { eventContextPaths } from './event-context';
 import { identityProperties } from './language';
@@ -26,6 +29,18 @@ const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export { exampleDeclarationItems } from './example-declaration-items';
 
+export const agentItems: CompletionEntry[] = [
+    { label: 'tokens personal', insertText: 'tokens personal', documentation: 'Only caller-owned personal tokens are supported; existing authorization still applies.' },
+    { label: 'query', insertText: 'query ${1:Qualified.Query}\n    scope read\n    description "${2:Read one item}"', documentation: 'Expose an explicit, keyed single-result query. Global and collection queries are refused.' },
+    { label: 'command', insertText: 'command ${1:Qualified.Command}\n    scope write\n    description "${2:Change one item}"', documentation: 'Expose an explicit command with write scope; no approval directive is supported.' },
+];
+
+export const agentOperationItems = (command: boolean): CompletionEntry[] => [
+    { label: command ? 'scope write' : 'scope read', insertText: command ? 'scope write' : 'scope read', documentation: 'Commands require write scope. A query can require read or write scope.' },
+    ...(!command ? [{ label: 'scope write', insertText: 'scope write', documentation: 'Require write scope for this query.' }] : []),
+    { label: 'description', insertText: 'description "${1:Purpose of this operation}"', documentation: 'A non-empty description is required for every exposed operation.' },
+];
+
 export const identityItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:caller details}"', documentation: 'Describes the caller metadata.' },
     { label: 'detail from claim', insertText: '${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'One typed detail sourced from a token claim.' },
@@ -34,9 +49,10 @@ export const identityItems: CompletionEntry[] = [
     { label: 'detail from file', insertText: '${1:detail} ${2:Type}\n    file ${3:Path}', documentation: 'One file source; no refresh or cache directives.' },
 ];
 
-export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntry[] {
+export function contextVariableEntries(symbols: DocumentSymbols, lines: string[] = [], lineIndex = 0): CompletionEntry[] {
     const details = [...new Map((symbols.identityDetails ?? []).map(detail => [detail.name, detail])).values()];
-    return [...contextVariableItems, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
+    const provided = providedValuesAt(lines, lineIndex).map(value => ({ label: `$context.${value.name}`, insertText: `\\$context.${value.name}`, detail: value.type, documentation: `Provided at the ${value.level} level${value.isOpaque ? '; opaque, the model never evaluates it' : ''}.` }));
+    return [...contextVariableItems, ...provided, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
 }
 
 export function calendarContextEntries(lines: string[], prefix = ''): CompletionEntry[] {
@@ -54,18 +70,22 @@ export const applicationContextItems: CompletionEntry[] = [
 ];
 
 export const topLevelItems: CompletionEntry[] = [
+    ...availabilityDeclarationItems,
+    ...provideItems,
+    { label: 'secret', insertText: 'secret ${1:Name}\n    description "${2:what the secret is for}"', documentation: 'A named secret, declared once. The model never holds its value; a system setting maps to it with from secret.' },
     { label: 'context', insertText: 'context\n    ${1:bookingZone} time zone', documentation: 'Typed application time-zone inputs. ESM v37 admits calendar from $context.timeZone or a member declared in the context block; other context paths remain refused. At most one block per application.' },
     { label: 'time zone', insertText: 'time zone "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar using an IANA zone. Never falls back to the machine zone.' },
     { label: 'time zone configurable default', insertText: 'time zone configurable default "${1:Europe/Oslo}"', documentation: 'ESM v37 application calendar default. Command calendar, scenario zone and execution-context zone take precedence.' },
     { label: 'command reads protected', insertText: 'command reads protected', documentation: 'Opts the application into protected command reads (ESM v25). Required absence rejects with Validation; matching intervening facts conflict. Each view and input key must pass admission; targets require separate version support.' },
     { label: 'reaction batches atomic', insertText: 'reaction batches atomic', documentation: 'Opts the composed application into atomic direct and refusal-branch reaction batches (ESM v22). Omit only to retain legacy per-fact behavior.' },
+    { label: 'agents', insertText: 'agents\n    tokens personal\n    query ${1:Qualified.Query}\n        scope read\n        description "${2:Read one item}"', documentation: 'Explicit application allowlist for personal tokens. Ungated, global and unsupported query shapes are refused; ESM authoring-only (PLAY0268).' },
     { label: 'identity', insertText: 'identity\n    ${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'Typed additional caller details; authoring metadata only, at most one block per application.' },
     { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
-    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
+    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system. Declare abilities on it (ESM v50); a system without abilities is not admitted by any supported executable model (ESM) version.' },
     { label: 'statemachine', insertText: 'statemachine ${1:Name}\n    follows ${2:ReadModel}\n    state ${3:Placed} initial\n        on ${4:Event} -> ${5:Paid}\n    state ${5:Paid} final', documentation: 'Where a thing is in its lifecycle, derived from the read model it follows (ESM v36). Exactly one initial state; a transition is `on <Event> [when <condition>] -> <State>`; `entering send <Command>` or `entering start <Workflow>` says what entering a state does.' },
-    { label: 'workflow', insertText: 'workflow ${1:Name}\n    for ${2:ReadModel}\n    trigger on ${3:Event}\n        -> ${4:Step}\n    action ${4:Step} sends ${5:Command}', documentation: 'A durable process that runs one at a time per subject (ESM v36): trigger, action, decide, wait, approval, foreach and join nodes connected by outlets. An unconnected failed, rejected or expired outlet fails the run.' },
+    { label: 'workflow', insertText: 'workflow ${1:Name}\n    for ${2:ReadModel}\n    trigger on ${3:Event}\n        -> ${4:Step}\n    action ${4:Step} invokes ${5:Command}', documentation: 'A durable process that runs one at a time per subject (ESM v36): trigger, action, decide, wait, approval, foreach and join nodes connected by outlets. An unconnected failed, rejected or expired outlet fails the run.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import from', insertText: 'import ${1:Module}.${2:Event} from "${3:origin}"', documentation: 'Imports a public event contract with a nonblank opaque origin, not a file path. An import has no local shape, so executable binding still refuses it with PLAY0268.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
@@ -80,6 +100,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'persona', insertText: 'persona ${1:Name}\n    description "${2:who they are}"', documentation: 'A named role interacting with the application, with the policies it holds.' },
     { label: 'sink', insertText: 'sink ${1:Name} for ${2|readmodels,graphs|}', documentation: 'A named store for read models or graphs.' },
     { label: 'user', insertText: 'user ${1:name} "${2:Display Name}" as ${3:Persona}', documentation: 'A person a development or test session can act as, playing one or more personas. Never part of the executable model.' },
+    { label: 'storyline', insertText: 'storyline ${1:Name} "${2:title}"\n    ${3|module,feature,slice,command,event,readmodel,query,screen,reaction|} ${4:Name} "${5:what happens}"', documentation: 'A named, ordered path through the model, such as a user journey. Each step names an element by kind. Never part of the executable model.' },
     { label: 'authentication', insertText: 'authentication\n    provider ${1:Name}', documentation: 'Declares the identity providers of the application — at most one block per file.' },
     { label: 'onboarding', insertText: 'onboarding\n    signup open creates tenant\n    invite member\n        by ${1:Persona}\n        grant ${2:Persona}', documentation: 'Declares how people get into the application: self-signup, invitations, legal terms, an offering and emails. Needs authentication; at most one block per application.' },
     { label: 'seed', insertText: 'seed\n    for ${1:EventSourceId}\n        ${2:EventType}', documentation: 'Declares events to seed into the event store per event source id.' },
@@ -102,8 +123,8 @@ export const stateMachineItems: CompletionEntry[] = [
 export const stateItems: CompletionEntry[] = [
     { label: 'on', insertText: 'on ${1:Event} -> ${2:State}', documentation: 'The first transition on the event whose condition holds and whose target the current state allows is taken; anything else is ignored.' },
     { label: 'on … when', insertText: 'on ${1:Event} when ${2:property} == ${3:"value"} -> ${4:State}', documentation: 'A guarded transition; the condition is over the followed read model after the event.' },
-    { label: 'entering send', insertText: 'entering send ${1:Command}', documentation: 'Sends a command when the state is entered. It may run again on redelivery.' },
-    { label: 'entering start', insertText: 'entering start ${1:Workflow}', documentation: 'Starts a workflow when the state is entered. It may run again on redelivery.' },
+    { label: 'entering invokes', insertText: 'entering invokes ${1:Command}', documentation: 'Invokes a command when the state is entered. It may run again on redelivery.' },
+    { label: 'entering starts', insertText: 'entering starts ${1:Workflow}', documentation: 'Starts a workflow when the state is entered. It may run again on redelivery.' },
 ];
 
 export const workflowItems: CompletionEntry[] = [
@@ -113,7 +134,9 @@ export const workflowItems: CompletionEntry[] = [
     { label: 'trigger when … enters', insertText: 'trigger when ${1:StateMachine} enters ${2:State}\n    -> ${3:Node}', documentation: 'Starts a run when the state machine enters the state.' },
     { label: 'trigger every', insertText: 'trigger every ${1:1} ${2|minutes,hours,days|}\n    -> ${3:Node}', documentation: 'Starts a run on a schedule.' },
     { label: 'trigger manual', insertText: 'trigger manual\n    -> ${1:Node}', documentation: 'Starts a run by hand.' },
-    { label: 'action', insertText: 'action ${1:Name} sends ${2:Command}\n    next -> ${3:Node}\n    failed -> ${4:Node}', documentation: 'Sends a command. Optional `attempts n`, `timeout n unit`, `retry after n unit`. Outlets next and failed.' },
+    { label: 'action ability', insertText: 'action ${1:Name} invokes ${2:System}.${3:Ability}\n    ${4:input} = ${5:value}\n    next -> ${6:Node}\n    failed -> ${7:Node}', documentation: 'Calls a system ability. Inputs come from literals, the trigger, the subject or an earlier node\'s result (`Node.field`); one edge per declared outcome, plus `next` and `failed`.' },
+    { label: 'compute', insertText: 'compute ${1:Name}\n    returns\n        ${2:field} ${3:Type}\n    ```csharp\n    return new { ${2:field} = 1 };\n    ```\n    next -> ${4:Node}', documentation: 'A workflow node that computes values in C# for later nodes to read as `Node.field`.' },
+    { label: 'action', insertText: 'action ${1:Name} invokes ${2:Command}\n    next -> ${3:Node}\n    failed -> ${4:Node}\n    refused -> ${5:Node}', documentation: 'Invokes a command. Optional `attempts n`, `timeout n unit`, `retry after n unit`. Outlets next, failed and refused.' },
     { label: 'decide', insertText: 'decide ${1:Name} when ${2:property} == ${3:true}\n    "${4:yes}" -> ${5:Node}\n    "${6:no}" -> ${7:Node}', documentation: 'Chooses between two outlets of your own: the first when the condition holds.' },
     { label: 'wait for', insertText: 'wait ${1:Name} for ${2:Event} expires after ${3:1} ${4|days,hours,minutes|}\n    resumed -> ${5:Node}\n    expired -> ${6:Node}', documentation: 'Waits for an event about the subject. Outlets resumed and expired.' },
     { label: 'approval', insertText: 'approval ${1:Name} by ${2:Persona} expires after ${3:1} ${4|days,hours,minutes|}\n    approved -> ${5:Node}\n    rejected -> ${6:Node}\n    expired -> ${7:Node}', documentation: 'Asks a persona or policy to approve.' },
@@ -134,6 +157,24 @@ export const operationImplementationItems: CompletionEntry[] = [
     { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered authoring guidance; not an executable implementation role.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects the phase’s sole source attachment.' },
     ...['csharp', 'java', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; not admitted by any supported executable model (ESM) version yet.' })),
+];
+
+export const systemItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:the external system}"', documentation: 'Describes the system.' },
+    { label: 'extension', insertText: 'extension "${1:ghcr.io/org/extension}" version ${2:1}', documentation: 'The extension that realizes the system. Realization metadata; it changes no executable-model bytes.' },
+    { label: 'setting from secret', insertText: 'setting ${1:name} from secret ${2:SecretName}', documentation: 'Maps an extension setting to a named secret. The deployment binds the secret name to its store.' },
+    { label: 'setting', insertText: 'setting ${1:name} = ${2:"value"}', documentation: 'A literal value for a non-secret extension setting. A setting not mentioned is read from systems.<System>.<setting>.' },
+    { label: 'activation', insertText: 'activation ${1|always,on demand|}', documentation: 'Overrides how the extension is activated: always, or on demand with an optional idle after <n> <unit>.' },
+    { label: 'ability', insertText: 'ability ${1:Name} ${2|safe,idempotent,once|}\n    ${3:input} ${4:Type}\n    outcome ${5:Refusal}', documentation: 'One typed thing the system can be asked to do, with an effect class (default once).' },
+];
+
+export const abilityItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what it does}"', documentation: 'Describes the ability.' },
+    { label: 'input', insertText: '${1:input} ${2:Type}', documentation: 'Typed ability input; no identifier or generated modifier.' },
+    { label: 'returns', insertText: 'returns\n    ${1:field} ${2:Type}', documentation: 'The typed values the ability returns.' },
+    { label: 'outcome', insertText: 'outcome ${1:Name}\n    description "${2:business result}"', documentation: 'A named business result other than success; it carries no payload and cannot be named next, refused, failed, returned or expired.' },
+    { label: 'answers later', insertText: 'answers later', documentation: 'The answer arrives after the invocation returns.' },
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:how it is carried out}"', documentation: 'The AbilityEffect attachment: hints, a file or a tagged fence.' },
 ];
 
 export const operationPhaseItems: CompletionEntry[] = [
@@ -171,7 +212,11 @@ export const typeItems: CompletionEntry[] = [
 
 export const sliceItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...availableItems,
+    ...provideItems,
     documentationItem,
+    { label: 'shows event', insertText: 'shows event ${1:EventName}', documentation: 'A linked copy of an event declared in another slice.' },
+    { label: 'shows readmodel', insertText: 'shows readmodel ${1:ReadModelName}', documentation: 'A linked copy of a read model declared in another slice.' },
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
@@ -196,6 +241,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    ...availableItems,
     { label: 'calendar', insertText: 'calendar "${1:Europe/Oslo}"', documentation: 'ESM v37 command calendar using an IANA zone; takes precedence over scenario zone, execution-context zone and application default.' },
     { label: 'calendar from', insertText: 'calendar from \\$context.timeZone', documentation: 'ESM v37 admits $context.timeZone or a member declared in the context block; other context paths remain refused.' },
     documentationItem,
@@ -248,6 +294,7 @@ export const handlerItems: CompletionEntry[] = [
 ];
 
 export const queryItems: CompletionEntry[] = [
+    ...availableItems,
     { label: 'description', insertText: 'description "${1:what this query is trying to accomplish}"', documentation: 'What the query is for, in prose — what a generator or reviewer works from.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
     { label: 'by parts', insertText: 'by\n  ${1:part} ${2:Type}\n  ${3:part} ${4:Type}', documentation: 'Declares a composite lookup. Supply every key part for a single instance.' },
@@ -287,6 +334,7 @@ export const reactionTriggerItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What this particular reaction does — enough on its own, with no file to point at.' },
     { label: 'produces', insertText: 'produces ${1:EventType}', documentation: 'An event the reaction appends.' },
     { label: 'invokes', insertText: 'invokes ${1:Command}', documentation: 'A command the reaction hands on. A command is asked for, not produced — it may still be rejected.' },
+    { label: 'invokes ability', insertText: 'invokes ${1:System}.${2:Ability}\n    ${3:input} = ${4:value}\n    on returned\n        produces ${5:EventType}\n    on failed\n        produces ${6:EventType}', documentation: 'Calls a system ability. Inputs are mapped from the event; `on returned`, `on failed` and `on <Outcome>` branches say what to append for each answer, reading `$result.<field>`, `$outcome.<field>` or `$failure.reason`.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the reaction to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
 ];
@@ -344,6 +392,9 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'then result', insertText: 'then result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
     { label: 'then no result', insertText: 'then no result', documentation: 'The query performed by `when query` returns nothing.' },
     { label: 'then no events', insertText: 'then no events', documentation: 'Asserts the action appended no events, including after when append, where no reaction appended anything. Executable from ESM v17; cannot accompany event, error or denial expectations.' },
+    { label: 'given ability returns', insertText: 'given ${1:System}.${2:Ability} returns\n    ${3:field} = ${4:value}', documentation: 'Scripts what a system ability answers with in a reaction specification: the returned fields.' },
+    { label: 'given ability answers', insertText: 'given ${1:System}.${2:Ability} answers ${3:Outcome}', documentation: 'Scripts a declared outcome of a system ability for a reaction specification.' },
+    { label: 'given ability fails', insertText: 'given ${1:System}.${2:Ability} fails "${3:reason}"', documentation: 'Scripts a failed ability call for a reaction specification.' },
     { label: 'then invokes', insertText: 'then invokes ${1:Command}\n    ${2:property} = ${3:value}', documentation: 'An invocation the slice\'s own reactions make, with the values it passes; unstated values are not compared. Once stated, every invocation must match in count and order. Executable from ESM v34.' },
 ];
 
@@ -426,6 +477,7 @@ export const validateItems: CompletionEntry[] = [
 ];
 
 export const screenItems: CompletionEntry[] = [
+    ...availableItems,
     { label: 'description', insertText: 'description "${1:screen intent}"', documentation: 'Report-only description, not a localizable screen title.' },
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
     { label: 'action', insertText: 'action ${1:CommandName} for ${2|item,screen|}', documentation: 'Makes a command available for the selected item or for the screen as a whole.' },
@@ -435,6 +487,9 @@ export const screenItems: CompletionEntry[] = [
     { label: 'table', insertText: 'table ${1:name}\n    column ${2:property} label "${3:text}"', documentation: 'A table widget over a read model or collection.' },
     { label: 'summary', insertText: 'summary ${1:ReadModel}\n    field ${2:property} label "${3:text}"', documentation: 'A summary widget showing labeled fields.' },
     { label: 'title', insertText: 'title "${1:text}"', documentation: 'The title of the screen or section.' },
+    { label: 'sketch', insertText: 'sketch ${1:Screens/name.sketch.json}', documentation: 'A sketch file beside the model.' },
+    { label: 'mockup', insertText: 'mockup ${1:Screens/name.html}', documentation: 'An HTML mockup page beside the model.' },
+    { label: 'image', insertText: 'image ${1:Screens/name.png}', documentation: 'An image beside the model.' },
     { label: 'fits', insertText: 'fits ${1|dialog,drawer,pane,panel,page|}', documentation: 'Where the slice\'s screen fits, in order of preference — `fits dialog, drawer, pane`.' },
     { label: 'show', insertText: 'show ${1:Screen} by ${2:param} from ${3:table}.selection', documentation: 'In a template slot: shows another screen for the row a table or component has selected.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Full external implementation — Stage uses the referenced file.' },
@@ -504,6 +559,7 @@ export const contextVariableItems: CompletionEntry[] = [
     })),
     { label: '$context.occurred', insertText: '$context.occurred', documentation: 'When the command or query was received.' },
     { label: '$context.tenant', insertText: '$context.tenant', documentation: 'The tenant the command or query is executing for.' },
+    { label: '$context.audiences', insertText: '$context.audiences', documentation: 'The audiences the caller belongs to, supplied by the host.' },
     { label: '$context.command.', insertText: '$context.command.${1:property}', documentation: 'A property of the command being handled.' },
     { label: '$context.arguments.', insertText: '$context.arguments.${1:name}', documentation: 'An argument of the query being performed.' },
     { label: '$context.causedBy.subject', insertText: '$context.causedBy.subject', documentation: 'Subject of the identity that caused the command or query.' },
@@ -536,5 +592,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label.startsWith('provide ') || item.label.startsWith('available ') || item.label.startsWith('shows ') || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
 }

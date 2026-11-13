@@ -28,6 +28,23 @@ function tokenize(lines: string[]): { offset: number; type: string }[][] {
 
 const typeAt = (tokens: { offset: number; type: string }[], column: number) => tokens.filter(token => token.offset <= column).at(-1)?.type ?? '';
 
+describe('when Monarch tokenizes agent exposure', () => {
+    it('highlights the allowlist and its contextual directives', () => {
+        const source = ['agents', '  tokens personal', '  query Sales.List.All', '    scope read', '    description "Read"', '  command Sales.Issue', '    scope write'];
+        const tokens = tokenize(source);
+        for (const [line, word] of [[0, 'agents'], [1, 'tokens'], [1, 'personal'], [2, 'query'], [3, 'scope'], [3, 'read'], [4, 'description'], [5, 'command'], [6, 'write']] as const) {
+            const start = source[line].indexOf(word);
+            const token = tokens[line].filter(token => token.offset <= start).at(-1);
+            token!.type.should.contain('keyword');
+        }
+    });
+    it('does not reserve agents or scope as property names', () => {
+        const source = ['agents', '  tokens personal', 'readmodel Invoice', '  agents String', '  tokens String', '  scope String'];
+        const tokens = tokenize(source);
+        for (const line of [3, 5]) tokens[line].find(token => token.offset === 2)!.type.should.contain('identifier');
+    });
+});
+
 describe('when Monarch tokenizes application context', () => {
     it('should scope the root block and its two-word member type', () => {
         const tokens = tokenize(['context // inputs', '  bookingZone time zone', '  @reportingZone time zone', 'command C', '  context String', '  zone String', '  timeZone String']);

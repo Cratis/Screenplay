@@ -57,7 +57,7 @@ public sealed partial class SemanticModelBinder
             var address = SemanticAddress.ForModule(_applicationIdentity, module.Name);
             var id = Resolve(address, module.Location);
             var features = module.Features.Select(feature => BindFeature(module.Name, [], feature)).ToImmutableArray();
-            return new(id, module.Name, features);
+            return new(id, module.Name, features) { Provides = BindProvides(module.Provides), Available = SemanticAvailabilityBinder.Gates(module.Available) };
         }
 
         SemanticFeature BindFeature(string module, ImmutableArray<string> parentPath, FeatureSyntax feature)
@@ -82,7 +82,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, feature.Location);
             var nested = feature.Features.Select(value => BindFeature(module, path, value)).ToImmutableArray();
             var slices = feature.Slices.Select(value => BindSlice(module, path, value)).ToImmutableArray();
-            return new(id, feature.Name, nested, slices);
+            return new(id, feature.Name, nested, slices) { Provides = BindProvides(feature.Provides), Available = SemanticAvailabilityBinder.Gates(feature.Available) };
         }
 
         SemanticSlice BindSlice(string module, ImmutableArray<string> featurePath, SliceSyntax slice)
@@ -124,6 +124,7 @@ public sealed partial class SemanticModelBinder
             {
                 var bound = BindCommand(address, value, _events, new DeclarationScope([module, .. featurePath, slice.Name]));
                 bound = bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath, value.Name) };
+                bound = bound with { Available = SemanticAvailabilityBinder.Gates(value.Available) };
                 _exampleCommands[value] = bound;
 
                 return bound;
@@ -144,6 +145,8 @@ public sealed partial class SemanticModelBinder
             return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, specifications)
             {
                 Constraints = BindConstraints(address, slice),
+                Provides = BindProvides(slice.Provides),
+                Available = SemanticAvailabilityBinder.Gates(slice.Available),
                 Reducers = reducers,
                 Direction = slice.Direction switch
                 {

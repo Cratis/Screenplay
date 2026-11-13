@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Buffers.Text;
 using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
@@ -36,16 +37,14 @@ public static class ModelNotesStore
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-#if NET9_0_OR_GREATER
         RespectRequiredConstructorParameters = true
-#endif
     };
 
     /// <summary>
     /// Allocates a content-independent cryptographically random identity.
     /// </summary>
     /// <returns>A note_ identity with a 22-character URL-safe token.</returns>
-    public static string NewId() => $"note_{Convert.ToBase64String(RandomNumberGenerator.GetBytes(16)).TrimEnd('=').Replace('+', '-').Replace('/', '_')}";
+    public static string NewId() => $"note_{Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(16))}";
 
     /// <summary>
     /// Reads a bounded file without turning unreadable notes into a model failure.

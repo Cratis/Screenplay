@@ -35,6 +35,9 @@ sealed class ReadOwnership : ScreenplaySyntaxWalker
     public override void VisitIdentityDetail(IdentityDetailSyntax syntax) => Owned(syntax, () => base.VisitIdentityDetail(syntax));
 
     /// <inheritdoc/>
+    public override void VisitProvide(ProvideSyntax syntax) => Owned(syntax, () => base.VisitProvide(syntax));
+
+    /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax) => Owned(syntax, () => base.VisitModule(syntax));
 
     /// <inheritdoc/>
@@ -78,6 +81,8 @@ sealed class ReadOwnership : ScreenplaySyntaxWalker
 
     /// <inheritdoc/>
     public override void VisitPolicy(PolicySyntax syntax) => Owned(syntax, () => base.VisitPolicy(syntax));
+    public override void VisitAudience(AudienceSyntax syntax) => Owned(syntax, () => base.VisitAudience(syntax));
+    public override void VisitAvailability(AvailabilitySyntax syntax) => Owned(syntax, () => base.VisitAvailability(syntax));
 
     /// <inheritdoc/>
     public override void VisitPersona(PersonaSyntax syntax) => Owned(syntax, () => base.VisitPersona(syntax));
@@ -86,7 +91,13 @@ sealed class ReadOwnership : ScreenplaySyntaxWalker
     public override void VisitUser(UserSyntax syntax) => Owned(syntax, () => base.VisitUser(syntax));
 
     /// <inheritdoc/>
+    public override void VisitStoryline(StorylineSyntax syntax) => Owned(syntax, () => base.VisitStoryline(syntax));
+
+    /// <inheritdoc/>
     public override void VisitSink(SinkSyntax syntax) => Owned(syntax, () => base.VisitSink(syntax));
+
+    /// <inheritdoc/>
+    public override void VisitSecret(SecretSyntax syntax) => Owned(syntax, () => base.VisitSecret(syntax));
 
     /// <inheritdoc/>
     public override void VisitLayout(LayoutSyntax syntax) => Owned(syntax, () => base.VisitLayout(syntax));

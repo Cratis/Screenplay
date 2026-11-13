@@ -35,7 +35,7 @@ describe('when reading lifecycle specifications', () => {
     it('should refuse an outcome with children', () => expect(codes('specification Spec', '  outcome N next', '    more')).toEqual(['PLAY0834@6']));
     it('should refuse a completes with a target and a target-less sends', () => {
         expect(codes('specification Spec', '  then completes N')).toEqual(['PLAY0834@5']);
-        expect(codes('specification Spec', '  then sends')).toEqual(['PLAY0834@5']);
+        expect(codes('specification Spec', '  then invokes')).toEqual(['PLAY0834@5']);
     });
     it('should refuse an unknown expectation', () => expect(codes('specification Spec', '  then explodes')).toEqual(['PLAY0834@5']));
     it('should refuse a then with children', () => expect(codes('specification Spec', '  then completes', '    more')).toEqual(['PLAY0834@6']));

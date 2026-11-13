@@ -43,6 +43,17 @@ public record PolicySyntax(
     /// Gets the report-only description of this authorization rule.
     /// </summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the read models the policy decides from, declared with <c>reads &lt;Model&gt; [as alias] [by property]</c>.
+    /// <c>by</c> names a property of the command or query being authorized.
+    /// </summary>
+    public IEnumerable<ReadsSyntax>? Reads { get; init; }
+
+    /// <summary>
+    /// Gets the typed inputs the policy declares, <see langword="null"/> when it declares none.
+    /// </summary>
+    public IEnumerable<PolicyInputSyntax>? Inputs { get; init; }
 }
 
 /// <summary>
@@ -104,3 +115,33 @@ public record LogicalPolicyConditionSyntax(
     LogicalOperator Operator,
     PolicyConditionSyntax Right,
     SourceLocation Location) : PolicyConditionSyntax(Location);
+
+/// <summary>
+/// A policy condition that compares recorded state, a property of the artifact being authorized or the caller's
+/// <c>$identity</c> with a value, for example <c>plan.dataQuality == true</c>.
+/// </summary>
+/// <param name="Comparison">The shared comparison condition the operand is written as.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the condition.</param>
+public record StateConditionSyntax(ComparisonConditionSyntax Comparison, SourceLocation Location) : PolicyConditionSyntax(Location);
+
+/// <summary>
+/// A typed input a policy declares, <c>assetId AssetId [from $context.asset]</c>, which a policy read can take its key from.
+/// </summary>
+/// <param name="Name">The input name.</param>
+/// <param name="Type">The declared type name.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the input.</param>
+public record PolicyInputSyntax(string Name, string Type, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the default source, such as <c>$context.asset</c>, used when the authorized artifact does not map the input.
+    /// </summary>
+    public string? From { get; init; }
+}
+
+/// <summary>
+/// One <c>input = property</c> line of the mapping block under a single-policy <c>authorize</c>.
+/// </summary>
+/// <param name="Input">The policy input that is mapped.</param>
+/// <param name="Property">The property of the authorized command or query that fills it.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the mapping.</param>
+public record PolicyInputMappingSyntax(string Input, string Property, SourceLocation Location) : SyntaxNode(Location);

@@ -50,6 +50,11 @@ public record ScreenSyntax(
     public string? Description { get; init; }
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this screen; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets what this screen contributes to contribution points elsewhere in the tree.
     /// </summary>
     public IEnumerable<ScreenContributionSyntax> Contributions { get; init; } = [];
@@ -63,6 +68,11 @@ public record ScreenSyntax(
     /// Gets where the screen fits, in order of preference - <c>fits dialog, drawer, pane</c>. Empty when the screen does not say.
     /// </summary>
     public IEnumerable<ScreenFit> Fits { get; init; } = [];
+
+    /// <summary>
+    /// Gets the sketches, HTML mockup pages and images the screen carries, in authored order.
+    /// </summary>
+    public IEnumerable<ScreenVisualSyntax> Visuals { get; init; } = [];
 }
 
 /// <summary>

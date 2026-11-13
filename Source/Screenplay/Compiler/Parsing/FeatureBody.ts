@@ -4,6 +4,8 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate } from './AvailabilityParser';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, SliceSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
@@ -14,6 +16,8 @@ import { parsePurposeReference } from './PurposeParser';
 import { parseDocumentation } from './DocumentationParser';
 import { parseDependsOn } from './DependsOnParser';
 import { parseFileImport } from './FileImportParser';
+import { parseProvide } from './ProvideParser';
+import { ProvideSyntax } from '../Syntax/ProvideSyntax';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -31,7 +35,7 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute', 'template']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, outlet, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, contribute, outlet, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.
@@ -42,6 +46,8 @@ export class FeatureBody {
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
+    readonly #provides: ProvideSyntax[] = [];
+    readonly #available: AvailableSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
@@ -85,6 +91,12 @@ export class FeatureBody {
                 if (this.#authorizationDepthExceeded) recordAuthorizationRefusal(this.#fileImports);
                 return true;
             }
+            case 'available':
+                addAvailabilityGate(context, line, this.#available);
+                return true;
+            case 'provide':
+                parseProvide(context, line, this.#provides);
+                return true;
             case 'import':
                 parseFileImport(context, line, this.#fileImports);
                 return true;
@@ -122,6 +134,8 @@ export class FeatureBody {
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
             purposes: this.#purposes,
+            ...(this.#provides.length > 0 ? { provides: this.#provides } : {}),
+            ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             features: this.#features,
             slices: this.#slices,

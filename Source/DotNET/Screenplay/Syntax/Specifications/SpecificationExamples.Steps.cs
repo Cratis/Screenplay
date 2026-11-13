@@ -10,6 +10,7 @@ public static partial class SpecificationExamples
         foreach (var step in specification.Given) yield return ("given", step, EventValues(step));
         foreach (var step in specification.GivenReadModels ?? []) yield return ("given readmodel", step, step.Properties);
         foreach (var step in specification.GivenCaptures) yield return ("given capture", step, step.Record);
+        foreach (var step in specification.GivenAbilityAnswers) yield return ("given ability", step, step.Values);
         if (specification.When is { } command) yield return ("when", command, command.Values.Concat(command.GeneratedValues.Select(value => value with { Property = $"generated {value.Property}" })).Concat(ForValue(command.For)));
         if (specification.WhenAppended is { } appended) yield return ("when append", appended, EventValues(appended));
         if (specification.WhenTrigger is { } trigger) yield return ("when trigger", trigger, trigger.Values);

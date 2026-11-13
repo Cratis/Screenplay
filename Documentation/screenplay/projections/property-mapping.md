@@ -74,6 +74,55 @@ from OwnerNoteCleared
 
 Because the two read alike, a bare `clear with` — the directive without its event type — is reported as an invalid mapping rather than read as clearing a property named `with`. If a read model really does have a property called `with`, escape it: `clear @with`.
 
+## Setting a Value Once
+
+`set once` assigns a value only while the property has none yet — it is missing or null. Every later event leaves it as it is:
+
+```pdl
+set once {Property} = {Expression}
+set once {Property} to {Expression}
+```
+
+`=` and `to` mean the same. Use it for a value that records the first time something happened, such as who created an instance or when:
+
+```pdl
+from ModelDefined
+  name = name
+  set once createdBy = $causedBy.subject
+  set once createdAt = $eventContext.occurred
+from ModelRenamed
+  name = name
+  set once createdAt = $eventContext.occurred
+```
+
+When `ModelRenamed` arrives before `ModelDefined`, it writes `createdAt` and `ModelDefined` leaves it; when `ModelDefined` arrives first, `ModelRenamed` never touches it. Events are applied in order, so replaying them gives the same result. A property named `once` is written `set @once = ...`, or with the assignment form `once = ...`.
+
+## Dictionary Entries
+
+A target can end in a dynamic key: a property path followed by `.$eventContent.<path>`, `.$eventContext.<path>` or `.$causedBy.<member>`. The value the key reads becomes the dictionary key the mapping writes under, so one property holds one entry per distinct value:
+
+```pdl
+from SlotAssigned
+  slots.$eventContent.slot = series
+  count assignmentsByUser.$causedBy.userName
+from SlotDropped
+  remove slots.$eventContent.slot
+```
+
+| Key | Reads |
+|---|---|
+| `.$eventContent.<path>` | A property of the event, such as `slot` or `slot.name`. |
+| `.$eventContext.<path>` | A member of the [event context](event-context.md#in-dynamic-dictionary-keys), such as `eventType.id`. |
+| `.$causedBy.subject`, `.name`, `.userName` | The identity that caused the event. |
+
+A dynamic key works with an assignment, `set once`, `increment`, `decrement`, `count`, `add`, `subtract` and `remove`. It does not work with `clear`: clearing an entry would keep its key with no value, so `clear <target>` with a dynamic key is an error (`PLAY0963`) that points at `remove`. An `$eventContent` path the handled event does not have is a warning (`PLAY0961`); `$eventContent` without a path, or a `$causedBy` member other than the three listed, is an error (`PLAY0957`).
+
+The property before the key has to be a dictionary. Chronicle refuses a projection that writes an entry into a scalar or an object with properties, and Screenplay has no dictionary type: every property a read model declares is a scalar, a collection or a type with at least one property. A dynamic key whose property the read model declares is therefore a warning (`PLAY0962`), and one whose property it does not declare is the usual unknown-property warning. Until the language has a dictionary type, dictionary entries are for projections whose read model the Screenplay model does not declare, such as one defined in application code; the samples do not use them.
+
+`remove <target>` deletes the entry the key names. The target must end in a dynamic key (`PLAY0956`); removing a key that is not there does nothing. `remove` is also the start of the `remove with` and `remove via join` [removal](removal.md) blocks, so a property named `with` or `via` is escaped: `remove @with.$eventContent.slot`.
+
+Screenplay's executable semantic model has no dictionary-keyed property, so a projection that uses a dynamic key or `remove` is checked and printed but is not run by the reference evaluator; it reports `PLAY0268` for those lines.
+
 ## String Templates
 
 Create formatted strings using template literals:
@@ -109,6 +158,8 @@ from UserRegistered
   SequenceNumber = $eventContext.sequenceNumber
   CorrelationId = $eventContext.correlationId
 ```
+
+`$causedBy.subject`, `$causedBy.name` and `$causedBy.userName` are short forms of `$eventContext.causedBy.<member>`: they read the same value, the identity that caused the event.
 
 Chronicle can read these metadata paths. The Screenplay reference evaluator supports `occurred` assignments in supported scopes, but not the `sequenceNumber` and `correlationId` assignments shown here. [Event Context](event-context.md) explains the available paths and how to supply occurrence times in specifications.
 

@@ -8,8 +8,8 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_proje
 
 // The InvoiceDetails projection of the invoicing sample, bound verbatim against declarations for everything it names. Every block
 // it uses - key, every/exclude children, multi-mapping from, join, children with parent keys, add/count, nested, clear with,
-// remove with, remove via join - is admitted; the only errors left are the expressions ESM v1 cannot execute: '$causedBy'
-// (Cratis/Chronicle#4119) and a string template. With those spelled as Chronicle executes them, the projection binds.
+// remove with, remove via join - is admitted, and so is '$causedBy.<member>' (Cratis/Chronicle#4119); the only error left is the
+// string template the executable model cannot execute. With it spelled as Chronicle executes it, the projection binds.
 public class the_invoicing_invoice_details_projection : for_SemanticModelBinder.given.a_semantic_binder
 {
     const string Declarations =
@@ -98,18 +98,15 @@ public class the_invoicing_invoice_details_projection : for_SemanticModelBinder.
     {
         _result = Bind(Declarations + _projection + "\n");
         var executable = _projection
-            .Replace("$causedBy.name", "$eventContext.causedBy.name", StringComparison.Ordinal)
-            .Replace("$causedBy.userName", "$eventContext.causedBy.userName", StringComparison.Ordinal)
-            .Replace("$causedBy.subject", "$eventContext.causedBy.subject", StringComparison.Ordinal)
             .Replace("`${invoiceNumber} (${currency})`", "invoiceNumber", StringComparison.Ordinal);
         _executable = Bind(Declarations + executable + "\n");
     }
 
     [Fact] void should_report_no_block_admission_error() =>
         Errors(_result).Any(_ => _.Message.Contains("Projection block", StringComparison.Ordinal)).ShouldBeFalse();
-    [Fact] void should_only_report_the_expressions_esm_v1_cannot_execute() =>
-        Errors(_result).All(_ => _.Message.Contains("$causedBy", StringComparison.Ordinal) || _.Message.Contains("TemplateExpressionSyntax", StringComparison.Ordinal)).ShouldBeTrue();
-    [Fact] void should_report_each_caused_by_and_the_template() => Errors(_result).Count().ShouldEqual(4);
+    [Fact] void should_only_report_the_template_the_model_cannot_execute() =>
+        Errors(_result).All(_ => _.Message.Contains("TemplateExpressionSyntax", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_report_only_the_template() => Errors(_result).Count().ShouldEqual(1);
     [Fact] void should_bind_the_executable_spelling() => _executable.Success.ShouldBeTrue();
     [Fact] void should_bind_one_transition_per_from_event() => Scope.From.Length.ShouldEqual(4);
     [Fact] void should_bind_the_join() => Scope.Joins.Length.ShouldEqual(1);

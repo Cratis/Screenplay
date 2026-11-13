@@ -26,7 +26,7 @@ describe('when reading workflows', () => {
         expect(result.nodes[0].edges.map(edge => [edge.outlet, edge.target])).toEqual([['next', 'Next'], ['yes', 'Next'], ['no', 'Next'], ['maybe', '']]);
     });
     it('should read action options', () => {
-        expect(node('  action A sends C attempts 3 timeout 30 seconds retry after 5 minutes')).toMatchObject({ nodeKind: 'Action', command: 'C', attempts: 3, timeout: { amount: 30, unit: 'Seconds' }, retryAfter: { amount: 5, unit: 'Minutes' } });
+        expect(node('  action A invokes C attempts 3 timeout 30 seconds retry after 5 minutes')).toMatchObject({ nodeKind: 'Action', command: 'C', attempts: 3, timeout: { amount: 30, unit: 'Seconds' }, retryAfter: { amount: 5, unit: 'Minutes' } });
     });
     it('should read waits, approvals, foreach and joins in every form', () => {
         const result = flow(
@@ -59,25 +59,25 @@ describe('when reading workflows', () => {
     it('should refuse a second subject', () => expect(codes('  for Other')).toEqual(['PLAY0843@3']));
     it('should refuse a subject with children', () => expect(codes('  for R2', '    more')).toContain('PLAY0843@4'));
     it('should refuse a workflow without a subject', () => expect(read('workflow W', '  trigger manual').diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0843'));
-    it('should refuse a node declared twice', () => expect(codes('  action A sends C', '  action A sends D')).toEqual(['PLAY0843@4']));
+    it('should refuse a node declared twice', () => expect(codes('  action A invokes C', '  action A invokes D')).toEqual(['PLAY0843@4']));
     it('should refuse an unexpected line and skip its block', () => expect(codes('  bogus here', '    nested')).toEqual(['PLAY0843@3']));
-    it('should refuse a malformed edge and skip its block', () => expect(codes('  action A sends C', '    not an edge', '      nested')).toEqual(['PLAY0843@4']));
-    it('should refuse an edge with children', () => expect(codes('  action A sends C', '    next -> B', '      more')).toEqual(['PLAY0843@5']));
+    it('should refuse a malformed edge and skip its block', () => expect(codes('  action A invokes C', '    not an edge', '      nested')).toEqual(['PLAY0843@4']));
+    it('should refuse an edge with children', () => expect(codes('  action A invokes C', '    next -> B', '      more')).toEqual(['PLAY0843@5']));
     it('should refuse a malformed trigger', () => expect(codes('  trigger')).toEqual(['PLAY0843@3']));
     it('should refuse a trigger of an unknown kind', () => expect(codes('  trigger sometimes')).toEqual(['PLAY0843@3']));
     it('should refuse a schedule trigger that does not parse', () => expect(read('workflow W', '  for R', '  trigger every soon').diagnostics.length).toBeGreaterThan(0));
     it('should refuse a malformed action', () => expect(codes('  action A')).toEqual(['PLAY0843@3']));
     it('should refuse a repeated or zero attempts', () => {
-        expect(codes('  action A sends C attempts 0')).toEqual(['PLAY0843@3']);
-        expect(codes('  action A sends C attempts 2 attempts 3')).toEqual(['PLAY0843@3']);
+        expect(codes('  action A invokes C attempts 0')).toEqual(['PLAY0843@3']);
+        expect(codes('  action A invokes C attempts 2 attempts 3')).toEqual(['PLAY0843@3']);
     });
     it('should refuse a repeated timeout and a zero timeout', () => {
-        expect(codes('  action A sends C timeout 1 seconds timeout 2 seconds')).toEqual(['PLAY0843@3']);
-        expect(codes('  action A sends C timeout 0 seconds')).toContain('PLAY0843@3');
+        expect(codes('  action A invokes C timeout 1 seconds timeout 2 seconds')).toEqual(['PLAY0843@3']);
+        expect(codes('  action A invokes C timeout 0 seconds')).toContain('PLAY0843@3');
     });
     it('should refuse a repeated retry and a zero retry', () => {
-        expect(codes('  action A sends C retry after 1 seconds retry after 2 seconds')).toEqual(['PLAY0843@3']);
-        expect(codes('  action A sends C retry after 0 seconds')).toContain('PLAY0843@3');
+        expect(codes('  action A invokes C retry after 1 seconds retry after 2 seconds')).toEqual(['PLAY0843@3']);
+        expect(codes('  action A invokes C retry after 0 seconds')).toContain('PLAY0843@3');
     });
     it('should refuse a malformed decide', () => expect(codes('  decide D')).toEqual(['PLAY0843@3']));
     it('should drop a decide whose condition does not parse', () => expect(flow('  decide D when date of').nodes).toEqual([]));

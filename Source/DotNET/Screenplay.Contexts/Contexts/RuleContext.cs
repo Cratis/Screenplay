@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Dynamic;
+
 namespace Cratis.Screenplay.Contexts;
 
 /// <summary>
@@ -43,6 +45,13 @@ public record RuleContext(
     DateTimeOffset Occurred)
 {
     /// <summary>
+    /// Gets the values the model adds to <c>$context</c> with <c>provide</c>, each readable by name - for
+    /// example <c>context.Values.Vessel</c>. It is empty when the model provides none. This init member keeps
+    /// the existing positional contract unchanged.
+    /// </summary>
+    public dynamic Values { get; init; } = new ExpandoObject();
+
+    /// <summary>
     /// Gets a value indicating whether the rule covers the whole <see cref="Artifact"/> rather than one of its
     /// properties, which is the case for a <c>validate csharp</c> block.
     /// </summary>
@@ -63,4 +72,12 @@ public record RuleContext(
     /// <returns>The value as <typeparamref name="T"/>.</returns>
     /// <exception cref="ContextPayloadTypeMismatch">The value is not a <typeparamref name="T"/>.</exception>
     public T ValueAs<T>() => ContextPayload.As<T>((object?)Value, nameof(Value));
+
+    /// <summary>
+    /// Gets the provided values as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the provided values.</typeparam>
+    /// <returns>The provided values as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The provided values are not a <typeparamref name="T"/>.</exception>
+    public T ValuesAs<T>() => ContextPayload.As<T>((object?)Values, nameof(Values));
 }

@@ -26,11 +26,17 @@ export const constructKeywords = [
     'type',
     'policy',
     'purpose',
+    'provide',
+    'audience',
+    'availability',
+    'available',
     'persona',
     'user',
+    'storyline',
     'sink',
     'sticky',
     'authentication',
+    'agents',
     'onboarding',
     'context',
     'identity',
@@ -45,6 +51,7 @@ export const constructKeywords = [
     'event',
     'public',
     'system',
+    'ability',
     'statemachine',
     'workflow',
     'eventsource',
@@ -254,6 +261,8 @@ export const clauseKeywords = [
     'stat',
     'sets',
     'shows',
+    'sketch', // Screen visuals: 'sketch|mockup|image <path>' beside the model; 'image' is also a logo kind.
+    'mockup',
     'fits', // Placement (Screenplay 6): 'fits dialog, drawer, pane', 'opens dialog|drawer|in slot <name>', 'enabled when', 'show … from <element>.selection', 'choose from query'.
     'drawer',
     'opens',
@@ -304,6 +313,8 @@ export const clauseKeywords = [
     'at',
     'where',
     'invokes',
+    'compute',
+    'returned',
     'contains',
     'ends',
     'with',
@@ -379,7 +390,7 @@ export const conceptAttributes = ['pii', 'personal', 'secret'];
 
 // The lines that open a block with a body of their own. A line that is complete as written - a `domain`, a
 // `concept` or `query` with nothing under it, a `produces` of an existing event - is not one.
-export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command(?!\s+reads\s+protected\b)|event|readmodel|graph|node(?=\s+\w+\s*$)|edge(?=\s+\w+)|reducer|projection|capture|reaction(?!\s+batches\b)|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|onboarding|invite\s+member|legal\s+terms|emails|identity|context(?=\s*(?:\/\/.*)?$)|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|generate\s+rule|validate|handler|on)\b[^=]*$/;
+export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command(?!\s+reads\s+protected\b)|event|readmodel|graph|node(?=\s+\w+\s*$)|edge(?=\s+\w+)|reducer|projection|capture|reaction(?!\s+batches\b)|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|onboarding|invite\s+member|legal\s+terms|emails|identity|context(?=\s*(?:\/\/.*)?$)|seed|system|ability|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|generate\s+rule|validate|handler|on)\b[^=]*$/;
 
 export const languageConfiguration: languages.LanguageConfiguration = {
     comments: {
@@ -409,7 +420,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     ],
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|onboarding|invite\s+member|legal\s+terms|emails|identity|context(?=\s*(?:\/\/.*)?$)|provider|event|command(?!\s+reads\s+protected\b)|query|type|screen|projection|capture|reaction(?!\s+batches\b)|trigger|constraint|specification|layout|template|generate\s+rule|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|action|otherwise(?=\s*$|\s+execute\b)|concurrency|seed|for|when|then|arguments|result|every|at|invokes|on)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|onboarding|invite\s+member|legal\s+terms|emails|identity|context(?=\s*(?:\/\/.*)?$)|provider|event|command(?!\s+reads\s+protected\b)|query|type|screen|projection|capture|reaction(?!\s+batches\b)|trigger|constraint|specification|layout|template|generate\s+rule|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|action|otherwise(?=\s*$|\s+execute\b)|concurrency|seed|ability|for|when|then|arguments|result|every|at|invokes|on)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },

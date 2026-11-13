@@ -113,6 +113,7 @@ WithEventBlock  = "with", TypeRef, NL,
 ChildrenBlock   = "children", Ident, "identified", "by", Expr, NL,
                   INDENT,
                     [ "no", "automap", NL ],
+                    [ ChildrenOrdering ],
                     { ChildBlock },
                   DEDENT ;
 
@@ -341,8 +342,12 @@ Define nested collections:
 ChildrenBlock = "children", Ident, "identified", "by", Expr, NL,
                 INDENT,
                   [ "no", "automap", NL ],
+                  [ ChildrenOrdering ],
                   { ChildBlock },
                 DEDENT ;
+
+ChildrenOrdering = "insert", ( "first" | "last" ), NL
+                 | "sort", "by", Path, [ "ascending" | "descending" ], NL ;
 
 ChildBlock = ChildEveryBlock
            | FromEventBlock
@@ -359,6 +364,8 @@ ChildEveryBlock = "every", NL,
                     { MappingLine },
                   DEDENT ;
 ```
+
+**Note:** `ChildrenOrdering` places a new child: `insert last` (the default) at the end, `insert first` at the start, and `sort by` sorts the collection by a child property after the child is added, `ascending` unless stated. A block takes at most one ordering line, and it may stand anywhere among the block's lines. The order is stored: an update to an existing child never moves it. See [Children](children.mdx#ordering-the-children).
 
 **Note:** `ChildEveryBlock` applies mappings to all events within the children collection. Unlike the top-level `EveryBlock`, it does not support the `exclude children` directive as it operates within a children context.
 
@@ -429,7 +436,9 @@ Operations that modify the read model:
 
 ```ebnf
 MappingLine = Assignment
+            | SetOnceLine
             | ClearLine
+            | RemoveLine
             | IncLine
             | DecLine
             | CountLine
@@ -438,7 +447,9 @@ MappingLine = Assignment
 
 Assignment = Target, "=", Expr, NL
            | "set", Target, ( "=" | "to" ), Expr, NL ;
+SetOnceLine = "set", "once", Target, ( "=" | "to" ), Expr, NL ;
 ClearLine = "clear", Target, NL ;
+RemoveLine = "remove", KeyedTarget, NL ;
 IncLine = "increment", Target, NL ;
 DecLine = "decrement", Target, NL ;
 CountLine = "count", Target, NL ;
@@ -446,10 +457,15 @@ AddLine = "add", Target, "by", Expr, NL ;
 SubLine = "subtract", Target, "by", Expr, NL ;
 
 Target = [ "@" ], Path, [ DynamicKey ] ;
-DynamicKey = ".", "$eventContext", ".", EventContextPath ;
+KeyedTarget = [ "@" ], Path, DynamicKey ;
+DynamicKey = ".", "$eventContext", ".", EventContextPath
+           | ".", "$eventContent", ".", Path
+           | ".", "$causedBy", ".", ( "subject" | "name" | "userName" ) ;
 ```
 
-**Note:** A `Target` is a dotted path on the read model, so a mapping can reach a property of a nested object. A leading `@` escapes a name that collides with a keyword. A target ending in a `DynamicKey` - `count eventCountByType.$eventContext.eventType.id` - writes under a dictionary key taken from the event context, so the property holds one entry per distinct value; see [Event Context](event-context.md#in-dynamic-dictionary-keys). Only `$eventContext` resolves in a key: another `$` source is kept as literal key text and warned about (`PLAY0299`).
+**Note:** A `Target` is a dotted path on the read model, so a mapping can reach a property of a nested object. A leading `@` escapes a name that collides with a keyword. A target ending in a `DynamicKey` - `count eventCountByType.$eventContext.eventType.id` - writes under a dictionary key taken from the event context, so the property holds one entry per distinct value; see [Event Context](event-context.md#in-dynamic-dictionary-keys). A key can also read the event, `slots.$eventContent.slot`, or who caused it, `byUser.$causedBy.userName`; see [Dictionary entries](property-mapping.md#dictionary-entries). Another `$` source is kept as literal key text and warned about (`PLAY0299`).
+
+**Note:** `SetOnceLine` assigns only when the target has no value yet. `RemoveLine` deletes the dictionary entry its key names, so its target must carry a `DynamicKey` (`PLAY0956`); it is not the `remove with` or `remove via join` block, and a property named `with` or `via` is escaped, `remove @with.$eventContent.slot`.
 
 **Note:** `ClearLine` removes the value a property holds, and takes a dotted `Target` so a property on a nested object can be cleared. It is a mapping line, distinct from `ClearWithBlock` — `clear with <EventType>` — which nulls a whole child object. The older `Assignment` spelling `<property> = null` still parses, and parses as an assignment of the null literal.
 
@@ -484,7 +500,7 @@ Literal = BoolLiteral
 
 `literal` in front of a literal states explicitly that the value is a constant - most often a fixed key, `key literal "global"` (see [Keys](keys.md)).
 
-`$causedBy` on its own, or followed by a path the catalog lists below `causedBy` - `subject`, `name`, `userName`, or `onBehalfOf` and its own members - parses as the short form of `$eventContext.causedBy`. Chronicle compiles and evaluates the scalar forms `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName`. The Screenplay semantic-model binder still rejects the shorthand and reports [Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119); write `$eventContext.causedBy.subject`, `.name` or `.userName` for semantic-model binding. Whole-object `$causedBy` and `$eventContext.causedBy`, and paths through the optional `onBehalfOf` member, are not admitted as portable scalar mappings.
+`$causedBy` on its own, or followed by a path the catalog lists below `causedBy` - `subject`, `name`, `userName`, or `onBehalfOf` and its own members - parses as the short form of `$eventContext.causedBy`. `$causedBy.subject`, `$causedBy.name` and `$causedBy.userName` are first-class values: Chronicle evaluates them and the semantic-model binder binds them to the same value as `$eventContext.causedBy.subject`, `.name` or `.userName`. Whole-object `$causedBy` and `$eventContext.causedBy`, and paths through the optional `onBehalfOf` member, are not admitted as portable scalar mappings.
 
 `$eventSourceId` and `$eventContext.eventSourceId` are distinct expressions that resolve to the same value; see [Event Context](event-context.md#eventsourceid-and-eventcontexteventsourceid).
 

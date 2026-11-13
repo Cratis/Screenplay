@@ -390,6 +390,11 @@ public sealed record SemanticCommand(
     public SemanticCommandHandler? Handler { get; init; }
 
     /// <summary>
+    /// Gets the availability gates of this command; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the transient response contract, or null when the command has no response.
     /// </summary>
     public SemanticCommandResponse? Response { get; init; }
@@ -523,6 +528,11 @@ public sealed record SemanticKeyedQuery(
     public SemanticAuthorization? Authorization { get; init; }
 
     /// <summary>
+    /// Gets the availability gates of this query; every one has to hold for it to be there. ESM v53.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets caller-supplied equality filters in declaration order.
     /// </summary>
     public ImmutableArray<SemanticQueryFilter> Filters { get; init; } = [];
@@ -531,6 +541,11 @@ public sealed record SemanticKeyedQuery(
     /// Gets the caller-supplied parts of a single-instance key, replacing Argument and KeyProperty when present.
     /// </summary>
     public ImmutableArray<SemanticQueryKeyPart> KeyParts { get; init; } = [];
+
+    /// <summary>
+    /// Gets the policy that narrows the rows of a collection result (ESM v47), <see langword="null"/> when every row is returned.
+    /// </summary>
+    public SemanticPolicyReference? Narrowing { get; init; }
 }
 
 /// <summary>

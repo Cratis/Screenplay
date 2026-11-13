@@ -67,8 +67,8 @@ internal static partial class SemanticModelRead
             .Add("modules", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Modules = Array(ref reader, (ref Utf8JsonReader item) => Module(ref item, state.SchemaVersion), property))
             .Add("policies", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Policies = Array(ref reader, Policy, property))
             .Add("triggers", 6, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Triggers = Array(ref reader, Trigger, property))
-            .Add("stateMachines", LanguageVersion.V36.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.StateMachines = Array(ref reader, StateMachine, property))
-            .Add("workflows", LanguageVersion.V36.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Workflows = Array(ref reader, Workflow, property))
+            .Add("stateMachines", LanguageVersion.V36.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.StateMachines = Array(ref reader, (ref Utf8JsonReader item) => StateMachine(ref item, state.SchemaVersion), property))
+            .Add("workflows", LanguageVersion.V36.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Workflows = Array(ref reader, (ref Utf8JsonReader item) => Workflow(ref item, state.SchemaVersion), property))
             .Add("graphs", LanguageVersion.V38.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Graphs = Array(ref reader, Graph, property))
             .Add("graphProjections", LanguageVersion.V38.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.GraphProjections = Array(ref reader, GraphProjection, property))
             .Add("graphSpecifications", LanguageVersion.V38.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.GraphSpecifications = Array(ref reader, GraphSpecification, property))
@@ -77,7 +77,12 @@ internal static partial class SemanticModelRead
             .Add("reactionProductionMode", LanguageVersion.V22.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReactionProductionMode = String(ref reader, property) == "atomic" ? SemanticReactionProductionMode.Atomic : throw new InvalidSemanticContract("Unknown reaction production mode."))
             .Add("commandReadMode", LanguageVersion.V25.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.CommandReadMode = String(ref reader, property) == "protected" ? SemanticCommandReadMode.Protected : throw new InvalidSemanticContract("Unknown command read mode."))
             .Add("timeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.TimeZone = Nested(ref reader, ApplicationTimeZone, property))
-            .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property));
+            .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property))
+            .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property))
+            .Add("systems", LanguageVersion.V50.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Systems = Array(ref reader, System, property))
+            .Add("audiences", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Audiences = Array(ref reader, Audience, property))
+            .Add("availabilities", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Availabilities = Array(ref reader, Availability, property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property));
 
         public ImmutableArray<SemanticConcept> Concepts { get; set; }
 
@@ -109,6 +114,16 @@ internal static partial class SemanticModelRead
 
         public SemanticTimeZone? TimeZone { get; set; }
 
+        public SemanticAgents? Agents { get; set; }
+
+        public ImmutableArray<SemanticSystem> Systems { get; set; }
+
+        public ImmutableArray<SemanticAudience> Audiences { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailability> Availabilities { get; set; } = [];
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
         public ImmutableArray<string> ContextMembers { get; set; } = [];
 
         bool HasCollections => !Concepts.IsDefault && !Types.IsDefault && !Modules.IsDefault;
@@ -128,7 +143,7 @@ internal static partial class SemanticModelRead
         public SemanticApplication Build()
         {
             Required(HasIdentity && HasCollections && (SchemaVersion < LanguageVersion.V37.Major || TimeZone is not null), "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers };
+            return new(Id, Name!, Concepts, Types, Modules) { Audiences = Audiences, Availabilities = Availabilities, Provides = Provides, Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents, Systems = Systems.IsDefault ? [] : Systems };
         }
     }
 
@@ -164,14 +179,20 @@ internal static partial class SemanticModelRead
     sealed class ModuleState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<ModuleState> Fields = TableFor<ModuleState>("module")
-            .Add("features", (ref Utf8JsonReader reader, ModuleState state, string property) => state.Features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, state.SchemaVersion), property));
+            .Add("features", (ref Utf8JsonReader reader, ModuleState state, string property) => state.Features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, state.SchemaVersion), property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ModuleState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ModuleState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
 
         public ImmutableArray<SemanticFeature> Features { get; set; }
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
 
         public SemanticModule Build()
         {
             Required(HasIdentity && !Features.IsDefault, "module");
-            return new(Id, Name!, Features);
+            return new(Id, Name!, Features) { Provides = Provides, Available = Available };
         }
     }
 
@@ -179,7 +200,13 @@ internal static partial class SemanticModelRead
     {
         public static readonly FieldTable<FeatureState> Fields = TableFor<FeatureState>("feature")
             .Add("features", (ref Utf8JsonReader reader, FeatureState state, string property) => state.Features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, state.SchemaVersion), property))
-            .Add("slices", (ref Utf8JsonReader reader, FeatureState state, string property) => state.Slices = Array(ref reader, (ref Utf8JsonReader item) => Slice(ref item, state.SchemaVersion), property));
+            .Add("slices", (ref Utf8JsonReader reader, FeatureState state, string property) => state.Slices = Array(ref reader, (ref Utf8JsonReader item) => Slice(ref item, state.SchemaVersion), property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, FeatureState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, FeatureState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
 
         public ImmutableArray<SemanticFeature> Features { get; set; }
 
@@ -188,7 +215,7 @@ internal static partial class SemanticModelRead
         public SemanticFeature Build()
         {
             Required(HasIdentity && !Features.IsDefault && !Slices.IsDefault, "feature");
-            return new(Id, Name!, Features, Slices);
+            return new(Id, Name!, Features, Slices) { Provides = Provides, Available = Available };
         }
     }
 }

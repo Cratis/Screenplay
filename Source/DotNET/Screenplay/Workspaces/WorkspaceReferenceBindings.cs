@@ -104,6 +104,7 @@ sealed class WorkspaceReferenceBindings
             WorkspaceReferenceDomain? domain = entry.Node switch
             {
                 ModuleSyntax or FeatureSyntax => WorkspaceReferenceDomain.Container,
+                SliceSyntax => WorkspaceReferenceDomain.Slice,
                 ConceptSyntax or TypeSyntax => WorkspaceReferenceDomain.Type,
                 EventSyntax => WorkspaceReferenceDomain.Event,
                 OperationSyntax => WorkspaceReferenceDomain.Operation,
@@ -118,7 +119,10 @@ sealed class WorkspaceReferenceBindings
                 DialogTemplateSyntax => WorkspaceReferenceDomain.DialogTemplate,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 PersonaSyntax => WorkspaceReferenceDomain.Persona,
+                AudienceSyntax => WorkspaceReferenceDomain.Audience,
+                AvailabilitySyntax => WorkspaceReferenceDomain.Availability,
                 SinkSyntax => WorkspaceReferenceDomain.Sink,
+                SecretSyntax => WorkspaceReferenceDomain.Secret,
                 SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 StateMachineSyntax => WorkspaceReferenceDomain.StateMachine,
@@ -176,7 +180,9 @@ sealed class WorkspaceReferenceBindings
     WorkspaceReferenceBinding Bind(WorkspaceReferenceMember reference)
     {
         var domain = reference.Domain;
-        if (domain == WorkspaceReferenceDomain.Container)
+
+        // A storyline step resolves like the compiler resolves it (StorylineDeclarations), not as a sibling dependency.
+        if (domain == WorkspaceReferenceDomain.Container && reference.Entry.Node is not StorylineStepSyntax)
         {
             var containers = _declarations.Where(declaration => declaration.Domain == domain)
                 .DistinctBy(declaration => (declaration.Name, Scope: string.Join('.', declaration.Scope.Segments))).ToArray();

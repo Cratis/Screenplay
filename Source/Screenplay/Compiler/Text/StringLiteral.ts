@@ -23,3 +23,10 @@ export function unescapeString(value: string): string {
     }
     return result;
 }
+
+const escapedCharacters: Record<string, string> = { '\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t' };
+
+// Escapes a string for a double-quoted literal; the counterpart of the C# StringLiteral.Escape.
+export function escapeString(value: string): string {
+    return value.replace(/[\\"\n\r\t]/g, character => escapedCharacters[character]);
+}

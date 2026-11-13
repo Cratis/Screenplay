@@ -1,6 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineSyntax } from '../Syntax/Storylines';
+import type { AgentsSyntax } from '../Syntax/Agents';
+import type { AudienceSyntax, AvailabilitySyntax } from '../Syntax/Availability';
+import { audienceLocationKey, parseAudienceDeclaration, parseAvailabilityDeclaration } from './AvailabilityParser';
+import { parseAgents } from './AgentsParser';
+import { parseStoryline } from './StorylineParser';
 import { CommandReadMode } from '../Syntax/CommandReadMode';
 import { ReactionProductionMode } from '../Syntax/ReactionProductionMode';
 import { EnumerationMembers } from './EnumerationMembers';
@@ -40,16 +46,19 @@ import { PolicySyntax } from '../Syntax/Policies';
 import { parsePolicy } from './PolicyParser';
 import { PurposeSyntax } from '../Syntax/Purposes';
 import { parsePurpose } from './PurposeParser';
+import { parseProvide } from './ProvideParser';
+import { ProvideSyntax } from '../Syntax/ProvideSyntax';
 import { SeedSyntax } from '../Syntax/Seeds';
 import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
+import { parseSecret } from './SystemConfigurationParser';
 import { parseStateMachine } from './StateMachineParser';
 import { parseWorkflow } from './WorkflowParser';
 import { StateMachineSyntax, WorkflowSyntax } from '../Syntax/Lifecycles';
 import { EventVisibility } from '../Syntax/EventVisibility';
 import { isBlankPublicEventOrigin } from '../Syntax/PublicEventInvariants';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
-import { SystemSyntax } from '../Syntax/Operations';
+import { SecretSyntax, SystemSyntax } from '../Syntax/Operations';
 import { EventSourceSyntax } from '../Syntax/EventSources';
 import { parseCanvasPair } from './CanvasPlacement';
 import { parseEventSource } from './EventSourceParser';
@@ -81,7 +90,7 @@ const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'Dat
 const opaqueTopLevel = new Set(['policy', 'authentication', 'onboarding', 'seed', 'ui', 'trigger', 'layout', 'behavior', 'sample']);
 
 // What belongs in a module or feature body; at the top level of a whole document it gets a hint saying so.
-const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation', 'authorize', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
+const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation', 'authorize', 'available', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
 
 // Parses one document into its application syntax - the port of the C# ScreenplayParser. The placement says
 // where the document's top level belongs: the application, unless an import placed it in a module or feature.
@@ -117,16 +126,22 @@ interface RootState {
     readonly concepts: ConceptSyntax[];
     readonly types: TypeSyntax[];
     readonly systems: SystemSyntax[];
+    readonly secrets: SecretSyntax[];
     readonly stateMachines: StateMachineSyntax[];
     readonly workflows: WorkflowSyntax[];
     readonly eventSources: EventSourceSyntax[];
     readonly modules: ModuleSyntax[];
     readonly personas: PersonaSyntax[];
     readonly users: UserSyntax[];
+    readonly storylines: StorylineSyntax[];
+    agents: AgentsSyntax | null;
     readonly sinks: SinkSyntax[];
     readonly stickyNotes: StickyNoteSyntax[];
     readonly policies: PolicySyntax[];
     readonly purposes: PurposeSyntax[];
+    readonly provides: ProvideSyntax[];
+    readonly audiences: AudienceSyntax[];
+    readonly availabilities: AvailabilitySyntax[];
     readonly seeds: SeedSyntax[];
     readonly examples: SpecificationExampleSyntax[];
     readonly declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][];
@@ -149,8 +164,8 @@ function createRootState(placement: PlayPlacement): RootState {
         placement, moduleBody, featureBody, placedBody: moduleBody ?? featureBody,
         identity: null, applicationContext: null, reactionProductionMode: null, sawReactionBatches: false, commandReadMode: null,
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
-        imports: [], fileImports: [], concepts: [], types: [], systems: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
-        personas: [], users: [], sinks: [], stickyNotes: [], policies: [], purposes: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
+        imports: [], fileImports: [], concepts: [], types: [], systems: [], secrets: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
+        personas: [], users: [], storylines: [], agents: null, sinks: [], stickyNotes: [], policies: [], purposes: [], provides: [], audiences: [], availabilities: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
         themes: [], designSystems: [], designProfiles: []
     };
 }
@@ -172,6 +187,7 @@ const bodyRules: readonly RootRule[] = [
     { matches: isKeyword('import'), parse: parseRootImport },
     { matches: isKeyword('example'), parse: parseRootExample },
     { matches: isKeyword('eventsource'), parse: (context, line, state) => { state.eventSources.push(parseEventSource(context, line)); } },
+    { matches: isKeyword('secret'), parse: (context, line, state) => { const secret = parseSecret(context, line); if (secret !== null) state.secrets.push(secret); } },
     { matches: isKeyword('system'), parse: (context, line, state) => { state.systems.push(parseSystem(context, line)); } },
     { matches: isKeyword('statemachine'), parse: (context, line, state) => { state.stateMachines.push(parseStateMachine(context, line)); } },
     { matches: isKeyword('workflow'), parse: (context, line, state) => { state.workflows.push(parseWorkflow(context, line)); } },
@@ -180,11 +196,21 @@ const bodyRules: readonly RootRule[] = [
     { matches: (keyword, _, state) => keyword === 'module' && !isDocumentPlacement(state.placement), parse: (context, line, state) => parseModuleInPlacedFile(context, line, state.placement, state.moduleBody) },
     { matches: isKeyword('module'), parse: (context, line, state) => { state.modules.push(parseModule(context, line)); } },
     { matches: isKeyword('user'), parse: (context, line, state) => { state.users.push(parseUser(context, line)); } },
+    { matches: isKeyword('storyline'), parse: (context, line, state) => { state.storylines.push(parseStoryline(context, line)); } },
+    { matches: isKeyword('agents'), parse: (context, line, state) => {
+        const agents = parseAgents(context, line);
+        if (state.agents !== null) context.error(DiagnosticCodes.DuplicateAgentsDeclaration, 'An application allows exactly one agents block', locationOf(line));
+        else state.agents = agents;
+    } },
     { matches: isKeyword(sinkKeyword), parse: (context, line, state) => { const sink = parseSinkDeclaration(context, line); if (sink !== undefined) state.sinks.push(sink); } },
+    { matches: isKeyword('audience'), parse: (context, line, state) => { state.audiences.push(parseAudienceDeclaration(context, line)); } },
+    { matches: isKeyword('availability'), parse: (context, line, state) => { state.availabilities.push(parseAvailabilityDeclaration(context, line)); } },
     { matches: isKeyword('persona'), parse: (context, line, state) => { state.personas.push(parsePersona(context, line)); } },
     { matches: isKeyword('sticky'), parse: parseRootStickyNote },
     { matches: isKeyword('seed'), parse: (context, line, state) => { state.seeds.push(parseSeed(context.valueContext, line)); } },
     { matches: (keyword, _, state) => keyword === 'purpose' && state.placedBody !== undefined, parse: (context, line, state) => { state.placedBody?.tryParse(context, line); } },
+    { matches: (keyword, _, state) => keyword === 'provide' && state.placedBody !== undefined, parse: (context, line, state) => { state.placedBody?.tryParse(context, line); } },
+    { matches: isKeyword('provide'), parse: (context, line, state) => { parseProvide(context, line, state.provides); } },
     { matches: isKeyword('purpose'), parse: (context, line, state) => { state.purposes.push(parsePurpose(context, line)); } },
     { matches: isKeyword('context'), parse: (context, line, state) => { state.applicationContext = parseApplicationContext(context, line, state.applicationContext, state.placement); } },
     { matches: isKeyword('identity'), parse: (context, line, state) => { state.identity = parseIdentity(context, line, state.identity); } },
@@ -345,8 +371,8 @@ function buildApplication(context: ParserContext, state: RootState): Application
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, sinks, policies, purposes, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions, themes, designSystems, designProfiles } = state;
-    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
+    const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, storylines, sinks, policies, purposes, provides, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions, themes, designSystems, designProfiles } = state;
+    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('agents', state.agents), ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, ...nonEmptyOnly('provides', provides), ...nonEmptyOnly('audiences', state.audiences), ...nonEmptyOnly('availabilities', state.availabilities), seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('secrets', state.secrets), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -360,7 +386,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     }
     if (keyword === 'identity') return line.content === 'identity';
     if (keyword === 'context') return line.content === 'context';
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'user' || keyword === 'sticky' || opaqueTopLevel.has(keyword) || keyword === 'design' || keyword === 'theme';
+    return keyword === 'purpose' || keyword === 'provide' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'statemachine' || keyword === 'workflow' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || keyword === 'audience' || keyword === 'availability' || keyword === 'user' || keyword === 'storyline' || keyword === 'sticky' || opaqueTopLevel.has(keyword) || keyword === 'design' || keyword === 'theme';
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -386,7 +412,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow';
+            : ' - expected domain, import, concept, type, policy, audience, availability, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);
@@ -515,6 +541,8 @@ function parseUser(context: ParserContext, line: SourceLine): UserSyntax {
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.
+const personaAudiencePattern = pattern('^audience\\s+([A-Za-z_]\\w*)$');
+
 function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
     const name = personaPattern.exec(line.content)?.[1] ?? '';
     if (name === '') {
@@ -522,6 +550,8 @@ function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
     }
     let description: string | null = null;
     const policies: string[] = [];
+    const audiences: string[] = [];
+    const audienceLocations: Record<string, SourceLocation> = {};
     const goals: string[] = [];
     let position: readonly [number, number] | null = null;
     let size: readonly [number, number] | null = null;
@@ -541,6 +571,14 @@ function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
             position = parseCanvasPair(context, child, 'position', 'x', 'y', position, true) ?? position;
         } else if (keyword === 'size') {
             size = parseCanvasPair(context, child, 'size', 'width', 'height', size, false) ?? size;
+        } else if (keyword === 'audience') {
+            const audience = personaAudiencePattern.exec(child.content);
+            if (audience === null) {
+                context.error(DiagnosticCodes.InvalidAudienceDeclaration, `Invalid audience reference '${child.content}' - expected 'audience <Name>'`, locationOf(child));
+            } else {
+                audiences.push(audience[1]);
+                audienceLocations[audienceLocationKey(audiences, audiences.length - 1)] = locationOf(child);
+            }
         } else if (keyword === 'policy') {
             const policy = personaPolicyPattern.exec(child.content);
             if (policy === null) {
@@ -549,12 +587,13 @@ function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
                 policies.push(policy[1]);
             }
         } else {
-            context.error(DiagnosticCodes.UnknownPersonaDirective, `Unexpected '${keyword}' in persona body - expected description, goal, policy, position or size`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownPersonaDirective, `Unexpected '${keyword}' in persona body - expected description, goal, policy, audience, position or size`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
     return {
         kind: 'PersonaSyntax', name, description, policies,
+        ...(audiences.length > 0 ? { audiences, directiveLocations: audienceLocations } : {}),
         ...(goals.length > 0 ? { goals } : {}),
         ...(position === null ? {} : { x: position[0], y: position[1] }),
         ...(size === null ? {} : { width: size[0], height: size[1] }),

@@ -14,80 +14,133 @@ internal static partial class WorkspaceTimelineRepairs
             .OrderBy(rank => rank.Value).Select(rank => rank.Key)]
         : Block(timeline, step);
 
-    static TimelineRecipe? ExpandImports(
-        WorkspaceSyntaxIndex index,
-        AuthoredTimeline timeline,
-        TimelineFinding finding,
-        WorkspaceSyntaxEntry subject,
-        WorkspaceSyntaxEntry parent,
-        WorkspaceSyntaxEntry consumerEntry,
-        WorkspaceSyntaxEntry producerEntry,
-        AuthoredOrderStep consumer,
-        AuthoredOrderStep producer)
+    static TimelineRecipe? ExpandImports(RepairScope scope, WorkspaceSyntaxEntry consumerEntry, WorkspaceSyntaxEntry producerEntry)
     {
-        var entries = index.Entries.Where(entry => entry.Parent == parent.Handle && entry.Member == "fileImports").OrderBy(entry => entry.Index).ToArray();
-        var start = Math.Min(consumerEntry.Index!.Value, producerEntry.Index!.Value);
-        var end = Math.Max(consumerEntry.Index.Value, producerEntry.Index.Value);
-        var selected = entries.Skip(start).Take(end - start + 1).ToArray();
-        if (!selected.Any(entry => PlayGlob.HasWildcard(((FileImportSyntax)entry.Node).Pattern))) return null;
-        var document = timeline.Documents.Single(document => document.Path == consumer.Path);
-        var compiler = new ScreenplayCompiler();
-        var discovered = ScreenplayCompiler.DiscoverImports(document.Source, document.Path, compiler.Languages);
-        var removed = selected.Select(entry => new TimelineImportPin(
-            document.Path,
-            discovered.Single(import => import.Import.Location == entry.Location).PlacementFrom(document.Placement)!,
-            (FileImportSyntax)entry.Node)).ToArray();
+        var span = ImportSpan.Between(scope, consumerEntry, producerEntry);
+        if (!span.HasGlob) return null;
+        var document = scope.Timeline.Documents.Single(document => document.Path == scope.Consumer.Path);
+        var removed = RemovedImportPins(document, span.Selected);
         if (removed.Any(import => import.Placement is null)) return null;
-        var expanded = removed.SelectMany(import => timeline.Documents
-            .Where(target => target.Path != document.Path && PlayGlob.IsMatch(PlayGlob.Resolve(document.Path, import.Import.Pattern), target.Path))
-            .OrderBy(target => target.Path, StringComparer.Ordinal).Select(target => (target.Path, Original: import))).ToArray();
-        if (expanded.Length == 0 || expanded.Select(item => item.Path).Distinct(StringComparer.Ordinal).Count() != expanded.Length ||
-            expanded.Any(item => item.Path.IndexOfAny(['*', '?', '[', ']', '{', '}']) >= 0 ||
-                !timeline.Documents.Single(document => document.Path == item.Path).Placement.Equals(item.Original.Placement)))
-        {
-            return null;
-        }
+        var expanded = ExpandedTargets(scope.Timeline, document, removed);
+        if (!IsExpandable(scope.Timeline, expanded)) return null;
 
+        var expansion = new ImportExpansion(scope, document, span, expanded, removed);
         foreach (var after in new[] { false, true })
         {
-            var ranks = Move(timeline, Block(timeline, after ? consumer : producer), Block(timeline, after ? producer : consumer), after);
-            if (ranks is null || !Safe(timeline, TimelineOrder.Analyze(timeline.Application!, ranks), finding.Key)) continue;
-            var paths = expanded.Select(item => item.Path).ToList();
-            var moved = after ? consumer.TargetPath! : producer.TargetPath!;
-            var anchor = after ? producer.TargetPath! : consumer.TargetPath!;
-            if (!paths.Remove(moved) || !paths.Contains(anchor)) continue;
-            paths.Insert(paths.IndexOf(anchor) + (after ? 1 : 0), moved);
-            var folder = document.Path.Contains('/') ? document.Path[..document.Path.LastIndexOf('/')] : ".";
-            var commented = new HashSet<TimelineImportPin>();
-            var imports = paths.Select(path =>
-            {
-                var original = expanded.Single(item => item.Path == path).Original;
-                var imported = new FileImportSyntax(Path.GetRelativePath(folder, path).Replace('\\', '/'), SourceLocation.Start);
-                return commented.Add(original) ? imported with { SourceComments = original.Import.SourceComments } : imported;
-            }).ToArray();
-            var replacements = entries.Take(start).Select(entry => (FileImportSyntax)entry.Node).Concat(imports)
-                .Concat(entries.Skip(end + 1).Select(entry => (FileImportSyntax)entry.Node)).ToArray();
-            var replacement = parent.Node switch
-            {
-                ApplicationSyntax application => application with { FileImports = replacements },
-                ModuleSyntax module => module with { FileImports = replacements },
-                FeatureSyntax feature => feature with { FileImports = replacements },
-                _ => parent.Node
-            };
-            if (ReferenceEquals(replacement, parent.Node)) return null;
+            var ranks = SafeExpansionMove(scope, after);
+            if (ranks is null) continue;
+            var paths = ExpandedOrder(expansion, after);
+            if (paths is null) continue;
 
-            return new(
-                new(finding.Diagnostic.Code, subject.Handle, [new ReplaceWorkspaceNode(parent.Handle, parent.Node, replacement)])
-                {
-                    Title = "Replace timeline globs with ordered imports (new files need explicit imports)"
-                },
-                ranks)
-            {
-                Pins = [.. paths.Zip(imports).Select(pair => new TimelineImportPin(document.Path, expanded.Single(item => item.Path == pair.First).Original.Placement, pair.Second))],
-                RemovedImports = [.. removed]
-            };
+            return ExpandedRecipe(expansion, ranks, paths);
         }
 
         return null;
+    }
+
+    static TimelineImportPin[] RemovedImportPins(PlacedPlayDocument document, WorkspaceSyntaxEntry[] selected)
+    {
+        var compiler = new ScreenplayCompiler();
+        var discovered = ScreenplayCompiler.DiscoverImports(document.Source, document.Path, compiler.Languages);
+
+        return [.. selected.Select(entry => new TimelineImportPin(
+            document.Path,
+            discovered.Single(import => import.Import.Location == entry.Location).PlacementFrom(document.Placement)!,
+            (FileImportSyntax)entry.Node))];
+    }
+
+    static (string Path, TimelineImportPin Original)[] ExpandedTargets(AuthoredTimeline timeline, PlacedPlayDocument document, TimelineImportPin[] removed) =>
+        [.. removed.SelectMany(import => timeline.Documents
+            .Where(target => target.Path != document.Path && PlayGlob.IsMatch(PlayGlob.Resolve(document.Path, import.Import.Pattern), target.Path))
+            .OrderBy(target => target.Path, StringComparer.Ordinal).Select(target => (target.Path, Original: import)))];
+
+    static bool IsExpandable(AuthoredTimeline timeline, (string Path, TimelineImportPin Original)[] expanded) =>
+        expanded.Length > 0 && expanded.Select(item => item.Path).Distinct(StringComparer.Ordinal).Count() == expanded.Length &&
+        expanded.All(item => !GlobMetacharacters.AreIn(item.Path) &&
+            timeline.Documents.Single(document => document.Path == item.Path).Placement.Equals(item.Original.Placement));
+
+    static Dictionary<string, int>? SafeExpansionMove(RepairScope scope, bool after)
+    {
+        var timeline = scope.Timeline;
+        var ranks = Move(timeline, Block(timeline, after ? scope.Consumer : scope.Producer), Block(timeline, after ? scope.Producer : scope.Consumer), after);
+
+        return ranks is not null && IsSafe(scope, ranks) ? ranks : null;
+    }
+
+    static List<string>? ExpandedOrder(ImportExpansion expansion, bool after)
+    {
+        var paths = expansion.Expanded.Select(item => item.Path).ToList();
+        var moved = after ? expansion.Scope.Consumer.TargetPath! : expansion.Scope.Producer.TargetPath!;
+        var anchor = after ? expansion.Scope.Producer.TargetPath! : expansion.Scope.Consumer.TargetPath!;
+        if (!paths.Remove(moved) || !paths.Contains(anchor)) return null;
+        paths.Insert(paths.IndexOf(anchor) + (after ? 1 : 0), moved);
+
+        return paths;
+    }
+
+    static TimelineRecipe? ExpandedRecipe(ImportExpansion expansion, Dictionary<string, int> ranks, List<string> paths)
+    {
+        var (scope, document, span, expanded, removed) = expansion;
+        var imports = OrderedImports(expanded, paths, FolderOf(document.Path));
+        var replacement = WithFileImports(scope.Parent.Node, span.Around(imports));
+        if (ReferenceEquals(replacement, scope.Parent.Node)) return null;
+
+        return new(
+            new(scope.Finding.Diagnostic.Code, scope.Subject.Handle, [new ReplaceWorkspaceNode(scope.Parent.Handle, scope.Parent.Node, replacement)])
+            {
+                Title = "Replace timeline globs with ordered imports (new files need explicit imports)"
+            },
+            ranks)
+        {
+            Pins = [.. paths.Zip(imports).Select(pair => new TimelineImportPin(document.Path, expanded.Single(item => item.Path == pair.First).Original.Placement, pair.Second))],
+            RemovedImports = [.. removed]
+        };
+    }
+
+    static FileImportSyntax[] OrderedImports(
+        (string Path, TimelineImportPin Original)[] expanded,
+        List<string> paths,
+        string folder)
+    {
+        var commented = new HashSet<TimelineImportPin>();
+
+        return [.. paths.Select(path =>
+        {
+            var original = expanded.Single(item => item.Path == path).Original;
+            var imported = new FileImportSyntax(Path.GetRelativePath(folder, path).Replace('\\', '/'), SourceLocation.Start);
+            return commented.Add(original) ? imported with { SourceComments = original.Import.SourceComments } : imported;
+        })];
+    }
+
+    static SyntaxNode WithFileImports(SyntaxNode parent, IEnumerable<FileImportSyntax> imports) => parent switch
+    {
+        ApplicationSyntax application => application with { FileImports = imports },
+        ModuleSyntax module => module with { FileImports = imports },
+        FeatureSyntax feature => feature with { FileImports = imports },
+        _ => parent
+    };
+
+    sealed record ImportExpansion(
+        RepairScope Scope,
+        PlacedPlayDocument Document,
+        ImportSpan Span,
+        (string Path, TimelineImportPin Original)[] Expanded,
+        TimelineImportPin[] Removed);
+
+    sealed record ImportSpan(WorkspaceSyntaxEntry[] Entries, int Start, int End)
+    {
+        internal WorkspaceSyntaxEntry[] Selected => [.. Entries.Skip(Start).Take(End - Start + 1)];
+
+        internal bool HasGlob => Selected.Any(entry => PlayGlob.HasWildcard(((FileImportSyntax)entry.Node).Pattern));
+
+        internal static ImportSpan Between(RepairScope scope, WorkspaceSyntaxEntry consumerEntry, WorkspaceSyntaxEntry producerEntry)
+        {
+            var entries = scope.Index.Entries.Where(entry => entry.Parent == scope.Parent.Handle && entry.Member == "fileImports").OrderBy(entry => entry.Index).ToArray();
+
+            return new(entries, Math.Min(consumerEntry.Index!.Value, producerEntry.Index!.Value), Math.Max(consumerEntry.Index.Value, producerEntry.Index.Value));
+        }
+
+        internal FileImportSyntax[] Around(IEnumerable<FileImportSyntax> imports) =>
+            [.. Entries.Take(Start).Select(entry => (FileImportSyntax)entry.Node).Concat(imports).Concat(Entries.Skip(End + 1).Select(entry => (FileImportSyntax)entry.Node))];
     }
 }

@@ -20,6 +20,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, screen.Description, screen);
+            WriteAvailable(writer, screen.Available);
             if (screen.File is not null)
             {
                 writer.Line($"file {screen.File.Path}", screen.File);
@@ -28,6 +29,11 @@ public partial class ScreenplayPrinter
             if (screen.Fits.Any())
             {
                 writer.Line($"fits {string.Join(", ", screen.Fits.Select(ScreenFitsParser.Keyword))}");
+            }
+
+            foreach (var visual in screen.Visuals)
+            {
+                writer.Line($"{ScreenVisualParser.Keyword(visual.Kind)} {visual.File.Path}", visual);
             }
 
             foreach (var directive in screen.Directives)

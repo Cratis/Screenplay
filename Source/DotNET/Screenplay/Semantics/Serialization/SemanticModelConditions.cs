@@ -20,6 +20,7 @@ public static partial class SemanticModelCanonicalJson
                     SemanticComparisonOperator.Equal => "==", SemanticComparisonOperator.NotEqual => "!=",
                     SemanticComparisonOperator.GreaterThan => ">", SemanticComparisonOperator.GreaterThanOrEqual => ">=",
                     SemanticComparisonOperator.LessThan => "<", SemanticComparisonOperator.LessThanOrEqual => "<=",
+                    SemanticComparisonOperator.Contains => "contains", SemanticComparisonOperator.StartsWith => "startsWith",
                     _ => throw new InvalidSemanticContract("Unknown condition comparison operator.")
                 });
                 WriteConditionOperand(writer, "right", comparison.Right);
@@ -48,6 +49,10 @@ public static partial class SemanticModelCanonicalJson
         if (operand.Clock is not null)
         {
             WriteClockOperand(writer, operand.Clock);
+        }
+        else if (operand.CallerId)
+        {
+            writer.WriteBoolean("callerId", true);
         }
         else if (operand.Property.IsSet)
         {
@@ -116,6 +121,8 @@ internal static partial class SemanticModelRead
                 "==" => SemanticComparisonOperator.Equal, "!=" => SemanticComparisonOperator.NotEqual,
                 ">" => SemanticComparisonOperator.GreaterThan, ">=" => SemanticComparisonOperator.GreaterThanOrEqual,
                 "<" => SemanticComparisonOperator.LessThan, "<=" => SemanticComparisonOperator.LessThanOrEqual,
+                "contains" when schemaVersion >= LanguageVersion.V45.Major => SemanticComparisonOperator.Contains,
+                "startsWith" when schemaVersion >= LanguageVersion.V45.Major => SemanticComparisonOperator.StartsWith,
                 _ => throw new InvalidSemanticContract("Unknown condition comparison operator.")
             };
             return new SemanticComparison(comparisonLeft, comparison, comparisonRight);
@@ -139,6 +146,7 @@ internal static partial class SemanticModelRead
         string? read = null;
         SemanticClockOperand? clock = null;
         var dateOf = false;
+        var callerId = false;
         while (NextProperty(ref reader, seen, "condition operand") is { } property)
         {
             switch (property)
@@ -146,6 +154,7 @@ internal static partial class SemanticModelRead
                 case "read" when schemaVersion >= LanguageVersion.V25.Major: read = String(ref reader, property); break;
                 case "clock" when schemaVersion >= LanguageVersion.V37.Major: clock = Nested(ref reader, ClockOperand, property); break;
                 case "dateOf" when schemaVersion >= LanguageVersion.V37.Major: dateOf = OnlyTrue(ref reader, property, "condition operand"); break;
+                case "callerId" when schemaVersion >= LanguageVersion.V49.Major: callerId = OnlyTrue(ref reader, property, "condition operand"); break;
                 case "property": propertyId = SemanticId.Parse(String(ref reader, property)); break;
                 case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "condition operand");
@@ -153,6 +162,12 @@ internal static partial class SemanticModelRead
         }
 
         var fields = new ConditionOperandFields(propertyId, value, valueRead, read, dateOf);
+        if (callerId)
+        {
+            Required(!propertyId.IsSet && !valueRead && read is null && !dateOf && clock is null, "condition operand");
+            return new(default, null) { CallerId = true };
+        }
+
         return clock is null ? fields.PropertyOperand() : fields.ClockOperand(clock);
     }
 

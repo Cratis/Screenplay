@@ -16,18 +16,28 @@ public sealed partial class SemanticModelBinder
 
     static List<Diagnostic> CommandProductionAdmission(ApplicationSyntax syntax, out bool usesPublicEvents)
     {
-        var walker = new CommandProductionAdmissionWalker();
+        var walker = new CommandProductionAdmissionWalker(syntax.Systems.Any(system => system.Abilities.Any()));
         walker.VisitApplication(syntax);
         usesPublicEvents = walker.UsesPublicEvents || PublicEventUsageValidator.EventTargets(syntax).Count > 0;
         return walker.Diagnostics;
     }
 
-    sealed class CommandProductionAdmissionWalker : ScreenplaySyntaxWalker
+    sealed class CommandProductionAdmissionWalker(bool abilitiesAdmitted) : ScreenplaySyntaxWalker
     {
+        bool _inReaction;
+
         internal List<Diagnostic> Diagnostics { get; } = [];
 
         /// <summary>Gets whether the model declares a public event, an origin, a direction or an events source.</summary>
         internal bool UsesPublicEvents { get; private set; }
+
+        public override void VisitReaction(ReactionSyntax syntax)
+        {
+            var previous = _inReaction;
+            _inReaction = true;
+            base.VisitReaction(syntax);
+            _inReaction = previous;
+        }
 
         public override void VisitNode(SyntaxNode node)
         {
@@ -75,18 +85,38 @@ public sealed partial class SemanticModelBinder
                     node.Location,
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#462")));
             }
-            if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
+
+            // A model that declares an ability admits its systems (ESM v50, #1250); operations stay syntax-only until their own admission.
+            if ((node is SystemSyntax && !abilitiesAdmitted) || node is OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Operations and systems are not admitted by any supported executable model (ESM) version yet (#301).",
+                    "Operations are not admitted by any supported executable model (ESM) version yet (#301); a system executes only when the model declares an ability on it (#1250).",
                     node.Location,
                     DiagnosticArguments.ForIssue("Cratis/Screenplay#301")));
+            }
+
+            // Ability invocations from reactions, workflow actions, compute nodes and state entries are admitted (ESM v51, #1252); operation phases, approval via and $trigger values parse, print and validate but no supported ESM version carries them yet.
+            if (IsUnadmittedInvocationSite(node))
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Ability invocations from operations, approvals that answer through an ability (via) and $trigger values are not admitted by any supported executable model (ESM) version yet (#1252).",
+                    node.Location,
+                    DiagnosticArguments.ForIssue("Cratis/Screenplay#1252")));
             }
         }
 
         // Intent has no production feature gates. Do not dereference malformed hint collections here;
         // named-rule binding reports their typed diagnostics while retaining partial attachments.
         public override void VisitImplementation(ImplementationSyntax syntax) => VisitNode(syntax);
+
+        bool IsUnadmittedInvocationSite(SyntaxNode node) => node switch
+        {
+            InvokesSyntax { IsAbility: true } or InvocationBranchSyntax => !_inReaction,
+            InvocationValueExpressionSyntax value => !_inReaction || value.Source == "trigger",
+            WorkflowNodeSyntax { Via: not null } => true,
+            _ => false
+        };
     }
 }

@@ -11,7 +11,76 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Name">The system name.</param>
 /// <param name="Description">The optional description.</param>
 /// <param name="Location">The declaration location.</param>
-public record SystemSyntax(string Name, string? Description, SourceLocation Location) : SyntaxNode(Location);
+public record SystemSyntax(string Name, string? Description, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the abilities the system declares, in declaration order.
+    /// </summary>
+    public IEnumerable<AbilitySyntax> Abilities { get; init; } = [];
+
+    /// <summary>
+    /// Gets the extension package that realizes the system, or <see langword="null"/> when none is named. Realization
+    /// metadata, never part of the executable model.
+    /// </summary>
+    public SystemExtensionSyntax? Extension { get; init; }
+
+    /// <summary>
+    /// Gets the settings the model maps for the system, in declaration order. Realization metadata, never part of the
+    /// executable model.
+    /// </summary>
+    public IEnumerable<SystemSettingSyntax> Settings { get; init; } = [];
+
+    /// <summary>
+    /// Gets the activation override, or <see langword="null"/> when the system keeps the extension's default.
+    /// Realization metadata, never part of the executable model.
+    /// </summary>
+    public SystemActivationSyntax? Activation { get; init; }
+}
+
+/// <summary>
+/// Represents one typed ability a system can be asked to perform, with its returned values, named outcomes and effect class.
+/// </summary>
+/// <param name="Name">The ability name, unique within its system ignoring case.</param>
+/// <param name="EffectClass">The written effect class (<c>safe</c>, <c>idempotent</c> or <c>once</c>), or null when omitted, which means <c>once</c>.</param>
+/// <param name="Inputs">The declared input shape.</param>
+/// <param name="Returns">The returned values; empty when the ability returns nothing.</param>
+/// <param name="Outcomes">The named business outcomes other than success.</param>
+/// <param name="Location">The declaration location.</param>
+public record AbilitySyntax(string Name, string? EffectClass, IEnumerable<PropertySyntax> Inputs, IEnumerable<PropertySyntax> Returns, IEnumerable<AbilityOutcomeSyntax> Outcomes, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the optional description.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the ability's answer arrives after the invocation returns (<c>answers later</c>).
+    /// </summary>
+    public bool AnswersLater { get; init; }
+
+    /// <summary>
+    /// Gets the optional implementation hints (the <c>AbilityEffect</c> attachment).
+    /// </summary>
+    public ImplementationSyntax? Implementation { get; init; }
+
+    /// <summary>
+    /// Gets the optional selected implementation file.
+    /// </summary>
+    public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the optional inline implementation source.
+    /// </summary>
+    public CodeBlockSyntax? Code { get; init; }
+}
+
+/// <summary>
+/// Represents a named business result of an ability other than success, such as a refusal the external system gives. It carries no payload.
+/// </summary>
+/// <param name="Name">The outcome name.</param>
+/// <param name="Description">The optional description.</param>
+/// <param name="Location">The declaration location.</param>
+public record AbilityOutcomeSyntax(string Name, string? Description, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a slice-owned operation intent, not an admitted executable operation.
@@ -46,7 +115,13 @@ public record OperationSyntax(string Name, string Uses, IEnumerable<PropertySynt
 /// <param name="Code">The optional inline source.</param>
 /// <param name="Implementation">The optional implementation intent.</param>
 /// <param name="Location">The phase location.</param>
-public record OperationPhaseSyntax(string? Description, FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax? Implementation, SourceLocation Location) : SyntaxNode(Location);
+public record OperationPhaseSyntax(string? Description, FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax? Implementation, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the <c>invokes &lt;System&gt;.&lt;Ability&gt;</c> calls the phase makes, in order.
+    /// </summary>
+    public IEnumerable<InvokesSyntax> Invocations { get; init; } = [];
+}
 
 /// <summary>
 /// Enumerates standalone and inline declarations without treating references as declarations.

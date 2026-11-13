@@ -5,11 +5,14 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
-import { OperationPhaseSyntax, OperationSyntax, SystemSyntax } from '../Syntax/Operations';
+import { AbilityOutcomeSyntax, AbilitySyntax, abilityEffectClasses, OperationPhaseSyntax, OperationSyntax, reservedOutcomeNames, SystemActivationSyntax, SystemExtensionSyntax, SystemSettingSyntax, SystemSyntax } from '../Syntax/Operations';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
-import { isFileDirective } from './FileReferences';
+import { isFileDirective, isFileDirectiveAmongProperties } from './FileReferences';
+import { parseActivation, parseExtension, parseSetting } from './SystemConfigurationParser';
 import { parseCode, parseFile, parseImplementationWrapper } from './ImplementationParser';
+import { parseInvokes } from './ReactionParser';
+import { InvokesSyntax } from '../Syntax/Reactions';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProperty, tryParseProperty } from './PropertyLineParser';
@@ -17,6 +20,8 @@ import { locationOf, SourceLine } from './SourceLine';
 import { parseStructuredValue, trailingMarker } from './StructuredBlockParser';
 
 const systemHeader = pattern('^system\\s+([A-Za-z_]\\w*)$');
+const abilityHeader = pattern('^ability\\s+([A-Za-z_]\\w*)(?:\\s+(\\S+))?$');
+const outcomeHeader = pattern('^outcome\\s+([A-Za-z_]\\w*)$');
 const operationHeader = pattern('^operation\\s+([A-Za-z_]\\w*)$');
 const inlineHeader = pattern('^produces\\s+operation\\s+([A-Za-z_]\\w*)$');
 const usesPattern = pattern('^uses\\s+([A-Za-z_]\\w*)$');
@@ -34,15 +39,147 @@ export function parseSystem(context: ParserContext, header: SourceLine): SystemS
     const match = systemHeader.exec(header.content);
     if (match === null) context.error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'system <Name>'.", locationOf(header));
     let description: string | null = null;
+    const abilities: AbilitySyntax[] = [];
+    const settings: SystemSettingSyntax[] = [];
+    let extension: SystemExtensionSyntax | null = null;
+    let activation: SystemActivationSyntax | null = null;
+    const systemName = match?.[1] ?? '';
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'description') description = parseDescription(context, child, description, `System '${match?.[1] ?? ''}'`);
-        else {
-            context.error(DiagnosticCodes.InvalidSystemDeclaration, 'A system accepts only a description; abilities are not supported.', locationOf(child));
+        const word = firstWord(child.content);
+        if (word === 'description') description = parseDescription(context, child, description, `System '${systemName}'`);
+        else if (word === 'ability') abilities.push(parseAbility(context, child));
+        else if (word === 'extension') {
+            const parsed = parseExtension(context, child);
+            if (parsed !== null && extension !== null) context.error(DiagnosticCodes.InvalidSystemDeclaration, `System '${systemName}' names an extension more than once.`, locationOf(child));
+            else extension = parsed ?? extension;
+        } else if (word === 'setting') {
+            const parsed = parseSetting(context, child);
+            if (parsed !== null) settings.push(parsed);
+        } else if (word === 'activation') {
+            const parsed = parseActivation(context, child);
+            if (parsed !== null && activation !== null) context.error(DiagnosticCodes.InvalidSystemDeclaration, `System '${systemName}' states its activation more than once.`, locationOf(child));
+            else activation = parsed ?? activation;
+        } else {
+            context.error(DiagnosticCodes.InvalidSystemDeclaration, 'A system accepts a description, abilities, an extension, settings and an activation.', locationOf(child));
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'SystemSyntax', name: match?.[1] ?? '', description, location: locationOf(header) };
+    const seen = new Set<string>();
+    for (const ability of abilities) {
+        const key = ability.name.toLowerCase();
+        if (seen.has(key)) context.error(DiagnosticCodes.DuplicateAbility, `System '${match?.[1] ?? ''}' already declares ability '${ability.name}'; ability names compare ignoring case.`, ability.location);
+        seen.add(key);
+    }
+    return { kind: 'SystemSyntax', name: systemName, description, abilities, ...(extension === null ? {} : { extension }), ...(settings.length === 0 ? {} : { settings }), ...(activation === null ? {} : { activation }), location: locationOf(header) };
+}
+
+export function parseAbility(context: ParserContext, header: SourceLine): AbilitySyntax {
+    const match = abilityHeader.exec(header.content);
+    const name = match?.[1] ?? '';
+    const effectClass = match?.[2] ?? null;
+    if (match === null) context.error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'ability <Name> [safe | idempotent | once]'.", locationOf(header));
+    else if (effectClass !== null && !(abilityEffectClasses as readonly string[]).includes(effectClass)) context.error(DiagnosticCodes.InvalidAbilityEffectClass, `Ability '${name}' has effect class '${effectClass}'; expected safe, idempotent or once.`, locationOf(header));
+    let description: string | null = null;
+    let answersLater = false;
+    let returnsSeen = false;
+    const inputs: PropertySyntax[] = [];
+    const returns: PropertySyntax[] = [];
+    const outcomes: AbilityOutcomeSyntax[] = [];
+    const inputNames = new Set<string>();
+    const outcomeNames = new Set<string>();
+    let file: AbilitySyntax['file'] = null;
+    let code: AbilitySyntax['code'] = null;
+    let implementation: AbilitySyntax['implementation'] = null;
+    let sourceSelected = false;
+    for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        const word = firstWord(line.content);
+        if (word === 'description') description = parseDescription(context, line, description, `Ability '${name}'`);
+        else if (line.content === 'answers later') {
+            if (answersLater) context.error(DiagnosticCodes.InvalidSystemDeclaration, `Ability '${name}' repeats 'answers later'.`, locationOf(line));
+            answersLater = true;
+            rejectOperationChildren(context, line, DiagnosticCodes.InvalidSystemDeclaration, "'answers later' cannot have children.");
+        } else if (line.content === 'returns') {
+            if (returnsSeen) context.error(DiagnosticCodes.InvalidSystemDeclaration, `Ability '${name}' repeats 'returns'.`, locationOf(line));
+            returnsSeen = true;
+            const before = returns.length;
+            parseAbilityReturns(context, line, name, returns);
+            if (returns.length === before) context.error(DiagnosticCodes.InvalidSystemDeclaration, `Ability '${name}' declares 'returns' without a field.`, locationOf(line));
+        } else if (word === 'outcome') {
+            const outcome = parseAbilityOutcome(context, line, outcomeNames);
+            if (outcome !== null) outcomes.push(outcome);
+        } else if (word === 'implementation') {
+            if (sourceSelected) context.error(DiagnosticCodes.ConflictingImplementationSources, 'An ability cannot mix wrapped and direct sources or repeat its wrapper.', locationOf(line));
+            const source = parseImplementationWrapper(context, line);
+            if (!sourceSelected) { file = source.file; code = source.code; implementation = source.implementation; }
+            sourceSelected = true;
+        } else if (isFileDirectiveAmongProperties(line) || line.content.startsWith('```')) {
+            if (sourceSelected) context.error(DiagnosticCodes.ConflictingImplementationSources, 'An ability has at most one file or inline payload.', locationOf(line));
+            const parsedFile = isFileDirectiveAmongProperties(line) ? parseFile(context, line) : null;
+            const parsedCode = parsedFile === null ? parseCode(context, line) : null;
+            if (!sourceSelected) { file = parsedFile; code = parsedCode; }
+            sourceSelected = true;
+            if (parsedFile !== null) rejectOperationChildren(context, line, DiagnosticCodes.InvalidImplementationBlock, 'A file directive cannot have children.');
+        } else if (tryParseProperty(line) !== undefined) {
+            const property = parseProperty(context, line)!;
+            validateAbilityProperty(context, property, line, 'input');
+            if (inputNames.has(property.name)) context.error(DiagnosticCodes.DuplicateDeclaration, `Ability '${name}' already declares input '${property.name}'.`, locationOf(line));
+            inputNames.add(property.name);
+            inputs.push(property);
+            rejectOperationChildren(context, line, DiagnosticCodes.InvalidSystemDeclaration, 'An ability input cannot have children.');
+        } else {
+            context.error(DiagnosticCodes.InvalidSystemDeclaration, 'An ability accepts a description, inputs, answers later, returns, outcomes and an implementation.', locationOf(line));
+            context.skipBlock(line.indent);
+        }
+    }
+    return { kind: 'AbilitySyntax', name, effectClass, inputs, returns, outcomes, description, answersLater, implementation, file, code, location: locationOf(header) };
+}
+
+export function parseAbilityReturns(context: ParserContext, header: SourceLine, abilityName: string, returns: PropertySyntax[]): void {
+    const names = new Set<string>();
+    for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        if (tryParseProperty(line) === undefined) {
+            context.error(DiagnosticCodes.InvalidSystemDeclaration, "Expected '<field> <Type>' in an ability 'returns' block.", locationOf(line));
+            context.skipBlock(line.indent);
+            continue;
+        }
+        const property = parseProperty(context, line)!;
+        validateAbilityProperty(context, property, line, 'returned field');
+        if (names.has(property.name)) context.error(DiagnosticCodes.DuplicateDeclaration, `Ability '${abilityName}' already returns '${property.name}'.`, locationOf(line));
+        names.add(property.name);
+        returns.push(property);
+        rejectOperationChildren(context, line, DiagnosticCodes.InvalidSystemDeclaration, 'A returned field cannot have children.');
+    }
+}
+
+function parseAbilityOutcome(context: ParserContext, header: SourceLine, seen: Set<string>): AbilityOutcomeSyntax | null {
+    const match = outcomeHeader.exec(header.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'outcome <Name>'.", locationOf(header));
+        context.skipBlock(header.indent);
+        return null;
+    }
+    const name = match[1];
+    if (reservedOutcomeNames.has(name.toLowerCase())) context.error(DiagnosticCodes.ReservedAbilityOutcomeName, `Outcome '${name}' is named like a reserved outlet; reserved names are ${[...reservedOutcomeNames].sort().join(', ')}.`, locationOf(header));
+    if (seen.has(name.toLowerCase())) context.error(DiagnosticCodes.DuplicateDeclaration, `Outcome '${name}' is declared more than once.`, locationOf(header));
+    seen.add(name.toLowerCase());
+    let description: string | null = null;
+    for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        if (firstWord(line.content) === 'description') description = parseDescription(context, line, description, `Outcome '${name}'`);
+        else {
+            context.error(DiagnosticCodes.InvalidSystemDeclaration, 'An outcome accepts only a description and carries no payload.', locationOf(line));
+            context.skipBlock(line.indent);
+        }
+    }
+    return { kind: 'AbilityOutcomeSyntax', name, description, location: locationOf(header) };
+}
+
+function validateAbilityProperty(context: ParserContext, property: PropertySyntax, line: SourceLine, role: string): void {
+    if (property.isSubject) context.error(DiagnosticCodes.InvalidSubjectOwner, `The subject modifier is only valid on event properties, not ability ${role}s (decision 0008: one data subject per event).`, locationOf(line));
+    if (property.isIdentifier || property.isGenerated) context.error(DiagnosticCodes.InvalidSystemDeclaration, `An ability ${role} cannot be an identifier or generated property.`, locationOf(line));
 }
 
 export function parseOperation(context: ParserContext, header: SourceLine, inline = false): { operation: OperationSyntax; mappings: PropertyMappingSyntax[] } {
@@ -113,10 +250,16 @@ function parseOperationPhase(context: ParserContext, header: SourceLine): Operat
     let code: OperationPhaseSyntax['code'] = null;
     let implementation: OperationPhaseSyntax['implementation'] = null;
     let sourceSelected = false;
+    const invocations: InvokesSyntax[] = [];
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (firstWord(line.content) === 'description') {
             description = parseDescription(context, line, description, `Operation phase '${header.content}'`);
+            continue;
+        }
+        if (firstWord(line.content) === 'invokes') {
+            const invoked = parseInvokes(context, line, false);
+            if (invoked !== undefined) invocations.push(invoked);
             continue;
         }
         if (firstWord(line.content) === 'implementation') {
@@ -132,9 +275,9 @@ function parseOperationPhase(context: ParserContext, header: SourceLine): Operat
             sourceSelected = true;
             if (parsedFile !== null) rejectOperationChildren(context, line, DiagnosticCodes.InvalidImplementationBlock, 'A file directive cannot have children.');
         } else {
-            context.error(DiagnosticCodes.InvalidOperationDeclaration, 'A phase accepts description, file, a tagged fence or implementation.', locationOf(line));
+            context.error(DiagnosticCodes.InvalidOperationDeclaration, 'A phase accepts description, invokes, file, a tagged fence or implementation.', locationOf(line));
             context.skipBlock(line.indent);
         }
     }
-    return { kind: 'OperationPhaseSyntax', description, file, code, implementation, location: locationOf(header) };
+    return { kind: 'OperationPhaseSyntax', description, file, code, implementation, invocations, location: locationOf(header) };
 }

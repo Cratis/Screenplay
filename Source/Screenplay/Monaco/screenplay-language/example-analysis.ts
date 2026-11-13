@@ -178,6 +178,7 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'IdentityExpressionSyntax': return `$identity.${expression.path}`;
         case 'EventContextExpressionSyntax': return `$eventContext.${expression.path}`;
         case 'RefusalExpressionSyntax': return `$refusal.${expression.member}`;
+        case 'InvocationValueExpressionSyntax': return `$${expression.source}.${expression.member}`;
         case 'EventSourceIdExpressionSyntax': return '$eventSourceId';
         case 'CausedByExpressionSyntax': return `$causedBy${expression.property ? `.${expression.property}` : ''}`;
         case 'EnvironmentExpressionSyntax': return `$env.${expression.name}`;

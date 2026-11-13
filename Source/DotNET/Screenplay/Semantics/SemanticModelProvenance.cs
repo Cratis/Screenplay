@@ -12,11 +12,12 @@ namespace Cratis.Screenplay.Semantics;
 /// </summary>
 internal static class SemanticModelProvenance
 {
+    static readonly Lock _lock = new();
     static readonly ConditionalWeakTable<ExecutableSemanticModel, Entry> _entries = [];
 
     internal static void Record(ExecutableSemanticModel model, ApplicationIdentity application, IReadOnlyDictionary<SemanticAddress, SemanticId> declarations)
     {
-        lock (_entries)
+        lock (_lock)
         {
             if (!_entries.TryGetValue(model, out var entry))
             {

@@ -60,6 +60,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     if (caller.Authenticated) writer.DirectiveLine("authenticated", caller, "authenticated");
+                    if (caller.Id is not null) writer.DirectiveLine($"id {StringLiteral.Quote(caller.Id)}", caller, "id");
                     var roles = caller.Roles.ToList();
                     for (var index = 0; index < roles.Count; index++)
                     {
@@ -96,6 +97,17 @@ public partial class ScreenplayPrinter
             foreach (var capture in specification.GivenCaptures)
             {
                 WriteSpecificationBlock(writer, $"given capture {capture.Capture}", capture, capture.Record);
+            }
+
+            foreach (var answer in specification.GivenAbilityAnswers)
+            {
+                var header = answer.Answer switch
+                {
+                    "answers" => $"given {answer.Ability} answers {answer.Outcome}",
+                    "fails" => answer.Reason is null ? $"given {answer.Ability} fails" : $"given {answer.Ability} fails {StringLiteral.Quote(answer.Reason)}",
+                    _ => $"given {answer.Ability} returns"
+                };
+                WriteSpecificationBlock(writer, header, answer, answer.Values);
             }
 
             foreach (var generated in specification.GivenGenerated)

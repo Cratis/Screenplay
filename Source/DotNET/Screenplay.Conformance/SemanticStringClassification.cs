@@ -19,30 +19,45 @@ internal static class SemanticStringClassification
     static readonly HashSet<string> _identities = new(StringComparer.Ordinal)
     {
         "id", "contractId", "eventContract", "targetProperty", "property", "readModel", "event", "forEach", "command",
-        "keyProperty", "filter", "reaction", "query", "capture", "stream", "on", "trigger", "target", "sourceEvents", "releasedBy",
+        "keyProperty", "system", "filter", "reaction", "query", "capture", "stream", "on", "trigger", "target", "sourceEvents", "releasedBy",
+    };
+
+    static readonly HashSet<string> _requirementScopes = new(StringComparer.Ordinal)
+    {
+        "generation/requirement", "entering/requirement", "nodes/requirement",
     };
 
     static readonly HashSet<string> _scopedIdentities = new(StringComparer.Ordinal)
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
-        "targets/properties", "mappings/target", "workflows/subject", "nodes/items",
+        "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "navigation/screen", "actions/then", "handles/commands",
+        "ordering/sortBy", "operations/operation",
+    };
+
+    // Scoped literals whose property name is an identity name elsewhere.
+    static readonly HashSet<string> _literalsNamedLikeIdentities = new(StringComparer.Ordinal)
+    {
+        "then/target", "mappings/property", "nodes/trigger", "timeZone/id", "givenCaller/id", "navigation/trigger",
     };
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
-        "then/target", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "givenCaller/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "screens/title", "screens/description", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
+        "layout/fits", "regions/shows", "regions/title", "regions/actions", "agents/tokenKind",
+        "condition/path", "left/path", "right/path", "operand/path", "by/path", "value/path", "extensions/reference", "components/name", "components/component", "components/properties", "handles/signal",
     };
 
     // All remaining string emissions from the nine canonical writer partials. Unknown strings fail closed;
     // overloaded names are deliberately absent and resolved by schema context below.
     static readonly HashSet<string> _literals = new(StringComparer.Ordinal)
     {
-        "alphabet", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
-        "commandReadMode", "contextMember", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
-        "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern",
+        "alphabet", "ability", "audience", "availability", "reason", "outcome", "node", "condition", "guard", "persona", "policy", "send", "start", "approverKind", "joinMode", "workflow", "stateMachine", "approver", "outlet", "state", "whenTrue", "whenFalse", "cardinality", "case", "checksum", "claim", "code", "constraint", "contextValue", "delivery",
+        "commandReadMode", "contextMember", "description", "effect", "outcomes", "direction", "encoding", "expression", "field", "fields", "from", "givenClock", "givenTimeZone", "kind", "label",
+        "languageVersion", "member", "message", "name", "operation", "operator", "origin", "part", "pattern", "placement",
         "prefix", "presence", "primitive", "reactionProductionMode", "read", "result", "revision", "role", "roles", "root", "schema", "scope",
         "selector", "semanticVersion", "separator", "severity", "sourceKind", "special", "storedName", "streamKind", "tags",
-        "targetKind", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
+        "targetKind", "by", "input", "text", "timeZone", "alias", "argument", "graphQuery", "clock", "delivery", "sourceLabel", "targetLabel", "identityProperty", "owner", "graph", "to", "unit", "value", "values", "visibility", "whenClock",
     };
 
     /// <summary>
@@ -56,7 +71,7 @@ internal static class SemanticStringClassification
     public static SemanticStringKind Classify(JsonElement container, string owner, string property)
     {
         var scoped = $"{owner}/{property}";
-        if (property == "requirementId" || scoped == "generation/requirement")
+        if (property == "requirementId" || _requirementScopes.Contains(scoped))
         {
             return SemanticStringKind.Requirement;
         }
@@ -92,7 +107,7 @@ internal static class SemanticStringClassification
     static bool IsIdentity(JsonElement container, string owner, string property) => IsIdentityScoped(container, owner, property, $"{owner}/{property}");
 
     static bool IsIdentityScoped(JsonElement container, string owner, string property, string scoped) =>
-        !(string.Equals(scoped, "then/target", StringComparison.Ordinal) || string.Equals(scoped, "nodes/trigger", StringComparison.Ordinal) || string.Equals(scoped, "timeZone/id", StringComparison.Ordinal)) && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
+        !_literalsNamedLikeIdentities.Contains(scoped) && (_identities.Contains(property) || _scopedIdentities.Contains($"{owner}/{property}") || VariantIdentity(container, owner, property));
 
     static bool VariantIdentity(JsonElement container, string owner, string property) => property switch
     {

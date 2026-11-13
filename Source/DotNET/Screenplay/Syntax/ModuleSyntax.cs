@@ -82,6 +82,16 @@ public record ModuleSyntax(
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this module; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this module adds to <c>$context</c> for everything beneath it.
+    /// </summary>
+    public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
+
+    /// <summary>
     /// Gets the outlets this module changes for the screens beneath it - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
     /// An outlet it does not mention keeps the items it inherits.
     /// </summary>
@@ -163,6 +173,16 @@ public record FeatureSyntax(
     /// Gets the processing purposes covering this feature and its descendants.
     /// </summary>
     public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>available</c> gates of this feature; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this feature adds to <c>$context</c> for everything beneath it.
+    /// </summary>
+    public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
 
     /// <summary>
     /// Gets the outlets this feature changes for its screens - and its sub features' - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.

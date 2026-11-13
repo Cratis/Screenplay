@@ -48,8 +48,12 @@ public class when_inspecting_the_containment_it_traverses : Specification
         new NullabilityInfoContext().Create(typeof(SemanticSpecification).GetProperty(nameof(SemanticSpecification.When))!).ReadState
             .ShouldEqual(NullabilityState.Nullable);
 
+    // Screens (ESM v42) describe what a user interface shows and issues; they have no execution meaning of their own, and
+    // the commands and queries they reference are indexed through their slices. Availability gates and provided values (ESM v53)
+    // are decided by the host before a request reaches the plan; specifications always run with everything available, so the
+    // reference evaluator treats every gate as available and never reads them.
     [Fact] void should_only_carry_the_slice_members_the_plan_indexes() =>
-        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints", "Reducers", "Reactions", "Captures"]);
+        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints", "Available", "Provides", "Reducers", "Reactions", "Captures", "Screens"]);
 
     [Fact] void should_only_nest_the_projection_levels_the_executor_walks() =>
         _projectionContainment.ShouldContainOnly(["SemanticProjection.Scope", "SemanticProjectionScope.Children", "SemanticProjectionScope.Nested", "SemanticProjectionChildren.Scope", "SemanticProjectionNested.Scope"]);

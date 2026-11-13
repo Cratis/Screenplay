@@ -3,7 +3,9 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
-import { QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
+import { NarrowSyntax, QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
@@ -19,6 +21,11 @@ const scopePattern = pattern('^scoped\\s+to\\s+([a-z_]\\w*)$');
 
 // Query directives this compiler does not model. They are skipped whole.
 const opaqueDirectives = new Set(['performer']);
+
+const performedQueries = new WeakSet<QuerySyntax>();
+
+// Performer bodies remain opaque on the syntax wire, but agent admission must remember their presence.
+export function isPerformedQuery(query: QuerySyntax): boolean { return performedQueries.has(query); }
 
 export function parseQuery(context: ParserContext, line: SourceLine): QuerySyntax {
     const match = header.exec(line.content);
@@ -43,8 +50,11 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     const filters: QueryParameterSyntax[] = [];
     let description: string | null = null;
     let scope: string | null = null;
+    let narrow: NarrowSyntax | undefined;
     let authorize: AuthorizeSyntax | null = null;
+    const available: AvailableSyntax[] = [];
     let authorizationDepthExceeded = false;
+    let performed = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -86,16 +96,28 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
                 authorize = combineAuthorize(authorize, next, context);
                 authorizationDepthExceeded = previous !== null && authorize === null;
             }
+        } else if (keyword === 'available' && isAvailabilityGate(child.content)) {
+            addAvailabilityGate(context, child, available);
+        } else if (keyword === 'narrow') {
+            const narrowing = /^narrow\s+([A-Z]\w*)$/.exec(child.content);
+            if (narrowing === null) {
+                context.error(DiagnosticCodes.UnknownQueryDirective, `Invalid narrow declaration '${child.content}' - expected 'narrow <Policy>'`, locationOf(child));
+            } else if (narrow !== undefined) {
+                context.error(DiagnosticCodes.UnknownQueryDirective, "A query declares at most one 'narrow' policy; combine the conditions in one policy.", locationOf(child));
+            } else {
+                narrow = { kind: 'NarrowSyntax', policy: narrowing[1], location: locationOf(child) };
+            }
         } else if (keyword === 'scoped') {
             scope = parseScope(context, child, scope, name) ?? scope;
         } else if (opaqueDirectives.has(keyword)) {
+            performed = true;
             context.skipOpaqueBlock(child.indent);
         } else {
-            context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, scoped or performer`, locationOf(child));
+            context.error(DiagnosticCodes.UnknownQueryDirective, `Unexpected '${child.content}' in query body - expected description, by, filter, authorize, available, narrow, scoped or performer`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
-    return {
+    const query: QuerySyntax = {
         kind: 'QuerySyntax',
         name,
         returnType,
@@ -106,8 +128,12 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         isObservable: match[2] !== undefined,
         scope,
         authorize,
+        ...(available.length > 0 ? { available } : {}),
+        ...(narrow === undefined ? {} : { narrow }),
         location: locationOf(line),
     };
+    if (performed) performedQueries.add(query);
+    return query;
 }
 
 export const parseQueryParameter = (context: ParserContext, line: SourceLine, keyword: string): QueryParameterSyntax | undefined => parseParameter(context, line, keyword);

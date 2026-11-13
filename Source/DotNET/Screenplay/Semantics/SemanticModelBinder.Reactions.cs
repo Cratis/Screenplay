@@ -321,6 +321,8 @@ public sealed partial class SemanticModelBinder
             Dictionary<string, SemanticProperty> values,
             Dictionary<string, SemanticCommand?> commands)
         {
+            if (invoked.IsAbility) return BindAbilityInvocation(reaction, kind, invoked, root, values);
+
             if (!commands.TryGetValue(ShortName(invoked.Command), out var command) || command is null)
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Reaction '{reaction.Name}' invokes '{invoked.Command}', which is not one declared command.", invoked.Location);
@@ -429,6 +431,7 @@ public sealed partial class SemanticModelBinder
             {
                 EventSourceIdExpressionSyntax or EventContextExpressionSyntax { Path: "eventSourceId" } => BindReactionEventSource(source, target, root),
                 RefusalExpressionSyntax refusal => BindRefusalValue(refusal, target),
+                InvocationValueExpressionSyntax invocationValue => BindInvocationValue(invocationValue, target),
                 ContextExpressionSyntax context => BindOccurrence(context, target),
                 IdentityExpressionSyntax identity => BindOccurrence(identity, target),
                 LiteralExpressionSyntax literal => BindConcreteValue(literal, target, description, false, routeInput) is { } value ? SemanticExpression.FromValue(value) : null,

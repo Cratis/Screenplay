@@ -52,6 +52,10 @@ internal sealed partial class SemanticScopedProjection
                 return Evaluate(mapping.Source!, fact, readsOccurrence);
             case SemanticProjectionOperation.Clear:
                 return SemanticValue.Null;
+
+            // Set-once writes only into an empty target - missing or null - and leaves a held value as it is (Chronicle#5757).
+            case SemanticProjectionOperation.SetOnce:
+                return current is null or SemanticNullValue ? Evaluate(mapping.Source!, fact, readsOccurrence) : null;
         }
 
         // Arithmetic is typed by the read-model target; a missing target is seeded with 0 and both operands are converted to the
@@ -139,6 +143,19 @@ internal sealed partial class SemanticScopedProjection
                 }
 
                 Fail($"Projection '{projection.Name}' reads occurred but this fact carries no occurrence time.");
+                return null;
+            case SemanticProjectionEventContextValue context when readsOccurrence && IsCausedByPath(context.Path):
+                if (fact.CausedBy is { } causedBy)
+                {
+                    return SemanticValue.Text(context.Path switch
+                    {
+                        "causedBy.subject" => causedBy.Subject,
+                        "causedBy.name" => causedBy.Name,
+                        _ => causedBy.UserName
+                    });
+                }
+
+                Fail($"Projection '{projection.Name}' reads causedBy but this fact carries no caller identity.");
                 return null;
             case SemanticProjectionEventProperty property:
                 var values = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);

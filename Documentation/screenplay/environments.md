@@ -85,6 +85,34 @@ if (compiled.Success)
 
 `EnvironmentRequirements` (namespace `Cratis.Screenplay.Environments`, package `Cratis.Screenplay`) holds `Keys` in declaration order and `Secrets`, the keys that must be supplied as secrets. Each `EnvironmentKey` has `Key`, `Source` (`AuthenticationProvider` or `Onboarding`), `Owner`, `Description`, `IsSecret` and `Location`. The requirements are not part of the executable semantic model and do not change its bytes.
 
+## System settings and named secrets
+
+The settings a system can map are declared by its extension's [contract](extension-contracts.md#settings).
+
+A `system` realized by an extension declares settings in its contract. The model says where each value comes from:
+
+```play
+secret MailerApiKey
+  description "The API key of the transactional mail service"
+
+system Mailer
+  extension "ghcr.io/cratis/extension-mail" version 2
+  setting apiKey from secret MailerApiKey
+  setting senderName = "Invoicing"
+  activation on demand idle after 10 minutes
+```
+
+- **Implicit.** A setting the model does not mention is read from configuration under `systems.<System>.<setting>`, following the binding convention above.
+- **Named secret.** `secret <Name>` is declared once at the top level, with an optional `description`. `setting <name> from secret <Name>` maps a setting to it, so one secret can serve several systems. The deployment binds the secret name to its store; the model never holds a value.
+- **Literal.** `setting <name> = <value>` is for non-secret settings only, and the environment may override it. A literal on a secret setting is an error.
+- **Activation.** `activation always` or `activation on demand [idle after <n> <unit>]` overrides the contract's default.
+
+An unknown setting, an unknown or unused secret and a duplicate mapping are errors; see [diagnostics](diagnostics.md) `PLAY0990` to `PLAY0997`. The `extension`, `setting` and `activation` lines are realization metadata: they change no bytes of the executable model, are exposed on the semantic compilation (`SystemConfigurations` and `Secrets`), and renderers include them in their render input.
+
+`EnvironmentRequirements` lists the implicit keys and the named secrets, each once, with its secret flag. The requirements inventory is implemented in C#; the TypeScript compiler parses and validates the same forms and exposes them on its syntax tree, but does not derive environment requirements.
+
+See also [Systems and abilities](systems.md). The CLI configuration documentation (Cratis/cli) links back here for the `systems.<System>.<setting>` keys.
+
 ## From the command line
 
 ```bash

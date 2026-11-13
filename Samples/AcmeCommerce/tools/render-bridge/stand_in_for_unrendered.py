@@ -6,7 +6,8 @@
    shape the sample used before the performer: every `from` states every counter, because any event may be the first one a row sees.
 2. `add total by unitPrice * quantity` (ESM v29) adds a product of two event values; Chronicle's projection engine adds one event property
    (STAGE-ESM-050). The total is left out of the variant: its mapping, its read-model property, the screen field and the assertions -
-   only inside the slice that holds the product, because the same name can be a command or event field in another slice.
+   only inside the slice that holds the product, because the same name can be a command or event field in another slice - and the same
+   property in the sample data of that read model (a `shape <ReadModel>` row in <Domain>/shell/*.play), which would otherwise be PLAY0710.
 usage: stand_in_for_unrendered.py <variant-folder>
 """
 import re, sys, glob
@@ -49,6 +50,7 @@ PURCHASING_FIGURES = '''      query CurrentPurchasingFigures => observable Purch
 '''
 
 stood_in = 0
+dropped = set()  # (read model, property) pairs left out, for the sample data
 for f in glob.glob(root + '/*/model/*.play'):
     t = read(f); o = t
     # 1. performer queries: only the Purchasing dashboard has one
@@ -66,6 +68,8 @@ for f in glob.glob(root + '/*/model/*.play'):
         s = ''.join(lines[i:j])
         for pm in list(re.finditer(r'(?m)^ *(?:add|subtract) (\w+) by \w+ \* \w+\n', s)):
             target = pm.group(1)
+            pj = re.findall(r'(?m)^ *projection \w+ => (\w+)', s[:s.find(pm.group(0))])
+            if pj: dropped.add((pj[-1], target))
             s = s.replace(pm.group(0), '')
             s = re.sub(r'(?m)^ *%s +\S+( optional)?\n' % target, '', s)            # the read-model property
             s = re.sub(r'(?m)^ *field %s +label .*\n' % target, '', s)            # a summary field of a screen
@@ -75,4 +79,16 @@ for f in glob.glob(root + '/*/model/*.play'):
         out.append(s); i = j
     t = ''.join(out)
     if t != o: write(f, t)
+# 2b. the sample data of a read model that lost a property: drop the property from that shape's rows, and only there
+for f in glob.glob(root + '/*/shell/*.play') if dropped else []:
+    out = []; shape = None
+    for line in read(f).splitlines(keepends=True):
+        sm = re.match(r'( *)shape (\w+)\s*$', line)
+        if sm: shape = (len(sm.group(1)), sm.group(2))
+        elif shape and line.strip() and len(line) - len(line.lstrip(' ')) <= shape[0]: shape = None
+        pm = re.match(r' *(\w+) *= ', line)
+        if shape and pm and (shape[1], pm.group(1)) in dropped: continue
+        out.append(line)
+    t = ''.join(out)
+    if t != read(f): write(f, t)
 print('stand_in_for_unrendered: %d construct(s) replaced' % stood_in)

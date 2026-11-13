@@ -118,8 +118,9 @@ internal static partial class SemanticModelRead
             .Add("thenReturns", 7, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Returns = Nested(ref reader, ThenReturns, property))
             .AddAll(["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"], 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
             .Add("givenGenerated", 30, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property))
-            .Add("thenInvocations", 34, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenInvocations = Array(ref reader, SpecificationInvocation, property))
-            .Add("givenTimeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenTimeZone = String(ref reader, property));
+            .Add("thenInvocations", 34, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenInvocations = Array(ref reader, (ref Utf8JsonReader item) => SpecificationInvocation(ref item, state.SchemaVersion), property))
+            .Add("givenTimeZone", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenTimeZone = String(ref reader, property))
+            .Add("givenAbilityAnswers", LanguageVersion.V51.Major, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenAbilityAnswers = Array(ref reader, AbilityAnswer, property));
 
         public ImmutableArray<SemanticSpecificationEvent> GivenEvents { get; set; }
 
@@ -155,6 +156,8 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticSpecificationInvocation> ThenInvocations { get; set; } = [];
 
+        public ImmutableArray<SemanticAbilityAnswer> GivenAbilityAnswers { get; set; } = [];
+
         public string? GivenTimeZone { get; set; }
 
         bool HasGiven => !GivenEvents.IsDefault && !GivenReadModels.IsDefault;
@@ -183,6 +186,7 @@ internal static partial class SemanticModelRead
                 WhenTrigger = Automation.WhenTrigger,
                 WhenCapture = Automation.WhenCapture,
                 ThenInvocations = ThenInvocations,
+                GivenAbilityAnswers = GivenAbilityAnswers,
                 GivenTimeZone = GivenTimeZone
             };
         }

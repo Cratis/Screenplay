@@ -36,7 +36,7 @@ export function validateReactionRefusals(application: ApplicationSyntax, context
                 context.warning(DiagnosticCodes.UnusedReactionIdentity, `Reaction '${reaction.name}' declares an identity but has no invocations or implementation body.`, reaction.runsAs.location);
             }
         }
-        for (const { reaction, invocation } of slice.reactions.flatMap(reaction => reaction.triggers.flatMap(trigger => trigger.invokes).map(invocation => ({ reaction, invocation })))) {
+        for (const { reaction, invocation } of slice.reactions.flatMap(reaction => reaction.triggers.flatMap(trigger => trigger.invokes.filter(invoked => !invoked.command.includes('.'))).map(invocation => ({ reaction, invocation })))) {
             const invoked = declarations.resolve(invocation.command, slice, owner => owner.commands);
             const authorizationGated = invoked !== null && (invoked.node.authorize !== null || gatedSlices.has(invoked.slice));
             const authorizationBranch = invocation.onRefused?.find(branch => branch.selector === 'authorization');

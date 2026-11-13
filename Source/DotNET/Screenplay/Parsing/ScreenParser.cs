@@ -35,12 +35,19 @@ internal static partial class ScreenParser
         var contributions = new List<ScreenContributionSyntax>();
         var outlets = new List<OutletSyntax>();
         List<ScreenFit>? fits = null;
+        var visuals = new List<ScreenVisualSyntax>();
+        var available = new List<AvailableSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Screen '{name.Groups[1].Value}'", directiveLocations)) continue;
-            if (LineText.FirstWord(line.Content) == "fits")
+            if (ScreenVisualParser.TryParse(context, line, visuals)) continue;
+            if (LineText.FirstWord(line.Content) == "available" && AvailabilityParser.IsGate(line.Content))
+            {
+                AvailabilityParser.AddGate(context, line, available);
+            }
+            else if (LineText.FirstWord(line.Content) == "fits")
             {
                 fits = ScreenFitsParser.Parse(context, line, name.Groups[1].Value, fits, directiveLocations);
             }
@@ -62,7 +69,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets, Fits = fits ?? [] };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions, Outlets = outlets, Visuals = visuals, Fits = fits ?? [], Available = available };
     }
 
     /// <summary>
@@ -530,7 +537,10 @@ internal static partial class ScreenParser
                     break;
                 case "on":
                 case "uses":
+                    // <System>.<Component> comes from an extension, whose contract names the signals an 'on' line may handle.
+                    context.AcceptsSignalTriggers = match.Groups[1].Value.Count(character => character == '.') == 1;
                     InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
+                    context.AcceptsSignalTriggers = false;
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, id, property, icon, presentation, exposes, slot, on or uses", child.Location);

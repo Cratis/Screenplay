@@ -48,9 +48,20 @@ sealed class McpOperationInventory
         inputCount = (entry.Node as OperationSyntax)?.Inputs.Count() ?? 0,
         execute = Phase((entry.Node as OperationSyntax)?.Execute),
         compensate = Phase((entry.Node as OperationSyntax)?.Compensate),
+        abilityCount = (entry.Node as SystemSyntax)?.Abilities.Count() ?? 0,
         executionAvailable = false,
-        executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301). Authoring intent is not an executable implementation role."
+        executionReadiness = entry.Node is SystemSyntax { Abilities: var abilities } && abilities.Any()
+            ? "A system with abilities is admitted in ESM v50 (#1250); reactions invoke its abilities from ESM v51 (#1252); workflows, state machines and approvals parse and validate but are not executable yet. Authoring intent is not an executable implementation role."
+            : "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301). Authoring intent is not an executable implementation role."
     };
+
+    // The call sites that name this ability: reactions, workflow actions, state entries and operation phases.
+    internal object[] InvokedBy(string system, string ability) =>
+    [
+        .. _index.Entries
+            .Where(entry => entry.Node is InvokesSyntax { IsAbility: true } invokes && invokes.Command == $"{system}.{ability}")
+            .Select(entry => (object)new { entry.Location, handle = McpAstHandles.Describe(entry.Handle) })
+    ];
 
     internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry) => entry.Node is OperationSyntax operation &&
         McpWorkspaceAnalysis.For(_workspace).Source.Index.HasExactOwnershipCollision("Operation", operation.Name, Scope(entry));
@@ -58,6 +69,32 @@ sealed class McpOperationInventory
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
     {
         yield return new { kind = "declaration", declaration = Summary(entry), description = entry.Node is SystemSyntax system ? system.Description : ((OperationSyntax)entry.Node).Description };
+        if (entry.Node is SystemSyntax declaredSystem)
+        {
+            foreach (var ability in declaredSystem.Abilities)
+            {
+                yield return new
+                {
+                    kind = "ability",
+                    ability.Name,
+                    effect = AbilityEffectClasses.Effective(ability.EffectClass),
+                    ability.Description,
+                    ability.AnswersLater,
+                    inputCount = ability.Inputs.Count(),
+                    returnCount = ability.Returns.Count(),
+                    outcomes = ability.Outcomes.Select(outcome => outcome.Name),
+                    invokedBy = InvokedBy(declaredSystem.Name, ability.Name),
+                    realization = ability.Code is not null || ability.File is not null ? "code" : "none",
+                    ability.Location,
+                    handle = Handle(ability)
+                };
+                foreach (var input in ability.Inputs) yield return new { kind = "abilityInput", ability = ability.Name, input.Name, input.Type, input.Location, handle = Handle(input) };
+                foreach (var returned in ability.Returns) yield return new { kind = "abilityReturn", ability = ability.Name, returned.Name, returned.Type, returned.Location, handle = Handle(returned) };
+            }
+
+            yield break;
+        }
+
         if (entry.Node is not OperationSyntax operation) yield break;
         foreach (var input in operation.Inputs)
         {

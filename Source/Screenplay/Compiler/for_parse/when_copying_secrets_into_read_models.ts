@@ -30,7 +30,7 @@ const findings = (source: string) => {
 };
 
 describe('when copying secrets into read models', () => {
-    it('should catalogue the warning', () => DiagnosticCodes.SecretConceptProjected.should.equal('PLAY0940'));
+    it('should catalogue the warning', () => DiagnosticCodes.SecretConceptProjected.should.equal('PLAY1142'));
 
     it('should warn for an explicit mapping into a secret property', () => {
         const [finding, ...rest] = findings(model('ApiKey', 'ApiKey', '          token = token\n'));

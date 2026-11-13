@@ -57,6 +57,11 @@ internal static partial class ExpressionParser
             return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
         }
 
+        if (TryParseInvocationValue(text, location) is { } invocationValue)
+        {
+            return invocationValue;
+        }
+
         if (text == "$eventSourceId")
         {
             return new EventSourceIdExpressionSyntax(location);
@@ -107,6 +112,24 @@ internal static partial class ExpressionParser
     }
 
     /// <summary>
+    /// Parses <c>$result.&lt;field&gt;</c>, <c>$outcome</c>, <c>$failure.&lt;member&gt;</c> and <c>$trigger.&lt;value&gt;</c>.
+    /// </summary>
+    /// <param name="text">The trimmed expression text.</param>
+    /// <param name="location">The <see cref="SourceLocation"/> of the expression.</param>
+    /// <returns>The <see cref="InvocationValueExpressionSyntax"/>, or <c>null</c> when the text is not an invocation value.</returns>
+    public static InvocationValueExpressionSyntax? TryParseInvocationValue(string text, SourceLocation location)
+    {
+        foreach (var source in new[] { "result", "outcome", "failure", "trigger" })
+        {
+            var prefix = $"${source}";
+            if (text == prefix) return new(source, string.Empty, location);
+            if (text.StartsWith(prefix + ".", StringComparison.Ordinal) && text.Length > prefix.Length + 1) return new(source, text[(prefix.Length + 1)..], location);
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Parses a mapping source expression as used by <c>produces</c> and <c>capture</c> mappings.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
@@ -120,6 +143,11 @@ internal static partial class ExpressionParser
         if (text == "$refusal" || text.StartsWith("$refusal.", StringComparison.Ordinal))
         {
             return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
+        }
+
+        if (TryParseInvocationValue(text, location) is { } invocationValue)
+        {
+            return invocationValue;
         }
 
         if (text == "$eventSourceId" || text == "$eventContext.eventSourceId")

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { AuthorizeSyntax } from './Authorization';
+import type { AvailableSyntax } from './Availability';
 import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
@@ -15,6 +16,8 @@ export interface QueryParameterSyntax extends SyntaxNode {
 
 export interface QuerySyntax extends SyntaxNode {
     readonly kind: 'QuerySyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly name: string;
     readonly returnType: TypeRefSyntax;
     readonly by: QueryParameterSyntax | null;
@@ -24,4 +27,11 @@ export interface QuerySyntax extends SyntaxNode {
     readonly isObservable: boolean;
     readonly scope: string | null;
     readonly authorize: AuthorizeSyntax | null;
+    readonly narrow?: NarrowSyntax;
+}
+
+// 'narrow <Policy>' on a collection query: only the rows the policy allows are returned.
+export interface NarrowSyntax extends SyntaxNode {
+    readonly kind: 'NarrowSyntax';
+    readonly policy: string;
 }

@@ -39,6 +39,11 @@ internal static class AuthoringProducers
                     if (declarations.Event(produced.Event, scope) is not { } @event) continue;
                     yield return Reaction(@event, scope, trigger, produced, AuthoringProducerKind.Reaction, application, declarations);
                 }
+                foreach (var produced in ReactionProductions.Branches(trigger))
+                {
+                    if (declarations.Event(produced.Event, scope) is not { } @event) continue;
+                    yield return Reaction(@event, scope, trigger, produced, AuthoringProducerKind.Reaction, application, declarations);
+                }
                 foreach (var produced in (trigger.Invokes ?? []).SelectMany(invoked => invoked.OnRefused).SelectMany(refusal => refusal.Produces))
                 {
                     if (declarations.Event(produced.Event, scope) is not { } @event) continue;

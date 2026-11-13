@@ -16,6 +16,7 @@ static class ReferenceKinds
     internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
     {
         QueryIdentitySourceSyntax value => [(value.Query, ["Query"], "identitySource")],
+        QueryProvideSourceSyntax value => [(value.Query, ["Query"], "provideSource")],
         SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
         OperationSyntax value => [(value.Uses, ["System"], "uses")],
         StateMachineSyntax value => [(value.Follows, ["ReadModel"], "follows")],
@@ -38,8 +39,13 @@ static class ReferenceKinds
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),
         PolicyReferenceSyntax value => [(value.Name, ["Policy"], "authorizes")],
+        AudienceAvailabilityRequirementSyntax value => [(value.Audience, ["Audience"], "availableFor")],
+        AvailabilityReferenceSyntax value => [(value.Availability, ["Availability"], "availableWith")],
         PurposeReferenceSyntax value => [(value.Name, ["Purpose"], "purpose")],
+        SlicePlacementSyntax { Kind: SlicePlacementKind.Event } value => [(value.Name, _eventKinds, "shows")],
+        SlicePlacementSyntax value => [(value.Name, ["ReadModel"], "shows")],
         TypeRefSyntax value when owner is IdentityDetailSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "identityDetailType")],
+        TypeRefSyntax value when owner is ProvideSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "provideType")],
         TypeRefSyntax value when owner is QuerySyntax query && ReferenceEquals(query.ReturnType, value) && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "queryResult")],
         TypeRefSyntax value when owner is ScreenSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel"], "dataReadModel")],
         TypeRefSyntax value when !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["Concept", "Type"], "type")],

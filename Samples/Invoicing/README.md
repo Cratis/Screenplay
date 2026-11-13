@@ -20,6 +20,18 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 `sink Reporting for readmodels` declares a logical place to store read models, and `InvoiceLineReportReadModel` chooses it with `sink Reporting`. Its projection writes there and its query reads from there. Every other read model names no sink, so it uses the default sink. The deployment maps `Reporting` to real storage; the model never names a database. Like `passive`, the choice is realization metadata outside portable ESM.
 
+## A storyline
+
+`storyline GetPaid` names the path an invoice takes from draft to payment: the module and feature it starts in, then a screen, commands, a slice, events, a query, a read model and a reaction, in the order a reader should walk them. Each step names one element by kind, so renaming or moving that element rewrites the step. A storyline is authoring metadata for review and boards; it never changes what the model executes. See [Storylines](../../Documentation/screenplay/storylines.md).
+
+## Agents
+
+The root `agents` block lets personal-token callers discover `ListInvoices` with `scope read` and `RegisterInvoice` with `scope write`. These are the only exposed operations, and the caller must still satisfy the module, feature and operation authorization gates. A write token also satisfies the read scope. The block selects ESM v48; the showcase's other executable-admission refusals remain unchanged. See [Agents](../../Documentation/screenplay/agents.md).
+
+## Sketches, mockups and linked copies
+
+The `InvoiceList` screen carries the material it was designed from: `sketch Screens/invoice-list.sketch.svg`, the HTML page `mockup Screens/invoice-list.html` and the screenshot `image Screens/invoice-list.png`, all kept in [`Screens`](Screens) beside the model. `CancelInvoice` shows `InvoiceRegistered` and `InvoiceListReadModel` with `shows event` and `shows readmodel`, so the timeline draws them again where cancellation reads them, as linked copies of their one declaration.
+
 ## Passive decision state
 
 In `invoicing.play`, the `InvoiceReservations` feature lets staff reserve an invoice number through a navigation entry opening `ReserveInvoiceNumberScreen` and its command-bound `ReserveInvoiceNumberForm`. Only the `ReserveInvoiceNumber` command reads the private `InvoiceReservationState`, rebuilt from the invoice's real history (`InvoiceRegistered` starts it unreserved, `InvoiceNumberReserved` reserves it and `InvoiceNumberReservationReleased` resets it), with an explicit bare `passive` directive. It is replayed on demand for the command, not materialized for a query or screen. Ordinary read models remain active: passivity is never inferred. This realization choice is metadata carried outside portable ESM. Repeating `passive` warns (`PLAY0858`), observing the model from a query or screen errors (`PLAY0859`), and a passive model no command reads warns (`PLAY0860`).
@@ -133,6 +145,11 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Construct | Where |
 | --- | --- |
 | `domain` with a qualified name, `import` | top of the file |
+| `system` with `ability` blocks: the three effect classes (`safe`, `idempotent`, the `once` default), `returns`, `outcome`, `answers later` and an `implementation` with a hint and a `file`; a model that declares abilities selects ESM v50 | PaymentGateway, after the composite types |
+| `secret` with a `description`; a `system` that names an `extension` and maps its settings `from secret` or to a literal, and overrides `activation` (`always`, or `on demand` with an `idle after` timeout) | `MailerApiKey`, `Mailer` |
+| The extension's contract and the lock that pins it: `screenplay.lock` records the version, digest, contract hash and publisher of `ghcr.io/cratis/extension-mail`, and the vendored `extensions/` folder holds the contract the compiler reads (see [extension contracts](../../Documentation/screenplay/extension-contracts.md)) | `screenplay.lock`, `extensions/` |
+| A screen that places a component the extension provides with `component <System>.<Component>`: `property` lines and `on <signal>` handled and checked against the contract, and the contract's `platform web ios android` covering both `ui profile`s | `InvoiceBalance` (`Mailer.MailPreview`) |
+| `storyline` with a title, a description, step notes and every step kind | GetPaid, at the end of the file |
 | `identity` with claim, keyed query, inline code and file sources | Caller metadata next to authentication; the details are not used in executable clauses pending #600 |
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
@@ -142,12 +159,14 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
+| `audience` and `availability` (`for`, `when`), persona `audience` lines, a module `provide` and `available for` / `available when` / `available with` gates, which [decide before `authorize`](../../Documentation/screenplay/availability.md) | Authorization; Auditing |
 | `onboarding` with open self-signup, tenant and member invitations, legal terms, an offering and email templates; the sender and mail server are [environment values](../../Documentation/screenplay/environments.md) | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `design system` with `modes`, `default theme`, `tokens`, `components` (`parts`, `variant`, `state`), `words` and a `contrast` rule; two `theme`s that `implements` it with `palette`, `values` and per-mode blocks; a `ui profile` that selects a theme | `InvoicingDesign`, `Nordic`, `NordicDark` |
 | two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
 | `toolbar` `button`s with `slice`, `emphasis` and `icon` that invoke State Change slices | `InvoiceList` |
 | Outlets of every kind - `actions`, `filters`, `tabs`, `stats` and `navigation` - with `default` items, changed below the template with `extends`/`overrides`, `hide`, `before` and `group` | `List` template, `InvoiceManagement` |
+| `sketch`, `mockup` and `image` on a screen; `shows event` and `shows readmodel` in a slice | `InvoiceList` screen; `CancelInvoice` |
 | Placement: `fits dialog, drawer, page` on a slice's screen; hooks that `opens dialog`, `opens drawer` and `opens in slot activity`, act `for item`, `runs` a screenless slice with `enabled when` and `confirm`; `show InvoiceDetails by invoiceId from … .selection` in the routed `detail` pane; a `choose from query` picker | `InvoiceManagement`, `SendInvoiceReminder`, `RegisterInvoiceForm` |
 | `outlet topbar of navigation` and `outlet sidebar of navigation` in the `AppShell` layout: `logo`, `item` with `title`, `icon`, `target`, `slot` and nested sidebar items | Application navigation |
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
@@ -169,7 +188,7 @@ queries' performers read the central bank feed, a credit bureau, an invoice regi
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |
 | `readmodel` with `description` and `file`; `query` with `observable`, `by`/`filter … from`, `scoped to identity`/`global`, `performer` in ```` ```sql ````, ```` ```csharp ```` and `file` | InvoiceList, InvoiceLineReport, ExchangeRates, MyInvoices, CreditStatus |
-| `projection` with `file`, `sequence`, `every`/`exclude children`, `all`, `from A, B`, inline and block keys, a composite `key`, `parent`, `join` with `automap`/`no automap`, `children`, `nested`, `clear with`, `remove with`, `remove via join`, `set … to`, `clear`, `increment`/`decrement`/`count`/`add`/`subtract`, templates, `$eventSourceId`, `$eventContext`, `$causedBy` | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard, InvoiceBalances, SystemActivity |
+| `projection` with `file`, `sequence`, `every`/`exclude children`, `all`, `from A, B`, inline and block keys, a composite `key`, `parent`, `join` with `automap`/`no automap`, `children` with `sort by`, `nested`, `clear with`, `remove with`, `remove via join`, `set … to`, `set once`, `clear`, `increment`/`decrement`/`count`/`add`/`subtract`, templates, `$eventSourceId`, `$eventContext`, `$causedBy` | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard, InvoiceBalances, SystemActivity |
 | projection `variant`s with `enters on` and a shared handler | CollectionsBoard |
 | `reducer` with inline and `file` rules | InvoiceAging |
 | `screen` at all three levels: intent (`data`, `action`, `label`, `navigate to`), structure (`template`, slots, `section`, `title`, `table`, `summary`, `on row-click`) and inline ```` ```react ````/```` ```html ````/```` ```typescript ````; a `file` screen | every state change and state view slice |

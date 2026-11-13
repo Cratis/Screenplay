@@ -423,7 +423,7 @@ internal static partial class InteractionParser
             return new IntervalInteractionTriggerSyntax(amount, unit, line.Location);
         }
 
-        if (ApplicationTriggerRegex().IsMatch(text))
+        if (ApplicationTriggerRegex().IsMatch(text) || (context.AcceptsSignalTriggers && SignalTriggerRegex().IsMatch(text)))
         {
             return new ApplicationTriggerInteractionTriggerSyntax(text, line.Location);
         }
@@ -769,8 +769,11 @@ internal static partial class InteractionParser
     [GeneratedRegex(@"^interval\s+(\d+)\s+(seconds?|minutes?|hours?|days?)$", RegexOptions.NonBacktracking)]
     private static partial Regex IntervalTriggerRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^[A-Z]\w*(\.[A-Z]\w*)?$", RegexOptions.NonBacktracking)]
     private static partial Regex ApplicationTriggerRegex();
+
+    [GeneratedRegex(@"^[a-z]\w*$", RegexOptions.NonBacktracking)]
+    private static partial Regex SignalTriggerRegex();
 
     [GeneratedRegex(@"^on\s+(success|failure|result)$", RegexOptions.NonBacktracking)]
     private static partial Regex ContinuationRegex();

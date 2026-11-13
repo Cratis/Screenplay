@@ -28,6 +28,7 @@
         { "include": "#concept-block" },
         { "include": "#purpose-block" },
         { "include": "#context-block" },
+        { "include": "#agents-block" },
         { "include": "#identity-block" },
         { "include": "#operation-block" },
         { "include": "#description-block" },
@@ -44,6 +45,28 @@
         { "include": "#common" }
     ],
     "repository": {
+        "agents-block": {
+            "begin": "^(agents)\\b(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "1": { "name": "keyword.control.screenplay" } },
+            "end": "^(?=\\S)",
+            "patterns": [
+                { "include": "#comment" },
+                {
+                    "match": "^\\s+(tokens)\\s+(personal)\\b(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s+(command|query)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s+(scope)\\s+(read|write|global)\\b(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                { "match": "^\\s+(description)(?=\\s+\")", "captures": { "1": { "name": "keyword.other.screenplay" } } },
+                { "include": "#common" }
+            ]
+        },
         "action-subjects": {
             "patterns": [
                 {
@@ -568,7 +591,7 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "constant.language.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(entering)\\s+(send|start)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "match": "^\\s*(entering)\\s+(invokes|starts|send|start)\\s+([A-Za-z_]\\w*)\\s*$",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
                 },
                 {
@@ -580,7 +603,7 @@
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.function.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(action|decide|wait|approval|foreach|join)\\s+([A-Za-z_]\\w*)(?=\\s+(?:sends|when|for|by|over|all|any|at)\\b)",
+                    "match": "^\\s*(action|decide|wait|approval|foreach|join)\\s+([A-Za-z_]\\w*)(?=\\s+(?:sends|invokes|when|for|by|over|all|any|at)\\b)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.function.screenplay" } }
                 },
                 {
@@ -592,15 +615,15 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.function.screenplay" }, "3": { "name": "constant.language.screenplay" } }
                 },
                 {
-                    "match": "^\\s*(then)\\s+(is|sends|starts|completes|fails\\s+at|waits\\s+at)\\b",
+                    "match": "^\\s*(then)\\s+(is|sends|invokes|starts|completes|fails\\s+at|waits\\s+at)\\b",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "match": "\\b(sends|enters|attempts|timeout|retry\\s+after|expires\\s+after|parallel|at\\s+least)\\b(?=\\s+[\\w\"]|\\s*$)",
+                    "match": "\\b(sends|invokes|enters|attempts|timeout|retry\\s+after|expires\\s+after|parallel|at\\s+least)\\b(?=\\s+[\\w\"]|\\s*$)",
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "^\\s*(next|failed|resumed|expired|approved|rejected|each|completed)(?=\\s*->)",
+                    "match": "^\\s*(next|failed|refused|resumed|expired|approved|rejected|each|completed)(?=\\s*->)",
                     "captures": { "1": { "name": "constant.language.screenplay" } }
                 },
                 {
@@ -632,6 +655,25 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
                 },
                 {
+                    "comment": "An invocation's outcome branches: on returned, on failed or on <Outcome>.",
+                    "match": "^\\s*(on)\\s+(returned|failed)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(on)\\s+([A-Z]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "comment": "An ability's scripted answer in a specification.",
+                    "match": "^\\s*(given)\\s+([A-Z]\\w*\\.[A-Z]\\w*)\\s+(returns|answers|fails)\\b",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "A workflow compute node.",
+                    "match": "^\\s*(compute)\\s+([A-Z]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
                     "match": "^\\s*(acknowledge)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" } }
                 },
@@ -647,6 +689,53 @@
                 {
                     "match": "^\\s*(stream|streamId)\\s*=(?!=|>)",
                     "captures": { "1": { "name": "variable.other.screenplay" } }
+                },
+                {
+                    "comment": "An ability under a system, with its optional effect class; 'answers later' is contextual so an input called answers keeps its name.",
+                    "match": "^\\s*(ability)\\s+([A-Za-z_]\\w*)(?:\\s+(safe|idempotent|once))?(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "Extension contract lines are contextual: a property called icon or kind keeps its name.",
+                    "match": "^\\s*(display)\\s+(name)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "string.quoted.double.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(icon|image|caption|placeholder|frontend)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "string.quoted.double.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(requires)\\s+(stage|screenplay|platform|runtime)\\s+(\\S.*?)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "string.quoted.double.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(setting)\\s+([A-Za-z_]\\w*)\\s+(public|secret)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(kind)\\s+(react|mount|screenplay)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "System configuration lines are contextual, so a property called setting keeps its name.",
+                    "match": "^\\s*(extension)\\s+(\"(?:[^\"\\\\]|\\\\.)*\")(?:\\s+(version)\\s+(\\S+))?(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "string.quoted.double.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "constant.numeric.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(setting)\\s+([A-Za-z_]\\w*)\\s+(from)\\s+(secret)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(activation)\\s+(always|on\\s+demand(?:\\s+idle\\s+after\\s+\\d+\\s+(?:seconds?|minutes?|hours?|days?))?)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^(secret)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(answers)\\s+(later)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
                 },
                 {
                     "match": "^(system|eventsource)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
@@ -833,7 +922,7 @@
                     }
                 },
                 {
-                    "match": "^\\s*(domain|import|concept|type|policy|persona|user|sink|sticky|authentication|onboarding|identity|module|layout|theme|ui|sample|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|graph|node|edge|trigger|screen|dialog|form|contribute|navigation|constraint|specification|example|seed|behavior|exposure|instance)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|user|storyline|sink|sticky|authentication|onboarding|identity|provide|audience|availability|available|module|layout|theme|ui|sample|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|graph|node|edge|trigger|screen|dialog|form|contribute|navigation|constraint|specification|example|seed|behavior|exposure|instance)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }
@@ -880,11 +969,16 @@
                     "name": "keyword.operator.logical.screenplay"
                 },
                 {
+                    "comment": "A provide value the host supplies.",
+                    "match": "(?<=\\sfrom )host(?=\\s*(?://.*)?$)",
+                    "name": "keyword.other.screenplay"
+                },
+                {
                     "match": "^(\\s*)(context)(\\s+)(from)\\b",
                     "captures": { "2": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" } }
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|passive|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|component|property|literal|icons|packages|outlet|toolbar|button|emphasis|primary|secondary|quiet|topbar|sidebar|inherits|extends|overrides|logo|image|slot|routed|page|pane|panel|actions|filters|tabs|stats|default|hide|before|group|tab|stat|sets|shows|fits|drawer|opens|enabled|show|selection|choose|presentation|exposes|mode|oneWay|twoWay|null|propagate|clear|preserve|expected|action|otherwise|hidden|execute|with|contains|starts|ends|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|not|no|empty|and|or|authenticated|anonymous|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodels|readmodel|graphs|graph|has|source|identified|detach|provider|nested|exclude|literal|automap|display|scopes|blueprint|version|statechange|stateview|reexposes|operations|items|icon|target|columns|rows|grow|span|signup|creates|joins|invite|member|grant|legal|terms|offering|emails|images|invitation|welcome|signupDeclined)\\b",
+                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|passive|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|component|signal|property|literal|icons|packages|outlet|toolbar|button|emphasis|primary|secondary|quiet|topbar|sidebar|inherits|extends|overrides|logo|image|slot|routed|page|pane|panel|actions|filters|tabs|stats|default|hide|before|group|tab|stat|sets|shows|sketch|mockup|fits|drawer|opens|enabled|show|selection|choose|presentation|exposes|mode|oneWay|twoWay|null|propagate|clear|preserve|expected|action|otherwise|hidden|execute|with|contains|starts|ends|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|not|no|empty|and|or|authenticated|anonymous|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodels|readmodel|graphs|graph|has|source|identified|detach|provider|nested|exclude|literal|automap|display|scopes|blueprint|version|statechange|stateview|reexposes|operations|items|icon|target|columns|rows|grow|span|signup|creates|joins|invite|member|grant|legal|terms|offering|emails|images|invitation|welcome|signupDeclined)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]
@@ -1198,7 +1292,7 @@
             "patterns": [
                 { "include": "#description-block" },
                 {
-                    "match": "\\b(description|from|every|join|children|identified|by|key|parent|with|remove|clear|on|set|increment|decrement|add|subtract|count|graph|node|edge|source|target|detach)\\b",
+                    "match": "\\b(description|from|every|join|children|identified|by|key|parent|with|remove|clear|on|set|once|insert|first|last|sort|ascending|descending|increment|decrement|add|subtract|count|graph|node|edge|source|target|detach)\\b",
                     "name": "keyword.other.pdl.screenplay"
                 },
                 { "include": "#common" }

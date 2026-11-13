@@ -93,6 +93,9 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         foreach (var purpose in syntax.Purposes) VisitPurpose(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
+        foreach (var audience in syntax.Audiences) VisitAudience(audience);
+        foreach (var availability in syntax.Availabilities) VisitAvailability(availability);
 
         foreach (var policy in syntax.Policies)
         {
@@ -109,9 +112,19 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUser(user);
         }
 
+        foreach (var storyline in syntax.Storylines)
+        {
+            VisitStoryline(storyline);
+        }
+
         foreach (var sink in syntax.Sinks)
         {
             VisitSink(sink);
+        }
+
+        foreach (var secret in syntax.Secrets)
+        {
+            VisitSecret(secret);
         }
 
         if (syntax.Identity is not null) VisitIdentity(syntax.Identity);
@@ -125,6 +138,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitOnboarding(syntax.Onboarding);
         }
+
+        VisitAgentDeclarations(syntax);
 
         foreach (var designSystem in syntax.DesignSystems)
         {
@@ -245,6 +260,8 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
@@ -657,6 +674,8 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
@@ -701,6 +720,9 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
+        foreach (var provide in syntax.Provides) VisitProvide(provide);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
+        foreach (var placement in syntax.Placements) VisitNode(placement);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
 
         if (syntax.File is not null)

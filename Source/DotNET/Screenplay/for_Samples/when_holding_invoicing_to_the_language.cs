@@ -24,11 +24,17 @@ public class when_holding_invoicing_to_the_language : Specification
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
-            [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])])
+            [("Documentation/screenplay/fixtures/operations.play", [typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
+        ("`provide` from a file or code block", 1300,
+            [("Documentation/screenplay/fixtures/provide-implementation.play", [typeof(CodeProvideSourceSyntax), typeof(FileProvideSourceSyntax)])]),
+        ("`compute`, `entering` bodies, approval `via`, operation-phase `invokes`, `$trigger` values", 1252,
+            [("Documentation/screenplay/fixtures/ability-invocations.play", [])])
     ];
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
+        (typeof(QueryProvideSourceSyntax), "Documentation/screenplay/fixtures/provide.play", "Provided values (ESM v53, decision 0161) are shown by the bound provide fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
+        (typeof(HostProvideSourceSyntax), "Documentation/screenplay/fixtures/provide.play", "Provided values (ESM v53, decision 0161) are shown by the bound provide fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(ApplicationContextSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(ContextMemberSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
         (typeof(TimeZoneSyntax), "Documentation/screenplay/fixtures/clock-preview.play", "Clock admission (ESM v37, decisions 0106, 0107 and 0132) is shown by the bound clock fixture, so the TypeScript-conformed Samples/Invoicing keeps its shape."),
@@ -43,10 +49,14 @@ public class when_holding_invoicing_to_the_language : Specification
         (typeof(GraphPatternHopSyntax), "Source/Screenplay/Compiler/Conformance/graph-queries.play", "Graph queries (ESM v40, decision 0139) are shown by the TypeScript-conformed graph-queries document, as graphs are by graphs.play."),
         (typeof(GraphConditionSyntax), "Source/Screenplay/Compiler/Conformance/graph-queries.play", "Graph queries (ESM v40, decision 0139) are shown by the TypeScript-conformed graph-queries document, as graphs are by graphs.play."),
         (typeof(GraphReturnSyntax), "Source/Screenplay/Compiler/Conformance/graph-queries.play", "Graph queries (ESM v40, decision 0139) are shown by the TypeScript-conformed graph-queries document, as graphs are by graphs.play."),
+        (typeof(Syntax.Projections.RemoveKeyMappingSyntax), "Source/Screenplay/Compiler/Conformance/projection-parity.play", "A dictionary entry needs a dictionary-typed read-model property, which Screenplay cannot declare (PLAY0962), so a warning-free sample cannot remove one."),
+        (typeof(NarrowSyntax), "Source/Screenplay/Compiler/Conformance/narrowed-queries.play", "Row narrowing of a collection query (decision 0154) is shown by the narrowed-queries conformance document; Samples/Invoicing keeps its shape."),
+        (typeof(PolicyInputSyntax), "Source/Screenplay/Compiler/Conformance/policy-inputs.play", "Typed policy inputs (decision 0153) are shown by the policy-inputs conformance document; Samples/Invoicing keeps its shape."),
+        (typeof(PolicyInputMappingSyntax), "Source/Screenplay/Compiler/Conformance/policy-inputs.play", "Policy input mappings (decision 0153) are shown by the policy-inputs conformance document; Samples/Invoicing keeps its shape."),
+        (typeof(StateConditionSyntax), "Source/Screenplay/Compiler/Conformance/state-policies.play", "Policies that decide from recorded state (decision 0151) are shown by the TypeScript-conformed state-policies document; Samples/Invoicing keeps its shape."),
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(SpecificationGeneratedValueSyntax), "Source/Screenplay/Compiler/Conformance/acme-second-admissions.play", "Pinned generated values need a reaction that invokes a command with a generated identifier; the conformance vector and the Acme Commerce sample show it."),
-        (typeof(SpecificationInvocationSyntax), "Samples/AcmeCommerce/Sales/model/approval.play", "Invocation expectations state what an automation slice's own reaction invokes; the Acme Commerce automations show it, where each slice is specified on its own."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
         (typeof(TemplateSlotSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
@@ -110,6 +120,17 @@ public class when_holding_invoicing_to_the_language : Specification
             SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Clock")));
         _fixtureFindings.AddRange(clockWorkspace.Compilation.Diagnostics.Select(diagnostic => $"Documentation/screenplay/fixtures/clock-preview.play: must bind, but {diagnostic.Code} {diagnostic.Message}"));
         _clockPreviewCalendar = SyntaxNodes.Under(clockFixture.Value!).OfType<CommandCalendarSyntax>().Single();
+
+        foreach (var bound in new[] { "provide", "availability" })
+        {
+            var boundPath = $"Documentation/screenplay/fixtures/{bound}.play";
+            var boundSource = File.ReadAllText(Path.Combine(root, boundPath));
+            _fixtureFindings.AddRange(compiler.Compile(boundSource).Diagnostics.Select(diagnostic => $"{boundPath}: {diagnostic.Code} {diagnostic.Message}"));
+            var boundWorkspace = ScreenplayWorkspace.Create("Bound",
+                [WorkspaceDocument.Create("bound", PortablePlayPath.Parse("bound.play"), Encoding.UTF8.GetBytes(boundSource))],
+                SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Bound")));
+            _fixtureFindings.AddRange(boundWorkspace.Compilation.Diagnostics.Where(diagnostic => diagnostic.Severity is DiagnosticSeverity.Error).Select(diagnostic => $"{boundPath}: must bind, but {diagnostic.Code} {diagnostic.Message}"));
+        }
 
         var calendarExample = File.ReadAllText(Path.Combine(root, "Documentation/screenplay/commands.md"))
             .Split('`').First(example => example.StartsWith("calendar from $context.", StringComparison.Ordinal));

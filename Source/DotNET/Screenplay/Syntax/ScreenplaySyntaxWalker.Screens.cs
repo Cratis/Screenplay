@@ -15,10 +15,17 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreen(ScreenSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
 
         if (syntax.File is not null)
         {
             VisitFileReference(syntax.File);
+        }
+
+        foreach (var visual in syntax.Visuals)
+        {
+            VisitNode(visual);
+            VisitFileReference(visual.File);
         }
 
         foreach (var directive in syntax.Directives)

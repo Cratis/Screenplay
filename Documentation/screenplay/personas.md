@@ -102,6 +102,10 @@ that plays no persona is authenticated and holds no roles, which is how to test 
   Lens when its own development mode and its explicit users switch are both on, and
   never in a published or rendered application.
 
+## Audiences
+
+A persona can carry `audience <Name>` lines naming the [audiences](availability.md) it is in. They are for authoring only: the board, Studio and documentation use them to show what the persona sees, and they change nothing at runtime.
+
 ## Guidance
 
 Name personas after roles, not people: `Accountant`, not `Alice`. Put the rules in policies so the model keeps the role and its requirements distinct.

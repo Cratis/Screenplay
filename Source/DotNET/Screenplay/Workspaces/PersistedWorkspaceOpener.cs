@@ -111,7 +111,10 @@ static class PersistedWorkspaceOpener
         return ScreenplayWorkspace.Create(state.IdentityCatalog.Application, state.ApplicationName, documents, state.IdentityCatalog, loaded.Contents, loaded.Diagnostics);
     }
 
-    static AttachmentFileResult LoadAttachments(ModelRootDirectory root, ImmutableArray<WorkspaceDocument> documents) => AttachmentFiles.Load(
-        root.DirectoryPath,
-        [.. documents.Select(document => SemanticSourceDocument.Create(document.Id, document.StableKey, document.Path.Value, document.Text))]);
+    static AttachmentFileResult LoadAttachments(ModelRootDirectory root, ImmutableArray<WorkspaceDocument> documents)
+    {
+        ImmutableArray<SemanticSourceDocument> sources = [.. documents.Select(document => SemanticSourceDocument.Create(document.Id, document.StableKey, document.Path.Value, document.Text))];
+        var loaded = AttachmentFiles.Load(root.DirectoryPath, sources);
+        return loaded with { Diagnostics = [.. loaded.Diagnostics, .. ScreenVisualFiles.Check(root.DirectoryPath, sources)] };
+    }
 }

@@ -9,6 +9,8 @@ A Screenplay screen connects the data a user needs to see with the actions they 
 
 Start with a query and the commands the user needs. Add a template when you need to place that content in named regions; use [forms](forms.md) for command input rather than redeclaring command properties on the screen.
 
+To build the user interface on a stack that does not read Scene, export the [UI contract](ui-contract.md): every screen's data, actions, navigation and layout as stack-neutral JSON. The same members can be [admitted to the executable model](ui-contract.md#screens-in-the-executable-model) as ESM v42, keyed to the identities of the queries, commands and screens they reference.
+
 ## The structure a screen fills
 
 A template gives screens a shared structure. It declares named slots, such as `sidebar` and `main`, and each screen supplies the content for those slots. Declare the [screen template or dialog template](templates.md) on the module:
@@ -396,6 +398,48 @@ A binding may carry `mode oneWay`, `mode twoWay`, `null propagate`, `null clear`
 
 These nodes are authoring syntax. The compilers preserve them, the MCP schema exposes them, and Stage decides whether a package/profile combination can execute them. An older renderer must reject unsupported components, packages or binding kinds explicitly instead of silently dropping the modeled UI.
 
+## Extension components
+
+A screen places a component an [extension](extension-contracts.md) provides through the system that names the extension, not through the package. Write `component <System>.<Component> <name>`: the part before the dot is a `system` with an `extension` line, the part after it a `component` in that extension's contract. Swapping a compatible provider changes nothing on the screen.
+
+```screenplay
+system Payments
+  extension "cratis/stripe" version 2
+
+module Orders
+  feature Checkout
+    slice StateChange ConfirmPayment
+      event PaymentConfirmed
+        paymentIntentId String
+      command ConfirmPayment
+        paymentIntentId String
+        produces PaymentConfirmed
+    slice StateView Checkout
+      screen Checkout
+        component Payments.PaymentForm payment
+          property amount = "10"
+          on succeeded
+            execute ConfirmPayment
+              with paymentIntentId from signal.paymentIntentId
+          on failed
+            notify warning "The payment failed"
+```
+
+The component takes the same `property` lines as a [package component](#package-components-and-typed-bindings), and they are checked against the contract:
+
+| You write | Checked against | Reported as |
+| --- | --- | --- |
+| `component <System>.<Component>` | The `component` lines of the system's contract. | `PLAY1114` when the contract declares no such component. |
+| `property <name> ...` | The contract component's typed `property` lines. | `PLAY1115` for a property the contract does not declare. |
+| `on <signal>` | The signals the component `raises`. | `PLAY1116` for a signal it does not raise. |
+| `with <input> from signal.<value>` | The typed values the handled signal carries. | `PLAY1117` for a value the signal does not carry, or when the interaction handles no signal. |
+| `on <System>.<Trigger>` | The `trigger` lines of the contract, as for a [reaction](triggers.md#how-a-name-resolves). | `PLAY1112` for a trigger the contract does not offer. |
+| The component's `platform` lines | The `target platform` of every [ui profile](ui-profile.md#extension-components). | `PLAY1118`, a warning, for a platform a profile targets that the component does not support. |
+
+`on <signal>` takes a camel-case name; `signal.<value>` reads a value the signal carries, as `item.<field>` reads the activated row. The component, its properties and its signal values are only checked once the extension's contract is restored (see [restore](extension-contracts.md#the-cache-vendoring-and-restore)); a contract that is not restored is reported where the system names the extension.
+
+Placing an extension component marks the screen as needing that extension. The [UI contract](ui-contract.md#extension-components) lists the extensions each screen needs, so a host can start the extension's backend before the first call from the browser. In the executable model, a screen that places an extension component is an ESM v52 screen.
+
 ## Navigation metadata
 
 A navigation can carry an authored route and named parameters without turning a screen into a router implementation:
@@ -490,6 +534,28 @@ Use `file` to reference an external screen implementation instead of describing 
 screen RegisterInvoiceScreen
   file Screens/RegisterInvoiceScreen.tsx
 ```
+
+## Sketches, mockups and images
+
+Early in modeling a screen is often a quick sketch, a screenshot of the system being replaced or a hand-written HTML page rather than a composed screen. Keep them with the screen so they travel with the model and reach whoever builds it:
+
+```screenplay
+screen RegisterInvoiceScreen
+  sketch Screens/register-invoice.sketch.json
+  mockup Screens/register-invoice/index.html
+  mockup Screens/register-invoice/confirm.html
+  image Screens/register-invoice-today.png
+```
+
+| Line | Holds |
+| --- | --- |
+| `sketch <path>` | A drawing of the screen kept as vector drawing data, such as a board sketch export. |
+| `mockup <path>` | One HTML/CSS page of a coded mockup. Repeat the line for each page, in the order a reader should see them. |
+| `image <path>` | A screenshot or a design export: PNG, JPG, GIF, SVG or WebP. |
+
+A screen can carry any number of each, beside or instead of its structure. Paths are relative to the model root, like the `file` directive, and the files live in the repository next to the `.play` files. They are authoring metadata: the printer keeps them in the order written, directly after `description`, `file` and `fits`, the AST and MCP editing tools carry them, and they never change what the screen does or reach the executable semantic model.
+
+The compiler refuses a line without a path (`PLAY0950`) and warns when an `image` is not an image file or a `mockup` is not an HTML page (`PLAY0951`). Opening a model root also checks that every file is there and inside the root, and warns about each one that is not (`PLAY0952`).
 
 ## Screen metadata
 

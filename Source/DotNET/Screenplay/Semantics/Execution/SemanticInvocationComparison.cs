@@ -77,7 +77,11 @@ internal static class SemanticInvocationComparison
     }
 
     static bool Matches(SemanticSpecificationInvocation expected, SemanticRecordedInvocation actual) =>
-        expected.Command == actual.Command && expected.Values.All(value =>
+        expected.Ability is not null
+            ? expected.System == actual.System && string.Equals(expected.Ability, actual.Ability, StringComparison.Ordinal) && expected.Inputs.All(input =>
+                actual.Inputs.SingleOrDefault(candidate => string.Equals(candidate.Name, input.Name, StringComparison.Ordinal)) is { } candidate &&
+                SemanticValueRules.AreEqual(input.Value, candidate.Value))
+            : expected.Command == actual.Command && actual.Ability is null && expected.Values.All(value =>
             actual.Values.SingleOrDefault(candidate => candidate.TargetProperty == value.TargetProperty) is { } candidate &&
             SemanticValueRules.AreEqual(value.Value, candidate.Value));
 
@@ -87,10 +91,19 @@ internal static class SemanticInvocationComparison
     static string Describe(SemanticExecutionPlan plan, ImmutableArray<SemanticRecordedInvocation> invocations) =>
         invocations.IsEmpty ? "none" : string.Join(", ", invocations.Select(invocation => Describe(plan, invocation)));
 
-    static string Describe(SemanticExecutionPlan plan, SemanticSpecificationInvocation invocation) => Describe(plan, invocation.Command, invocation.Values);
+    static string Describe(SemanticExecutionPlan plan, SemanticSpecificationInvocation invocation) =>
+        invocation.Ability is not null ? DescribeAbility(plan, invocation.System, invocation.Ability, invocation.Inputs) : Describe(plan, invocation.Command, invocation.Values);
 
     static string Describe(SemanticExecutionPlan plan, SemanticRecordedInvocation invocation) =>
-        $"{Describe(plan, invocation.Command, invocation.Values)}{(invocation.Accepted ? string.Empty : " (refused)")}";
+        invocation.Ability is not null
+            ? DescribeAbility(plan, invocation.System, invocation.Ability, invocation.Inputs)
+            : $"{Describe(plan, invocation.Command, invocation.Values)}{(invocation.Accepted ? string.Empty : " (refused)")}";
+
+    static string DescribeAbility(SemanticExecutionPlan plan, SemanticId system, string ability, ImmutableArray<SemanticAbilityFieldValue> inputs)
+    {
+        var name = plan.Model.Application.Systems.FirstOrDefault(candidate => candidate.Id == system)?.Name ?? system.ToString();
+        return $"{name}.{ability}({string.Join(", ", inputs.Select(input => $"{input.Name} = {Describe(input.Value)}"))})";
+    }
 
     static string Describe(SemanticExecutionPlan plan, SemanticId command, ImmutableArray<SemanticPropertyValue> values)
     {

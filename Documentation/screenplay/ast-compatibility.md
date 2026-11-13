@@ -9,6 +9,10 @@ The syntax tree is a public API. Every consumer that compiles Screenplay to some
 
 This page states those promises. It is deliberately narrow: a guarantee you cannot rely on is worse than one that was never made.
 
+## Agent allowlist additions
+
+`ApplicationSyntax.Agents` is nullable and init-only. Both syntax writers omit it when absent, preserving legacy syntax bytes. An explicit block contains ordered `AgentOperationSyntax` entries and an `AgentTokensSyntax` declaration under `AgentsSyntax`; operation kind is carried as `syntaxKind`, separately from the node's `kind`. Scope and description remain authored fields, not inferred permissions. These three node kinds are registered in the native schema and generated TypeScript contracts. An explicit block, including an empty one, selects ESM v42; absence retains the model's earlier executable version. See [Agents](agents.md).
+
 ## Nested sample rows
 
 `SampleDataValueKind.Rows = 4` is additive; the existing enum values, positional constructor and deconstruction of `SampleDataFieldSyntax` are unchanged. Its init-only `Rows` sequence defaults to empty and is omitted from syntax JSON when empty, including on legacy scalar fields. `syntaxKind: "Rows"` distinguishes an explicit empty collection from an omitted field. Nonempty child rows keep authored order and recurse through the same row/field syntax. Only collections of declared top-level types admit nested rows; read-model shapes remain invalid member types (`PLAY0273`). See [sample data](sample-data.md#composite-collections).
@@ -118,6 +122,14 @@ A pending `HandlerSyntax.Implementation` may coexist with unconditional `Command
 `ObserverFilterSyntax` carries an event source name, optional stream name and location. Routes and filters select ESM v10. Explicit single read-model keys preserve ESM bytes. Flat composite read-model identities mark several properties as identifiers, use `keyParts` for single-instance query arguments and `kind: "parts"` for projection keys, and select their own executable contract. Earlier readers reject these shapes. See [AST authoring](ast-authoring.md#keys-production-routes-and-observer-filters).
 
 `RemoveWithSyntax.PartsKey` is a nullable init-only `CompositeKeySyntax`, beside the existing scalar `Key`. It holds the untyped `key` child block, defaults to null and is omitted from syntax JSON when absent. The walker visits its parts and expressions. Preserve it during source recovery; an earlier transport reader rejects the new member. A removal with both scalar and parts keys is invalid.
+
+## Set once, dictionary entries and children ordering
+
+`SetOnceMappingSyntax(Property, Source, Location)` and `RemoveKeyMappingSyntax(Property, Location)` are additive `MappingSyntax` kinds for `set once <target> = <value>` and `remove <target>`. A dictionary-entry target, such as `slots.$eventContent.slot`, adds no node: the dynamic key stays in the existing `Property` text of any mapping kind, and the part before `.$` is the property it writes into. The walker gains `VisitSetOnceMapping` and `VisitRemoveKeyMapping`.
+
+`ChildrenSyntax.Ordering` is a nullable init-only `ChildrenOrderingSyntax`, not a new constructor or Deconstruct parameter. `ChildrenOrderingSyntax(Placement, SortBy, Direction, Location)` is an additive node; the additive enums are `ChildrenPlacement` (`Append = 0`, `Prepend = 1`, `Sorted = 2`) and `ChildrenSortDirection` (`Ascending = 0`, `Descending = 1`). `SortBy` is set only for `Sorted`. A block without an ordering line keeps `Ordering` null, and syntax JSON omits the member, preserving existing documents' bytes; `insert last` is kept as an explicit `Append`. The walker gains `VisitChildrenOrdering`. Preserve the member when rewriting a children block.
+
+On the executable side, `SemanticProjectionOperation` gains `SetOnce = 6` (`"operation":"setOnce"`), and a children scope gains an optional ordering. Either selects ESM v43; a model that uses neither keeps its version and bytes, and `insert last` binds to no ordering. Dynamic keys and `RemoveKeyMappingSyntax` add no ESM member: the binder refuses them with `PLAY0268`. Older readers must reject v43 rather than drop set-once or ordering. See [decision 0150](../../decisions/0150-projection-parity-esm-v43.md).
 
 ## Reaction command identity member
 

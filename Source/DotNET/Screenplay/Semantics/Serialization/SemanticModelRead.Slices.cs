@@ -94,7 +94,10 @@ internal static partial class SemanticModelRead
             .Add("constraints", (ref Utf8JsonReader reader, SliceState state, string property) => state.Constraints = Array(ref reader, Constraint, property))
             .Add("reactions", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Reactions = Array(ref reader, (ref Utf8JsonReader item) => Reaction(ref item, state.SchemaVersion), property))
             .Add("captures", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Captures = Array(ref reader, (ref Utf8JsonReader item) => Capture(ref item, state.SchemaVersion), property))
-            .Add("direction", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Direction = ParseDirection(String(ref reader, property)));
+            .Add("direction", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Direction = ParseDirection(String(ref reader, property)))
+            .Add("screens", LanguageVersion.V42.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Screens = Array(ref reader, (ref Utf8JsonReader item) => Screen(ref item, state.SchemaVersion), property))
+            .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
 
         public SemanticSliceKind? Kind { get; set; }
 
@@ -120,6 +123,12 @@ internal static partial class SemanticModelRead
 
         public SemanticTranslationDirection? Direction { get; set; }
 
+        public ImmutableArray<SemanticScreen> Screens { get; set; } = [];
+
+        public ImmutableArray<SemanticProvidedValue> Provides { get; set; } = [];
+
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
+
         bool HasContracts => !Events.IsDefault && !Commands.IsDefault && !ReadModels.IsDefault;
 
         bool HasBehaviors => !Projections.IsDefault && !Queries.IsDefault && !Specifications.IsDefault;
@@ -133,7 +142,10 @@ internal static partial class SemanticModelRead
                 Reducers = Reducers,
                 Reactions = Reactions,
                 Captures = Captures,
-                Direction = Direction
+                Direction = Direction,
+                Screens = Screens,
+                Provides = Provides,
+                Available = Available
             };
         }
     }
@@ -283,7 +295,13 @@ internal static partial class SemanticModelRead
             .Add("filters", LanguageVersion.V14.Major, (ref Utf8JsonReader reader, QueryState state, string property) => state.Filters = Array(ref reader, QueryFilter, property))
             .Add("cardinality", (ref Utf8JsonReader reader, QueryState state, string property) => state.Cardinality = ParseQueryCardinality(String(ref reader, property)))
             .Add("delivery", (ref Utf8JsonReader reader, QueryState state, string property) => state.Delivery = ParseQueryDelivery(String(ref reader, property)))
-            .Add("authorization", (ref Utf8JsonReader reader, QueryState state, string property) => state.Authorization = Nested(ref reader, SemanticModelRead.Authorization, property));
+            .Add("authorization", (ref Utf8JsonReader reader, QueryState state, string property) => state.Authorization = Nested(ref reader, SemanticModelRead.Authorization, property))
+            .Add("narrowing", LanguageVersion.V47.Major, (ref Utf8JsonReader reader, QueryState state, string property) => state.Narrowing = Nested(ref reader, SemanticModelRead.Authorization, property) as SemanticPolicyReference ?? throw Malformed("narrowing", "a policy reference"))
+            .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, QueryState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
+
+        public SemanticPolicyReference? Narrowing { get; set; }
+
+        public ImmutableArray<SemanticAvailabilityRequirement> Available { get; set; } = [];
 
         public SemanticId ReadModel { get; set; }
 
@@ -305,7 +323,7 @@ internal static partial class SemanticModelRead
         {
             Required(HasIdentity && ReadModel.IsSet && Cardinality is not null && Delivery is not null, "query");
             Required((Argument is null) == (KeyProperty is null), "query");
-            return new(Id, Name!, Argument, ReadModel, KeyProperty, Cardinality!.Value, Delivery!.Value) { Authorization = Authorization, Filters = Filters, KeyParts = KeyParts };
+            return new(Id, Name!, Argument, ReadModel, KeyProperty, Cardinality!.Value, Delivery!.Value) { Authorization = Authorization, Filters = Filters, KeyParts = KeyParts, Narrowing = Narrowing, Available = Available };
         }
     }
 

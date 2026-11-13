@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if NET10_0
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_PortableMatch;
@@ -12,7 +11,7 @@ public class when_matching_long_budget_inputs
     void should_agree_with_the_normalized_nonbacktracking_pattern_for_long_budget_edge_inputs()
     {
         // Node's default-engine oracle checks these risky shapes only on <= 6 code units under
-        // a watchdog. Here .NET 10 NonBacktracking independently covers 100-1000 units; the
+        // a watchdog. Here .NET NonBacktracking independently covers 100-1000 units; the
         // completion spec covers 10000 units. The structural state-bound spec needs no oracle.
         using var document = MatchVectors.Read("portable-match-differential.json");
         var patterns = document.RootElement.GetProperty("patterns").EnumerateArray()
@@ -35,4 +34,3 @@ public class when_matching_long_budget_inputs
         }
     }
 }
-#endif

@@ -1,11 +1,15 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
+import { AgentOperationSyntax, AgentsSyntax, AgentTokensSyntax } from './Agents';
 import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import type { OutletItemSyntax, OutletSyntax } from './Outlets';
 import { IdentitySyntax } from './IdentitySyntax';
+import type { ProvideSourceSyntax, ProvideSyntax } from './ProvideSyntax';
+import type { AudienceSyntax, AvailabilityRequirementSyntax, AvailabilitySyntax, AvailableSyntax } from './Availability';
 import { DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
 import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
@@ -30,10 +34,10 @@ import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
 import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
-import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
+import { InvocationBranchSyntax, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
+    SpecificationExampleSyntax, SpecificationAbilityAnswerSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationInvocationSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -42,7 +46,7 @@ import { EventStreamIdPartSyntax } from './EventStreamIdPartSyntax';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
 import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './Purposes';
-import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
+import { AbilityOutcomeSyntax, AbilitySyntax, OperationSyntax, OperationPhaseSyntax, SecretSyntax, SystemActivationSyntax, SystemExtensionSyntax, SystemSettingSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { PossibleEventsSyntax } from './PossibleEventsSyntax';
 import { LifecycleSpecificationSyntax, StateEntrySyntax, StateMachineSyntax, StateSyntax, StateTransitionSyntax, WorkflowEdgeSyntax, WorkflowNodeSyntax, WorkflowSyntax } from './Lifecycles';
@@ -70,7 +74,9 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
         (syntax.users ?? []).forEach(node => this.visitUser(node));
+        (syntax.storylines ?? []).forEach(node => this.visitStoryline(node));
         (syntax.sinks ?? []).forEach(node => this.visitSink(node));
+        (syntax.secrets ?? []).forEach(node => this.visitSecret(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
         syntax.stickyNotes?.forEach(node => this.visitStickyNote(node));
         syntax.exposures?.forEach(node => {
@@ -93,12 +99,26 @@ export abstract class ScreenplaySyntaxWalker {
         });
         if (syntax.identity != null) this.visitIdentity(syntax.identity);
         syntax.purposes?.forEach(node => this.visitPurpose(node));
+        syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.audiences?.forEach(node => this.visitAudience(node));
+        syntax.availabilities?.forEach(node => this.visitAvailability(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
+        if (syntax.agents != null) this.visitAgents(syntax.agents);
         syntax.designSystems?.forEach(node => this.visitDesignSystem(node));
         syntax.themes?.forEach(node => this.visitTheme(node));
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
+
+    visitAgents(syntax: AgentsSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.tokens != null) this.visitAgentTokens(syntax.tokens);
+        syntax.operations.forEach(operation => this.visitAgentOperation(operation));
+    }
+
+    visitAgentTokens(syntax: AgentTokensSyntax): void { this.visitNode(syntax); }
+
+    visitAgentOperation(syntax: AgentOperationSyntax): void { this.visitNode(syntax); }
 
     visitDesignSystem(syntax: DesignSystemSyntax): void {
         this.visitNode(syntax);
@@ -161,6 +181,51 @@ export abstract class ScreenplaySyntaxWalker {
     visitCodeIdentitySource(syntax: CodeIdentitySourceSyntax): void { this.visitNode(syntax); this.visitCodeBlock(syntax.code); }
     visitFileIdentitySource(syntax: FileIdentitySourceSyntax): void { this.visitNode(syntax); this.visitFileReference(syntax.file); }
 
+    visitAudience(syntax: AudienceSyntax): void { this.visitNode(syntax); }
+
+    visitAvailability(syntax: AvailabilitySyntax): void {
+        this.visitNode(syntax);
+        syntax.requirements.forEach(requirement => this.visitAvailabilityRequirement(requirement));
+    }
+
+    visitAvailable(syntax: AvailableSyntax): void {
+        this.visitNode(syntax);
+        this.visitAvailabilityRequirement(syntax.requirement);
+    }
+
+    visitAvailabilityRequirement(syntax: AvailabilityRequirementSyntax): void {
+        switch (syntax.kind) {
+            case 'ConditionAvailabilityRequirementSyntax':
+                this.visitNode(syntax);
+                this.visitCondition(syntax.condition);
+                break;
+            case 'LogicalAvailabilityRequirementSyntax':
+                this.visitNode(syntax);
+                this.visitAvailabilityRequirement(syntax.left);
+                this.visitAvailabilityRequirement(syntax.right);
+                break;
+            default:
+                this.visitNode(syntax);
+        }
+    }
+
+    visitProvide(syntax: ProvideSyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.type);
+        this.visitProvideSource(syntax.source);
+    }
+
+    visitProvideSource(syntax: ProvideSourceSyntax): void {
+        this.visitNode(syntax);
+        switch (syntax.kind) {
+            case 'QueryProvideSourceSyntax': syntax.by.forEach(node => this.visitExpression(node)); break;
+            case 'ValueProvideSourceSyntax': this.visitExpression(syntax.value); break;
+            case 'CodeProvideSourceSyntax': this.visitCodeBlock(syntax.code); break;
+            case 'FileProvideSourceSyntax': this.visitFileReference(syntax.file); break;
+            default: break;
+        }
+    }
+
     visitPurpose(syntax: PurposeSyntax): void {
         this.visitNode(syntax);
         syntax.transfers.forEach(node => this.visitPurposeTransfer(node));
@@ -171,6 +236,8 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitPolicy(syntax: PolicySyntax): void {
         this.visitNode(syntax);
+        syntax.inputs?.forEach(input => this.visitNode(input));
+        syntax.reads?.forEach(reads => this.visitReads(reads));
         if (syntax.condition !== null) this.visitPolicyCondition(syntax.condition);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
@@ -179,6 +246,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitPolicyCondition(syntax: PolicyConditionSyntax): void {
         this.visitNode(syntax);
         if (syntax.kind === 'ClaimConditionSyntax' && syntax.matches !== null) this.visitExpression(syntax.matches);
+        if (syntax.kind === 'StateConditionSyntax') this.visitCondition(syntax.comparison);
         if (syntax.kind === 'NotPolicyConditionSyntax') this.visitPolicyCondition(syntax.operand);
         if (syntax.kind === 'LogicalPolicyConditionSyntax') { this.visitPolicyCondition(syntax.left); this.visitPolicyCondition(syntax.right); }
     }
@@ -199,6 +267,15 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
     }
 
+    visitStoryline(syntax: StorylineSyntax): void {
+        this.visitNode(syntax);
+        syntax.steps.forEach(step => this.visitStorylineStep(step));
+    }
+
+    visitStorylineStep(syntax: StorylineStepSyntax): void {
+        this.visitNode(syntax);
+    }
+
     visitSink(syntax: SinkSyntax): void {
         this.visitNode(syntax);
     }
@@ -209,6 +286,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitAuthorize(syntax: AuthorizeSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(mapping => this.visitNode(mapping));
         this.visitPolicyRequirement(syntax.requirement);
     }
 
@@ -255,6 +333,8 @@ export abstract class ScreenplaySyntaxWalker {
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
+        syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
@@ -266,6 +346,8 @@ export abstract class ScreenplaySyntaxWalker {
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
+        syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
@@ -278,6 +360,9 @@ export abstract class ScreenplaySyntaxWalker {
     visitSlice(syntax: SliceSyntax): void {
         this.visitNode(syntax);
         syntax.purposes?.forEach(node => this.visitPurposeReference(node));
+        syntax.provides?.forEach(node => this.visitProvide(node));
+        syntax.available?.forEach(node => this.visitAvailable(node));
+        syntax.placements?.forEach(node => this.visitNode(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.commands.forEach(node => this.visitCommand(node));
         syntax.operations?.forEach(node => this.visitOperation(node));
@@ -354,6 +439,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitCommand(syntax: CommandSyntax): void {
         this.visitNode(syntax);
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         if (syntax.stream != null) this.visitCommandStream(syntax.stream);
@@ -388,7 +474,27 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.propertyCandidate !== null) this.visitProperty(syntax.propertyCandidate);
     }
 
-    visitSystem(syntax: SystemSyntax): void { this.visitNode(syntax); }
+    visitSystem(syntax: SystemSyntax): void {
+        this.visitNode(syntax);
+        syntax.abilities.forEach(ability => this.visitAbility(ability));
+        if (syntax.extension !== undefined) this.visitSystemExtension(syntax.extension);
+        (syntax.settings ?? []).forEach(setting => this.visitSystemSetting(setting));
+        if (syntax.activation !== undefined) this.visitSystemActivation(syntax.activation);
+    }
+    visitSecret(syntax: SecretSyntax): void { this.visitNode(syntax); }
+    visitSystemExtension(syntax: SystemExtensionSyntax): void { this.visitNode(syntax); }
+    visitSystemSetting(syntax: SystemSettingSyntax): void { this.visitNode(syntax); }
+    visitSystemActivation(syntax: SystemActivationSyntax): void { this.visitNode(syntax); }
+    visitAbility(syntax: AbilitySyntax): void {
+        this.visitNode(syntax);
+        syntax.inputs.forEach(input => this.visitProperty(input));
+        syntax.returns.forEach(returned => this.visitProperty(returned));
+        syntax.outcomes.forEach(outcome => this.visitAbilityOutcome(outcome));
+        if (syntax.implementation !== null) this.visitImplementation(syntax.implementation);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+    visitAbilityOutcome(syntax: AbilityOutcomeSyntax): void { this.visitNode(syntax); }
 
     visitStateMachine(syntax: StateMachineSyntax): void {
         this.visitNode(syntax);
@@ -402,7 +508,12 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.transitions.forEach(node => this.visitStateTransition(node));
     }
 
-    visitStateEntry(syntax: StateEntrySyntax): void { this.visitNode(syntax); }
+    visitStateEntry(syntax: StateEntrySyntax): void {
+        this.visitNode(syntax);
+        syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
+        if (syntax.file != null) this.visitFileReference(syntax.file);
+        if (syntax.code != null) this.visitCodeBlock(syntax.code);
+    }
 
     visitStateTransition(syntax: StateTransitionSyntax): void {
         this.visitNode(syntax);
@@ -417,6 +528,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitWorkflowNode(syntax: WorkflowNodeSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
+        syntax.returns?.forEach(node => this.visitProperty(node));
+        if (syntax.file != null) this.visitFileReference(syntax.file);
+        if (syntax.code != null) this.visitCodeBlock(syntax.code);
         if (syntax.schedule !== null) this.visitNode(syntax.schedule);
         if (syntax.timeout !== null) this.visitNode(syntax.timeout);
         if (syntax.retryAfter !== null) this.visitNode(syntax.retryAfter);
@@ -447,6 +562,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.implementation !== null) this.visitImplementation(syntax.implementation);
         if (syntax.file !== null) this.visitFileReference(syntax.file);
         if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+        syntax.invocations?.forEach(node => this.visitInvokes(node));
     }
     visitSpecificationOperationFailure(syntax: SpecificationOperationFailureSyntax): void { this.visitNode(syntax); }
     visitSpecificationCompensated(syntax: SpecificationCompensatedSyntax): void { this.visitNode(syntax); }
@@ -631,11 +747,13 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitQuery(syntax: QuerySyntax): void {
         this.visitNode(syntax);
+        syntax.available?.forEach(node => this.visitAvailable(node));
         this.visitTypeRef(syntax.returnType);
         if (syntax.by !== null) this.visitQueryParameter(syntax.by);
         syntax.byParts?.forEach(part => this.visitQueryParameter(part));
         syntax.filters.forEach(node => this.visitQueryParameter(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        if (syntax.narrow !== undefined) this.visitNode(syntax.narrow);
     }
 
     visitQueryParameter(syntax: QueryParameterSyntax): void {
@@ -678,6 +796,7 @@ export abstract class ScreenplaySyntaxWalker {
                 break;
             case 'ChildrenSyntax':
                 if (syntax.identifiedBy !== undefined) this.visitExpression(syntax.identifiedBy);
+                if (syntax.ordering != null) this.visitNode(syntax.ordering);
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
             case 'NestedSyntax':
@@ -746,6 +865,12 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
         syntax.onRefused?.forEach(node => this.visitInvocationRefusal(node));
+        syntax.branches?.forEach(node => this.visitInvocationBranch(node));
+    }
+
+    visitInvocationBranch(syntax: InvocationBranchSyntax): void {
+        this.visitNode(syntax);
+        syntax.produces.forEach(node => this.visitProduces(node));
     }
 
     visitInvocationRefusal(syntax: InvocationRefusalSyntax): void {
@@ -802,6 +927,11 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitScreen(syntax: ScreenSyntax): void {
         this.visitNode(syntax);
+        syntax.available?.forEach(node => this.visitAvailable(node));
+        syntax.visuals?.forEach(visual => {
+            this.visitNode(visual);
+            this.visitFileReference(visual.file);
+        });
         syntax.directives.forEach(node => this.visitScreenDirective(node));
         syntax.contributions?.forEach(contribution => {
             this.visitNode(contribution);
@@ -927,6 +1057,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.parameters?.forEach(node => { this.visitNode(node); this.visitTypeRef(node.type); });
         syntax.cases?.forEach(node => { this.visitNode(node); node.values.forEach(value => this.visitPropertyMapping(value)); });
+        syntax.givenAbilityAnswers?.forEach(node => this.visitSpecificationAbilityAnswer(node));
         if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
         if (syntax.givenTimeZone != null) this.visitSpecificationTimeZone(syntax.givenTimeZone);
         syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
@@ -976,6 +1107,11 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.for !== null) this.visitExpression(syntax.for);
         if (syntax.stream != null) this.visitSpecificationStream(syntax.stream);
         if (syntax.noStream != null) this.visitSpecificationNoStream(syntax.noStream);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationAbilityAnswer(syntax: SpecificationAbilityAnswerSyntax): void {
+        this.visitNode(syntax);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
     }
 

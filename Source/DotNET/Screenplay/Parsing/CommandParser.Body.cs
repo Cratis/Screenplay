@@ -22,6 +22,7 @@ internal static partial class CommandParser
         // property called description. Only the directives that do take an identifier operand
         // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
         new(["calendar"], (line, _) => CommandCalendarParser.IsDeclaration(line.Content), ParseCalendarDirective),
+        new(["available"], (line, _) => AvailabilityParser.IsGate(line.Content), (context, line, state) => AvailabilityParser.AddGate(context, line, state.Available)),
         new(["description", "documentation", "handler", "concurrency"], (line, _) => PropertyLineParser.TryParse(line) is not null, AddPropertyDirective),
         new(["validate"], (line, _) => line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is not null, AddPropertyDirective),
         new(["returns"], null, ParseReturnsDirective),
@@ -261,6 +262,8 @@ internal static partial class CommandParser
         public List<ProducesSyntax> Produces { get; } = [];
 
         public List<ReadsSyntax> Reads { get; } = [];
+
+        public List<AvailableSyntax> Available { get; } = [];
 
         public HandlerSyntax? Handler { get; set; }
 

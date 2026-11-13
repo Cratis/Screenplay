@@ -1,40 +1,25 @@
 name: .NET Build
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: dotnet-build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - "**"
-    paths:
-      - "Source/DotNET/**"
-      # The C# compiler is held to the TypeScript compiler's golden syntax, so a change to it is a C# change.
-      - "Source/Screenplay/Compiler/Conformance/**"
-      # The MCP server embeds the event model board, which is built from these.
-      - "Source/Screenplay/McpApp/**"
-      - "Source/Screenplay/Compiler/**"
-      - "Source/Screenplay/EventModels/**"
-      - "Source/Screenplay/Views/**"
-      - "package.json"
-      - "Documentation/**"
-      - "*.props"
-      - "*.targets"
-      - "*.slnx"
-      - "global.json"
-      - ".github/workflows/dotnet-build.yml"
-      - ".github/scripts/run-specifications*"
-      - ".github/scripts/verify-specifications-trx.cs"
+  workflow_call:
 
 # One source of truth for both the coverage guard and the spec matrix. Most projects
 # carry inline specs in Debug; discovering only *.Specs.csproj would miss them.
+# Split patterns select ordered, disjoint groups of classes plus a final remainder. Each group
+# excludes every earlier pattern, so even overlapping patterns select every spec exactly once.
+# Both runtimes build once and fan out to run-only shards; the compatibility split may differ from the net11.0 one.
 env:
   SPEC_SHARDS: >-
     {"include":[
-      {"name":"compiler","projects":["Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj"]},
-      {"name":"mcp","projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
+      {"name":"compiler","split":["Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_i*","Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_t*","Cratis.Screenplay.Semantics*","Cratis.Screenplay.Workspaces*"],"compatibility-split":["Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_i*","Cratis.Screenplay.for_Samples.when_repairing_the_sample_timelines.and_it_is_t*","Cratis.Screenplay.Semantics*","Cratis.Screenplay.Workspaces*"],"projects":["Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj"]},
+      {"name":"mcp","split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pag*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pin*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_ref*","Cratis.Screenplay.Mcp.for_ModelNotes*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_p*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_r*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_e*"],"compatibility-split":["Cratis.Screenplay.Mcp.for_McpConnection*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pag*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_pin*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_ref*","Cratis.Screenplay.Mcp.for_ModelNotes*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_p*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_r*","Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow.when_e*"],"projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
       {"name":"contracts-tool-vectors","projects":[
         "Source/DotNET/Screenplay.Matching/Screenplay.Matching.csproj",
         "Source/DotNET/Screenplay.Matching.Specs/Screenplay.Matching.Specs.csproj",
@@ -48,11 +33,15 @@ env:
     ]}
 
 jobs:
-  dotnet-build:
+  # The shard guard and matrices need only the project files, so they run alongside the Debug build and
+  # let the net10.0 compatibility shards start without waiting for it.
+  shards:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
       spec-matrix: ${{ steps.specs.outputs.matrix }}
+      compatibility-matrix: ${{ steps.specs.outputs.compatibility-matrix }}
+      compatibility-projects: ${{ steps.specs.outputs.compatibility-projects }}
 
     steps:
       - name: Checkout code
@@ -61,18 +50,10 @@ jobs:
       - name: Setup .Net
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
+          global-json-file: global.json
           dotnet-version: |
-            8.0.x
-            9.0.x
             10.0.x
-
-      - name: Cache NuGet packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
+            11.0.x
 
       - name: Verify spec shard coverage
         id: specs
@@ -103,15 +84,71 @@ jobs:
               raise SystemExit(f'Invalid spec shards: missing={sorted(missing)}, unexpected={sorted(unexpected)}, duplicates={sorted(duplicates)}')
           print('Every Debug test project is assigned exactly once:')
           print('\n'.join(sorted(expected)))
+          # The CLI and Roslyn catalog specs require the SDK's net11.0 runtime.
+          sdk_bound = {
+              'Source/DotNET/Tool/Tool.csproj',
+              'Source/DotNET/Screenplay.ContractCatalog.Specs/Screenplay.ContractCatalog.Specs.csproj'
+          }
+          compatibility = {'include': [
+              {**shard, 'split': shard.get('compatibility-split', shard.get('split')),
+               'projects': [project for project in shard['projects'] if project not in sdk_bound]}
+              for shard in matrix['include']
+          ]}
+          if any(not shard['projects'] for shard in compatibility['include']):
+              raise SystemExit('A net10.0 compatibility shard has no library specifications')
+
+          # Use the same tested expansion for both runtime matrices.
+          def expand(shards):
+              return json.loads(subprocess.check_output([
+                  'node', '.github/scripts/expand-spec-shards.mjs', json.dumps(shards)
+              ], text=True))
+
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write(f'matrix={json.dumps(matrix, separators=(",", ":"))}\n')
+              output.write(f'matrix={json.dumps(expand(matrix), separators=(",", ":"))}\n')
+              output.write(f'compatibility-matrix={json.dumps(expand(compatibility), separators=(",", ":"))}\n')
+              projects = sorted({project for shard in compatibility['include'] for project in shard['projects']})
+              output.write(f'compatibility-projects={json.dumps(projects, separators=(",", ":"))}\n')
           PY
+
+  dotnet-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
 
       - name: Setup node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.2
           package-manager-cache: false
+
+      # yarn.lock is not committed, so the cache keys on package.json files, like mcp-desktop.yml.
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
 
       - name: Yarn install
         run: yarn
@@ -123,12 +160,23 @@ jobs:
       - name: Verify native specification launcher
         run: node --test .github/scripts/run-specifications.test.mjs
 
+      # Analyzers are off here only to keep them off the build -> specs path. Every rule is still enforced, with
+      # warnings as errors, by the Release build in package-validation, which is part of the required `build` check.
       - name: Build Debug
-        run: dotnet build --configuration Debug
+        run: dotnet build --configuration Debug -p:RunAnalyzers=false -bl:"$RUNNER_TEMP/debug-build.binlog"
 
-      # A tar preserves executable bits and relative paths. Include the frontend output
-      # for the Release build that embeds and packs the board; do not cache compiled
-      # output across runs or require a cache hit to run specs.
+      # Short-lived evidence for build-time analysis; uploaded even when the build fails.
+      - name: Upload Debug build binlog
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: debug-build-binlog
+          path: ${{ runner.temp }}/debug-build.binlog
+          retention-days: 3
+          if-no-files-found: ignore
+
+      # A tar preserves executable bits and relative paths, including the frontend output.
+      # Do not cache compiled output across runs or require a cache hit to run specs.
       - name: Archive build output
         run: |
           {
@@ -146,12 +194,12 @@ jobs:
 
   specs:
     name: Specs (${{ matrix.name }})
-    needs: dotnet-build
+    needs: [dotnet-build, shards]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.dotnet-build.outputs.spec-matrix) }}
+      matrix: ${{ fromJSON(needs.shards.outputs.spec-matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -159,10 +207,10 @@ jobs:
       - name: Setup .Net
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
+          global-json-file: global.json
           dotnet-version: |
-            8.0.x
-            9.0.x
             10.0.x
+            11.0.x
 
       - name: Download build output
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -175,13 +223,18 @@ jobs:
       - name: Run specs without rebuilding
         env:
           PROJECTS: ${{ toJSON(matrix.projects) }}
+          RUNNER_ARGS: ${{ toJSON(matrix.args) }}
         run: |
+          mapfile -t runner_args < <(jq -r '.[]' <<< "$RUNNER_ARGS")
           while IFS= read -r project; do
-            bash .github/scripts/run-specifications.sh "$project" Debug
+            bash .github/scripts/run-specifications.sh "$project" Debug ${runner_args[@]+"${runner_args[@]}"}
           done < <(jq -r '.[]' <<< "$PROJECTS")
 
-  package-validation:
-    needs: dotnet-build
+  # The net10.0 library specifications compile from source, never from the net11.0 binaries, so they get
+  # their own single build. The shards below only run what it produced, as the net11.0 shards do.
+  dotnet-build-net10:
+    name: Build net10.0 library specifications
+    needs: shards
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -191,10 +244,10 @@ jobs:
       - name: Setup .Net
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
+          global-json-file: global.json
           dotnet-version: |
-            8.0.x
-            9.0.x
             10.0.x
+            11.0.x
 
       - name: Cache NuGet packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -204,21 +257,168 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
+      # The MCP server embeds the event model board page.
+      - name: Setup node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          package-manager-cache: false
+
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
+      - name: Yarn install
+        run: yarn
+
+      - name: Build event model board
+        run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
+
+      - name: Build net10.0 library specifications
+        env:
+          PROJECTS: ${{ needs.shards.outputs.compatibility-projects }}
+        run: |
+          # One aggregate project builds every spec project in parallel and compiles shared libraries once.
+          aggregate="$RUNNER_TEMP/net10-specifications.proj"
+          # shellcheck disable=SC2016
+          {
+            echo '<Project><PropertyGroup><Shared>Configuration=Debug;SpecTargetFramework=net10.0;RunAnalyzers=false</Shared></PropertyGroup><ItemGroup>'
+            while IFS= read -r project; do
+              echo "<Spec Include=\"$GITHUB_WORKSPACE/$project\" />"
+            done < <(jq -r '.[]' <<< "$PROJECTS")
+            echo '</ItemGroup>'
+            echo '<Target Name="RestoreAll"><MSBuild Projects="@(Spec)" Targets="Restore" Properties="$(Shared)" BuildInParallel="true" /></Target>'
+            echo '<Target Name="BuildAll"><MSBuild Projects="@(Spec)" Targets="Build" Properties="$(Shared);NoRestore=true" BuildInParallel="true" /></Target>'
+            echo '</Project>'
+          } > "$aggregate"
+          dotnet msbuild "$aggregate" -nologo -t:RestoreAll
+          dotnet msbuild "$aggregate" -nologo -maxcpucount -t:BuildAll -bl:"$RUNNER_TEMP/net10-build.binlog"
+
+      - name: Upload net10.0 build binlog
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: net10-build-binlog
+          path: ${{ runner.temp }}/net10-build.binlog
+          retention-days: 3
+          if-no-files-found: ignore
+
+      # Only the net10.0 output is archived; the net11.0 binaries are a separate artifact.
+      - name: Archive build output
+        run: |
+          {
+            find Source/DotNET -type d -path '*/bin/Debug/net10.0' -print0
+            # The published-reader vector runs this net11.0 probe, which the specification project builds.
+            find Source/DotNET -type d -path '*/LegacyReader/bin/Debug/net11.0' -print0
+            find Source/Screenplay -type d -name dist -not -path '*/node_modules/*' -print0
+          } | tar --null -czf build-output-net10.tar.gz -T -
+
+      - name: Upload build output
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dotnet-build-output-net10
+          path: build-output-net10.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  compatibility-specs:
+    name: Specs net10.0 (${{ matrix.name }})
+    needs: [dotnet-build-net10, shards]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.shards.outputs.compatibility-matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
       - name: Download build output
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: dotnet-build-output
+          name: dotnet-build-output-net10
 
       - name: Extract build output
-        run: tar -xzf build-output.tar.gz
+        run: tar -xzf build-output-net10.tar.gz
+
+      - name: Run net10.0 library specifications without rebuilding
+        env:
+          PROJECTS: ${{ toJSON(matrix.projects) }}
+          RUNNER_ARGS: ${{ toJSON(matrix.args) }}
+          SPEC_TARGET_FRAMEWORK: net10.0
+        run: |
+          mapfile -t runner_args < <(jq -r '.[]' <<< "$RUNNER_ARGS")
+          while IFS= read -r project; do
+            bash .github/scripts/run-specifications.sh "$project" Debug ${runner_args[@]+"${runner_args[@]}"}
+          done < <(jq -r '.[]' <<< "$PROJECTS")
+
+  package-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # Release compiles from source; only the board page was needed from the Debug artifact.
+      # Build it here so package validation starts alongside Debug instead of waiting for it.
+      - name: Setup node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          package-manager-cache: false
+
+      - name: Cache yarn packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .yarn/cache
+            **/node_modules
+            **/yarn.lock
+          key: ${{ runner.os }}-node24.22.2-yarn-${{ hashFiles('**/package.json', '.yarnrc.yml') }}
+
+      - name: Yarn install
+        run: yarn
+
+      - name: Build event model board
+        run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 
       # The version is a sentinel, not a release. Package validation compares assembly versions, and one
       # below the baseline is rejected on that alone before the API surface is ever looked at - so it has to
       # be set on the build, since the pack below reuses what this produces.
+      # This is the all-rules analyzer gate (Release enables warnings as errors); the Debug builds run without analyzers.
       - name: Build Release
         run: dotnet build --configuration Release -p:Version=9999.0.0
 
-      - name: Run canonical vector specifications on net10.0
+      - name: Run canonical vector specifications on net11.0
         run: bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Release
 
       # Package validation only runs on pack, so a binary break was invisible until the release failed on
@@ -234,11 +434,11 @@ jobs:
   # turn the aggregate green. Release/package validation runs alongside the specs.
   build:
     if: always()
-    needs: [dotnet-build, specs, package-validation]
+    needs: [shards, dotnet-build, dotnet-build-net10, specs, compatibility-specs, package-validation]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Require all build, spec and package checks to pass
         env:
-          SUCCESS: ${{ needs.dotnet-build.result == 'success' && needs.specs.result == 'success' && needs.package-validation.result == 'success' }}
+          SUCCESS: ${{ needs.shards.result == 'success' && needs.dotnet-build.result == 'success' && needs.dotnet-build-net10.result == 'success' && needs.specs.result == 'success' && needs.compatibility-specs.result == 'success' && needs.package-validation.result == 'success' }}
         run: test "$SUCCESS" = true

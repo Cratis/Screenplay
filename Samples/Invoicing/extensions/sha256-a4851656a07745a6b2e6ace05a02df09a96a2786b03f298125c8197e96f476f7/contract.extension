@@ -1,0 +1,21 @@
+extension Mail
+  display name "Transactional mail"
+  description "Sends invoices and receipts through a transactional mail service"
+  icon "assets/icon.svg"
+  requires stage "^5"
+  activation on demand idle after 10 minutes
+
+  setting apiKey secret
+  setting senderName
+  setting retries
+  setting trackOpens
+
+  component MailPreview
+    kind react
+    platform web ios android
+    placeholder "placeholders/mail-preview.html"
+    property subject String
+    raises sent
+      messageId String
+
+  frontend "frontend/index.js"

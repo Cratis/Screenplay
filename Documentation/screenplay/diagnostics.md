@@ -478,7 +478,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0075` | Error | A mapping line in a projection is not one the language can read. |
 | `PLAY0452` | Warning | More than one `automap` or `no automap` appears in the same projection scope. The last setting wins; printing preserves the authored settings and their individual comments. |
 | `PLAY0514` | Warning | A projection mapping, `children`, or `nested` target is absent from the declared read-model or element shape. Unknown or imported shapes are not guessed. |
-| `PLAY0940` | Warning | A projection or reducer copies a value whose concept is marked `secret` (including `pii secret`) into a read-model property, so the value becomes part of the read model and its query results. Reported for an explicit mapping whose target or source event property has a secret concept, for a property AutoMap fills from a same-named secret event property, and for a reducer that builds a read-model property with a secret concept. Metadata, literal and aggregate sources are not reported. The message names the projection or reducer, the concept and the read-model property path. There is no automatic repair: decide whether the read model needs the value at all. |
+| `PLAY1142` | Warning | A projection or reducer copies a value whose concept is marked `secret` (including `pii secret`) into a read-model property, so the value becomes part of the read model and its query results. Reported for an explicit mapping whose target or source event property has a secret concept, for a property AutoMap fills from a same-named secret event property, and for a reducer that builds a read-model property with a secret concept. Metadata, literal and aggregate sources are not reported. The message names the projection or reducer, the concept and the read-model property path. There is no automatic repair: decide whether the read model needs the value at all. |
 
 ### Reducer instance identity
 
@@ -1152,7 +1152,7 @@ itself what an unresolvable one means.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0268` | Error | Source syntax carries behavior the supported ESM profile cannot represent, including query filters with `from`, single-result filters, invalid same-name/scalar/type filter shapes, explicit query scopes, compliance on identity or enum concepts, events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark, generated-concept rules outside the supported rule forms (supported rules are checked for consistency instead: refuted rules report `PLAY0688` errors and unproven rules `PLAY0689` warnings), and unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` and read-path mappings without `command reads protected`, read paths in production conditions or other unadmitted positions, clock operands (`today`, `now`, `date of`) outside command conditions and `validate` comparison rules, and date comparisons outside the supported shapes (`==`, `!=`, `>`, `>=`, `<`, `<=` over required scalar command properties of the same primitive, or matching literals, in `require` and `produces when`), non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
-| `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
+| `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. Screens are deferred by default and can be admitted on request as ESM v42; see [UI contract](ui-contract.md#screens-in-the-executable-model). |
 | `PLAY0270` | Information | Source syntax, including a valid persona, a query a performer answers (an opaque read, left out of the executable model), compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. Event `id` pins are executable stored names from ESM v16. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly, including command reads without `command reads protected`. Opted-in reads instead undergo `PLAY0781`–`PLAY0785` admission. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
@@ -1162,6 +1162,8 @@ itself what an unresolvable one means.
 For read-model members, both compilers and editor validation share `PLAY0273` for known read-model shapes outside the value-type namespace; imported files are composed before checking. A slice-local `type` is skipped with Warning `PLAY0029` at its header, without a compile-time member error. Referencing it fails semantic binding (`screenplay test`) with `PLAY0273` at the member, as does any undeclared name outside the value-type namespace. See [member value types](readmodels.md#member-value-types). Other property owners retain their existing unknown-type warning behavior.
 
 Executable binding reports independent semantic contract failures together as `PLAY0273`, at the nearest enclosing declaration with a source location. If no declaration location is available, it uses the application location. Identity registration and application-wide version checks still stop at their first failure.
+
+For an event-source assertion whose identity type cannot be determined, `PLAY0273` names the event and explains how to supply the missing contract: declare a read-model projection keyed on the event source (`$eventSourceId`) or a producing command with a required scalar destination. An unrouted producerless event can use one consistent required scalar projected key type; missing, conflicting or nonscalar keys remain refused. Case parameters and example overrides use that same projected identity type during parameter-target validation.
 
 Comparison operands must be required, including command properties and protected read-model properties on either side. An optional operand is refused with `PLAY0268` at the comparison rather than deferred to semantic contract validation.
 
@@ -1252,7 +1254,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0296` | Warning | An `$eventContext.<path>` continues into something the member before it does not have, such as `$eventContext.eventType.name`. The derived function `Week` is case-sensitive: `occurred.Week` resolves and `occurred.week` does not. |
 | `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
 | `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
-| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
+| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, `$eventContent` or `$causedBy`, such as `bySource.$eventSourceId`. Only `$eventContext.<path>`, `$eventContent.<path>` and `$causedBy.subject`, `.name` or `.userName` are resolved; any other source becomes the literal key. |
 
 ### Specification semantics
 
@@ -1320,7 +1322,7 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0343` | Error | A guarded action repeats `otherwise`, or declares a `when` alternative after it. |
 | `PLAY0344` | Error | A guarded action condition does not compare an `item.<field>` path with a literal. Ordering operators require a number; `contains` and `starts with` require a string. |
 | `PLAY0345` | Warning | An item path in a guarded action condition or input binding names no subject field, continues past a scalar, or crosses a collection-valued field. |
-| `PLAY0346` | Warning | A guarded action has no nearest `data` subject, or multiple data directives tie in its nearest container. Field checks are skipped until the subject resolves. |
+| `PLAY0346` | Warning | A guarded action has no nearest `data` subject, or multiple data directives tie in its nearest container; an authored `for item` over several data is ambiguous unless a table in scope shows exactly one collection data, and the message names the candidates. Field checks are skipped until the subject resolves. |
 | `PLAY0347` | Warning | Earlier alternatives provably shadow an alternative. Guards use first-match order; proof uses DNF comparison-set inclusion with a 64-disjunct expansion cap. Overlap alone is not reported. |
 | `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare, or binds a subject field whose collection cardinality differs from the command input. |
 
@@ -1376,11 +1378,11 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
+| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, a multiline description uses a bare fence, or a workflow or state machine uses a deprecated verb: `action ... sends`, `entering send`, `entering start` or `then sends`. The message names the replacement (`invokes` or `starts`; see the migration notes in [workflows](workflows.md) and [state machines](statemachines.md)). |
 
 A compiler-authored typed repair is offered only when `PLAY0397` identifies a
-`validate csharp` header. It uses an identity replacement and canonical printing
-to produce a tagged `` ```csharp `` fence. The entire file is reprinted; other
+`validate csharp` header or a deprecated `sends`, `send` or `start` lifecycle verb. It uses an identity replacement and canonical printing
+to produce a tagged `` ```csharp `` fence or the `invokes` and `starts` forms. The entire file is reprinted; other
 legacy forms and whitespace may change, but a repair that would drop any comment
 is refused. Preview it through the revision-checked AST authoring contract (or
 MCP `read-workspace` repairs / `propose-repair`); review the bytes before applying.
@@ -1601,7 +1603,7 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
-| `PLAY0495` | Error | An external system declaration is malformed or repeated. |
+| `PLAY0495` | Error | An external system declaration, or an ability, outcome, `returns` block, `extension`, `setting` or `activation` line inside one, is malformed or repeated. |
 | `PLAY0496` | Error | An operation declaration or phase is malformed, or supplies event-only metadata. |
 | `PLAY0497` | Error | A production reference is ambiguous, or a qualified production does not resolve to an explicit operation. |
 | `PLAY0498` | Error | An operation name collides with an event or another operation in its owning slice. |
@@ -1755,6 +1757,165 @@ Named sinks for read models and graphs; see [Sinks](sinks.md). Both compilers re
 | `PLAY0937` | Warning | A read model or graph repeats the same `sink` line. Keep one. |
 | `PLAY0938` | Warning | No read model or graph names a declared sink. Remove the declaration or add `sink <Name>` to what it should store. |
 | `PLAY0939` | Warning | A read model's `sink <Type>` line stays a property named `sink`, but its type differs only in case from a declared sink. Write the sink's exact name to store the read model there, or `@sink <Type>` to keep the property. |
+
+## Storylines
+
+A `storyline` names an ordered path through the model. See [Storylines](storylines.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0940` | Error | A `storyline` declaration is not `storyline <Name> ["<title>"]`. |
+| `PLAY0941` | Error | A line in a storyline is not `<kind> <reference> ["<note>"]` with kind `module`, `feature`, `slice`, `command`, `event`, `readmodel`, `query`, `screen` or `reaction`, nor `description "<text>"`; or a step has a line nested under it. |
+| `PLAY0942` | Warning | A storyline step names an element that no declaration of that kind matches. The storyline still compiles; remove the step or point it at the element that replaced it. An ambiguous step reports `PLAY0198` instead: qualify it. |
+| `PLAY0943` | Error | Two `storyline` declarations carry the same name. |
+
+## Agents
+
+An `agents` block is an explicit operation allowlist, not an authorization grant. See [Agents](agents.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0964` | Error | The agents block, operation reference or field is malformed or unsupported. Write a root `agents` block, `query <reference>` or `command <reference>`, and literal quoted descriptions. Fields cannot have children. |
+| `PLAY0965` | Error | The composed application declares more than one agents block, including across imported files. Keep one. |
+| `PLAY0966` | Error | No query or command of the declared kind matches the exposed reference. |
+| `PLAY0967` | Error | More than one operation of the declared kind matches the reference. Qualify it with its module, feature and slice. |
+| `PLAY0968` | Error | The same operation is exposed more than once, including through different short and qualified references. |
+| `PLAY0969` | Error | An exposed operation has no nonempty literal description. Add `description "<text>"`. |
+| `PLAY0970` | Error | An exposed operation is missing its scope, repeats it or uses an unsupported scope. Declare exactly one `scope read` or `scope write` on each entry. |
+| `PLAY0971` | Error | An exposed command does not require `scope write`. Commands cannot use `scope read`. |
+| `PLAY0972` | Error | The agents block is missing its token declaration or repeats it. Declare exactly one `tokens personal`. |
+| `PLAY0973` | Error | An unsupported token kind is declared. Only `tokens personal` is supported; `tokens oauth` is refused. |
+| `PLAY0974` | Error | An exposed operation declares approval. Approval is not supported; token scope and model authorization must both permit the call. |
+| `PLAY0975` | Error | The agents block declares a global scope. Move the scope to each exposed operation. |
+| `PLAY0976` | Information | The block leaves queries or commands unexposed. The diagnostic reports an aggregate count and up to ten names; unlisted operations remain unavailable to agents. |
+| `PLAY0977` | Warning | The agents block explicitly exposes no operations. An empty block with `tokens personal` is valid. |
+| `PLAY0978` | Warning | Reserved for model comparison reporting a newly exposed agent operation; not emitted by compilation. |
+| `PLAY0979` | Warning | Reserved for model comparison reporting a loosened agent token requirement; not emitted by compilation. |
+| `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
+| `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
+| `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+
+## Ability diagnostics
+
+Abilities declared on a `system`, see [Systems and abilities](systems.md). `PLAY0495` also covers a malformed ability, an outcome with a payload, an empty `returns` block, an identifier or generated input and a repeated `answers later`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0983` | Error | A system declares two abilities whose names are equal ignoring case. |
+| `PLAY0984` | Error | An ability's effect class is not `safe`, `idempotent` or `once`. |
+| `PLAY0985` | Error | An ability outcome is named `next`, `refused`, `failed`, `returned` or `expired`, which are reserved outlets. |
+| `PLAY0986` | Error | An ability input or returned field names a type that is not declared. |
+| `PLAY1001` | Error | An invocation names a system or ability that is not declared. |
+| `PLAY1002` | Error | An invocation branch or workflow outlet names an outcome the ability does not declare. |
+| `PLAY1003` | Error | An invocation leaves a declared ability input unmapped. |
+| `PLAY1004` | Error | An invocation maps an input the ability does not declare, or maps one twice. |
+| `PLAY1005` | Error | An invocation maps an input from a source whose type is incompatible. |
+| `PLAY1006` | Error | An invocation declares two branches or outlets for the same selector. |
+| `PLAY1007` | Error | An outlet or branch can never be taken, such as `expired` on an ability that does not answer later. |
+| `PLAY1008` | Error | `$result`, `$outcome` or `$failure` is read where no matching branch is in scope. |
+| `PLAY1009` | Error | A workflow reads a node's returned value through a path not guaranteed to have passed that node. |
+| `PLAY1010` | Error | An `answers later` ability is invoked from a reaction, which has no place to wait. |
+| `PLAY1011` | Error | An `answers later` ability is invoked from a state machine, which has no data to hold the answer. |
+| `PLAY1012` | Error | An approval's `via` ability does not answer later with `approved` and `rejected` outcomes. |
+| `PLAY1013` | Error | A `compute` node is malformed: it has no returns, no body, or an invalid outlet set. |
+| `PLAY1014` | Error | A reaction trigger combines `invokes` with an attached body. |
+| `PLAY1015` | Warning | A `once` ability is invoked with `attempts` greater than one. |
+| `PLAY1016` | Error | Result branches are not allowed on this invocation. |
+| `PLAY1017` | Error | A `given <System>.<Ability> returns`, `answers` or `fails` step names an ability, outcome or returned field the system does not declare. |
+
+## System configuration diagnostics
+
+Secrets and the settings a `system` maps, see [Environments](environments.md#system-settings-and-named-secrets). A malformed `extension`, `setting` or `activation` line is `PLAY0495`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0990` | Error | A `secret` declaration is not `secret <Name>` with an optional description, or is not at the top level. |
+| `PLAY0991` | Error | Two `secret` declarations have names that are equal ignoring case. |
+| `PLAY0992` | Error | A system setting maps `from secret` a name that no `secret` declaration provides. |
+| `PLAY0993` | Error | A declared `secret` is not mapped by any system setting. |
+| `PLAY0994` | Error | A system maps the same setting more than once. |
+| `PLAY0995` | Error | A system maps a setting that its extension's contract does not declare. Reported when the model is bound against the extension's [contract](extension-contracts.md). |
+| `PLAY0996` | Error | A system gives a literal value to a setting its extension's contract declares secret. Reported when the model is bound against the extension's [contract](extension-contracts.md). |
+| `PLAY0997` | Error | A system maps a secret to a setting its extension's contract declares public, which could reach the browser. Reported when the model is bound against the extension's [contract](extension-contracts.md). |
+
+## Extension contracts and the lock
+
+An extension package's `contract.play`, the `extension` line of a system and `screenplay.lock`, see [Extension contracts](extension-contracts.md).
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0998` | Error | A contract file is malformed: it has an unknown line, a wrong shape, no `extension` declaration or more than one. |
+| `PLAY0999` | Error | A contract does not declare its `display name`, `description` or `icon`. |
+| `PLAY1100` | Error | A component declares a `kind` other than `react`, `mount` or `screenplay`. |
+| `PLAY1101` | Error | A component or `requires platform` line names a platform other than `web`, `ios`, `android` or `desktop`. |
+| `PLAY1102` | Error | A component with a frontend declares no `placeholder`. |
+| `PLAY1103` | Error | A contract setting is declared both `public` and `secret`. |
+| `PLAY1104` | Error | A component `invokes` an ability the contract does not declare. |
+| `PLAY1105` | Error | A contract declares two abilities, triggers, components or settings with the same name. |
+| `PLAY1106` | Error | A system names an `extension` and also declares abilities; the contract is the only source of its abilities. |
+| `PLAY1107` | Error | A system's `extension` reference has no entry in `screenplay.lock`. A warning in editors, which restore it. |
+| `PLAY1108` | Error | A locked extension's contract is not in the local cache or the vendored `extensions` folder yet, or restore could not fetch it. A warning ("extension not restored") in editors. |
+| `PLAY1109` | Error | A cached contract does not match the contract hash the lock pins. |
+| `PLAY1110` | Error | A lock entry was written for a different version range than the model now asks for. A warning in editors. |
+| `PLAY1111` | Error | `screenplay.lock` is malformed. |
+| `PLAY1112` | Error | A system uses a trigger its extension's contract does not offer, reported at each use. |
+| `PLAY1113` | Error | A component placeholder is not static HTML: it has script, an inline handler or an external reference. |
+| `PLAY1114` | Error | A screen places `<System>.<Component>`, but the extension's contract declares no component of that name. |
+| `PLAY1115` | Error | A screen gives an extension component a `property` its contract does not declare. |
+| `PLAY1116` | Error | An `on` line of an extension component names a signal its contract does not `raise`. |
+| `PLAY1117` | Error | A binding reads `signal.<value>` where the handled signal does not carry that value, or where the interaction handles no signal. |
+| `PLAY1118` | Warning | An extension component does not support a platform a `ui profile` targets. |
+| `PLAY1119` | Error | A `provide` line is not `provide <name> <Type> [optional] from <source>`. |
+| `PLAY1120` | Error | A `provide` source is not `query`, `host`, a literal, an expression over `$context` values, a `file` reference or an inline code block. |
+| `PLAY1121` | Error | A `provide` has neither `from <source>` nor a `file` reference or inline code block beneath it. |
+| `PLAY1122` | Error | A `provide` that states `from <source>` also has a body beneath it. |
+| `PLAY1123` | Error | The same value is provided twice at one level (application, module, feature or slice). |
+| `PLAY1124` | Error | A `provide` redeclares a built-in `$context` name, which no level may change. |
+| `PLAY1125` | Error | A `provide` overrides a value declared higher up with a different type; an override keeps the type. |
+| `PLAY1126` | Error | A `provide ... from query` names a query that is not declared, or is declared more than once. |
+| `PLAY1127` | Error | A `provide ... from query` names an observable query; a value is resolved once per request. |
+| `PLAY1128` | Error | The type of a `provide ... from query` differs from what the query returns, or the query key is missing or surplus. |
+| `PLAY1129` | Error | Provided values read each other in a cycle. |
+| `PLAY1130` | Error | An `audience` declaration is not `audience <Name>`, or its body holds a line other than `description`. |
+| `PLAY1131` | Error | An `availability` declaration is not `availability <Name>`, or its body holds a line other than `description`, `for`, `when` or `with`. |
+| `PLAY1132` | Error | An `available` gate is not `available for <audiences>`, `available when <condition>` or `available with <Availability>`, or its operand is missing or is not a PascalCase name. |
+| `PLAY1133` | Error | The same audience is declared more than once. |
+| `PLAY1134` | Error | The same availability is declared more than once. |
+| `PLAY1135` | Warning | An `available for` gate, an `availability` or a persona names an audience that is not declared. Nothing grants it, so the gate stays closed. |
+| `PLAY1136` | Warning | An `available with` gate or an `availability` names an availability that is not declared. The gate stays closed. |
+| `PLAY1137` | Error | Availabilities build on each other with `with` in a cycle. |
+| `PLAY1138` | Warning | An `available when` condition reads a `$context` value that nothing provides at that place. An undecided gate stays closed. |
+| `PLAY1139` | Warning | A screen action, form or reaction `invokes` a command whose audiences can be off while the invoker's are on, so the invocation can be refused as not available. `when` conditions are opaque and skipped; a reaction is never gated. |
+| `PLAY1140` | Error | An `available for` or `available with` line holds a token that is not a name, `and`, `or` or a parenthesis. |
+| `PLAY1141` | Error | A parenthesis in an `available for` or `available with` line is never closed. |
+
+## Screen visuals and slice placements
+
+Sketches, HTML mockups and images a screen carries, see [Screens](screens.md#sketches-mockups-and-images), and the linked copies a slice shows, see [Slices](slices.md#show-an-element-in-more-than-one-slice). Both compilers report `PLAY0950`, `PLAY0951` and `PLAY0953` to `PLAY0955`. `PLAY0952` needs the files beside the model, so it is reported where a model root is opened: the MCP server, `open-workspace` and the tools built on them.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0950` | Error | A screen's `sketch`, `mockup` or `image` line names no file. Write the path after the keyword, relative to the model root. |
+| `PLAY0951` | Warning | A screen's `image` is not a PNG, JPG, GIF, SVG or WebP file, or its `mockup` is not an HTML page ending in `.html` or `.htm`. |
+| `PLAY0952` | Warning | A screen's sketch, mockup or image file is not beside the model: it does not exist, or its path leaves the model root. |
+| `PLAY0953` | Error | A slice's `shows` line is not `shows event <Name>` or `shows readmodel <Name>`. |
+| `PLAY0954` | Warning | A slice shows an event or read model the application does not declare. |
+| `PLAY0955` | Warning | A slice shows an element it already declares itself, or shows the same element twice. Remove the extra line. |
+
+## Projection dictionary keys, set once and children ordering
+
+Dynamic dictionary keys, the `remove` mapping line and the ordering of a `children` block, see [Property mapping](projections/property-mapping.md#dictionary-entries) and [Children](projections/children.mdx#ordering-the-children). Both compilers report every code in this table.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0956` | Error | A `remove <target>` line names a target without a dynamic key, so there is no entry to remove. End the target in `.$eventContent.<property>`, `.$eventContext.<path>` or `.$causedBy.<member>`; to empty the whole property, write `clear <target>`. |
+| `PLAY0957` | Error | A dynamic key is malformed: `.$eventContent` names no event property, or `.$causedBy` names a member other than `subject`, `name` or `userName`. |
+| `PLAY0958` | Error | A children ordering line is not `insert first`, `insert last` or `sort by <property> [ascending\|descending]`, takes indented lines, or stands outside a `children` block. |
+| `PLAY0959` | Error | A `children` block declares more than one ordering line. Keep one. |
+| `PLAY0960` | Warning | A children `sort by` names a property the element type of the collection does not declare. |
+| `PLAY0961` | Warning | A `.$eventContent.<path>` key names a path the event the mapping handles does not have, so the entry is never written. |
+| `PLAY0962` | Warning | A dynamic key writes into a declared read-model property. Chronicle accepts a dictionary entry only in a dictionary property, and Screenplay has no dictionary type, so Chronicle refuses the projection when it registers it. |
+| `PLAY0963` | Error | A `clear` line names a target with a dynamic key. Clearing would keep the entry with no value; write `remove <target>` to delete it. |
 
 ## Toolbar buttons
 

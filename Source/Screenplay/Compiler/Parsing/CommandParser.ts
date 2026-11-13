@@ -9,6 +9,8 @@ import { misplacedRuleHintForCommand } from './MisplacedRuleHint';
 import { parseCondition } from './ConditionParser';
 import { parseClockOperand } from './ClockOperandParser';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { CommandCalendarSyntax } from '../Syntax/Calendar';
@@ -120,6 +122,7 @@ interface CommandBodyState {
     description: string | null;
     documentation: string | null;
     authorize: AuthorizeSyntax | null;
+    readonly available: AvailableSyntax[];
     authorizationDepthExceeded: boolean;
     handler: HandlerSyntax | null;
     readonly handlers: { handler: HandlerSyntax | null; location: SourceLocation }[];
@@ -137,7 +140,7 @@ interface CommandDirectiveRule {
 function createCommandBodyState(name: string, responseNames: ReadonlySet<string> | undefined): CommandBodyState {
     return {
         name, responseNames, properties: [], responses: [], identifier: undefined, validations: [], produces: [], reads: [], referenceReads: [],
-        concurrency: undefined, description: null, documentation: null, authorize: null, authorizationDepthExceeded: false, handler: null,
+        concurrency: undefined, description: null, documentation: null, authorize: null, available: [], authorizationDepthExceeded: false, handler: null,
         handlers: [], stream: null, streamCandidates: [], calendar: null
     };
 }
@@ -155,6 +158,7 @@ const commandDirectiveRules: readonly CommandDirectiveRule[] = [
     { matches: isDirective('description'), parse: (context, line, state) => { state.description = parseDescription(context, line, state.description, `Command '${state.name}'`); } },
     { matches: isDirective('documentation'), parse: (context, line, state) => { state.documentation = parseDocumentation(context, line, state.documentation, `Command '${state.name}'`); } },
     { matches: isDirective('authorize'), parse: parseAuthorizeDirective },
+    { matches: (keyword, line) => keyword === 'available' && isAvailabilityGate(line.content), parse: (context, line, state) => { addAvailabilityGate(context, line, state.available); } },
     { matches: isDirective('validate'), parse: parseValidateDirective },
     { matches: isDirective('produces'), parse: parseProducesDirective },
     { matches: isDirective('handler'), parse: (context, line, state) => { state.handler = parseHandler(context, line); state.handlers.push({ handler: state.handler, location: locationOf(line) }); } },
@@ -280,10 +284,10 @@ function resolveResponse(context: ParserContext, state: CommandBodyState, discov
 }
 
 function buildCommand(context: ParserContext, line: SourceLine, state: CommandBodyState, discoveredNames: Set<string> | undefined): CommandSyntax {
-    const { name, properties, validations, produces, reads, referenceReads, concurrency, description, documentation, authorize, handler, handlers, stream, streamCandidates, calendar } = state;
+    const { name, properties, validations, produces, reads, referenceReads, concurrency, description, documentation, authorize, available, handler, handlers, stream, streamCandidates, calendar } = state;
     const { response, removed } = resolveResponse(context, state, discoveredNames);
     validateHandlerContracts(handlers, handler, produces.length > 0, context);
-    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, ...(calendar === null ? {} : { calendar }), location: locationOf(line) };
+    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, ...(available.length > 0 ? { available } : {}), properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, ...(calendar === null ? {} : { calendar }), location: locationOf(line) };
     commandReadSources.set(syntax, reads);
     dependencySources.set(syntax, { reads: referenceReads, concurrency });
     return syntax;

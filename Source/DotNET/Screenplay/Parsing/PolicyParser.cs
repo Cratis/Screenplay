@@ -39,11 +39,25 @@ internal static partial class PolicyParser
         FileReferenceSyntax? file = null;
         string? description = null;
         var locations = new Dictionary<string, SourceLocation>();
+        var reads = new List<ReadsSyntax>();
+        var inputs = new List<PolicyInputSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Policy '{name.Groups[1].Value}'", locations)) continue;
+            if (InputRegex().Match(line.Content) is { Success: true } input && LineText.FirstWord(line.Content) is not ("reads" or "require" or "file" or "description" or "anonymous"))
+            {
+                inputs.Add(new(input.Groups[1].Value, input.Groups[2].Value, line.Location) { From = input.Groups[3].Success ? input.Groups[3].Value : null });
+                continue;
+            }
+
+            if (LineText.FirstWord(line.Content) == "reads")
+            {
+                if (ReadsParser.Parse(context, line) is { } read) reads.Add(read);
+                continue;
+            }
+
             if (LineText.FirstWord(line.Content) == "require")
             {
                 var text = line.Content["require".Length..].Trim();
@@ -93,7 +107,7 @@ internal static partial class PolicyParser
             }
             else
             {
-                context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Unexpected '{line.Content}' in policy body - expected 'require ...', 'file <path>' or an inline code block", line.Location);
+                context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Unexpected '{line.Content}' in policy body - expected 'reads ...', 'require ...', 'file <path>' or an inline code block", line.Location);
                 context.SkipBlock(line.Indent);
             }
         }
@@ -108,7 +122,7 @@ internal static partial class PolicyParser
             context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition, a file reference or an inline code block", header.Location);
         }
 
-        return new(name.Groups[1].Value, condition, code, header.Location) { File = file, Description = description, DirectiveLocations = locations };
+        return new(name.Groups[1].Value, condition, code, header.Location) { File = file, Description = description, DirectiveLocations = locations, Reads = reads.Count == 0 ? null : reads, Inputs = inputs.Count == 0 ? null : inputs };
     }
 
     static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location, ConditionDepthBudget budget) =>
@@ -178,6 +192,13 @@ internal static partial class PolicyParser
                     : new ClaimConditionSyntax(claim, false, ExpressionParser.ParseMappingSource(context, target, location), location);
 
             default:
+                if (IsStatePath(tokens[position]) && position + 1 < tokens.Count && ConditionParser.ParseOperator(tokens, position + 1, out _) is not null)
+                {
+                    return ConditionParser.ParseComparison(context, tokens, ref position, location) is ComparisonConditionSyntax comparison
+                        ? new StateConditionSyntax(comparison, location)
+                        : null;
+                }
+
                 context.Error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, $"Unexpected '{tokens[position]}' in policy condition", location);
                 return null;
         }
@@ -214,6 +235,11 @@ internal static partial class PolicyParser
         _ => false
     };
 
+    [GeneratedRegex(@"^([a-z]\w*)\s+([A-Z]\w*)(?:\s+from\s+(\$[\w.]+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex InputRegex();
+
+    static bool IsStatePath(string token) => token.Length > 0 && (char.IsLetter(token[0]) || token[0] is '_' or '$');
+
     static bool IsString(string token) => token.Length >= 2 && token.StartsWith('"') && token.EndsWith('"');
 
     static string Unquote(string token) => StringLiteral.Unescape(token[1..^1]);
@@ -221,12 +247,12 @@ internal static partial class PolicyParser
     static List<string> Tokenize(string text, NumericMode mode) =>
         [.. ConditionParser.Tokenize(mode == NumericMode.Exact ? ExactTokenRegex() : TokenRegex(), text)];
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|(?<number>-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)(?:$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|(?<number>-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)(?:$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.NonBacktracking)]
     private static partial Regex ExactTokenRegex();
 
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|[\\w.$]+", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$]+", RegexOptions.NonBacktracking)]
     private static partial Regex TokenRegex();
 }

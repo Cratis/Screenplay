@@ -183,6 +183,11 @@ public record CommandSyntax(
     IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the <c>available</c> gates of this command; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets the authoring-only markdown explaining this command.
     /// </summary>
     public string? Documentation { get; init; }
@@ -244,6 +249,11 @@ public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location)
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record AuthorizeSyntax(PolicyRequirementSyntax Requirement, SourceLocation Location) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the input mappings under a single-policy <c>authorize</c>, <see langword="null"/> when there are none.
+    /// </summary>
+    public IEnumerable<PolicyInputMappingSyntax>? Mappings { get; init; }
+
     /// <summary>
     /// Gets every policy the requirement names, in the order they appear.
     /// </summary>

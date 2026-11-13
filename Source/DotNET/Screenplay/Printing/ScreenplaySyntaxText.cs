@@ -113,6 +113,7 @@ internal static partial class ScreenplaySyntaxText
             ? $"not ({PolicyCondition(not.Operand)})"
             : $"not {PolicyCondition(not.Operand)}",
         ClaimConditionSyntax claim => ClaimCondition(claim),
+        StateConditionSyntax state => Condition(state.Comparison),
         LogicalPolicyConditionSyntax logical => Combined(
             PolicyCondition(logical.Left),
             OperatorOf(logical.Left),
@@ -138,6 +139,22 @@ internal static partial class ScreenplaySyntaxText
             PolicyRequirement(logical.Right),
             OperatorOf(logical.Right)),
         _ => throw Unsupported("policy requirement", requirement)
+    };
+
+    /// <summary>
+    /// Renders an availability requirement as the keyword that introduces it, <c>for</c>, <c>when</c> or <c>with</c>,
+    /// followed by its text, the way it is written after <c>available</c> or on an <c>availability</c> line.
+    /// </summary>
+    /// <param name="requirement">The <see cref="AvailabilityRequirementSyntax"/> to render.</param>
+    /// <returns>The rendered requirement.</returns>
+    public static string AvailabilityRequirement(AvailabilityRequirementSyntax requirement) => requirement switch
+    {
+        ConditionAvailabilityRequirementSyntax condition => $"when {Condition(condition.Condition)}",
+        _ when AvailabilityRequirementSyntax.Leaves<AudienceAvailabilityRequirementSyntax>(requirement).Any() && AvailabilityLeafCount(requirement) == AvailabilityRequirementSyntax.Leaves<AudienceAvailabilityRequirementSyntax>(requirement).Count() =>
+            $"for {AvailabilityNames(requirement)}",
+        _ when AvailabilityRequirementSyntax.Leaves<AvailabilityReferenceSyntax>(requirement).Any() && AvailabilityLeafCount(requirement) == AvailabilityRequirementSyntax.Leaves<AvailabilityReferenceSyntax>(requirement).Count() =>
+            $"with {AvailabilityNames(requirement)}",
+        _ => throw Unsupported("availability requirement", requirement)
     };
 
     /// <summary>
@@ -300,6 +317,7 @@ internal static partial class ScreenplaySyntaxText
         ContextExpressionSyntax context => $"$context.{context.Path}",
         IdentityExpressionSyntax identity => $"$identity.{identity.Path}",
         RefusalExpressionSyntax refusal => $"$refusal.{refusal.Member}",
+        InvocationValueExpressionSyntax value => value.Member.Length == 0 ? $"${value.Source}" : $"${value.Source}.{value.Member}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
@@ -385,6 +403,25 @@ internal static partial class ScreenplaySyntaxText
     /// reads back the same without them, but a document is written to be read by someone who should not
     /// have to know the precedence table to know what it says.
     /// </remarks>
+    static string AvailabilityNames(AvailabilityRequirementSyntax requirement) => requirement switch
+    {
+        AudienceAvailabilityRequirementSyntax audience => audience.Audience,
+        AvailabilityReferenceSyntax reference => reference.Availability,
+        LogicalAvailabilityRequirementSyntax logical => Combined(
+            AvailabilityNames(logical.Left),
+            logical.Left is LogicalAvailabilityRequirementSyntax left ? left.Operator : null,
+            logical.Operator,
+            AvailabilityNames(logical.Right),
+            logical.Right is LogicalAvailabilityRequirementSyntax right ? right.Operator : null),
+        _ => throw Unsupported("availability requirement", requirement)
+    };
+
+    static int AvailabilityLeafCount(AvailabilityRequirementSyntax requirement) => requirement switch
+    {
+        LogicalAvailabilityRequirementSyntax logical => AvailabilityLeafCount(logical.Left) + AvailabilityLeafCount(logical.Right),
+        _ => 1
+    };
+
     static string Combined(string left, LogicalOperator? leftOperator, LogicalOperator @operator, string right, LogicalOperator? rightOperator) =>
         $"{Group(left, leftOperator is { } nestedLeft && nestedLeft != @operator)} {Logical(@operator)} {Group(right, rightOperator is not null)}";
 

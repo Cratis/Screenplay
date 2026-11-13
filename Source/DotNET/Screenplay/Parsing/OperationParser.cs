@@ -19,23 +19,153 @@ internal static partial class OperationParser
         var match = SystemHeaderRegex().Match(header.Content);
         if (!match.Success) context.Error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'system <Name>'.", header.Location);
         string? description = null;
+        var abilities = new List<AbilitySyntax>();
+        var settings = new List<SystemSettingSyntax>();
+        SystemExtensionSyntax? extension = null;
+        SystemActivationSyntax? activation = null;
         var locations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(header.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "description")
+            var word = LineText.FirstWord(child.Content);
+            if (word == "description")
             {
                 description = DescriptionParser.Parse(context, child, description, $"System '{match.Groups[1].Value}'", out _);
                 locations.TryAdd("description", child.Location);
             }
+            else if (word == "ability")
+            {
+                abilities.Add(ParseAbility(context, child));
+            }
+            else if (word == "extension")
+            {
+                var parsed = SystemConfigurationParser.ParseExtension(context, child);
+                if (parsed is not null && extension is not null) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"System '{match.Groups[1].Value}' names an extension more than once.", child.Location);
+                else extension = parsed ?? extension;
+            }
+            else if (word == "setting")
+            {
+                if (SystemConfigurationParser.ParseSetting(context, child) is { } setting) settings.Add(setting);
+            }
+            else if (word == "activation")
+            {
+                var parsed = SystemConfigurationParser.ParseActivation(context, child);
+                if (parsed is not null && activation is not null) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"System '{match.Groups[1].Value}' states its activation more than once.", child.Location);
+                else activation = parsed ?? activation;
+            }
             else
             {
-                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "A system accepts only a description; abilities are not supported.", child.Location);
+                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "A system accepts a description, abilities, an extension, settings and an activation.", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
 
-        return new(match.Groups[1].Value, description, header.Location) { DirectiveLocations = locations };
+        foreach (var duplicate in abilities.GroupBy(ability => ability.Name, StringComparer.OrdinalIgnoreCase).SelectMany(group => group.Skip(1)))
+            context.Error(DiagnosticCodes.DuplicateAbility, $"System '{match.Groups[1].Value}' already declares ability '{duplicate.Name}'; ability names compare ignoring case.", duplicate.Location);
+
+        return new(match.Groups[1].Value, description, header.Location) { Abilities = abilities, Extension = extension, Settings = settings, Activation = activation, DirectiveLocations = locations };
+    }
+
+    internal static AbilitySyntax ParseAbility(ParserContext context, SourceLine header)
+    {
+        var match = AbilityHeaderRegex().Match(header.Content);
+        var name = match.Success ? match.Groups[1].Value : string.Empty;
+        var effect = match.Success && match.Groups[2].Success ? match.Groups[2].Value : null;
+        if (!match.Success) context.Error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'ability <Name> [safe | idempotent | once]'.", header.Location);
+        else if (effect is not null && !AbilityEffectClasses.All.Contains(effect))
+            context.Error(DiagnosticCodes.InvalidAbilityEffectClass, $"Ability '{name}' has effect class '{effect}'; expected safe, idempotent or once.", header.Location);
+
+        string? description = null;
+        var answersLater = false;
+        var returnsSeen = false;
+        var inputs = new List<PropertySyntax>();
+        var returns = new List<PropertySyntax>();
+        var outcomes = new List<AbilityOutcomeSyntax>();
+        var inputNames = new HashSet<string>(StringComparer.Ordinal);
+        var outcomeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var locations = new Dictionary<string, SourceLocation>();
+        FileReferenceSyntax? file = null;
+        CodeBlockSyntax? code = null;
+        ImplementationSyntax? implementation = null;
+        var sourceSelected = false;
+        while (context.TryPeekChild(header.Indent, out var line))
+        {
+            context.Reader.TakeSignificant();
+            var word = LineText.FirstWord(line.Content);
+            if (word == "description")
+            {
+                description = DescriptionParser.Parse(context, line, description, $"Ability '{name}'", out _);
+                locations.TryAdd("description", line.Location);
+            }
+            else if (line.Content == "answers later")
+            {
+                if (answersLater) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"Ability '{name}' repeats 'answers later'.", line.Location);
+                answersLater = true;
+                locations.TryAdd("answersLater", line.Location);
+                RejectChildren(context, line, DiagnosticCodes.InvalidSystemDeclaration, "'answers later' cannot have children.");
+            }
+            else if (line.Content == "returns")
+            {
+                if (returnsSeen) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"Ability '{name}' repeats 'returns'.", line.Location);
+                returnsSeen = true;
+                var before = returns.Count;
+                ParseAbilityReturns(context, line, name, returns);
+                if (returns.Count == before) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"Ability '{name}' declares 'returns' without a field.", line.Location);
+            }
+            else if (word == "outcome")
+            {
+                var outcome = ParseAbilityOutcome(context, line, outcomeNames);
+                if (outcome is not null) outcomes.Add(outcome);
+            }
+            else if (word == "implementation")
+            {
+                if (sourceSelected) context.Error(DiagnosticCodes.ConflictingImplementationSources, "An ability cannot mix wrapped and direct sources or repeat its wrapper.", line.Location);
+                var source = ImplementationParser.ParseWrapper(context, line);
+                if (!sourceSelected)
+                {
+                    file = source.File;
+                    code = source.Code;
+                    implementation = source.Implementation;
+                }
+                sourceSelected = true;
+            }
+            else if (FileReferenceParser.IsDirectiveAmongProperties(line) || line.Content.StartsWith("```", StringComparison.Ordinal))
+            {
+                if (sourceSelected) context.Error(DiagnosticCodes.ConflictingImplementationSources, "An ability has at most one file or inline payload.", line.Location);
+                var parsedFile = FileReferenceParser.IsDirectiveAmongProperties(line) ? FileReferenceParser.Parse(context, line) : null;
+                var parsedCode = parsedFile is null ? CodeBlockParser.Parse(context, line) : null;
+                if (!sourceSelected)
+                {
+                    file = parsedFile;
+                    code = parsedCode;
+                }
+                sourceSelected = true;
+                if (parsedFile is not null) RejectChildren(context, line, DiagnosticCodes.InvalidImplementationBlock, "A file directive cannot have children.");
+            }
+            else if (PropertyLineParser.TryParse(line) is not null)
+            {
+                var property = PropertyLineParser.Parse(context, line)!;
+                ValidateAbilityProperty(context, property, line, "input");
+                if (!inputNames.Add(property.Name)) context.Error(DiagnosticCodes.DuplicateDeclaration, $"Ability '{name}' already declares input '{property.Name}'.", line.Location);
+                inputs.Add(property);
+                RejectChildren(context, line, DiagnosticCodes.InvalidSystemDeclaration, "An ability input cannot have children.");
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "An ability accepts a description, inputs, answers later, returns, outcomes and an implementation.", line.Location);
+                context.SkipBlock(line.Indent);
+            }
+        }
+
+        return new(name, effect, inputs, returns, outcomes, header.Location)
+        {
+            Description = description,
+            AnswersLater = answersLater,
+            Implementation = implementation,
+            File = file,
+            Code = code,
+            DirectiveLocations = locations
+        };
     }
 
     internal static (OperationSyntax Operation, List<PropertyMappingSyntax> Mappings) Parse(ParserContext context, SourceLine header, bool inline = false)
@@ -137,10 +267,17 @@ internal static partial class OperationParser
         CodeBlockSyntax? code = null;
         ImplementationSyntax? implementation = null;
         var sourceSelected = false;
+        var invocations = new List<InvokesSyntax>();
         var locations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(line.Content) == "invokes")
+            {
+                if (ReactionParser.ParseInvokes(context, line, allowBranches: false) is { } invoked) invocations.Add(invoked);
+                continue;
+            }
+
             if (LineText.FirstWord(line.Content) == "description")
             {
                 description = DescriptionParser.Parse(context, line, description, $"Operation phase '{header.Content}'", out _);
@@ -174,12 +311,12 @@ internal static partial class OperationParser
             }
             else
             {
-                context.Error(DiagnosticCodes.InvalidOperationDeclaration, "A phase accepts description, file, a tagged fence or implementation.", line.Location);
+                context.Error(DiagnosticCodes.InvalidOperationDeclaration, "A phase accepts description, invokes, file, a tagged fence or implementation.", line.Location);
                 context.SkipBlock(line.Indent);
             }
         }
 
-        return new(description, file, code, implementation, header.Location) { DirectiveLocations = locations };
+        return new(description, file, code, implementation, header.Location) { DirectiveLocations = locations, Invocations = invocations };
     }
 
     internal static void RejectChildren(ParserContext context, SourceLine line, string code, string message)
@@ -188,6 +325,73 @@ internal static partial class OperationParser
         context.Error(code, message, child.Location);
         context.SkipBlock(line.Indent);
     }
+
+    internal static void ParseAbilityReturns(ParserContext context, SourceLine header, string abilityName, List<PropertySyntax> returns)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        while (context.TryPeekChild(header.Indent, out var line))
+        {
+            context.Reader.TakeSignificant();
+            if (PropertyLineParser.TryParse(line) is null)
+            {
+                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "Expected '<field> <Type>' in an ability 'returns' block.", line.Location);
+                context.SkipBlock(line.Indent);
+                continue;
+            }
+
+            var property = PropertyLineParser.Parse(context, line)!;
+            ValidateAbilityProperty(context, property, line, "returned field");
+            if (!names.Add(property.Name)) context.Error(DiagnosticCodes.DuplicateDeclaration, $"Ability '{abilityName}' already returns '{property.Name}'.", line.Location);
+            returns.Add(property);
+            RejectChildren(context, line, DiagnosticCodes.InvalidSystemDeclaration, "A returned field cannot have children.");
+        }
+    }
+
+    static AbilityOutcomeSyntax? ParseAbilityOutcome(ParserContext context, SourceLine header, HashSet<string> seen)
+    {
+        var match = OutcomeHeaderRegex().Match(header.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSystemDeclaration, "Expected 'outcome <Name>'.", header.Location);
+            context.SkipBlock(header.Indent);
+            return null;
+        }
+
+        var name = match.Groups[1].Value;
+        if (AbilityOutcomes.ReservedOutlets.Contains(name))
+            context.Error(DiagnosticCodes.ReservedAbilityOutcomeName, $"Outcome '{name}' is named like a reserved outlet; reserved names are {string.Join(", ", AbilityOutcomes.ReservedOutlets.Order())}.", header.Location);
+        if (!seen.Add(name)) context.Error(DiagnosticCodes.DuplicateDeclaration, $"Outcome '{name}' is declared more than once.", header.Location);
+        string? description = null;
+        var locations = new Dictionary<string, SourceLocation>();
+        while (context.TryPeekChild(header.Indent, out var line))
+        {
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(line.Content) == "description")
+            {
+                description = DescriptionParser.Parse(context, line, description, $"Outcome '{name}'", out _);
+                locations.TryAdd("description", line.Location);
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.InvalidSystemDeclaration, "An outcome accepts only a description and carries no payload.", line.Location);
+                context.SkipBlock(line.Indent);
+            }
+        }
+
+        return new(name, description, header.Location) { DirectiveLocations = locations };
+    }
+
+    static void ValidateAbilityProperty(ParserContext context, PropertySyntax property, SourceLine line, string role)
+    {
+        if (property.IsSubject) context.Error(DiagnosticCodes.InvalidSubjectOwner, $"The subject modifier is only valid on event properties, not ability {role}s (decision 0008: one data-subject model).", line.Location);
+        if (property.IsIdentifier || property.IsGenerated) context.Error(DiagnosticCodes.InvalidSystemDeclaration, $"An ability {role} cannot be an identifier or generated property.", line.Location);
+    }
+
+    [GeneratedRegex(@"^ability\s+([A-Za-z_]\w*)(?:\s+(\S+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex AbilityHeaderRegex();
+
+    [GeneratedRegex(@"^outcome\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex OutcomeHeaderRegex();
 
     [GeneratedRegex(@"^system\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex SystemHeaderRegex();

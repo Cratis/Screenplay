@@ -79,8 +79,51 @@ public sealed partial class SemanticModelBinder
             return BindGeneratedValue(pinned.Source, property) is { } value ? new(commandId, propertyId, value) : null;
         }
 
+        ImmutableArray<SemanticAbilityFieldValue> BindAbilityValues(IEnumerable<PropertyMappingSyntax> values, IEnumerable<PropertySyntax> fields, string description)
+        {
+            var byName = fields.ToDictionary(field => field.Name, StringComparer.Ordinal);
+            var bound = ImmutableArray.CreateBuilder<SemanticAbilityFieldValue>();
+            foreach (var value in values)
+            {
+                if (!byName.TryGetValue(value.Property, out var field))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"The {description} value '{value.Property}' is unresolved.", value.Location);
+                    continue;
+                }
+
+                if (BindConcreteValue(value.Source, BindTypeReference(field.Type), description, false) is { } concrete) bound.Add(new(value.Property, concrete));
+            }
+
+            return bound.ToImmutable();
+        }
+
+        SemanticAbilityAnswer? BindAbilityAnswer(SpecificationAbilityAnswerSyntax answer)
+        {
+            if (FindAbility(answer.Ability) is not { } found)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Ability answer '{answer.Ability}' is not one declared ability.", answer.Location);
+                return null;
+            }
+
+            var system = SystemId(found.System);
+            return answer.Answer switch
+            {
+                "answers" => new SemanticAbilityAnswer(system, found.Ability.Name, SemanticAbilityAnswerKind.Outcome) { Outcome = answer.Outcome },
+                "fails" => new SemanticAbilityAnswer(system, found.Ability.Name, SemanticAbilityAnswerKind.Failed) { Reason = answer.Reason },
+                _ => new SemanticAbilityAnswer(system, found.Ability.Name, SemanticAbilityAnswerKind.Returned)
+                {
+                    Values = BindAbilityValues(answer.Values, found.Ability.Returns, "ability answer")
+                }
+            };
+        }
+
         SemanticSpecificationInvocation? BindSpecificationInvocation(SpecificationSyntax specification, SpecificationInvocationSyntax expected)
         {
+            if (FindAbility(expected.Command) is { } found)
+            {
+                return new(default, []) { System = SystemId(found.System), Ability = found.Ability.Name, Inputs = BindAbilityValues(expected.Values, found.Ability.Inputs, "specification invocation") };
+            }
+
             var commands = AllSlices()
                 .SelectMany(entry => entry.Slice.Commands.Where(command => command.Name == ShortName(expected.Command)).Select(command => (entry, command)))
                 .Where(candidate => CommandBelongsToSlice(expected.Command, SemanticAddress.ForSlice(_applicationIdentity, candidate.entry.Module, candidate.entry.FeaturePath, candidate.entry.Slice.Name)))

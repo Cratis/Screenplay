@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
-import { AuthorizeSyntax, LogicalOperator, PolicyRequirementSyntax } from '../Syntax/Authorization';
+import { AuthorizeSyntax, LogicalOperator, PolicyInputMappingSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { FileImportSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
@@ -23,6 +23,8 @@ export function authorizationWasRefused(imports: readonly FileImportSyntax[]): b
 
 // The port of the C# AuthorizeParser: the requirement may continue on the lines below the 'authorize', and
 // two operands written side by side are joined by an implicit 'and'.
+const mappingPattern = /^([a-z]\w*)\s*=\s*([a-z]\w*)$/u;
+
 export function parseAuthorize(context: ParserContext, line: SourceLine): AuthorizeSyntax | null {
     let text = line.content.substring('authorize'.length);
     for (let child = context.peekChild(line.indent); child !== undefined && continuationPattern.test(child.content); child = context.peekChild(line.indent)) {
@@ -38,7 +40,18 @@ export function parseAuthorize(context: ParserContext, line: SourceLine): Author
     if (hasImplicitConjunction(text)) context.information(DiagnosticCodes.ImplicitAuthorizationConjunction, 'Write \'and\' between adjacent policies in \'authorize\'.', location);
     const parser = new RequirementParser(context, tokens, location);
     const requirement = parser.parse();
-    return requirement === null ? null : { kind: 'AuthorizeSyntax', requirement, location };
+    if (requirement === null) return null;
+    const mappings: PolicyInputMappingSyntax[] = [];
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        const mapping = mappingPattern.exec(child.content);
+        if (mapping === null) break;
+        context.reader.takeSignificant();
+        mappings.push({ kind: 'PolicyInputMappingSyntax', input: mapping[1], property: mapping[2], location: locationOf(child) });
+    }
+    if (mappings.length > 0 && requirement.kind !== 'PolicyReferenceSyntax') {
+        context.error(DiagnosticCodes.InvalidPolicyReference, 'An input mapping block belongs to a single policy; write one \'authorize\' line per policy to map its inputs.', mappings[0].location);
+    }
+    return { kind: 'AuthorizeSyntax', requirement, ...(mappings.length === 0 ? {} : { mappings }), location };
 }
 
 // Several 'authorize' lines on one construct all have to hold, so they combine with 'and'.
@@ -47,8 +60,10 @@ export function combineAuthorize(first: AuthorizeSyntax | null, next: AuthorizeS
     if (next === null) return first;
     const depth = 1 + Math.max(requirementDepth(first.requirement), requirementDepth(next.requirement));
     if (!new ConditionDepthBudget(context, next.location).allowsDepth(depth)) return null;
+    const combined = [...first.mappings ?? [], ...next.mappings ?? []];
     return {
         kind: 'AuthorizeSyntax',
+        ...(combined.length === 0 ? {} : { mappings: combined }),
         requirement: { kind: 'LogicalPolicyRequirementSyntax', left: first.requirement, operator: 'And', right: next.requirement, location: first.location },
         location: first.location,
     };

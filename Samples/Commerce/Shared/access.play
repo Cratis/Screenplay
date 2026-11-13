@@ -22,6 +22,15 @@ policy CanCancelOrder
   require role "Customer"
     or role "SupportAgent"
 
+// Who a part of the application is available to. The model never says who is in an audience;
+// the personas below carry them for authoring only.
+audience Fulfillment
+  description "Tenants that run their own warehouse"
+
+availability FulfillmentService
+  description "Warehouse fulfillment, sold to tenants that run a warehouse"
+  for Fulfillment
+
 persona Customer
   description "Shops the storefront, places orders and follows them to the door"
   goal "Find and buy what they came for"
@@ -43,6 +52,7 @@ persona WarehouseClerk
   goal "Hand every order to a carrier on time"
   policy IsAuthenticated
   policy IsWarehouseClerk
+  audience Fulfillment
 
 persona SupportAgent
   description "Answers customers about their orders and cancels on their behalf"
@@ -51,6 +61,7 @@ persona SupportAgent
   policy IsAuthenticated
   policy IsSupportAgent
   policy CanCancelOrder
+  audience Fulfillment
 
 authentication
   provider EntraId

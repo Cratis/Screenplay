@@ -119,19 +119,73 @@ internal static partial class SemanticModelRead
         SemanticId command = default;
         ImmutableArray<SemanticPropertyMapping> mappings = default;
         ImmutableArray<SemanticInvocationRefusal> branches = [];
+        SemanticId system = default;
+        string? ability = null;
+        ImmutableArray<SemanticAbilityInputMapping> inputs = [];
+        ImmutableArray<SemanticInvocationBranch> resultBranches = [];
         while (NextProperty(ref reader, seen, "invocation") is { } property)
         {
             switch (property)
             {
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
+                case "system" when schemaVersion >= 51: system = SemanticId.Parse(String(ref reader, property)); break;
+                case "ability" when schemaVersion >= 51: ability = String(ref reader, property); break;
+                case "inputs" when schemaVersion >= 51: inputs = Array(ref reader, (ref Utf8JsonReader item) => AbilityInput(ref item, schemaVersion), property); break;
+                case "branches" when schemaVersion >= 51: resultBranches = Array(ref reader, (ref Utf8JsonReader item) => InvocationBranch(ref item, schemaVersion), property); break;
                 case "onRefused" when schemaVersion >= 19: branches = Array(ref reader, (ref Utf8JsonReader item) => InvocationRefusal(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "invocation");
             }
         }
 
-        Required(command.IsSet && !mappings.IsDefault, "invocation");
+        if (ability is not null)
+        {
+            Required(system.IsSet && !command.IsSet && mappings.IsDefault && branches.IsEmpty, "invocation");
+            return new(default, []) { System = system, Ability = ability, Inputs = inputs, Branches = resultBranches };
+        }
+
+        Required(command.IsSet && !mappings.IsDefault && !system.IsSet && inputs.IsEmpty && resultBranches.IsEmpty, "invocation");
         return new(command, mappings) { OnRefused = branches };
+    }
+
+    internal static SemanticAbilityInputMapping AbilityInput(ref Utf8JsonReader reader, uint schemaVersion)
+    {
+        Object(ref reader, "ability input");
+        var seen = NewSeen();
+        string? input = null;
+        SemanticExpression? source = null;
+        while (NextProperty(ref reader, seen, "ability input") is { } property)
+        {
+            switch (property)
+            {
+                case "input": input = String(ref reader, property); break;
+                case "source": source = Nested(ref reader, (ref Utf8JsonReader item) => Expression(ref item, schemaVersion), property); break;
+                default: throw Unknown(property, "ability input");
+            }
+        }
+
+        Required(input is not null && source is not null, "ability input");
+        return new(input!, source!);
+    }
+
+    internal static SemanticInvocationBranch InvocationBranch(ref Utf8JsonReader reader, uint schemaVersion)
+    {
+        Object(ref reader, "invocation branch");
+        var seen = NewSeen();
+        string? selector = null;
+        ImmutableArray<SemanticProducedEvent> produces = default;
+        while (NextProperty(ref reader, seen, "invocation branch") is { } property)
+        {
+            switch (property)
+            {
+                case "selector": selector = String(ref reader, property); break;
+                case "produces": produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, schemaVersion, true), property); break;
+                default: throw Unknown(property, "invocation branch");
+            }
+        }
+
+        Required(selector is not null && !produces.IsDefault, "invocation branch");
+        return new(selector!, produces);
     }
 
     internal static SemanticInvocationRefusal InvocationRefusal(ref Utf8JsonReader reader, uint schemaVersion)
@@ -383,23 +437,90 @@ internal static partial class SemanticModelRead
         return new(target) { Field = field, Value = value };
     }
 
-    internal static SemanticSpecificationInvocation SpecificationInvocation(ref Utf8JsonReader reader)
+    internal static SemanticAbilityFieldValue AbilityFieldValue(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "ability field value");
+        var seen = NewSeen();
+        string? name = null;
+        SemanticValue? value = null;
+        while (NextProperty(ref reader, seen, "ability field value") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "value": value = Nested(ref reader, Value, property); break;
+                default: throw Unknown(property, "ability field value");
+            }
+        }
+
+        Required(name is not null && value is not null, "ability field value");
+        return new(name!, value!);
+    }
+
+    internal static SemanticAbilityAnswer AbilityAnswer(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "ability answer");
+        var seen = NewSeen();
+        SemanticId system = default;
+        string? ability = null;
+        string? kind = null;
+        string? outcome = null;
+        string? reason = null;
+        ImmutableArray<SemanticAbilityFieldValue> values = default;
+        while (NextProperty(ref reader, seen, "ability answer") is { } property)
+        {
+            switch (property)
+            {
+                case "system": system = SemanticId.Parse(String(ref reader, property)); break;
+                case "ability": ability = String(ref reader, property); break;
+                case "kind": kind = String(ref reader, property); break;
+                case "outcome": outcome = String(ref reader, property); break;
+                case "reason": reason = String(ref reader, property); break;
+                case "values": values = Array(ref reader, AbilityFieldValue, property); break;
+                default: throw Unknown(property, "ability answer");
+            }
+        }
+
+        var answerKind = kind switch
+        {
+            "returned" => SemanticAbilityAnswerKind.Returned,
+            "outcome" => SemanticAbilityAnswerKind.Outcome,
+            "failed" => SemanticAbilityAnswerKind.Failed,
+            _ => throw new InvalidSemanticContract($"The ability answer kind '{kind}' is unknown.")
+        };
+        Required(system.IsSet && ability is not null && !values.IsDefault, "ability answer");
+        return new(system, ability!, answerKind) { Outcome = outcome, Reason = reason, Values = values };
+    }
+
+    internal static SemanticSpecificationInvocation SpecificationInvocation(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "specification invocation");
         var seen = NewSeen();
         SemanticId command = default;
         ImmutableArray<SemanticPropertyValue> values = default;
+        SemanticId system = default;
+        string? ability = null;
+        ImmutableArray<SemanticAbilityFieldValue> inputs = [];
         while (NextProperty(ref reader, seen, "specification invocation") is { } property)
         {
             switch (property)
             {
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
                 case "values": values = Array(ref reader, PropertyValue, property); break;
+                case "system" when schemaVersion >= 51: system = SemanticId.Parse(String(ref reader, property)); break;
+                case "ability" when schemaVersion >= 51: ability = String(ref reader, property); break;
+                case "inputs" when schemaVersion >= 51: inputs = Array(ref reader, AbilityFieldValue, property); break;
                 default: throw Unknown(property, "specification invocation");
             }
         }
 
-        Required(command.IsSet && !values.IsDefault, "specification invocation");
+        if (ability is not null)
+        {
+            Required(system.IsSet && !command.IsSet && values.IsDefault, "specification invocation");
+            return new(default, []) { System = system, Ability = ability, Inputs = inputs };
+        }
+
+        Required(command.IsSet && !values.IsDefault && !system.IsSet && inputs.IsEmpty, "specification invocation");
         return new(command, values);
     }
 

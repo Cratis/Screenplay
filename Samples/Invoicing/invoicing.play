@@ -26,6 +26,11 @@ domain Acme.Invoicing
 reaction batches atomic
 command reads protected
 
+// A secret is named once and described here; the model never holds its value. A
+// deployment binds the name to its store, and several systems may map settings from it.
+secret MailerApiKey
+  description "The API key of the transactional mail service"
+
 // Reports are stored apart from the operational read models. 'Reporting' is a
 // logical sink the deployment maps to real storage; every read model that names
 // no sink stays in the default one.
@@ -233,6 +238,58 @@ type InstallmentPlan
   firstDueDate Date
 
 // ------------------------------------------------------------
+// External systems - what the model can ask of the world outside it
+// ------------------------------------------------------------
+
+// A system names a business system and the abilities it can be asked to perform. An ability
+// has typed inputs, the values it returns, named outcomes other than success and an effect
+// class that says what a retry may do: safe (no effect), idempotent (the same key has the
+// effect once) or once (never retried; the default). A reaction, a workflow action or a
+// state's entry invokes an ability as <System>.<Ability>.
+system PaymentGateway
+  description "The card payment gateway that charges invoices"
+  ability CapturePayment idempotent
+    description "Captures the payment for one invoice"
+    invoiceId InvoiceId
+    amount Money
+    returns
+      paymentId PaymentId
+      capturedAt DateTime
+    outcome CardDeclined
+      description "The card issuer declined the charge"
+    outcome LimitExceeded
+  ability LookUpRate safe
+    description "Reads today's exchange rate"
+    currency CurrencyCode
+    returns
+      rate ExchangeRate
+  ability RequestApproval once
+    description "Asks a manager to approve a large write-off; the answer arrives later"
+    answers later
+    invoiceId InvoiceId
+    outcome Rejected
+  ability SendReceipt
+    description "Mails the receipt through the existing mail adapter"
+    invoiceId InvoiceId
+    email EmailAddress
+    implementation
+      hint "Use the existing mail adapter"
+      file Adapters/SendReceipt.cs
+
+// A system an extension realizes says where each of the extension's settings gets its
+// value. A setting the model does not mention is read from configuration under
+// systems.<System>.<setting>. Settings and activation are realization metadata: changing
+// them never changes the executable model.
+system Mailer
+  description "The transactional mail service that sends invoices and receipts"
+  extension "ghcr.io/cratis/extension-mail" version 2
+  setting apiKey from secret MailerApiKey
+  setting senderName = "Invoicing"
+  setting retries = 3
+  setting trackOpens = false
+  activation on demand idle after 10 minutes
+
+// ------------------------------------------------------------
 // Authorization - policies say what, personas say who
 // ------------------------------------------------------------
 
@@ -341,18 +398,42 @@ persona Customer
   policy IsAdultCustomer
   policy IsWithinCreditLimit
 
+// Audiences say who a part of the application is available to; the model never says who is in them.
+// Personas carry audiences for authoring only, so the board draws the audit screens for the Auditor.
+audience AuditTrail
+  description "Customers who bought the audit trail"
+
+audience Preview
+  description "Tenants taking part in the preview"
+
+availability AuditTrailEnabled
+  description "Sold with the audit trail, in the preview region"
+  for AuditTrail or Preview
+  when $context.region == "Nordics"
+
 persona Auditor
   description "Reviews what happened, never changes it"
   goal "Review what happened without changing it"
   policy IsAuthenticated
   policy IsPerson
   policy IsAuditor
+  audience AuditTrail
 
 authentication
   provider EntraId
   provider GitHub
   provider OpenId name Partner
   provider OpenId name CustomerPortal
+
+// The agent can read the invoice list and register an invoice, but still needs the same staff policies as a person.
+agents
+  tokens personal
+  query Invoicing.InvoiceManagement.InvoiceList.ListInvoices
+    scope read
+    description "Read the invoices the caller may manage."
+  command Invoicing.InvoiceManagement.RegisterInvoice.RegisterInvoice
+    scope write
+    description "Register an invoice for the caller's customer."
 
 // How people get in. Authoring metadata only: the sender address and the mail server are environment values,
 // found by name (see Documentation/screenplay/environments.md), never part of the model.
@@ -674,11 +755,15 @@ statemachine InvoiceLifecycle
     on InvoiceMarkedOverdue when status == "overdue" -> Overdue
     on InvoiceCancelled -> Cancelled
   state Overdue
-    entering send ApplyLateFee
-    entering start CollectOverdue
+    entering invokes ApplyLateFee
+    entering starts CollectOverdue
     on InvoicePaid -> Paid
     on InvoiceCancelled -> Cancelled
   state Paid final
+    // A state's entry can ask a system for an ability, mapping its inputs from the subject.
+    entering invokes PaymentGateway.SendReceipt
+      invoiceId = invoiceId
+      email     = "accounts@example.com"
   state Cancelled final
 
   specification AnOverdueInvoiceIsChased
@@ -692,8 +777,19 @@ statemachine InvoiceLifecycle
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
       overdueAt = "2026-10-02T09:00:00Z"
     then is Overdue
-    then sends ApplyLateFee
+    then invokes ApplyLateFee
     then starts CollectOverdue
+
+  specification APaidInvoiceGetsItsReceipt
+    description "Entering Paid asks the gateway to mail the receipt"
+    given InvoiceRegistered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      invoiceNumber = "INV-000123"
+    when append InvoicePaid
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      paidAt = "2026-10-02T09:00:00Z"
+    then is Paid
+    then invokes PaymentGateway.SendReceipt
 
   specification AnUnsentInvoiceCannotGoOverdue
     description "A draft that is reported overdue stays a draft: Draft allows no such transition"
@@ -714,7 +810,7 @@ workflow CollectOverdue
     -> ApplyFee
   trigger Manual manual
     -> ApplyFee
-  action ApplyFee sends ApplyLateFee attempts 2 timeout 30 seconds retry after 10 seconds
+  action ApplyFee invokes ApplyLateFee attempts 2 timeout 30 seconds retry after 10 seconds
     next -> Grace
     failed -> ApproveWriteOff
   wait Grace for 3 days
@@ -724,10 +820,17 @@ workflow CollectOverdue
     "settled" -> Close
   foreach TagEachLine over lineItems parallel 2
     each -> TagLine
-    completed -> AwaitPayment
-  action TagLine sends TagInvoice
+    completed -> ChargeCard
+  action TagLine invokes TagInvoice
     next -> AllTagged
   join AllTagged all
+  // A workflow action asks a system for an ability; an edge per declared outcome says where each answer goes.
+  action ChargeCard invokes PaymentGateway.CapturePayment
+    invoiceId = invoiceId
+    amount = 100
+    next -> AwaitPayment
+    CardDeclined -> ApproveWriteOff
+    failed -> ApproveWriteOff
   wait AwaitPayment for InvoicePaid expires after 14 days
     resumed -> Close
     expired -> ApproveWriteOff
@@ -735,9 +838,9 @@ workflow CollectOverdue
     approved -> WriteOff
     rejected -> Plan
     expired -> WriteOff
-  action WriteOff sends WriteOffInvoice
-  action Plan sends RequestPaymentPlan
-  action Close sends TagInvoice
+  action WriteOff invokes WriteOffInvoice
+  action Plan invokes RequestPaymentPlan
+  action Close invokes TagInvoice
 
   specification APaidInvoiceEndsTheChase
     description "The invoice is paid while the process waits, so it only tags the invoice"
@@ -750,8 +853,8 @@ workflow CollectOverdue
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
       overdueAt = "2026-10-02T09:00:00Z"
     outcome AwaitPayment resumed
-    then sends ApplyLateFee
-    then sends TagInvoice
+    then invokes ApplyLateFee
+    then invokes TagInvoice
     then completes
 
   specification EveryLineIsTagged
@@ -774,9 +877,9 @@ workflow CollectOverdue
     when append InvoiceMarkedOverdue
       for "9c858901-8a57-4791-81fe-4c455b099bc9"
       overdueAt = "2026-10-02T09:00:00Z"
-    then sends ApplyLateFee
-    then sends TagInvoice
-    then sends TagInvoice
+    then invokes ApplyLateFee
+    then invokes TagInvoice
+    then invokes TagInvoice
     then waits at AwaitPayment
 
   specification NoPaymentMeansAWriteOff
@@ -791,8 +894,8 @@ workflow CollectOverdue
       overdueAt = "2026-10-02T09:00:00Z"
     outcome AwaitPayment expired
     outcome ApproveWriteOff approved
-    then sends ApplyLateFee
-    then sends WriteOffInvoice
+    then invokes ApplyLateFee
+    then invokes WriteOffInvoice
     then completes
 
   specification ARejectedWriteOffBecomesAPaymentPlan
@@ -807,8 +910,8 @@ workflow CollectOverdue
       overdueAt = "2026-10-02T09:00:00Z"
     outcome AwaitPayment expired
     outcome ApproveWriteOff rejected
-    then sends ApplyLateFee
-    then sends RequestPaymentPlan
+    then invokes ApplyLateFee
+    then invokes RequestPaymentPlan
     then completes
 
   specification AFeeThatCannotBeAppliedGoesToApproval
@@ -823,9 +926,9 @@ workflow CollectOverdue
       overdueAt = "2026-10-02T09:00:00Z"
     outcome ApplyFee failed
     outcome ApproveWriteOff expired
-    then sends ApplyLateFee
-    then sends ApplyLateFee
-    then sends WriteOffInvoice
+    then invokes ApplyLateFee
+    then invokes ApplyLateFee
+    then invokes WriteOffInvoice
     then completes
 
 // ============================================================
@@ -834,6 +937,7 @@ workflow CollectOverdue
 
 module Invoicing
   purpose Billing
+  provide region String from "Nordics"
   documentation
     ```markdown
     Invoicing owns billing decisions. Payment-provider facts enter through translation slices.
@@ -1430,6 +1534,8 @@ module Invoicing
 
     slice StateChange CancelInvoice
       description "Cancels an invoice that will not be paid, optionally refunding it"
+      shows event InvoiceRegistered
+      shows readmodel InvoiceListReadModel
 
       command CancelInvoice
         invoiceId     InvoiceId identifier
@@ -2004,6 +2110,9 @@ module Invoicing
         remove with InvoiceCancelled
 
       screen InvoiceList
+        sketch Screens/invoice-list.sketch.svg
+        mockup Screens/invoice-list.html
+        image Screens/invoice-list.png
         title $strings.invoices.title
         data InvoiceListReadModel[] via query ListInvoices
         on load
@@ -2219,6 +2328,7 @@ module Invoicing
         registeredForSubject String
         displayLabel         String
         sentAt               DateTime optional
+        firstSentAt          DateTime optional
         paidAt               DateTime optional
         overdueAt            DateTime optional
         customerName         String optional
@@ -2253,6 +2363,7 @@ module Invoicing
         from InvoiceSent
           set status to "sent"
           sentAt = sentAt
+          set once firstSentAt = sentAt
         from InvoicePaid
           status = "paid"
           paidAt = paidAt
@@ -2268,6 +2379,7 @@ module Invoicing
             customerName = name
         children lineItems identified by lineNumber
           no automap
+          sort by lineNumber
           from InvoiceLineItemAdded key lineNumber
             parent $eventSourceId
             quantity  = quantity
@@ -2365,6 +2477,7 @@ module Invoicing
           invoiceNumber = "INV-000123"
           status        = "sent"
           sentAt        = "2026-10-02T09:00:00Z"
+          firstSentAt   = "2026-10-02T09:00:00Z"
           customerName  = "Acme Corp"
           displayLabel  = "INV-000123 (NOK)"
         then query GetInvoice
@@ -3027,6 +3140,12 @@ module Invoicing
             table InvoiceBalanceReadModel
               column outstanding label "Outstanding"
               on row-click navigate to RecordPaymentScreen by invoiceId
+          // A component the Mailer system's extension provides, placed through the system: the screen
+          // names Mailer.MailPreview, never the package, and handles the signal the contract raises.
+          component Mailer.MailPreview statement
+            property subject = "Your balance statement"
+            on sent
+              notify info "The balance statement was sent"
 
       specification ReducingTheBalanceByAPayment
         given caller
@@ -3376,6 +3495,87 @@ module Invoicing
           receivedAt = "2026-10-02T09:00:00Z"
         then no events
 
+    // A reaction calls an ability of a system outside the model. The ability answers with what it returns, with one
+    // of its declared outcomes, or fails; each answer has a branch that says which event records it.
+    slice Automation CapturePaymentsWithGateway
+      description "Asks the card payment gateway to capture a payment once it is recorded"
+
+      event PaymentCaptured
+        paymentId  PaymentId
+        capturedAt DateTime
+
+      event PaymentCardDeclined
+        invoiceId InvoiceId
+
+      event PaymentCaptureFailed
+        invoiceId InvoiceId
+        reason    String
+
+      reaction GatewayCapturer
+        description "Captures each recorded payment with the gateway"
+        from Payment.Transactions
+        runs as system
+        when PaymentRecorded
+          invoiceId
+          amount
+          invokes PaymentGateway.CapturePayment
+            invoiceId = invoiceId
+            amount    = amount
+            on returned
+              produces PaymentCaptured
+                for invoiceId
+                paymentId  = $result.paymentId
+                capturedAt = $result.capturedAt
+            on CardDeclined
+              produces PaymentCardDeclined
+                for invoiceId
+                invoiceId = invoiceId
+            on failed
+              produces PaymentCaptureFailed
+                for invoiceId
+                invoiceId = invoiceId
+                reason    = $failure.reason
+
+      specification TheGatewayCapturesThePayment
+        given PaymentGateway.CapturePayment returns
+          paymentId  = "5d0b2a77-3c1e-4e4f-9a5b-7c6d8e9f0a1b"
+          capturedAt = "2026-10-02T09:00:00Z"
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then PaymentCaptured
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          paymentId  = "5d0b2a77-3c1e-4e4f-9a5b-7c6d8e9f0a1b"
+          capturedAt = "2026-10-02T09:00:00Z"
+        then invokes PaymentGateway.CapturePayment
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+
+      specification TheCardIsDeclined
+        given PaymentGateway.CapturePayment answers CardDeclined
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then PaymentCardDeclined
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+      specification TheGatewayIsDown
+        given PaymentGateway.CapturePayment fails "gateway unavailable"
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then PaymentCaptureFailed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason    = "gateway unavailable"
+
     slice Automation ChaseOverdueInvoices
       description "Reminds the billing contact while an invoice is late"
 
@@ -3638,6 +3838,7 @@ module Invoicing
     purpose Bookkeeping
     description "What auditors look at - nothing here changes anything"
     authorize IsAuditor
+    available with AuditTrailEnabled
 
     contribute to Navigation
       navigate to CancelledInvoices
@@ -3663,6 +3864,7 @@ module Invoicing
       query ListCancelledInvoices => CancelledInvoiceReadModel[]
         description "Cancelled invoices, kept for audit"
         authorize IsAuditor
+        available for AuditTrail or Preview
 
       // AutoMap is on by default and copies every matching property.
       projection CancelledInvoices => CancelledInvoiceReadModel
@@ -4187,3 +4389,17 @@ sticky note on seeddata
   position 1000 150
   size 260 170
 
+
+storyline GetPaid "An invoice from draft to payment"
+  description "The path a manager and an accountant walk to turn a draft into money in the bank"
+  module Invoicing
+  feature InvoiceManagement
+  screen StartInvoiceDraftScreen "The manager starts a draft"
+  command StartInvoiceDraft
+  slice RegisterInvoice "The draft becomes an invoice"
+  event InvoiceRegistered
+  query GetInvoiceBalance
+  readmodel InvoiceBalanceReadModel
+  reaction OverdueChaser "A late invoice gets chased"
+  command RecordPayment "The customer pays"
+  event PaymentRecorded

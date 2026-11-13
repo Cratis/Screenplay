@@ -106,7 +106,12 @@ public enum SemanticProjectionOperation
     /// <summary>
     /// Subtracts one from the numeric target.
     /// </summary>
-    Decrement = 5
+    Decrement = 5,
+
+    /// <summary>
+    /// Assigns the source value only when the target has no value yet - it is missing or null (ESM v43).
+    /// </summary>
+    SetOnce = 6
 }
 
 /// <summary>

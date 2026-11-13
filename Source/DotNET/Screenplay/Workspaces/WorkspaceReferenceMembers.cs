@@ -34,7 +34,11 @@ enum WorkspaceReferenceDomain
     SpecificationParameter,
     StateMachine,
     Workflow,
-    Sink
+    Sink,
+    Secret,
+    Slice,
+    Audience,
+    Availability
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -189,6 +193,7 @@ static class WorkspaceReferenceMembers
         SpecificationRedeliverySyntax => [("eventType", WorkspaceReferenceDomain.Event)],
         EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
+        SlicePlacementSyntax { Kind: SlicePlacementKind.Event } => [("name", WorkspaceReferenceDomain.Event)],
         NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
         StateTransitionSyntax => [("event", WorkspaceReferenceDomain.Event)],
         StateMachineSyntax => [("follows", WorkspaceReferenceDomain.View)],
@@ -266,7 +271,9 @@ static class WorkspaceReferenceMembers
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
         SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
+        SlicePlacementSyntax { Kind: SlicePlacementKind.ReadModel } => [("name", WorkspaceReferenceDomain.View)],
         ReadModelSyntax or GraphSyntax => [("sink", WorkspaceReferenceDomain.Sink)],
+        SystemSettingSyntax => [("secret", WorkspaceReferenceDomain.Secret)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         _ => null
     };
@@ -287,12 +294,27 @@ static class WorkspaceReferenceMembers
         _ => AuthorizationMembers(node)
     };
 
+    static WorkspaceReferenceDomain StorylineDomain(StorylineElementKind kind) => kind switch
+    {
+        StorylineElementKind.Module or StorylineElementKind.Feature => WorkspaceReferenceDomain.Container,
+        StorylineElementKind.Slice => WorkspaceReferenceDomain.Slice,
+        StorylineElementKind.Command => WorkspaceReferenceDomain.Command,
+        StorylineElementKind.Event => WorkspaceReferenceDomain.Event,
+        StorylineElementKind.ReadModel => WorkspaceReferenceDomain.View,
+        StorylineElementKind.Query => WorkspaceReferenceDomain.Query,
+        StorylineElementKind.Screen => WorkspaceReferenceDomain.Screen,
+        _ => WorkspaceReferenceDomain.Reaction
+    };
+
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? AuthorizationMembers(SyntaxNode node) => node switch
     {
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
-        PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
+        PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy), ("audiences", WorkspaceReferenceDomain.Audience)],
+        AudienceAvailabilityRequirementSyntax => [("audience", WorkspaceReferenceDomain.Audience)],
+        AvailabilityReferenceSyntax => [("availability", WorkspaceReferenceDomain.Availability)],
         UserSyntax => [("personas", WorkspaceReferenceDomain.Persona)],
+        StorylineStepSyntax step => [("target", StorylineDomain(step.ElementKind))],
         SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
         _ => null
     };

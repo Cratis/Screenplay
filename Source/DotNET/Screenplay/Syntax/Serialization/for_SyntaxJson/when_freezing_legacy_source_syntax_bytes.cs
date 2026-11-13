@@ -15,13 +15,21 @@ public partial class when_freezing_legacy_source_syntax_bytes
     [
         "design-system",
         "command-reads",
+        "state-policies",
+        "policy-inputs",
+        "narrowed-queries",
+        "caller-identity",
+        "abilities",
+        "ability-invocations",
         "graph-queries",
         "graph-foreach",
+        "projection-parity",
         "reaction-batches",
         "identity",
         "application-context",
         "reaction-identity",
         "reaction-event-source",
+        "producerless-event-source",
         "declaration-descriptions",
         "purposes",
         "event-subject",
@@ -35,6 +43,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "persona-callers",
         "personas-canvas",
         "users",
+        "storylines",
         "specification-tables",
         "guarded-actions",
         "guarded-interactions",
@@ -43,6 +52,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "reaction-refusals-redelivery",
         "specification-streams",
         "public-events",
+        "provide",
+        "availability",
         "public-events-admission",
         "event-translations",
         "read-model-keys",
@@ -79,6 +90,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "event-source-capture-keys",
         "then-invokes",
         "lifecycles",
+        "extension-references",
+        "extension-components",
     ];
 
     [Fact]
@@ -105,7 +118,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed)))))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleProjectionParity(WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed))))))),
                 "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
@@ -128,11 +141,16 @@ public partial class when_freezing_legacy_source_syntax_bytes
             {
                 // Newly demonstrated classifications have their own conformance vector. Preserve the
                 // baseline for every existing concept, rather than rewriting protected historical bytes.
-                legacy = legacy with { StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
+                // Agent exposure is pinned by the current sample vectors and agents specs, not the pre-feature baseline.
+                legacy = legacy with { Agents = null, StateMachines = [], Workflows = [], Identity = null, ReactionProductionMode = null, CommandReadMode = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
-            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleGraphs(legacy);
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleAvailability(WithoutSampleGraphs(legacy));
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleSystemConfiguration(legacy);
+
+            // Screen visuals and slice placements have their own conformance vector; the frozen bytes predate them.
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutVisualsAndPlacements(legacy);
 
             // Template categories (PLAY0720) have their own conformance vector; the frozen bytes predate them.
             legacy = WithoutTemplateCategories(legacy);
@@ -351,6 +369,52 @@ public partial class when_freezing_legacy_source_syntax_bytes
     };
 
     // Graphs have their own conformance vector. Drop the slices that declare them from the frozen pre-graph bytes.
+    static ApplicationSyntax WithoutVisualsAndPlacements(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutVisualsAndPlacements) })
+    };
+
+    static FeatureSyntax WithoutVisualsAndPlacements(FeatureSyntax feature) => feature with
+    {
+        Slices = feature.Slices.Select(slice => slice with { Placements = [], Screens = slice.Screens.Select(screen => screen with { Visuals = [] }) }),
+        Features = feature.Features.Select(WithoutVisualsAndPlacements)
+    };
+
+    // System settings, secrets and activation (#1254) have shared vectors; the mail system the sample gained with them is projected out.
+    static ApplicationSyntax WithoutSampleSystemConfiguration(ApplicationSyntax application) => application with
+    {
+        Secrets = [],
+        Systems = application.Systems.Where(system => system.Name != "Mailer")
+    };
+
+    // Audiences, availabilities, available gates and provided values have their own parser, printer, binder and conformance specs; the frozen bytes predate them.
+    static ApplicationSyntax WithoutSampleAvailability(ApplicationSyntax application) => application with
+    {
+        Audiences = [],
+        Availabilities = [],
+        Provides = [],
+        Personas = application.Personas.Select(persona => persona with { Audiences = [] }),
+        Modules = application.Modules.Select(module => module with
+        {
+            Available = [],
+            Provides = [],
+            Features = module.Features.Select(WithoutAvailableFeature)
+        })
+    };
+
+    static FeatureSyntax WithoutAvailableFeature(FeatureSyntax feature) => feature with
+    {
+        Available = [],
+        Provides = [],
+        Slices = feature.Slices.Select(slice => slice with
+        {
+            Available = [],
+            Provides = [],
+            Queries = slice.Queries.Select(query => query with { Available = [] })
+        }),
+        Features = feature.Features.Select(WithoutAvailableFeature)
+    };
+
     static ApplicationSyntax WithoutSampleGraphs(ApplicationSyntax application) => application with
     {
         Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutGraphSlices) })
@@ -358,7 +422,8 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
     static FeatureSyntax WithoutGraphSlices(FeatureSyntax feature) => feature with
     {
-        Slices = feature.Slices.Where(slice => !slice.Graphs.Any() && !slice.GraphProjections.Any()),
+        // The ability-invoking automation has its own parser, printer, binder and conformance specs; the frozen bytes predate it.
+        Slices = feature.Slices.Where(slice => !slice.Graphs.Any() && !slice.GraphProjections.Any() && slice.Name != "CapturePaymentsWithGateway"),
         Features = feature.Features.Select(WithoutGraphSlices)
     };
 
@@ -501,6 +566,42 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
     // Screenplay 6 placement (Cratis/Screenplay#1178) - fits, pickers, slots that show a selection, the routed and docked slots of
     // the List template and the slice only a hook issues - has its own parser, printer and compiler specs; the frozen bytes predate it.
+    // Set once and the children sort (decision 0150) have their own parser, printer, conformance and
+    // evaluator specs; the frozen bytes predate them, so the invoice details slice is restored to its pre-feature shape.
+    static ApplicationSyntax WithoutSampleProjectionParity(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutProjectionParity).ToArray() }).ToArray()
+    };
+
+    static FeatureSyntax WithoutProjectionParity(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutProjectionParity).ToArray(),
+        Slices = feature.Slices.Select(slice => slice.Name != "InvoiceDetails" ? slice : slice with
+        {
+            ReadModels = slice.ReadModels.Select(readModel => readModel with
+            {
+                Properties = readModel.Properties.Where(property => property.Name != "firstSentAt").ToArray()
+            }).ToArray(),
+            Projections = slice.Projections.Select(projection => projection with
+            {
+                Blocks = projection.Blocks
+                    .Select(block => block switch
+                    {
+                        Projections.FromSyntax handler => handler with { Mappings = handler.Mappings.Where(mapping => mapping is not Projections.SetOnceMappingSyntax).ToArray() },
+                        Projections.ChildrenSyntax children => children with { Ordering = null },
+                        _ => block
+                    }).ToArray()
+            }).ToArray(),
+            Specifications = slice.Specifications.Select(specification => specification with
+            {
+                ThenReadModels = specification.ThenReadModels?.Select(readModel => readModel with
+                {
+                    Properties = readModel.Properties.Where(property => property.Property != "firstSentAt").ToArray()
+                }).ToArray()
+            }).ToArray()
+        }).ToArray()
+    };
+
     static ApplicationSyntax WithoutSamplePlacement(ApplicationSyntax application) => application with
     {
         Modules = application.Modules.Select(module => module with
@@ -532,6 +633,12 @@ public partial class when_freezing_legacy_source_syntax_bytes
     {
         // Sample data has its own parser, printer and compiler specs; the frozen bytes predate it.
         SampleDataPacks = [],
+
+        // Storylines have their own parser, printer, compiler and conformance specs; the frozen bytes predate them.
+        Storylines = [],
+
+        // Systems with abilities have their own parser, printer, binder and conformance specs; the frozen bytes predate them.
+        Systems = [],
 
         // The root template, appearance and new screen default have their own parser, printer and compiler specs;
         // the frozen bytes predate them and spell the shell the legacy way, as a layout.

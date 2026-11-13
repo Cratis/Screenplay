@@ -14,7 +14,10 @@
     "text": { "type": "string", "minLength": 1, "maxLength": 16384 },
     "reference": {
       "type": "object", "additionalProperties": false, "required": ["id"],
-      "properties": { "id": { "$ref": "#/$defs/text" }, "url": { "type": "string", "format": "uri", "pattern": "^https?://" } }
+      "properties": {
+        "id": { "$ref": "#/$defs/text" }, "url": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "tracker": { "enum": ["github", "jira", "linear", "other"] }
+      }
     },
     "anchor": {
       "type": "object", "additionalProperties": false,
@@ -49,13 +52,15 @@
       "required": ["id", "kind", "text", "anchor", "lastAddress", "author", "createdAt", "refs", "resolution"],
       "properties": {
         "id": { "type": "string", "pattern": "^note_[A-Za-z0-9_-]{22}$" },
-        "kind": { "enum": ["question", "task", "note"] },
+        "kind": { "enum": ["question", "task", "note", "issue"] },
         "text": { "$ref": "#/$defs/text" }, "anchor": { "$ref": "#/$defs/anchor" },
         "lastAddress": { "oneOf": [{ "$ref": "#/$defs/address" }, { "type": "null" }] },
         "author": { "$ref": "#/$defs/text" }, "createdAt": { "type": "string", "format": "date-time" },
         "refs": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/reference" } },
         "resolution": { "oneOf": [{ "$ref": "#/$defs/resolution" }, { "type": "null" }] }
-      }
+      },
+      "if": { "properties": { "kind": { "const": "issue" } } },
+      "then": { "properties": { "refs": { "minItems": 1, "items": { "required": ["id", "tracker"] } } } }
     }
   }
 }

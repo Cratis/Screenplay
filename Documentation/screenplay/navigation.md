@@ -1,6 +1,6 @@
 ---
 title: "Screenplay navigation: navigation outlets in the shell"
-description: "Declare topbar and sidebar destinations as navigation outlets on a Screenplay layout. Modules, features and screens inherit, extend or override them to guide users through their features."
+description: "Declare topbar and sidebar destinations as navigation outlets on a Screenplay layout, which modules, features and screens can inherit, extend or override."
 ---
 
 # Navigation
@@ -36,6 +36,11 @@ module Sales
 
 module Support
 ```
+
+The `logo image` is a URL the browser loads, and the compiler does not check it. Two forms work:
+
+- A path under `/assets/`, as above, with the file in an `assets` folder beside the `.play` files (`assets/acme.svg`). [Stage](https://github.com/Cratis/Stage) serves that folder read-only in the sandbox from 5.2.0. A host that does not serve it shows a broken image, and the compiler cannot tell you.
+- An inline `data:image/svg+xml;base64,...` URI, which needs no file and works in every host. [The Acme walkthrough](acme-commerce-walkthrough.md#navigation-and-the-logo) uses it.
 
 A navigation item is `<id> title "…" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]` - after `default` on a layout, after `item` below it:
 

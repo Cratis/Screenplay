@@ -14,7 +14,7 @@ public sealed partial class SemanticModelBinder
     {
         static decimal BindNumber(double value)
         {
-            var legacy = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+            var legacy = LegacyNumberLowering.FromDouble(value);
 
             // Decimal scale can round the shortest round-trip form. Keep it only when the shared
             // activation predicate can distinguish it from legacy lowering in the retained model.
@@ -43,13 +43,13 @@ public sealed partial class SemanticModelBinder
             SemanticExpressionRootKind root,
             string description,
             bool allowReadPaths = false) => expression switch
-        {
-            PathExpressionSyntax path when properties.TryGetValue(path.Path, out var property) =>
-                SemanticExpression.Property(root, property.Id),
-            PathExpressionSyntax path when allowReadPaths && syntax.CommandReadMode is not null && path.Path.Contains('.') => BindReadMapping(path, description),
-            LiteralExpressionSyntax literal => SemanticExpression.FromValue(BindLiteral(literal)),
-            _ => UnsupportedExpression(expression, description)
-        };
+            {
+                PathExpressionSyntax path when properties.TryGetValue(path.Path, out var property) =>
+                    SemanticExpression.Property(root, property.Id),
+                PathExpressionSyntax path when allowReadPaths && syntax.CommandReadMode is not null && path.Path.Contains('.') => BindReadMapping(path, description),
+                LiteralExpressionSyntax literal => SemanticExpression.FromValue(BindLiteral(literal)),
+                _ => UnsupportedExpression(expression, description)
+            };
 
         SemanticReadPathExpression? BindReadMapping(PathExpressionSyntax path, string position) =>
             BindReadPath(path.Path, path.Location, position) is { } read ? new SemanticReadPathExpression(read.Read, read.Property.Id) : null;

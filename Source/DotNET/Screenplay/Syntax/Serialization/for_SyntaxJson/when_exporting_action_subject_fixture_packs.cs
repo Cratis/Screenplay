@@ -11,6 +11,17 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 public class when_exporting_action_subject_fixture_packs : Specification
 {
     static readonly JsonSerializerOptions _indented = new() { WriteIndented = true };
+    static readonly HashSet<string> _relevantCodes = new(StringComparer.Ordinal)
+    {
+        DiagnosticCodes.InvalidInteractionArgument,
+        DiagnosticCodes.UnknownActionSubjectField,
+        DiagnosticCodes.UnresolvedActionSubject,
+        DiagnosticCodes.InvalidActionSubjectClause,
+        DiagnosticCodes.InferredActionSubject,
+        DiagnosticCodes.ChangedActionSubject,
+        DiagnosticCodes.AmbiguousActionInputBinding,
+        DiagnosticCodes.UnsupportedActionSubjectContext
+    };
     readonly Dictionary<string, JsonElement> _exports = [];
     ApplicationSyntax _raw;
     ApplicationSyntax _effective;
@@ -115,7 +126,7 @@ public class when_exporting_action_subject_fixture_packs : Specification
         {
             var path = Path.Combine(_directory, $"native.{name}.json");
             if (regenerate) File.WriteAllText(path, JsonSerializer.Serialize(value, _indented) + "\n");
-            else Assert.True(JsonElement.DeepEquals(value, JsonDocument.Parse(File.ReadAllText(path)).RootElement), path);
+            else Assert.True(JsonElement.DeepEquals(value, JsonElement.Parse(File.ReadAllText(path))), path);
         }
         Assert.False(regenerate, "Fixture pack regenerated; review and rerun without SCREENPLAY_REGENERATE_ACTION_SUBJECT_FIXTURES");
     }
@@ -123,11 +134,11 @@ public class when_exporting_action_subject_fixture_packs : Specification
     [Fact]
     void should_agree_with_typescript_on_authored_and_effective_members()
     {
-        var context = JsonDocument.Parse(File.ReadAllText(Path.Combine(_directory, "typescript.context.json"))).RootElement;
+        var context = JsonElement.Parse(File.ReadAllText(Path.Combine(_directory, "typescript.context.json")));
         Assert.True(JsonElement.DeepEquals(context.GetProperty("subjects"), _exports["context"].GetProperty("subjects")));
         foreach (var name in new[] { "raw.syntax", "effective.syntax" })
         {
-            var expected = JsonDocument.Parse(File.ReadAllText(Path.Combine(_directory, $"typescript.{name}.json"))).RootElement;
+            var expected = JsonElement.Parse(File.ReadAllText(Path.Combine(_directory, $"typescript.{name}.json")));
             Compare(expected, _exports[name], "$");
         }
     }
@@ -160,30 +171,34 @@ public class when_exporting_action_subject_fixture_packs : Specification
             : children;
     }
 
-    static bool Relevant(Diagnostic diagnostic) => string.Equals(diagnostic.Code, DiagnosticCodes.InvalidInteractionArgument, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnknownActionSubjectField, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnresolvedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InvalidActionSubjectClause, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.InferredActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.ChangedActionSubject, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.AmbiguousActionInputBinding, StringComparison.Ordinal) || string.Equals(diagnostic.Code, DiagnosticCodes.UnsupportedActionSubjectContext, StringComparison.Ordinal);
+    static bool Relevant(Diagnostic diagnostic) => _relevantCodes.Contains(diagnostic.Code);
 
     static IEnumerable<(string Path, SyntaxNode Node)> Locations(SyntaxNode node, string path)
     {
         yield return (path, node);
         foreach (var member in SyntaxKinds.For(node.GetType()).Members)
         {
-            var value = member.Property.GetValue(node);
-            if (value is SyntaxNode child)
+            foreach (var entry in MemberLocations(member.Property.GetValue(node), $"{path}.{member.Name}")) yield return entry;
+        }
+    }
+
+    static IEnumerable<(string Path, SyntaxNode Node)> MemberLocations(object? value, string path)
+    {
+        if (value is SyntaxNode child)
+        {
+            foreach (var entry in Locations(child, path)) yield return entry;
+            yield break;
+        }
+        if (value is not IEnumerable items || value is string) yield break;
+
+        var index = 0;
+        foreach (var item in items)
+        {
+            if (item is SyntaxNode element)
             {
-                foreach (var entry in Locations(child, $"{path}.{member.Name}")) yield return entry;
+                foreach (var entry in Locations(element, $"{path}[{index}]")) yield return entry;
             }
-            else if (value is IEnumerable items and not string)
-            {
-                var index = 0;
-                foreach (var item in items)
-                {
-                    if (item is SyntaxNode element)
-                    {
-                        foreach (var entry in Locations(element, $"{path}.{member.Name}[{index}]")) yield return entry;
-                    }
-                    index++;
-                }
-            }
+            index++;
         }
     }
 
@@ -192,21 +207,31 @@ public class when_exporting_action_subject_fixture_packs : Specification
         Assert.True(actual.ValueKind == expected.ValueKind, path);
         if (expected.ValueKind == JsonValueKind.Object)
         {
-            foreach (var property in expected.EnumerateObject())
-            {
-                Assert.True(actual.TryGetProperty(property.Name, out var value), $"{path}.{property.Name}");
-                Compare(property.Value, value, $"{path}.{property.Name}");
-            }
+            CompareProperties(expected, actual, path);
         }
         else if (expected.ValueKind == JsonValueKind.Array)
         {
-            Assert.True(actual.GetArrayLength() == expected.GetArrayLength(), path);
-            for (var index = 0; index < expected.GetArrayLength(); index++) Compare(expected[index], actual[index], $"{path}[{index}]");
+            CompareElements(expected, actual, path);
         }
         else
         {
             Assert.True(JsonElement.DeepEquals(expected, actual), path);
         }
+    }
+
+    static void CompareProperties(JsonElement expected, JsonElement actual, string path)
+    {
+        foreach (var property in expected.EnumerateObject())
+        {
+            Assert.True(actual.TryGetProperty(property.Name, out var value), $"{path}.{property.Name}");
+            Compare(property.Value, value, $"{path}.{property.Name}");
+        }
+    }
+
+    static void CompareElements(JsonElement expected, JsonElement actual, string path)
+    {
+        Assert.True(actual.GetArrayLength() == expected.GetArrayLength(), path);
+        for (var index = 0; index < expected.GetArrayLength(); index++) Compare(expected[index], actual[index], $"{path}[{index}]");
     }
 
     static string Fixtures([CallerFilePath] string path = "")

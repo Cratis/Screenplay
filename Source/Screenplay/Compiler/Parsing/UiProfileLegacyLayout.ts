@@ -39,6 +39,7 @@ export function parseUiProfile(context: ParserContext, header: SourceLine): Desi
     let layout: string | undefined;
     let root: string | undefined;
     let theme: string | null = null;
+    let platforms: string[] = [];
     let bodyIndent: number | undefined;
     let appearanceIndent: number | undefined;
     let sawAppearance = false;
@@ -56,6 +57,8 @@ export function parseUiProfile(context: ParserContext, header: SourceLine): Desi
             if (appearanceIndent !== undefined) {
                 for (const { member, pattern } of deprecatedAppearance) if (!deprecated.has(member) && pattern.test(child.content)) deprecated.set(member, child);
             } else if (child.indent === bodyIndent) {
+                const target = /^target\s+platform\s+(.+)$/.exec(child.content);
+                if (target !== null) platforms = target[1].split(',').map(platform => platform.trim()).filter(platform => platform.length > 0);
                 if (firstWord(child.content) === 'appearance' && !sawAppearance) {
                     sawAppearance = true;
                     appearanceIndent = child.indent;
@@ -83,5 +86,5 @@ export function parseUiProfile(context: ParserContext, header: SourceLine): Desi
         const line = deprecated.get(member);
         return line === undefined ? [] : [{ member, location: locationOf(line) }];
     });
-    return { name: match[1], theme, deprecatedAppearance: deprecatedMembers, location: locationOf(header) };
+    return { name: match[1], theme, platforms, deprecatedAppearance: deprecatedMembers, location: locationOf(header) };
 }

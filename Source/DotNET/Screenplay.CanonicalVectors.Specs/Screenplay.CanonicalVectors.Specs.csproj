@@ -4,7 +4,7 @@
         <RootNamespace>Cratis.Screenplay.CanonicalVectors.Specs</RootNamespace>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(SpecTargetFramework)</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <EnablePackageValidation>false</EnablePackageValidation>
         <!-- PublishedCorpus is a standalone tool that consumes the published corpus package; it is not part of these specs. -->
@@ -15,7 +15,7 @@
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
         <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
-        <ProjectReference Include="LegacyReader/LegacyReader.csproj" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="LegacyReader/LegacyReader.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
         <ProjectReference Include="../Screenplay.Conformance/Screenplay.Conformance.csproj" />
     </ItemGroup>
 
@@ -196,6 +196,54 @@
                           Link="Golden/full-esm-v41.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v41.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v42.json"
+                          Link="Golden/full-esm-v42.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v42.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v43.json"
+                          Link="Golden/full-esm-v43.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v43.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v44.json"
+                          Link="Golden/full-esm-v44.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v44.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v45.json"
+                          Link="Golden/full-esm-v45.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v45.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v48.json"
+                          Link="Golden/full-esm-v48.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v48.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v49.json"
+                          Link="Golden/full-esm-v49.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v49.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v50.json"
+                          Link="Golden/full-esm-v50.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v50.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v51.json"
+                          Link="Golden/full-esm-v51.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v51.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v52.json"
+                          Link="Golden/full-esm-v52.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v52.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v53.json"
+                          Link="Golden/full-esm-v53.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v53.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v47.json"
+                          Link="Golden/full-esm-v47.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v47.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v46.json"
+                          Link="Golden/full-esm-v46.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v46.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/policy-negation-v7.json"
                           Link="Golden/policy-negation-v7.json"
                           WithCulture="false"

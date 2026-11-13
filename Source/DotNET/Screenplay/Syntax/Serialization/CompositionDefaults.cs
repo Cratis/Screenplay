@@ -30,14 +30,16 @@ static class CompositionDefaults
 
     static readonly Dictionary<Type, Dictionary<string, Default>> _omittable = new()
     {
-        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["sinks"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
+        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["storylines"] = Default.Empty, ["sinks"] = Default.Empty, ["secrets"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
         [typeof(ThemeSyntax)] = new(StringComparer.Ordinal) { ["implements"] = Default.Null, ["palette"] = Default.Empty, ["values"] = Default.Empty, ["modeValues"] = Default.Empty },
+        [typeof(SystemSyntax)] = new(StringComparer.Ordinal) { ["extension"] = Default.Null, ["settings"] = Default.Empty, ["activation"] = Default.Null },
         [typeof(ReadModelSyntax)] = new(StringComparer.Ordinal) { ["sink"] = Default.Null },
         [typeof(GraphSyntax)] = new(StringComparer.Ordinal) { ["sink"] = Default.Null },
         [typeof(PersonaSyntax)] = new(StringComparer.Ordinal) { ["goals"] = Default.Empty, ["x"] = Default.Null, ["y"] = Default.Null, ["width"] = Default.Null, ["height"] = Default.Null },
         [typeof(SeedSyntax)] = new(StringComparer.Ordinal) { ["name"] = Default.Null, ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(EventSourceSyntax)] = new(StringComparer.Ordinal) { ["x"] = Default.Null, ["y"] = Default.Null },
-        [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty, ["outlets"] = Default.Empty, ["fits"] = Default.Empty },
+        [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty, ["outlets"] = Default.Empty, ["fits"] = Default.Empty, ["visuals"] = Default.Empty },
+        [typeof(SliceSyntax)] = new(StringComparer.Ordinal) { ["placements"] = Default.Empty },
         [typeof(FormFieldSyntax)] = new(StringComparer.Ordinal) { ["choices"] = Default.Null },
         [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["slot"] = Default.Null },
         [typeof(SlotSyntax)] = new(StringComparer.Ordinal) { ["role"] = Default.Null, ["routed"] = Default.False, ["routedBy"] = Default.Null, ["primary"] = Default.False, ["optional"] = Default.False },

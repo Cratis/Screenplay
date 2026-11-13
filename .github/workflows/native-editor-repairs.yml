@@ -1,5 +1,7 @@
 name: Native editor repairs
 
+# Called from pull-requests.yml; the PR triggers and path filters live there.
+
 on:
   workflow_dispatch:
   schedule:
@@ -11,18 +13,6 @@ on:
         description: 'Release gate: run the full matrix and never skip as already ran'
         default: true
         type: boolean
-  pull_request:
-    paths:
-      - 'Source/Screenplay/VSCodeExtension/**'
-      - 'Source/Screenplay/Views/**'
-      - 'Source/DotNET/Screenplay.Mcp/**'
-      - 'Source/DotNET/Screenplay/Workspaces/Workspace*Repair*.cs'
-      - 'Source/DotNET/Tool/**'
-      - 'package.json'
-      - '.yarnrc.yml'
-      - '*.props'
-      - 'global.json'
-      - '.github/workflows/native-editor-repairs.yml'
 
 permissions:
   contents: read
@@ -95,7 +85,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '10.0.x'
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
       - name: Resolve native NuGet SDK cohort
         id: native-nuget-context
         run: |

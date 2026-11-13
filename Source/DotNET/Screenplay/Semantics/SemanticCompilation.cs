@@ -61,6 +61,19 @@ public sealed class SemanticCompilation
     public ImmutableArray<SemanticSink> Sinks { get; private init; } = [];
 
     /// <summary>
+    /// Gets how the model configures each system that names an extension, a setting or an activation, in declaration
+    /// order, or an empty array when none does. This realization sidecar is not part of ESM bytes or its revision;
+    /// renderers must include it in hashed render input.
+    /// </summary>
+    public ImmutableArray<SemanticSystemConfiguration> SystemConfigurations { get; private init; } = [];
+
+    /// <summary>
+    /// Gets the named secrets the model declares, in declaration order, or an empty array when it declares none. This
+    /// realization sidecar is not part of ESM bytes or its revision; renderers must include it in hashed render input.
+    /// </summary>
+    public ImmutableArray<SemanticSecretDeclaration> Secrets { get; private init; } = [];
+
+    /// <summary>
     /// Gets the sink name of every read model that names one, keyed by the read model's canonical identity. A read model
     /// that is absent uses the default read-model sink; its projection or reducer writes there and its queries read
     /// from there. This realization sidecar is not part of ESM bytes or its revision.
@@ -141,11 +154,14 @@ public sealed class SemanticCompilation
     internal SemanticCompilation WithSinks(ImmutableArray<SemanticSink> sinks, ImmutableDictionary<SemanticId, string> readModelSinks, ImmutableDictionary<string, string> graphSinks) =>
         Copy(sinks: sinks, readModelSinks: readModelSinks, graphSinks: graphSinks);
 
+    internal SemanticCompilation WithSystemConfigurations(ImmutableArray<SemanticSystemConfiguration> configurations, ImmutableArray<SemanticSecretDeclaration> secrets) =>
+        Copy(systemConfigurations: configurations, secrets: secrets);
+
     /// <summary>
     /// Copies every realization sidecar onto a new compilation, replacing only the ones given.
     /// </summary>
     internal SemanticCompilation WithSidecarsOf(SemanticCompilation other) =>
-        Copy(other.SpecificationOrigins, other.Environment, other.PassiveReadModels, other.Sinks, other.ReadModelSinks, other.GraphSinks);
+        Copy(other.SpecificationOrigins, other.Environment, other.PassiveReadModels, other.Sinks, other.ReadModelSinks, other.GraphSinks, other.SystemConfigurations, other.Secrets);
 
     SemanticCompilation Copy(
         ImmutableDictionary<SemanticId, EffectiveSpecification>? origins = null,
@@ -153,7 +169,9 @@ public sealed class SemanticCompilation
         ImmutableHashSet<SemanticId>? passiveReadModels = null,
         ImmutableArray<SemanticSink>? sinks = null,
         ImmutableDictionary<SemanticId, string>? readModelSinks = null,
-        ImmutableDictionary<string, string>? graphSinks = null) =>
+        ImmutableDictionary<string, string>? graphSinks = null,
+        ImmutableArray<SemanticSystemConfiguration>? systemConfigurations = null,
+        ImmutableArray<SemanticSecretDeclaration>? secrets = null) =>
         new(Model, Documents, SourceMap)
         {
             SpecificationOrigins = origins ?? SpecificationOrigins,
@@ -161,7 +179,9 @@ public sealed class SemanticCompilation
             PassiveReadModels = passiveReadModels ?? PassiveReadModels,
             Sinks = sinks ?? Sinks,
             ReadModelSinks = readModelSinks ?? ReadModelSinks,
-            GraphSinks = graphSinks ?? GraphSinks
+            GraphSinks = graphSinks ?? GraphSinks,
+            SystemConfigurations = systemConfigurations ?? SystemConfigurations,
+            Secrets = secrets ?? Secrets
         };
 }
 
@@ -206,6 +226,11 @@ sealed class SemanticCompilationIndex
             var triggerAddress = SemanticAddress.ForTrigger(applicationIdentity, trigger.Name);
             index.Register(triggerAddress, trigger.Id);
             index.RegisterProperties(triggerAddress, trigger.Properties);
+        }
+
+        foreach (var system in application.Systems)
+        {
+            index.Register(SemanticAddress.ForSystem(applicationIdentity, system.Name), system.Id);
         }
 
         foreach (var source in application.EventSources)
@@ -333,6 +358,11 @@ sealed class SemanticCompilationIndex
         foreach (var capture in slice.Captures)
         {
             Register(SemanticAddress.ForCapture(sliceAddress, capture.Name), capture.Id);
+        }
+
+        foreach (var screen in slice.Screens)
+        {
+            Register(SemanticAddress.ForScreen(sliceAddress, screen.Name), screen.Id);
         }
     }
 

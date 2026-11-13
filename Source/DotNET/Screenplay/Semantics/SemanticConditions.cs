@@ -36,7 +36,17 @@ public enum SemanticComparisonOperator
     /// <summary>
     /// Less than or equal.
     /// </summary>
-    LessThanOrEqual
+    LessThanOrEqual,
+
+    /// <summary>
+    /// Text contains a substring, or a collection holds an element (ESM v45, policy state conditions).
+    /// </summary>
+    Contains,
+
+    /// <summary>
+    /// Text starts with a prefix (ESM v45, policy state conditions).
+    /// </summary>
+    StartsWith
 }
 
 /// <summary>
@@ -97,6 +107,11 @@ public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue
     /// Gets a value indicating that the operand is the <c>Date</c> of the referenced <see cref="Property"/> (<c>date of createdAt</c>).
     /// </summary>
     public bool DateOf { get; init; }
+
+    /// <summary>
+    /// Gets whether the operand is the caller's identifier - <c>$identity.id</c> - which a policy state condition compares a read property with (ESM v48).
+    /// </summary>
+    public bool CallerId { get; init; }
 }
 
 /// <summary>

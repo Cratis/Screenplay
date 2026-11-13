@@ -74,6 +74,12 @@ function addEvents(events: readonly Properties[], autoMap: boolean, properties: 
 
 function addMappings(mappings: readonly MappingSyntax[], events: readonly Properties[], properties: Properties): void {
     for (const mapping of mappings) {
+        // A dynamic dictionary key ('.$eventContent.slot') writes an entry of the property before it, which holds an object.
+        const marker = mapping.property.indexOf('.$');
+        if (marker > 0) {
+            properties[mapping.property.slice(0, marker)] ??= { type: 'object' };
+            continue;
+        }
         if (mapping.property.startsWith('$') || mapping.kind === 'ClearMappingSyntax' && properties[mapping.property] !== undefined) {
             continue;
         }

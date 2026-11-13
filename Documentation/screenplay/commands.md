@@ -353,7 +353,7 @@ These meanings fix earlier C#/JavaScript differences: `\s` now includes Unicode 
 #### Matching in generated .NET applications
 
 Use `Cratis.Screenplay.Matching` at the same version as the compiler that admitted the pattern.
-This BCL-only package targets .NET 8, 9 and 10 and contains the compiler's own portable parser and
+This BCL-only package targets .NET 10 and .NET 11 and contains the compiler's own portable parser and
 linear matcher, without a dependency on the compiler, diagnostics or context contracts.
 
 ```csharp

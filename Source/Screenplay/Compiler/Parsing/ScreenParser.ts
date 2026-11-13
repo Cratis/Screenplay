@@ -12,8 +12,11 @@ import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseAuthorize } from './AuthorizeParser';
+import { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
 import { parsePlainActionInput, parseSubjectClause } from './ActionSubjectClause';
-import { InteractionArgumentSyntax } from '../Syntax/Screens';
+import { InteractionArgumentSyntax, ScreenVisualSyntax } from '../Syntax/Screens';
+import { parseScreenVisual } from './ScreenVisualParser';
 import { parseFencedText } from './CodeBlockParser';
 import { parseMappingSource } from './ExpressionParser';
 import { parseDescription } from './DescriptionParser';
@@ -21,6 +24,7 @@ import { isFileDirective } from './FileReferences';
 import { parseGuardedAction, validateCondition } from './GuardedActionParser';
 import { parseCondition } from './ConditionParser';
 import { ConditionSyntax } from '../Syntax/Conditions';
+import { ComponentSignalUse, componentSignalUses } from './ComponentSignalUses';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -90,9 +94,14 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
     const outlets: OutletSyntax[] = [];
     let description: string | null = null;
     let fits: ScreenFit[] | undefined;
+    const visuals: ScreenVisualSyntax[] = [];
+    const available: AvailableSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'fits') {
+        if (parseScreenVisual(context, child, visuals)) continue;
+        if (firstWord(child.content) === 'available' && isAvailabilityGate(child.content)) {
+            addAvailabilityGate(context, child, available);
+        } else if (firstWord(child.content) === 'fits') {
             fits = parseFits(context, child, match?.[1] ?? '', fits);
         } else if (firstWord(child.content) === 'contribute') {
             const parsed = parseScreenContribution(context, child);
@@ -105,7 +114,7 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
             pushDirective(context, child, directives);
         }
     }
-    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), ...(fits !== undefined && fits.length > 0 ? { fits } : {}), location: locationOf(line) };
+    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(available.length > 0 ? { available } : {}), ...(contributions.length > 0 ? { contributions } : {}), ...(outlets.length > 0 ? { outlets } : {}), ...(fits !== undefined && fits.length > 0 ? { fits } : {}), ...(visuals.length > 0 ? { visuals } : {}), location: locationOf(line) };
 }
 
 // 'fits <role>, ...' - the places a slice's screen fits, in order of preference (PLAY0906).
@@ -409,6 +418,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
     const exposedValues: ComponentExposedValueSyntax[] = [];
     const presentationValues: PresentationValueSyntax[] = [];
     const slots: ComponentSlotSyntax[] = [];
+    const signalUses: ComponentSignalUse[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
@@ -440,7 +450,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
                 break;
             }
             case 'on':
-                collectInputUses(context, child);
+                signalUses.push(signalUseOf(collectInputUses(context, child)));
                 break;
             case 'uses':
                 collectInputUses(context, child);
@@ -452,7 +462,16 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
         }
     }
 
-    return { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, slots, location: locationOf(line) };
+    const placed: ScreenComponentSyntax = { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, slots, location: locationOf(line) };
+    if (signalUses.length > 0) componentSignalUses.set(placed, signalUses);
+    return placed;
+}
+
+// The trigger an 'on' line names and the 'signal.<value>' reads of the actions below it.
+function signalUseOf(lines: readonly SourceLine[]): ComponentSignalUse {
+    const [header, ...body] = lines;
+    const reads = body.flatMap(line => [...line.content.matchAll(/\bfrom\s+signal\.([A-Za-z_]\w*)/g)].map(read => ({ value: read[1], location: locationOf(line) })));
+    return { trigger: header.content.replace(/^on\s+/, '').trim(), location: locationOf(header), reads };
 }
 
 function parseUiContext(context: ParserContext, line: SourceLine) {

@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineSyntax } from './Storylines';
+import type { AgentsSyntax } from './Agents';
+import type { AudienceSyntax, AvailabilitySyntax, AvailableSyntax } from './Availability';
 import type { TimeZoneSyntax } from './Calendar';
 import { CommandReadMode } from './CommandReadMode';
 import type { DesignProfileFacts, DesignSystemSyntax, ThemeSyntax } from './DesignSystemSyntax';
@@ -9,6 +12,7 @@ import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
 import { AuthorizeSyntax, PersonaSyntax, StickyNoteSyntax, UserSyntax } from './Authorization';
 import { SinkSyntax } from './Sinks';
+import { SecretSyntax } from './Operations';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -29,15 +33,29 @@ import { SyntaxNode } from './SyntaxNode';
 import { SourceOptions } from './SourceOptions';
 import { TranslationDirection } from './TranslationDirection';
 import { PurposeReferenceSyntax, PurposeSyntax } from './Purposes';
+import type { ProvideSyntax } from './ProvideSyntax';
 
 // The four kinds of slice. The names are the C# SliceType members, which is also how SyntaxJson writes them.
 export type SliceType = 'StateChange' | 'StateView' | 'Automation' | 'Translate';
 
 export const sliceTypes: readonly SliceType[] = ['StateChange', 'StateView', 'Automation', 'Translate'];
 
+// 'shows event|readmodel <Name>' - a linked copy of an element declared in another slice.
+export type SlicePlacementKind = 'Event' | 'ReadModel';
+
+export interface SlicePlacementSyntax extends SyntaxNode {
+    readonly kind: 'SlicePlacementSyntax';
+    readonly syntaxKind: SlicePlacementKind;
+    readonly name: string;
+}
+
 export interface SliceSyntax extends SyntaxNode {
     readonly purposes?: readonly PurposeReferenceSyntax[];
+    readonly provides?: readonly ProvideSyntax[];
+    readonly placements?: readonly SlicePlacementSyntax[];
     readonly kind: 'SliceSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly direction?: TranslationDirection | null;
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
@@ -75,8 +93,11 @@ export interface DependsOnSyntax extends SyntaxNode {
 
 export interface FeatureSyntax extends SyntaxNode {
     readonly purposes?: readonly PurposeReferenceSyntax[];
+    readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
@@ -94,8 +115,11 @@ export interface FeatureSyntax extends SyntaxNode {
 
 export interface ModuleSyntax extends SyntaxNode {
     readonly purposes?: readonly PurposeReferenceSyntax[];
+    readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
@@ -122,12 +146,17 @@ export interface ContextMemberSyntax extends SyntaxNode {
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
+    readonly agents?: AgentsSyntax | null;
+    // The 'audience' and 'availability' declarations, written only when present.
+    readonly audiences?: readonly AudienceSyntax[];
+    readonly availabilities?: readonly AvailabilitySyntax[];
     readonly reactionProductionMode?: ReactionProductionMode | null;
     readonly commandReadMode?: CommandReadMode | null;
     readonly timeZone?: TimeZoneSyntax | null;
     readonly context?: ApplicationContextSyntax | null;
     readonly identity?: IdentitySyntax | null;
     readonly purposes?: readonly PurposeSyntax[];
+    readonly provides?: readonly ProvideSyntax[];
     readonly kind: 'ApplicationSyntax';
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly sourceOptions?: SourceOptions;
@@ -157,8 +186,13 @@ export interface ApplicationSyntax extends SyntaxNode {
     // The development and test users - written only when present.
     readonly users?: readonly UserSyntax[];
 
+    // The storylines: named, ordered paths through the model - written only when present.
+    readonly storylines?: readonly StorylineSyntax[];
+
     // The named sinks read models and graphs may choose - written only when present.
     readonly sinks?: readonly SinkSyntax[];
+    // The named secrets system settings map from - written only when present.
+    readonly secrets?: readonly SecretSyntax[];
 
     // The sticky notes on the personas canvas - written only when present.
     readonly stickyNotes?: readonly StickyNoteSyntax[];

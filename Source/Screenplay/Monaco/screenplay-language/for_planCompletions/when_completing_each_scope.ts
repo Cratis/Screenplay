@@ -13,14 +13,14 @@ const offered = (text: string): string[] => {
 };
 
 const scopes: Record<string, [string, string[]]> = {
-    'the root': ['', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sink', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
-    'a domain': ['domain Catalog\n  ', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'seed', 'sink', 'statemachine', 'sticky', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
+    'the root': ['', ['agents', 'context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'secret', 'seed', 'sink', 'statemachine', 'sticky', 'storyline', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
+    'a domain': ['domain Catalog\n  ', ['context', 'time zone', 'time zone configurable default', 'identity', 'authentication', 'onboarding', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'design system', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'sample data', 'secret', 'seed', 'sink', 'statemachine', 'sticky', 'storyline', 'system', 'theme', 'trigger', 'type', 'ui profile', 'user', 'workflow']],
     'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'outlet extends', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'outlet extends', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
-    'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
-    'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['documentation', 'event', 'event from', 'event generation', 'example', 'file', 'graph', 'projection', 'projection graph', 'public event', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'specification']],
-    'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'reaction', 'readmodel', 'reducer', 'specification']],
-    'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'direction', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'public event', 'specification']],
+    'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'shows event', 'shows readmodel', 'specification']],
+    'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['documentation', 'event', 'event from', 'event generation', 'example', 'file', 'graph', 'projection', 'projection graph', 'public event', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'shows event', 'shows readmodel', 'specification']],
+    'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'reaction', 'readmodel', 'reducer', 'shows event', 'shows readmodel', 'specification']],
+    'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'direction', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'public event', 'shows event', 'shows readmodel', 'specification']],
     'a read model': ['module M\n  feature F\n    slice StateView S\n      readmodel R\n        ', ['description', 'documentation', 'file', 'passive', 'property', 'sink']],
     'a reducer': ['module M\n  feature F\n    slice StateView S\n      reducer R => V\n        ', ['description', 'from', 'on']],
     'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'field (picker)', 'on', 'populate from item', 'populate via query', 'uses']],
@@ -28,6 +28,9 @@ const scopes: Record<string, [string, string[]]> = {
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],
     'a persona': ['persona P\n  ', ['description', 'goal', 'policy', 'position', 'size']],
     'application context': ['context\n  ', ['time zone member', 'description']],
+    'agent exposure': ['agents\n  ', ['tokens personal', 'command', 'query']],
+    'an exposed command': ['agents\n  command Sales.Issue\n    ', ['scope write', 'description']],
+    'an exposed query': ['agents\n  query Sales.List.One\n    ', ['scope read', 'scope write', 'description']],
     'authentication': ['authentication\n  ', ['provider', 'provider (named)']],
     'onboarding': ['onboarding\n  ', ['signup (creates tenant)', 'signup (joins tenant)', 'invite tenant', 'invite member', 'legal terms', 'offering', 'emails']],
     'a member invitation': ['onboarding\n  invite member\n    ', ['by', 'grant']],
@@ -52,11 +55,24 @@ const scopes: Record<string, [string, string[]]> = {
     'a layout': ['layout L\n  ', ['arrangement', 'outlet', 'outlet of navigation', 'slot']],
 };
 
+const gates = ['available for', 'available when', 'available with'];
+const availabilityEntries: Record<string, string[]> = {
+    'the root': ['audience', 'availability'],
+    'a domain': ['audience', 'availability'],
+    'a module': gates,
+    'a feature': gates,
+    'a persona': ['audience'],
+    'a state change slice': gates,
+    'a state view slice': gates,
+    'an automation slice': gates,
+    'a translate slice': gates,
+};
+
 describe('when completing an empty line in each scope', () => {
     for (const [scope, [text, expected]] of Object.entries(scopes)) {
         const supportsPurpose = ['the root', 'a domain', 'a module', 'a feature', 'a state change slice', 'a state view slice', 'an automation slice', 'a translate slice'].includes(scope);
         it(`should offer only what ${scope} can hold`, () => {
-            offered(text).should.deep.equal([...expected, ...supportsPurpose ? ['purpose'] : [], ...['the root', 'a domain'].includes(scope) ? ['command reads protected', 'reaction batches atomic'] : []].sort());
+            offered(text).should.deep.equal([...expected, ...availabilityEntries[scope] ?? [], ...supportsPurpose ? ['purpose', 'provide from query', 'provide from value', 'provide from host', 'provide with code'] : [], ...['the root', 'a domain'].includes(scope) ? ['command reads protected', 'reaction batches atomic'] : []].sort());
         });
     }
 

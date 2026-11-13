@@ -24,10 +24,10 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | UserDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | AudienceDecl | AvailabilityDecl | PurposeDecl | ProvideDecl
+               | PersonaDecl | UserDecl | StorylineDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
-               | SystemDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
+               | SystemDecl | SecretDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
 (* At most one domain, authentication block, onboarding block and identity block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -112,16 +112,71 @@ ImportPattern  = ? a path or glob relative to the importing file's folder -
    imported once, at the deepest placement - see imports.md.                  *)
 
 (* -------------------------------------------------------------- *)
-(* External systems — syntax-only                                  *)
+(* External systems and their abilities — ESM v50                  *)
 (* -------------------------------------------------------------- *)
 
 SystemDecl     = "system", Ident, NL,
-                 [ INDENT, { DescriptionDecl }, DEDENT ] ;
+                 [ INDENT, { DescriptionDecl | ExtensionDecl | SettingDecl | ActivationDecl | AbilityDecl }, DEDENT ] ;
 
-(* Systems are application-scoped, including in placed files. They name external
-   systems without provider types or abilities. Systems, operations and their
-   specification steps are authoring-only: binding rejects them with PLAY0268;
-   these constructs are not admitted by any supported ESM version yet. *)
+SecretDecl     = "secret", Ident, NL,
+                 [ INDENT, { DescriptionDecl }, DEDENT ] ;     (* top level; named once, never holds a value *)
+ExtensionDecl  = "extension", String, [ "version", Token ], NL ;
+SettingDecl    = "setting", Ident, ( "from", "secret", Ident | "=", Literal ), NL ;
+(* The contract file of an extension package is its own document: extension-contracts.md *)
+ContractFile   = "extension", Ident, NL,
+                 INDENT, { "display", "name", String, NL | DescriptionLine | "icon", String, NL
+                         | "image", String, NL, [ INDENT, "caption", String, NL, DEDENT ]
+                         | "requires", ( "stage" | "screenplay" ), String, NL | "requires", "platform", Ident, NL
+                         | "requires", "runtime", Token, Token, NL | ActivationDecl
+                         | "setting", Ident, [ "public" | "secret" ], NL | AbilityDecl | TriggerDecl | ComponentDecl
+                         | "backend", "runtime", Token, Token, "assembly", String, NL | "frontend", String, NL }, DEDENT ;
+ComponentDecl  = "component", Ident, NL,
+                 INDENT, { "kind", ( "react" | "mount" | "screenplay" ), NL | "platform", { Ident }, NL
+                         | "placeholder", String, NL | "property", Ident, TypeRef, NL
+                         | "raises", Ident, NL, [ INDENT, { Ident, TypeRef, NL }, DEDENT ] | "invokes", Ident, NL }, DEDENT ;
+ActivationDecl = "activation", ( "always"
+                 | "on", "demand", [ "idle", "after", Integer, ( "second" | "minute" | "hour" | "day" ), "s"? ] ), NL ;
+                 (* realization metadata, outside the ESM bytes; see environments.md *)
+
+AbilityDecl    = "ability", Ident, [ EffectClass ], NL,
+                 [ INDENT, { DescriptionDecl | AnswersLater | AbilityInput | AbilityReturns
+                           | AbilityOutcome | AbilityImplementation | FileDirective | InlineBlock }, DEDENT ] ;
+EffectClass    = "safe" | "idempotent" | "once" ;            (* omitted means "once" *)
+AnswersLater   = "answers", "later", NL ;
+AbilityInput   = [ "@" ], Ident, TypeRef, NL ;               (* not identifier or generated *)
+AbilityReturns = "returns", NL,
+                 INDENT, { [ "@" ], Ident, TypeRef, NL }, DEDENT ;
+AbilityOutcome = "outcome", Ident, NL,
+                 [ INDENT, { DescriptionDecl }, DEDENT ] ;   (* no payload; not next, refused, failed, returned or expired *)
+AbilityImplementation = "implementation", NL,
+                 [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+
+(* Systems are application-scoped, including in placed files. A system names an
+   external system and the abilities it can be asked to perform; see systems.md.
+   Ability names are unique within their system ignoring case. An ability owns at
+   most one file OR tagged fence, directly or in its implementation wrapper: the
+   AbilityEffect attachment. A model that declares an ability admits its systems in
+   ESM v50 (ESM v51 when something invokes one); a system without abilities, operations and their specification steps
+   stay authoring-only and bind with PLAY0268. *)
+
+(* -------------------------------------------------------------- *)
+(* Invoking an ability — ESM v51 (reactions, workflow actions, state entries) *)
+(* -------------------------------------------------------------- *)
+
+AbilityInvocation = "invokes", Ident, ".", Ident, NL,           (* System.Ability; a dotted name is an ability *)
+                 [ INDENT, { InputMapping }, { InvocationBranch }, DEDENT ] ;
+InputMapping   = Ident, "=", Expression, NL ;                  (* every declared input exactly once *)
+InvocationBranch = "on", ( "returned" | "failed" | Ident ), NL, (* Ident is a declared outcome *)
+                 INDENT, { "produces", Ident, NL, [ INDENT, { Ident, "=", Expression, NL }, DEDENT ] }, DEDENT ;
+InvocationValue = ( "$result" | "$outcome" | "$failure" | "$trigger" ), ".", Ident ;
+AbilityAnswer  = "given", Ident, ".", Ident, ( "returns", NL, INDENT, { InputMapping }, DEDENT
+                 | "answers", Ident, NL | "fails", [ String ], NL ) ;
+(* Workflow: "action" Ident "invokes" System.Ability [ "attempts" Integer ] with mapping lines and one
+   outlet per answer ("next", "failed", or a declared outcome); "compute" Ident with "returns" and a C# body;
+   "approval" Ident "by" Ident "via" System.Ability "expires after" Integer Unit. State machine:
+   "entering invokes" System.Ability with mapping lines, or a bare "entering" with a C# fence or a file.
+   Compute nodes, approval via, entering bodies, operation-phase invocations and $trigger values parse
+   and validate but bind with PLAY0268 (#1252). *)
 
 (* -------------------------------------------------------------- *)
 (* State machines — ESM v36                                         *)
@@ -134,7 +189,8 @@ StateMachineDecl = "statemachine", Ident, NL,
 StateDecl      = "state", Ident, { "initial" | "final" }, NL,
                  [ INDENT, { EnteringDecl | TransitionDecl }, DEDENT ] ;
 
-EnteringDecl   = "entering", ( "send" | "start" ), Ident, NL ;       (* a command, or a workflow *)
+EnteringDecl   = "entering", ( "invokes" | "starts" ), Ident, NL ;     (* a command, or a workflow *)
+(* "entering send", "entering start", "action ... sends" and "then sends" are deprecated spellings of "invokes" and "starts" (PLAY0397). *)
 
 TransitionDecl = "on", QualifiedName, [ "when", Condition ], "->", Ident, NL ;
 
@@ -159,7 +215,7 @@ TriggerNode    = "trigger", [ Ident ], ( "on", QualifiedName
                                        | "when", Ident, "enters", Ident
                                        | TriggerSchedule                (* "every <n> <unit>" | "at HH:mm ..." *)
                                        | "manual" ) ;
-ActionNode     = "action", Ident, "sends", Ident,
+ActionNode     = "action", Ident, "invokes", Ident,
                  [ "attempts", Number ], [ "timeout", Duration ], [ "retry", "after", Duration ] ;
 DecideNode     = "decide", Ident, "when", Condition ;
 WaitNode       = "wait", Ident, "for", ( Duration | QualifiedName, [ "expires", "after", Duration ] ) ;
@@ -188,7 +244,7 @@ LifecycleSpecDecl = "specification", Ident, NL,
                               [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                             | "when", "start", Expression, NL
                             | "outcome", Ident, Ident, NL
-                            | "then", ( "is", Ident | "sends", Ident | "starts", Ident | "completes"
+                            | "then", ( "is", Ident | "invokes", Ident | "starts", Ident | "completes"
                                       | "fails", "at", Ident | "waits", "at", Ident ), NL }, DEDENT ;
 
 (* -------------------------------------------------------------- *)
@@ -235,6 +291,16 @@ PurposeDecl    = "purpose", Ident, NL,
                  | "transfer", QuotedString, "safeguard", QuotedString, NL
                  | "erasure", "exception", ErasureException, NL }, DEDENT ] ;
 PurposeReference = "purpose", Ident, NL ;
+ProvideDecl    = "provide", Ident, TypeRef,
+                 ( "from", "query", QualifiedName, [ "by", Expression, { ",", Expression } ], NL
+                 | "from", "host", NL
+                 | "from", ( Literal | Expression ), NL
+                 | NL, INDENT, ( InlineBlock | FileDirective ), DEDENT ) ;
+(* Adds a named value to $context for everything beneath the application, module, feature or slice
+   that declares it. Inheritance is by name and the nearest declaration wins; an override keeps the
+   type. The built-in names tenant, identity, causedBy, causation, occurred, audiences, command and
+   arguments are reserved. A query source must be a keyed snapshot query whose result type matches.
+   Provided values may not read each other in a cycle. Executable use reports PLAY0268 (#1300). *)
 PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
                | "publicTask" | "legitimateInterests" ;
 PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
@@ -372,13 +438,21 @@ ClaimTarget    = "subject"
 
 PersonaDecl    = "persona", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | "goal", String, NL | "policy", Ident, NL
+                   { DescriptionDecl | "goal", String, NL | "policy", Ident, NL | "audience", Ident, NL
                    | "position", Integer, Integer, NL | "size", Integer, Integer, NL },
                  DEDENT ;
 
 (* A person a development or test session can act as. One line; authoring *)
 (* metadata for tooling, never part of the executable model.             *)
 UserDecl       = "user", Ident, [ String ], [ "as", Ident, { ",", Ident } ], NL ;
+
+(* A named, ordered path through the model, such as a user journey. Each step *)
+(* names one element by kind (PLAY0941); a step naming nothing warns          *)
+(* (PLAY0942). Authoring metadata, never part of the executable model.        *)
+StorylineDecl  = "storyline", Ident, [ String ], NL,
+                 INDENT, { DescriptionDecl | StorylineStep }, DEDENT ;
+StorylineStep  = ( "module" | "feature" | "slice" | "command" | "event" | "readmodel" | "query" | "screen" | "reaction" ),
+                 QualifiedName, [ String ], NL ;
 
 (* A named sink: a logical place read models or graphs are stored, which the  *)
 (* deployment maps to real storage. One line (PLAY0931); names are unique      *)
@@ -674,8 +748,8 @@ SampleLiteral  = StringLiteral | Number | "true" | "false" | "null" ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | PurposeReference
-                   | AuthorizeDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl
+                   | AvailableDecl | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
                    | ScreenTemplateDecl
@@ -970,8 +1044,8 @@ ArrangementSizeClass = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | PurposeReference
-                   | AuthorizeDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl
+                   | AvailableDecl | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
                    | Feature
@@ -989,7 +1063,12 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | ProvideDecl | AvailableDecl | SlicePlacementDecl | FileDirective | SliceBody }, DEDENT ;
+
+(* A linked copy of an event or read model declared in another slice, drawn again on this slice of the
+   timeline. Presentation only: the executable model never sees it. PLAY0953 malformed, PLAY0954 unknown
+   element (warning), PLAY0955 the slice declares it itself or shows it twice (warning). *)
+SlicePlacementDecl = "shows", ( "event" | "readmodel" ), Path, NL ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -1133,7 +1212,7 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 
 CommandDecl    = "command", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | PropertyLine | ReadsDecl | AuthorizeDecl
+                   { DescriptionDecl | DocumentationDecl | PropertyLine | ReadsDecl | AvailableDecl | AuthorizeDecl
                    | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl | CommandCalendarDecl },
                  DEDENT ;
 
@@ -1203,6 +1282,25 @@ ConcurrencyDim = "eventSource", NL
                | "events", Ident, { ",", Ident }, NL ;
 
 AuthorizeDecl  = "authorize", PolicyRequirement, NL ;
+
+AudienceDecl   = "audience", Ident, NL,
+                 [ INDENT, [ DescriptionDecl ], DEDENT ] ;
+AvailabilityDecl = "availability", Ident, NL,
+                 [ INDENT, { DescriptionDecl | AvailabilityLine }, DEDENT ] ;
+AvailabilityLine = "for", AudienceRequirement, NL
+                 | "when", Condition, NL
+                 | "with", AvailabilityRequirement, NL ;
+AvailableDecl  = "available", AvailabilityLine ;
+AudienceRequirement     = AudienceTerm, { ( "and" | "or" ), AudienceTerm } ;
+AudienceTerm            = Ident | "(", AudienceRequirement, ")" ;
+AvailabilityRequirement = AvailabilityTerm, { ( "and" | "or" ), AvailabilityTerm } ;
+AvailabilityTerm        = Ident | "(", AvailabilityRequirement, ")" ;
+(* Audiences and availabilities decide whether a part of the model is there at all, before 'authorize'
+   decides who may use it. A gate takes one form per line: 'for' names audiences, 'when' reads $context,
+   'with' names a reusable availability; several 'available' lines on one construct all have to hold, and
+   gates AND down the module, feature, slice and construct. A persona's 'audience' lines are authoring
+   metadata only. $context.audiences holds the audiences of the tenant, the user and the system caller,
+   and an unknown value never opens a gate. PLAY1130 to PLAY1141. *)
 
 PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
 
@@ -1463,7 +1561,7 @@ ImplementationHint = "hint", StringLiteral, NL ;
 QueryDecl      = "query", Ident, "=>", [ "observable" ], TypeRef, NL,
                  [ INDENT,
                      { DescriptionDecl | ByClause | FilterClause | ScopeDecl
-                     | AuthorizeDecl | PerformerDecl },
+                     | AvailableDecl | AuthorizeDecl | PerformerDecl },
                    DEDENT ] ;
 
 (* "observable" qualifies the return type as a live read - the query keeps
@@ -1793,6 +1891,7 @@ TriggerClause  = TriggerSource, NL,
                    DEDENT ] ;
 
 TriggerSource  = "when", Ident                      (* event, declared or registered trigger *)
+               | "when", Ident, ".", Ident          (* a trigger of a system's extension; extension-contracts.md *)
                | "every", Integer, IntervalUnit     (* every 15 minutes                      *)
                | "at", Time, [ "on", ( Weekday | "day", Integer ) ] ;
 
@@ -1863,7 +1962,13 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, [ DescriptionDecl ], ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { AvailableDecl }, { ScreenVisualDecl }, ScreenBody, { ScreenContributionDecl | OutletChangeDecl }, DEDENT ;
+
+(* A sketch, an HTML/CSS mockup page or an image the screen carries, stored beside the model and named by a
+   path relative to the model root. Authoring metadata: kept, printed and exported, never executable.
+   PLAY0950 no path, PLAY0951 an image that is not PNG/JPG/GIF/SVG/WebP or a mockup that is not .html/.htm
+   (warning), PLAY0952 the file is not there when the model is opened (warning). *)
+ScreenVisualDecl = ( "sketch" | "mockup" | "image" ), FilePath, NL ;
 
 (* Content a screen contributes to an outlet elsewhere in the tree -
    Scene's Screen.Contributions.                                             *)
@@ -2067,7 +2172,7 @@ Descriptions on concepts, policies, constraints, projection headers, screens and
 The grammar includes authoring forms that are not executable. These notes describe which forms are
 admitted by the executable semantic model (ESM) and which diagnostics apply.
 
-> Systems, operations, operation phases and their specification forms in this grammar are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+> Operations, operation phases and their specification forms in this grammar, and systems that declare no ability, are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
 > [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths remain refused with `PLAY0268`, and attached file/inline handler routes require a constrained implementation attachment (`PLAY0800`). Pending command handler intents with unconditional `produces` select ESM v23: the body owns payload values and `produces` doubles as result contract v1 (`PLAY0695`). No productions and conditional productions refuse binding with `PLAY0696` and `PLAY0697`. Production route overrides and reaction/reducer observer filters select ESM v10. Flat composite read-model keys, complete caller-supplied optional single-instance queries by parts, and root projection/removal parts keys select ESM v27. Collection by-block queries, context-sourced parts and non-optional single-instance returns remain `PLAY0268`. New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 

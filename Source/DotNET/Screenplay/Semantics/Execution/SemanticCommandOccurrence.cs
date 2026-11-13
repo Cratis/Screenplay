@@ -16,4 +16,10 @@ public sealed record SemanticCommandOccurrence(DateTimeOffset Occurred, string S
     /// Gets whether this occurrence supplies time only, without a caller audit identity.
     /// </summary>
     public bool IsTimeOnly { get; init; }
+
+    /// <summary>
+    /// Gets the audit identity recorded on the facts produced under this occurrence. An occurrence that supplies time only has no
+    /// caller, so the reference evaluator attributes its facts to the fixed <c>specification</c> identity.
+    /// </summary>
+    public SemanticCausedBy CausedBy => IsTimeOnly ? SemanticScenario.SpecificationIdentity : new(Subject, Name, UserName);
 }

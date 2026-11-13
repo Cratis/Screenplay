@@ -4,7 +4,7 @@
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, TemplateInterpolationSyntax, TemplateTextSyntax } from '../Syntax/Expressions';
-import { parseLiteral, parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
+import { parseLiteral, parseModeledMappingSource as parseMappingSource, tryParseInvocationValue } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
 import { nativePattern as pattern } from '../Text/patterns';
 
@@ -47,6 +47,8 @@ export function parseProjectionExpression(text: string, location: SourceLocation
         return { kind: 'RawExpressionSyntax', text, location };
     }
     if (text === '$refusal' || text.startsWith('$refusal.')) return { kind: 'RefusalExpressionSyntax', member: text === '$refusal' ? '' : text.substring('$refusal.'.length), location };
+    const invocationValue = tryParseInvocationValue(text, location);
+    if (invocationValue !== undefined) return invocationValue;
     if (text === '$eventSourceId') return { kind: 'EventSourceIdExpressionSyntax', location };
     if (text.startsWith('$eventContext.')) return { kind: 'EventContextExpressionSyntax', path: text.substring('$eventContext.'.length), location };
     if (text === '$causedBy') return { kind: 'CausedByExpressionSyntax', property: null, location };

@@ -29,6 +29,17 @@ The `with` lines explicitly supply the retry command's inputs. Plain actions kee
 
 `for item` needs one nearest `data` declaration: a record, or a collection from which the user selects an item. Local sibling data takes precedence over inherited data, including in sections, filled slots and component slots. Source order does not break a tie between equally near declarations; missing or ambiguous data needs to be resolved explicitly.
 
+A screen often shows a header record next to a table of rows. An authored plain or toolbar `for item` action then acts on the one collection `data` that a `table` in scope shows, so the header does not make it ambiguous:
+
+```play
+data Header via query HeaderOf
+data Row[] via query Rows
+table Row
+action RetryItem for item
+```
+
+The narrowing needs exactly one collection data shown by a table in scope; a table over a record or two tables over two collections leave the action ambiguous, and PLAY0346 names the candidates. Guarded actions and inferred subjects are unchanged.
+
 Once the subject is known, inputs are supplied in this order:
 
 1. Explicit input bindings win.

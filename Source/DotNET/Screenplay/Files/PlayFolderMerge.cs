@@ -71,6 +71,7 @@ internal static partial class PlayFolderMerge
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
             Users = DeclaredInOneFile(applications.SelectMany(application => application.Users), user => user.Name, user => user.Location, "user", context),
+            Storylines = DeclaredInOneFile(applications.SelectMany(application => application.Storylines), storyline => storyline.Name, storyline => storyline.Location, "storyline", context),
             ReactionProductionMode = MergeReactionProductionMode(applications, context),
             CommandReadMode = MergeCommandReadMode(applications, context),
             TimeZone = MergeTimeZone(applications, context),
@@ -78,6 +79,7 @@ internal static partial class PlayFolderMerge
             Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
             DesignSystems = OnlyOne(applications.SelectMany(application => application.DesignSystems), designSystem => designSystem.Location, "design system", context) is { } designSystem ? [designSystem] : [],
             Onboarding = OnlyOne(applications.Select(application => application.Onboarding), onboarding => onboarding.Location, "onboarding block", context),
+            Agents = MergeAgents(applications, context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],
@@ -85,9 +87,15 @@ internal static partial class PlayFolderMerge
             Workflows = DeclaredInOneFile(applications.SelectMany(application => application.Workflows), workflow => workflow.Name, workflow => workflow.Location, "workflow", context),
             SampleDataPacks = DeclaredInOneFile(applications.SelectMany(application => application.SampleDataPacks), pack => pack.Name, pack => pack.Location, "sample data pack", context),
             Purposes = DeclaredInOneFile(applications.SelectMany(application => application.Purposes), purpose => purpose.Name, purpose => purpose.Location, "purpose", context),
+            Provides = [.. applications.SelectMany(application => application.Provides)],
+            Audiences = DeclaredInOneFile(applications.SelectMany(application => application.Audiences), audience => audience.Name, audience => audience.Location, "audience", context),
+            Availabilities = DeclaredInOneFile(applications.SelectMany(application => application.Availabilities), availability => availability.Name, availability => availability.Location, "availability", context),
 
             // Sink names are compared ignoring case across the whole application, so the validator reports duplicates.
             Sinks = [.. applications.SelectMany(application => application.Sinks)],
+
+            // Secret names are compared ignoring case across the whole application, so the validator reports duplicates.
+            Secrets = [.. applications.SelectMany(application => application.Secrets)],
 
             // Preserve physical parents; a duplicate source makes every child scope ambiguous.
             EventSources = [.. applications.SelectMany(application => application.EventSources)],
@@ -153,6 +161,24 @@ internal static partial class PlayFolderMerge
         }
 
         return registrations.ToImmutableDictionary(StringComparer.Ordinal);
+    }
+
+    static AgentsSyntax? MergeAgents(IEnumerable<ApplicationSyntax> applications, ParserContext context)
+    {
+        AgentsSyntax? result = null;
+        foreach (var agents in applications.Select(application => application.Agents).OfType<AgentsSyntax>())
+        {
+            if (result is not null)
+            {
+                context.Error(DiagnosticCodes.DuplicateAgentsDeclaration, "An application can declare only one agents block", agents.Location);
+            }
+            else
+            {
+                result = agents;
+            }
+        }
+
+        return result;
     }
 
     /// <summary>

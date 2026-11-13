@@ -45,10 +45,12 @@ internal static partial class ScreenplayValidator
 
         ValidateDeclarations(application, slices, names, allowUnresolvedPersonaPolicies, context);
         ValidateSlices(application, slices, names, context);
+        SlicePlacementValidator.Validate(slices, names, context);
         LifecycleValidator.Validate(application, slices, names, context);
         ReadModelMemberTypeValidator.Validate(application, context);
         GraphValidator.Validate(application, slices, names, context);
         SinkValidator.Validate(application, slices, context);
+        SystemConfigurationValidator.Validate(application, context);
         ValidateScopedReferences(application, expansion, names, context);
         ValidatePresentation(application, context);
         foreach (var diagnostic in ScreenActionSubjects.Resolve(application).Diagnostics) context.Add(diagnostic);
@@ -57,6 +59,7 @@ internal static partial class ScreenplayValidator
 
         authored = DeclaredDependencyTargets.Validate(authored, context);
         DeclaredDependencies.Validate(authored, context);
+        AgentsValidator.Validate(application, context, deferImportedExampleTypes);
 
         return authored;
     }
@@ -156,9 +159,13 @@ internal static partial class ScreenplayValidator
         ValidateReadModels(slices, names.ReadModels, names.Events, context);
         ValidateTypes(application, names.Types, context);
         IdentityValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);
+        ProvideValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);
+        AvailabilityValidator.Validate(application, context);
+        AvailabilityInvocationValidator.Validate(application, context);
 
         ValidatePersonaPolicies(application, names.Policies, allowUnresolvedPersonaPolicies, context);
         ValidateUsers(application, context);
+        StorylineValidator.Validate(application, context);
         ValidateDuplicateProviders(application, context);
         ValidateOnboarding(application, allowUnresolvedPersonaPolicies, context);
         ValidateSeeds(application, names.Events, context);
@@ -173,7 +180,7 @@ internal static partial class ScreenplayValidator
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
-        var catalog = new TriggerCatalog(declaredTriggers, eventsByName);
+        var catalog = new TriggerCatalog(declaredTriggers, eventsByName, application.Systems.Where(system => system.Extension is not null).Select(system => system.Name).ToHashSet(StringComparer.Ordinal));
         var eventDeclarations = slices.SelectMany(EventDeclarations.In).ToLookup(@event => @event.Name, StringComparer.Ordinal);
         var productionResolver = new AuthoringProductionResolver(application);
         InlineEventValidator.Validate(application, slices, context);
@@ -249,5 +256,5 @@ internal static partial class ScreenplayValidator
         }
     }
 
-    internal sealed record TriggerCatalog(Dictionary<string, TriggerSyntax> Declared, Dictionary<string, EventSyntax> EventsByName);
+    internal sealed record TriggerCatalog(Dictionary<string, TriggerSyntax> Declared, Dictionary<string, EventSyntax> EventsByName, HashSet<string> ExtensionSystems);
 }

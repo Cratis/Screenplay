@@ -108,6 +108,23 @@ public static class CliCommandCatalog
     /// </summary>
     public static CliCommand EnvironmentKeys { get; } = new("environment", "[<file.play|folder>]", [Format]);
 
+    /// <summary>Gets the option that makes restore fail on any reference the lock does not pin instead of resolving it.</summary>
+    public static CliOption Locked { get; } = new("--locked");
+
+    /// <summary>Gets the option that makes restore re-resolve every reference to the newest release in its range.</summary>
+    public static CliOption Update { get; } = new("--update");
+
+    /// <summary>Gets the directory of vendored packages restore fetches from.</summary>
+    public static CliOption PackageSource { get; } = new("--source", "<directory>");
+
+    /// <summary>Gets the option that copies restored contracts into the model's vendored extensions folder.</summary>
+    public static CliOption Vendor { get; } = new("--vendor");
+
+    /// <summary>
+    /// Gets the command that pins the extensions a model references in <c>screenplay.lock</c> and restores their contracts.
+    /// </summary>
+    public static CliCommand Restore { get; } = new("restore", "[<folder>]", [Locked, Update, PackageSource, Vendor]);
+
     /// <summary>Gets the version a migration reads.</summary>
     public static CliOption MigrateFrom { get; } = new("--from", "<version>", Required: true);
 
@@ -135,11 +152,14 @@ public static class CliCommandCatalog
     /// <summary>Gets the stored contract equality gate.</summary>
     public static CliCommand BaselineCheck { get; } = new("baseline check", "<root>", []);
 
-    /// <summary>Gets the executable model export format option.</summary>
-    public static CliOption ExportFormat { get; } = new("--format", "esm");
+    /// <summary>Gets the export format option: the executable model, its OpenAPI description or its UI contract.</summary>
+    public static CliOption ExportFormat { get; } = new("--format", "esm|openapi|ui|capability-manifest");
 
-    /// <summary>Gets the executable model export command.</summary>
-    public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output]);
+    /// <summary>Gets the option that admits the model's screens to the exported executable model as ESM v42.</summary>
+    public static CliOption Screens { get; } = new("--screens");
+
+    /// <summary>Gets the export command for the executable model, its HTTP API description and its UI contract.</summary>
+    public static CliCommand Export { get; } = new("export", "[<file.play|folder>]", [ExportFormat, Scope, Output, Screens]);
 
     /// <summary>Gets the model comparison command.</summary>
     public static CliCommand Diff { get; } = new("diff", "<before> <after>", [Format]);
@@ -149,6 +169,12 @@ public static class CliCommandCatalog
 
     /// <summary>Gets the identity-preserving rename command.</summary>
     public static CliCommand Rename { get; } = new("rename", "<address> <new-name> [<folder>]", [Kind]);
+
+    /// <summary>Gets the lineage direction option.</summary>
+    public static CliOption LineageDirection { get; } = new("--direction", "upstream|downstream|both");
+
+    /// <summary>Gets the value lineage trace command.</summary>
+    public static CliCommand Lineage { get; } = new("lineage", "<address> [<file.play|folder>]", [LineageDirection, Format]);
 
     /// <summary>
     /// Gets the help command.
@@ -163,7 +189,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, EnvironmentKeys, Restore, Migrate, BaselineAdmit, BaselineCheck, Export, Diff, Rename, Lineage, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

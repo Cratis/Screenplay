@@ -25,6 +25,11 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     public IReadOnlyList<RetiredForm> RetiredForms => _retiredForms;
 
     /// <summary>
+    /// Gets or sets a value indicating whether an <c>on</c> line may name a signal an extension component raises, which is written in camel case.
+    /// </summary>
+    public bool AcceptsSignalTriggers { get; set; }
+
+    /// <summary>
     /// Gets the immutable options established before reading document values.
     /// </summary>
     public SourceOptions SourceOptions { get; internal set; } = SourceOptions.Legacy;
@@ -127,6 +132,15 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// </summary>
     /// <param name="diagnostic">The <see cref="Diagnostic"/> to add.</param>
     public void Add(Diagnostic diagnostic) => _diagnostics.Add(diagnostic);
+
+    /// <summary>
+    /// Withdraws the diagnostics of a code reported at a location, once a later check knows the report was premature.
+    /// </summary>
+    /// <param name="code">The diagnostic code.</param>
+    /// <param name="location">The <see cref="SourceLocation"/> the diagnostics were reported at.</param>
+    /// <param name="quoted">The text the message must quote, so a sibling report at the same location stays.</param>
+    public void Withdraw(string code, SourceLocation location, string quoted) =>
+        _diagnostics.RemoveAll(diagnostic => diagnostic.Code == code && diagnostic.Location == location && diagnostic.Message.Contains(quoted, StringComparison.Ordinal));
 
     /// <summary>
     /// Keeps a form an earlier Screenplay version wrote, after it has been reported, so a migration can rewrite it.

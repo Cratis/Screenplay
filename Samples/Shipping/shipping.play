@@ -1,0 +1,153 @@
+// Shipping: asking systems outside the model for something. Two systems, a REST carrier and a chat
+// service, are invoked from a reaction, a workflow and a state machine.
+domain Acme.Shipping
+
+command reads protected
+reaction batches atomic
+
+concept ParcelId : Uuid
+concept TrackingNumber : String
+concept ChannelName : String
+concept MessageText : String
+
+// A system names what the model can ask of the world outside it. The carrier is reached over REST.
+// Booking a pickup is idempotent: asking again with the same parcel has the pickup once. The carrier
+// can also answer that it has no capacity, which is an outcome of its own, not a failure.
+system Carrier
+  description "The carrier's REST API for booking pickups"
+  ability BookPickup idempotent
+    description "Books a pickup for one parcel"
+    parcelId ParcelId
+    address String
+    returns
+      trackingNumber TrackingNumber
+    outcome NoCapacity
+      description "The carrier cannot collect on that day"
+
+// The chat service is told about it. Posting has no effect worth protecting against a retry
+// beyond a duplicate message, so it keeps the default effect class (once: never retried).
+system Chat
+  description "The team chat that dispatchers watch"
+  ability Post
+    description "Posts a message to one channel"
+    channel ChannelName
+    text MessageText
+
+policy Dispatchers
+  require authenticated
+
+// A state's entry can invoke an ability. The inputs are mapped from the subject or given as values.
+statemachine ParcelFlow
+  description "Where a parcel is, from packed to shipped"
+  follows ParcelView
+  state Packed initial
+    entering invokes Chat.Post
+      channel = "#dispatch"
+      text = "A parcel is packed"
+    on PickupBooked -> Shipped
+  state Shipped final
+
+// A workflow action invokes an ability too. A value can come from an earlier node's result
+// (BookPickup.trackingNumber) and each answer the ability can give has an edge.
+workflow Pickup
+  description "Books the pickup and tells the dispatchers"
+  for ParcelView
+  trigger Manual manual
+    -> BookPickup
+  action BookPickup invokes Carrier.BookPickup attempts 3
+    parcelId = parcelId
+    address = "1 Main Street"
+    next -> Tell
+    NoCapacity -> Escalate
+    failed -> Escalate
+  action Tell invokes Chat.Post
+    channel = "#dispatch"
+    text = BookPickup.trackingNumber
+  action Escalate invokes Chat.Post
+    channel = "#escalations"
+    text = "No pickup could be booked"
+
+module Shipping
+  feature Pickup
+    slice Automation PickupBooking
+      description "Books a pickup with the carrier once a parcel is packed"
+
+      readmodel ParcelView
+        parcelId ParcelId
+        status String
+
+      projection ParcelView
+        from OrderPacked
+          parcelId = $eventSourceId
+          status   = "packed"
+        from PickupBooked
+          status = "booked"
+
+      event OrderPacked
+        parcelId ParcelId
+        shippingAddress String
+
+      event PickupBooked
+        trackingNumber TrackingNumber
+
+      event PickupUnavailable
+        parcelId ParcelId
+
+      event PickupBookingFailed
+        reason String
+
+      // A reaction invokes an ability and handles each answer in a branch: what the ability returned,
+      // a declared outcome, or a failure. Each branch appends the event that records what happened.
+      reaction PickupBooking
+        description "Books the pickup and records the answer"
+        runs as system
+        when OrderPacked
+          parcelId
+          shippingAddress
+          invokes Carrier.BookPickup
+            parcelId = parcelId
+            address = shippingAddress
+            on returned
+              produces PickupBooked
+                trackingNumber = $result.trackingNumber
+            on NoCapacity
+              produces PickupUnavailable
+                parcelId = parcelId
+            on failed
+              produces PickupBookingFailed
+                reason = $failure.reason
+
+      // A specification scripts what the ability answers, so the reaction is exercised without the carrier.
+      specification TheCarrierReturnsATrackingNumber
+        given Carrier.BookPickup returns
+          trackingNumber = "TRK-1"
+        when append OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupBooked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          trackingNumber = "TRK-1"
+        then invokes Carrier.BookPickup
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          address = "1 Main Street"
+
+      specification TheCarrierHasNoCapacity
+        given Carrier.BookPickup answers NoCapacity
+        when append OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupUnavailable
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+      specification TheCarrierIsDown
+        given Carrier.BookPickup fails "carrier unavailable"
+        when append OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupBookingFailed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "carrier unavailable"

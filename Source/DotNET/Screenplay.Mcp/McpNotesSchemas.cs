@@ -12,7 +12,7 @@ static class McpNotesSchemas
     {
         ["anchor"] = Target,
         ["operations"] = () => BoundedArray(Operation(), 200, minimum: 1),
-        ["kind"] = () => McpAstSchemas.Choice("question", "task", "note"),
+        ["kind"] = () => McpAstSchemas.Choice("question", "task", "note", "issue"),
         ["state"] = () => McpAstSchemas.Choice("open", "resolved", "orphaned", "all"),
         ["view"] = () => McpAstSchemas.Choice("items", "findings")
     };
@@ -46,7 +46,8 @@ static class McpNotesSchemas
         new JsonObject
         {
             ["id"] = McpAstSchemas.String(),
-            ["url"] = new JsonObject { ["type"] = "string", ["format"] = "uri", ["pattern"] = "^https?://" }
+            ["url"] = new JsonObject { ["type"] = "string", ["format"] = "uri", ["pattern"] = "^https?://" },
+            ["tracker"] = McpAstSchemas.Choice("github", "jira", "linear", "other")
         },
         "id");
 
@@ -70,7 +71,7 @@ static class McpNotesSchemas
             {
                 ["operation"] = McpAstSchemas.Choice("add", "edit", "resolve", "reopen", "reanchor", "remove"),
                 ["id"] = McpAstSchemas.String(),
-                ["kind"] = McpAstSchemas.Choice("question", "task", "note"),
+                ["kind"] = McpAstSchemas.Choice("question", "task", "note", "issue"),
                 ["text"] = McpAstSchemas.String(),
                 ["author"] = McpAstSchemas.String(),
                 ["refs"] = BoundedArray(Reference(), 100),
@@ -79,7 +80,7 @@ static class McpNotesSchemas
                 ["resolution"] = Resolution()
             },
             "operation");
-        schema["description"] = "add requires kind/text/author and exactly anchor or target; other operations require id. resolve requires resolution (server supplies at); reanchor requires exactly anchor or target. IDs and createdAt are server generated. Text is nonempty, trimmed, at most 16384 characters. No authoring-key or document anchors.";
+        schema["description"] = "add requires kind/text/author and exactly anchor or target; other operations require id. resolve requires resolution (server supplies at); reanchor requires exactly anchor or target. IDs and createdAt are server generated. Text is nonempty, trimmed, at most 16384 characters. No authoring-key or document anchors. An issue note links its anchor to issues in an external tracker: every ref names its tracker (github, jira, linear or other), id is the issue key and url its page.";
         return schema;
     }
 }

@@ -40,6 +40,11 @@ public record QuerySyntax(
     public const string ObservableModifier = "observable";
 
     /// <summary>
+    /// Gets the <c>available</c> gates of this query; every one has to hold for it to be there.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+
+    /// <summary>
     /// Gets what the query's results are narrowed to, and <c>null</c> when they are narrowed to the tenant
     /// the query runs for - the default, which a document leaves unstated.
     /// </summary>
@@ -56,7 +61,19 @@ public record QuerySyntax(
     /// Gets the named composite lookup parameters, mutually exclusive with <see cref="By"/>.
     /// </summary>
     public IEnumerable<QueryParameterSyntax> ByParts { get; init; } = [];
+
+    /// <summary>
+    /// Gets the policy that narrows the rows of a collection result, <see langword="null"/> when every row is returned.
+    /// </summary>
+    public NarrowSyntax? Narrow { get; init; }
 }
+
+/// <summary>
+/// <c>narrow &lt;Policy&gt;</c> on a collection query: only the rows the policy allows are returned.
+/// </summary>
+/// <param name="Policy">The policy name.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the directive.</param>
+public record NarrowSyntax(string Policy, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a parameter of a query.

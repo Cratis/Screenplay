@@ -179,7 +179,7 @@ public static class WorkspaceDiagnosticRepairs
         }
 
         // PLAY0397 also covers bare description fences and legacy handler language lines. Only the
-        // 'validate csharp' form has a unique CodeValidateSyntax subject at the warning's position.
+        // 'validate csharp' form, the deprecated 'sends' verb forms and 'entering start' have a unique subject at the warning's position.
         if (!index.RepairableDiagnosticSet.Contains(diagnostic))
         {
             return [];
@@ -260,7 +260,7 @@ public static class WorkspaceDiagnosticRepairs
             return [];
         }
 
-        var matching = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Node is CodeValidateSyntax && entry.Location == diagnostic.Location).ToArray();
+        var matching = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Node is CodeValidateSyntax or WorkflowNodeSyntax or StateEntrySyntax or LifecycleExpectationSyntax && entry.Location == diagnostic.Location).ToArray();
         if (matching.Length != 1)
         {
             return [];

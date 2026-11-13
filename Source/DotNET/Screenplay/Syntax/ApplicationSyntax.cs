@@ -63,6 +63,9 @@ public record ApplicationSyntax(
     /// </summary>
     public OnboardingSyntax? Onboarding { get; init; }
 
+    /// <summary>Gets the explicit agent operation allowlist; absence exposes nothing.</summary>
+    public AgentsSyntax? Agents { get; init; }
+
     /// <summary>
     /// Gets the explicit reaction production mode, inherited by the composed application.
     /// Absence preserves legacy per-fact production.
@@ -116,10 +119,21 @@ public record ApplicationSyntax(
     public IEnumerable<UserSyntax> Users { get; init; } = [];
 
     /// <summary>
+    /// Gets the storylines: named, ordered paths through the model, such as user journeys. Authoring metadata, never part of the executable model.
+    /// </summary>
+    public IEnumerable<StorylineSyntax> Storylines { get; init; } = [];
+
+    /// <summary>
     /// Gets the named sinks read models and graphs may choose with a <c>sink</c> directive. Realization metadata, never part
     /// of the executable model; a read model or graph that names no sink uses its kind's implicit default sink.
     /// </summary>
     public IEnumerable<SinkSyntax> Sinks { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named secrets systems map settings from. Realization metadata, never part of the executable model: the
+    /// model names a secret and a deployment binds the name to its store.
+    /// </summary>
+    public IEnumerable<SecretSyntax> Secrets { get; init; } = [];
 
     /// <summary>
     /// Gets the sticky notes placed on the personas canvas: authoring metadata around the personas, never part of the executable model.
@@ -150,6 +164,21 @@ public record ApplicationSyntax(
     /// Gets the report-only processing purposes declared in the application.
     /// </summary>
     public IEnumerable<PurposeSyntax> Purposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the values this application adds to <c>$context</c> for everything beneath it.
+    /// </summary>
+    public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>audience</c> declarations - the groups a tenant, user or system caller can be in at runtime.
+    /// </summary>
+    public IEnumerable<AudienceSyntax> Audiences { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>availability</c> declarations - the reusable rules <c>available with</c> names.
+    /// </summary>
+    public IEnumerable<AvailabilitySyntax> Availabilities { get; init; } = [];
 
     /// <summary>Gets every physical application-owned event source declaration.</summary>
     public IEnumerable<EventSourceSyntax> EventSources { get; init; } = [];

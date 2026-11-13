@@ -29,8 +29,14 @@
   href: structured-values.md
 - name: Policies
   href: policies.md
+- name: Audiences and availability
+  href: availability.md
 - name: Personas
   href: personas.md
+- name: Storylines
+  href: storylines.md
+- name: Agents
+  href: agents.md
 - name: Authentication
   href: authentication.md
 - name: Onboarding
@@ -57,6 +63,16 @@
   href: event-sources.md
 - name: Commands
   href: commands.md
+- name: Extensions overview
+  href: extensions.md
+- name: Using an extension
+  href: using-an-extension.md
+- name: Building an extension
+  href: building-an-extension.md
+- name: Systems and abilities
+  href: systems.md
+- name: Extension contracts and the lock
+  href: extension-contracts.md
 - name: Operations and external systems
   href: operations.md
 - name: State machines
@@ -151,6 +167,10 @@
   href: executable-model-schema.md
 - name: Model comparison API
   href: model-comparison.md
+- name: HTTP API description
+  href: api-description.md
+- name: UI contract
+  href: ui-contract.md
 - name: Observation comparison API
   href: observation-comparison.md
 - name: Value rule checks

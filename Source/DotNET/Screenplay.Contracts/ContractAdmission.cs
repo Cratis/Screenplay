@@ -254,6 +254,7 @@ static class ContractAdmission
     // Every published condition is a binding result for one of these sources, not a prose promise.
     internal static readonly Probe[] Probes =
     [
+        new("agents", "agents\n  tokens personal\n", [Slice + Event + Command + "agents\n  tokens personal\n  command M.F.S.Record\n    scope write\n    description \"Record a value\"\n"], Baseline: string.Empty, VariantBaselines: [Slice + Event + Command]),
         new("authentication", "authentication\n  provider GitHub\n"),
         new("onboarding", "authentication\n  provider GitHub\nonboarding\n  signup open creates tenant\n", Baseline: "authentication\n  provider GitHub\n"),
         new("identity", "identity\n  department String from claim \"department\"\n", ["identity\n  department String from claim \"department\"\n" + Slice + Event + Command.Replace("value = value", "value = $identity.department", StringComparison.Ordinal)], Baseline: string.Empty),
@@ -271,15 +272,25 @@ static class ContractAdmission
         new("numbers", "numbers exact\n"),
         new("context", "context\n  businessTimeZone time zone\n"),
         new("time", "time zone \"Europe/Oslo\"\n", ["time zone configurable default \"Europe/Oslo\"\n"]),
+        new("audience", "audience Plus\n", Baseline: string.Empty),
+        new("availability", "audience Plus\navailability Sold\n  for Plus\n", Baseline: "audience Plus\n"),
+        new("available", "audience Plus\nmodule M\n  available for Plus\n", Baseline: "audience Plus\nmodule M\n"),
         new("persona", "persona Person\n"),
         new("user", "persona Person\nuser ada \"Ada\" as Person\n", Baseline: "persona Person\n"),
+        new("storyline", "module M\nstoryline Journey \"A journey\"\n  module M \"Start here\"\n", Baseline: "module M\n"),
         new("sink", "sink Reporting for readmodels\n" + Slice + Event + ReadModel.Replace("      readmodel View\n", "      readmodel View\n        sink Reporting\n", StringComparison.Ordinal) + Projection + KeyedQuery, Baseline: Slice + Event + ReadModel + Projection + KeyedQuery),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  require anonymous\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("public", Slice + "      public event Recorded\n        value String\n"),
+        new("provide", "provide region String from host\n", [Slice.Replace("module M\n", "module M\n  provide region String from host\n", StringComparison.Ordinal)], Baseline: string.Empty),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
+        new("shows", Slice + Event + "    slice StateView V\n      shows event Recorded\n", Baseline: Slice + Event),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
         new("sticky", "persona Person\nsticky note on personas\n  description \"A note\"\n  position 10 20\n", Baseline: "persona Person\n"),
         new("system", "system External\n"),
+        new("secret", "secret Key\nsystem External\n  setting key from secret Key\n", Baseline: "system External\n"),
+        new("extension", "system External\n  extension \"ghcr.io/cratis/extension\" version 1\n", Baseline: "system External\n"),
+        new("setting", "system External\n  setting retries = 3\n", Baseline: "system External\n"),
+        new("activation", "system External\n  activation on demand idle after 10 minutes\n", Baseline: "system External\n"),
         new("statemachine", Lifecycles),
         new("workflow", Workflows),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
@@ -422,6 +433,8 @@ static class ContractAdmission
 
     internal static CompilationResult<SemanticCompilation> Bind(string source, string? imported = null)
     {
+        // A probe is about the keyword, not about a lock on the machine that generates the contract: an unresolved extension reference is a warning here.
+        Extensions.ExtensionContractResolver.Current = new(new(Path.Combine(Path.GetTempPath(), "screenplay-contract-probe")), Extensions.ExtensionResolutionMode.Editor, Extensions.ExtensionLock.Empty);
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Contract"));
         var documents = new List<WorkspaceDocument>
         {

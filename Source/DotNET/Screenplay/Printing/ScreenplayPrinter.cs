@@ -210,12 +210,20 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteApplicationDeclarations(ScreenplayWriter writer, ApplicationSyntax application)
     {
+        WriteSection(writer, application.Secrets, WriteSecret);
         WriteSection(writer, application.Systems, WriteSystem);
         WriteSection(writer, application.EventSources, WriteEventSource);
         WriteSection(writer, application.Concepts, WriteConcept);
         WriteSection(writer, application.Types ?? [], WriteType);
         WriteSection(writer, application.Purposes, WritePurpose);
+        if (application.Provides.Any())
+        {
+            writer.Blank();
+            WriteProvides(writer, application.Provides);
+        }
         WriteSection(writer, application.Policies, WritePolicy);
+        WriteSection(writer, application.Audiences, WriteAudience);
+        WriteSection(writer, application.Availabilities, WriteAvailability);
         WriteSection(writer, application.Personas ?? [], WritePersona);
         WriteSection(writer, application.Users, WriteUser);
         WriteSection(writer, application.Sinks, WriteSink);
@@ -228,6 +236,7 @@ public sealed partial class ScreenplayPrinter :
     {
         WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
         WriteOptionalSection(writer, application.Onboarding, WriteOnboarding);
+        WriteOptionalSection(writer, application.Agents, WriteAgents);
         WriteOptionalSection(writer, application.Identity, WriteIdentity);
         WriteSection(writer, application.DesignSystems, WriteDesignSystem);
         WriteSection(writer, application.Themes ?? [], WriteTheme);
@@ -246,6 +255,7 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.Examples, WriteSpecificationExample);
         WriteSection(writer, application.Modules, WriteModule);
         WriteSection(writer, application.Seeds ?? [], WriteSeed);
+        WriteSection(writer, application.Storylines, WriteStoryline);
     }
 
     void WriteAuthentication(ScreenplayWriter writer, AuthenticationSyntax authentication)
@@ -656,6 +666,16 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, policy.Description, policy);
+            foreach (var input in policy.Inputs ?? [])
+            {
+                writer.Line($"{input.Name} {input.Type}{(input.From is null ? string.Empty : $" from {input.From}")}", input);
+            }
+
+            foreach (var reads in policy.Reads ?? [])
+            {
+                WriteReads(writer, reads);
+            }
+
             if (policy.Condition is not null)
             {
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);
@@ -688,6 +708,12 @@ public sealed partial class ScreenplayPrinter :
             for (var index = 0; index < goals.Count; index++)
             {
                 writer.DirectiveLine($"goal {StringLiteral.Quote(goals[index])}", persona, DirectiveLocationKeys.ForValue("goal", goals, index));
+            }
+
+            var audiences = persona.Audiences.ToList();
+            for (var index = 0; index < audiences.Count; index++)
+            {
+                writer.DirectiveLine($"audience {audiences[index]}", persona, DirectiveLocationKeys.ForValue("audience", audiences, index));
             }
 
             var policies = persona.Policies.ToList();
@@ -760,6 +786,8 @@ public sealed partial class ScreenplayPrinter :
         WriteDescription(writer, module.Description, module);
         WriteDocumentation(writer, module.Documentation, module);
         foreach (var purpose in module.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
+        WriteProvides(writer, module.Provides);
+        WriteAvailable(writer, module.Available);
         foreach (var dependency in module.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, module.FileImports, -1, import => WriteFileImports(writer, [import]));
@@ -995,6 +1023,8 @@ public sealed partial class ScreenplayPrinter :
         WriteDescription(writer, feature.Description, feature);
         WriteDocumentation(writer, feature.Documentation, feature);
         foreach (var purpose in feature.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
+        WriteProvides(writer, feature.Provides);
+        WriteAvailable(writer, feature.Available);
         foreach (var dependency in feature.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, feature.FileImports, -1, import => WriteFileImports(writer, [import]));
@@ -1029,6 +1059,9 @@ public sealed partial class ScreenplayPrinter :
             WriteDescription(writer, slice.Description, slice);
             WriteDocumentation(writer, slice.Documentation, slice);
             foreach (var purpose in slice.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
+            WriteProvides(writer, slice.Provides);
+            WriteAvailable(writer, slice.Available);
+            foreach (var placement in slice.Placements) writer.Line($"shows {Parsing.SlicePlacementParser.Keyword(placement.Kind)} {placement.Name}", placement);
             WriteFile(writer, slice.File);
 
             var members = new List<PrintableMember>();

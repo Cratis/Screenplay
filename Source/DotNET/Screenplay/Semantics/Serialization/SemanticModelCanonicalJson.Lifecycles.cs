@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
@@ -48,6 +49,18 @@ public static partial class SemanticModelCanonicalJson
             {
                 output.WriteString("kind", "send");
                 output.WriteString("command", entry.Command.ToString());
+            }
+            else if (entry.Kind == SemanticStateEntryKind.InvokeAbility)
+            {
+                output.WriteString("kind", "invoke");
+                output.WriteString("system", entry.System.ToString());
+                CanonicalJson.WriteString(output, "ability", entry.Ability!);
+                WriteAbilityInputs(output, entry.Inputs);
+            }
+            else if (entry.Kind == SemanticStateEntryKind.RunBody)
+            {
+                output.WriteString("kind", "body");
+                if (entry.RequirementId is not null) CanonicalJson.WriteString(output, "requirement", entry.RequirementId);
             }
             else
             {
@@ -130,6 +143,7 @@ public static partial class SemanticModelCanonicalJson
                     SemanticLifecycleExpectationKind.Starts => "starts",
                     SemanticLifecycleExpectationKind.Completes => "completes",
                     SemanticLifecycleExpectationKind.Fails => "fails",
+                    SemanticLifecycleExpectationKind.Invokes => "invokes",
                     _ => "waits"
                 });
                 if (expectation.Target is not null) CanonicalJson.WriteString(item, "target", expectation.Target);
@@ -173,8 +187,31 @@ public static partial class SemanticModelCanonicalJson
         if (node.MaxParallel is { } parallel) writer.WriteNumber("maxParallel", parallel);
         if (node.JoinMode is { } mode) writer.WriteString("joinMode", mode switch { SemanticJoinMode.All => "all", SemanticJoinMode.Any => "any", _ => "atLeast" });
         if (node.JoinCount is { } count) writer.WriteNumber("joinCount", count);
+        if (node.Ability is not null)
+        {
+            writer.WriteString("system", node.System.ToString());
+            CanonicalJson.WriteString(writer, "ability", node.Ability);
+            WriteAbilityInputs(writer, node.Inputs);
+        }
+
+        if (node.Kind == SemanticWorkflowNodeKind.Compute)
+        {
+            WriteArray(writer, "returns", node.Returns.IsDefault ? [] : node.Returns, WriteAbilityField);
+            if (node.RequirementId is not null) CanonicalJson.WriteString(writer, "requirement", node.RequirementId);
+        }
+
         writer.WriteEndObject();
     }
+
+    static void WriteAbilityInputs(Utf8JsonWriter writer, ImmutableArray<SemanticAbilityInputMapping> inputs) =>
+        WriteArray(writer, "inputs", inputs.IsDefault ? [] : inputs, (output, input) =>
+        {
+            output.WriteStartObject();
+            CanonicalJson.WriteString(output, "input", input.Input);
+            output.WritePropertyName("source");
+            WriteExpression(output, input.Source);
+            output.WriteEndObject();
+        });
 
     static string WorkflowNodeKind(SemanticWorkflowNodeKind kind) => kind switch
     {
@@ -185,6 +222,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticWorkflowNodeKind.Approval => "approval",
         SemanticWorkflowNodeKind.ForEach => "forEach",
         SemanticWorkflowNodeKind.Join => "join",
+        SemanticWorkflowNodeKind.Compute => "compute",
         _ => throw Unknown(nameof(SemanticWorkflowNodeKind), kind)
     };
 

@@ -61,6 +61,18 @@ public sealed record SemanticApplicationTrigger(SemanticId Id, string Name, Immu
 /// <param name="Mappings">The command values, from the occurrence that set the reaction off.</param>
 public sealed record SemanticInvocation(SemanticId Command, ImmutableArray<SemanticPropertyMapping> Mappings)
 {
+    /// <summary>Gets the system whose ability is invoked, when the invocation targets an ability (ESM v51).</summary>
+    public SemanticId System { get; init; }
+
+    /// <summary>Gets the name of the invoked ability, or <c>null</c> when the invocation targets a command.</summary>
+    public string? Ability { get; init; }
+
+    /// <summary>Gets the ability inputs, in the ability's declaration order.</summary>
+    public ImmutableArray<SemanticAbilityInputMapping> Inputs { get; init; } = [];
+
+    /// <summary>Gets the ordered branches handling the ability's answer.</summary>
+    public ImmutableArray<SemanticInvocationBranch> Branches { get; init; } = [];
+
     /// <summary>
     /// Gets ordered refusal branches; the first matching branch handles the refusal.
     /// </summary>

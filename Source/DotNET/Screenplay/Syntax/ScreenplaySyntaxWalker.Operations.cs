@@ -11,7 +11,53 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits an external system declaration.
     /// </summary>
     /// <param name="syntax">The system.</param>
-    public virtual void VisitSystem(SystemSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitSystem(SystemSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var ability in syntax.Abilities) VisitAbility(ability);
+        if (syntax.Extension is not null) VisitSystemExtension(syntax.Extension);
+        foreach (var setting in syntax.Settings) VisitSystemSetting(setting);
+        if (syntax.Activation is not null) VisitSystemActivation(syntax.Activation);
+    }
+
+    /// <summary>
+    /// Visits the extension line of a system.
+    /// </summary>
+    /// <param name="syntax">The extension line.</param>
+    public virtual void VisitSystemExtension(SystemExtensionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a setting line of a system.
+    /// </summary>
+    /// <param name="syntax">The setting line.</param>
+    public virtual void VisitSystemSetting(SystemSettingSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits the activation line of a system.
+    /// </summary>
+    /// <param name="syntax">The activation line.</param>
+    public virtual void VisitSystemActivation(SystemActivationSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits an ability, its inputs, returned values, outcomes and implementation.
+    /// </summary>
+    /// <param name="syntax">The ability.</param>
+    public virtual void VisitAbility(AbilitySyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var input in syntax.Inputs) VisitProperty(input);
+        foreach (var returned in syntax.Returns) VisitProperty(returned);
+        foreach (var outcome in syntax.Outcomes) VisitAbilityOutcome(outcome);
+        if (syntax.Implementation is not null) VisitImplementation(syntax.Implementation);
+        if (syntax.File is not null) VisitFileReference(syntax.File);
+        if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
+    }
+
+    /// <summary>
+    /// Visits an ability outcome.
+    /// </summary>
+    /// <param name="syntax">The outcome.</param>
+    public virtual void VisitAbilityOutcome(AbilityOutcomeSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits an operation and its inputs and phases.
@@ -35,6 +81,7 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Implementation is not null) VisitImplementation(syntax.Implementation);
         if (syntax.File is not null) VisitFileReference(syntax.File);
         if (syntax.Code is not null) VisitCodeBlock(syntax.Code);
+        foreach (var invocation in syntax.Invocations) VisitInvokes(invocation);
     }
 
     /// <summary>

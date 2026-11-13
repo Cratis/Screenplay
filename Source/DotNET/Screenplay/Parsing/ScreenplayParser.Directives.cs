@@ -33,15 +33,22 @@ internal static partial class ScreenplayParser
         new("type", null, (context, line, state) => state.Types.Add(TypeParser.Parse(context, line))),
         new("purpose", (_, state) => state.HasPlacedBody, ParseRootPlacedLine),
         new("purpose", null, (context, line, state) => state.Purposes.Add(PurposeParser.Parse(context, line))),
+        new("provide", (_, state) => state.HasPlacedBody, ParseRootPlacedLine),
+        new("provide", null, (context, line, state) => ProvideParser.Parse(context, line, state.Provides)),
         new("policy", null, (context, line, state) => state.Policies.Add(PolicyParser.Parse(context, line))),
+        new("audience", null, (context, line, state) => state.Audiences.Add(AvailabilityParser.ParseAudienceDeclaration(context, line))),
+        new("availability", null, (context, line, state) => state.Availabilities.Add(AvailabilityParser.ParseAvailability(context, line))),
         new("persona", null, (context, line, state) => state.Personas.Add(ParsePersona(context, line))),
         new("user", null, (context, line, state) => state.Users.Add(ParseUser(context, line))),
+        new("storyline", null, (context, line, state) => state.Storylines.Add(StorylineParser.Parse(context, line))),
+        new("secret", null, (context, line, state) => { if (SystemConfigurationParser.ParseSecret(context, line) is { } secret) state.Secrets.Add(secret); }),
         new("sink", null, (context, line, state) => { if (SinkParser.ParseDeclaration(context, line) is { } sink) state.Sinks.Add(sink); }),
         new("sticky", null, ParseRootStickyNote),
         new("context", null, (context, line, state) => state.ApplicationContext = ApplicationContextParser.Parse(context, line, state.ApplicationContext, state.Placement)),
         new("identity", null, (context, line, state) => state.Identity = IdentityParser.Parse(context, line, state.Identity)),
         new("authentication", null, (context, line, state) => state.Authentication = AuthenticationParser.Parse(context, line, state.Authentication)),
         new("onboarding", null, (context, line, state) => state.Onboarding = OnboardingParser.Parse(context, line, state.Onboarding)),
+        new("agents", null, (context, line, state) => state.Agents = AgentsParser.Parse(context, line, state.Agents)),
         new("module", (_, state) => !state.Placement.IsDocument, (context, line, state) => ParseModuleInPlacedFile(context, line, state.Placement, state.ModuleBody)),
         new("module", null, (context, line, state) => state.Modules.Add(ParseModule(context, line))),
         new("seed", null, (context, line, state) => state.Seeds.Add(SeedParser.Parse(context, line))),
@@ -231,6 +238,8 @@ internal static partial class ScreenplayParser
 
         public OnboardingSyntax? Onboarding { get; set; }
 
+        public AgentsSyntax? Agents { get; set; }
+
         public ReactionProductionMode? ReactionProductionMode { get; set; }
 
         public bool SawReactionBatches { get; set; }
@@ -253,13 +262,26 @@ internal static partial class ScreenplayParser
 
         public List<PolicySyntax> Policies { get; } = [];
 
+        public List<AudienceSyntax> Audiences { get; } = [];
+
+        public List<AvailabilitySyntax> Availabilities { get; } = [];
+
         public List<PurposeSyntax> Purposes { get; } = [];
+
+        /// <summary>
+        /// Gets the application-level provided values.
+        /// </summary>
+        public List<ProvideSyntax> Provides { get; } = [];
 
         public List<PersonaSyntax> Personas { get; } = [];
 
         public List<UserSyntax> Users { get; } = [];
 
+        public List<StorylineSyntax> Storylines { get; } = [];
+
         public List<SinkSyntax> Sinks { get; } = [];
+
+        public List<SecretSyntax> Secrets { get; } = [];
 
         public List<StickyNoteSyntax> StickyNotes { get; } = [];
 
@@ -301,7 +323,7 @@ internal static partial class ScreenplayParser
         /// Gets a value indicating whether any construct the domain must precede was declared before it.
         /// </summary>
         public bool DeclaredBeforeDomain =>
-            Imports.Count > 0 || Concepts.Count > 0 || Types.Count > 0 || Policies.Count > 0 || Purposes.Count > 0 || Personas.Count > 0 || Users.Count > 0 || Sinks.Count > 0 || Modules.Count > 0 || Seeds.Count > 0 || Authentication is not null || Identity is not null || ApplicationContext is not null || Onboarding is not null || UiProfiles.Count > 0 || Themes.Count > 0 || DesignSystems.Count > 0 || Triggers.Count > 0 || Layouts.Count > 0 || Systems.Count > 0 || EventSources.Count > 0 || Examples.Count > 0;
+            Imports.Count > 0 || Concepts.Count > 0 || Types.Count > 0 || Policies.Count > 0 || Audiences.Count > 0 || Availabilities.Count > 0 || Purposes.Count > 0 || Provides.Count > 0 || Personas.Count > 0 || Users.Count > 0 || Storylines.Count > 0 || Sinks.Count > 0 || Modules.Count > 0 || Seeds.Count > 0 || Authentication is not null || Identity is not null || ApplicationContext is not null || Onboarding is not null || Agents is not null || UiProfiles.Count > 0 || Themes.Count > 0 || DesignSystems.Count > 0 || Triggers.Count > 0 || Layouts.Count > 0 || Systems.Count > 0 || EventSources.Count > 0 || Examples.Count > 0;
 
         /// <summary>
         /// Builds the <see cref="ApplicationSyntax"/>, placing the module or feature a placed document opened.
@@ -322,16 +344,22 @@ internal static partial class ScreenplayParser
             return new(Imports, Concepts, Policies, Modules, context.Start, Domain, Personas, Seeds, Authentication, Types, UiProfiles, Themes, Triggers, Layouts)
             {
                 Identity = Identity,
+                Audiences = Audiences,
+                Availabilities = Availabilities,
                 DesignSystems = DesignSystems,
                 Onboarding = Onboarding,
+                Agents = Agents,
                 Users = Users,
+                Storylines = Storylines,
                 Sinks = Sinks,
+                Secrets = Secrets,
                 ReactionProductionMode = ReactionProductionMode,
                 CommandReadMode = CommandReadMode,
                 TimeZone = TimeZone,
                 Context = ApplicationContext,
                 SourceOptions = context.SourceOptions,
                 Purposes = Purposes,
+                Provides = Provides,
                 StickyNotes = StickyNotes,
                 Examples = Examples,
                 Systems = Systems,

@@ -17,7 +17,7 @@ If you are building your own tooling, the compiler is also available as a
 
 ## Install the CLI
 
-For a local installation, you need the .NET 10 SDK and the global .NET tool
+For a local installation, you need the .NET 11 SDK and the global .NET tool
 directory on `PATH`. The CLI is a
 [.NET tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools)
 published to NuGet as `Cratis.Screenplay.Tool`. Install it globally:
@@ -444,6 +444,12 @@ Do not parse the file's JSON yourself.
 
 `screenplay environment [<file.play|folder>] [--format text|json]` lists the keys a model needs from the [environment](environments.md) it runs in — each authentication provider's `clientId` and `clientSecret`, the mail settings of onboarding — and marks the ones that must be secrets. The default path is the current directory and the default format is text, one key per line. Source errors exit `1` and list nothing; bad arguments, unavailable paths and empty model directories exit `2`. A model that needs nothing prints a single line saying so.
 
+## Restore extensions
+
+`screenplay restore [<folder>] [--locked] [--update] [--source <directory>] [--vendor]` pins the extensions a model's systems reference in [`screenplay.lock`](extension-contracts.md#the-lock) and restores their contracts into the cache. Without a flag it resolves the references the lock does not pin yet and restores everything the lock pins. `--update` re-resolves every reference to the newest release in its range. `--locked` is for CI: it never resolves a range and exits 1 on a reference the lock does not pin. `--source` names a directory of packages laid out `<full reference>/<version>/contract.play`, or set `SCREENPLAY_EXTENSION_SOURCE`; OCI and npm sources come from Stage and the Cratis CLI. `--vendor` also copies the restored contracts into the model's `extensions` folder so they can be committed. Exit codes: 0 restored, 1 a reference could not be resolved or restored, 2 could not run.
+
+Every other command that compiles a model is strict about extensions: a reference missing from the lock, or whose contract is not restored, is an error (`PLAY1107`, `PLAY1108`). `screenplay mcp` restores unresolved references on opening a model root and reports them as warnings until it has.
+
 ## Migrate files written for an earlier version
 
 `screenplay migrate <file.play|folder> --from <version> [--to <version>] [--dry-run] [--report <file>]` rewrites files written for an earlier Screenplay version - for example `--from 5` for the forms Screenplay 6 split into slots and outlets - and compiles the result. `--to` defaults to the version the compiler reads. It exits `0` when every file migrated, `2` when a file needs review and `1` when it could not run. See [Migrate a model to a new version](migration.md).
@@ -494,7 +500,7 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
 
-## Export the executable model
+## Export the executable model, its HTTP API, UI contract and agent allowlist
 
 Write the canonical executable semantic model (ESM) of a model, for a builder, a script or a CI step:
 
@@ -503,14 +509,43 @@ screenplay export path/to/screenplays --output model.esm.json
 screenplay export path/to/screenplays --scope Billing.Invoices.Send
 ```
 
-The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory, and `--format esm` is the only format. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
+The bytes are exactly what `SemanticModelSerializer.Serialize` writes for the same model, including `schemaVersion` and `revision`. Validate them, or generate types for them, with the [JSON Schema](executable-model-schema.md) published for their version. `PATH` defaults to the current directory and `--format` to `esm`. Without `--output` the JSON goes to standard output; with it the file gets the exact bytes, and an identical file is left untouched so incremental builds are not invalidated.
 
 `--scope <Module>[.<Feature>...][.<Slice>]` keeps one module, feature or slice and drops every other module, feature and slice. Application-wide declarations (concepts, types, policies, triggers, event sources, lifecycles and graphs) stay, so references from the selected slices still resolve. The excerpt's `revision` identifies the excerpt, not the whole model. From .NET, use `ExecutableSemanticModelScope.Select(model, scope)`.
 
+`--screens` admits the model's screens to the exported model as ESM v42: each slice holds its screens' data, actions, navigation and layout, keyed to query, command and screen identities (see [UI contract](ui-contract.md#screens-in-the-executable-model)). Without it, screens stay deferred and the export keeps its version and bytes. `--screens` works only with `--format esm`. A screen that places an [extension component](screens.md#extension-components) makes the exported model ESM v52, which also lists the extensions the screen needs; `--format ui` carries the same placements and the restored contract's `kind`, `platforms` and static placeholder when the extension is restored.
+
+```bash
+screenplay export path/to/screenplays --screens --output model.esm.json
+```
+
+The [capability manifest](agents.md#capability-manifest) exports only the explicit `agents` allowlist:
+
+```bash
+screenplay export path/to/screenplays --format capability-manifest --output capabilities.json
+```
+
+It requires a successful complete compilation and an `agents` block, not executable-model export.
+No block or any compilation error exits `1` without a manifest; an explicitly empty block emits an empty
+operations array. Descriptions over 1024 Unicode code points also refuse emission, naming the operation.
+There is no truncation. Descriptions are untrusted; ASCII escaping does not protect against prompt injection.
+`approvalRequired: false` is not authorization. `--scope` and `--screens` are rejected (exit `2`).
+Without `--output` stdout contains only the JSON. With it, failed exports delete an existing stale target and
+report the deletion on stderr; successful writes are atomic and leave byte-identical files untouched.
+
+Two more formats describe the same model for builders on any stack:
+
+```bash
+screenplay export path/to/screenplays --format openapi --output api.json
+screenplay export path/to/screenplays --format ui --output screens.json
+```
+
+`--format openapi` writes the [OpenAPI 3.1 description](api-description.md) of every command and query: route, method, request and response shapes, authorization and observable queries. It needs the executable model, like `esm`, and `--scope` narrows it the same way. `--format ui` writes the [UI contract](ui-contract.md) of every screen: data, actions, navigation, layout and the optional Scene layer. It needs only the sources; when the model has no executable model the contract carries no identities or routes, and standard error says so while the exit code stays `0`. With `--scope`, the UI contract keeps the screens of that module, feature or slice.
+
 | Exit code | Meaning |
 |---|---|
-| `0` | The model was written |
-| `1` | The model has no executable model; its errors are listed on standard error |
+| `0` | The model or capability manifest was written |
+| `1` | The model has no executable model, `--screens` was refused, or capability-manifest emission was refused; details are listed on standard error |
 | `2` | Invalid arguments or scope, or the model could not be read |
 
 ## Compare two model versions
@@ -527,6 +562,30 @@ The command runs `ModelComparison.Compare`, the comparison the library offers, a
 Declarations are matched by persisted identity when both folders hold `.screenplay/identities.json` for the same application, so a rename or a move reads as one. Otherwise they are matched by address, and a rename reads as a removal plus an addition; the report says which matching it used and lists what it could not compare.
 
 `--format json` writes one object: `before` and `after` (path, source revision, whether persisted identities were used, model revision) and `difference`, the `ModelDifference` with camelCase names and enumerations as strings; `difference.slices` holds the per-slice summary. The command exits `0` when it compared the versions and `2` when it could not run, including when the two folders hold identities for different applications.
+
+## Trace a value's lineage
+
+`screenplay lineage` prints where one value comes from and where it goes: the same hop tree the MCP `trace-lineage` tool pages, all at once. The address names a command, event or read-model property (the owner's address and the member name) or a screen field (the screen's or form's address and the property it binds).
+
+```bash
+screenplay lineage Lending.Catalog.AddBook.AddBook.title Samples/Library
+```
+
+```text
+Lineage of Lending.Catalog.AddBook.AddBook.title (Property), both
+command-property Lending.Catalog.AddBook.AddBook.title 'title BookTitle' (library.play:78:9)
+  -> production-mapping Lending.Catalog.AddBook.AddBook 'title = title' (library.play:90:11)
+    -> event-property Lending.Catalog.AddBook.BookAdded.title 'title BookTitle' (library.play:95:9)
+      -> projection-mapping Lending.Catalog.BookCatalog.BookCatalog 'title = title' (library.play:164:11)
+        -> read-model-property Lending.Catalog.BookCatalog.CatalogEntry.title 'title BookTitle' (library.play:150:9)
+          -> query Lending.Catalog.BookCatalog.AllBooks 'query AllBooks' (library.play:158:36)
+          -> query Lending.Catalog.BookCatalog.BookById 'query BookById' (library.play:154:25)
+          -> screen-display Lending.Catalog.BookCatalog.BookCatalog 'column title' (library.play:176:11)
+  <- screen-input Lending.AddBookInput 'field title' (library.play:57:5)
+9 hop(s), complete.
+```
+
+`->` is where the value goes and `<-` is where it comes from. A break (a missing mapping, an ambiguous name, code the trace cannot read) is shown in brackets with its reason. `--direction upstream|downstream|both` narrows the trace and `--format json` prints every hop with the fields described in [field lineage](mcp/reference.md#field-lineage). The command exits 0 for a complete trace, 1 when it has breaks and 2 when it cannot run, for example when the address names nothing.
 
 ## Rename a declaration and keep its identity
 

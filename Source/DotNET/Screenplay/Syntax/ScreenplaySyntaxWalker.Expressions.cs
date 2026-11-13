@@ -46,6 +46,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case RefusalExpressionSyntax refusal:
                 VisitRefusalExpression(refusal);
                 break;
+            case InvocationValueExpressionSyntax invocationValue:
+                VisitInvocationValueExpression(invocationValue);
+                break;
             case EnvironmentExpressionSyntax environment:
                 VisitEnvironmentExpression(environment);
                 break;
@@ -153,6 +156,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The refusal value.</param>
     public virtual void VisitRefusalExpression(RefusalExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits an ability invocation value expression.
+    /// </summary>
+    /// <param name="syntax">The invocation value.</param>
+    public virtual void VisitInvocationValueExpression(InvocationValueExpressionSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits an <see cref="EnvironmentExpressionSyntax"/> node.

@@ -16,10 +16,11 @@ namespace Cratis.Screenplay.Parsing;
 internal static partial class ScreenplayParser
 {
     // The words that open something belonging in a module or feature body, which a document's top level cannot hold.
-    static readonly HashSet<string> _scopeKeywords = new(StringComparer.Ordinal)
-    {
-        "slice", "feature", "description", "documentation", "authorize", "screen", "dialog", "form", "contribute", "on", "uses"
-    };
+    static readonly HashSet<string> _scopeKeywords =
+    [
+        with(StringComparer.Ordinal),
+        "slice", "feature", "description", "documentation", "authorize", "available", "screen", "dialog", "form", "contribute", "on", "uses"
+    ];
 
     /// <summary>
     /// Parses a document.
@@ -199,7 +200,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow";
+                : " - expected domain, import, concept, type, policy, audience, availability, persona, sticky note, authentication, onboarding, identity, context, module, seed, trigger, behavior, ui profile, design system, theme, sample data, layout, statemachine or workflow";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 
@@ -475,6 +476,7 @@ internal static partial class ScreenplayParser
         string? description = null;
         var policies = new List<string>();
         var goals = new List<string>();
+        var audiences = new List<string>();
         (int X, int Y)? position = null;
         (int Width, int Height)? size = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -493,6 +495,18 @@ internal static partial class ScreenplayParser
                     else
                     {
                         context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid goal '{child.Content}' - expected 'goal \"<text>\"'", child.Location);
+                    }
+
+                    break;
+                case "audience":
+                    if (PersonaAudienceRegex().Match(child.Content) is { Success: true } audience)
+                    {
+                        audiences.Add(audience.Groups[1].Value);
+                        directiveLocations[DirectiveLocationKeys.ForValue("audience", audiences, audiences.Count - 1)] = child.Location;
+                    }
+                    else
+                    {
+                        context.Error(DiagnosticCodes.InvalidAudienceDeclaration, $"Invalid audience reference '{child.Content}' - expected 'audience <Name>'", child.Location);
                     }
 
                     break;
@@ -524,7 +538,7 @@ internal static partial class ScreenplayParser
 
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description, goal, policy, position or size", child.Location);
+                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description, goal, policy, audience, position or size", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -534,6 +548,7 @@ internal static partial class ScreenplayParser
         {
             DirectiveLocations = directiveLocations,
             Goals = goals,
+            Audiences = audiences,
             X = position?.X,
             Y = position?.Y,
             Width = size?.Width,
@@ -644,6 +659,9 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex PersonaPolicyRegex();
+
+    [GeneratedRegex(@"^audience\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex PersonaAudienceRegex();
 
     [GeneratedRegex(@"^user\s+([A-Za-z_]\w*)(?:\s+""(" + StringLiteral.BodyPattern + @")"")?(?:\s+as\s+([A-Za-z_]\w*(?:\s*,\s*[A-Za-z_]\w*)*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex UserRegex();

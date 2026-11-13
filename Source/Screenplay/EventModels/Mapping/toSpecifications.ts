@@ -119,6 +119,10 @@ function specificationName(specification: SpecificationSyntax, onCards: readonly
     for (const model of specification.thenReadModels.filter(model => !onCards.includes(model))) {
         details.push(`then readmodel ${model.name}${model.exactly ? ' exactly' : ''} { ${mappingText(model.properties)} }`);
     }
+    for (const answer of specification.givenAbilityAnswers ?? []) {
+        const detail = answer.answer === 'returns' ? `returns { ${mappingText(answer.values)} }` : answer.answer === 'fails' ? `fails${answer.reason === null ? '' : ` "${answer.reason}"`}` : `answers ${answer.outcome ?? ''}`;
+        details.push(`given ${answer.ability} ${detail}`);
+    }
     if (specification.whenRedelivered != null) details.push(`when ${redeliveryTitle(specification.whenRedelivered)}`);
     if (specification.thenNoEvents) details.push('then no events');
     for (const invocation of specification.thenInvocations ?? []) {

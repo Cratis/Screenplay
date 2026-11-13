@@ -95,6 +95,7 @@ internal static partial class WorkflowParser
             "approval" => ParseApproval(context, line),
             "foreach" => ParseForEach(context, line),
             "join" => ParseJoin(context, line),
+            "compute" => ParseCompute(context, line),
             _ => Unexpected(context, line, workflow)
         };
         if (node is null)
@@ -103,21 +104,74 @@ internal static partial class WorkflowParser
             return null;
         }
 
-        return node with { Edges = ParseEdges(context, line) };
+        var mappings = new List<PropertyMappingSyntax>();
+        var returns = new List<PropertySyntax>();
+        FileReferenceSyntax? file = null;
+        CodeBlockSyntax? code = null;
+        var edges = ParseEdges(context, line, node.NodeKind, mappings, returns, ref file, ref code);
+        return node with { Edges = edges, Mappings = mappings, Returns = returns, File = file, Code = code };
+    }
+
+    static WorkflowNodeSyntax? ParseCompute(ParserContext context, SourceLine line)
+    {
+        var match = ComputeRegex().Match(line.Content);
+        if (match.Success) return new(WorkflowNodeKind.Compute, match.Groups[1].Value, [], line.Location);
+        context.Error(DiagnosticCodes.InvalidComputeDeclaration, $"Invalid compute '{line.Content}' - expected 'compute <Name>'.", line.Location);
+        return null;
     }
 
     static WorkflowNodeSyntax? Unexpected(ParserContext context, SourceLine line, string workflow)
     {
-        context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Unexpected '{line.Content}' in workflow '{workflow}' - expected for, description, specification or a node: trigger, action, decide, wait, approval, foreach or join.", line.Location);
+        context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Unexpected '{line.Content}' in workflow '{workflow}' - expected for, description, specification or a node: trigger, action, compute, decide, wait, approval, foreach or join.", line.Location);
         return null;
     }
 
-    static List<WorkflowEdgeSyntax> ParseEdges(ParserContext context, SourceLine header)
+    static List<WorkflowEdgeSyntax> ParseEdges(
+        ParserContext context,
+        SourceLine header,
+        WorkflowNodeKind kind,
+        List<PropertyMappingSyntax> mappings,
+        List<PropertySyntax> returns,
+        ref FileReferenceSyntax? file,
+        ref CodeBlockSyntax? code)
     {
         var edges = new List<WorkflowEdgeSyntax>();
+        var returnsSeen = false;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (kind == WorkflowNodeKind.Compute)
+            {
+                if (line.Content == "returns")
+                {
+                    if (returnsSeen) context.Error(DiagnosticCodes.InvalidComputeDeclaration, $"Compute '{header.Content}' repeats 'returns'.", line.Location);
+                    returnsSeen = true;
+                    OperationParser.ParseAbilityReturns(context, line, header.Content, returns);
+                    continue;
+                }
+
+                if (FileReferenceParser.IsDirective(line) || line.Content.StartsWith("```", StringComparison.Ordinal))
+                {
+                    var parsedFile = FileReferenceParser.IsDirective(line) ? FileReferenceParser.Parse(context, line) : null;
+                    var parsedCode = parsedFile is null ? CodeBlockParser.Parse(context, line) : null;
+                    if (file is not null || code is not null)
+                    {
+                        context.Error(DiagnosticCodes.ConflictingImplementationSources, "A compute node has at most one file or inline payload.", line.Location);
+                    }
+                    else
+                    {
+                        file = parsedFile;
+                        code = parsedCode;
+                    }
+
+                    continue;
+                }
+            }
+            else if (kind == WorkflowNodeKind.Action && !line.Content.Contains("->", StringComparison.Ordinal) && MappingLineRegex().Match(line.Content) is { Success: true } mapping)
+            {
+                mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(mapping.Groups[1].Value), mapping.Groups[2], line));
+                continue;
+            }
             var shorthand = ShorthandEdgeRegex().Match(line.Content);
             var edge = EdgeRegex().Match(line.Content);
             if (shorthand.Success)
@@ -176,16 +230,19 @@ internal static partial class WorkflowParser
         var match = ActionRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid action '{line.Content}' - expected 'action <Name> sends <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.", line.Location);
+            context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid action '{line.Content}' - expected 'action <Name> invokes <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.", line.Location);
             return null;
         }
 
+        if (match.Groups[2].Value == "sends") context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "'action ... sends' is deprecated - use 'action <Name> invokes <Command>'.", line.Location);
         int? attempts = null;
         WorkflowDurationSyntax? timeout = null;
         WorkflowDurationSyntax? retry = null;
         var hasTimeout = false;
         var hasRetry = false;
-        foreach (Match option in ActionOptionRegex().Matches(match.Groups[3].Value))
+        WorkflowDurationSyntax? expires = null;
+        var hasExpiry = false;
+        foreach (Match option in ActionOptionRegex().Matches(match.Groups[4].Value))
         {
             if (option.Groups[1].Success)
             {
@@ -204,6 +261,18 @@ internal static partial class WorkflowParser
                     hasTimeout = true;
                 }
             }
+            else if (option.Groups[6].Success)
+            {
+                if (hasExpiry || Duration(context, option.Groups[6].Value, option.Groups[7].Value, line) is not { } parsedExpiry)
+                {
+                    context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid or repeated expiry in '{line.Content}'.", line.Location);
+                }
+                else
+                {
+                    expires = parsedExpiry;
+                    hasExpiry = true;
+                }
+            }
             else if (hasRetry || Duration(context, option.Groups[4].Value, option.Groups[5].Value, line) is not { } parsedRetry)
             {
                 context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid or repeated retry in '{line.Content}'.", line.Location);
@@ -215,7 +284,7 @@ internal static partial class WorkflowParser
             }
         }
 
-        return new(WorkflowNodeKind.Action, match.Groups[1].Value, [], line.Location) { Command = match.Groups[2].Value, Attempts = attempts, Timeout = timeout, RetryAfter = retry };
+        return new(WorkflowNodeKind.Action, match.Groups[1].Value, [], line.Location) { Command = match.Groups[3].Value, Attempts = attempts, Timeout = timeout, RetryAfter = retry, ExpiresAfter = expires };
     }
 
     static WorkflowNodeSyntax? ParseDecide(ParserContext context, SourceLine line)
@@ -258,13 +327,13 @@ internal static partial class WorkflowParser
         var match = ApprovalRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid approval '{line.Content}' - expected 'approval <Name> by <Persona or Policy> [expires after <n> <unit>]'.", line.Location);
+            context.Error(DiagnosticCodes.InvalidWorkflowDeclaration, $"Invalid approval '{line.Content}' - expected 'approval <Name> by <Persona or Policy> [via <System>.<Ability>] [expires after <n> <unit>]'.", line.Location);
             return null;
         }
 
         WorkflowDurationSyntax? expires = null;
-        if (match.Groups[3].Success && (expires = Duration(context, match.Groups[3].Value, match.Groups[4].Value, line)) is null) return null;
-        return new(WorkflowNodeKind.Approval, match.Groups[1].Value, [], line.Location) { By = match.Groups[2].Value, ExpiresAfter = expires };
+        if (match.Groups[4].Success && (expires = Duration(context, match.Groups[4].Value, match.Groups[5].Value, line)) is null) return null;
+        return new(WorkflowNodeKind.Approval, match.Groups[1].Value, [], line.Location) { By = match.Groups[2].Value, Via = match.Groups[3].Success ? match.Groups[3].Value : null, ExpiresAfter = expires };
     }
 
     static WorkflowNodeSyntax? ParseForEach(ParserContext context, SourceLine line)
@@ -339,10 +408,16 @@ internal static partial class WorkflowParser
     [GeneratedRegex(@"^when\s+([A-Za-z_]\w*)\s+enters\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex EntersRegex();
 
-    [GeneratedRegex(@"^action\s+([A-Za-z_]\w*)\s+sends\s+([A-Za-z_]\w*)((?:\s+(?:attempts\s+\d+|timeout\s+\d+\s+\w+|retry\s+after\s+\d+\s+\w+))*)$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^compute\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ComputeRegex();
+
+    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
+    private static partial Regex MappingLineRegex();
+
+    [GeneratedRegex(@"^action\s+([A-Za-z_]\w*)\s+(sends|invokes)\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)?)((?:\s+(?:attempts\s+\d+|timeout\s+\d+\s+\w+|retry\s+after\s+\d+\s+\w+|expires\s+after\s+\d+\s+\w+))*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ActionRegex();
 
-    [GeneratedRegex(@"attempts\s+(\d+)|timeout\s+(\d+)\s+(\w+)|retry\s+after\s+(\d+)\s+(\w+)", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"attempts\s+(\d+)|timeout\s+(\d+)\s+(\w+)|retry\s+after\s+(\d+)\s+(\w+)|expires\s+after\s+(\d+)\s+(\w+)", RegexOptions.NonBacktracking)]
     private static partial Regex ActionOptionRegex();
 
     [GeneratedRegex(@"^decide\s+([A-Za-z_]\w*)\s+when\s+(.+)$", RegexOptions.NonBacktracking)]
@@ -351,7 +426,7 @@ internal static partial class WorkflowParser
     [GeneratedRegex(@"^wait\s+([A-Za-z_]\w*)\s+for\s+(?:(\d+)\s+(seconds?|minutes?|hours?|days?)|([A-Za-z_][\w.]*)(?:\s+expires\s+after\s+(\d+)\s+(seconds?|minutes?|hours?|days?))?)$", RegexOptions.NonBacktracking)]
     private static partial Regex WaitRegex();
 
-    [GeneratedRegex(@"^approval\s+([A-Za-z_]\w*)\s+by\s+([A-Za-z_]\w*)(?:\s+expires\s+after\s+(\d+)\s+(seconds?|minutes?|hours?|days?))?$", RegexOptions.NonBacktracking)]
+    [GeneratedRegex(@"^approval\s+([A-Za-z_]\w*)\s+by\s+([A-Za-z_]\w*)(?:\s+via\s+([A-Za-z_]\w*\.[A-Za-z_]\w*))?(?:\s+expires\s+after\s+(\d+)\s+(seconds?|minutes?|hours?|days?))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ApprovalRegex();
 
     [GeneratedRegex(@"^foreach\s+([A-Za-z_]\w*)\s+over\s+([A-Za-z_][\w.]*)(?:\s+parallel\s+(\d+))?$", RegexOptions.NonBacktracking)]

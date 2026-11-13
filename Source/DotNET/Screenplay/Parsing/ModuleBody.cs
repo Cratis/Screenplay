@@ -17,7 +17,7 @@ internal sealed class ModuleBody(string name)
     /// <summary>
     /// What a module body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, outlet, feature, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, available, provide, import, screen template, dialog template, form, contribute, outlet, feature, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<ScreenTemplateSyntax> _screenTemplates = [];
     readonly List<DialogTemplateSyntax> _dialogTemplates = [];
@@ -34,6 +34,8 @@ internal sealed class ModuleBody(string name)
     readonly List<OutletSyntax> _outlets = [];
     readonly List<RetiredForm> _retiredForms = [];
     readonly List<PurposeReferenceSyntax> _purposes = [];
+    readonly List<ProvideSyntax> _provides = [];
+    readonly List<AvailableSyntax> _available = [];
     int _restatedHeaders;
     string? _description;
     string? _documentation;
@@ -70,6 +72,12 @@ internal sealed class ModuleBody(string name)
                 return true;
             case "purpose":
                 PurposeParser.ParseReference(context, line, _purposes);
+                return true;
+            case "available":
+                AvailabilityParser.AddGate(context, line, _available);
+                return true;
+            case "provide":
+                ProvideParser.Parse(context, line, _provides);
                 return true;
             case "authorize":
                 var diagnosticCount = context.Diagnostics.Count;
@@ -157,6 +165,8 @@ internal sealed class ModuleBody(string name)
             IsPlacement = isPlacement,
             Templates = _templates,
             Purposes = _purposes,
+            Provides = _provides,
+            Available = _available,
             Outlets = _outlets,
             RetiredForms = _retiredForms.Count == 0 ? [] : [.. _retiredForms]
         };

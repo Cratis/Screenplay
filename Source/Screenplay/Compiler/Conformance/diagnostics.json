@@ -40,14 +40,14 @@
         {"name": "A sink nothing names warns", "validate": true, "source": ["sink Reporting for readmodels", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String"], "diagnostics": ["PLAY0938@1"]},
         {"name": "A property named sink of a primitive type is not a directive", "validate": true, "source": ["module M", "  feature F", "    slice StateView S", "      readmodel Row", "        sink String"], "diagnostics": []},
         {"name": "An escaped property named sink is not a directive", "validate": true, "source": ["concept Money : Decimal", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        @sink Money"], "diagnostics": []},
-        {"name": "Nested AutoMap inherits an enabled projection setting", "validate": true, "source": ["concept ApiKey : String secret", "type Entry", "  id String", "  token ApiKey", "type Group", "  id String", "  entries Entry", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        groups Group[]", "      event Recorded", "        id String", "        token ApiKey", "      event GroupRecorded", "        id String", "      projection Keys => Row", "        automap", "        children groups identified by id", "          automap", "          from GroupRecorded", "          nested entries", "            from Recorded"], "diagnostics": ["PLAY0940@25"], "messages": ["Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.groups.entries.token' - the value becomes part of the read model and its query results"]},
+        {"name": "Nested AutoMap inherits an enabled projection setting", "validate": true, "source": ["concept ApiKey : String secret", "type Entry", "  id String", "  token ApiKey", "type Group", "  id String", "  entries Entry", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        groups Group[]", "      event Recorded", "        id String", "        token ApiKey", "      event GroupRecorded", "        id String", "      projection Keys => Row", "        automap", "        children groups identified by id", "          automap", "          from GroupRecorded", "          nested entries", "            from Recorded"], "diagnostics": ["PLAY1142@25"], "messages": ["Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.groups.entries.token' - the value becomes part of the read model and its query results"]},
         {"name": "Nested AutoMap does not inherit an enabled immediate parent when the projection disables it", "validate": true, "source": ["concept ApiKey : String secret", "type Entry", "  id String", "  token ApiKey", "type Group", "  id String", "  entries Entry", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        groups Group[]", "      event Recorded", "        id String", "        token ApiKey", "      event GroupRecorded", "        id String", "      projection Keys => Row", "        no automap", "        children groups identified by id", "          automap", "          from GroupRecorded", "          nested entries", "            from Recorded"], "diagnostics": []},
         {"name": "An explicit nested no automap overrides the enabled projection", "validate": true, "source": ["concept ApiKey : String secret", "type Entry", "  id String", "  token ApiKey", "type Group", "  id String", "  entries Entry", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        groups Group[]", "      event Recorded", "        id String", "        token ApiKey", "      event GroupRecorded", "        id String", "      projection Keys => Row", "        automap", "        children groups identified by id", "          automap", "          from GroupRecorded", "          nested entries", "            no automap", "            from Recorded", "              id = $eventSourceId", "              token = \"redacted\""], "diagnostics": []},
-        {"name": "An explicit nested automap overrides the disabled projection", "validate": true, "source": ["concept ApiKey : String secret", "type Entry", "  id String", "  token ApiKey", "type Group", "  id String", "  entries Entry", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        groups Group[]", "      event Recorded", "        id String", "        token ApiKey", "      event GroupRecorded", "        id String", "      projection Keys => Row", "        no automap", "        children groups identified by id", "          no automap", "          from GroupRecorded", "          nested entries", "            automap", "            from Recorded"], "diagnostics": ["PLAY0940@26"]},
-        {"name": "A projection mapping that copies a secret concept warns", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token ApiKey", "      event Recorded", "        token ApiKey", "      projection Keys => Row", "        from Recorded", "          token = token"], "diagnostics": ["PLAY0940@12"], "messages": ["Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.token' - the value becomes part of the read model and its query results"], "severities": ["warning"]},
-        {"name": "A projection mapping from a secret event property into plain text warns", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token String", "      event Recorded", "        token ApiKey", "      projection Keys => Row", "        from Recorded", "          token = token"], "diagnostics": ["PLAY0940@12"]},
-        {"name": "AutoMap that copies a personal secret concept warns at the from block", "validate": true, "source": ["concept BankAccount : String pii secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        account BankAccount", "      event Recorded", "        account BankAccount", "      projection Accounts => Row", "        from Recorded"], "diagnostics": ["PLAY0940@11"], "messages": ["Projection 'Accounts' copies secret concept 'BankAccount' into read model property 'Row.account' - the value becomes part of the read model and its query results"]},
-        {"name": "A reducer that builds a secret read-model property warns", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token ApiKey", "      event Recorded", "        token ApiKey", "      reducer Fold => Row", "        on Recorded"], "diagnostics": ["PLAY0940@10"], "messages": ["Reducer 'Fold' copies secret concept 'ApiKey' into read model property 'Row.token' - the value becomes part of the read model and its query results"]},
+        {"name": "An explicit nested automap overrides the disabled projection", "validate": true, "source": ["concept ApiKey : String secret", "type Entry", "  id String", "  token ApiKey", "type Group", "  id String", "  entries Entry", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        groups Group[]", "      event Recorded", "        id String", "        token ApiKey", "      event GroupRecorded", "        id String", "      projection Keys => Row", "        no automap", "        children groups identified by id", "          no automap", "          from GroupRecorded", "          nested entries", "            automap", "            from Recorded"], "diagnostics": ["PLAY1142@26"]},
+        {"name": "A projection mapping that copies a secret concept warns", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token ApiKey", "      event Recorded", "        token ApiKey", "      projection Keys => Row", "        from Recorded", "          token = token"], "diagnostics": ["PLAY1142@12"], "messages": ["Projection 'Keys' copies secret concept 'ApiKey' into read model property 'Row.token' - the value becomes part of the read model and its query results"], "severities": ["warning"]},
+        {"name": "A projection mapping from a secret event property into plain text warns", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token String", "      event Recorded", "        token ApiKey", "      projection Keys => Row", "        from Recorded", "          token = token"], "diagnostics": ["PLAY1142@12"]},
+        {"name": "AutoMap that copies a personal secret concept warns at the from block", "validate": true, "source": ["concept BankAccount : String pii secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        account BankAccount", "      event Recorded", "        account BankAccount", "      projection Accounts => Row", "        from Recorded"], "diagnostics": ["PLAY1142@11"], "messages": ["Projection 'Accounts' copies secret concept 'BankAccount' into read model property 'Row.account' - the value becomes part of the read model and its query results"]},
+        {"name": "A reducer that builds a secret read-model property warns", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token ApiKey", "      event Recorded", "        token ApiKey", "      reducer Fold => Row", "        on Recorded"], "diagnostics": ["PLAY1142@10"], "messages": ["Reducer 'Fold' copies secret concept 'ApiKey' into read model property 'Row.token' - the value becomes part of the read model and its query results"]},
         {"name": "A projection copying a personal value that is not secret does not warn", "validate": true, "source": ["concept Email : String pii", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        email Email", "      event Recorded", "        email Email", "      projection Emails => Row", "        from Recorded", "          email = email"], "diagnostics": []},
         {"name": "A projection that maps metadata into a secret property does not warn", "validate": true, "source": ["concept ApiKey : String secret", "module M", "  feature F", "    slice StateView S", "      readmodel Row", "        id String", "        token ApiKey", "      event Recorded", "        other ApiKey", "      projection Keys => Row", "        no automap", "        from Recorded", "          token = $eventSourceId"], "diagnostics": []},
         { "name": "Capture input rejects a wrong qualifier", "validate": true, "source": ["module Products", "  feature Catalog", "    slice Translate Facts", "      direction inbound", "      event ProductPublished from \"catalog\"", "        id String", "      event ProductReceived", "        id String", "      capture Feed", "        source events", "          from Wrong.ProductPublished", "        key id", "        append ProductReceived", "          id = $.id"], "diagnostics": ["PLAY0166@11"], "severities": ["error"] },
@@ -2055,10 +2055,142 @@
             "diagnostics": []
         },
         {
-            "name": "Systems reject abilities",
+            "name": "Systems accept abilities",
             "validate": true,
             "source": ["system Mailer", "  ability Send"],
+            "diagnostics": []
+        },
+        {
+            "name": "Abilities need a name",
+            "validate": true,
+            "source": ["system Mailer", "  ability 1Send"],
             "diagnostics": ["PLAY0495@2"]
+        },
+        {
+            "name": "Ability names are unique ignoring case",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send", "  ability send"],
+            "diagnostics": ["PLAY0983@3"]
+        },
+        {
+            "name": "Abilities take a known effect class",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send often"],
+            "diagnostics": ["PLAY0984@2"]
+        },
+        {
+            "name": "Outcomes are not named like outlets",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send", "    outcome Refused"],
+            "diagnostics": ["PLAY0985@3"]
+        },
+        {
+            "name": "Outcomes carry no payload",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send", "    outcome Busy", "      reason String"],
+            "diagnostics": ["PLAY0495@4"]
+        },
+        {
+            "name": "Returns declare a field",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send", "    returns"],
+            "diagnostics": ["PLAY0495@3"]
+        },
+        {
+            "name": "Systems accept only a description and abilities",
+            "validate": true,
+            "source": ["system S", "  bogus"],
+            "diagnostics": ["PLAY0495@2"]
+        },
+        {
+            "name": "Abilities answer later at most once",
+            "validate": true,
+            "source": ["system S", "  ability A", "    answers later", "    answers later"],
+            "diagnostics": ["PLAY0495@4"]
+        },
+        {
+            "name": "Answers later has no children",
+            "validate": true,
+            "source": ["system S", "  ability A", "    answers later", "      x String"],
+            "diagnostics": ["PLAY0495@4"]
+        },
+        {
+            "name": "Abilities return at most once",
+            "validate": true,
+            "source": ["system S", "  ability A", "    returns", "      x String", "    returns", "      y String"],
+            "diagnostics": ["PLAY0495@5"]
+        },
+        {
+            "name": "Returns accept only fields",
+            "validate": true,
+            "source": ["system S", "  ability A", "    returns", "      ???"],
+            "diagnostics": ["PLAY0495@4", "PLAY0495@3"]
+        },
+        {
+            "name": "Returned fields are unique",
+            "validate": true,
+            "source": ["system S", "  ability A", "    returns", "      x String", "      x String"],
+            "diagnostics": ["PLAY0168@5"]
+        },
+        {
+            "name": "Ability inputs are unique",
+            "validate": true,
+            "source": ["system S", "  ability A", "    x String", "    x String"],
+            "diagnostics": ["PLAY0168@4"]
+        },
+        {
+            "name": "Ability inputs have no children",
+            "validate": true,
+            "source": ["system S", "  ability A", "    x String", "      y String"],
+            "diagnostics": ["PLAY0495@4"]
+        },
+        {
+            "name": "Abilities accept only declared lines",
+            "validate": true,
+            "source": ["system S", "  ability A", "    ???"],
+            "diagnostics": ["PLAY0495@3"]
+        },
+        {
+            "name": "Outcomes are named",
+            "validate": true,
+            "source": ["system S", "  ability A", "    outcome 1bad"],
+            "diagnostics": ["PLAY0495@3"]
+        },
+        {
+            "name": "Outcome names are unique ignoring case",
+            "validate": true,
+            "source": ["system S", "  ability A", "    outcome Busy", "    outcome busy"],
+            "diagnostics": ["PLAY0168@4"]
+        },
+        {
+            "name": "Abilities do not take the subject modifier",
+            "validate": true,
+            "source": ["system S", "  ability A", "    x String subject"],
+            "diagnostics": ["PLAY0593@3"]
+        },
+        {
+            "name": "Abilities own one implementation source",
+            "validate": true,
+            "source": ["system S", "  ability A", "    file A.cs", "    implementation", "      hint \"x\""],
+            "diagnostics": ["PLAY0494@4"]
+        },
+        {
+            "name": "Abilities do not combine a file and a fence",
+            "validate": true,
+            "source": ["system S", "  ability A", "    file A.cs", "    ```csharp", "    return 1;", "    ```"],
+            "diagnostics": ["PLAY0494@4"]
+        },
+        {
+            "name": "Abilities type their inputs and returned values",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send", "    parcel ParcelId", "    returns", "      tracking TrackingNumber"],
+            "diagnostics": ["PLAY0986@3", "PLAY0986@5"]
+        },
+        {
+            "name": "Ability inputs are not identifiers",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send", "    parcel Uuid identifier"],
+            "diagnostics": ["PLAY0495@3"]
         },
         {
             "name": "Operation phases reject malformed children locally",
@@ -4484,6 +4616,37 @@
             ]
         },
         {
+            "name": "invalid storyline declaration",
+            "source": [
+                "storyline 9Bad"
+            ],
+            "diagnostics": [
+                "PLAY0940@1"
+            ]
+        },
+        {
+            "name": "invalid storyline step",
+            "source": [
+                "storyline Journey",
+                "  aggregate Returns"
+            ],
+            "diagnostics": [
+                "PLAY0941@2"
+            ]
+        },
+        {
+            "name": "storyline step with a nested line",
+            "source": [
+                "module Returns",
+                "storyline Journey",
+                "  module Returns",
+                "    feature Requests"
+            ],
+            "diagnostics": [
+                "PLAY0941@4"
+            ]
+        },
+        {
             "name": "invalid user declaration",
             "source": [
                 "persona Clerk",
@@ -5217,6 +5380,55 @@
         {"name": "A folder checks the themes of its design system", "source": [], "files": {"design.play": ["design system D", "  modes light, dark", "  default theme T", "  tokens", "    color", "      text", "      surface", "    space", "      md", "    radius", "      control", "  components", "    Button", "      parts text, background, radius", "      variant primary", "        text = color.text", "        background = color.surface", "        radius = radius.control"], "theme.play": ["theme T", "  implements D", "  light", "    color.text = \"#000000\""]}, "roots": ["design.play", "theme.play"], "diagnostics": ["PLAY0921@1", "PLAY0921@1", "PLAY0921@1"]},
         {"name": "Design system component parts line is invalid", "source": ["design system D", "  components", "    Button", "      parts"], "diagnostics": ["PLAY0916@4"]},
         {"name": "Theme implements line is invalid", "source": ["theme T", "  implements"], "diagnostics": ["PLAY0930@2"]},
-        {"name": "A ui profile without a theme is held to nothing", "validate": true, "source": ["design system D", "  default theme T", "theme T", "  implements D", "ui profile Bare", "  target platform web", "  target size regular"], "diagnostics": []}
+        {"name": "A ui profile without a theme is held to nothing", "validate": true, "source": ["design system D", "  default theme T", "theme T", "  implements D", "ui profile Bare", "  target platform web", "  target size regular"], "diagnostics": []},
+        {"name": "A screen carries a sketch, mockups and an image", "source": ["module M", "  feature F", "    slice StateView S", "      screen Review", "        sketch Screens/review.sketch.json", "        mockup Screens/review.html", "        image Screens/review.png"], "diagnostics": []},
+        {"name": "A screen visual without a path", "source": ["module M", "  feature F", "    slice StateView S", "      screen Review", "        image"], "diagnostics": ["PLAY0950@5"]},
+        {"name": "A screen image that is not an image file", "source": ["module M", "  feature F", "    slice StateView S", "      screen Review", "        image Screens/review.pdf"], "diagnostics": ["PLAY0951@5"]},
+        {"name": "A screen mockup that is not an HTML page", "source": ["module M", "  feature F", "    slice StateView S", "      screen Review", "        mockup Screens/review.png"], "diagnostics": ["PLAY0951@5"]},
+        {"name": "A slice shows an event and a read model declared elsewhere", "validate": true, "source": ["module M", "  feature F", "    slice StateChange Add", "      event Added", "        title String", "      readmodel Row", "        id String", "    slice StateView S", "      shows event Added", "      shows readmodel Row"], "diagnostics": []},
+        {"name": "A malformed slice placement", "source": ["module M", "  feature F", "    slice StateChange Add", "      event Added", "        title String", "    slice StateView S", "      shows command Add"], "diagnostics": ["PLAY0953@7"]},
+        {"name": "A slice shows an element nobody declares", "validate": true, "source": ["module M", "  feature F", "    slice StateChange Add", "      event Added", "        title String", "    slice StateView S", "      shows event Removed"], "diagnostics": ["PLAY0954@7"]},
+        {"name": "A slice shows an element twice", "validate": true, "source": ["module M", "  feature F", "    slice StateChange Add", "      event Added", "        title String", "    slice StateView S", "      shows event Added", "      shows event Added"], "diagnostics": ["PLAY0955@8"]},
+        {"name": "A remove line names a target without a dynamic key", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        from A", "          remove slots"], "diagnostics": ["PLAY0956@6"]},
+        {"name": "A remove line names a dynamic key", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        from A", "          remove slots.$eventContent.slot"], "diagnostics": []},
+        {"name": "A set once mapping", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        from A", "          set once createdBy = $causedBy.subject", "          set once createdAt to $eventContext.occurred"], "diagnostics": []},
+        {"name": "A children block orders its children", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        children lines identified by lineId", "          sort by addedAt descending", "          from A"], "diagnostics": []},
+        {"name": "A children block declares two orderings", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        children lines identified by lineId", "          insert first", "          sort by addedAt", "          from A"], "diagnostics": ["PLAY0959@7"]},
+        {"name": "A malformed children ordering", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        children lines identified by lineId", "          sort by addedAt sideways", "          from A"], "diagnostics": ["PLAY0958@6"]},
+        {"name": "A children ordering outside a children block", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        insert first", "        from A"], "diagnostics": ["PLAY0958@5"]},
+        {"name": "A children ordering inside a nested block", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        nested details", "          insert first", "          from A", "            name = name"], "diagnostics": ["PLAY0958@6"]},
+        {"name": "Mappings name properties insert, sort and once", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        children entries identified by entryId", "          from A", "            insert = title", "            sort = rank", "            once = title", "            set @once = title", "            set insert to title"], "diagnostics": []},
+        {"name": "A malformed dynamic key", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        from A", "          count slots.$eventContent", "          count byUser.$causedBy.email", "          count byUser.$causedBy.userName", "          slots.$eventContent.slot.name = series"], "diagnostics": ["PLAY0957@6", "PLAY0957@7"], "messages": ["'$eventContent' in 'slots.$eventContent' names no event property - write '<property>.$eventContent.<event property>'", "'$causedBy' in 'byUser.$causedBy.email' must name one of subject, name, userName - write '<property>.$causedBy.subject'"]},
+        {"name": "A clear line names a dictionary entry", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        from A", "          clear slots.$eventContent.slot", "          clear slots"], "diagnostics": ["PLAY0963@6"], "messages": ["'clear slots.$eventContent.slot' would keep the dictionary entry with no value - write 'remove slots.$eventContent.slot' to delete the entry"]},
+        {"name": "A dictionary entry line stands directly in the projection body", "source": ["module A", "  feature B", "    slice StateView C", "      projection P => R", "        remove slots.$eventContent.slot", "        from A"], "diagnostics": ["PLAY0068@5"], "messages": ["Invalid remove declaration 'remove slots.$eventContent.slot' - expected 'remove with <EventType>' or 'remove via join on <EventType>'; to delete a dictionary entry, write 'remove <target>' as a mapping line inside a from, join or every block"]},
+        {"name": "A dictionary entry writes into a declared property and reads a key the event does not have", "validate": true, "source": ["module A", "  feature B", "    slice StateView C", "      event SlotAssigned", "        slot String", "        series String", "      readmodel R", "        id String", "        slots String optional", "      projection P => R", "        from SlotAssigned", "          slots.$eventContent.missing = series", "          others.$eventContent.slot = series"], "diagnostics": ["PLAY0962@12", "PLAY0514@13", "PLAY0961@12"]},
+        {"name": "A provide that is not well formed", "source": ["module M", "  provide Region String from host"], "diagnostics": ["PLAY1119@2"]},
+        {"name": "A provide with a source that is not a value", "source": ["module M", "  provide region String from nonsense words"], "diagnostics": ["PLAY1120@2"]},
+        {"name": "A provide without a source", "source": ["module M", "  provide region String"], "diagnostics": ["PLAY1121@2"]},
+        {"name": "A provide with a body beneath a stated source", "source": ["module M", "  provide region String from host", "    file Region.cs"], "diagnostics": ["PLAY1122@3"]},
+        {"name": "A value provided twice at one level", "source": ["module M", "  provide region String from host", "  provide region String from host"], "diagnostics": ["PLAY1123@3"]},
+        {"name": "Provides at every level", "validate": true, "source": ["provide region String from \"Nordics\"", "module M", "  provide vessel Vessel optional from query VesselByKey by \"x\"", "  feature F", "    provide region String from host", "    slice StateView S", "      provide limit Int", "        ```csharp", "        return 10;", "        ```", "      query VesselByKey => Vessel optional", "        by vesselId Uuid", "      readmodel Vessel", "        vesselId Uuid"], "diagnostics": []},
+        {"name": "A provide that redeclares a built-in value", "validate": true, "source": ["module M", "  provide tenant String from host"], "diagnostics": ["PLAY1124@2"]},
+        {"name": "A provide that overrides with another type", "validate": true, "source": ["provide region String from host", "module M", "  provide region Int from host"], "diagnostics": ["PLAY1125@3"]},
+        {"name": "A provide from a query that does not exist", "validate": true, "source": ["module M", "  provide vessel String from query Missing by \"x\""], "diagnostics": ["PLAY1126@2"]},
+        {"name": "Provided values that read each other", "validate": true, "source": ["module M", "  provide a String from $context.b", "  provide b String from $context.a"], "diagnostics": ["PLAY1129@2", "PLAY1129@3"]},
+        {"name": "A context root that a provide names", "validate": true, "source": ["module M", "  provide region String from host", "  provide copy String from $context.region"], "diagnostics": []},
+        {"name": "A context root that no provide names", "validate": true, "source": ["module M", "  provide copy String from $context.region"], "diagnostics": ["PLAY0153@2"]},
+        {"name": "An audience without a name", "validate": true, "source": ["audience"], "diagnostics": ["PLAY1130@1"]},
+        {"name": "An availability without a name", "validate": true, "source": ["availability"], "diagnostics": ["PLAY1131@1"]},
+        {"name": "A gate without a requirement", "validate": true, "source": ["module M", "  available for"], "diagnostics": ["PLAY1132@2"]},
+        {"name": "An audience declared twice", "validate": true, "source": ["audience A", "audience A"], "diagnostics": ["PLAY1133@2"]},
+        {"name": "An availability declared twice", "validate": true, "source": ["audience A", "availability V", "  for A", "availability V"], "diagnostics": ["PLAY1134@4"]},
+        {"name": "A gate naming an audience nothing declares", "validate": true, "source": ["module M", "  available for Ghost"], "diagnostics": ["PLAY1135@2"]},
+        {"name": "A gate naming an availability nothing declares", "validate": true, "source": ["module M", "  available with Ghost"], "diagnostics": ["PLAY1136@2"]},
+        {"name": "Availabilities that build on each other", "validate": true, "source": ["availability A", "  with B", "availability B", "  with A"], "diagnostics": ["PLAY1137@1"]},
+        {"name": "A gate reading a value nothing provides", "validate": true, "source": ["module M", "  available when $context.vessel.hasReported == true"], "diagnostics": ["PLAY1138@2"]},
+        {"name": "A gate reading a provided value", "validate": true, "source": ["module M", "  provide vessel String from host", "  available when $context.vessel == \"x\""], "diagnostics": []},
+        {"name": "An availability reading a value provided elsewhere", "validate": true, "source": ["provide vessel String from host", "availability V", "  when $context.vessel == \"x\""], "diagnostics": []},
+        {"name": "Two audiences side by side", "validate": true, "source": ["audience A", "audience B", "module M", "  available for A B"], "diagnostics": ["PLAY1140@4"]},
+        {"name": "An unclosed group in a gate", "validate": true, "source": ["audience A", "module M", "  available for (A"], "diagnostics": ["PLAY1141@3"]},
+        {"name": "A persona in an audience nothing declares", "validate": true, "source": ["persona P", "  audience Ghost"], "diagnostics": ["PLAY1135@2"]},
+        {"name": "A persona in a declared audience", "validate": true, "source": ["audience A", "persona P", "  audience A"], "diagnostics": []},
+        {"name": "A screen action invoking a command that can be off while the screen is on", "validate": true, "source": ["audience A", "audience B", "module M", "  feature F", "    slice StateChange S", "      available for A", "      event E", "        x String", "      command C", "        available for B", "        x String", "        produces E", "          x = x", "      screen Sc", "        available for A or B", "        action C for screen"], "diagnostics": ["PLAY1139@16"]}
     ]
 }

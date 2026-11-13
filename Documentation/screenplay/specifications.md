@@ -58,7 +58,7 @@ A table declares typed `parameter` values and at least one named `case`. Every c
 
 `case.<parameter>` fills a whole specification value position. It is substituted **after** example resolution and step overrides. Parameter and target types must match, or be a concept and its underlying primitive in either direction. An optional parameter can feed only an optional target. Every row value, including unused parameters, follows ordinary fixture normalization; substituted values still follow the target's ordinary admission rules.
 
-Use references in step assignments, generated fixtures, query arguments and results, `for` values, absent read-model keys, or `streamId = case.<parameter>` inside a restated route. An event's `for` target is inferred from that event's producers (or its declared routed source identifier), not the command under test. Outbound event projections count as producers and inherit the source types of the facts they fold; an `every` scope considers all producible facts. Inference requires one distinct type; unknown or ambiguous sources are not guessed. This includes transitive publication and also applies to `when append` without a command action. `when trigger` assignments use the declared trigger's data types. Standalone specification documents retain primitive and structural checks, including known String error-message targets. Concept and composite parameter types whose declarations are unavailable remain unknown, as do declaration-dependent targets; parsing never treats the missing owning application as an empty declaration inventory. `then error case.reason` takes a String parameter; a value such as `"$strings.nameRequired"` retains its symbolic-message meaning. References cannot replace callers, redelivery locators, clocks, declaration names, step kinds or members inside structured literals. Pass the whole object or list instead.
+Use references in step assignments, generated fixtures, query arguments and results, `for` values, absent read-model keys, or `streamId = case.<parameter>` inside a restated route. An event's `for` target is inferred from that event's producers (or its declared routed source identifier), not the command under test. Unrouted history without one producer destination type can use a [projected identity type](#event-sources-without-one-producing-command). Outbound event projections count as producers and inherit the source types of the facts they fold; an `every` scope considers all producible facts. Inference requires one distinct type; unknown or ambiguous sources are not guessed. This includes transitive publication and also applies to `when append` without a command action. `when trigger` assignments use the declared trigger's data types. Standalone specification documents retain primitive and structural checks, including known String error-message targets. Concept and composite parameter types whose declarations are unavailable remain unknown, as do declaration-dependent targets; parsing never treats the missing owning application as an empty declaration inventory. `then error case.reason` takes a String parameter; a value such as `"$strings.nameRequired"` retains its symbolic-message meaning. References cannot replace callers, redelivery locators, clocks, declaration names, step kinds or members inside structured literals. Pass the whole object or list instead.
 
 Each row runs independently as `<Specification>_<Case>`, in case order, inheriting the table description. Derived names must not collide with other specifications or derived names in the same scope. The executable bytes and revision match hand-written specifications with those names; the table is authoring syntax, not a new executable-model version. The board titles cards `<Specification> — <Case>`.
 
@@ -148,7 +148,19 @@ specification <Name>
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, an event `then`, or an event `when append`. It identifies occurrence context rather than an event payload property.
 
-Without a routing line, a `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed; `when append` with `for` supplies the occurrence source and selects v2 under the same rule. The value must be a concrete scalar of the event's producer command's unambiguous destination type (or the command under test for `when for`). A `StateView` slice can use `when append … for` to specify an event declared in a different slice when its producer supplies that type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
+Without a routing line, a `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed; `when append` with `for` supplies the occurrence source and selects v2 under the same rule. The value must be a concrete scalar of the event's unambiguous identity type (or the command under test for `when for`). A `StateView` slice can use `when append … for` to specify an event declared in a different slice when its producers or a root read-model projection supply that type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
+
+### Event sources without one producing command
+
+An unrouted event does not need a producing command to appear in `given … for` or `when append … for`. When its producers do not supply one distinct destination type, a root read-model projection can supply the identity type instead:
+
+- The projection consumes the event using its own event-source identity: the default key or explicit `$eventSourceId`, not an event payload property.
+- Every matching root projection has exactly one required scalar read-model key, and all those keys have the same type. A query's `by` property can identify that key.
+- The `for` value is a concrete literal compatible with that type. Protected (`pii` or `secret`), optional, collection, structured, missing or conflicting identity types remain refused.
+
+For example, a view that projects `DayOpened` and `SlotTaken` into a `DayView` keyed by a String day ID can establish both facts with `for "2026-11-10"`, even if neither event has a producing command. Both facts fold into that day's instance, so a `SlotTaken` transition that increments a counter updates the row established by `DayOpened`. Initialize required counter properties when establishing the row.
+
+One existing producer destination type still takes precedence; the projection does not reinterpret it. Named event examples and `for case.<parameter>` use the same inference, including when a case overrides an example. Parameter-target validation checks the projected identity type before substituting concrete case values: an optional parameter cannot supply a required identity, even when a particular row contains non-null text. When no identity type can be determined, `PLAY0273` names the event and asks for a projection keyed on the event source or a producing command with a required scalar destination. This changes neither the `for` syntax nor the selected ESM version. TypeScript preserves the same syntax; execution and semantic identity validation remain the .NET compiler's responsibility.
 
 ### Givens without an event source
 
@@ -717,6 +729,19 @@ The run records every invocation the slice's reactions make, in order, whether t
 
 The command must exist, every value must name one of its non-generated properties with a literal of that property's type, and a reaction declared in the specification's own slice must invoke the command; otherwise the compiler reports `PLAY0816`. The statement selects language/semantic `34.0`.
 
+## Ability answers
+
+A reaction specification scripts what a [system's ability](systems.md#invoke-an-ability) answers while the reaction runs, then asserts the events and the call.
+
+```play
+given Carrier.BookPickup returns
+  trackingNumber = "TRK-1"
+given Carrier.BookPickup answers NoCapacity
+given Carrier.BookPickup fails "carrier unavailable"
+```
+
+`returns` gives the returned fields, `answers` names a declared outcome and `fails` supplies the failure reason. An answer that names an ability, outcome or returned field the system does not declare is `PLAY1017`. When a branch reads a value the specification did not script, the specification is unsupported rather than guessing. `then invokes <System>.<Ability>` with the inputs asserts the call. Specifications of workflows and state machines assert `then invokes <System>.<Ability>` without values.
+
 ## Generated fixtures and return expectations
 
 Generated fixtures and `then returns` select **ESM v7** and execute in the reference runner. They pin [generated values and responses](commands.md#generated-values-and-responses) separately from request inputs and emitted events. See the [complete fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
@@ -741,6 +766,12 @@ A scalar response uses `then returns <value>`; a record uses `then returns` with
 Missing fixtures are bindable. If execution reaches generation without every generated value supplied, it returns `Unsupported(IdentityAllocation)` and the specification never passes; it does not invent random values. Authorization denial and validation failure happen before generation and keep their own outcomes. A reaction-invoked response-only command runs and discards its response. Pin any generated values it needs with `given generated <Command>.<property> = <value>` (ESM v30); a reached invocation without the required pinned values returns `Unsupported(IdentityAllocation)`.
 
 For a generated identifier, `for` travels in the generated-value channel, not the legacy event-source allocation channel. It does not assert that explicitly routed productions use that identifier; expected events assert their own destinations. For commands without generated identifiers, `when … for` keeps its existing destination assertion. A generated identifier with a reached plain legacy allocated production needs two separate channels, which source specifications cannot supply together, so that combination is `Unsupported(IdentityAllocation)`. Source fixtures and return expectations on generated UUID-backed values normalize accepted UUID spellings to lowercase hyphenated form; existing non-generated values are unchanged. Relational assertions without concrete fixtures remain deferred.
+
+## Specifications inside state machines and workflows
+
+A `specification` inside a `statemachine` or `workflow` states what entering a state or running a node does. `then invokes <Command>` says a command was invoked, in order, and `then starts <Workflow>` says a workflow was started. A workflow `outcome <Node> <outlet>` picks the outlet an action takes: `next`, `failed` or `refused`.
+
+`then sends <Command>` still compiles and raises the deprecation warning `PLAY0397`; printing a document writes `then invokes`. See [State machines](statemachines.md) and [Workflows](workflows.md).
 
 ## Compiling specifications
 

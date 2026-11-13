@@ -26,7 +26,7 @@ const clockRules: MonarchTokenRules = [
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow']);
+const contextualConstructs = new Set(['operation', 'system', 'ability', 'eventsource', 'purpose', 'context', 'runs', 'time', 'statemachine', 'workflow', 'agents', 'extension', 'setting', 'activation']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -80,12 +80,32 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
             [/^()(context)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@applicationContextBody.$1' }]],
+            [/^()(agents)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@agentsBody.$1' }]],
             [/^(\s*)(context)(\s+)(from)\b/, ['white', 'keyword', 'white', 'keyword']],
             [/^(command)(\s+)(reads)(\s+)(protected)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(reaction)(\s+)(batches)(\s+)(atomic)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
+            // An ability sits under a system. Its effect class is a keyword; 'answers later' is contextual, so an input called answers keeps its name.
+            [/^(\s*)(ability)(\s+)([A-Z]\w*)(\s+)(safe|idempotent|once)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            [/^(\s*)(ability)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            // Extension contract lines are contextual: a property called icon or kind keeps its name.
+            [/^(\s*)(display)(\s+)(name)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'string']],
+            [/^(\s*)(icon|image|caption|placeholder|frontend)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'string']],
+            [/^(\s*)(requires)(\s+)(stage|screenplay|platform|runtime)(\s+)(.+?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'string']],
+            [/^(\s*)(setting)(\s+)([A-Za-z_]\w*)(\s+)(public|secret)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword']],
+            [/^(\s*)(component)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(component)(\s+)([A-Za-z_]\w*)(\.)([A-Z]\w*)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'delimiter', 'type.identifier', 'white', 'variable']],
+            [/^(\s*)(with)(\s+)([A-Za-z_]\w*)(\s+)(from)(\s+)(signal)(\.)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword', 'white', 'keyword', 'delimiter', 'variable']],
+            [/^(\s*)(kind)(\s+)(react|mount|screenplay)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(backend)(\s+)(runtime)(\s+)(\S+)(\s+)(\S+)(\s+)(assembly)(\s+)(".*?")(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'identifier', 'white', 'number', 'white', 'keyword', 'white', 'string']],
+            // System configuration lines are contextual, so a property called setting keeps its name.
+            [/^(\s*)(extension)(\s+)(".*?")(?:(\s+)(version)(\s+)(\S+))?(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'string', 'white', 'keyword', 'white', 'number']],
+            [/^(\s*)(setting)(\s+)([A-Za-z_]\w*)(\s+)(from)(\s+)(secret)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'variable', 'white', 'keyword', 'white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(activation)(\s+)(always|on)(?:(\s+)(demand)(?:(\s+)(idle)(\s+)(after)(\s+)(\d+)(\s+)(seconds?|minutes?|hours?|days?))?)?(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'number', 'white', 'keyword']],
+            [/^(secret)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
+            [/^(\s*)(answers)(\s+)(later)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
             // 'runs' is contextual: only a reaction's identity line is a keyword; a property called runs keeps its name.
             [/^(\s*)(runs)(\s+)(as)(\s+)(system)\b/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
@@ -138,6 +158,13 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(on)(\s+)(refused)(\s+)(by)(\s+)(validation|constraint|authorization)\b/,
                 ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(on)(\s+)(refused)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            // An invocation's outcome branches: `on returned`, `on failed` or `on <Outcome>`.
+            [/^(\s*)(on)(\s+)(returned|failed)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(on)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            // An ability's scripted answer in a specification: `given Sys.Ability returns|answers <Outcome>|fails`.
+            [/^(\s*)(given)(\s+)([A-Z]\w*\.[A-Z]\w*)(\s+)(returns|answers|fails)\b/, ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            // A workflow compute node and an approval answered through an ability.
+            [/^(\s*)(compute)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
             [/^(\s*)(on)(\s+)([\w-]+)\b/, ['white', 'keyword', 'white', { token: 'keyword', next: '@interactionBody.$1' }]],
             [/^(\s*)(acknowledge)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
@@ -214,6 +241,15 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(otherwise)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             [/^(\s*)(when)(\s+)(?=item\.|\()/, ['white', 'keyword', 'white']],
             [/^(\s*)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
+        agentsBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(tokens)(\s+)(personal)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(command|query)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(scope)(\s+)(read|write|global)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(description)(?=\s+")/, ['white', 'keyword']],
             { include: '@root' },
         ],
 

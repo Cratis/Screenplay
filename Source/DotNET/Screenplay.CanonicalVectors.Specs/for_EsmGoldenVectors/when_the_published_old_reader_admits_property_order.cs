@@ -19,7 +19,7 @@ public class when_the_published_old_reader_admits_property_order : given.golden_
         _vector = EsmGoldenVectors.GetMinor(SemanticVersion.V37_1);
         _readModel = SemanticModelSerializer.Deserialize(_vector.Bytes.AsSpan()).Application.Modules[0].Features[0].Slices.SelectMany(slice => slice.ReadModels).Single();
         var configuration = new DirectoryInfo(Path.GetDirectoryName(typeof(when_the_published_old_reader_admits_property_order).Assembly.Location)!).Parent!.Name;
-        var probe = Path.GetFullPath(Path.Combine(_goldenFolder, "../../../../Screenplay.CanonicalVectors.Specs/LegacyReader/bin", configuration, "net10.0/LegacyReader.dll"));
+        var probe = Path.GetFullPath(Path.Combine(_goldenFolder, "../../../../Screenplay.CanonicalVectors.Specs/LegacyReader/bin", configuration, "net11.0/LegacyReader.dll"));
         var start = new ProcessStartInfo("dotnet") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
         start.ArgumentList.Add(probe);
         start.ArgumentList.Add(Path.Combine(_goldenFolder, "full-esm-v37.1.json"));

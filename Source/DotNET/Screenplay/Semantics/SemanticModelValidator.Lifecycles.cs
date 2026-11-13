@@ -1,11 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
-    static readonly string[] _decisionReserved = ["next", "failed", "resumed", "expired", "approved", "rejected", "each", "completed"];
+    static readonly string[] _decisionReserved = ["next", "failed", "refused", "resumed", "expired", "approved", "rejected", "each", "completed"];
 
     // ESM v36 constructs: state machines and workflows. A v36 model contains one; a model before v36 contains none.
     internal static bool UsesLifecycles(SemanticApplication application) =>
@@ -14,7 +16,7 @@ internal static partial class SemanticModelValidator
     internal static string[] Outlets(SemanticWorkflowNodeKind kind) => kind switch
     {
         SemanticWorkflowNodeKind.Trigger or SemanticWorkflowNodeKind.Join => ["next"],
-        SemanticWorkflowNodeKind.Action => ["next", "failed"],
+        SemanticWorkflowNodeKind.Action => ["next", "failed", "refused"],
         SemanticWorkflowNodeKind.Wait => ["resumed", "expired"],
         SemanticWorkflowNodeKind.Approval => ["approved", "rejected", "expired"],
         SemanticWorkflowNodeKind.ForEach => ["each", "completed"],
@@ -54,6 +56,8 @@ internal static partial class SemanticModelValidator
                 if (state.IsFinal && machine.Transitions.Any(transition => transition.From == state.Name)) throw new InvalidSemanticContract($"The final state '{state.Name}' of {where} has transitions out.");
                 foreach (var entry in state.Entering)
                 {
+                    if (entry.Kind == SemanticStateEntryKind.InvokeAbility) ValidateLifecycleAbilityCall($"state '{state.Name}' of {where}", entry.System, entry.Ability, entry.Inputs, properties, null);
+                    if (entry.Kind == SemanticStateEntryKind.RunBody && !_semanticVersion.IsAtLeast(SemanticVersion.V51)) throw new InvalidSemanticContract($"An entering body requires ESM v51 or later ({where}).");
                     if (entry.Kind == SemanticStateEntryKind.SendCommand && !_commands.ContainsKey(entry.Command)) throw new InvalidSemanticContract($"State '{state.Name}' of {where} sends an unknown command.");
                     if (entry.Kind == SemanticStateEntryKind.StartWorkflow && !application.Workflows.Any(workflow => workflow.Name == entry.Workflow)) throw new InvalidSemanticContract($"State '{state.Name}' of {where} starts an unknown workflow.");
                 }
@@ -76,7 +80,8 @@ internal static partial class SemanticModelValidator
             if (!workflow.Nodes.Any(node => node.Kind == SemanticWorkflowNodeKind.Trigger)) throw new InvalidSemanticContract($"The {where} has no trigger.");
             var nodes = workflow.Nodes.ToDictionary(node => node.Name, StringComparer.Ordinal);
             var properties = Properties(subject.Properties);
-            foreach (var node in workflow.Nodes) ValidateWorkflowNode(application, workflow, node, properties);
+            var results = LifecycleNodeResults(workflow);
+            foreach (var node in workflow.Nodes) ValidateWorkflowNode(application, workflow, node, properties, results);
             foreach (var specification in workflow.Specifications) ValidateLifecycleSpecification(specification, where, nodes.Keys, null);
             var seen = new HashSet<(string, string)>();
             foreach (var edge in workflow.Edges)
@@ -84,10 +89,24 @@ internal static partial class SemanticModelValidator
                 if (!nodes.TryGetValue(edge.From, out var from) || !nodes.TryGetValue(edge.To, out var to)) throw new InvalidSemanticContract($"An edge of {where} names an unknown node.");
                 if (!seen.Add((edge.From, edge.Outlet))) throw new InvalidSemanticContract($"Node '{edge.From}' of {where} leaves by outlet '{edge.Outlet}' more than once.");
                 if (to.Kind == SemanticWorkflowNodeKind.Trigger) throw new InvalidSemanticContract($"An edge of {where} leads to trigger '{to.Name}'.");
-                var legal = from.Kind == SemanticWorkflowNodeKind.Decision ? from.WhenTrue == edge.Outlet || from.WhenFalse == edge.Outlet : Outlets(from.Kind).Contains(edge.Outlet);
+                var legal = from.Kind switch
+                {
+                    SemanticWorkflowNodeKind.Decision => from.WhenTrue == edge.Outlet || from.WhenFalse == edge.Outlet,
+                    SemanticWorkflowNodeKind.Compute => edge.Outlet.Length > 0,
+                    SemanticWorkflowNodeKind.Action when from.Ability is not null => AbilityOutlet(from, edge.Outlet),
+                    _ => Outlets(from.Kind).Contains(edge.Outlet)
+                };
                 if (!legal) throw new InvalidSemanticContract($"Node '{edge.From}' of {where} has no outlet '{edge.Outlet}'.");
             }
         }
+
+        bool AbilityNamed(string? written) =>
+            written?.Split('.') is [var system, var ability] &&
+            _eventRoutesApplication.Systems.Any(candidate => candidate.Name == system && candidate.Abilities.Any(declared => declared.Name == ability));
+
+        bool AbilityOutlet(SemanticWorkflowNode node, string outlet) =>
+            string.Equals(outlet, "next", StringComparison.Ordinal) || string.Equals(outlet, "failed", StringComparison.Ordinal) || (outlet == "expired" && node.ExpiresAfter is not null) ||
+            _eventRoutesApplication.Systems.FirstOrDefault(system => system.Id == node.System)?.Abilities.FirstOrDefault(ability => ability.Name == node.Ability)?.Outcomes.Contains(outlet) == true;
 
         void ValidateLifecycleSpecification(SemanticLifecycleSpecification specification, string where, IEnumerable<string>? nodes, IEnumerable<string>? states)
         {
@@ -109,6 +128,7 @@ internal static partial class SemanticModelValidator
                     SemanticLifecycleExpectationKind.State => states?.Contains(expectation.Target ?? string.Empty) == true,
                     SemanticLifecycleExpectationKind.Sends => _commands.ContainsKey(expectation.Command),
                     SemanticLifecycleExpectationKind.Starts => expectation.Target is not null,
+                    SemanticLifecycleExpectationKind.Invokes => _semanticVersion.IsAtLeast(SemanticVersion.V51) && AbilityNamed(expectation.Target),
                     SemanticLifecycleExpectationKind.Completes => nodes is not null,
                     _ => nodes?.Contains(expectation.Target ?? string.Empty) == true
                 };
@@ -116,7 +136,7 @@ internal static partial class SemanticModelValidator
             }
         }
 
-        void ValidateWorkflowNode(SemanticApplication application, SemanticWorkflow workflow, SemanticWorkflowNode node, Dictionary<SemanticId, SemanticProperty> subject)
+        void ValidateWorkflowNode(SemanticApplication application, SemanticWorkflow workflow, SemanticWorkflowNode node, Dictionary<SemanticId, SemanticProperty> subject, Dictionary<string, ImmutableArray<SemanticAbilityField>> results)
         {
             var where = $"node '{node.Name}' of workflow '{workflow.Name}'";
             switch (node.Kind)
@@ -132,6 +152,13 @@ internal static partial class SemanticModelValidator
                         default: throw new InvalidSemanticContract($"The trigger {where} is malformed or names something unknown.");
                     }
 
+                    break;
+                case SemanticWorkflowNodeKind.Compute:
+                    if (!_semanticVersion.IsAtLeast(SemanticVersion.V51)) throw new InvalidSemanticContract($"Compute nodes require ESM v51 or later ({where}).");
+                    break;
+                case SemanticWorkflowNodeKind.Action when node.Ability is not null:
+                    ValidateLifecycleAbilityCall(where, node.System, node.Ability, node.Inputs, subject, results);
+                    if (node.MaxAttempts is < 1 || node.AttemptTimeout is < 1 || node.RetryDelay is < 1 || node.ExpiresAfter is < 1) throw new InvalidSemanticContract($"The action {where} has a non-positive attempt, timeout, retry delay or expiry.");
                     break;
                 case SemanticWorkflowNodeKind.Action:
                     if (!_commands.ContainsKey(node.Command)) throw new InvalidSemanticContract($"The action {where} sends an unknown command.");

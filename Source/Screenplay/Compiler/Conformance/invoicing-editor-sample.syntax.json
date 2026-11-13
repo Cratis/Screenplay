@@ -1,5 +1,73 @@
 {
   "kind": "ApplicationSyntax",
+  "agents": {
+    "kind": "AgentsSyntax",
+    "operations": [
+      {
+        "kind": "AgentOperationSyntax",
+        "description": "Read the invoices the caller may manage.",
+        "reference": "Invoicing.InvoiceManagement.InvoiceList.ListInvoices",
+        "scope": "Read",
+        "syntaxKind": "Query"
+      },
+      {
+        "kind": "AgentOperationSyntax",
+        "description": "Register an invoice for the caller's customer.",
+        "reference": "Invoicing.InvoiceManagement.RegisterInvoice.RegisterInvoice",
+        "scope": "Write",
+        "syntaxKind": "Command"
+      }
+    ],
+    "tokens": {
+      "kind": "AgentTokensSyntax",
+      "syntaxKind": "Personal"
+    }
+  },
+  "audiences": [
+    {
+      "kind": "AudienceSyntax",
+      "description": "Customers who bought the audit trail",
+      "name": "AuditTrail"
+    },
+    {
+      "kind": "AudienceSyntax",
+      "description": "Tenants taking part in the preview",
+      "name": "Preview"
+    }
+  ],
+  "availabilities": [
+    {
+      "kind": "AvailabilitySyntax",
+      "description": "Sold with the audit trail, in the preview region",
+      "name": "AuditTrailEnabled",
+      "requirements": [
+        {
+          "kind": "LogicalAvailabilityRequirementSyntax",
+          "left": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "AuditTrail"
+          },
+          "operator": "Or",
+          "right": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "Preview"
+          }
+        },
+        {
+          "kind": "ConditionAvailabilityRequirementSyntax",
+          "condition": {
+            "kind": "ComparisonConditionSyntax",
+            "left": "$context.region",
+            "operator": "Equal",
+            "right": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "Nordics"
+            }
+          }
+        }
+      ]
+    }
+  ],
   "commandReadMode": "Protected",
   "concepts": [
     {
@@ -4795,6 +4863,18 @@
               ],
               "name": "CancelInvoice",
               "operations": [],
+              "placements": [
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceRegistered",
+                  "syntaxKind": "Event"
+                },
+                {
+                  "kind": "SlicePlacementSyntax",
+                  "name": "InvoiceListReadModel",
+                  "syntaxKind": "ReadModel"
+                }
+              ],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -8403,6 +8483,32 @@
                       "mode": "Extend",
                       "name": "views"
                     }
+                  ],
+                  "visuals": [
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.sketch.svg"
+                      },
+                      "syntaxKind": "Sketch"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.html"
+                      },
+                      "syntaxKind": "Mockup"
+                    },
+                    {
+                      "kind": "ScreenVisualSyntax",
+                      "file": {
+                        "kind": "FileReferenceSyntax",
+                        "path": "Screens/invoice-list.png"
+                      },
+                      "syntaxKind": "Image"
+                    }
                   ]
                 }
               ],
@@ -9204,6 +9310,14 @@
                         {
                           "kind": "SetMappingSyntax",
                           "property": "sentAt"
+                        },
+                        {
+                          "kind": "SetOnceMappingSyntax",
+                          "property": "firstSentAt",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "sentAt"
+                          }
                         }
                       ]
                     },
@@ -9318,6 +9432,12 @@
                           "event": "InvoiceLineItemRemoved"
                         }
                       ],
+                      "ordering": {
+                        "kind": "ChildrenOrderingSyntax",
+                        "direction": "Ascending",
+                        "placement": "Sorted",
+                        "sortBy": "lineNumber"
+                      },
                       "property": "lineItems"
                     },
                     {
@@ -9545,6 +9665,18 @@
                       "isGenerated": false,
                       "isIdentifier": false,
                       "name": "sentAt",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "DateTime"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "firstSentAt",
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -10036,6 +10168,14 @@
                         {
                           "kind": "PropertyMappingSyntax",
                           "property": "sentAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T09:00:00Z"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "firstSentAt",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
                             "value": "2026-10-02T09:00:00Z"
@@ -12742,6 +12882,28 @@
                             }
                           ],
                           "name": "recordPaymentInput"
+                        },
+                        {
+                          "kind": "ScreenComponentSyntax",
+                          "component": "Mailer.MailPreview",
+                          "context": null,
+                          "exposes": [],
+                          "icon": null,
+                          "name": "statement",
+                          "presentation": [],
+                          "properties": [
+                            {
+                              "kind": "ComponentPropertySyntax",
+                              "binding": null,
+                              "property": "subject",
+                              "value": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Your balance statement"
+                              }
+                            }
+                          ],
+                          "slots": [],
+                          "stableId": null
                         }
                       ],
                       "name": "balance"
@@ -14774,6 +14936,574 @@
               "captures": [],
               "commands": [],
               "constraints": [],
+              "description": "Asks the card payment gateway to capture a payment once it is recorded",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentCaptured",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "paymentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PaymentId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "capturedAt",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "DateTime"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentCardDeclined",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "PaymentCaptureFailed",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reason",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "CapturePaymentsWithGateway",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": "Captures each recorded payment with the gateway",
+                  "from": {
+                    "kind": "ObserverFilterSyntax",
+                    "eventSource": "Payment",
+                    "stream": "Transactions"
+                  },
+                  "name": "GatewayCapturer",
+                  "runsAs": {
+                    "kind": "ReactionIdentitySyntax",
+                    "roles": [],
+                    "syntaxKind": "system"
+                  },
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "branches": [
+                            {
+                              "kind": "InvocationBranchSyntax",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PaymentCaptured",
+                                  "for": {
+                                    "kind": "PathExpressionSyntax",
+                                    "path": "invoiceId"
+                                  },
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "paymentId",
+                                      "source": {
+                                        "kind": "InvocationValueExpressionSyntax",
+                                        "member": "paymentId",
+                                        "source": "result"
+                                      }
+                                    },
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "capturedAt",
+                                      "source": {
+                                        "kind": "InvocationValueExpressionSyntax",
+                                        "member": "capturedAt",
+                                        "source": "result"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "returned"
+                            },
+                            {
+                              "kind": "InvocationBranchSyntax",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PaymentCardDeclined",
+                                  "for": {
+                                    "kind": "PathExpressionSyntax",
+                                    "path": "invoiceId"
+                                  },
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "invoiceId",
+                                      "source": {
+                                        "kind": "PathExpressionSyntax",
+                                        "path": "invoiceId"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "CardDeclined"
+                            },
+                            {
+                              "kind": "InvocationBranchSyntax",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "PaymentCaptureFailed",
+                                  "for": {
+                                    "kind": "PathExpressionSyntax",
+                                    "path": "invoiceId"
+                                  },
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "invoiceId",
+                                      "source": {
+                                        "kind": "PathExpressionSyntax",
+                                        "path": "invoiceId"
+                                      }
+                                    },
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "reason",
+                                      "source": {
+                                        "kind": "InvocationValueExpressionSyntax",
+                                        "member": "reason",
+                                        "source": "failure"
+                                      }
+                                    }
+                                  ],
+                                  "tags": []
+                                }
+                              ],
+                              "selector": "failed"
+                            }
+                          ],
+                          "command": "PaymentGateway.CapturePayment"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "PaymentRecorded"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenAbilityAnswers": [
+                    {
+                      "kind": "SpecificationAbilityAnswerSyntax",
+                      "ability": "PaymentGateway.CapturePayment",
+                      "answer": "returns",
+                      "outcome": null,
+                      "reason": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "5d0b2a77-3c1e-4e4f-9a5b-7c6d8e9f0a1b"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "capturedAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T09:00:00Z"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "TheGatewayCapturesThePayment",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PaymentCaptured",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "5d0b2a77-3c1e-4e4f-9a5b-7c6d8e9f0a1b"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "capturedAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T09:00:00Z"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenInvocations": [
+                    {
+                      "kind": "SpecificationInvocationSyntax",
+                      "command": "PaymentGateway.CapturePayment",
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 12000
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "PaymentRecorded",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 12000
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "method",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "transfer"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenAbilityAnswers": [
+                    {
+                      "kind": "SpecificationAbilityAnswerSyntax",
+                      "ability": "PaymentGateway.CapturePayment",
+                      "answer": "answers",
+                      "outcome": "CardDeclined",
+                      "reason": null,
+                      "values": []
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "TheCardIsDeclined",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PaymentCardDeclined",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "PaymentRecorded",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 12000
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "method",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "transfer"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenAbilityAnswers": [
+                    {
+                      "kind": "SpecificationAbilityAnswerSyntax",
+                      "ability": "PaymentGateway.CapturePayment",
+                      "answer": "fails",
+                      "outcome": null,
+                      "reason": "gateway unavailable",
+                      "values": []
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "TheGatewayIsDown",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "PaymentCaptureFailed",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reason",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "gateway unavailable"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "PaymentRecorded",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 12000
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "method",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "transfer"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "Automation"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
               "description": "Reminds the billing contact while an invoice is late",
               "events": [
                 {
@@ -16326,6 +17056,15 @@
               "name": "IsAuditor"
             }
           },
+          "available": [
+            {
+              "kind": "AvailableSyntax",
+              "requirement": {
+                "kind": "AvailabilityReferenceSyntax",
+                "availability": "AuditTrailEnabled"
+              }
+            }
+          ],
           "description": "What auditors look at - nothing here changes anything",
           "features": [],
           "fileImports": [],
@@ -16414,6 +17153,23 @@
                       "name": "IsAuditor"
                     }
                   },
+                  "available": [
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "LogicalAvailabilityRequirementSyntax",
+                        "left": {
+                          "kind": "AudienceAvailabilityRequirementSyntax",
+                          "audience": "AuditTrail"
+                        },
+                        "operator": "Or",
+                        "right": {
+                          "kind": "AudienceAvailabilityRequirementSyntax",
+                          "audience": "Preview"
+                        }
+                      }
+                    }
+                  ],
                   "by": null,
                   "description": "Cancelled invoices, kept for audit",
                   "filters": [],
@@ -18865,6 +19621,25 @@
           "name": "sidebar"
         }
       ],
+      "provides": [
+        {
+          "kind": "ProvideSyntax",
+          "name": "region",
+          "source": {
+            "kind": "ValueProvideSourceSyntax",
+            "value": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "Nordics"
+            }
+          },
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ],
       "purposes": [
         {
           "kind": "PurposeReferenceSyntax",
@@ -19182,6 +19957,9 @@
     },
     {
       "kind": "PersonaSyntax",
+      "audiences": [
+        "AuditTrail"
+      ],
       "description": "Reviews what happened, never changes it",
       "goals": [
         "Review what happened without changing it"
@@ -19260,6 +20038,13 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "secrets": [
+    {
+      "kind": "SecretSyntax",
+      "description": "The API key of the transactional mail service",
+      "name": "MailerApiKey"
+    }
+  ],
   "sinks": [
     {
       "kind": "SinkSyntax",
@@ -19336,6 +20121,63 @@
               {
                 "kind": "PropertyMappingSyntax",
                 "property": "overdueAt",
+                "source": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "2026-10-02T09:00:00Z"
+                }
+              }
+            ]
+          },
+          "whenStarted": null
+        },
+        {
+          "kind": "LifecycleSpecificationSyntax",
+          "description": "Entering Paid asks the gateway to mail the receipt",
+          "given": [
+            {
+              "kind": "SpecificationEventSyntax",
+              "eventType": "InvoiceRegistered",
+              "for": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+              },
+              "values": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceNumber",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "INV-000123"
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "APaidInvoiceGetsItsReceipt",
+          "outcomes": [],
+          "then": [
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "State",
+              "target": "Paid"
+            },
+            {
+              "kind": "LifecycleExpectationSyntax",
+              "expectation": "Sends",
+              "target": "PaymentGateway.SendReceipt"
+            }
+          ],
+          "whenAppended": {
+            "kind": "SpecificationEventSyntax",
+            "eventType": "InvoicePaid",
+            "for": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+            },
+            "values": [
+              {
+                "kind": "PropertyMappingSyntax",
+                "property": "paidAt",
                 "source": {
                   "kind": "LiteralExpressionSyntax",
                   "value": "2026-10-02T09:00:00Z"
@@ -19489,7 +20331,31 @@
         },
         {
           "kind": "StateSyntax",
-          "entering": [],
+          "entering": [
+            {
+              "kind": "StateEntrySyntax",
+              "entryKind": "Invoke",
+              "mappings": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "invoiceId",
+                  "source": {
+                    "kind": "PathExpressionSyntax",
+                    "path": "invoiceId"
+                  }
+                },
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "email",
+                  "source": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "accounts@example.com"
+                  }
+                }
+              ],
+              "target": "PaymentGateway.SendReceipt"
+            }
+          ],
           "isFinal": true,
           "isInitial": false,
           "name": "Paid",
@@ -19558,7 +20424,331 @@
       "y": 150
     }
   ],
-  "systems": [],
+  "storylines": [
+    {
+      "kind": "StorylineSyntax",
+      "description": "The path a manager and an accountant walk to turn a draft into money in the bank",
+      "name": "GetPaid",
+      "steps": [
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Module",
+          "note": null,
+          "target": "Invoicing"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Feature",
+          "note": null,
+          "target": "InvoiceManagement"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Screen",
+          "note": "The manager starts a draft",
+          "target": "StartInvoiceDraftScreen"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Command",
+          "note": null,
+          "target": "StartInvoiceDraft"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Slice",
+          "note": "The draft becomes an invoice",
+          "target": "RegisterInvoice"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Event",
+          "note": null,
+          "target": "InvoiceRegistered"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Query",
+          "note": null,
+          "target": "GetInvoiceBalance"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "ReadModel",
+          "note": null,
+          "target": "InvoiceBalanceReadModel"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Reaction",
+          "note": "A late invoice gets chased",
+          "target": "OverdueChaser"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Command",
+          "note": "The customer pays",
+          "target": "RecordPayment"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Event",
+          "note": null,
+          "target": "PaymentRecorded"
+        }
+      ],
+      "title": "An invoice from draft to payment"
+    }
+  ],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "abilities": [
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Captures the payment for one invoice",
+          "effectClass": "idempotent",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "invoiceId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "amount",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Money"
+              }
+            }
+          ],
+          "name": "CapturePayment",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": "The card issuer declined the charge",
+              "name": "CardDeclined"
+            },
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "LimitExceeded"
+            }
+          ],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "paymentId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "PaymentId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "capturedAt",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "DateTime"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Reads today's exchange rate",
+          "effectClass": "safe",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "currency",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "CurrencyCode"
+              }
+            }
+          ],
+          "name": "LookUpRate",
+          "outcomes": [],
+          "returns": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "rate",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "ExchangeRate"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": true,
+          "code": null,
+          "description": "Asks a manager to approve a large write-off; the answer arrives later",
+          "effectClass": "once",
+          "file": null,
+          "implementation": null,
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "invoiceId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            }
+          ],
+          "name": "RequestApproval",
+          "outcomes": [
+            {
+              "kind": "AbilityOutcomeSyntax",
+              "description": null,
+              "name": "Rejected"
+            }
+          ],
+          "returns": []
+        },
+        {
+          "kind": "AbilitySyntax",
+          "answersLater": false,
+          "code": null,
+          "description": "Mails the receipt through the existing mail adapter",
+          "effectClass": null,
+          "file": {
+            "kind": "FileReferenceSyntax",
+            "path": "Adapters/SendReceipt.cs"
+          },
+          "implementation": {
+            "kind": "ImplementationSyntax",
+            "hints": [
+              {
+                "kind": "ImplementationHintSyntax",
+                "text": "Use the existing mail adapter"
+              }
+            ]
+          },
+          "inputs": [
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "invoiceId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            },
+            {
+              "kind": "PropertySyntax",
+              "isGenerated": false,
+              "isIdentifier": false,
+              "name": "email",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "EmailAddress"
+              }
+            }
+          ],
+          "name": "SendReceipt",
+          "outcomes": [],
+          "returns": []
+        }
+      ],
+      "description": "The card payment gateway that charges invoices",
+      "name": "PaymentGateway"
+    },
+    {
+      "kind": "SystemSyntax",
+      "activation": {
+        "kind": "SystemActivationSyntax",
+        "always": false,
+        "idleAmount": 10,
+        "idleUnit": "minute"
+      },
+      "description": "The transactional mail service that sends invoices and receipts",
+      "extension": {
+        "kind": "SystemExtensionSyntax",
+        "reference": "ghcr.io/cratis/extension-mail",
+        "version": "2"
+      },
+      "name": "Mailer",
+      "settings": [
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "apiKey",
+          "secret": "MailerApiKey",
+          "value": null,
+          "valueKind": null
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "senderName",
+          "secret": null,
+          "value": "Invoicing",
+          "valueKind": "string"
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "retries",
+          "secret": null,
+          "value": "3",
+          "valueKind": "number"
+        },
+        {
+          "kind": "SystemSettingSyntax",
+          "name": "trackOpens",
+          "secret": null,
+          "value": "false",
+          "valueKind": "boolean"
+        }
+      ]
+    }
+  ],
   "themes": [
     {
       "kind": "ThemeSyntax",
@@ -20260,7 +21450,7 @@
             {
               "kind": "WorkflowEdgeSyntax",
               "outlet": "completed",
-              "target": "AwaitPayment"
+              "target": "ChargeCard"
             }
           ],
           "event": null,
@@ -20322,6 +21512,63 @@
           "joinMode": "All",
           "name": "AllTagged",
           "nodeKind": "Join",
+          "parallel": null,
+          "retryAfter": null,
+          "schedule": null,
+          "state": null,
+          "stateMachine": null,
+          "timeout": null,
+          "triggerKind": null
+        },
+        {
+          "kind": "WorkflowNodeSyntax",
+          "attempts": null,
+          "by": null,
+          "command": "PaymentGateway.CapturePayment",
+          "condition": null,
+          "duration": null,
+          "edges": [
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "next",
+              "target": "AwaitPayment"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "CardDeclined",
+              "target": "ApproveWriteOff"
+            },
+            {
+              "kind": "WorkflowEdgeSyntax",
+              "outlet": "failed",
+              "target": "ApproveWriteOff"
+            }
+          ],
+          "event": null,
+          "expiresAfter": null,
+          "items": null,
+          "joinCount": null,
+          "joinMode": null,
+          "mappings": [
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "invoiceId",
+              "source": {
+                "kind": "PathExpressionSyntax",
+                "path": "invoiceId"
+              }
+            },
+            {
+              "kind": "PropertyMappingSyntax",
+              "property": "amount",
+              "source": {
+                "kind": "LiteralExpressionSyntax",
+                "value": 100
+              }
+            }
+          ],
+          "name": "ChargeCard",
+          "nodeKind": "Action",
           "parallel": null,
           "retryAfter": null,
           "schedule": null,

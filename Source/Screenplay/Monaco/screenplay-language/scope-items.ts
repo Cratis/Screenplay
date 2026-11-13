@@ -2,9 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { CompletionEntry } from './completion-items';
+import { provideItems } from './provide-items';
 import { exampleDeclarationItems } from './example-declaration-items';
 import { documentationItem } from './documentation-item';
 import { purposeReferenceItem } from './purpose-items';
+import { availableItems, personaAudienceItems } from './availability-items';
 
 const interactions = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave'];
 
@@ -15,7 +17,9 @@ const interactionItems: CompletionEntry[] = [
 
 export const moduleScopeItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...availableItems,
     documentationItem,
+    ...provideItems,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the module.' },
@@ -33,7 +37,9 @@ export const moduleScopeItems: CompletionEntry[] = [
 
 export const featureScopeItems: CompletionEntry[] = [
     purposeReferenceItem,
+    ...availableItems,
     documentationItem,
+    ...provideItems,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this feature is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the feature.' },
@@ -108,6 +114,7 @@ export const outcomeItems: CompletionEntry[] = [
 ];
 
 export const personaItems: CompletionEntry[] = [
+    ...personaAudienceItems,
     { label: 'description', insertText: 'description "${1:who they are}"', documentation: 'A human-readable description.' },
     { label: 'goal', insertText: 'goal "${1:what they want to achieve}"', documentation: 'A goal of this persona.' },
     { label: 'policy', insertText: 'policy ${1:PolicyName}', documentation: 'A policy this persona holds.' },

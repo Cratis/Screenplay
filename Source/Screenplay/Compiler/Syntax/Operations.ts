@@ -4,7 +4,8 @@
 import { OperationSyntax } from './OperationSyntax';
 import { SliceSyntax } from './Structure';
 
-export type { SystemSyntax } from './SystemSyntax';
+export type { AbilityOutcomeSyntax, AbilitySyntax, SecretSyntax, SystemActivationSyntax, SystemExtensionSyntax, SystemSettingSyntax, SystemSyntax } from './SystemSyntax';
+export { abilityEffectClasses, reservedOutcomeNames } from './SystemSyntax';
 export type { OperationSyntax } from './OperationSyntax';
 export type { OperationPhaseSyntax } from './OperationPhaseSyntax';
 

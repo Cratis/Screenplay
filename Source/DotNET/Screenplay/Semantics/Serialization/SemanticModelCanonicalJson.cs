@@ -96,6 +96,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "types", application.Types.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCompositeType);
         var queries = application.Modules.SelectMany(module => module.Features).SelectMany(QueryDeclarations).ToDictionary(query => query.Id);
         WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, module) => WriteModule(output, module, version, queries));
+        WriteAudiencesAndAvailabilities(writer, application, version);
         if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
         if (!application.Triggers.IsDefaultOrEmpty) WriteArray(writer, "triggers", application.Triggers.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteTrigger);
         WriteLifecycles(writer, application, version);
@@ -104,6 +105,8 @@ public static partial class SemanticModelCanonicalJson
         if (application.ReactionProductionMode is not null) writer.WriteString("reactionProductionMode", "atomic");
         if (application.CommandReadMode is not null) writer.WriteString("commandReadMode", "protected");
         WriteApplicationTimeZone(writer, application, version);
+        WriteAgents(writer, application.Agents);
+        WriteSystems(writer, application.Systems);
         writer.WriteEndObject();
     }
 
@@ -161,6 +164,8 @@ public static partial class SemanticModelCanonicalJson
         WriteId(writer, module.Id);
         CanonicalJson.WriteString(writer, "name", module.Name);
         WriteArray(writer, "features", module.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, feature) => WriteFeature(output, feature, version, queries));
+        WriteProvides(writer, module.Provides, version);
+        WriteAvailable(writer, module.Available, version);
         writer.WriteEndObject();
     }
 
@@ -171,6 +176,8 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", feature.Name);
         WriteArray(writer, "features", feature.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, nested) => WriteFeature(output, nested, version, queries));
         WriteArray(writer, "slices", feature.Slices.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, slice) => WriteSlice(output, slice, version, queries));
+        WriteProvides(writer, feature.Provides, version);
+        WriteAvailable(writer, feature.Available, version);
         writer.WriteEndObject();
     }
 
@@ -185,12 +192,15 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "readModels", slice.ReadModels.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteReadModel);
         WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, projection) => WriteProjection(output, projection, version));
         if (!slice.Reducers.IsEmpty) WriteArray(writer, "reducers", slice.Reducers.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteReducer);
-        WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
+        WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, query) => WriteQuery(output, query, version));
         WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, specification) => WriteSpecification(output, specification, version, queries));
         WriteConstraints(writer, slice.Constraints);
         if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, reaction) => WriteReaction(output, reaction, version));
         if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
         if (slice.Direction is { } direction) writer.WriteString("direction", direction == SemanticTranslationDirection.Outbound ? "outbound" : "inbound");
+        WriteScreens(writer, slice, version);
+        WriteProvides(writer, slice.Provides, version);
+        WriteAvailable(writer, slice.Available, version);
         writer.WriteEndObject();
     }
 
@@ -321,6 +331,7 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("authorization");
             WriteAuthorization(writer, command.Authorization);
         }
+        WriteAvailable(writer, command.Available, version);
         if (command.Destination is not null)
         {
             writer.WritePropertyName("destination");
@@ -456,7 +467,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteQuery(Utf8JsonWriter writer, SemanticKeyedQuery query)
+    static void WriteQuery(Utf8JsonWriter writer, SemanticKeyedQuery query, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, query.Id);
@@ -485,6 +496,12 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("authorization");
             WriteAuthorization(writer, query.Authorization);
         }
+        if (query.Narrowing is not null)
+        {
+            writer.WritePropertyName("narrowing");
+            WriteAuthorization(writer, query.Narrowing);
+        }
+        WriteAvailable(writer, query.Available, version);
         writer.WriteEndObject();
     }
 
@@ -546,6 +563,7 @@ public static partial class SemanticModelCanonicalJson
         }
         WriteAutomationSpecification(writer, specification);
         if (specification.GivenTimeZone is not null) CanonicalJson.WriteString(writer, "givenTimeZone", specification.GivenTimeZone);
+        if (!specification.GivenAbilityAnswers.IsDefaultOrEmpty) WriteArray(writer, "givenAbilityAnswers", specification.GivenAbilityAnswers, WriteAbilityAnswer);
         writer.WriteEndObject();
     }
 
@@ -707,6 +725,11 @@ public static partial class SemanticModelCanonicalJson
                 writer.WriteString("member", refusal.Member);
                 writer.WritePropertyName("type");
                 WriteTypeReference(writer, refusal.Type);
+                break;
+            case SemanticInvocationValueExpression invocationValue:
+                writer.WriteString("member", invocationValue.Member.Length == 0 ? invocationValue.Source : $"{invocationValue.Source}.{invocationValue.Member}");
+                writer.WritePropertyName("type");
+                WriteTypeReference(writer, invocationValue.Type);
                 break;
             case SemanticReadPathExpression readPath:
                 CanonicalJson.WriteString(writer, "read", readPath.Read);
@@ -929,6 +952,7 @@ public static partial class SemanticModelCanonicalJson
         SemanticExpressionKind.EventContext => "eventContext",
         SemanticExpressionKind.Refusal => "refusal",
         SemanticExpressionKind.ReadPath => "readPath",
+        SemanticExpressionKind.InvocationValue => "invocationValue",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

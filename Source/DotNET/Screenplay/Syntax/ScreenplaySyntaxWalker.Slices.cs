@@ -15,6 +15,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitQuery(QuerySyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
         VisitTypeRef(syntax.ReturnType);
 
         if (syntax.By is not null)
@@ -35,6 +36,11 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Authorize is not null)
         {
             VisitAuthorize(syntax.Authorize);
+        }
+
+        if (syntax.Narrow is not null)
+        {
+            VisitNode(syntax.Narrow);
         }
 
         if (syntax.Performer is not null)

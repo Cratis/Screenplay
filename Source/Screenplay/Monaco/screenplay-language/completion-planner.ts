@@ -35,6 +35,8 @@ export type CompletionPlan =
     | { kind: 'contextVariables'; replaceLength: number }
     | { kind: 'playFiles'; replaceLength: number }
     | { kind: 'policies' }
+    | { kind: 'audiences' }
+    | { kind: 'availabilities' }
     | { kind: 'events' }
     | { kind: 'triggers' }
     | { kind: 'commands' }
@@ -54,7 +56,7 @@ export interface CompletionScope {
 const declaredIn = (document: readonly string[], keyword: string) => document.some(line => new RegExp(`^${keyword}\\b`).test(line));
 
 function topLevelEntries(document: readonly string[]): CompletionEntry[] {
-    const singularDeclarations = ['domain', 'authentication', 'onboarding', 'identity', 'context'];
+    const singularDeclarations = ['domain', 'authentication', 'onboarding', 'identity', 'context', 'agents'];
     return items.topLevelItems.filter(item => !singularDeclarations.includes(item.label) || !declaredIn(document, item.label));
 }
 
@@ -70,7 +72,9 @@ function expansionEntry(text: string, indent: number): CompletionEntry {
 
 export function completionEntriesFor(chain: string[], where: CompletionScope = { headers: [], document: [] }): CompletionEntry[] {
     const construct = chain[0];
-    if (construct === undefined || construct === 'domain') return topLevelEntries(where.document);
+    if (construct === undefined) return topLevelEntries(where.document);
+    if (construct === 'domain') return topLevelEntries(where.document).filter(entry => entry.label !== 'agents');
+    if (chain.includes('agents')) return construct === 'agents' ? items.agentItems : items.agentOperationItems(construct === 'command');
     if (chain.includes('sample') && !chain.includes('ui')) {
         if (construct === 'row') return scope.sampleRowItems;
         if (chain[1] === 'row' && /^[A-Za-z_]\w*$/.test(where.headers[0] ?? construct)) return scope.sampleShapeItems;
@@ -156,7 +160,9 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'workflow':
             return items.workflowItems;
         case 'system':
-            return items.operationItems.filter(item => item.label === 'description');
+            return items.systemItems;
+        case 'ability':
+            return items.abilityItems;
         case 'operation':
             return items.operationItems;
         case 'execute':
@@ -355,6 +361,16 @@ export function planCompletions(
     ];
     if (modifierEntries.length > 0) return { kind: 'entries', entries: modifierEntries };
 
+    // Gates and availabilities name audiences after `for` and availabilities after `with`; a persona lists the audiences it holds.
+    if (/^\s*(?:available\s+)?for\b[\w\s()]*$/.test(textBefore) && (/^\s*available\b/.test(textBefore) || chain[0] === 'availability')) {
+        return { kind: 'audiences' };
+    }
+    if (/^\s*(?:available\s+)?with\b[\w\s()]*$/.test(textBefore) && (/^\s*available\b/.test(textBefore) || chain[0] === 'availability')) {
+        return { kind: 'availabilities' };
+    }
+    if (/^\s+audience\s+\w*$/.test(textBefore) && chain[0] === 'persona') {
+        return { kind: 'audiences' };
+    }
     if (/\bauthorize\s+[\w\s]*$/.test(textBefore) || chain[0] === 'authorize') {
         return { kind: 'policies' };
     }

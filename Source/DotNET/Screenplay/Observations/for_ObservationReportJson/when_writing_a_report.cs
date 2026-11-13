@@ -31,7 +31,7 @@ public class when_writing_a_report : for_ObservationComparison.given.a_compiled_
     void Because() => _json = ObservationReportJson.Write(_result);
 
     [Fact] void should_match_the_reviewed_golden() => _json.ShouldEqual(_golden);
-    [Fact] void should_not_include_payloads_or_event_source_identifiers() => PropertyNames(JsonDocument.Parse(_json).RootElement).Any(value => value.Contains("payload", StringComparison.OrdinalIgnoreCase) || value.Contains("eventSource", StringComparison.OrdinalIgnoreCase) || value.Contains("causation", StringComparison.OrdinalIgnoreCase)).ShouldBeFalse();
-    [Fact] void should_keep_human_statements_identical() => JsonDocument.Parse(_json).RootElement.GetProperty("findings").EnumerateArray().Select(value => value.GetProperty("statement").GetString()).ShouldEqual(_result.Findings.Select(value => value.Statement));
-    [Fact] void should_omit_unknown_verdict_instead_of_reporting_false() => JsonDocument.Parse(_json).RootElement.TryGetProperty("hasDrift", out _).ShouldBeFalse();
+    [Fact] void should_not_include_payloads_or_event_source_identifiers() => PropertyNames(JsonElement.Parse(_json)).Any(value => value.Contains("payload", StringComparison.OrdinalIgnoreCase) || value.Contains("eventSource", StringComparison.OrdinalIgnoreCase) || value.Contains("causation", StringComparison.OrdinalIgnoreCase)).ShouldBeFalse();
+    [Fact] void should_keep_human_statements_identical() => JsonElement.Parse(_json).GetProperty("findings").EnumerateArray().Select(value => value.GetProperty("statement").GetString()).ShouldEqual(_result.Findings.Select(value => value.Statement));
+    [Fact] void should_omit_unknown_verdict_instead_of_reporting_false() => JsonElement.Parse(_json).TryGetProperty("hasDrift", out _).ShouldBeFalse();
 }

@@ -43,18 +43,17 @@ module Merchandising
             component Cratis.Blueprint.Default.pageHeader productsHeader
               property title = "Products"
               property subtitle = "Everything we sell, with its status"
+          // The toolbar acts on the product selected in the list: Approve and Withdraw run their slice for it once its status allows.
           toolbar
             toolbar actions
               button new title "New product" slice Merchandising.Products.DraftProduct emphasis primary icon plus
-            data ProductRow[] via query AllProducts
-            action "Approve for sale"
-              when item.status == "draft" execute ApproveProductForSale
-                with productId from item.productId
-              otherwise hidden
-            action "Withdraw"
-              when item.status == "approved" or item.status == "published" execute WithdrawProduct
-                with productId from item.productId
-              otherwise hidden
+              button approve title "Approve for sale" slice Merchandising.Publication.ApproveProductForSale for item icon check
+                runs
+                enabled when item.status == "draft"
+              button withdraw title "Withdraw" slice Merchandising.Publication.WithdrawProduct for item icon ban
+                runs
+                enabled when item.status == "approved"
+                confirm "Withdraw this product?"
           list
             data ProductRow[] via query AllProducts
             table ProductRow

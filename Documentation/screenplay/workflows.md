@@ -1,6 +1,6 @@
 ---
 title: "Screenplay workflows: model a durable business process"
-description: "Model order fulfilment with a Screenplay workflow: send commands, wait for events or approvals, and specify where the process completes or fails."
+description: "Model order fulfilment with a Screenplay workflow: invoke commands, wait for events or approvals, and specify where the process completes or fails."
 ---
 
 # Workflows
@@ -23,13 +23,13 @@ workflow FulfilOrder
   for OrderProgress
   trigger when OrderLifecycle enters Paid
     -> ReserveStock
-  action ReserveStock sends HoldStock attempts 3 timeout 1 minute retry after 30 seconds
+  action ReserveStock invokes HoldStock attempts 3 timeout 1 minute retry after 30 seconds
     next -> InStock
     failed -> Escalate
   decide InStock when itemsInStock == true
     "in stock" -> CreateParcel
     "backorder" -> AcceptBackorder
-  action CreateParcel sends CreateParcel
+  action CreateParcel invokes CreateParcel
     next -> ParcelLeaves
   wait ParcelLeaves for OrderHandedToCarrier expires after 2 days
     resumed -> TellCustomer
@@ -38,21 +38,21 @@ workflow FulfilOrder
     approved -> PlaceBackorder
     rejected -> CancelOrder
     expired -> Escalate
-  action PlaceBackorder sends PlaceBackorder
+  action PlaceBackorder invokes PlaceBackorder
     next -> ParcelLeaves
-  action CancelOrder sends WithdrawOrder
-  action TellCustomer sends NotifyCustomer
-  action Escalate sends EscalateOrder
+  action CancelOrder invokes WithdrawOrder
+  action TellCustomer invokes NotifyCustomer
+  action Escalate invokes EscalateOrder
 ```
 
-When the order enters Paid, the run sends `HoldStock`. A successful reservation leads to a decision over `itemsInStock` on the subject read model. Stock on hand leads to parcel creation; otherwise a warehouse clerk must approve the backorder. The run then waits for the carrier event, or escalates if the deadline passes.
+When the order enters Paid, the run invokes `HoldStock`. A successful reservation leads to a decision over `itemsInStock` on the subject read model. Stock on hand leads to parcel creation; otherwise a warehouse clerk must approve the backorder. The run then waits for the carrier event, or escalates if the deadline passes.
 
 Node words are recognized only directly inside a `workflow`. This leaves `trigger` available as a top-level declaration and `join` as a projection word elsewhere.
 
 | Node | Line | Outlets |
 | --- | --- | --- |
 | trigger | `trigger [Name] on <Event>`, `when <StateMachine> enters <State>`, `every <n> <unit>`, `at <HH:mm> [on <Weekday>]` (the [reaction](reactions.md) schedule forms) or `manual`. Write its edge as `-> <Node>`. | `next` |
-| action | `action <Name> sends <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]` | `next`, `failed` |
+| action | `action <Name> invokes <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]` | `next`, `failed`, `refused` |
 | decide | `decide <Name> when <condition>`; the condition is over the subject read model | exactly two of your own: the first is taken when the condition holds, the second when it does not |
 | wait | `wait <Name> for <Event> [expires after <n> <unit>]` waits for an event about the subject; `wait <Name> for <n> <unit>` lets time pass | `resumed`, `expired` |
 | approval | `approval <Name> by <Persona or Policy> [expires after <n> <unit>]` | `approved`, `rejected`, `expired` |
@@ -61,9 +61,24 @@ Node words are recognized only directly inside a `workflow`. This leaves `trigge
 
 An unnamed trigger is called `Trigger`, then `Trigger2` and so on. A workflow may have several triggers. Units are `second`, `minute`, `hour` and `day`, singular or plural.
 
-Connect each negative outcome you want to recover from. An unconnected `failed`, `rejected` or `expired` outlet fails the run; an unconnected positive outlet ends that branch. In the example, reservation failure reaches `Escalate`, whose successful action ends its branch. Outlet names match Cratis Choreography's `WellKnownOutlets`.
+Connect each negative outcome you want to recover from. An unconnected `failed`, `refused`, `rejected` or `expired` outlet fails the run; an unconnected positive outlet ends that branch. In the example, reservation failure reaches `Escalate`, whose successful action ends its branch. Outlet names match Cratis Choreography's `WellKnownOutlets`.
 
 An action's command receives the subject key and subject properties with matching names. The executor defines how to fill any remaining inputs. The reference evaluator records that the command was sent; it does not execute that command's business effects.
+
+## Invoking an ability
+
+An action asks a [system](systems.md#invoke-an-ability) for an ability with `action <Name> invokes <System>.<Ability>`. Its inputs are mapped on the lines under it from a literal, a property of the workflow's subject or an earlier node's result (`Node.field`). The node has a `next` edge for a normal answer, a `failed` edge and one edge per outcome the ability declares (an outlet that can never be taken, such as `expired` on an ability that does not answer later, is `PLAY1007`, and an outcome the ability does not declare is `PLAY1002`).
+
+```play
+action BookPickup invokes Carrier.BookPickup attempts 3
+  parcelId = parcelId
+  address = "1 Main Street"
+  next -> Risk
+  NoCapacity -> Done
+  failed -> Done
+```
+
+A `compute <Name>` node, with its `returns` fields and a C# body, and an approval answered through an ability (`approval <Name> by <Policy> via <System>.<Ability> expires after 2 days`) parse and validate. They are not executable yet; binding reports `PLAY0268` naming #1252. A node may only read the result of a node that always ran before it (`PLAY1009`).
 
 ## Specifications
 
@@ -76,8 +91,8 @@ The reference evaluator computes decisions from the subject read model and recor
 | `given <Event>` | A fact that already happened (with `for` and values). |
 | `when append <Event>` | The event that sets the run off: it starts the run when it matches an `on` trigger, or moves a state machine into the state a `when ... enters` trigger waits for. |
 | `when start <key>` | Starts the run by hand for the subject key, through a `manual` or scheduled trigger. |
-| `outcome <Node> <outlet>` | The outlet an action (`next`, `failed`), wait (`resumed`, `expired`), approval (`approved`, `rejected`, `expired`) or foreach takes. An action defaults to `next`; a failed action sends its command once per attempt. |
-| `then sends <Command>` | A command was sent. Every command sent is stated, in order. |
+| `outcome <Node> <outlet>` | The outlet an action (`next`, `failed`, `refused`), wait (`resumed`, `expired`), approval (`approved`, `rejected`, `expired`) or foreach takes. An action defaults to `next`; a failed action invokes its command once per attempt. `refused` means the command was handed on and something rejected it; it is distinct from `failed`, which means the invocation itself broke, and a refused command is not retried. |
+| `then invokes <Command>` | A command was invoked. Every command invoked is stated, in order. |
 | `then completes` | The run ended without failing. |
 | `then fails at <Node>` | The run failed at the node. |
 | `then waits at <Node>` | The run is suspended at a wait or an approval. |
@@ -89,8 +104,8 @@ specification TheRunWaitsForTheCarrier
     for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
   when append PaymentCaptured
     for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-  then sends HoldStock
-  then sends CreateParcel
+  then invokes HoldStock
+  then invokes CreateParcel
   then waits at ParcelLeaves
 ```
 
@@ -115,3 +130,14 @@ For collection work, a `foreach` runs its `each` branch once per item in item or
 | `PLAY0841` | A condition or a foreach reads a property the subject does not have. |
 
 See [State machines](statemachines.md) for the lifecycle that can start a workflow, and decision [0124](https://github.com/Cratis/Screenplay/blob/main/decisions/0124-state-machines-and-workflows-esm-v36.md) for the full contract.
+
+## Migrating from `sends`
+
+`invokes` is the one verb for asking a command to run, here and in reactions. The old forms still compile and raise the deprecation warning `PLAY0397` with a repair; printing a document writes the new forms.
+
+| Before | After |
+| --- | --- |
+| `action <Node> sends <Command>` | `action <Node> invokes <Command>` |
+| `then sends <Command>` | `then invokes <Command>` |
+
+An action that invoked a command and treated a rejection as `failed` can now route `refused` separately.

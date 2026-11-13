@@ -1629,7 +1629,7 @@ public static class DiagnosticCodes
     public const string MissingEventContextPath = "PLAY0298";
 
     /// <summary>
-    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, which the runtime never resolves.
+    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, <c>$eventContent</c> or <c>$causedBy</c>, which the runtime never resolves.
     /// </summary>
     public const string UnresolvedDynamicKeySource = "PLAY0299";
 
@@ -2031,7 +2031,7 @@ public static class DiagnosticCodes
     public const string FileConstraintOnlySupportsUniqueness = "PLAY0396";
 
     /// <summary>
-    /// An inline code block uses a legacy language line, or a description uses a bare fence.
+    /// A deprecated form is used: an inline code block with a legacy language line, a description with a bare fence, or a lifecycle verb that <c>invokes</c> and <c>starts</c> replace (<c>sends</c>, <c>entering send</c>, <c>entering start</c>).
     /// </summary>
     public const string LegacyInlineCodeFence = "PLAY0397";
 
@@ -4162,8 +4162,422 @@ public static class DiagnosticCodes
     public const string SinkNameCaseMismatch = "PLAY0939";
 
     /// <summary>
+    /// A <c>storyline</c> declaration is not <c>storyline &lt;Name&gt; ["&lt;title&gt;"]</c>.
+    /// </summary>
+    public const string InvalidStorylineDeclaration = "PLAY0940";
+
+    /// <summary>
+    /// A line in a storyline body is not <c>&lt;kind&gt; &lt;reference&gt; ["&lt;note&gt;"]</c> or <c>description</c>, or a step has a nested line.
+    /// </summary>
+    public const string InvalidStorylineStep = "PLAY0941";
+
+    /// <summary>
+    /// A storyline step names an element no declaration of that kind matches.
+    /// </summary>
+    public const string UnknownStorylineElement = "PLAY0942";
+
+    /// <summary>
+    /// Two <c>storyline</c> declarations carry the same name.
+    /// </summary>
+    public const string DuplicateStoryline = "PLAY0943";
+
+    /// <summary>An agents declaration is malformed.</summary>
+    public const string InvalidAgentsDeclaration = "PLAY0964";
+
+    /// <summary>The application declares more than one agents block.</summary>
+    public const string DuplicateAgentsDeclaration = "PLAY0965";
+
+    /// <summary>An exposed operation does not resolve to an existing operation of its kind.</summary>
+    public const string UnknownAgentOperation = "PLAY0966";
+
+    /// <summary>An exposed operation reference has multiple candidates.</summary>
+    public const string AmbiguousAgentOperation = "PLAY0967";
+
+    /// <summary>An operation is exposed more than once.</summary>
+    public const string DuplicateAgentOperation = "PLAY0968";
+
+    /// <summary>An exposed operation needs a nonempty literal description.</summary>
+    public const string AgentOperationMissingDescription = "PLAY0969";
+
+    /// <summary>An exposed operation needs exactly one explicit scope.</summary>
+    public const string AgentOperationMissingScope = "PLAY0970";
+
+    /// <summary>A command cannot be exposed with read scope.</summary>
+    public const string AgentCommandRequiresWriteScope = "PLAY0971";
+
+    /// <summary>An agents block needs exactly one tokens declaration.</summary>
+    public const string AgentTokensMissing = "PLAY0972";
+
+    /// <summary>The agent token kind is not supported.</summary>
+    public const string UnsupportedAgentTokenKind = "PLAY0973";
+
+    /// <summary>Agent approval is not supported.</summary>
+    public const string AgentApprovalNotSupported = "PLAY0974";
+
+    /// <summary>A block-wide scope is not allowed.</summary>
+    public const string GlobalAgentScope = "PLAY0975";
+
+    /// <summary>Some model operations are not in the explicit agent allowlist.</summary>
+    public const string UnexposedAgentOperations = "PLAY0976";
+
+    /// <summary>The agents block explicitly exposes no operations.</summary>
+    public const string AgentsExposeNothing = "PLAY0977";
+
+    /// <summary>Comparison found a newly exposed operation.</summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning)]
+    public const string NewlyExposedAgentOperation = "PLAY0978";
+
+    /// <summary>Comparison found a loosened agent token requirement.</summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning)]
+    public const string WidenedAgentOperation = "PLAY0979";
+
+    /// <summary>An exposed operation has no applicable model authorization gate.</summary>
+    public const string UngatedAgentOperation = "PLAY0980";
+
+    /// <summary>A global query cannot be exposed to agents.</summary>
+    public const string AgentGlobalQueryRefused = "PLAY0981";
+
+    /// <summary>A performed or graph query has no portable operation identity for agent exposure yet.</summary>
+    public const string UnsupportedAgentQueryKind = "PLAY0982";
+
+    /// <summary>A system declares two abilities whose names are equal ignoring case.</summary>
+    public const string DuplicateAbility = "PLAY0983";
+
+    /// <summary>An ability's effect class is not <c>safe</c>, <c>idempotent</c> or <c>once</c>.</summary>
+    public const string InvalidAbilityEffectClass = "PLAY0984";
+
+    /// <summary>An ability outcome is named like a reserved outlet (<c>next</c>, <c>refused</c>, <c>failed</c>, <c>returned</c> or <c>expired</c>).</summary>
+    public const string ReservedAbilityOutcomeName = "PLAY0985";
+
+    /// <summary>An ability input or returned field names a type that is not declared.</summary>
+    public const string UnknownAbilityType = "PLAY0986";
+
+    /// <summary>An invocation names a system or ability that is not declared.</summary>
+    public const string UnknownInvocationTarget = "PLAY1001";
+
+    /// <summary>An invocation branch or workflow outlet names an outcome the ability does not declare.</summary>
+    public const string UnknownInvocationOutcome = "PLAY1002";
+
+    /// <summary>An invocation leaves a declared ability input unmapped.</summary>
+    public const string MissingAbilityInput = "PLAY1003";
+
+    /// <summary>An invocation maps an input the ability does not declare, or maps one twice.</summary>
+    public const string UnknownAbilityInput = "PLAY1004";
+
+    /// <summary>An invocation maps an input from a source whose type is incompatible.</summary>
+    public const string IncompatibleAbilityInputMapping = "PLAY1005";
+
+    /// <summary>An invocation declares two branches or outlets for the same selector.</summary>
+    public const string DuplicateInvocationBranch = "PLAY1006";
+
+    /// <summary>An outlet or branch can never be taken, such as <c>expired</c> on an ability that does not answer later.</summary>
+    public const string UnreachableInvocationOutlet = "PLAY1007";
+
+    /// <summary><c>$result</c>, <c>$outcome</c> or <c>$failure</c> is read where no matching branch is in scope.</summary>
+    public const string InvocationValueOutsideBranch = "PLAY1008";
+
+    /// <summary>A workflow reads a node's returned value through a path not guaranteed to have passed that node.</summary>
+    public const string NonDominatingNodeRead = "PLAY1009";
+
+    /// <summary>An <c>answers later</c> ability is invoked from a reaction, which has no place to wait.</summary>
+    public const string AnswersLaterInReaction = "PLAY1010";
+
+    /// <summary>An <c>answers later</c> ability is invoked from a state machine, which has no data to hold the answer.</summary>
+    public const string AnswersLaterInStateMachine = "PLAY1011";
+
+    /// <summary>An approval's <c>via</c> ability does not answer later with <c>approved</c> and <c>rejected</c> outcomes.</summary>
+    public const string ApprovalViaAbilityLacksOutcomes = "PLAY1012";
+
+    /// <summary>A <c>compute</c> node is malformed: it has no returns, no body, or an invalid outlet set.</summary>
+    public const string InvalidComputeDeclaration = "PLAY1013";
+
+    /// <summary>A reaction trigger combines <c>invokes</c> with an attached body.</summary>
+    public const string InvocationWithAttachedBody = "PLAY1014";
+
+    /// <summary>A <c>once</c> ability is invoked with <c>attempts</c> greater than one.</summary>
+    public const string OnceAbilityRetried = "PLAY1015";
+
+    /// <summary>Result branches are not allowed on this invocation: a workflow node, state machine or operation phase handles results elsewhere.</summary>
+    public const string InvocationBranchesNotAllowed = "PLAY1016";
+
+    /// <summary>A <c>given &lt;System&gt;.&lt;Ability&gt; returns|answers|fails</c> step names an ability, outcome or returned field the system does not declare.</summary>
+    public const string InvalidAbilityAnswer = "PLAY1017";
+
+    /// <summary>A <c>secret</c> declaration is not <c>secret &lt;Name&gt;</c> with an optional description, or is not at the top level.</summary>
+    public const string InvalidSecretDeclaration = "PLAY0990";
+
+    /// <summary>Two <c>secret</c> declarations have names that are equal ignoring case.</summary>
+    public const string DuplicateSecret = "PLAY0991";
+
+    /// <summary>A system setting maps <c>from secret</c> a name that no <c>secret</c> declaration provides.</summary>
+    public const string UnknownSecret = "PLAY0992";
+
+    /// <summary>A declared <c>secret</c> is not mapped by any system setting.</summary>
+    public const string UnusedSecret = "PLAY0993";
+
+    /// <summary>A system maps the same setting more than once.</summary>
+    public const string DuplicateSystemSetting = "PLAY0994";
+
+    /// <summary>A system maps a setting that its extension's contract does not declare.</summary>
+    public const string UnknownSystemSetting = "PLAY0995";
+
+    /// <summary>A system gives a literal value to a setting its extension's contract declares as secret.</summary>
+    public const string SecretSettingLiteral = "PLAY0996";
+
+    /// <summary>A system maps a secret to a setting its extension's contract declares as public, which would reach the browser.</summary>
+    public const string SecretOnPublicSetting = "PLAY0997";
+
+    /// <summary>An extension contract file is malformed: an unknown line, a bad shape or no <c>extension</c> declaration.</summary>
+    public const string InvalidExtensionContract = "PLAY0998";
+
+    /// <summary>An extension contract does not declare its <c>display name</c>, <c>description</c> or <c>icon</c>.</summary>
+    public const string MissingExtensionManifestField = "PLAY0999";
+
+    /// <summary>A component declares a <c>kind</c> other than <c>react</c>, <c>mount</c> or <c>screenplay</c>.</summary>
+    public const string UnknownComponentKind = "PLAY1100";
+
+    /// <summary>A component or requirement names a platform other than <c>web</c>, <c>ios</c>, <c>android</c> or <c>desktop</c>.</summary>
+    public const string UnknownComponentPlatform = "PLAY1101";
+
+    /// <summary>A component with a frontend declares no <c>placeholder</c> for design tools to draw.</summary>
+    public const string ComponentWithoutPlaceholder = "PLAY1102";
+
+    /// <summary>A contract setting is declared both <c>public</c> and <c>secret</c>.</summary>
+    public const string SettingBothPublicAndSecret = "PLAY1103";
+
+    /// <summary>A component <c>invokes</c> an ability the contract does not declare.</summary>
+    public const string ComponentInvokesUnknownAbility = "PLAY1104";
+
+    /// <summary>A contract declares two members of the same kind with the same name.</summary>
+    public const string DuplicateExtensionMember = "PLAY1105";
+
+    /// <summary>A system declares abilities beside an <c>extension</c> line; the contract is the only source of its abilities.</summary>
+    public const string SystemAbilitiesBesideExtension = "PLAY1106";
+
+    /// <summary>A system's <c>extension</c> reference has no entry in the lock file.</summary>
+    public const string ExtensionNotLocked = "PLAY1107";
+
+    /// <summary>A locked extension's contract is not in the local cache yet, so its contract could not be read.</summary>
+    public const string ExtensionNotRestored = "PLAY1108";
+
+    /// <summary>A cached contract does not match the contract hash the lock pins.</summary>
+    public const string ExtensionContractHashMismatch = "PLAY1109";
+
+    /// <summary>A lock entry was written for a different version range than the model now asks for.</summary>
+    public const string ExtensionLockStale = "PLAY1110";
+
+    /// <summary>The lock file is malformed.</summary>
+    public const string InvalidExtensionLock = "PLAY1111";
+
+    /// <summary>A system uses an ability, trigger or component its extension's contract does not offer, or offers with a different shape.</summary>
+    public const string ExtensionIncompatibleUse = "PLAY1112";
+
+    /// <summary>A placeholder is not a static HTML file: it has script, an external reference or an inline event handler.</summary>
+    public const string InvalidExtensionPlaceholder = "PLAY1113";
+
+    /// <summary>A screen places <c>&lt;System&gt;.&lt;Component&gt;</c>, but the extension's contract declares no component of that name.</summary>
+    public const string UnknownExtensionComponent = "PLAY1114";
+
+    /// <summary>A screen gives an extension component a property its contract does not declare.</summary>
+    public const string UnknownExtensionComponentProperty = "PLAY1115";
+
+    /// <summary>An <c>on</c> line of an extension component names something its contract does not raise.</summary>
+    public const string UnknownExtensionSignal = "PLAY1116";
+
+    /// <summary>A binding reads <c>signal.&lt;value&gt;</c> from a signal that does not carry that value.</summary>
+    public const string UnknownExtensionSignalValue = "PLAY1117";
+
+    /// <summary>An extension component does not support a platform a <c>ui profile</c> targets.</summary>
+    public const string ExtensionComponentPlatformUnsupported = "PLAY1118";
+
+    /// <summary>
+    /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
+    /// </summary>
+    public const string InvalidScreenVisual = "PLAY0950";
+
+    /// <summary>
+    /// A screen's <c>image</c> is not a PNG, JPG, GIF, SVG or WebP file, or its <c>mockup</c> is not an HTML page.
+    /// </summary>
+    public const string UnexpectedScreenVisualFile = "PLAY0951";
+
+    /// <summary>
+    /// A screen's sketch, mockup or image file does not exist beside the model.
+    /// </summary>
+    public const string ScreenVisualMissing = "PLAY0952";
+
+    /// <summary>
+    /// A slice's <c>shows</c> line is not <c>shows event &lt;Name&gt;</c> or <c>shows readmodel &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidSlicePlacement = "PLAY0953";
+
+    /// <summary>
+    /// A slice shows an event or read model the application does not declare.
+    /// </summary>
+    public const string UnknownPlacedElement = "PLAY0954";
+
+    /// <summary>
+    /// A slice shows an element it already declares, or shows the same element twice.
+    /// </summary>
+    public const string RedundantSlicePlacement = "PLAY0955";
+
+    /// <summary>
+    /// A projection <c>remove &lt;target&gt;</c> line names a target without a dynamic dictionary key, so there is no entry to remove.
+    /// </summary>
+    public const string RemoveKeyWithoutDynamicKey = "PLAY0956";
+
+    /// <summary>
+    /// A dynamic dictionary key is malformed: <c>$eventContent</c> names no event property, or <c>$causedBy</c> names a member other than <c>subject</c>, <c>name</c> or <c>userName</c>.
+    /// </summary>
+    public const string InvalidDynamicKey = "PLAY0957";
+
+    /// <summary>
+    /// A children ordering line is not <c>insert first</c>, <c>insert last</c> or <c>sort by &lt;property&gt; [ascending|descending]</c>, or it is outside a <c>children</c> block.
+    /// </summary>
+    public const string InvalidChildrenOrdering = "PLAY0958";
+
+    /// <summary>
+    /// A <c>children</c> block declares more than one ordering line.
+    /// </summary>
+    public const string DuplicateChildrenOrdering = "PLAY0959";
+
+    /// <summary>
+    /// A children <c>sort by</c> names a property the child element type does not declare.
+    /// </summary>
+    public const string UnknownChildrenSortProperty = "PLAY0960";
+
+    /// <summary>
+    /// A <c>$eventContent.&lt;path&gt;</c> dynamic dictionary key names a path the event the mapping handles does not have.
+    /// </summary>
+    public const string UnknownEventContentKey = "PLAY0961";
+
+    /// <summary>
+    /// A dynamic dictionary key writes into a declared read-model property, which Screenplay cannot type as a dictionary, so Chronicle refuses the projection.
+    /// </summary>
+    public const string DynamicKeyOnNonDictionaryProperty = "PLAY0962";
+
+    /// <summary>
+    /// A <c>clear</c> line names a target with a dynamic dictionary key; clearing would keep the entry with no value, so the entry is removed with <c>remove</c>.
+    /// </summary>
+    public const string ClearDynamicKey = "PLAY0963";
+
+    /// <summary>
+    /// A <c>provide</c> line is not <c>provide &lt;name&gt; &lt;Type&gt; [optional] from &lt;source&gt;</c>.
+    /// </summary>
+    public const string InvalidProvideDeclaration = "PLAY1119";
+
+    /// <summary>
+    /// A <c>provide</c> source is not <c>query</c>, <c>host</c>, a literal, an expression over <c>$context</c> values, a <c>file</c> reference or an inline code block.
+    /// </summary>
+    public const string InvalidProvideSource = "PLAY1120";
+
+    /// <summary>
+    /// A <c>provide</c> has neither <c>from &lt;source&gt;</c> nor a <c>file</c> reference or inline code block beneath it.
+    /// </summary>
+    public const string ProvideWithoutSource = "PLAY1121";
+
+    /// <summary>
+    /// A <c>provide</c> that states <c>from &lt;source&gt;</c> also has a body beneath it.
+    /// </summary>
+    public const string ProvideSourceWithBody = "PLAY1122";
+
+    /// <summary>
+    /// The same value is provided twice at one level (application, module, feature or slice).
+    /// </summary>
+    public const string DuplicateProvide = "PLAY1123";
+
+    /// <summary>
+    /// A <c>provide</c> redeclares a built-in <c>$context</c> name, which no level may change.
+    /// </summary>
+    public const string ReservedProvideName = "PLAY1124";
+
+    /// <summary>
+    /// A <c>provide</c> overrides a value declared higher up with a different type; an override keeps the type.
+    /// </summary>
+    public const string ProvideTypeMismatch = "PLAY1125";
+
+    /// <summary>
+    /// A <c>provide ... from query</c> names a query that is not declared, or is declared more than once.
+    /// </summary>
+    public const string UnknownProvideQuery = "PLAY1126";
+
+    /// <summary>
+    /// A <c>provide ... from query</c> names an observable query; a value is resolved once per request.
+    /// </summary>
+    public const string ObservableProvideQuery = "PLAY1127";
+
+    /// <summary>
+    /// The type of a <c>provide ... from query</c> differs from what the query returns, or the query key is missing.
+    /// </summary>
+    public const string ProvideQueryTypeMismatch = "PLAY1128";
+
+    /// <summary>
+    /// Provided values read each other in a cycle.
+    /// </summary>
+    public const string ProvideCycle = "PLAY1129";
+
+    /// <summary>
+    /// An <c>audience</c> declaration is not <c>audience &lt;Name&gt;</c>, or its body holds a line other than <c>description</c>.
+    /// </summary>
+    public const string InvalidAudienceDeclaration = "PLAY1130";
+
+    /// <summary>
+    /// An <c>availability</c> declaration is not <c>availability &lt;Name&gt;</c>, or its body holds a line other than <c>description</c>, <c>for</c>, <c>when</c> or <c>with</c>.
+    /// </summary>
+    public const string InvalidAvailabilityDeclaration = "PLAY1131";
+
+    /// <summary>
+    /// An <c>available</c> gate is not <c>available for &lt;audiences&gt;</c>, <c>available when &lt;condition&gt;</c> or <c>available with &lt;Availability&gt;</c>, or an <c>availability</c> line is not <c>for</c>, <c>when</c> or <c>with</c> with something after it.
+    /// </summary>
+    public const string InvalidAvailableGate = "PLAY1132";
+
+    /// <summary>
+    /// The same audience is declared more than once.
+    /// </summary>
+    public const string DuplicateAudience = "PLAY1133";
+
+    /// <summary>
+    /// The same availability is declared more than once.
+    /// </summary>
+    public const string DuplicateAvailability = "PLAY1134";
+
+    /// <summary>
+    /// An <c>available for</c> gate, an <c>availability</c> or a persona names an audience that is not declared.
+    /// </summary>
+    public const string UnknownAudience = "PLAY1135";
+
+    /// <summary>
+    /// An <c>available with</c> gate or an <c>availability</c> names an availability that is not declared.
+    /// </summary>
+    public const string UnknownAvailability = "PLAY1136";
+
+    /// <summary>
+    /// Availabilities build on each other with <c>with</c> in a cycle.
+    /// </summary>
+    public const string AvailabilityCycle = "PLAY1137";
+
+    /// <summary>
+    /// An <c>available when</c> condition reads a <c>$context</c> value that nothing provides at that place.
+    /// </summary>
+    public const string UnprovidedAvailabilityValue = "PLAY1138";
+
+    /// <summary>
+    /// A screen action, form or reaction <c>invokes</c> a command whose audiences can be off while the invoker's are on; the invocation can be refused as not available.
+    /// </summary>
+    public const string AvailabilityHidesInvokedCommand = "PLAY1139";
+
+    /// <summary>
+    /// An <c>available for</c> or <c>available with</c> line holds a token that is not an audience or availability name, <c>and</c>, <c>or</c> or a parenthesis.
+    /// </summary>
+    public const string UnexpectedTokenInAvailable = "PLAY1140";
+
+    /// <summary>
+    /// A parenthesis in an <c>available</c> line is never closed.
+    /// </summary>
+    public const string UnclosedAvailableGroup = "PLAY1141";
+
+    /// <summary>
     /// A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked <c>secret</c>
     /// into a read-model property, so the value becomes part of the read model and its query results.
     /// </summary>
-    public const string SecretConceptProjected = "PLAY0940";
+    public const string SecretConceptProjected = "PLAY1142";
 }

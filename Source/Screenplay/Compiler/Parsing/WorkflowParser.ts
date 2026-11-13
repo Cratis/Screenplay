@@ -5,11 +5,17 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { IntervalUnit } from '../Syntax/Reactions';
 import { LifecycleSpecificationSyntax, WorkflowDurationSyntax, WorkflowEdgeSyntax, WorkflowNodeKind, WorkflowNodeSyntax, WorkflowSyntax } from '../Syntax/Lifecycles';
-import { pattern } from '../Text/patterns';
+import { nativePattern, pattern } from '../Text/patterns';
+import { PropertySyntax } from '../Syntax/Declarations';
+import { PropertyMappingSyntax } from '../Syntax/Expressions';
+import { CodeBlockSyntax, FileReferenceSyntax } from '../Syntax/Implementations';
+import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
+import { isFileDirective } from './FileReferences';
+import { parseCode, parseFile } from './ImplementationParser';
 import { parseCondition } from './ConditionParser';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
-import { rejectOperationChildren } from './OperationParser';
+import { parseAbilityReturns, rejectOperationChildren } from './OperationParser';
 import { ParserContext } from './ParserContext';
 import { parseTriggerSource } from './ReactionParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -23,11 +29,13 @@ const edgePattern = pattern('^(?:"([^"]+)"|([A-Za-z_]\\w*))(?:\\s*->\\s*([A-Za-z
 const triggerPattern = pattern('^trigger(?:\\s+(?!(?:on|when|every|at|manual)\\b)([A-Za-z_]\\w*))?\\s+(.+)$');
 const onEventPattern = pattern('^on\\s+([A-Za-z_][\\w.]*)$');
 const entersPattern = pattern('^when\\s+([A-Za-z_]\\w*)\\s+enters\\s+([A-Za-z_]\\w*)$');
-const actionPattern = pattern('^action\\s+([A-Za-z_]\\w*)\\s+sends\\s+([A-Za-z_]\\w*)((?:\\s+(?:attempts\\s+\\d+|timeout\\s+\\d+\\s+\\w+|retry\\s+after\\s+\\d+\\s+\\w+))*)$');
-const actionOption = /attempts\s+(\d+)|timeout\s+(\d+)\s+(\w+)|retry\s+after\s+(\d+)\s+(\w+)/g;
+const actionPattern = pattern('^action\\s+([A-Za-z_]\\w*)\\s+(sends|invokes)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?)((?:\\s+(?:attempts\\s+\\d+|timeout\\s+\\d+\\s+\\w+|retry\\s+after\\s+\\d+\\s+\\w+|expires\\s+after\\s+\\d+\\s+\\w+))*)$');
+const computePattern = pattern('^compute\\s+([A-Za-z_]\\w*)$');
+const mappingLinePattern = nativePattern('^(@?[\\w.]+)\\s*=(?:\\s+(.+)|([^=>\\n].*))$');
+const actionOption = /attempts\s+(\d+)|timeout\s+(\d+)\s+(\w+)|retry\s+after\s+(\d+)\s+(\w+)|expires\s+after\s+(\d+)\s+(\w+)/g;
 const decidePattern = pattern('^decide\\s+([A-Za-z_]\\w*)\\s+when\\s+(.+)$');
 const waitPattern = pattern(`^wait\\s+([A-Za-z_]\\w*)\\s+for\\s+(?:(\\d+)\\s+${unit}|([A-Za-z_][\\w.]*)(?:\\s+expires\\s+after\\s+(\\d+)\\s+${unit})?)$`);
-const approvalPattern = pattern(`^approval\\s+([A-Za-z_]\\w*)\\s+by\\s+([A-Za-z_]\\w*)(?:\\s+expires\\s+after\\s+(\\d+)\\s+${unit})?$`);
+const approvalPattern = pattern(`^approval\\s+([A-Za-z_]\\w*)\\s+by\\s+([A-Za-z_]\\w*)(?:\\s+via\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*))?(?:\\s+expires\\s+after\\s+(\\d+)\\s+${unit})?$`);
 const forEachPattern = pattern('^foreach\\s+([A-Za-z_]\\w*)\\s+over\\s+([A-Za-z_][\\w.]*)(?:\\s+parallel\\s+(\\d+))?$');
 const joinPattern = pattern('^join\\s+([A-Za-z_]\\w*)\\s+(all|any|at\\s+least\\s+(\\d+))$');
 
@@ -92,25 +100,66 @@ function parseNode(context: ParserContext, line: SourceLine, workflow: string, o
     switch (keyword) {
         case 'trigger': node = parseTrigger(context, line, ordinal); break;
         case 'action': node = parseAction(context, line); break;
+        case 'compute': node = parseCompute(context, line); break;
         case 'decide': node = parseDecide(context, line); break;
         case 'wait': node = parseWait(context, line); break;
         case 'approval': node = parseApproval(context, line); break;
         case 'foreach': node = parseForEach(context, line); break;
         case 'join': node = parseJoin(context, line); break;
         default:
-            context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Unexpected '${line.content}' in workflow '${workflow}' - expected for, description, specification or a node: trigger, action, decide, wait, approval, foreach or join.`, locationOf(line));
+            context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Unexpected '${line.content}' in workflow '${workflow}' - expected for, description, specification or a node: trigger, action, compute, decide, wait, approval, foreach or join.`, locationOf(line));
     }
     if (node === undefined) {
         context.skipBlock(line.indent);
         return undefined;
     }
-    return { ...node, edges: parseEdges(context, line) };
+    const mappings: PropertyMappingSyntax[] = [];
+    const returns: PropertySyntax[] = [];
+    const body: { file: FileReferenceSyntax | null; code: CodeBlockSyntax | null } = { file: null, code: null };
+    const edges = parseEdges(context, line, node.nodeKind, mappings, returns, body);
+    return {
+        ...node,
+        edges,
+        ...(mappings.length > 0 ? { mappings } : {}),
+        ...(returns.length > 0 ? { returns } : {}),
+        ...(body.file !== null ? { file: body.file } : {}),
+        ...(body.code !== null ? { code: body.code } : {}),
+    };
 }
 
-function parseEdges(context: ParserContext, header: SourceLine): WorkflowEdgeSyntax[] {
+function parseEdges(
+    context: ParserContext,
+    header: SourceLine,
+    kind: WorkflowNodeKind,
+    mappings: PropertyMappingSyntax[],
+    returns: PropertySyntax[],
+    body: { file: FileReferenceSyntax | null; code: CodeBlockSyntax | null }
+): WorkflowEdgeSyntax[] {
     const edges: WorkflowEdgeSyntax[] = [];
+    let returnsSeen = false;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        if (kind === 'Compute') {
+            if (line.content === 'returns') {
+                if (returnsSeen) context.error(DiagnosticCodes.InvalidComputeDeclaration, `Compute '${header.content}' repeats 'returns'.`, locationOf(line));
+                returnsSeen = true;
+                parseAbilityReturns(context, line, header.content, returns);
+                continue;
+            }
+            if (isFileDirective(line) || line.content.startsWith('```')) {
+                const parsedFile = isFileDirective(line) ? parseFile(context, line) : null;
+                const parsedCode = parsedFile === null ? parseCode(context, line) : null;
+                if (body.file !== null || body.code !== null) context.error(DiagnosticCodes.ConflictingImplementationSources, 'A compute node has at most one file or inline payload.', locationOf(line));
+                else { body.file = parsedFile; body.code = parsedCode; }
+                continue;
+            }
+        } else if (kind === 'Action' && !line.content.includes('->')) {
+            const mapping = mappingLinePattern.exec(line.content);
+            if (mapping !== null) {
+                mappings.push({ kind: 'PropertyMappingSyntax', property: mapping[1].replaceAll('@', ''), source: parseMappingSource(mapping[2] ?? mapping[3], locationOf(line), context.valueContext), location: locationOf(line) });
+                continue;
+            }
+        }
         const shorthand = shorthandEdge.exec(line.content);
         const edge = edgePattern.exec(line.content);
         if (shorthand !== null) edges.push({ kind: 'WorkflowEdgeSyntax', outlet: 'next', target: shorthand[1], location: locationOf(line) });
@@ -151,13 +200,15 @@ function parseTrigger(context: ParserContext, line: SourceLine, ordinal: number)
 function parseAction(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {
     const match = actionPattern.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid action '${line.content}' - expected 'action <Name> sends <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid action '${line.content}' - expected 'action <Name> invokes <Command> [attempts <n>] [timeout <n> <unit>] [retry after <n> <unit>]'.`, locationOf(line));
         return undefined;
     }
+    if (match[2] === 'sends') context.warning(DiagnosticCodes.LegacyInlineCodeFence, "'action ... sends' is deprecated - use 'action <Name> invokes <Command>'.", locationOf(line));
     let attempts: number | null = null;
     let timeout: WorkflowDurationSyntax | null = null;
     let retryAfter: WorkflowDurationSyntax | null = null;
-    for (const option of match[3].matchAll(actionOption)) {
+    let expiresAfter: WorkflowDurationSyntax | null = null;
+    for (const option of match[4].matchAll(actionOption)) {
         if (option[1] !== undefined) {
             const count = Number(option[1]);
             if (attempts !== null || !Number.isInteger(count) || count < 1) context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid or repeated attempts in '${line.content}'.`, locationOf(line));
@@ -166,13 +217,17 @@ function parseAction(context: ParserContext, line: SourceLine): WorkflowNodeSynt
             const parsed = duration(context, option[2], option[3], line);
             if (timeout !== null || parsed === undefined) context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid or repeated timeout in '${line.content}'.`, locationOf(line));
             else timeout = parsed;
-        } else {
+        } else if (option[4] !== undefined) {
             const parsed = duration(context, option[4], option[5], line);
             if (retryAfter !== null || parsed === undefined) context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid or repeated retry in '${line.content}'.`, locationOf(line));
             else retryAfter = parsed;
+        } else {
+            const parsed = duration(context, option[6], option[7], line);
+            if (expiresAfter !== null || parsed === undefined) context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid or repeated expiry in '${line.content}'.`, locationOf(line));
+            else expiresAfter = parsed;
         }
     }
-    return empty('Action', match[1], locationOf(line), { command: match[2], attempts, timeout, retryAfter });
+    return empty('Action', match[1], locationOf(line), { command: match[3], attempts, timeout, retryAfter, expiresAfter });
 }
 
 function parseDecide(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {
@@ -204,19 +259,28 @@ function parseWait(context: ParserContext, line: SourceLine): WorkflowNodeSyntax
     return empty('Wait', match[1], locationOf(line), { event: match[4], expiresAfter });
 }
 
+function parseCompute(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {
+    const match = computePattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidComputeDeclaration, `Invalid compute '${line.content}' - expected 'compute <Name>'.`, locationOf(line));
+        return undefined;
+    }
+    return empty('Compute', match[1], locationOf(line), {});
+}
+
 function parseApproval(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {
     const match = approvalPattern.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid approval '${line.content}' - expected 'approval <Name> by <Persona or Policy> [expires after <n> <unit>]'.`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidWorkflowDeclaration, `Invalid approval '${line.content}' - expected 'approval <Name> by <Persona or Policy> [via <System>.<Ability>] [expires after <n> <unit>]'.`, locationOf(line));
         return undefined;
     }
     let expiresAfter: WorkflowDurationSyntax | null = null;
-    if (match[3] !== undefined) {
-        const parsed = duration(context, match[3], match[4], line);
+    if (match[4] !== undefined) {
+        const parsed = duration(context, match[4], match[5], line);
         if (parsed === undefined) return undefined;
         expiresAfter = parsed;
     }
-    return empty('Approval', match[1], locationOf(line), { by: match[2], expiresAfter });
+    return empty('Approval', match[1], locationOf(line), { by: match[2], expiresAfter, ...(match[3] !== undefined ? { via: match[3] } : {}) });
 }
 
 function parseForEach(context: ParserContext, line: SourceLine): WorkflowNodeSyntax | undefined {

@@ -7,6 +7,7 @@ using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Ui;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -47,6 +48,13 @@ internal sealed partial class McpWorkspaces
     static object ReadExecutableModelView(ScreenplayWorkspace workspace, JsonElement arguments, string view)
     {
         var model = workspace.Compilation.Success ? workspace.Compilation.Value!.Model : null;
+        if (model is not null && McpJson.Boolean(arguments, "screens"))
+        {
+            var admitted = ExecutableScreens.Admit(workspace);
+            if (!admitted.Success) throw new McpFailure($"ScreensRefused: {string.Join(' ', admitted.Refusals)}");
+            model = admitted.Compilation!.Model;
+        }
+
         var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
         CheckContinuation(arguments, "expectedAttachmentManifestRevision", manifestRevision);
         if (model is null)

@@ -111,6 +111,10 @@ The bare `passive` read-model directive is retained as optional `isPassive: true
 
 Sinks are read like the C# compiler reads them: `ApplicationSyntax.sinks` holds the `sink <Name> for readmodels|graphs` declarations, and `ReadModelSyntax.sink` and `GraphSyntax.sink` the bare `sink <Name>` directives; each is omitted when absent. Both compilers settle a read model's `sink <Name>` line the same way, once the declared sinks are known, and report every sink diagnostic, `PLAY0931` to `PLAY0939`. See [Sinks](sinks.md).
 
+## Extension components
+
+`checkExtensionUseSites(application, contracts)` checks every component a screen places as `<System>.<Component>` against the contracts a host restored, as the C# binder does: an unknown component (`PLAY1114`), property (`PLAY1115`), signal (`PLAY1116`) or signal value (`PLAY1117`), and a `ui profile` platform the component does not support (`PLAY1118`). Interaction bodies stay opaque in the syntax tree, so the `on` lines and `signal.<value>` reads it checks come from a parser-owned side table that the wire projection never carries. The profile platforms are parser-owned facts on `designProfiles`. Reading and restoring the contracts is the host's job: the compiler only checks what it is given.
+
 ## Keys and routed observers
 
 Both source parsers retain trailing read-model `key` marks, query and reads `by` blocks, production `stream` overrides and reaction/reducer `from` filters. Structural JSON uses `isKey`, `byParts`, `stream` and `from`. The narrow parser exposes reducer evidence through `dependencySourcesOf(slice).reducers` and command/trigger reads through `dependencySourcesOf(node).reads`. Full typed AST transport carries `ReducerSyntax` and `ReadsSyntax`.
@@ -127,7 +131,7 @@ Use this inventory to check whether the syntax your tool needs is retained:
 
 - the domain, imports, concepts and types
 - application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only)
-- systems, operations and their phase/specification intent (syntax-only)
+- systems with their abilities, outcomes, effect classes and implementations (the C# binder admits them as ESM v50), and operations with their phase/specification intent (syntax-only)
 - [state machines](statemachines.md) and [workflows](workflows.md), with the specifications written inside them (syntax shared with C# ESM v36 admission). The TypeScript compiler reads and validates their structure (`PLAY0834`, `PLAY0843` and the parse-time checks); the cross-reference checks (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`) and the run of their specifications are C# only
 - [graphs](graphs.md), [graph projections](projections/graphs.md) and the `given graph` and `then graph` specification steps (syntax shared with C# ESM v38 admission). The TypeScript compiler reads them and reports `PLAY0862` to `PLAY0877`; the run of graph specifications is C# only
 - generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
@@ -150,7 +154,7 @@ Use this inventory to check whether the syntax your tool needs is retained:
 
 Finite pattern support, exact bigint range/checksum math and rule consistency have a mirrored pure TypeScript implementation and shared vectors. This includes ESM v21 source syntax for direct generation-rule bodies and String-concept checksum validation. It is not a TypeScript ESM binder, generator or executor: semantic admission and clock-pinned fixture execution remain native. Monaco and VS Code share strategy/checksum help, completions and host diagnostic codes PLAY0691/PLAY0692.
 
-Systems and operations remain syntax-only and unadmitted. Event sources, streams, command and specification routes, and composite stream ids are admitted by ESM v8 in the C# binder and reference runner. Generated values and responses are admitted as ESM v7. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and V20 generated-concept consistency (Refuted `PLAY0688`, Unproven `PLAY0689`, Proven silent) are C# semantic checks, not additional TypeScript syntax rules. TypeScript has no independent proof engine; host-supplied proof diagnostics are forwarded rather than claimed as local proofs.
+Systems parse with their abilities, held equal to the C# compiler by the conformance documents; the C# binder admits them as ESM v50. Operations remain syntax-only and unadmitted. Event sources, streams, command and specification routes, and composite stream ids are admitted by ESM v8 in the C# binder and reference runner. Generated values and responses are admitted as ESM v7. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and V20 generated-concept consistency (Refuted `PLAY0688`, Unproven `PLAY0689`, Proven silent) are C# semantic checks, not additional TypeScript syntax rules. TypeScript has no independent proof engine; host-supplied proof diagnostics are forwarded rather than claimed as local proofs.
 
 Some constructs are recognized but skipped or represented only by limited evidence, without an unsupported-construct diagnostic:
 

@@ -26,6 +26,14 @@ export type PolicyRequirementSyntax = PolicyReferenceSyntax | LogicalPolicyRequi
 export interface AuthorizeSyntax extends SyntaxNode {
     readonly kind: 'AuthorizeSyntax';
     readonly requirement: PolicyRequirementSyntax;
+    readonly mappings?: readonly PolicyInputMappingSyntax[];
+}
+
+// 'input = property' under a single-policy 'authorize': which property of the artifact fills a policy input.
+export interface PolicyInputMappingSyntax extends SyntaxNode {
+    readonly kind: 'PolicyInputMappingSyntax';
+    readonly input: string;
+    readonly property: string;
 }
 
 // 'persona <Name>' - a role that uses the application, and the policies that say what it may do.
@@ -35,6 +43,8 @@ export interface PersonaSyntax extends SyntaxNode {
     readonly description: string | null;
     readonly policies: readonly string[];
 
+    // The audiences the persona is always in - authoring metadata, written only when present.
+    readonly audiences?: readonly string[];
     // Authoring metadata for the personas canvas, written only when present.
     readonly goals?: readonly string[];
     readonly x?: number;

@@ -30,6 +30,14 @@ public class when_binding_the_invoicing_sample : Specification
     }
 
     [Fact]
+    void should_expose_only_the_authorized_invoice_operations() => _application.Agents!.Operations.Select(operation => operation.Reference).ShouldEqual([
+        "Invoicing.InvoiceManagement.InvoiceList.ListInvoices",
+        "Invoicing.InvoiceManagement.RegisterInvoice.RegisterInvoice"]);
+
+    [Fact]
+    void should_keep_the_exposed_operations_gated() => _diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UngatedAgentOperation).ShouldBeFalse();
+
+    [Fact]
     void should_parse_the_anonymous_policy() => _application.Policies.Single(policy => policy.Name == "Anyone").Condition.ShouldBeOfExactType<AnonymousConditionSyntax>();
 
     [Fact]
@@ -134,4 +142,9 @@ public class when_binding_the_invoicing_sample : Specification
 
     [Fact]
     void should_show_both_key_shapes_and_production_routes() => SyntaxNodes.Under(_application).OfType<ReadModelSyntax>().Count(model => model.Properties.Any(property => property.IsKey)).ShouldEqual(4);
+
+    [Fact]
+    void should_admit_set_once_and_the_children_sort() => _diagnostics.Any(diagnostic =>
+        (diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding) &&
+        (diagnostic.Message.Contains("firstSentAt", StringComparison.Ordinal) || diagnostic.Message.Contains("lineItems", StringComparison.Ordinal))).ShouldBeFalse();
 }

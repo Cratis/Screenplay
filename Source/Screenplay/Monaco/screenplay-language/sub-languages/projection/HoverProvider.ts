@@ -215,6 +215,9 @@ export class HoverProvider implements languages.HoverProvider {
             'join': '**join** *<collection>* **on** *<property>*\n\nJoins with a child collection based on a property.',
             'children': '**children** *<collection>* **id** *<expression>*\n\nDefines operations on child collections.',
             'remove': '**remove with** *<EventType>* or **remove via join on** *<EventType>*\n\nRemoves items from the read model based on events.',
+            'once': '**set once** *<property>* = *<value>*\n\nAssigns the value only while the property has none yet - it is missing or null. Later events leave it as it is.',
+            'insert': '**insert first** | **insert last**\n\nInside a `children` block: where a new child goes. `insert last` is the default.',
+            'sort': '**sort by** *<property>* [ascending|descending]\n\nInside a `children` block: the collection is sorted by the child property when a child is added. An update never moves a child.',
             'clear': '**clear** *<property>*\n\nRemoves the value a property holds. **clear with** *<EventType>* nulls a whole nested object instead.',
             'automap': '**automap** or **no automap**\n\nControls automatic property mapping from events to the read model.',
             'increment': '**increment** *<property>*\n\nIncrements a numeric property by 1.',
@@ -240,7 +243,8 @@ export class HoverProvider implements languages.HoverProvider {
     private getExpressionInfo(word: string): string | null {
         const expressions: Record<string, string> = {
             '$eventSourceId': '**$eventSourceId**\n\nThe identifier of the event source (aggregate/entity) that generated the event.',
-            '$causedBy': '**$causedBy**\n\nThe identity that caused the event - `subject`, `name`, `userName` or `onBehalfOf`, itself an identity.\n\nChronicle cannot yet evaluate this short form (Cratis/Chronicle#4119); prefer **$eventContext.causedBy**.*property*.',
+            '$causedBy': '**$causedBy**.*<member>*\n\nThe identity that caused the event - `subject`, `name` or `userName`. Reads the same value as the event context member causedBy, and can key a dictionary entry: `countByUser.$causedBy.userName`.',
+            '$eventContent': '**$eventContent**.*<path>*\n\nAs a dynamic dictionary key - `slots.$eventContent.slot` - the event property whose value names the entry.',
             '$eventContext': describeEventContext(),
         };
 

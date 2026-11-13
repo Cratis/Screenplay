@@ -36,6 +36,8 @@ public static class SemanticTypedContextSerializer
     /// Revision 1 carries no time-zone member. Revision 2 adds the <c>TimeZone</c> runtime token for <c>$context.timeZone</c>.
     /// Revision 3 (decision 0132) is written only when a declared application context member is read: it adds the
     /// <c>application-context</c> source kind and a top-level <c>contextMembers</c> registry, ordered by name.
+    /// Revision 4 (ESM v53) is written only when a provided value is read: it adds the <c>provided</c> source kind, whose path names
+    /// the <c>provide</c>, and carries the <c>contextMembers</c> registry, which is empty unless an application context member is read too.
     /// A descriptor with a handler result contract carries a <c>result</c> member (decision 0119).
     /// </remarks>
     public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors)
@@ -51,8 +53,23 @@ public static class SemanticTypedContextSerializer
             .ToArray();
         string[] runtimeTokens = [.. _runtimeTokens, .. usesTimeZone ? [SemanticContextRuntimeTokens.TimeZone] : Array.Empty<string>()];
         var written = descriptors.Select(descriptor => WithResult(descriptor, Descriptor(descriptor)));
-        object contract = contextMembers.Length > 0
-            ? new
+        var usesProvided = members.Any(member => member.Source.Kind == SemanticContextSourceKinds.Provided);
+        object contract;
+        if (usesProvided)
+        {
+            contract = new
+            {
+                contractRevision = SemanticTypedContextDescriptor.ProvidedContractRevision,
+                typeKinds = _typeKinds,
+                sourceKinds = (string[])[.. _sourceKinds, .. contextMembers.Length > 0 ? [SemanticContextSourceKinds.ApplicationContext] : Array.Empty<string>(), SemanticContextSourceKinds.Provided],
+                runtimeTokens,
+                contextMembers,
+                descriptors = written
+            };
+        }
+        else if (contextMembers.Length > 0)
+        {
+            contract = new
             {
                 contractRevision = SemanticTypedContextDescriptor.ContextMembersContractRevision,
                 typeKinds = _typeKinds,
@@ -60,8 +77,11 @@ public static class SemanticTypedContextSerializer
                 runtimeTokens,
                 contextMembers,
                 descriptors = written
-            }
-            : new
+            };
+        }
+        else
+        {
+            contract = new
             {
                 contractRevision = usesTimeZone ? SemanticTypedContextDescriptor.TimeZoneContractRevision : SemanticTypedContextDescriptor.ContractRevision,
                 typeKinds = _typeKinds,
@@ -69,6 +89,8 @@ public static class SemanticTypedContextSerializer
                 runtimeTokens,
                 descriptors = written
             };
+        }
+
         return JsonSerializer.SerializeToUtf8Bytes(contract, contract.GetType(), _options);
     }
 

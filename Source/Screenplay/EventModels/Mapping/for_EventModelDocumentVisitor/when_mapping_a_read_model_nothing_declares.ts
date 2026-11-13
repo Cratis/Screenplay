@@ -43,6 +43,8 @@ describe('when mapping a read model nothing declares', () => {
             '          clear note',
             '          status = "registered"',
             '          $eventContext.correlationId = invoiceNumber',
+            '          amountsByNumber.$eventContent.invoiceNumber = amount',
+            '          set once firstNumber = invoiceNumber',
             '        every',
             '          no automap',
             '          increment touches',
@@ -81,6 +83,9 @@ describe('when mapping a read model nothing declares', () => {
     it('should hold a property it only clears as text', () => properties.note.type!.should.equal('string'));
     it('should hold a set property no event names as text', () => properties.status.type!.should.equal('string'));
     it('should not hold what it writes to the event context', () => Object.keys(properties).some(name => name.startsWith('$')).should.be.false);
+    it('should hold a dictionary a dynamic key writes as an object', () => properties.amountsByNumber.type!.should.equal('object'));
+    it('should not hold the dynamic key as a property', () => Object.keys(properties).some(name => name.includes('$')).should.be.false);
+    it('should type a set once property after the event property of its name, if any', () => properties.firstNumber.type!.should.equal('string'));
     it('should hold what a join sets', () => (properties.customerName !== undefined).should.be.true);
     it('should hold children as a list of what they project', () => {
         properties.lines.type!.should.equal('array');

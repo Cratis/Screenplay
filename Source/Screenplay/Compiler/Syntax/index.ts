@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 export * from './SyntaxNode';
+export * from './Agents';
 export * from './IdentitySyntax';
 export * from './IdentityDetailSyntax';
 export * from './IdentitySourceSyntax';
@@ -9,6 +10,7 @@ export * from './ClaimIdentitySourceSyntax';
 export * from './QueryIdentitySourceSyntax';
 export * from './CodeIdentitySourceSyntax';
 export * from './FileIdentitySourceSyntax';
+export * from './ProvideSyntax';
 export * from './Declarations';
 export type { GenerationSyntax } from './GenerationSyntax';
 export * from './EventVisibility';
@@ -51,6 +53,7 @@ export * from './Captures';
 export * from './CaptureEventsSource';
 export { dependencySourcesOf } from './DependencySources';
 export * from './Authorization';
+export * from './Availability';
 export * from './Sinks';
 export * from './Constraints';
 export * from './Specifications';

@@ -25,14 +25,15 @@ internal static class SemanticArrayClassification
         "application/concepts", "application/types", "application/modules", "application/triggers", "application/eventSources",
         "modules/features", "features/features", "features/slices",
         "slices/events", "slices/commands", "slices/readModels", "slices/projections", "slices/queries",
-        "slices/specifications", "slices/reactions", "slices/captures",
+        "slices/specifications", "slices/reactions", "slices/captures", "slices/screens",
         "types/properties", "events/properties", "commands/properties", "readModels/properties", "triggers/properties",
         "priorRevisions/properties", "eventSources/streams", "queries/keyParts",
+        "application/systems",
     ];
 
     static readonly string[] _nameSets =
     [
-        "application/policies", "application/contextMembers", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
+        "application/audiences", "application/availabilities", "application/policies", "application/contextMembers", "application/stateMachines", "application/workflows", "stateMachines/states", "workflows/nodes",
         "stateMachines/specifications", "workflows/specifications", "slices/reducers", "slices/constraints", "record/fields", "records/fields", "thenReturns/fields",
     ];
 
@@ -45,17 +46,23 @@ internal static class SemanticArrayClassification
 
     static readonly string[] _ordered =
     [
+        "application/provides", "modules/provides", "features/provides", "slices/provides",
+        "modules/available", "features/available", "slices/available", "commands/available", "queries/available", "screens/available",
+        "availabilities/requirements", "source/by",
         "appends/mappings", "appends/tags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",
         "children/appends", "children/map", "nested/appends", "nested/map",
-        "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations",
+        "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations", "policies/reads", "policies/inputs", "authorization/mappings",
         "concepts/numbers", "concepts/validations", "concepts/values",
         "constraints/releasedBy", "constraints/targets", "targets/properties",
         "events/priorRevisions", "events/tags", "priorRevisions/tags",
         "every/mappings", "from/mappings", "join/mappings", "transitions/mappings", "projections/transitions",
-        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path",
+        "source/path", "value/path", "factor/path", "key/path", "target/path", "identity/path", "ordering/sortBy",
         "fields/records", "response/fields",
         "givenCaller/claims", "givenCaller/roles", "runsAs/roles",
+        "abilities/inputs", "abilities/returns", "abilities/outcomes",
+        "invokes/inputs", "invokes/branches", "branches/produces", "entering/inputs", "nodes/inputs", "nodes/returns",
+        "specifications/givenAbilityAnswers", "givenAbilityAnswers/values", "thenInvocations/inputs",
         "handler/possibleEvents",
         "invokes/mappings", "invokes/onRefused", "onRefused/produces",
         "map/targets", "map/template", "map/translations", "mappings/target",
@@ -76,6 +83,7 @@ internal static class SemanticArrayClassification
         "specifications/thenEvents", "specifications/thenInvocations", "specifications/thenQueries", "specifications/thenReadModels",
         "thenQueries/filters", "thenQueries/results", "when/fields",
         "value/values", "key/values", "streamId/values", "operand/values", "values/values",
+        "screens/data", "screens/actions", "screens/navigation", "screens/extensions", "screens/components", "components/properties", "components/handles", "handles/commands", "data/fields", "actions/inputs", "layout/fits", "layout/regions", "regions/regions", "regions/actions",
     ];
 
     static readonly ImmutableDictionary<string, SemanticArrayRule> _rules = BuildRules();
@@ -115,6 +123,12 @@ internal static class SemanticArrayClassification
         Add(rules, _nameSets, new(SemanticArrayKind.NameSet, "name"));
         Add(rules, _targetPropertySets, new(SemanticArrayKind.ReferenceSet, "targetProperty"));
         Add(rules, _ordered, new(SemanticArrayKind.Ordered));
+
+        // Agent exposure is an allowlist; the canonical writer sorts it by operation kind and identity.
+        rules.Add("agents/operations", new(SemanticArrayKind.ReferenceSet, "operation"));
+
+        // A system holds its abilities by name; the canonical writer sorts them by ordinal name.
+        rules.Add("systems/abilities", new(SemanticArrayKind.NameSet, "name"));
         rules.Add("reducers/transitions", new(SemanticArrayKind.ReferenceSet, "eventContract"));
         rules.Add("key/parts", new(SemanticArrayKind.ReferenceSet, "property"));
         rules.Add("parentKey/parts", new(SemanticArrayKind.ReferenceSet, "property"));

@@ -24,6 +24,16 @@ export type { SpecificationOperationSyntax } from './SpecificationOperationSynta
 export type { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
 export type { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
 
+// 'given <System>.<Ability> returns|answers|fails': how an ability answers while a specification runs.
+export interface SpecificationAbilityAnswerSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationAbilityAnswerSyntax';
+    readonly ability: string;
+    readonly answer: string;
+    readonly outcome: string | null;
+    readonly reason: string | null;
+    readonly values: readonly PropertyMappingSyntax[];
+}
+
 // 'given <Event>', 'then <Event>' or 'when append <Event>', with the values it states.
 export interface SpecificationEventSyntax extends SyntaxNode {
     readonly kind: 'SpecificationEventSyntax';
@@ -155,6 +165,8 @@ export interface SpecificationCallerSyntax extends SyntaxNode {
     readonly authenticated: boolean;
     readonly roles: readonly string[];
     readonly claims: readonly SpecificationCallerClaimSyntax[];
+    // The caller's identifier - 'id "alice"' - which $identity.id reads in a policy state condition.
+    readonly id?: string;
 }
 
 // One 'claim "<type>" = "<value>"' line of a caller.
@@ -178,6 +190,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly thenGraphs?: readonly SpecificationGraphSyntax[];
     readonly thenQueries?: readonly SpecificationQuerySyntax[];
     readonly given: readonly SpecificationEventSyntax[];
+    readonly givenAbilityAnswers?: readonly SpecificationAbilityAnswerSyntax[];
     readonly givenCaller?: SpecificationCallerSyntax | null;
     readonly givenCallerPersona?: SpecificationCallerPersonaSyntax | null;
     readonly givenReadModels: readonly SpecificationReadModelSyntax[];

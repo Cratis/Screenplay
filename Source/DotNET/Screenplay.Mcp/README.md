@@ -29,7 +29,7 @@ personal publisher, invent an assigned app ID, or publish credentials in source.
 
 ## Build and validate locally
 
-Prerequisites: .NET 10 SDK, Node 24, Corepack/Yarn, Python 3.12 or later, and
+Prerequisites: .NET 11 SDK, Node 24, Corepack/Yarn, Python 3.12 or later, and
 `@anthropic-ai/mcpb` **2.1.2**. Python validation uses `jsonschema` **4.26.0**.
 These are maintainer build tools, not end-user dependencies.
 

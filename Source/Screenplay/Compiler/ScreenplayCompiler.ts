@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { validateIdentity } from './Parsing/IdentityValidator';
+import { validateProvides } from './Parsing/ProvideValidator';
+import { validateAvailability, validateAvailabilityInvocations } from './Parsing/AvailabilityValidator';
 import { validateDesignSystem } from './Parsing/DesignSystemValidator';
 import { validateApplicationHandlers } from './Parsing/CommandHandlerValidator';
 import { recordStructuralInteractions } from './Parsing/StructuralInteractionSites';
@@ -20,8 +22,12 @@ import { GuardedInteractionBinding, interactionAncestry } from './Parsing/Intera
 import { validateResponses } from './Parsing/ResponseValidator';
 import { validatePublicEventUsage } from './Parsing/PublicEventUsageValidator';
 import { sourceContext } from './Parsing/SourceOptionsParser';
+import { parseExtensionContractDocument } from './Parsing/ExtensionContractParser';
+import { ExtensionContract } from './Syntax/ExtensionContract';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
+import { validateInvocations } from './Parsing/InvocationValidator';
+import { validateSystemConfiguration } from './Parsing/SystemConfigurationValidator';
 import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
 import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
@@ -31,6 +37,7 @@ import { validateSecretProjections } from './Parsing/SecretProjectionValidator';
 import { validateReadModelKeys } from './Parsing/ReadModelKeyValidator';
 import { validateGraphs } from './Parsing/GraphValidator';
 import { validateSinks } from './Parsing/Sinks';
+import { validateSlicePlacements } from './Parsing/SlicePlacementValidator';
 import { validateReadModelMemberTypes } from './Parsing/ReadModelMemberTypeValidator';
 import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
@@ -38,6 +45,7 @@ import { validateGuardedActions } from './Parsing/GuardedActionValidator';
 import { validatePersonaCallers } from './Parsing/PersonaCallerValidator';
 import { validatePurposes } from './Parsing/PurposeValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
+import { validateAgents } from './Parsing/AgentsValidator';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
 import { ApplicationSyntax } from './Syntax/Structure';
@@ -87,11 +95,17 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     if (validateResponseContracts) {
         validateApplicationHandlers(value, context);
         validateIdentity(value, context);
+        validateProvides(value, context);
+        validateAvailability(value, context);
+        validateAvailabilityInvocations(value, context);
         validateDesignSystem(value, context);
         validatePurposes(value, context);
+        validateSlicePlacements(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);
+        validateInvocations(value, context);
+        validateSystemConfiguration(value, context);
         validatePublicEventUsage(value, context);
         validateSpecificationCases(value, context);
         validateSpecificationExampleTypes(value, context, true);
@@ -110,6 +124,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);
         validatePersonaCallers(value, context);
+        validateAgents(value, context, true);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
         for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
@@ -162,6 +177,13 @@ export function parseProjectionSource(source: string, path?: string, languages?:
 
 export function parseCaptureSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly CaptureSyntax[]> {
     return parseSourceFamily(source, 'capture', parseCapture, path, languages);
+}
+
+/** Parses the contract.play of an extension package, the TypeScript counterpart of the C# ExtensionContractParser.Parse. */
+export function parseExtensionContract(source: string, path?: string): CompilationResult<ExtensionContract | null> {
+    const context = sourceContext(splitLines(source, false, path), path);
+    const value = parseExtensionContractDocument(context, path);
+    return { value, diagnostics: context.diagnostics, success: value !== null && !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }
 
 export function parseSpecificationSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly SpecificationSyntax[]> {

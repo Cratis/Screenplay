@@ -1,8 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { StorylineSyntax } from '../Syntax/Storylines';
+import { validateAgents } from '../Parsing/AgentsValidator';
 import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
+import { validateProvides } from '../Parsing/ProvideValidator';
+import { validateAvailability, validateAvailabilityInvocations } from '../Parsing/AvailabilityValidator';
 import { validateDesignSystem } from '../Parsing/DesignSystemValidator';
 import { validateApplicationHandlers } from '../Parsing/CommandHandlerValidator';
 import { ParserContext } from '../Parsing/ParserContext';
@@ -48,6 +52,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
     const identities = applications.flatMap(application => application.identity == null ? [] : [application.identity]);
+    const agents = applications.flatMap(application => application.agents == null ? [] : [application.agents]);
+    for (const extra of agents.slice(1)) diagnostics.push(error(DiagnosticCodes.DuplicateAgentsDeclaration, 'An application allows exactly one agents block', extra.location));
     for (const extra of identities.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
         `The folder already declares an identity block in '${describe(identities[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
     const contexts = applications.flatMap(application => application.context == null ? [] : [application.context]);
@@ -74,6 +80,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const modules = mergeModules(applications.flatMap(application => application.modules), diagnostics);
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
     const users = declaredInOneFile<UserSyntax>(applications.flatMap(application => application.users ?? []), 'user', diagnostics);
+    const storylines = declaredInOneFile<StorylineSyntax>(applications.flatMap(application => application.storylines ?? []), 'storyline', diagnostics);
     const declaredPolicies = applications.flatMap(application => application.policies ?? []);
     const policies = declaredInOneFile(declaredPolicies, 'policy', diagnostics);
     // Like the C# merge, a policy dropped as repeated across files is not also reported as repeated within its file.
@@ -86,6 +93,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...(zones.length === 0 ? {} : { timeZone: zones[0].timeZone }),
         ...(identities.length === 0 ? {} : { identity: identities[0] }),
         ...(contexts.length === 0 ? {} : { context: contexts[0] }),
+        ...(agents.length === 0 ? {} : { agents: agents[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
@@ -95,11 +103,15 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...(applications.some(application => (application.stateMachines?.length ?? 0) > 0) ? { stateMachines: applications.flatMap(application => application.stateMachines ?? []) } : {}),
         ...(applications.some(application => (application.workflows?.length ?? 0) > 0) ? { workflows: applications.flatMap(application => application.workflows ?? []) } : {}),
         purposes: declaredInOneFile(applications.flatMap(application => application.purposes ?? []), 'purpose', diagnostics),
+        ...presentOnly('provides', applications.flatMap(application => application.provides ?? [])),
+        ...presentOnly('audiences', declaredInOneFile(applications.flatMap(application => application.audiences ?? []), 'audience', diagnostics)),
+        ...presentOnly('availabilities', declaredInOneFile(applications.flatMap(application => application.availabilities ?? []), 'availability', diagnostics)),
         eventSources: applications.flatMap(application => application.eventSources ?? []),
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
         modules,
         personas,
         ...presentOnly('users', users),
+        ...presentOnly('storylines', storylines),
         ...presentOnly('sinks', applications.flatMap(application => application.sinks ?? [])),
         policies,
         seeds: applications.flatMap(application => application.seeds ?? []),
@@ -116,7 +128,11 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const identityContext = new ParserContext(new LineReader([]));
     validateApplicationHandlers(value, identityContext);
     validateIdentity(value, identityContext);
+    validateProvides(value, identityContext);
+    validateAvailability(value, identityContext);
+    validateAvailabilityInvocations(value, identityContext);
     validateDesignSystem(value, identityContext);
+    validateAgents(value, identityContext);
     diagnostics.push(...identityContext.diagnostics);
     const documentDiagnostics = documents.flatMap(document => document.diagnostics).filter(diagnostic =>
         diagnostic.code !== DiagnosticCodes.DuplicateDeclaration || !droppedPolicies.some(location => sameLocation(location, diagnostic.location)));
@@ -126,7 +142,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
+    if (application.agents != null || application.context != null || application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.users?.length ?? 0) > 0 || (application.storylines?.length ?? 0) > 0 || (application.sinks?.length ?? 0) > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.provides?.length ?? 0) > 0 || (application.audiences?.length ?? 0) > 0 || (application.availabilities?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.stateMachines?.length ?? 0) > 0 || (application.workflows?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0 || (application.stickyNotes?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }
@@ -140,6 +156,8 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
             fileImports: parts.flatMap(part => part.fileImports),
             examples: parts.flatMap(part => part.examples ?? []),
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
+            ...presentOnly('provides', parts.flatMap(part => part.provides ?? [])),
+            ...presentOnly('available', parts.flatMap(part => part.available ?? [])),
             description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
             authorize: parts.some(part => authorizationWasRefused(part.fileImports))
@@ -160,6 +178,8 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
             fileImports: parts.flatMap(part => part.fileImports),
             examples: parts.flatMap(part => part.examples ?? []),
             purposes: firstOfEach(parts.flatMap(part => part.purposes ?? []), reference => reference.name),
+            ...presentOnly('provides', parts.flatMap(part => part.provides ?? [])),
+            ...presentOnly('available', parts.flatMap(part => part.available ?? [])),
             description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
             documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
             authorize: parts.some(part => authorizationWasRefused(part.fileImports))

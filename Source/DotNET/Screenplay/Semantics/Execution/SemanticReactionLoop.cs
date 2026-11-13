@@ -34,6 +34,8 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
         plan.Model.Application.Types.ToDictionary(type => type.Id));
 
+    SemanticAbilityAnswer? _abilityAnswer;
+
     /// <summary>
     /// Gets the world as the loop has left it.
     /// </summary>
@@ -43,6 +45,11 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     /// Gets the IANA time zone a specification pins with <c>given time zone</c>; commands that reactions invoke read it as the scenario and context zone.
     /// </summary>
     public string? GivenTimeZone { get; init; }
+
+    /// <summary>
+    /// Gets the answers the invoked abilities give, stated by the specification (ESM v51).
+    /// </summary>
+    public ImmutableArray<SemanticAbilityAnswer> AbilityAnswers { get; init; } = [];
 
     /// <summary>
     /// Gets every fact appended through the loop, in order.
@@ -218,6 +225,12 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
 
             foreach (var invocation in trigger.Invokes)
             {
+                if (invocation.Ability is not null)
+                {
+                    if (InvokeAbility(reaction, invocation, lookup, root, cause, occurrence) is { } abilityFailure) return abilityFailure;
+                    continue;
+                }
+
                 if (Invoke(reaction, invocation, lookup, root, cause, occurrence, out var handled) is { } failure)
                 {
                     return failure;
@@ -229,8 +242,59 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         {
             return new SemanticRejected(World, SemanticRejectionCategory.Contract, null, exception.Message);
         }
+        catch (SemanticAbilityAnswerMissing missing)
+        {
+            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, missing.Message);
+        }
 
         return null;
+    }
+
+    // An ability runs outside the model: the specification supplies its answer ('given <System>.<Ability> returns|answers|fails');
+    // without one the ability returns nothing, so a branch that reads what it returned cannot be proved and reports unsupported.
+    SemanticExecutionResult? InvokeAbility(
+        SemanticReaction reaction,
+        SemanticInvocation invocation,
+        Dictionary<SemanticId, SemanticValue> values,
+        SemanticExpressionRootKind root,
+        SemanticFact? cause,
+        SemanticCommandOccurrence? occurrence)
+    {
+        var inputs = invocation.Inputs
+            .Select(input => new SemanticAbilityFieldValue(input.Input, SemanticEvaluator.Evaluate(input.Source, root, values, occurrence, cause)))
+            .ToImmutableArray();
+        _invocations.Add(new(default, [], true) { System = invocation.System, Ability = invocation.Ability, Inputs = inputs });
+        var answer = AbilityAnswers.FirstOrDefault(candidate => candidate.System == invocation.System && string.Equals(candidate.Ability, invocation.Ability, StringComparison.Ordinal));
+        var selector = answer?.Kind switch
+        {
+            SemanticAbilityAnswerKind.Outcome => answer.Outcome,
+            SemanticAbilityAnswerKind.Failed => "failed",
+            _ => "returned"
+        };
+        var branch = invocation.Branches.FirstOrDefault(candidate => string.Equals(candidate.Selector, selector, StringComparison.Ordinal));
+        if (branch is null) return null;
+        var previous = _abilityAnswer;
+        _abilityAnswer = answer ?? new SemanticAbilityAnswer(invocation.System, invocation.Ability!, SemanticAbilityAnswerKind.Returned);
+        try
+        {
+            return ProduceAll(reaction, branch.Produces, values, root, cause, occurrence);
+        }
+        finally
+        {
+            _abilityAnswer = previous;
+        }
+    }
+
+    SemanticValue AbilityValue(SemanticInvocationValueExpression expression)
+    {
+        var answer = _abilityAnswer!;
+        var value = expression.Source switch
+        {
+            "result" => answer.Values.FirstOrDefault(field => string.Equals(field.Name, expression.Member, StringComparison.Ordinal))?.Value,
+            "outcome" => answer.Outcome is null ? null : SemanticValue.Text(answer.Outcome),
+            _ => answer.Reason is null ? null : SemanticValue.Text(answer.Reason)
+        };
+        return value ?? throw new SemanticAbilityAnswerMissing($"The reaction reads '${expression.Source}{(expression.Member.Length == 0 ? string.Empty : "." + expression.Member)}' of an ability, which the specification gives no answer for ('given <System>.<Ability> returns|answers|fails').");
     }
 
     // A reaction-invoked command reads the triggering instant when the model uses the clock (decision 0107); other models keep the scenario clock.
@@ -276,8 +340,12 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
 
         var eventContract = plan.Events[produced.EventContract];
         var mapped = produced.Mappings
-            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, mapping.Source is SemanticRefusalExpression expression && refusal is not null
-                ? refusal.ValueOf(expression.Member) : SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence, cause)))
+            .Select(mapping => new SemanticPropertyValue(mapping.TargetProperty, mapping.Source switch
+            {
+                SemanticRefusalExpression expression when refusal is not null => refusal.ValueOf(expression.Member),
+                SemanticInvocationValueExpression invocationValue when _abilityAnswer is not null => AbilityValue(invocationValue),
+                _ => SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence, cause)
+            }))
             .ToImmutableArray();
         var properties = eventContract.Properties.ToDictionary(property => property.Id);
         foreach (var value in mapped)

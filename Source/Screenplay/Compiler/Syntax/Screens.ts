@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { AuthorizeSyntax } from './Authorization';
+import type { AvailableSyntax } from './Availability';
 import { ConditionSyntax } from './Conditions';
+import type { FileReferenceSyntax } from './Constraints';
 import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
 import type { ScreenContributionSyntax } from './CompositionSyntax';
@@ -32,11 +34,24 @@ export interface UiBindingSyntax extends SyntaxNode {
 export interface ScreenSyntax extends SyntaxNode {
     readonly description?: string | null;
     readonly kind: 'ScreenSyntax';
+    // The 'available' gates, written only when present.
+    readonly available?: readonly AvailableSyntax[];
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
     readonly contributions?: readonly ScreenContributionSyntax[];
     readonly outlets?: readonly OutletSyntax[];
     readonly fits?: readonly ScreenFit[];
+    readonly visuals?: readonly ScreenVisualSyntax[];
+}
+
+// A sketch, an HTML/CSS mockup page or an image a screen carries - 'sketch|mockup|image <path>'. The C# member
+// Kind is written 'syntaxKind' so it does not collide with the node kind.
+export type ScreenVisualKind = 'Sketch' | 'Mockup' | 'Image';
+
+export interface ScreenVisualSyntax extends SyntaxNode {
+    readonly kind: 'ScreenVisualSyntax';
+    readonly syntaxKind: ScreenVisualKind;
+    readonly file: FileReferenceSyntax;
 }
 
 // Where a slice's screen fits, written 'fits <role>, ...' in order of preference.

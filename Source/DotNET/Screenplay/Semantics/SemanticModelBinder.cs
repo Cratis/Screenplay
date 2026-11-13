@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Environments;
+using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -40,12 +41,25 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
-        var result = BindCore(applicationName, syntax, documents);
-        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, result.Diagnostics) };
+        var resolution = ExtensionContractResolver.Current.Resolve(syntax, documents.Documents.Select(document => document.DisplayPath));
+        var effective = resolution.Apply(syntax);
+        var result = BindCore(applicationName, effective, documents);
+        var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax)).AddRange(resolution.CheckSettings(syntax));
+        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]) };
     }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
+        if (SemanticModelValidator.UsesAvailability(application)) return (LanguageVersion.V53, SemanticVersion.V53);
+        if (SemanticModelValidator.UsesAbilityInvocations(application)) return (LanguageVersion.V51, SemanticVersion.V51);
+        if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
+        if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
+        if (application.Agents is not null) return (LanguageVersion.V48, SemanticVersion.V48);
+        if (SemanticModelValidator.UsesNarrowing(application)) return (LanguageVersion.V47, SemanticVersion.V47);
+        if (SemanticModelValidator.UsesPolicyInputs(application)) return (LanguageVersion.V46, SemanticVersion.V46);
+        if (SemanticModelValidator.UsesTextOperators(application)) return (LanguageVersion.V45, SemanticVersion.V45);
+        if (SemanticModelValidator.UsesStatePolicies(application)) return (LanguageVersion.V44, SemanticVersion.V44);
+        if (SemanticModelValidator.UsesProjectionParity(application)) return (LanguageVersion.V43, SemanticVersion.V43);
         if (SemanticModelValidator.UsesGraphForEach(application)) return (LanguageVersion.V41, SemanticVersion.V41);
         if (SemanticModelValidator.UsesGraphQueries(application)) return (LanguageVersion.V40, SemanticVersion.V40);
         if (SemanticModelValidator.UsesGraphs(application)) return (LanguageVersion.V38, SemanticVersion.V38);
@@ -149,6 +163,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
         var memberTypes = ParserContext.ForDiagnostics();
+        var agents = ParserContext.ForDiagnostics();
+        AgentsValidator.Validate(syntax, agents, deferImportedReferences: false);
+        foreach (var diagnostic in agents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) memberTypes.Add(diagnostic);
         ReadModelMemberTypeValidator.Validate(syntax, memberTypes, rejectUnknownTypes: true);
         admission.AddRange(memberTypes.Diagnostics);
         if (syntax.Identity?.Details.Any() == true)
@@ -187,6 +204,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         try
         {
             var application = context.BindApplication();
+            application = application with { Agents = context.BindAgents(application) };
             var descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
             if (context.HasErrors)
             {
@@ -257,7 +275,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV41Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV53Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
@@ -306,7 +324,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks);
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -371,6 +389,17 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal ImmutableArray<SemanticSink> Sinks => [.. syntax.Sinks.Select(sink => new SemanticSink(sink.Name, sink.Stores == SinkKind.Graphs ? SemanticSinkKind.Graphs : SemanticSinkKind.ReadModels))];
 
+        internal ImmutableArray<SemanticSecretDeclaration> Secrets => [.. syntax.Secrets.Select(secret => new SemanticSecretDeclaration(secret.Name, secret.Description))];
+
+        internal ImmutableArray<SemanticSystemConfiguration> SystemConfigurations => [.. syntax.Systems
+            .Where(system => system.Extension is not null || system.Settings.Any() || system.Activation is not null)
+            .Select(system => new SemanticSystemConfiguration(
+                system.Name,
+                system.Extension?.Reference,
+                system.Extension?.Version,
+                [.. system.Settings.Select(setting => new SemanticSystemSetting(setting.Name, setting.Secret, setting.Value))],
+                system.Activation is { } activation ? new SemanticSystemActivation(activation.Always, activation.IdleAmount, activation.IdleUnit) : null))];
+
         internal ImmutableDictionary<SemanticId, string> ReadModelSinks => _readModelSinks.ToImmutableDictionary();
 
         internal ImmutableDictionary<string, string> GraphSinks => _graphSinks.ToImmutableDictionary(StringComparer.Ordinal);
@@ -434,6 +463,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var (stateMachines, workflows) = BindLifecycles(modules);
             var (graphs, graphProjections, graphSpecifications, graphQueries) = BindGraphs(modules);
+            var systems = BindSystems();
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
             ValidateReactionIdentities(modules, policies);
@@ -445,7 +475,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || UsesPublicEvents || UsesV10 || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
+                Audiences = SemanticAvailabilityBinder.Audiences(syntax.Audiences),
+                Availabilities = SemanticAvailabilityBinder.Availabilities(syntax.Availabilities),
+                Provides = BindProvides(syntax.Provides),
                 Triggers = triggers,
+                Systems = systems,
                 StateMachines = stateMachines,
                 Workflows = workflows,
                 Graphs = graphs,
@@ -667,7 +701,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                             SemanticQueryArguments.KeyProperties(bound),
                             module,
                             featurePath,
-                            queryFilterNames: query.Filters.Select(filter => filter.Name))
+                            queryFilterNames: query.Filters.Select(filter => filter.Name)),
+                        Available = SemanticAvailabilityBinder.Gates(query.Available)
                     });
                 }
             }

@@ -7,6 +7,8 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 
 internal static class SyntaxJsonWriter
 {
+    static readonly HashSet<string> _availabilityMembers = new(StringComparer.Ordinal) { "audiences", "availabilities", "available" };
+
     internal static Dictionary<string, object?> Write(SyntaxNode node, string path, int depth)
     {
         SyntaxJson.CheckDepth(depth, path);
@@ -18,7 +20,7 @@ internal static class SyntaxJsonWriter
         {
             var value = member.Property.GetValue(node);
             if (OmitPossibleEvents(node, member.Name, value)) continue;
-            if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "context" || member.Name == "onboarding" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
+            if (node is ApplicationSyntax && (member.Name == "identity" || member.Name == "context" || member.Name == "onboarding" || member.Name == "agents" || member.Name == "reactionProductionMode" || member.Name == "commandReadMode") && value is null) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;
@@ -33,15 +35,24 @@ internal static class SyntaxJsonWriter
             if (node is PropertySyntax && (member.Name == "isSubject" || member.Name == "isKey") && Equals(value, false)) continue;
             if (node is Projections.RemoveWithSyntax && member.Name == "partsKey" && value is null) continue;
             if (node is Projections.GraphFromSyntax or Projections.GraphRemoveSyntax && member.Name == "forEach" && value is null) continue;
+            if (node is Projections.ChildrenSyntax && member.Name == "ordering" && value is null) continue;
+            if (node is QuerySyntax && member.Name == "narrow" && value is null) continue;
+            if (node is Specifications.SpecificationCallerSyntax && member.Name == "id" && value is null) continue;
+            if (node is SystemSyntax && member.Name == "abilities" && value is IEnumerable abilities && !abilities.Cast<object>().Any()) continue;
+            if (node is PolicySyntax && member.Name == "inputs" && (value is null || (value is IEnumerable policyInputs && !policyInputs.Cast<object>().Any()))) continue;
+            if (node is AuthorizeSyntax && member.Name == "mappings" && (value is null || (value is IEnumerable authorizeMappings && !authorizeMappings.Cast<object>().Any()))) continue;
+            if (node is PolicySyntax && member.Name == "reads" && (value is null || (value is IEnumerable policyReads && !policyReads.Cast<object>().Any()))) continue;
             if (node is QuerySyntax or ReadsSyntax && member.Name == "byParts" && value is IEnumerable parts && !parts.Cast<object>().Any()) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
             if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;
-            if (member.Name == "description" && value is null && node is ConceptSyntax or PolicySyntax or ConstraintSyntax or Projections.ProjectionSyntax or Projections.GraphProjectionSyntax or ScreenSyntax or FormSyntax) continue;
+            if (member.Name == "description" && value is null && node is ConceptSyntax or PolicySyntax or ConstraintSyntax or Projections.ProjectionSyntax or Projections.GraphProjectionSyntax or ScreenSyntax or FormSyntax or AudienceSyntax or AvailabilitySyntax) continue;
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
             if ((member.Name == "examples" || (node is Specifications.SpecificationSyntax && (member.Name == "parameters" || member.Name == "cases"))) && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
             if (node is Specifications.SpecificationErrorSyntax && member.Name == "caseValue" && value is null) continue;
             if (((node is SliceSyntax && (member.Name == "graphs" || member.Name == "graphProjections" || member.Name == "graphQueries")) || (node is Specifications.SpecificationSyntax && (member.Name == "givenGraphs" || member.Name == "thenGraphs"))) && value is IEnumerable graphs && !graphs.Cast<object>().Any()) continue;
             if (member.Name == "purposes" && value is IEnumerable purposes && !purposes.Cast<object>().Any()) continue;
+            if (member.Name == "provides" && value is IEnumerable provides && !provides.Cast<object>().Any()) continue;
+            if (_availabilityMembers.Contains(member.Name) && value is IEnumerable gates && !gates.Cast<object>().Any()) continue;
             if (OmitSampleRows(node, member.Name, value)) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
             if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;
@@ -69,7 +80,7 @@ internal static class SyntaxJsonWriter
         node is SampleDataFieldSyntax && name == "rows" && value is IEnumerable<SampleDataRowSyntax> rows && !rows.Any();
 
     static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
-        ClockSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||
+        ClockSyntaxDefaults.Omit(node, member, value) || InvocationSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||
         (node is ScreenActionSyntax or ScreenGuardedActionSyntax or ToolbarItemSyntax && member == "subject" && value is null) ||
         (node is ScreenActionSyntax && member == "inputs" && value is IEnumerable<InteractionArgumentSyntax> inputs && !inputs.Any());
 

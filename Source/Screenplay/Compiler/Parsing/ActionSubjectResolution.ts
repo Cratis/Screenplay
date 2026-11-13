@@ -8,6 +8,7 @@ import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structu
 import { ScreenActionSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax, ToolbarItemSyntax } from '../Syntax/Screens';
 import { RefusalDeclarations } from './RefusalDeclarations';
 import { ActionSubjectContext, ActionSubjectInputs } from './ActionSubjectInputs';
+import { itemSubjects, unresolvedSubjectMessage, visibleWithin } from './ActionSubjectVisibility';
 
 export interface ActionSubjectEvidence {
     readonly authored: ScreenActionSyntax | ToolbarItemSyntax;
@@ -21,12 +22,17 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
     const resolver = new ActionSubjectInputs(new RefusalDeclarations(application), diagnostics);
     const hasSubject = (context: ActionSubjectContext, guarded: boolean): boolean => {
         if (context.data.length === 1) return true;
-        const message = guarded ? "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved" : "Action 'for item' requires one resolvable data subject - no item binding is inferred";
+        const message = unresolvedSubjectMessage(context.data, guarded);
         diagnostics.push({ severity: 'warning', code: DiagnosticCodes.UnresolvedActionSubject, message, location: context.location });
         return false;
     };
-    const toolbar = (item: ToolbarItemSyntax, context: ActionSubjectContext): ToolbarItemSyntax => {
+    const itemContext = (authored: ScreenActionSyntax['subject'], visible: ActionSubjectContext): ActionSubjectContext => {
+        const data = itemSubjects(authored, visible.data, visible.tables);
+        return data === visible.data ? visible : { ...visible, data };
+    };
+    const toolbar = (item: ToolbarItemSyntax, visible: ActionSubjectContext): ToolbarItemSyntax => {
         if (item.syntaxKind !== 'Action') return item;
+        const context = itemContext(item.subject, visible);
         const subject = resolver.subject(item.subject, item.target, item.parameters.map(parameter => parameter.name), context);
         const authored = item.parameters.map(parameter => ({ kind: 'InteractionArgumentSyntax' as const, name: parameter.name, binding: parameter.binding.path, location: parameter.location }));
         const additions = subject === 'Item' && hasSubject(context, false) ? resolver.inputs(item.target, authored, context).slice(authored.length) : [];
@@ -47,7 +53,8 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
             otherwise: fallback !== null && fallback.command !== null ? { ...fallback, arguments: resolver.inputs(fallback.command, fallback.arguments, { ...context, location: fallback.location }) } : fallback,
         };
     };
-    const plain = (node: ScreenActionSyntax, context: ActionSubjectContext): ScreenActionSyntax => {
+    const plain = (node: ScreenActionSyntax, visible: ActionSubjectContext): ScreenActionSyntax => {
+        const context = itemContext(node.subject, visible);
         const subject = resolver.subject(node.subject, node.command, (node.inputs ?? []).map(input => input.name), context);
         const inputs = subject === 'Item' && hasSubject(context, false) ? resolver.inputs(node.command, node.inputs ?? [], context) : node.inputs;
         const effective = subject == null && inputs === node.inputs ? node : { ...node, subject, ...(inputs === undefined ? {} : { inputs }) };
@@ -55,8 +62,7 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
         return effective;
     };
     const body = (directives: readonly ScreenDirectiveSyntax[], inherited: ActionSubjectContext): readonly ScreenDirectiveSyntax[] => {
-        const local = directives.filter((node): node is Extract<ScreenDirectiveSyntax, { kind: 'ScreenDataSyntax' }> => node.kind === 'ScreenDataSyntax');
-        const scope = { ...inherited, data: local.length > 0 ? local : inherited.data };
+        const scope = visibleWithin(directives, inherited);
         return directives.map(node => {
             const context = { ...scope, location: node.location };
             switch (node.kind) {
@@ -71,7 +77,7 @@ export function resolveActionSubjectApplication(application: ApplicationSyntax, 
         });
     };
     const screen = (node: ScreenSyntax, slice: SliceSyntax): ScreenSyntax => {
-        const context = { data: [], slice, location: node.location };
+        const context = { data: [], tables: [], slice, location: node.location };
         return { ...node, directives: body(node.directives, context), ...(node.contributions === undefined ? {} : { contributions: node.contributions.map(contribution => ({ ...contribution, directives: body(contribution.directives, context) })) }) };
     };
     const feature = (node: FeatureSyntax): FeatureSyntax => ({ ...node, features: node.features.map(feature), slices: node.slices.map(slice => ({ ...slice, screens: slice.screens.map(node => screen(node, slice)) })) });

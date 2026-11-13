@@ -107,10 +107,35 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitUser(UserSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="StorylineSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="StorylineSyntax"/> to visit.</param>
+    public virtual void VisitStoryline(StorylineSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var step in syntax.Steps)
+        {
+            VisitStorylineStep(step);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="StorylineStepSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="StorylineStepSyntax"/> to visit.</param>
+    public virtual void VisitStorylineStep(StorylineStepSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="SinkSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="SinkSyntax"/> to visit.</param>
     public virtual void VisitSink(SinkSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="SecretSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SecretSyntax"/> to visit.</param>
+    public virtual void VisitSecret(SecretSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="StickyNoteSyntax"/> node.

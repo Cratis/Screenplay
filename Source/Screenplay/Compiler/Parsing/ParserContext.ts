@@ -79,6 +79,15 @@ export class ParserContext {
         this.#diagnostics.push({ severity: 'warning', code, message, location, arguments: arguments_ });
     }
 
+    // Withdraws the diagnostics of a code reported at a location, once a later check knows the report was premature.
+    // The message must quote the text, so a sibling report at the same location stays.
+    withdraw(code: string, location: SourceLocation, quoted: string): void {
+        for (let index = this.#diagnostics.length - 1; index >= 0; index--) {
+            const diagnostic = this.#diagnostics[index];
+            if (diagnostic.code === code && diagnostic.message.includes(quoted) && diagnostic.location.path === location.path && diagnostic.location.line === location.line && diagnostic.location.column === location.column) this.#diagnostics.splice(index, 1);
+        }
+    }
+
     // The next significant line when it is indented deeper than its parent - that is, when it belongs to
     // the parent's body under the offside rule.
     peekChild(parentIndent: number): SourceLine | undefined {

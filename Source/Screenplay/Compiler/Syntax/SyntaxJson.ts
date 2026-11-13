@@ -98,7 +98,7 @@ function dataArray<T>(): T[] {
 
 // Members omitted from the wire form when null (or undefined), by node kind.
 const omittedWhenNull: Record<string, readonly string[]> = {
-    ApplicationSyntax: ['identity', 'reactionProductionMode', 'commandReadMode', 'timeZone', 'context'],
+    ApplicationSyntax: ['identity', 'reactionProductionMode', 'commandReadMode', 'timeZone', 'context', 'agents'],
     CommandSyntax: ['calendar'],
     ComparisonConditionSyntax: ['leftExpression'],
     EventSyntax: ['origin'],
@@ -111,6 +111,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     GraphSyntax: ['sink'],
     GraphFromSyntax: ['forEach'],
     GraphRemoveSyntax: ['forEach'],
+    ChildrenSyntax: ['ordering'],
     ProducesSyntax: ['stream'],
     ConceptAttributeSyntax: ['scope', 'specialCategory'],
     ConceptSyntax: ['description', 'valueNumbers', 'generation'],
@@ -128,7 +129,9 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     SpecificationSyntax: ['description', 'whenRedelivered', 'givenTimeZone'],
     SpecificationErrorSyntax: ['caseValue'],
     SpecificationExampleSyntax: ['stream', 'noStream'],
-    SpecificationRedeliverySyntax: ['stream', 'noStream']
+    SpecificationRedeliverySyntax: ['stream', 'noStream'],
+    WorkflowNodeSyntax: ['file', 'code', 'via'],
+    StateEntrySyntax: ['file', 'code']
 };
 
 // Members omitted from the wire form when empty arrays, by node kind.
@@ -136,10 +139,14 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     ScreenActionSyntax: ['inputs'],
     ModuleSyntax: ['dependsOn'],
     FeatureSyntax: ['dependsOn'],
-    SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs'],
+    SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs', 'givenAbilityAnswers'],
     SliceSyntax: ['graphs', 'graphProjections', 'graphQueries'],
-    InvokesSyntax: ['onRefused'],
-    ApplicationSyntax: ['sinks']
+    InvokesSyntax: ['onRefused', 'branches'],
+    OperationPhaseSyntax: ['invocations'],
+    WorkflowNodeSyntax: ['mappings', 'returns'],
+    StateEntrySyntax: ['mappings'],
+    ApplicationSyntax: ['sinks'],
+    SystemSyntax: ['abilities']
 };
 
 // Members omitted when they hold their default value, by node kind.
