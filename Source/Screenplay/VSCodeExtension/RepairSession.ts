@@ -5,6 +5,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import * as path from 'node:path';
 import { RepairClient, RepairFailure, RepairLaunch, pinnedRepairs, object, text, integer, boolean, array, evidence } from './RepairClient';
 
+import { repairTitle, requireApprovedMetadata, retiredAddressesOf } from './RepairAdvertisedChoices';
 import { SavedVersions } from './SavedVersions';
 import { RepairEnvironment } from './RepairEnvironment';
 import { RepairLocation } from './RepairLocation';
@@ -38,16 +39,6 @@ export function diagnostic(value: unknown): ServerDiagnostic {
     const severity = text(item.severity);
     if (!['Error', 'Warning', 'Information'].includes(severity)) throw new RepairFailure('MalformedContract', 'Unsupported diagnostic severity.');
     return { code: text(item.code), message: text(item.message), severity, location: location(item.location) };
-}
-const maximumRetiredAddresses = 64;
-// A contract-changing repair must name what it retires; the review is bound to that exact, bounded list.
-function retiredAddresses(item: Record<string, unknown>): string[] {
-    const addresses = array(item.retiredSemanticAddresses);
-    if (!addresses.length || addresses.length > maximumRetiredAddresses) throw new RepairFailure('MalformedContract', 'The repair must list between 1 and 64 retired semantic addresses.');
-    return addresses.map(value => {
-        const address = object(value);
-        return `${text(address.kind)}: ${array(address.parts).map(part => `${text(object(part).kind)} ${text(object(part).key)}`).join(' / ')}`;
-    });
 }
 function revisions(value: unknown): { revision: string; catalog: string; executableReady: boolean } {
     const workspace = object(value);
@@ -197,11 +188,11 @@ export class RepairSession {
                 const subject = object(item.subject);
                 const source = location(item.location);
                 const code = text(item.diagnosticCode);
-                if (item.requiredFormatting !== 'CanonicalizeTouchedDocuments' || ((code === 'PLAY0478' || code === 'PLAY0469') && item.canFixAll !== false)) throw new RepairFailure('MalformedContract', 'Repair metadata does not match the approved contract.');
+                requireApprovedMetadata(item, code);
                 const handle = { revision: text(subject.revision), documentId: text(subject.documentId), path: text(subject.path) };
                 if (handle.revision !== opened.revision || !source.path || documents.get(handle.documentId) !== source.path ||
                     !diagnostics.some(issue => issue.code === code && issue.location.path === source.path && issue.location.line === source.line && issue.location.column === source.column)) continue;
-                choices.push({ token: randomUUID(), code, title: code === 'PLAY0516' ? 'Reorder the authored timeline (review import changes)' : code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : code === 'PLAY0661' ? 'Supply every command-read key part by name' : code === 'PLAY0469' ? 'Remove the inline identifier payload (changes the event contract)' : code === 'PLAY0664' ? 'Remove the redundant production route' : 'Declare the missing produced event', location: source, subject: handle, ...(code === 'PLAY0469' ? { retiredAddresses: retiredAddresses(item) } : {}) });
+                choices.push({ token: randomUUID(), code, title: repairTitle(code), location: source, subject: handle, ...retiredAddressesOf(code, item) });
             }
             this.#check(epoch, versions);
             this.#snapshot = { epoch, versions, revision: opened.revision, catalog: opened.catalog, evidence: evidence(pinnedEvidence), diagnostics, choices };
