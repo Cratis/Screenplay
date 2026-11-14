@@ -11,6 +11,8 @@ applies-to:
   - Source/DotNET/Screenplay/**
   - Source/Screenplay/Compiler/**
   - Source/Screenplay/Monaco/**
+  - Source/DotNET/Screenplay.Mcp/**
+  - Source/Screenplay/EventModels/**
   - Documentation/screenplay/**
   - Samples/**
 ---
@@ -26,6 +28,7 @@ Events declare `tag` lines and Chronicle appends them, but a specification could
 - A value is an identifier or string literal. Context expressions are resolved at append time and are refused.
 - `given`, `when`, redelivery locators and event examples refuse both forms. Every misuse reports `PLAY1144`.
 - The expectations are executable from executable semantic model **v54**; earlier versions keep their semantics.
+- The MCP fixture-occurrence view and event-model board remain payload-and-routing views: they do not expose tag expectations. This is a display-only exclusion, not a loss of executable semantics. Read the authored specification or its ESM v54 `expectedTags` to inspect these assertions; the specification runner still enforces them. The MCP board application consumes that same event-model representation.
 
 ## Consequences
 
