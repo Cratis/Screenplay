@@ -45,7 +45,21 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var effective = resolution.Apply(syntax);
         var result = BindCore(applicationName, effective, documents);
         var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax)).AddRange(resolution.CheckSettings(syntax));
-        return result with { Diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]) };
+        var diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]);
+        var partial = extensionDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) ? null : result.SpecificationRefusedValue;
+        if (partial is not null)
+        {
+            partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+        }
+
+        return result with { Diagnostics = diagnostics, SpecificationRefusedValue = partial };
+    }
+
+    static SemanticCompilation AttachRefusalDiagnostics(SemanticCompilation compilation, IEnumerable<Diagnostic> originals, IEnumerable<Diagnostic> attached)
+    {
+        Dictionary<Diagnostic, Diagnostic> diagnostics = new(ReferenceEqualityComparer.Instance);
+        foreach (var (original, diagnostic) in originals.Zip(attached)) diagnostics[original] = diagnostic;
+        return compilation.WithRefusedSpecifications([.. compilation.RefusedSpecifications.Select(refusal => refusal with { Diagnostics = [.. refusal.Diagnostics.Select(diagnostic => diagnostics[diagnostic])] })]);
     }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
@@ -140,6 +154,25 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         return null;
     }
 
+    static (LanguageVersion Language, SemanticVersion Semantic) InitialBoundVersions(BindingContext context) => context switch
+    {
+        { UsesV10: true } or { UsesReactionIdentity: true } => (LanguageVersion.V10, SemanticVersion.V10),
+        { UsesPublicEvents: true } => (LanguageVersion.V9, SemanticVersion.V9),
+        { UsesEventRoutes: true } => (LanguageVersion.V8, SemanticVersion.V8),
+        { UsesV7: true } => (LanguageVersion.V7, SemanticVersion.V7),
+        _ => LegacyBoundVersions(context)
+    };
+
+    static (LanguageVersion Language, SemanticVersion Semantic) LegacyBoundVersions(BindingContext context) => context switch
+    {
+        { UsesV6: true } => (LanguageVersion.V6, SemanticVersion.V6),
+        { UsesV5: true } => (LanguageVersion.V5, SemanticVersion.V5),
+        { UsesV4: true } => (LanguageVersion.V4, SemanticVersion.V4),
+        { UsesV3: true } => (LanguageVersion.V3, SemanticVersion.V3),
+        { UsesV2: true } => (LanguageVersion.V2, SemanticVersion.V2),
+        _ => (LanguageVersion.V1, SemanticVersion.V1)
+    };
+
     CompilationResult<SemanticCompilation> BindCore(
         string applicationName,
         ApplicationSyntax syntax,
@@ -206,58 +239,13 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var application = context.BindApplication();
             application = application with { Agents = context.BindAgents(application) };
             var descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
-            if (context.HasErrors)
+            var failureDescriptors = descriptors;
+            if (context.HasStructuralErrors)
             {
                 return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
             }
 
-            var languageVersion = LanguageVersion.V1;
-            var semanticVersion = SemanticVersion.V1;
-            if (context.UsesV10 || context.UsesReactionIdentity)
-            {
-                languageVersion = LanguageVersion.V10;
-                semanticVersion = SemanticVersion.V10;
-            }
-            else if (context.UsesPublicEvents)
-            {
-                languageVersion = LanguageVersion.V9;
-                semanticVersion = SemanticVersion.V9;
-            }
-            else if (context.UsesEventRoutes)
-            {
-                languageVersion = LanguageVersion.V8;
-                semanticVersion = SemanticVersion.V8;
-            }
-            else if (context.UsesV7)
-            {
-                languageVersion = LanguageVersion.V7;
-                semanticVersion = SemanticVersion.V7;
-            }
-            else if (context.UsesV6)
-            {
-                languageVersion = LanguageVersion.V6;
-                semanticVersion = SemanticVersion.V6;
-            }
-            else if (context.UsesV5)
-            {
-                languageVersion = LanguageVersion.V5;
-                semanticVersion = SemanticVersion.V5;
-            }
-            else if (context.UsesV4)
-            {
-                languageVersion = LanguageVersion.V4;
-                semanticVersion = SemanticVersion.V4;
-            }
-            else if (context.UsesV3)
-            {
-                languageVersion = LanguageVersion.V3;
-                semanticVersion = SemanticVersion.V3;
-            }
-            else if (context.UsesV2)
-            {
-                languageVersion = LanguageVersion.V2;
-                semanticVersion = SemanticVersion.V2;
-            }
+            var (languageVersion, semanticVersion) = InitialBoundVersions(context);
 
             if (SelectBoundVersions(application, semanticVersion, context.UsesStoredEventNames) is { } numberVersions)
             {
@@ -298,38 +286,13 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var model = ExecutableSemanticModel.CreateValidated(languageVersion, semanticVersion, application);
-            var compiledDocuments = documents;
-            if (context.UsesV4)
-            {
-                // New v4 event addresses need their declared revision before compilation verifies identity
-                // coherence. Existing persisted revisions are never advanced here: an explicit revision-bound
-                // catalog plan is required. Legacy and lone-generation-1 events already resolve to revision 1.
-                var index = SemanticCompilationIndex.Create(application, documents.IdentityCatalog.Application);
-                var missing = index.Events
-                    .Where(entry => entry.Value.Revision.Value > 1 &&
-                        !documents.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)))
-                    .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision))
-                    .ToImmutableArray();
-                if (!missing.IsEmpty)
-                {
-                    var catalog = SemanticIdentityCatalog.PlanEventRevisionAdvancement(
-                        documents.IdentityCatalog,
-                        documents.IdentityCatalog.Revision,
-                        [.. documents.Documents.Select(value => value.StableKey)],
-                        [.. index.Declarations.Keys],
-                        [.. index.Events.Keys],
-                        missing).Catalog;
-                    compiledDocuments = SemanticDocumentSet.Create(documents.Documents, catalog, documents.AttachmentContents);
-                }
-            }
+            var compiledDocuments = context.UsesV4
+                ? BootstrapEventRevisions(documents, application, context.RefusedSpecifications)
+                : documents;
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
-            return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
-            {
-                ImplementationRequirements = context.ImplementationRequirements,
-                TypedContextDescriptors = [.. descriptors.Select(value => value with { ModelRevision = model.Revision })]
-            };
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap, context.RefusedSpecifications).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
+            return context.CompleteCompilation(compilation, descriptors, failureDescriptors);
         }
         catch (InvalidSemanticContract exception)
         {
@@ -367,6 +330,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
     {
         readonly List<Diagnostic> _diagnostics = [];
         readonly Dictionary<SemanticId, EffectiveSpecification> _specificationOrigins = [];
+        readonly Dictionary<SpecificationSyntax, (SemanticId Id, EffectiveSpecification? Origin)> _specificationBindings = new(ReferenceEqualityComparer.Instance);
+        readonly Dictionary<SemanticId, ImmutableArray<SemanticId>> _specificationSources = [];
+        readonly Dictionary<SemanticId, (EffectiveSpecification? Origin, ImmutableArray<int> Diagnostics)> _refusedSpecifications = [];
+        readonly HashSet<int> _specificationErrorIndexes = [];
         readonly List<SemanticSourceMapEntry> _sourceMapEntries = [];
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _concepts = new(StringComparer.Ordinal);
         readonly Dictionary<EventSyntax, BoundEvent> _eventDeclarations = [];
@@ -383,7 +350,13 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
-        internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
+        internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.Where(pair => !_refusedSpecifications.ContainsKey(pair.Key)).ToImmutableDictionary();
+
+        internal ImmutableArray<RefusedSpecification> RefusedSpecifications =>
+            [.. _refusedSpecifications.Select(pair => new RefusedSpecification(pair.Key, [.. pair.Value.Diagnostics.Select(index => _diagnostics[index])], pair.Value.Origin)
+            {
+                DeclarationIds = _specificationSources.GetValueOrDefault(pair.Key, [])
+            })];
 
         internal ImmutableHashSet<SemanticId> PassiveReadModels => [.. _passiveReadModels];
 
@@ -408,6 +381,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool HasErrors => _diagnostics.Exists(_ => _.Severity == DiagnosticSeverity.Error);
 
+        internal bool HasStructuralErrors => _diagnostics.Where((diagnostic, index) => diagnostic.Severity == DiagnosticSeverity.Error && !_specificationErrorIndexes.Contains(index)).Any();
+
         internal bool UsesV2 { get; set; }
 
         internal bool UsesV3 { get; set; }
@@ -428,7 +403,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool UsesStoredEventNames { get; set; }
 
-        internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
+        internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries
+        {
+            get
+            {
+                var refusedSources = _refusedSpecifications.Keys.SelectMany(id => _specificationSources.GetValueOrDefault(id, [])).ToHashSet();
+                return [.. _sourceMapEntries.Where(entry => !refusedSources.Contains(entry.SemanticId))];
+            }
+        }
 
         internal static SemanticApplication PromoteV2Destinations(SemanticApplication application) =>
             application with { Modules = [.. application.Modules.Select(PromoteV2Destinations)] };
@@ -492,8 +474,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 ContextMembers = [.. _contextMembers],
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
+            application = WithoutRefusedSpecifications(application);
             ValidateExampleAdmission(application);
-            application = WithEffectiveTimeZone(BindRoutedFixtureSources(application));
+            application = WithEffectiveTimeZone(BindRoutedFixtureSources(WithoutRefusedSpecifications(application)));
+            application = WithRetainedSpecificationVersions(application);
             UsesEventRoutes = SemanticEventRouting.Uses(application);
             ReportLegacyDecisionReads();
 
@@ -532,6 +516,30 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                     return command with { Destination = new(property.Type, source) };
                 })]
             })]
+        };
+
+        void RecordSpecificationErrors(SemanticId id, EffectiveSpecification? origin, int start)
+        {
+            var errors = Enumerable.Range(start, _diagnostics.Count - start).Where(index => _diagnostics[index].Severity == DiagnosticSeverity.Error).ToImmutableArray();
+            if (errors.IsEmpty) return;
+            _specificationErrorIndexes.UnionWith(errors);
+            var previous = _refusedSpecifications.TryGetValue(id, out var refusal) ? refusal.Diagnostics : [];
+            _refusedSpecifications[id] = (origin, previous.AddRange(errors));
+        }
+
+        SemanticApplication WithoutRefusedSpecifications(SemanticApplication application) =>
+            _refusedSpecifications.Count == 0 ? application : application with
+            {
+                Modules = [.. application.Modules.Select(module => module with
+                {
+                    Features = [.. module.Features.Select(WithoutRefusedSpecifications)]
+                })]
+            };
+
+        SemanticFeature WithoutRefusedSpecifications(SemanticFeature feature) => feature with
+        {
+            Features = [.. feature.Features.Select(WithoutRefusedSpecifications)],
+            Slices = [.. feature.Slices.Select(slice => slice with { Specifications = [.. slice.Specifications.Where(specification => !_refusedSpecifications.ContainsKey(specification.Id))] })]
         };
 
         void Information(string code, string message, SourceLocation location) =>
