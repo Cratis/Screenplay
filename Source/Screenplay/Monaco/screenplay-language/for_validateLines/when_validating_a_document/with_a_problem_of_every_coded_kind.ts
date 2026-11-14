@@ -208,7 +208,7 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(['projection P => R', '  from E', '    remove slots', '    count bySlot.$eventContent', '    clear slots.$eventContent.slot']));
         // Graph query collects: a malformed, a misfitting, a nested and a non-view-shaped collect, as the conformance vectors state them.
         const collectVectors = (JSON.parse(readFileSync(new URL('../../../../Compiler/Conformance/diagnostics.json', import.meta.url), 'utf8')) as { cases: { source: string[]; diagnostics: string[] }[] }).cases
-            .filter(vector => vector.diagnostics.some(diagnostic => /^PLAY114[2-5]@/.test(diagnostic)));
+            .filter(vector => vector.diagnostics.some(diagnostic => /^PLAY114[4-7]@/.test(diagnostic)));
         issues.push(...collectVectors.flatMap(vector => validateLines(vector.source)));
         // Assembled compiler diagnostics must pass the editor gate without dropping an agents code.
         for (const [name, code] of Object.entries(diagnosticCodes).filter(([name]) => /agent/i.test(name))) {

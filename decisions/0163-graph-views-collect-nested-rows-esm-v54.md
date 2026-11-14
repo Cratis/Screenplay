@@ -60,7 +60,7 @@ It has exactly one `match <alias>:<Label>` of its root alone: no hops and no `op
 
 ### 4. Nesting
 
-A collect inside a collect is refused with `PLAY1144`. Nesting is one level by construction, which also rules out the shared `RecursiveView`. Deeper nesting is an addition to this grammar, not a change to it.
+A collect inside a collect is refused with `PLAY1146`. Nesting is one level by construction, which also rules out the shared `RecursiveView`. Deeper nesting is an addition to this grammar, not a change to it.
 
 ### 5. ESM v54
 
@@ -68,10 +68,10 @@ The executable model carries `collects` on a graph query. Each collect holds the
 
 ### 6. Diagnostics
 
-- `PLAY1142`: a malformed collect.
-- `PLAY1143`: a collect that does not fit its read-model property or row type.
-- `PLAY1144`: a nested collect.
-- `PLAY1145`: a query that is not view-shaped.
+- `PLAY1144`: a malformed collect.
+- `PLAY1145`: a collect that does not fit its read-model property or row type.
+- `PLAY1146`: a nested collect.
+- `PLAY1147`: a query that is not view-shaped.
 
 Shared rules that already have a Screenplay code keep it. An unknown edge, label or property is `PLAY0879`. An edge that is not incident on the root, or a reached label that does not match, is `PLAY0880`. An alias used twice is `PLAY0884`.
 

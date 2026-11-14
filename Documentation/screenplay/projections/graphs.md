@@ -149,7 +149,7 @@ The reference executor keeps an in-memory graph and applies these operations, wh
 
 ## What the tools do not follow yet
 
-The event model board, dependency and lineage queries, find-references and rename follow read-model projections only. A graph projection is compiled, printed, bound and executed like any other construct, but those tools do not draw it or rewrite its event references; renaming an event leaves a graph projection that the compiler then reports as unknown. Graph queries, flat or collecting, are the same: renaming a read model, a composite type or one of their properties does not rewrite the `return` lines and `collect` rows that name them, and the compiler then reports them (`PLAY0881`, `PLAY1143`).
+The event model board, dependency and lineage queries, find-references and rename follow read-model projections only. A graph projection is compiled, printed, bound and executed like any other construct, but those tools do not draw it or rewrite its event references; renaming an event leaves a graph projection that the compiler then reports as unknown. Graph queries, flat or collecting, are the same: renaming a read model, a composite type or one of their properties does not rewrite the `return` lines and `collect` rows that name them, and the compiler then reports them (`PLAY0881`, `PLAY1145`).
 
 See also [graph declarations](../graphs.md).
 
@@ -262,12 +262,12 @@ module Organization
             name = parent.name
 ```
 
-- **The root.** A query that collects reads like a view: one `match <alias>:<Label>` of its root node alone, no hops and no `optional match`. Its scalar returns come from the root. Every row of the result is one root node, distinct by key and ordered by the key (`PLAY1145` otherwise).
+- **The root.** A query that collects reads like a view: one `match <alias>:<Label>` of its root node alone, no hops and no `optional match`. Its scalar returns come from the root. Every row of the result is one root node, distinct by key and ordered by the key (`PLAY1147` otherwise).
 - **The edge.** A collect follows one declared edge from the root, outgoing (`-TYPE->`) or incoming (`<-TYPE-`), to the node it leads to. The arrow gives the direction, so an edge whose source and target are the same label (`PART_OF` above) is never ambiguous. Name the edge (`-membership:MEMBER_OF->`) when a row reads one of its properties.
-- **The rows.** The collected property is a list of a [composite type](../types.md) (`GroupMembership[]`) or an optional composite type (`GroupSummary optional`). The lines under the collect assign the type's properties, each from the reached node or the followed edge, and every required property of the type is assigned (`PLAY1143`). A list holds one row per edge reached, ordered by the reached node's key and then by the edge's `identified by` value, so two roles in the same group are two rows; with nothing reached it is empty. An optional row is the first of those, or null.
-- **Conditions select roots.** A `where` condition on a collected node keeps the roots with at least one reached node that satisfies every condition on that alias. It never narrows what is collected: `PeopleInGroup` returns everyone in the group, each with all of their groups. A condition on a collected edge is `PLAY1145`.
+- **The rows.** The collected property is a list of a [composite type](../types.md) (`GroupMembership[]`) or an optional composite type (`GroupSummary optional`). The lines under the collect assign the type's properties, each from the reached node or the followed edge, and every required property of the type is assigned (`PLAY1145`). A list holds one row per edge reached, ordered by the reached node's key and then by the edge's `identified by` value, so two roles in the same group are two rows; with nothing reached it is empty. An optional row is the first of those, or null.
+- **Conditions select roots.** A `where` condition on a collected node keeps the roots with at least one reached node that satisfies every condition on that alias. It never narrows what is collected: `PeopleInGroup` returns everyone in the group, each with all of their groups. A condition on a collected edge is `PLAY1147`.
 - **Absent properties.** A node created only by an edge (see [the graph is ensured by its edges](../graphs.md#the-graph-is-ensured-by-its-edges)) has none of its other properties yet; a row reads them as null.
-- **One level.** A collect inside a collect is `PLAY1144`; follow the edge from the root in a collect of its own. A malformed collect is `PLAY1142`.
+- **One level.** A collect inside a collect is `PLAY1146`; follow the edge from the root in a collect of its own. A malformed collect is `PLAY1144`.
 
 A specification asserts collected rows with structured values under `then query`, one `item` per row and `none` for an empty list:
 

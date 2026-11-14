@@ -2001,10 +2001,10 @@ Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#col
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY1142` | Error | A `collect` is malformed: its line is not `<property> = collect <root> -[alias:]TYPE-> [alias:]Label` (or `<-[alias:]TYPE-`), it does not start at the query's root, it has no row lines, or a row line is not `<property> = <alias>.<property>` naming the collected node or edge. |
-| `PLAY1143` | Error | A `collect` does not fit the read model: its property is not a list of a composite type (`Row[]`) or an optional composite type (`Row optional`), or its row assigns a property the type lacks, assigns one twice, leaves a required one out or assigns a value of another type. |
-| `PLAY1144` | Error | A `collect` is nested inside another `collect`. This version collects one level of rows; follow the edge from the root in a collect of its own. |
-| `PLAY1145` | Error | A query that collects does not have the shape of a view: it needs exactly one `match <alias>:<Label>` of its root node alone, its scalar returns come from the root, and a `where` condition names the root or a collected node, never a collected edge. |
+| `PLAY1144` | Error | A `collect` is malformed: its line is not `<property> = collect <root> -[alias:]TYPE-> [alias:]Label` (or `<-[alias:]TYPE-`), it does not start at the query's root, it has no row lines, or a row line is not `<property> = <alias>.<property>` naming the collected node or edge. |
+| `PLAY1145` | Error | A `collect` does not fit the read model: its property is not a list of a composite type (`Row[]`) or an optional composite type (`Row optional`), or its row assigns a property the type lacks, assigns one twice, leaves a required one out or assigns a value of another type. |
+| `PLAY1146` | Error | A `collect` is nested inside another `collect`. This version collects one level of rows; follow the edge from the root in a collect of its own. |
+| `PLAY1147` | Error | A query that collects does not have the shape of a view: it needs exactly one `match <alias>:<Label>` of its root node alone, its scalar returns come from the root, and a `where` condition names the root or a collected node, never a collected edge. |
 
 ## Retired codes
 

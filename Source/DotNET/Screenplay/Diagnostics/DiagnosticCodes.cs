@@ -4589,20 +4589,20 @@ public static class DiagnosticCodes
     /// <summary>
     /// A graph query <c>collect</c> is malformed: its line is not <c>&lt;property&gt; = collect &lt;root&gt; -[alias:]TYPE-&gt; [alias:]Label</c>, it does not start at the query's root, or a row line is not <c>&lt;property&gt; = &lt;alias&gt;.&lt;property&gt;</c> naming the collected node or edge.
     /// </summary>
-    public const string InvalidGraphCollect = "PLAY1142";
+    public const string InvalidGraphCollect = "PLAY1144";
 
     /// <summary>
     /// A graph query <c>collect</c> does not fit the read model: its property is not a list of a composite type or an optional composite type, or its row does not assign exactly the properties of that type with compatible types.
     /// </summary>
-    public const string GraphCollectTargetMismatch = "PLAY1143";
+    public const string GraphCollectTargetMismatch = "PLAY1145";
 
     /// <summary>
     /// A graph query <c>collect</c> is nested inside another <c>collect</c>; this version collects one level of rows.
     /// </summary>
-    public const string NestedGraphCollect = "PLAY1144";
+    public const string NestedGraphCollect = "PLAY1146";
 
     /// <summary>
     /// A graph query that collects does not have the shape of a view: one <c>match</c> of its root node alone, scalar returns from the root, and conditions on the root or a collected node only.
     /// </summary>
-    public const string GraphCollectQueryShape = "PLAY1145";
+    public const string GraphCollectQueryShape = "PLAY1147";
 }

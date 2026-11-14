@@ -1611,7 +1611,7 @@ GraphAssignment = Ident, "=", Ident, ".", Ident, NL ;
    the query's root (decision 0163, ESM v54): a list of a composite type gets
    every row, an optional composite type the first or null. Each row line reads
    the reached node or the followed edge. A query that collects has one
-   "match" of its root alone; a collect nested in a collect is PLAY1144.
+   "match" of its root alone; a collect nested in a collect is PLAY1146.
    See projections/graphs.md#collect-nested-rows.                             *)
 
 GraphCollect   = Ident, "=", "collect", Ident, GraphHop, NL,
