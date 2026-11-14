@@ -1,6 +1,6 @@
 ---
 title: "Audiences and availability"
-description: "Decide whether a part of a Screenplay model is there at all for a tenant, user or system caller with audiences, reusable availability blocks and available gates."
+description: "Decide whether part of a Screenplay model exists for a tenant, user or system caller using audiences, reusable availability blocks and available gates."
 ---
 
 # Audiences and availability
