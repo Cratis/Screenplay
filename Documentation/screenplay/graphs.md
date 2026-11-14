@@ -117,6 +117,10 @@ then graph Organization
 
 See [the executable model](projections/graphs.md#executable-model) for how graphs and graph projections are admitted and executed.
 
+## Reading a graph
+
+A query that ends in `graph <Graph>` reads the graph and returns an ordinary read model; see [reading a graph](projections/graphs.md#reading-a-graph). With `collect` it returns nested rows - a person with the groups they belong to, a group with its members - as a graph view; see [collect nested rows](projections/graphs.md#collect-nested-rows).
+
 ## Diagnostics
 
 | Code | Meaning |
