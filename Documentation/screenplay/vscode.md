@@ -95,7 +95,7 @@ Monaco and VS Code recognize trailing read-model `key` modifiers, query and read
 
 Both editors highlight `member = N` enum lines, complete numbered members and show their numbers in concept hover. Shared validation reports mixed numbering (`PLAY0667`), duplicate numbers (`PLAY0668`), int32 overflow (`PLAY0669`) and malformed numbers (`PLAY0670`). The stored-enum Information hint (`PLAY0671`) comes from opt-in completeness checks and is preserved when supplied to editor validation; ordinary validation does not emit it. That hint suggests the opt-in [MCP numbering refactoring](mcp/authoring-tools.md#number-enum-members), not a correctness quick fix. Pins equal to positions preserve the prior executable version, bytes and revision; non-positional numbers bind as ESM v12. Consumers must explicitly admit v12 before accepting these models.
 
-The editors preserve native `PLAY0661`, scoped `PLAY0662` and `PLAY0666` findings. They do not synthesize these whole-model C# checks. Saved-file C# code actions can preview deterministic command-read key completion (`PLAY0661`) and removal of a redundant production route (`PLAY0664`). Queries and trigger reads are not repaired. These actions use revision-checked proposals without the PLAY0166/PLAY0478 attachment-evidence pins. Review all source and identity bytes before explicit Apply.
+The editors preserve native `PLAY0661`, scoped `PLAY0662` and `PLAY0666` findings. They do not synthesize these whole-model C# checks. Saved-file C# code actions can preview deterministic command-read key completion (`PLAY0661`) and removal of a redundant production route (`PLAY0664`) when the server advertises them. Queries and trigger reads are not repaired. These actions use revision-checked proposals without the PLAY0166/PLAY0478 attachment-evidence pins. Review all source and identity bytes before explicit Apply.
 
 The board shows named key parts, each production override and observer descriptions. See [Read-model keys](readmodels.md#keys) and [Event sources](event-sources.md).
 
@@ -358,15 +358,25 @@ remains available separately.
 
 ## Preview saved-file C# repairs
 
-This **opt-in** bridge offers only `PLAY0166` (declare a missing
-produced event) and `PLAY0478` (explicitly route to the command identifier).
-`PLAY0478` changes routing; it is not cleanup. C# decides eligibility across the
-physical application. Extraction, `PLAY0469`, rename and a Monaco host bridge are
-not included. Local `PLAY0471` and `PLAY0479` fixes remain unchanged.
+This **opt-in** bridge offers `PLAY0166` (declare a missing produced event),
+`PLAY0478` (explicitly route to the command identifier), `PLAY0516` (reorder the
+authored timeline), `PLAY0661` (supply missing command-read key parts), `PLAY0664`
+(remove a redundant production route) and `PLAY0469` (remove an inline identifier
+payload). `PLAY0478` changes routing and `PLAY0469` changes the event contract;
+neither is cleanup. The `PLAY0469` review lists the semantic addresses the repair
+retires, it is never applied in bulk, and Apply stays an explicit second step. C#
+decides eligibility across the physical application. Extraction, rename and a
+Monaco host bridge are not included. Local `PLAY0471` and `PLAY0479` fixes remain
+unchanged.
+
+The editor offers a repair only when the connected server lists it in
+`repair-capabilities` with the contract the editor implements. A server that does
+not list `PLAY0469`, `PLAY0516`, `PLAY0661` or `PLAY0664` still works and simply
+does not offer that repair.
 
 Install a compatible server yourself using the [repair server setup](mcp/install.md#repair-capable-server-setup).
 The server must expose repair contract v1, including pinned evidence and structured
-failures. Older servers are refused, not downgraded. A CLI version alone does not
+failures. Servers without the pinned `PLAY0166` and `PLAY0478` actions are refused, not downgraded. A CLI version alone does not
 prove compatibility: capability support must be released in the server and included
 in the CLI or bundle you install before that distribution is compatible.
 

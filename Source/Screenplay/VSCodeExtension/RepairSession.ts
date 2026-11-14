@@ -3,7 +3,7 @@
 
 import { randomUUID, createHash } from 'node:crypto';
 import * as path from 'node:path';
-import { RepairClient, RepairFailure, RepairLaunch, object, text, integer, boolean, array, evidence } from './RepairClient';
+import { RepairClient, RepairFailure, RepairLaunch, pinnedRepairs, object, text, integer, boolean, array, evidence } from './RepairClient';
 
 import { SavedVersions } from './SavedVersions';
 import { RepairEnvironment } from './RepairEnvironment';
@@ -38,6 +38,16 @@ export function diagnostic(value: unknown): ServerDiagnostic {
     const severity = text(item.severity);
     if (!['Error', 'Warning', 'Information'].includes(severity)) throw new RepairFailure('MalformedContract', 'Unsupported diagnostic severity.');
     return { code: text(item.code), message: text(item.message), severity, location: location(item.location) };
+}
+const maximumRetiredAddresses = 64;
+// A contract-changing repair must name what it retires; the review is bound to that exact, bounded list.
+function retiredAddresses(item: Record<string, unknown>): string[] {
+    const addresses = array(item.retiredSemanticAddresses);
+    if (!addresses.length || addresses.length > maximumRetiredAddresses) throw new RepairFailure('MalformedContract', 'The repair must list between 1 and 64 retired semantic addresses.');
+    return addresses.map(value => {
+        const address = object(value);
+        return `${text(address.kind)}: ${array(address.parts).map(part => `${text(object(part).kind)} ${text(object(part).key)}`).join(' / ')}`;
+    });
 }
 function revisions(value: unknown): { revision: string; catalog: string; executableReady: boolean } {
     const workspace = object(value);
@@ -183,15 +193,15 @@ export class RepairSession {
             const choices: RepairChoice[] = [];
             for (const value of await read('repairs')) {
                 const item = object(value);
-                if (!['PLAY0166', 'PLAY0478', 'PLAY0516', 'PLAY0661', 'PLAY0664'].includes(String(item.diagnosticCode))) continue;
+                if (!this.#client.advertised.has(String(item.diagnosticCode))) continue;
                 const subject = object(item.subject);
                 const source = location(item.location);
                 const code = text(item.diagnosticCode);
-                if (item.requiredFormatting !== 'CanonicalizeTouchedDocuments' || (code === 'PLAY0478' && item.canFixAll !== false)) throw new RepairFailure('MalformedContract', 'Repair metadata does not match the approved contract.');
+                if (item.requiredFormatting !== 'CanonicalizeTouchedDocuments' || ((code === 'PLAY0478' || code === 'PLAY0469') && item.canFixAll !== false)) throw new RepairFailure('MalformedContract', 'Repair metadata does not match the approved contract.');
                 const handle = { revision: text(subject.revision), documentId: text(subject.documentId), path: text(subject.path) };
                 if (handle.revision !== opened.revision || !source.path || documents.get(handle.documentId) !== source.path ||
                     !diagnostics.some(issue => issue.code === code && issue.location.path === source.path && issue.location.line === source.line && issue.location.column === source.column)) continue;
-                choices.push({ token: randomUUID(), code, title: code === 'PLAY0516' ? 'Reorder the authored timeline (review import changes)' : code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : code === 'PLAY0661' ? 'Supply every command-read key part by name' : code === 'PLAY0664' ? 'Remove the redundant production route' : 'Declare the missing produced event', location: source, subject: handle });
+                choices.push({ token: randomUUID(), code, title: code === 'PLAY0516' ? 'Reorder the authored timeline (review import changes)' : code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : code === 'PLAY0661' ? 'Supply every command-read key part by name' : code === 'PLAY0469' ? 'Remove the inline identifier payload (changes the event contract)' : code === 'PLAY0664' ? 'Remove the redundant production route' : 'Declare the missing produced event', location: source, subject: handle, ...(code === 'PLAY0469' ? { retiredAddresses: retiredAddresses(item) } : {}) });
             }
             this.#check(epoch, versions);
             this.#snapshot = { epoch, versions, revision: opened.revision, catalog: opened.catalog, evidence: evidence(pinnedEvidence), diagnostics, choices };
@@ -211,7 +221,7 @@ export class RepairSession {
         this.#busy = true;
         this.#phase = 'preview-collection'; this.trace('preview:begin', { tokenHash: repairObservationEnabled(this.launch.root) ? observationHash(choiceToken) : undefined });
         let proposalId: string | undefined;
-        const pinned = ['PLAY0166', 'PLAY0478'].includes(choice.code);
+        const pinned = pinnedRepairs.includes(choice.code);
         try {
             const proposal = await this.#client.tool('propose-repair', {
                 diagnosticCode: choice.code, subject: choice.subject, formatting: 'CanonicalizeTouchedDocuments',
@@ -272,7 +282,7 @@ export class RepairSession {
             const droppedComments = await read('dropped-comments');
             if (authoring.length !== integer(proposal.authoringDiagnosticCount) || droppedComments.length !== integer(proposal.droppedCommentCount)) throw new RepairFailure('MalformedContract', 'Incomplete diagnostic/comment review.');
             this.#check(snapshot.epoch, snapshot.versions);
-            const preview: RepairPreview = { token: randomUUID(), binding: { root: this.launch.root, proposalId, beforeRevision: before.revision, afterRevision: after.revision, beforeEvidence, candidateEvidence }, title: choice.title, code: choice.code, files, authoring, executable, executableReady: after.executableReady, droppedComments };
+            const preview: RepairPreview = { token: randomUUID(), binding: { root: this.launch.root, proposalId, beforeRevision: before.revision, afterRevision: after.revision, beforeEvidence, candidateEvidence }, title: choice.title, code: choice.code, files, authoring, executable, executableReady: after.executableReady, droppedComments, ...(choice.retiredAddresses ? { retiredAddresses: choice.retiredAddresses } : {}) };
             // Only a FULLY collected source AND state review obtains an apply token.
             this.#retained = { preview, snapshot, proposalId, beforeEvidence, candidateEvidence, afterRevision: after.revision, afterCatalog: after.catalog, changeCount: changes.length, dispatched: false };
             this.#phase = 'review'; this.trace('preview:retained');
