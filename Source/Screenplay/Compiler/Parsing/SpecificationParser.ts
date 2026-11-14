@@ -807,6 +807,10 @@ function parseTagExpectation(context: ParserContext, line: SourceLine, eventKeyw
         context.error(DiagnosticCodes.InvalidEventTagExpectation, 'An expected tag is a literal - an identifier or a string; a context expression is resolved at append time and cannot be asserted.', locationOf(line));
         return noTags;
     }
+    if (typeof tag.value.value !== 'string' || tag.value.value.trim().length === 0) {
+        context.error(DiagnosticCodes.InvalidEventTagExpectation, 'An expected tag is a nonblank string literal or identifier.', locationOf(line));
+        return noTags;
+    }
     tags.push(tag);
     return noTags;
 }

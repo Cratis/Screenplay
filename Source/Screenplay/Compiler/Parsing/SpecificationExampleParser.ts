@@ -94,6 +94,9 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
         }
         if (match !== null) {
             addFixtureValue(context, values, { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(child), context), location: locationOf(child) }, generatedValues);
+        } else if ((firstWord(child.content) === 'tag' && child.content !== 'tag') || child.content === 'no tags') {
+            context.error(DiagnosticCodes.InvalidEventTagExpectation, "Tags are asserted only on a 'then' event; a 'given', 'when', redelivery or example occurrence cannot declare 'tag' or 'no tags'.", locationOf(child));
+            context.skipBlock(child.indent);
         } else if (firstWord(child.content) === 'for') {
             const source = child.content.substring('for'.length).trim();
             if (source.length === 0) context.error(DiagnosticCodes.InvalidSpecificationEventSource, "Invalid event-source assertion 'for' - expected 'for <value>'", locationOf(child));
