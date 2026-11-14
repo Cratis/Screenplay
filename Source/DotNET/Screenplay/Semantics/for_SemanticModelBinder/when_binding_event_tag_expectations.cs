@@ -31,7 +31,7 @@ public class when_binding_event_tag_expectations : given.a_semantic_binder
     [Fact] void should_keep_older_versions_without_the_new_form() => _older.SemanticVersion.ShouldEqual(SemanticVersion.V1);
     [Fact] void should_select_v54_for_a_tag_expectation() => _tagged.SemanticVersion.ShouldEqual(SemanticVersion.V54);
     [Fact] void should_select_v54_for_no_tags() => _empty.SemanticVersion.ShouldEqual(SemanticVersion.V54);
-    [Fact] void should_preserve_order_and_duplicates() => _tagged.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single().ThenEvents.Single().ExpectedTags!.Value.ShouldEqual(["audit", "audit"]);
+    [Fact] void should_preserve_order_and_duplicates() => _tagged.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single().ThenEvents.Single().ExpectedTags!.Value.ToArray().ShouldEqual(new[] { "audit", "audit" });
     [Fact] void should_leave_older_output_byte_identical() => SemanticModelSerializer.Serialize(_unchecked).ShouldEqual(SemanticModelSerializer.Serialize(_older));
     [Fact] void should_not_write_expected_tags_in_older_output() => System.Text.Encoding.UTF8.GetString(SemanticModelSerializer.Serialize(_older)).ShouldNotContain("expectedTags");
 }

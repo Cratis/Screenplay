@@ -25,7 +25,10 @@ public class a_plan_with_tag_expectations : a_bound_register_project_plan
             Commands = [command with { Produces = [.. tags.Select(actual => command.Produces.Single() with { Tags = [.. actual] })] }],
             Specifications = [.. slice.Specifications.Select(value => value.Id == original.Id ? specification : value)]
         };
-        return ExecutableSemanticModel.Create(LanguageVersion.V54, SemanticVersion.V54,
+        var checksTags = expectedTags.Any(expected => expected is not null);
+        return ExecutableSemanticModel.Create(
+            checksTags ? LanguageVersion.V54 : LanguageVersion.V53,
+            checksTags ? SemanticVersion.V54 : SemanticVersion.V53,
             application with { Modules = [module with { Features = [feature with { Slices = [.. feature.Slices.Select(value => value.Id == slice.Id ? updated : value)] }] }] });
     }
 

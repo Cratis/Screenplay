@@ -10,8 +10,26 @@ public class when_event_tag_expectations_fail : given.a_model
     JsonElement _report;
     string[] _failures;
 
-    void Establish() => File.WriteAllText(Path.Combine(RootPath, "application.play"),
-        "module M\n  feature F\n    slice StateChange S\n      command C\n        produces E\n          tag actual\n      event E\n      specification X\n        when C\n        then E\n          tag expected\n");
+    void Establish() => File.WriteAllText(Path.Combine(RootPath, "application.play"), """
+        concept ThingId : Uuid
+        module M
+          feature F
+            slice StateChange S
+              command C
+                thingId ThingId identifier
+                produces E
+                  for thingId
+                  tag actual
+                  thingId = thingId
+              event E
+                thingId ThingId
+              specification X
+                when C
+                  thingId = "00000000-0000-0000-0000-000000000101"
+                then E
+                  tag expected
+                  thingId = "00000000-0000-0000-0000-000000000101"
+        """);
 
     void Because()
     {
