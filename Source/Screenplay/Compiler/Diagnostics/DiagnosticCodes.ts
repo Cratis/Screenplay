@@ -703,4 +703,8 @@ export const DiagnosticCodes = {
     AvailabilityHidesInvokedCommand: 'PLAY1139',
     UnexpectedTokenInAvailable: 'PLAY1140',
     UnclosedAvailableGroup: 'PLAY1141',
+    InvalidGraphCollect: 'PLAY1142',
+    GraphCollectTargetMismatch: 'PLAY1143',
+    NestedGraphCollect: 'PLAY1144',
+    GraphCollectQueryShape: 'PLAY1145',
 } as const;
