@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelCompiler;
@@ -96,6 +97,34 @@ public class when_compiling_with_specification_refusals : given.a_specification_
         result.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady && descriptor.ModelRevision == partial.Model.Revision).ShouldBeTrue();
         SemanticTypedContextSerializer.Serialize(result.TypedContextDescriptors)
             .SequenceEqual(SemanticTypedContextSerializer.Serialize([.. successful.TypedContextDescriptors.Select(descriptor => descriptor with { ModelRevision = partial.Model.Revision })])).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_not_promote_contexts_when_a_refused_specification_has_an_extension_error()
+    {
+        var source = Source.Replace("        produces Confirmed", "        handler\n          file Confirm.cs\n        produces Confirmed", StringComparison.Ordinal)
+            .Replace("when Record amount = 10", "when Record", StringComparison.Ordinal);
+        var previous = ExtensionContractResolver.Current;
+        try
+        {
+            ExtensionContractResolver.Current = new(ExtensionCache.Default, fixedLock: ExtensionLock.Empty);
+            var partial = Compile(source);
+            partial.SpecificationRefusedValue.ShouldNotBeNull();
+            partial.TypedContextDescriptors.ShouldNotBeEmpty();
+            partial.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady).ShouldBeTrue();
+            var result = Compile("system Payments\n  extension \"cratis/missing\"\n\n" + source);
+            result.Success.ShouldBeFalse();
+            result.Value.ShouldBeNull();
+            result.SpecificationRefusedValue.ShouldBeNull();
+            result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.ExtensionNotLocked && diagnostic.Severity == DiagnosticSeverity.Error);
+            result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationProperty && diagnostic.Severity == DiagnosticSeverity.Error);
+            result.TypedContextDescriptors.ShouldNotBeEmpty();
+            result.TypedContextDescriptors.All(descriptor => !descriptor.IsWrapperReady && descriptor.ModelRevision is null).ShouldBeTrue();
+        }
+        finally
+        {
+            ExtensionContractResolver.Current = previous;
+        }
     }
 
     [Fact]

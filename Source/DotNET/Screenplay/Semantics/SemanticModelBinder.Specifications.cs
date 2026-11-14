@@ -24,8 +24,7 @@ public sealed partial class SemanticModelBinder
                 {
                     SpecificationRefusedValue = compilation,
                     ImplementationRequirements = ImplementationRequirements,
-                    TypedContextDescriptors = [.. SemanticTypedContextCatalog.Create(compilation.Model.Application, ImplementationRequirements, true)
-                        .Select(value => value with { ModelRevision = compilation.Model.Revision })]
+                    TypedContextDescriptors = descriptors
                 };
             }
 

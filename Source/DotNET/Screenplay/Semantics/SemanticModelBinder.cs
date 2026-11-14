@@ -47,13 +47,21 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax)).AddRange(resolution.CheckSettings(syntax));
         var diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]);
         var partial = extensionDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) ? null : result.SpecificationRefusedValue;
-        if (partial is not null)
+        if (partial is null)
         {
-            partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+            return result with { Diagnostics = diagnostics, SpecificationRefusedValue = null };
         }
 
-        return result with { Diagnostics = diagnostics, SpecificationRefusedValue = partial };
+        partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+        return result with { Diagnostics = diagnostics, SpecificationRefusedValue = partial, TypedContextDescriptors = DescriptorsFor(partial, result.ImplementationRequirements) };
     }
+
+    /// <summary>
+    /// Publishes the trusted descriptors for a partial compilation whose only errors are refused specifications.
+    /// Only called once every other error source has been ruled out, so failed compilations keep their failure descriptors.
+    /// </summary>
+    static ImmutableArray<SemanticTypedContextDescriptor> DescriptorsFor(SemanticCompilation partial, ImmutableArray<SemanticImplementationRequirement> requirements) =>
+        [.. SemanticTypedContextCatalog.Create(partial.Model.Application, requirements, true).Select(value => value with { ModelRevision = partial.Model.Revision })];
 
     static SemanticCompilation AttachRefusalDiagnostics(SemanticCompilation compilation, IEnumerable<Diagnostic> originals, IEnumerable<Diagnostic> attached)
     {
