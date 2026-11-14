@@ -697,6 +697,12 @@ export abstract class ScreenplaySyntaxWalker {
             this.visitExpression(condition.value);
         }
         syntax.returns.forEach(node => this.visitNode(node));
+        for (const collect of syntax.collects ?? []) {
+            this.visitNode(collect);
+            this.visitNode(collect.hop);
+            this.visitNode(collect.hop.node);
+            collect.returns.forEach(node => this.visitNode(node));
+        }
     }
 
     visitGraphProjection(syntax: GraphProjectionSyntax): void {

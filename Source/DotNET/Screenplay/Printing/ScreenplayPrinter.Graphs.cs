@@ -26,11 +26,13 @@ public partial class ScreenplayPrinter
     static string PatternNode(GraphPatternNodeSyntax node) => node.Alias is null ? node.Label : $"{node.Alias}:{node.Label}";
 
     static string Pattern(GraphMatchSyntax match) =>
-        PatternNode(match.Start) + string.Concat(match.Hops.Select(hop =>
-        {
-            var edge = hop.Alias is null ? hop.Type : $"{hop.Alias}:{hop.Type}";
-            return $" {(hop.Outgoing ? $"-{edge}->" : $"<-{edge}-")} {PatternNode(hop.Node)}";
-        }));
+        PatternNode(match.Start) + string.Concat(match.Hops.Select(Hop));
+
+    static string Hop(GraphPatternHopSyntax hop)
+    {
+        var edge = hop.Alias is null ? hop.Type : $"{hop.Alias}:{hop.Type}";
+        return $" {(hop.Outgoing ? $"-{edge}->" : $"<-{edge}-")} {PatternNode(hop.Node)}";
+    }
 
     void WriteGraphQuery(ScreenplayWriter writer, GraphQuerySyntax query)
     {
@@ -54,6 +56,14 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 foreach (var @return in query.Returns) writer.Line($"{@return.Property} = {@return.Alias}.{@return.Source}", @return);
+                foreach (var collect in query.Collects)
+                {
+                    writer.Line($"{collect.Property} = collect {collect.From}{Hop(collect.Hop)}", collect);
+                    using (writer.Indent())
+                    {
+                        foreach (var @return in collect.Returns) writer.Line($"{@return.Property} = {@return.Alias}.{@return.Source}", @return);
+                    }
+                }
             }
         }
     }

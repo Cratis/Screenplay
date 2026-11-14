@@ -149,7 +149,7 @@ The reference executor keeps an in-memory graph and applies these operations, wh
 
 ## What the tools do not follow yet
 
-The event model board, dependency and lineage queries, find-references and rename follow read-model projections only. A graph projection is compiled, printed, bound and executed like any other construct, but those tools do not draw it or rewrite its event references; renaming an event leaves a graph projection that the compiler then reports as unknown.
+The event model board, dependency and lineage queries, find-references and rename follow read-model projections only. A graph projection is compiled, printed, bound and executed like any other construct, but those tools do not draw it or rewrite its event references; renaming an event leaves a graph projection that the compiler then reports as unknown. Graph queries, flat or collecting, are the same: renaming a read model, a composite type or one of their properties does not rewrite the `return` lines and `collect` rows that name them, and the compiler then reports them (`PLAY0881`, `PLAY1145`).
 
 See also [graph declarations](../graphs.md).
 
@@ -194,5 +194,139 @@ module Organization
 - `where` joins equality tests with `and`; each compares a node or edge property with a `$argument` or a literal.
 - `return` assigns every required read-model property from a node or edge property of the pattern.
 - Not in this version (`PLAY0885`): variable-length paths, `or`, ranges, functions and aggregates. There is no engine-native query text.
+- `return` can also [collect nested rows](#collect-nested-rows) along an edge from the root, with `<property> = collect <root> -TYPE-> <alias>:<Label>`.
 - A specification asserts it with `then query <Name>` after `given graph`, or after events a projection turns into nodes and edges. `given clock "<instant>"` sets `$eventContext.occurred` for those events; without it the reference runner uses a fixed instant.
 
+
+## Collect nested rows
+
+A graph query can return rows that hold other rows: a person with the groups they belong to, a group with its members. Inside `return`, `<property> = collect <root> -[alias:]TYPE-> [alias:]Label` assigns a read-model property the rows reached along one edge from the query's root, and the lines under it fill each row from the reached node or the edge that was followed (decision 0163, ESM v54):
+
+```screenplay
+concept PersonId : Uuid
+concept GroupId  : Uuid
+concept Name     : String
+
+type GroupMembership
+  id    GroupId
+  name  Name
+  since DateTime optional
+
+type GroupSummary
+  id   GroupId
+  name Name
+
+module Organization
+  feature Chart
+    slice StateView OrganizationViews
+      graph Organization
+        node Person
+          personId PersonId key
+          name     Name
+        node Group
+          groupId GroupId key
+          name    Name
+        edge MEMBER_OF source Person target Group
+          since DateTime optional
+        edge PART_OF source Group target Group
+
+      readmodel PersonWithGroups
+        id     PersonId key
+        name   Name
+        groups GroupMembership[]
+
+      readmodel GroupWithParent
+        id     GroupId key
+        name   Name
+        parent GroupSummary optional
+
+      query PeopleInGroup => PersonWithGroups[] graph Organization
+        filter groupId GroupId
+        match person:Person
+        where group.groupId = $groupId
+        return
+          id     = person.personId
+          name   = person.name
+          groups = collect person -membership:MEMBER_OF-> group:Group
+            id    = group.groupId
+            name  = group.name
+            since = membership.since
+
+      query GroupsWithParent => GroupWithParent[] graph Organization
+        match group:Group
+        return
+          id     = group.groupId
+          name   = group.name
+          parent = collect group -PART_OF-> parent:Group
+            id   = parent.groupId
+            name = parent.name
+```
+
+- **The root.** A query that collects reads like a view: one `match <alias>:<Label>` of its root node alone, no hops and no `optional match`. Its scalar returns come from the root. Every row of the result is one root node, distinct by key and ordered by the key (`PLAY1147` otherwise).
+- **The edge.** A collect follows one declared edge from the root, outgoing (`-TYPE->`) or incoming (`<-TYPE-`), to the node it leads to. The arrow gives the direction, so an edge whose source and target are the same label (`PART_OF` above) is never ambiguous. Name the edge (`-membership:MEMBER_OF->`) when a row reads one of its properties.
+- **The rows.** The collected property is a list of a [composite type](../types.md) (`GroupMembership[]`) or an optional composite type (`GroupSummary optional`). The lines under the collect assign the type's properties, each from the reached node or the followed edge, and every required property of the type is assigned (`PLAY1145`). A list holds one row per edge reached, ordered by the reached node's key and then by the edge's `identified by` value, so two roles in the same group are two rows; with nothing reached it is empty. An optional row is the first of those, or null.
+- **Conditions select roots.** A `where` condition on a collected node keeps the roots with at least one reached node that satisfies every condition on that alias. It never narrows what is collected: `PeopleInGroup` returns everyone in the group, each with all of their groups. A condition on a collected edge is `PLAY1147`.
+- **Absent properties.** A node created only by an edge (see [the graph is ensured by its edges](../graphs.md#the-graph-is-ensured-by-its-edges)) has none of its other properties yet; a row reads them as null.
+- **One level.** A collect inside a collect is `PLAY1146`; follow the edge from the root in a collect of its own. A malformed collect is `PLAY1144`.
+
+A specification asserts collected rows with structured values under `then query`, one `item` per row and `none` for an empty list:
+
+```screenplay
+concept PersonId : Uuid
+concept GroupId  : Uuid
+concept Name     : String
+
+type GroupMembership
+  id    GroupId
+  name  Name
+
+module Organization
+  feature Chart
+    slice StateView OrganizationViews
+      graph Organization
+        node Person
+          personId PersonId key
+          name     Name
+        node Group
+          groupId GroupId key
+          name    Name
+        edge MEMBER_OF source Person target Group
+
+      readmodel PersonWithGroups
+        id     PersonId key
+        name   Name
+        groups GroupMembership[]
+
+      query PeopleWithGroups => PersonWithGroups[] graph Organization
+        match person:Person
+        return
+          id     = person.personId
+          name   = person.name
+          groups = collect person -MEMBER_OF-> group:Group
+            id   = group.groupId
+            name = group.name
+
+      specification SeeingEveryoneWithTheirGroups
+        given graph Organization
+          has node Person "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+            name = "Ada"
+          has node Person "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            name = "Linus"
+          has node Group "0f8fad5b-d9cb-469f-a165-70867728950e"
+            name = "Engineering"
+          has edge MEMBER_OF from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e"
+        then query PeopleWithGroups
+          result
+            id   = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+            name = "Ada"
+            groups
+              item
+                id   = "0f8fad5b-d9cb-469f-a165-70867728950e"
+                name = "Engineering"
+          result
+            id   = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            name = "Linus"
+            groups none
+```
+
+The executable model carries each collect on its graph query as `collects`: the read-model property, the root alias, the followed hop (edge type, `outgoing`, the reached label), the cardinality (`many` or `one`), the row's composite type and its members, each of kind `property` (a property of the reached node) or `edgeProperty` (a property of the followed edge) with its `source`. A query that collects selects ESM v54; a query that does not keeps its version and bytes. A sink answers it with the same rows the reference runner gives, as for any graph query. The Organization sample reads its graph this way; see [the Organization sample](https://github.com/Cratis/Screenplay/tree/main/Samples/Organization).

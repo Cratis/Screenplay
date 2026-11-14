@@ -1995,6 +1995,17 @@ The `design system` construct and the `theme` that implements it. See [Design sy
 | `PLAY0929` | Warning | `accent`, `corners` or `font` in a `ui profile`'s `appearance` is deprecated; the value belongs in the selected theme. `appearance` keeps only `color scheme`. |
 | `PLAY0930` | Error | A theme's `implements`, `palette`, `values` or mode block is malformed or repeated. |
 
+## Graph queries that collect nested rows
+
+Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#collect-nested-rows) along one edge from its root, and selects ESM v54. Both compilers report these codes.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY1144` | Error | A `collect` is malformed: its line is not `<property> = collect <root> -[alias:]TYPE-> [alias:]Label` (or `<-[alias:]TYPE-`), it does not start at the query's root, it has no row lines, or a row line is not `<property> = <alias>.<property>` naming the collected node or edge. |
+| `PLAY1145` | Error | A `collect` does not fit the read model: its property is not a list of a composite type (`Row[]`) or an optional composite type (`Row optional`), or its row assigns a property the type lacks, assigns one twice, leaves a required one out or assigns a value of another type. |
+| `PLAY1146` | Error | A `collect` is nested inside another `collect`. This version collects one level of rows; follow the edge from the root in a collect of its own. |
+| `PLAY1147` | Error | A query that collects does not have the shape of a view: it needs exactly one `match <alias>:<Label>` of its root node alone, its scalar returns come from the root, and a `where` condition names the root or a collected node, never a collected edge. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

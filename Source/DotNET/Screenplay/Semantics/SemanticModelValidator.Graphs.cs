@@ -19,6 +19,10 @@ internal static partial class SemanticModelValidator
     internal static bool UsesGraphForEach(SemanticApplication application) =>
         application.GraphProjections.Any(projection => projection.Nodes.Concat(projection.Edges).Any(element => element.Handlers.Any(handler => handler.ForEach is not null)));
 
+    // ESM v54 constructs: graph queries that collect nested rows along an edge from their root.
+    internal static bool UsesGraphCollects(SemanticApplication application) =>
+        application.GraphQueries.Any(query => !query.Collects.IsDefaultOrEmpty);
+
     static void ValidateGraphForEachVersion(SemanticApplication application, SemanticVersion version)
     {
         ValidateFeatureVersion(
@@ -27,6 +31,41 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V41,
             "An ESM v41 model must declare a graph handler that iterates an event collection.",
             "Graph handlers that iterate an event collection require ESM v41.");
+    }
+
+    static void ValidateGraphCollectVersion(SemanticApplication application, SemanticVersion version)
+    {
+        ValidateFeatureVersion(
+            UsesGraphCollects(application),
+            version,
+            SemanticVersion.V54,
+            "An ESM v54 model must declare a graph query that collects nested rows.",
+            "Graph queries that collect nested rows require ESM v54.");
+        if (!UsesGraphCollects(application)) return;
+        var types = application.Types.ToDictionary(type => type.Id);
+        foreach (var query in application.GraphQueries.Where(query => !query.Collects.IsDefaultOrEmpty))
+        {
+            if (query.Matches.Length != 1 || query.Matches[0].IsOptional || !query.Matches[0].Hops.IsDefaultOrEmpty || query.Matches[0].Start.Alias is not { } root)
+            {
+                throw new InvalidSemanticContract($"Graph query '{query.Name}' collects, so it must have exactly one match of its root node alone.");
+            }
+
+            foreach (var collect in query.Collects)
+            {
+                if (collect.From != root) throw new InvalidSemanticContract($"Graph query '{query.Name}' collects from '{collect.From}', which is not its root '{root}'.");
+                if (!types.TryGetValue(collect.Row, out var row)) throw new InvalidSemanticContract($"Graph query '{query.Name}' collects rows of an unknown composite type.");
+                if (collect.Members.Any(member => row.Properties.All(property => property.Id != member.Property)))
+                {
+                    throw new InvalidSemanticContract($"Graph query '{query.Name}' collects a row property that composite type '{row.Name}' does not declare.");
+                }
+            }
+
+            if (query.Collects.Select(collect => collect.Property).Distinct().Count() != query.Collects.Length ||
+                query.Collects.Any(collect => query.Returns.Any(@return => @return.Property == collect.Property)))
+            {
+                throw new InvalidSemanticContract($"Graph query '{query.Name}' assigns a read-model property twice.");
+            }
+        }
     }
 
     static void ValidateGraphQueryVersion(SemanticApplication application, SemanticVersion version)

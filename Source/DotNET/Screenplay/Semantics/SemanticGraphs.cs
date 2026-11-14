@@ -265,7 +265,38 @@ public sealed record SemanticGraphQuery(
 {
     /// <summary>Gets the effective authorization, or null for an unrestricted query.</summary>
     public SemanticAuthorization? Authorization { get; init; }
+
+    /// <summary>
+    /// Gets the nested rows the query collects along one edge from its root (ESM v54). A query that collects has one match of its root node
+    /// alone, so every row is one root; its conditions on a collected node select roots and never narrow what is collected.
+    /// </summary>
+    public ImmutableArray<SemanticGraphCollect> Collects { get; init; } = [];
 }
+
+/// <summary>
+/// Represents a property of a collected row.
+/// </summary>
+/// <param name="Property">The identity of the property on the row's composite type.</param>
+/// <param name="Kind">Whether it is read from the reached node or from the followed edge.</param>
+/// <param name="Source">The name of the node or edge property it is read from.</param>
+public sealed record SemanticGraphCollectMember(SemanticId Property, SemanticGraphCollectMemberKind Kind, string Source);
+
+/// <summary>
+/// Represents a read-model property assigned the rows reached along one edge from a graph query's root: a relation to a nested row type (ESM v54).
+/// </summary>
+/// <param name="Property">The identity of the read-model property the rows are assigned to.</param>
+/// <param name="From">The alias of the root the edge is followed from.</param>
+/// <param name="Hop">The followed edge, its direction and the node it leads to.</param>
+/// <param name="Cardinality">Whether a list or a single optional row is assigned.</param>
+/// <param name="Row">The identity of the composite type of each row.</param>
+/// <param name="Members">The properties of each row, in declaration order.</param>
+public sealed record SemanticGraphCollect(
+    SemanticId Property,
+    string From,
+    SemanticGraphHop Hop,
+    SemanticGraphCollectCardinality Cardinality,
+    SemanticId Row,
+    ImmutableArray<SemanticGraphCollectMember> Members);
 
 /// <summary>
 /// Represents one expected row of a graph query.

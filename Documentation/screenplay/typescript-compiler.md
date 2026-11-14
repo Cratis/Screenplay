@@ -134,6 +134,7 @@ Use this inventory to check whether the syntax your tool needs is retained:
 - systems with their abilities, outcomes, effect classes and implementations (the C# binder admits them as ESM v50), and operations with their phase/specification intent (syntax-only)
 - [state machines](statemachines.md) and [workflows](workflows.md), with the specifications written inside them (syntax shared with C# ESM v36 admission). The TypeScript compiler reads and validates their structure (`PLAY0834`, `PLAY0843` and the parse-time checks); the cross-reference checks (`PLAY0835` to `PLAY0842`, `PLAY0844` to `PLAY0851`) and the run of their specifications are C# only
 - [graphs](graphs.md), [graph projections](projections/graphs.md) and the `given graph` and `then graph` specification steps (syntax shared with C# ESM v38 admission). The TypeScript compiler reads them and reports `PLAY0862` to `PLAY0877`; the run of graph specifications is C# only
+- graph queries and the nested rows they `collect` (`GraphQuerySyntax.collects`, decision 0163): the TypeScript compiler reads them and reports `PLAY1144` to `PLAY1147` and the query and edge codes they share with a flat graph query; evaluating them is C# only
 - generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
 - modules, features (nested too) and slices
 - fenced Markdown documentation on modules, features, slices, commands, read models and reactions, and quoted or fenced-text specification descriptions (report-only authoring metadata)

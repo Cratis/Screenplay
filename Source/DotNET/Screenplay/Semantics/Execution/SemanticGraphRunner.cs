@@ -258,6 +258,9 @@ public static class SemanticGraphRunner
 
         public IEnumerable<(string Source, string Target, Dictionary<string, SemanticValue> Properties)> Edges(string graph, string type) =>
             edges.Where(edge => edge.Key.Graph == graph && edge.Key.Type == type).Select(edge => (edge.Key.Source, edge.Key.Target, edge.Value));
+
+        public IEnumerable<(string Source, string Target, string? Identity, Dictionary<string, SemanticValue> Properties)> IdentifiedEdges(string graph, string type) =>
+            edges.Where(edge => edge.Key.Graph == graph && edge.Key.Type == type).Select(edge => (edge.Key.Source, edge.Key.Target, edge.Key.Identity, edge.Value));
     }
 
     sealed class GraphState(Dictionary<string, SemanticGraph> graphs)

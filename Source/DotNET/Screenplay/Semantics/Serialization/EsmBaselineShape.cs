@@ -177,5 +177,7 @@ internal enum EsmBaselineShape
     AvailabilityCondition,
     ContextOperand,
     Provide,
-    ProvideSource
+    ProvideSource,
+    GraphCollect,
+    GraphCollectMember
 }

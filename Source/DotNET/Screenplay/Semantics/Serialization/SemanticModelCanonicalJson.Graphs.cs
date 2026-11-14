@@ -14,6 +14,11 @@ public static partial class SemanticModelCanonicalJson
 {
     static void WriteGraphs(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
     {
+        if (SemanticModelValidator.UsesGraphCollects(application) && version.Major < 54)
+        {
+            throw new InvalidSemanticContract("Graph queries that collect nested rows require ESM v54 or later.");
+        }
+
         if (SemanticModelValidator.UsesGraphQueries(application) && version.Major < 40)
         {
             throw new InvalidSemanticContract("Graph queries require ESM v40 or later.");
@@ -53,16 +58,7 @@ public static partial class SemanticModelCanonicalJson
             output.WriteBoolean("optional", match.IsOptional);
             output.WritePropertyName("start");
             WriteGraphPatternNode(output, match.Start);
-            WriteArray(output, "hops", match.Hops, (item, hop) =>
-            {
-                item.WriteStartObject();
-                if (hop.Alias is not null) CanonicalJson.WriteString(item, "alias", hop.Alias);
-                CanonicalJson.WriteString(item, "type", hop.Type);
-                item.WriteBoolean("outgoing", hop.Outgoing);
-                item.WritePropertyName("node");
-                WriteGraphPatternNode(item, hop.Node);
-                item.WriteEndObject();
-            });
+            WriteArray(output, "hops", match.Hops, WriteGraphHop);
             output.WriteEndObject();
         });
         WriteArray(writer, "conditions", query.Conditions, (output, condition) =>
@@ -87,12 +83,44 @@ public static partial class SemanticModelCanonicalJson
             CanonicalJson.WriteString(output, "source", @return.Source);
             output.WriteEndObject();
         });
+        if (!query.Collects.IsDefaultOrEmpty) WriteArray(writer, "collects", query.Collects, WriteGraphCollect);
         if (query.Authorization is not null)
         {
             writer.WritePropertyName("authorization");
             WriteAuthorization(writer, query.Authorization);
         }
 
+        writer.WriteEndObject();
+    }
+
+    static void WriteGraphCollect(Utf8JsonWriter writer, SemanticGraphCollect collect)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("property", collect.Property.ToString());
+        CanonicalJson.WriteString(writer, "from", collect.From);
+        writer.WritePropertyName("hop");
+        WriteGraphHop(writer, collect.Hop);
+        writer.WriteString("cardinality", collect.Cardinality == SemanticGraphCollectCardinality.Many ? "many" : "one");
+        writer.WriteString("row", collect.Row.ToString());
+        WriteArray(writer, "members", collect.Members, (output, member) =>
+        {
+            output.WriteStartObject();
+            output.WriteString("property", member.Property.ToString());
+            output.WriteString("kind", member.Kind == SemanticGraphCollectMemberKind.Property ? "property" : "edgeProperty");
+            CanonicalJson.WriteString(output, "source", member.Source);
+            output.WriteEndObject();
+        });
+        writer.WriteEndObject();
+    }
+
+    static void WriteGraphHop(Utf8JsonWriter writer, SemanticGraphHop hop)
+    {
+        writer.WriteStartObject();
+        if (hop.Alias is not null) CanonicalJson.WriteString(writer, "alias", hop.Alias);
+        CanonicalJson.WriteString(writer, "type", hop.Type);
+        writer.WriteBoolean("outgoing", hop.Outgoing);
+        writer.WritePropertyName("node");
+        WriteGraphPatternNode(writer, hop.Node);
         writer.WriteEndObject();
     }
 

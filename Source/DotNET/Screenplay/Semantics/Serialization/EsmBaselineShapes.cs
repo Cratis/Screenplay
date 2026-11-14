@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -142,13 +142,15 @@ internal static class EsmBaselineShapes
         ["GraphStep"] = "graph elements:GraphElementStep",
         ["GraphElementStep"] = "node absent name key:Value target:Value identity:Value values:GraphPropertyValue",
         ["GraphPropertyValue"] = "name value:Value",
-        ["GraphQuery"] = "name graph readModel cardinality delivery arguments:GraphQueryArgument matches:GraphMatch conditions:GraphCondition returns:GraphReturn authorization:Authorization",
+        ["GraphQuery"] = "name graph readModel cardinality delivery arguments:GraphQueryArgument matches:GraphMatch conditions:GraphCondition returns:GraphReturn collects@54:GraphCollect authorization:Authorization",
         ["GraphQueryArgument"] = "name type:TypeReference key",
         ["GraphMatch"] = "optional start:GraphPatternNode hops:GraphHop",
         ["GraphPatternNode"] = "alias label",
         ["GraphHop"] = "alias type outgoing node:GraphPatternNode",
         ["GraphCondition"] = "alias name argument literal:Value",
         ["GraphReturn"] = "property alias source",
+        ["GraphCollect"] = "property from hop:GraphHop cardinality row members:GraphCollectMember",
+        ["GraphCollectMember"] = "property kind source",
         ["StateMachine"] = "name readModel states:State transitions:StateTransition specifications:LifecycleSpecification",
         ["State"] = "name initial final entering:StateEntry",
         ["StateEntry"] = "kind command workflow system@51 ability@51 inputs@51:AbilityInput requirement@51",
