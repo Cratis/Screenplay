@@ -613,6 +613,11 @@ public partial class when_freezing_legacy_source_syntax_bytes
         Features = feature.Features.Select(WithoutTagExpectations).ToArray(),
         Slices = feature.Slices.Select(slice => slice with
         {
+            Events = slice.Events.Select(@event => @event.Name == "DeferredPaymentInvoiceRegistered" ? @event with { Tags = null } : @event).ToArray(),
+            Commands = slice.Commands.Select(command => command with
+            {
+                Produces = command.Produces.Select(production => production.Event == "DeferredPaymentInvoiceRegistered" ? production with { Tags = null } : production).ToArray()
+            }).ToArray(),
             Specifications = slice.Specifications.Select(specification => specification with
             {
                 ThenEvents = specification.ThenEvents.Select(@event => @event with { Tags = [], NoTags = null }).ToArray()
