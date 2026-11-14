@@ -23,10 +23,25 @@ internal static partial class SemanticModelValidator
 
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
             ValidateFixtureRoute(value.Route, value.Unrouted, then, value.EventSource, value.EventContract);
+            ValidateExpectedTags(value, then);
             if (value.EventSource is not null)
             {
                 ValidateForeignFixtureSource(value.EventSource, value.EventContract);
                 ValidateEventSource(value.EventSource, FixtureEventSourceType(value.Route, value.EventContract));
+            }
+        }
+
+        void ValidateExpectedTags(SemanticSpecificationEvent value, bool then)
+        {
+            if (value.ExpectedTags is not { } expectedTags) return;
+            if (!then)
+            {
+                throw new InvalidSemanticContract("An expected tag set is allowed only on a then event.");
+            }
+
+            if (expectedTags.IsDefault || expectedTags.Any(string.IsNullOrWhiteSpace))
+            {
+                throw new InvalidSemanticContract("An expected tag must be non-empty text.");
             }
         }
 

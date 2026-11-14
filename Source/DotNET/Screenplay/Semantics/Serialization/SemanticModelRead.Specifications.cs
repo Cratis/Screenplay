@@ -199,9 +199,12 @@ internal static partial class SemanticModelRead
             .Add("values", (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.Values = Array(ref reader, PropertyValue, property))
             .Add("eventSource", (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.Source = Nested(ref reader, EventSource, property))
             .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.Route = Nested(ref reader, FixtureRoute, property))
-            .Add("unrouted", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.ReadUnrouted(ref reader, property), state => state.Then);
+            .Add("unrouted", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.ReadUnrouted(ref reader, property), state => state.Then)
+            .Add("expectedTags", LanguageVersion.V54.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.ExpectedTags = StringArray(ref reader, property), state => state.Then);
 
         public bool Then { get; } = then;
+
+        public ImmutableArray<string>? ExpectedTags { get; set; }
 
         public SemanticId EventContract { get; set; }
 
@@ -222,7 +225,7 @@ internal static partial class SemanticModelRead
         public SemanticSpecificationEvent Build()
         {
             Required(EventContract.IsSet && !Values.IsDefault, "specification event");
-            return new(EventContract, Values) { EventSource = Source, Route = Route, Unrouted = Unrouted };
+            return new(EventContract, Values) { EventSource = Source, Route = Route, Unrouted = Unrouted, ExpectedTags = ExpectedTags };
         }
     }
 

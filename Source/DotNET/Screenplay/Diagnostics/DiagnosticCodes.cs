@@ -4585,4 +4585,9 @@ public static class DiagnosticCodes
     /// into a read-model property, so the value becomes part of the read model and its query results.
     /// </summary>
     public const string SecretConceptProjected = "PLAY1142";
+
+    /// <summary>
+    /// An event tag expectation - <c>tag &lt;value&gt;</c> or <c>no tags</c> - is misplaced, repeated, mixed or not a literal.
+    /// </summary>
+    public const string InvalidEventTagExpectation = "PLAY1144";
 }

@@ -56,6 +56,8 @@ internal static class SyntaxJsonWriter
             if (OmitSampleRows(node, member.Name, value)) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
             if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;
+            if (node is Specifications.SpecificationEventSyntax && member.Name == "noTags" && value is null) continue;
+            if (node is Specifications.SpecificationEventSyntax && member.Name == "tags" && value is IEnumerable expectedTags && !expectedTags.Cast<object>().Any()) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;
             if (node is InteractionBindingSyntax binding && member.Name == "alternatives" && !binding.Alternatives.Any()) continue;
             if (node is InteractionBindingSyntax && member.Name == "otherwise" && value is null) continue;

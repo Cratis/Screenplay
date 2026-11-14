@@ -526,6 +526,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     static bool FactMatches(SemanticSpecificationEvent expected, SemanticFact actual, SemanticEventRoute? route) =>
         expected.EventContract == actual.EventContract && ValuesEqual(expected.Values, actual.Values) &&
         (route is null || route == actual.Route) && (!expected.Unrouted || actual.Route is null) &&
+        (expected.ExpectedTags is not { IsDefault: false } expectedTags || expectedTags.SequenceEqual(actual.Tags.IsDefault ? [] : actual.Tags, StringComparer.Ordinal)) &&
         (expected.EventSource is null ||
          (actual.Context?.EventSource.Type == expected.EventSource.Type &&
           SemanticValueRules.AreEqual(actual.Destination, expected.EventSource.Value)));

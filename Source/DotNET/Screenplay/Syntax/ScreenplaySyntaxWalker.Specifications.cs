@@ -208,6 +208,8 @@ public abstract partial class ScreenplaySyntaxWalker
         VisitNode(syntax);
         if (syntax.Stream is { } stream) VisitSpecificationStream(stream);
         if (syntax.NoStream is { } noStream) VisitSpecificationNoStream(noStream);
+        foreach (var tag in syntax.Tags) VisitTag(tag);
+        if (syntax.NoTags is { } noTags) VisitSpecificationNoTags(noTags);
 
         if (syntax.For is not null)
         {
@@ -236,6 +238,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The expectation.</param>
     public virtual void VisitSpecificationNoStream(SpecificationNoStreamSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits an expectation that the event carries no tags.
+    /// </summary>
+    /// <param name="syntax">The expectation.</param>
+    public virtual void VisitSpecificationNoTags(SpecificationNoTagsSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="SpecificationCommandSyntax"/> node and its children.

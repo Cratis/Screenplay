@@ -341,8 +341,15 @@ public sealed partial class SemanticModelBinder
             {
                 EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type, value.EventType),
                 Route = BindFixtureRoute(value),
-                Unrouted = value.NoStream is not null
+                Unrouted = value.NoStream is not null,
+                ExpectedTags = expectedFact ? BindExpectedTags(value) : null
             };
+        }
+
+        ImmutableArray<string>? BindExpectedTags(SpecificationEventSyntax value)
+        {
+            if (value.NoTags is not null) return [];
+            return value.Tags.Any() ? BindTags(value.Tags) : null;
         }
 
         SemanticEventSourceIdentity? BindEventSource(ExpressionSyntax expression, SemanticTypeReference? type, string? eventName = null)

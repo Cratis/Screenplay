@@ -71,7 +71,7 @@ internal static class EsmSchemaMembers
         ["QueryFilter"] = "id:s name:s type:1 property:s",
         ["QueryFilterValue"] = "filter:s value:1",
         ["Specification"] = "id:s name:s givenEvents:[] givenReadModels:[] givenCaller:1 when:1 whenAppended:1 whenRedelivered:1 thenEvents:[] thenNoEvents:b thenEventsInAnyOrder:b thenReadModels:[] thenAbsentReadModels:[] thenQueries:[] thenErrors:[] thenDenied:b thenReturns:1 givenClock:s givenCaptures:[] givenGenerated:[] whenClock:s whenTrigger:1 whenCapture:1 thenInvocations:[] givenTimeZone:s givenAbilityAnswers:[]",
-        ["SpecificationEvent"] = "eventContract:s values:[] eventSource:1 route:1 unrouted:b",
+        ["SpecificationEvent"] = "eventContract:s values:[] eventSource:1 route:1 unrouted:b expectedTags:s[]",
         ["SpecificationCommand"] = "command:s values:[] generatedValues:[] eventSource:1 system:s ability:s inputs:[]",
         ["AbilityFieldValue"] = "name:s value:1",
         ["AbilityAnswer"] = "system:s ability:s kind:s outcome:s reason:s values:[]",

@@ -1889,6 +1889,7 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1139` | Warning | A screen action, form or reaction `invokes` a command whose audiences can be off while the invoker's are on, so the invocation can be refused as not available. `when` conditions are opaque and skipped; a reaction is never gated. |
 | `PLAY1140` | Error | An `available for` or `available with` line holds a token that is not a name, `and`, `or` or a parenthesis. |
 | `PLAY1141` | Error | A parenthesis in an `available for` or `available with` line is never closed. |
+| `PLAY1144` | Error | An event tag expectation is misplaced, repeated, mixed or not a literal: `tag <value>` and `no tags` are written only under a `then` event, `no tags` cannot be repeated or combined with `tag`, the value is an identifier or a string, and the line takes no children. |
 
 ## Screen visuals and slice placements
 
