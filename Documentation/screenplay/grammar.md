@@ -1776,6 +1776,11 @@ SpecificationStream = "stream", Ident, ".", Ident, NL,
 SpecificationStreamIdParts = "streamId", NL, INDENT, { SpecificationStreamIdPart }, DEDENT ;
 SpecificationStreamIdPart = Ident, "=", ConcreteValue, NL ;
 SpecificationNoStream = "no", "stream", NL ;
+SpecificationTag = "tag", ( Ident | String ), NL ;
+SpecificationNoTags = "no", "tags", NL ;
+(* Only a then event takes SpecificationTag lines (ordered, exact, duplicates kept)
+   or one SpecificationNoTags; the two never mix and take no children (PLAY1144).
+   Tag expectations are executable from ESM v54. *)
 (* A route occurs at most once. Then, redelivery locators and event examples
    accept no stream. Only event examples carry routes; steps replace inherited
    routes as a whole. Routed given and when append require for; then and
