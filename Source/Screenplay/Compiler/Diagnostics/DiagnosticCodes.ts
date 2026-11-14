@@ -705,4 +705,5 @@ export const DiagnosticCodes = {
     UnclosedAvailableGroup: 'PLAY1141',
     SecretConceptProjected: 'PLAY1142',
     ScreenWithoutPersona: 'PLAY1143',
+    InvalidEventTagExpectation: 'PLAY1144',
 } as const;
