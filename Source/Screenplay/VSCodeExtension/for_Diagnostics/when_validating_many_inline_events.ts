@@ -161,7 +161,7 @@ describe('when validating many inline events in the workspace', () => {
 
     for (const selection of ['privilege', 'purposes', 'personas']) {
         const vectors = JSON.parse(readFileSync(resolve(__dirname, `../../Compiler/Conformance/completeness-${selection}.json`), 'utf8')) as { cases: { name: string; source: string[] }[] };
-        const codes = new Set(['PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0574', 'PLAY0575', 'PLAY0576']);
+        const codes = new Set(['PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY1143']);
         for (const vector of vectors.cases) {
             it(`should preserve supplied ${selection} findings for ${vector.name} without enabling the check`, () => {
                 const source = vector.source.join('\n');

@@ -14,8 +14,8 @@ interface Vector {
     readonly diagnostics: readonly Diagnostic[];
 }
 const vectors = JSON.parse(readFileSync(resolve(__dirname, '../../Conformance/completeness-personas.json'), 'utf8')) as { cases: Vector[] };
-const codes = new Set(['PLAY0574', 'PLAY0575', 'PLAY0576']);
-const selections = ['personas', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'all'];
+const codes = new Set(['PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY1143']);
+const selections = ['personas', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY1143', 'all'];
 
 describe('when reading shared personas completeness vectors', () => {
     it('should exercise nonempty positive and negative cases', () => {
