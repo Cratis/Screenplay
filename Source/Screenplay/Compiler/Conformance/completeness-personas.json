@@ -1298,6 +1298,277 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "local command bindings ignore declaration order",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        authorize Restricted",
+                "      screen Locked",
+                "        action C",
+                "    slice StateChange T",
+                "      command C",
+                "        authorize Member",
+                "      screen Open",
+                "        action C"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 10, "column": 7 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 12, "column": 7 } }
+            ]
+        },
+        {
+            "name": "local query bindings ignore declaration order",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateView S",
+                "      readmodel Rm",
+                "        value String",
+                "      query Q => Rm",
+                "        authorize Restricted",
+                "      screen Locked",
+                "        data Rm via query Q",
+                "    slice StateView T",
+                "      readmodel OtherRm",
+                "        value String",
+                "      query Q => OtherRm",
+                "        authorize Member",
+                "      screen Open",
+                "        data OtherRm via query Q"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Query 'Q' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 12, "column": 7 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 14, "column": 7 } }
+            ]
+        },
+        {
+            "name": "fully and partially qualified command and query bindings",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command Allowed",
+                "        authorize Member",
+                "      command C",
+                "        authorize Restricted",
+                "      readmodel Rm",
+                "        value String",
+                "      query Q => Rm",
+                "        authorize Restricted",
+                "      screen Locked",
+                "        data Rm via query M.F.S.Q",
+                "        action M.F.S.C",
+                "      screen AlsoLocked",
+                "        data Rm via query S.Q",
+                "        action S.C"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 12, "column": 7 } },
+                { "severity": "warning", "code": "PLAY0575", "message": "Query 'Q' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 16, "column": 7 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 18, "column": 7 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'AlsoLocked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 21, "column": 7 } }
+            ]
+        },
+        {
+            "name": "nested features resolve bindings within their module",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module A",
+                "  feature F",
+                "    feature Nested",
+                "      slice StateChange S",
+                "        command C",
+                "          authorize Member",
+                "        screen Open",
+                "          action C",
+                "module B",
+                "  feature F",
+                "    feature Nested",
+                "      slice StateChange S",
+                "        command C",
+                "          authorize Restricted",
+                "        screen Locked",
+                "          action C"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 19, "column": 9 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 21, "column": 9 } }
+            ]
+        },
+        {
+            "name": "unknown and ambiguous actions are not definitely denied",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command Allowed",
+                "        authorize Member",
+                "      command Denied",
+                "        authorize Restricted",
+                "      screen Unknown",
+                "        action Missing",
+                "        action Denied",
+                "      screen Ambiguous",
+                "        action C",
+                "        action Denied",
+                "    slice StateChange T",
+                "      command C",
+                "        authorize Restricted",
+                "    slice StateChange U",
+                "      command C",
+                "        authorize Member"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'Denied' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 12, "column": 7 } },
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'C' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 21, "column": 7 } }
+            ]
+        },
+        {
+            "name": "guarded-only denied action is a screen binding",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command Allowed",
+                "        authorize Member",
+                "      command Denied",
+                "        authorize Restricted",
+                "      screen Locked",
+                "        action \"Guarded\"",
+                "          when item.ready == true execute Denied",
+                "          otherwise hidden"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'Denied' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 12, "column": 7 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 14, "column": 7 } }
+            ]
+        },
+        {
+            "name": "available guarded alternative keeps a denied-query screen usable",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command Allowed",
+                "        authorize Member",
+                "      readmodel Rm",
+                "        value String",
+                "      query Q => Rm",
+                "        authorize Restricted",
+                "      screen Open",
+                "        data Rm via query Q",
+                "        action \"Guarded\"",
+                "          when item.ready == true execute Allowed",
+                "          otherwise hidden"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Query 'Q' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 14, "column": 7 } }
+            ]
+        },
+        {
+            "name": "available guarded fallback keeps a denied-query screen usable",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command Allowed",
+                "        authorize Member",
+                "      command Denied",
+                "        authorize Restricted",
+                "      readmodel Rm",
+                "        value String",
+                "      query Q => Rm",
+                "        authorize Restricted",
+                "      screen Open",
+                "        data Rm via query Q",
+                "        action \"Guarded\"",
+                "          when item.ready == true execute Denied",
+                "          otherwise execute Allowed"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'Denied' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 12, "column": 7 } },
+                { "severity": "warning", "code": "PLAY0575", "message": "Query 'Q' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 16, "column": 7 } }
+            ]
+        },
+        {
+            "name": "guarded alternatives and fallback inside a template section",
+            "source": [
+                "policy Member",
+                "  require role \"A\"",
+                "policy Restricted",
+                "  require role \"Other\"",
+                "persona Person",
+                "  policy Member",
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command Allowed",
+                "        authorize Member",
+                "      command Denied",
+                "        authorize Restricted",
+                "      screen Locked",
+                "        template T",
+                "          body",
+                "            section Main",
+                "              action \"Guarded\"",
+                "                when item.ready == true execute S.Denied",
+                "                otherwise execute M.F.S.Denied"
+            ],
+            "diagnostics": [
+                { "severity": "warning", "code": "PLAY0575", "message": "Command 'Denied' is definitely denied to every declared persona's synthesized caller.", "location": { "line": 12, "column": 7 } },
+                { "severity": "warning", "code": "PLAY1143", "message": "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", "location": { "line": 14, "column": 7 } }
+            ]
         }
     ]
 }

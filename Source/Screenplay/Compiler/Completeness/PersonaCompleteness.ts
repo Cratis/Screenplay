@@ -4,13 +4,16 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { SliceReferenceCollector } from '../Dependencies/SliceReferences';
+import { RefusalDeclarations } from '../Parsing/RefusalDeclarations';
 import { AuthorizeSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
 import { AnonymousConditionSyntax, AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax, StateConditionSyntax } from '../Syntax/Policies';
 import { SpecificationCallerSyntax } from '../Syntax/Specifications';
-import { ScreenDirectiveSyntax, ScreenSyntax } from '../Syntax/Screens';
-import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
+import { ScreenSyntax } from '../Syntax/Screens';
+import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
+import { SyntaxNode } from '../Syntax/SyntaxNode';
 import { combine, conditionTruth, requirementTruth, Truth } from './AuthorizationFacts';
 import { ordinalClaimKey, personaAmbiguities } from './PersonaWitness';
 
@@ -19,30 +22,52 @@ interface Gate {
     readonly name: string;
     readonly location: SourceLocation;
     readonly gates: readonly AuthorizeSyntax[];
+    readonly node: SyntaxNode;
 }
 
 function gatesIn(features: readonly FeatureSyntax[], inherited: readonly AuthorizeSyntax[]): readonly Gate[] {
     return features.flatMap(feature => {
         const gates = feature.authorize === null ? inherited : [...inherited, feature.authorize];
         return [...gatesIn(feature.features, gates), ...feature.slices.flatMap(slice => [
-            ...slice.commands.map(command => ({ kind: 'Command', name: command.name, location: command.location, gates: command.authorize === null ? gates : [...gates, command.authorize] })),
-            ...slice.queries.map(query => ({ kind: 'Query', name: query.name, location: query.location, gates: query.authorize === null ? gates : [...gates, query.authorize] })),
-            ...slice.screens.map(screen => ({ kind: 'Screen', name: screen.name, location: screen.location, gates })),
+            ...slice.commands.map(command => ({ kind: 'Command', name: command.name, node: command, location: command.location, gates: command.authorize === null ? gates : [...gates, command.authorize] })),
+            ...slice.queries.map(query => ({ kind: 'Query', name: query.name, node: query, location: query.location, gates: query.authorize === null ? gates : [...gates, query.authorize] })),
+            ...slice.screens.map(screen => ({ kind: 'Screen', name: screen.name, node: screen, location: screen.location, gates })),
         ])];
     });
 }
 
-function screensIn(features: readonly FeatureSyntax[], inherited: readonly AuthorizeSyntax[]): readonly { readonly screen: ScreenSyntax; readonly gates: readonly AuthorizeSyntax[] }[] {
-    return features.flatMap(feature => {
-        const gates = feature.authorize === null ? inherited : [...inherited, feature.authorize];
-        return [...screensIn(feature.features, gates), ...feature.slices.flatMap(slice => slice.screens.map(screen => ({ screen, gates })))];
+type BindingGates = readonly AuthorizeSyntax[] | null;
+
+function bindingGates(screen: ScreenSyntax, slice: SliceSyntax, declarations: RefusalDeclarations, gates: ReadonlyMap<SyntaxNode, readonly AuthorizeSyntax[]>): readonly BindingGates[] {
+    const collector = new SliceReferenceCollector();
+    collector.visitScreen(screen);
+    return collector.references.filter(reference => reference.targetKind === 'Command' || reference.targetKind === 'Query').map(reference => {
+        const target = reference.targetKind === 'Command'
+            ? declarations.resolve(reference.name, slice, candidate => candidate.commands)
+            : declarations.resolve(reference.name, slice, candidate => candidate.queries);
+        return target === null ? null : gates.get(target.node)!;
     });
 }
 
-function directivesIn(directives: readonly ScreenDirectiveSyntax[]): readonly ScreenDirectiveSyntax[] {
-    return directives.flatMap(directive => [directive, ...directivesIn(
-        directive.kind === 'ScreenTemplateReferenceSyntax' ? directive.slots.flatMap(slot => slot.directives)
-            : directive.kind === 'ScreenSectionSyntax' ? directive.directives : [])]);
+function screenDenied(bindings: readonly BindingGates[], inherited: readonly AuthorizeSyntax[], caller: SpecificationCallerSyntax, application: ApplicationSyntax): boolean {
+    return evaluate(inherited, caller, application) === false
+        || bindings.every(binding => binding !== null && evaluate([...inherited, ...binding], caller, application) === false);
+}
+
+function screenDiagnostics(application: ApplicationSyntax, gates: readonly Gate[], callers: readonly (SpecificationCallerSyntax | null)[]): readonly Diagnostic[] {
+    const byNode = new Map(gates.map(gate => [gate.node, gate.gates] as const));
+    const declarations = new RefusalDeclarations(application);
+    const diagnostics: Diagnostic[] = [];
+    for (const { slice } of declarations.slices) {
+        for (const screen of slice.screens) {
+            const bindings = bindingGates(screen, slice, declarations, byNode);
+            if (bindings.length > 0 && callers.every(caller => caller !== null && screenDenied(bindings, byNode.get(screen)!, caller, application))) {
+                diagnostics.push({ severity: 'warning', code: DiagnosticCodes.ScreenWithoutPersona,
+                    message: `Screen '${screen.name}' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.`, location: screen.location });
+            }
+        }
+    }
+    return diagnostics;
 }
 
 function references(requirement: PolicyRequirementSyntax): readonly string[] {
@@ -133,27 +158,21 @@ export function personaDiagnostics(application: ApplicationSyntax): readonly Dia
     if (personas.length === 0) return [];
     const gates = application.modules.flatMap(module => gatesIn(module.features, module.authorize === null ? [] : [module.authorize]));
     const used = new Set(gates.flatMap(gate => gate.gates.flatMap(authorize => references(authorize.requirement))));
-    const diagnostics: Diagnostic[] = [];
-    for (const { persona } of personas) {
-        if (!persona.policies.some(policy => used.has(policy))) diagnostics.push({ severity: 'warning', code: DiagnosticCodes.PersonaWithoutGate,
-            message: `Persona '${persona.name}' has no policy used by a command, query, or inherited screen gate.`, location: persona.location });
-        for (const ambiguity of personaAmbiguities(persona, application)) diagnostics.push({ severity: 'information', code: DiagnosticCodes.AmbiguousPersonaCaller,
-            message: `Persona '${persona.name}' policy '${ambiguity.policy}' has an unchosen buildable alternative '${conditionText(ambiguity.alternative)}'; add a policy that pins it.`, location: ambiguity.location });
-    }
+    const diagnostics = personaWarnings(application, used);
     for (const gate of gates.filter(gate => gate.kind !== 'Screen' && gate.gates.length > 0 && personas.every(({ result }) => result.caller !== null && evaluate(gate.gates, result.caller, application) === false))) {
         diagnostics.push({ severity: 'warning', code: DiagnosticCodes.GateWithoutPersona,
             message: `${gate.kind} '${gate.name}' is definitely denied to every declared persona's synthesized caller.`, location: gate.location });
     }
-    const byName = new Map<string, readonly AuthorizeSyntax[]>(gates.filter(gate => gate.kind !== 'Screen').map(gate => [`${gate.kind}:${gate.name}`, gate.gates] as const));
-    for (const { screen, gates: inherited } of application.modules.flatMap(module => screensIn(module.features, module.authorize === null ? [] : [module.authorize]))) {
-        const bindings = directivesIn(screen.directives).flatMap(directive =>
-            directive.kind === 'ScreenDataSyntax' ? [`Query:${directive.query}`] : directive.kind === 'ScreenActionSyntax' ? [`Command:${directive.command}`] : []).filter(key => byName.has(key));
-        if (bindings.length === 0) continue;
-        if (personas.every(({ result }) => result.caller !== null && (evaluate(inherited, result.caller, application) === false
-            || bindings.every(key => evaluate([...inherited, ...byName.get(key)!], result.caller!, application) === false)))) {
-            diagnostics.push({ severity: 'warning', code: DiagnosticCodes.ScreenWithoutPersona,
-                message: `Screen '${screen.name}' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.`, location: screen.location });
-        }
+    return [...diagnostics, ...screenDiagnostics(application, gates, personas.map(({ result }) => result.caller))];
+}
+
+function personaWarnings(application: ApplicationSyntax, used: ReadonlySet<string>): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    for (const persona of application.personas) {
+        if (!persona.policies.some(policy => used.has(policy))) diagnostics.push({ severity: 'warning', code: DiagnosticCodes.PersonaWithoutGate,
+            message: `Persona '${persona.name}' has no policy used by a command, query, or inherited screen gate.`, location: persona.location });
+        for (const ambiguity of personaAmbiguities(persona, application)) diagnostics.push({ severity: 'information', code: DiagnosticCodes.AmbiguousPersonaCaller,
+            message: `Persona '${persona.name}' policy '${ambiguity.policy}' has an unchosen buildable alternative '${conditionText(ambiguity.alternative)}'; add a policy that pins it.`, location: ambiguity.location });
     }
     return diagnostics;
 }
