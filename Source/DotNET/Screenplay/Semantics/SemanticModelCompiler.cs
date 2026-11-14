@@ -38,6 +38,6 @@ public sealed class SemanticModelCompiler(IScreenplayCompiler compiler, ISemanti
         var diagnostics = syntax.Diagnostics.Concat(bound.Diagnostics).ToArray();
         return bound.Success
             ? new CompilationResult<SemanticCompilation>(bound.Value, diagnostics) { ImplementationRequirements = bound.ImplementationRequirements, TypedContextDescriptors = bound.TypedContextDescriptors }
-            : CompilationResult<SemanticCompilation>.Failed(diagnostics) with { ImplementationRequirements = bound.ImplementationRequirements, TypedContextDescriptors = bound.TypedContextDescriptors };
+            : CompilationResult<SemanticCompilation>.Failed(diagnostics) with { SpecificationRefusedValue = bound.SpecificationRefusedValue, ImplementationRequirements = bound.ImplementationRequirements, TypedContextDescriptors = bound.TypedContextDescriptors };
     }
 }

@@ -4391,6 +4391,11 @@ public static class DiagnosticCodes
     public const string ExtensionComponentPlatformUnsupported = "PLAY1118";
 
     /// <summary>
+    /// An opt-in check found a screen whose bound commands and queries are definitely denied to every declared persona.
+    /// </summary>
+    public const string ScreenWithoutPersona = "PLAY1143";
+
+    /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>
     public const string InvalidScreenVisual = "PLAY0950";
@@ -4574,6 +4579,12 @@ public static class DiagnosticCodes
     /// A parenthesis in an <c>available</c> line is never closed.
     /// </summary>
     public const string UnclosedAvailableGroup = "PLAY1141";
+
+    /// <summary>
+    /// A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked <c>secret</c>
+    /// into a read-model property, so the value becomes part of the read model and its query results.
+    /// </summary>
+    public const string SecretConceptProjected = "PLAY1142";
 
     /// <summary>
     /// A graph query <c>collect</c> is malformed: its line is not <c>&lt;property&gt; = collect &lt;root&gt; -[alias:]TYPE-&gt; [alias:]Label</c>, it does not start at the query's root, or a row line is not <c>&lt;property&gt; = &lt;alias&gt;.&lt;property&gt;</c> naming the collected node or edge.

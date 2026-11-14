@@ -372,6 +372,7 @@ export const diagnosticCodes = {
     removeKeyWithoutDynamicKey: 'PLAY0956',
     invalidDynamicKey: 'PLAY0957',
     clearDynamicKey: 'PLAY0963',
+    secretConceptProjected: 'PLAY1142',
     invalidGraphCollect: 'PLAY1142',
     graphCollectTargetMismatch: 'PLAY1143',
     nestedGraphCollect: 'PLAY1144',

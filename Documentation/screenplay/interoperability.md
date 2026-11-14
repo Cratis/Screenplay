@@ -19,6 +19,30 @@ The executable semantic model (ESM) carries portable model meaning, not permissi
 
 A render planner decides how to realize admitted semantics for its target. It returns an artifact plan, while the caller owns publication and runtime orchestration. Source adapters likewise contribute evidence, not authority to change the workspace. These boundaries let you reuse the model without treating syntax recognition or a successful compilation as proof of runtime support.
 
+### Opt into specification-refused compilations (.NET)
+
+`SemanticModelCompiler.Compile` still returns `Success == false` and `Value == null`
+when a specification has binding errors. A host that needs the executable model
+without those specifications can explicitly read
+`CompilationResult<SemanticCompilation>.SpecificationRefusedValue`:
+
+```csharp
+var result = compiler.Compile(applicationName, documents);
+var executable = result.Value ?? result.SpecificationRefusedValue;
+```
+
+This opt-in value is present only when every error belongs to a specification
+binding or case-value validation scope. Syntax, structural, extension-resolution,
+and semantic-contract validation errors leave it absent. Broken specifications are
+removed, not repaired. `executable.RefusedSpecifications` identifies each removed
+specification by its authoritative `Id`, original Error `Diagnostics`, and effective
+`Origin` when available. Healthy identities, documents, and source mappings remain;
+refusals are a sidecar, not a new ESM field or version.
+
+Keep reporting `result.Diagnostics` and treating the result as failed verification.
+Reading this member does not change CLI, verification, or MCP success behavior,
+and does not admit the remaining model for a target automatically.
+
 ## Two-direction architecture
 
 ```mermaid
