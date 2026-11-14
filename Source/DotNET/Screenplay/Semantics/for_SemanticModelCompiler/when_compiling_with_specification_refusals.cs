@@ -102,7 +102,7 @@ public class when_compiling_with_specification_refusals : given.a_specification_
     [Fact]
     void should_not_promote_contexts_when_a_refused_specification_has_an_extension_error()
     {
-        var source = Source.Replace("        produces Confirmed", "        handler\n          file Confirm.cs\n        produces Confirmed", StringComparison.Ordinal)
+        var source = Source.Replace("        produces Confirmed", "        validate\n          amount rule Positive\n            file Positive.cs\n        validate csharp\n          ```csharp\n          return true;\n          ```\n        produces Confirmed", StringComparison.Ordinal)
             .Replace("when Record amount = 10", "when Record", StringComparison.Ordinal);
         var previous = ExtensionContractResolver.Current;
         try
