@@ -60,12 +60,14 @@ public sealed partial class SemanticModelBinder
             _specificationBindings[specification] = (id, origin);
             var diagnosticStart = _diagnostics.Count;
             var sourceStart = _sourceMapEntries.Count;
+            var versions = (UsesV2, UsesV5, UsesV6, UsesV7, UsesV30);
             try
             {
                 return BindSpecificationCore(slice, specification, commands, origin);
             }
             finally
             {
+                (UsesV2, UsesV5, UsesV6, UsesV7, UsesV30) = versions;
                 _specificationSources[id] = [.. _sourceMapEntries.Skip(sourceStart).Select(entry => entry.SemanticId)];
                 RecordSpecificationErrors(id, origin, diagnosticStart);
             }

@@ -286,30 +286,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var model = ExecutableSemanticModel.CreateValidated(languageVersion, semanticVersion, application);
-            var compiledDocuments = documents;
-            if (context.UsesV4)
-            {
-                // New v4 event addresses need their declared revision before compilation verifies identity
-                // coherence. Existing persisted revisions are never advanced here: an explicit revision-bound
-                // catalog plan is required. Legacy and lone-generation-1 events already resolve to revision 1.
-                var index = SemanticCompilationIndex.Create(application, documents.IdentityCatalog.Application);
-                var missing = index.Events
-                    .Where(entry => entry.Value.Revision.Value > 1 &&
-                        !documents.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)))
-                    .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision))
-                    .ToImmutableArray();
-                if (!missing.IsEmpty)
-                {
-                    var catalog = SemanticIdentityCatalog.PlanEventRevisionAdvancement(
-                        documents.IdentityCatalog,
-                        documents.IdentityCatalog.Revision,
-                        [.. documents.Documents.Select(value => value.StableKey)],
-                        [.. index.Declarations.Keys],
-                        [.. index.Events.Keys],
-                        missing).Catalog;
-                    compiledDocuments = SemanticDocumentSet.Create(documents.Documents, catalog, documents.AttachmentContents);
-                }
-            }
+            var compiledDocuments = context.UsesV4
+                ? BootstrapEventRevisions(documents, application, context.RefusedSpecifications)
+                : documents;
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
             var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap, context.RefusedSpecifications).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
@@ -498,6 +477,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             application = WithoutRefusedSpecifications(application);
             ValidateExampleAdmission(application);
             application = WithEffectiveTimeZone(BindRoutedFixtureSources(WithoutRefusedSpecifications(application)));
+            application = WithRetainedSpecificationVersions(application);
             UsesEventRoutes = SemanticEventRouting.Uses(application);
             ReportLegacyDecisionReads();
 
