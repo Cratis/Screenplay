@@ -44,7 +44,10 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
         documents.set(path.basename(document.uri.fsPath), document.getText());
         const rootFile = path.basename(document.uri.fsPath);
         const result = compileApplication(documents, [rootFile]);
-        return { name, root: folder, files: [...documents.keys()], result };
+        // Only the files the compile reached - the document and what it imports - may be opened from the board.
+        const reached = new Set(result.documents.map(document => document.path));
+        reached.add(rootFile);
+        return { name, root: folder, files: [...reached], result };
     }
     const rootUri = vscode.Uri.file(root);
     const sources = await sourcesBeneath(rootUri, rootUri);
