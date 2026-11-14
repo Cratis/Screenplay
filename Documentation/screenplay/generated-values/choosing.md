@@ -33,11 +33,13 @@ Entropy measures the randomness in a value, in bits. Generated identifiers requi
 
 ## Sequences: why not yet
 
-`generate sequence` is reserved. Binding, describe, propose-ast and propose-source refuse it with `PLAY0682`, and nothing is admitted. The admitted strategies draw values independently, so they are neither ordered nor collision-free. A `rule` has no store to count against. Reading the highest value and adding one in a handler races and produces duplicates, and a failure after reserving a number leaves a gap.
+`generate sequence` is reserved. Binding, describe, propose-ast and propose-source refuse it with `PLAY0682`, and nothing is admitted. `random` and `pattern` draw each value independently, so their values are neither ordered nor guaranteed collision-free. A `rule` has no store to count against. Reading the highest value and adding one in a handler races and produces duplicates, and a failure after reserving a number leaves a gap.
 
-[Decision 0123](https://github.com/Cratis/Screenplay/blob/main/decisions/0123-store-backed-sequences-through-a-chronicle-allocator.md) is proposed, not shipped. It describes one allocator event source per counter key, built from the counter name and scope parts such as `InvoiceNumber/2026`. The allocation is appended atomically with the business event in one batch and guarded by a concurrency scope on the tail. On contention the caller receives a concurrency outcome and resubmits. Admission also waits for Chronicle kernel 19.40.1 or later, race vectors, retry-scope and freshness evidence, and an Arc allocation step that does not exist yet.
+[Decision 0123](https://github.com/Cratis/Screenplay/blob/main/decisions/0123-store-backed-sequences-through-a-chronicle-allocator.md) is proposed, not shipped. It describes one allocator event source per counter key, built from the counter name and scope parts such as `InvoiceNumber/2026`. The allocation is appended atomically with the business event in one batch and guarded by a concurrency scope on the tail.
 
-Even when admitted, a sequence promises values that are unique per counter and increasing, not that no numbers are missing. Gaps remain possible through writes that bypass the allocator, imports, redaction and older kernels. Until then, use `pattern` with a date and checksum for a readable reference, or `ulid` or `uuidv7` for an ordered identity. Do not imitate a sequence in `Handle`.
+On contention the caller receives a concurrency outcome and resubmits. Admission also waits for Chronicle kernel 19.40.1 or later, race vectors, retry-scope and freshness evidence, and an Arc allocation step that does not exist yet.
+
+Even when admitted, a sequence promises values that are unique per counter and increasing, not that no numbers are missing. Gaps remain possible through writes that bypass the allocator, imports, redaction and older kernels. Until then, use `pattern` with a date and checksum for a readable reference, or `ulid` or `uuidv7` for a time-ordered identity (values created in the same millisecond are not guaranteed to be ordered). Do not imitate a sequence in `Handle`.
 
 ## Declare and verify
 
