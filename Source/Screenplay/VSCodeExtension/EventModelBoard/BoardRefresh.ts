@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { boardFor } from './compileBoard';
 import { compileForBoard } from './boardSources';
+import { resolveBoardSource } from './BoardSourcePath';
 
 // How long the board waits after a change before compiling again, so typing does not redraw it per key.
 const recompileDelay = 300;
@@ -15,6 +16,7 @@ export class BoardRefresh implements vscode.Disposable {
     readonly #subscriptions: vscode.Disposable[] = [];
     #watcher: vscode.FileSystemWatcher | undefined;
     #root: vscode.Uri | undefined;
+    #files: ReadonlySet<string> = new Set();
     #pending: ReturnType<typeof setTimeout> | undefined;
     #latest = 0;
 
@@ -29,6 +31,11 @@ export class BoardRefresh implements vscode.Disposable {
     // The folder of the application the board shows, when the document is part of one.
     get root(): vscode.Uri | undefined {
         return this.#root;
+    }
+
+    // The file to open for a path the board's webview asked for; only a file the board compiled is ever returned.
+    sourceFor(requested: unknown): vscode.Uri | undefined {
+        return resolveBoardSource(this.#root, this.#files, requested);
     }
 
     soon(): void {
@@ -52,6 +59,7 @@ export class BoardRefresh implements vscode.Disposable {
             return;
         }
         this.#watch(compilation.root);
+        this.#files = new Set(compilation.files);
         void this.webview.postMessage(boardFor(compilation.result, compilation.name, compilation.wholeApplication));
     }
 
