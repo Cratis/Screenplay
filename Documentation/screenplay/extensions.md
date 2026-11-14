@@ -1,6 +1,6 @@
 ---
 title: "Screenplay extensions: systems, abilities and extension packages"
-description: "How a Cratis Screenplay model reaches the outside world: systems and abilities, the single invokes verb, durable invocations, extension packages, the lock, activation and execution tiers, with a map to the owning pages in every repository."
+description: "How a Screenplay model reaches outside systems: abilities, the invokes verb, durable invocations, extension packages, the lock and execution tiers."
 ---
 
 # Extensions

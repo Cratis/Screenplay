@@ -1,6 +1,6 @@
 ---
 title: "Screenplay systems and abilities: declare what an external system can be asked"
-description: "Declare external systems in Cratis Screenplay with typed abilities, returned values, named outcomes and effect classes, and see how they reach the executable semantic model."
+description: "Declare external systems in Cratis Screenplay with typed abilities, returned values, named outcomes and effect classes, checked in the semantic model."
 ---
 
 # Systems and abilities

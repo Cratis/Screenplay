@@ -1,6 +1,6 @@
 ---
 title: "Build a Screenplay extension: create, verify and publish a package"
-description: "A tutorial that creates an extension package with cratis extension new, reads its contract and manifest, implements an ability and a component, adds the icon, marketplace images and placeholders, verifies it with cratis extension verify and publishes it."
+description: "Tutorial: create a Screenplay extension package with cratis extension new, implement an ability and component, add assets, verify it and publish it."
 ---
 
 # Build an extension
