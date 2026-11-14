@@ -80,9 +80,45 @@ public sealed partial class SemanticModelBinder
             var cardinality = SemanticQueryCardinality.One;
             if (query.ReturnType.IsCollection) cardinality = SemanticQueryCardinality.Many;
             else if (query.ReturnType.IsOptional) cardinality = SemanticQueryCardinality.ZeroOrOne;
+            var collects = BindGraphCollects(query, readModel.Properties);
             return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before
                 ? null
-                : new(query.Name, query.Graph, readModel.Model.Id, cardinality, query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot, arguments, matches, conditions, returns.ToImmutable()) { Authorization = authorization };
+                : new(query.Name, query.Graph, readModel.Model.Id, cardinality, query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot, arguments, matches, conditions, returns.ToImmutable()) { Authorization = authorization, Collects = collects };
+        }
+
+        ImmutableArray<SemanticGraphCollect> BindGraphCollects(GraphQuerySyntax query, Dictionary<string, SemanticProperty> properties)
+        {
+            var collects = ImmutableArray.CreateBuilder<SemanticGraphCollect>();
+            foreach (var collect in query.Collects)
+            {
+                if (!properties.TryGetValue(collect.Property, out var property))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Graph query '{query.Name}' collects '{collect.Property}', which read model '{query.ReturnType.Name}' does not declare.", collect.Location);
+                    continue;
+                }
+
+                var declaration = (syntax.Types ?? []).FirstOrDefault(type => _types.TryGetValue(type.Name, out var registered) && registered.Id == property.Type.Target);
+                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType || declaration is null)
+                {
+                    Error(DiagnosticCodes.GraphCollectTargetMismatch, $"Graph query '{query.Name}' collects '{collect.Property}', which is not a composite type.", collect.Location);
+                    continue;
+                }
+
+                var owner = _types[declaration.Name];
+                var members = ImmutableArray.CreateBuilder<SemanticGraphCollectMember>();
+                foreach (var @return in collect.Returns)
+                {
+                    var id = documents.IdentityCatalog.ResolveSemanticAssignment(SemanticAddress.ForProperty(owner.Address, @return.Property)).Id;
+                    var kind = @return.Alias == collect.Hop.Node.Alias ? SemanticGraphCollectMemberKind.Property : SemanticGraphCollectMemberKind.EdgeProperty;
+                    members.Add(new(id, kind, @return.Source));
+                }
+
+                var hop = new SemanticGraphHop(collect.Hop.Alias, collect.Hop.Type, collect.Hop.Outgoing, new(collect.Hop.Node.Alias, collect.Hop.Node.Label));
+                var cardinality = property.Type.IsCollection ? SemanticGraphCollectCardinality.Many : SemanticGraphCollectCardinality.One;
+                collects.Add(new(property.Id, collect.From, hop, cardinality, owner.Id, members.ToImmutable()));
+            }
+
+            return collects.ToImmutable();
         }
 
         SemanticGraph? BindGraph(GraphSyntax graph)
@@ -352,7 +388,9 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (BindConcreteValue(property.Source, target.Type, "graph query row", false) is { } value) values.Add(new(property.Property, value));
+                    // A collected property may be asserted null: a collect of one row assigns null when nothing is reached, and so may a row's absent node property.
+                    var collected = query.Collects.Any(collect => collect.Property == property.Property);
+                    if (BindConcreteValue(property.Source, target.Type, "graph query row", collected) is { } value) values.Add(new(property.Property, value));
                 }
 
                 rows.Add(new(values.ToImmutable()));

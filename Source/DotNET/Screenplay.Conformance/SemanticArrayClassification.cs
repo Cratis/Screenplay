@@ -71,7 +71,7 @@ internal static class SemanticArrayClassification
         "application/graphs", "application/graphProjections", "application/graphSpecifications",
         "graphs/nodes", "graphs/edges", "nodes/properties", "edges/properties",
         "graphProjections/nodes", "graphProjections/edges", "nodes/handlers", "edges/handlers", "handlers/mappings",
-        "application/graphQueries", "graphQueries/arguments", "graphQueries/matches", "graphQueries/conditions", "graphQueries/returns", "matches/hops",
+        "application/graphQueries", "graphQueries/arguments", "graphQueries/matches", "graphQueries/conditions", "graphQueries/returns", "graphQueries/collects", "collects/members", "matches/hops",
         "graphSpecifications/thenQueries", "thenQueries/arguments", "thenQueries/rows", "rows/values",
         "graphSpecifications/given", "graphSpecifications/givenGraphs", "graphSpecifications/thenGraphs", "givenGraphs/elements", "thenGraphs/elements", "elements/values",
         "stateMachines/transitions", "states/entering", "workflows/edges", "specifications/given", "specifications/outcomes", "specifications/then",

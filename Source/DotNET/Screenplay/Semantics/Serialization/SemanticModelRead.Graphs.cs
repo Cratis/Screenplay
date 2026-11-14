@@ -316,6 +316,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticGraphMatch> matches = default;
         ImmutableArray<SemanticGraphCondition> conditions = default;
         ImmutableArray<SemanticGraphReturn> returns = default;
+        ImmutableArray<SemanticGraphCollect> collects = [];
         SemanticAuthorization? authorization = null;
         while (NextProperty(ref reader, seen, "graph query") is { } property)
         {
@@ -330,13 +331,78 @@ internal static partial class SemanticModelRead
                 case "matches": matches = Array(ref reader, GraphMatch, property); break;
                 case "conditions": conditions = Array(ref reader, GraphCondition, property); break;
                 case "returns": returns = Array(ref reader, GraphReturn, property); break;
+                case "collects": collects = Array(ref reader, GraphCollect, property); break;
                 case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
                 default: throw Unknown(property, "graph query");
             }
         }
 
         Required(name is not null && graph is not null && readModel is not null && cardinality is not null && delivery is not null && !arguments.IsDefault && !matches.IsDefault && !conditions.IsDefault && !returns.IsDefault, "graph query");
-        return new(name!, graph!, readModel!.Value, cardinality!.Value, delivery!.Value, arguments, matches, conditions, returns) { Authorization = authorization };
+        return new(name!, graph!, readModel!.Value, cardinality!.Value, delivery!.Value, arguments, matches, conditions, returns) { Authorization = authorization, Collects = collects };
+    }
+
+    static SemanticGraphCollect GraphCollect(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph collect");
+        var seen = NewSeen();
+        SemanticId? target = null;
+        string? from = null;
+        SemanticGraphHop? hop = null;
+        SemanticGraphCollectCardinality? cardinality = null;
+        SemanticId? row = null;
+        ImmutableArray<SemanticGraphCollectMember> members = default;
+        while (NextProperty(ref reader, seen, "graph collect") is { } property)
+        {
+            switch (property)
+            {
+                case "property": target = Identifier(ref reader, property); break;
+                case "from": from = String(ref reader, property); break;
+                case "hop": hop = Nested(ref reader, GraphHop, property); break;
+                case "cardinality":
+                    cardinality = String(ref reader, property) switch
+                    {
+                        "many" => SemanticGraphCollectCardinality.Many,
+                        "one" => SemanticGraphCollectCardinality.One,
+                        var other => throw new InvalidSemanticContract($"Unknown graph collect cardinality '{other}'.")
+                    };
+                    break;
+                case "row": row = Identifier(ref reader, property); break;
+                case "members": members = Array(ref reader, GraphCollectMember, property); break;
+                default: throw Unknown(property, "graph collect");
+            }
+        }
+
+        Required(target is not null && from is not null && hop is not null && cardinality is not null && row is not null && !members.IsDefault, "graph collect");
+        return new(target!.Value, from!, hop!, cardinality!.Value, row!.Value, members);
+    }
+
+    static SemanticGraphCollectMember GraphCollectMember(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "graph collect member");
+        var seen = NewSeen();
+        SemanticId? target = null;
+        SemanticGraphCollectMemberKind? kind = null;
+        string? source = null;
+        while (NextProperty(ref reader, seen, "graph collect member") is { } property)
+        {
+            switch (property)
+            {
+                case "property": target = Identifier(ref reader, property); break;
+                case "kind":
+                    kind = String(ref reader, property) switch
+                    {
+                        "property" => SemanticGraphCollectMemberKind.Property,
+                        "edgeProperty" => SemanticGraphCollectMemberKind.EdgeProperty,
+                        var other => throw new InvalidSemanticContract($"Unknown graph collect member kind '{other}'.")
+                    };
+                    break;
+                case "source": source = String(ref reader, property); break;
+                default: throw Unknown(property, "graph collect member");
+            }
+        }
+
+        Required(target is not null && kind is not null && source is not null, "graph collect member");
+        return new(target!.Value, kind!.Value, source!);
     }
 
     static SemanticGraphQueryArgument GraphQueryArgument(ref Utf8JsonReader reader)
