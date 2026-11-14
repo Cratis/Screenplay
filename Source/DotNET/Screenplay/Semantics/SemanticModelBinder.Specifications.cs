@@ -16,8 +16,7 @@ public sealed partial class SemanticModelBinder
     {
         internal CompilationResult<SemanticCompilation> CompleteCompilation(
             SemanticCompilation compilation,
-            ImmutableArray<SemanticTypedContextDescriptor> descriptors,
-            ImmutableArray<SemanticTypedContextDescriptor> failureDescriptors)
+            ImmutableArray<SemanticTypedContextDescriptor> descriptors)
         {
             if (HasErrors)
             {
@@ -25,7 +24,8 @@ public sealed partial class SemanticModelBinder
                 {
                     SpecificationRefusedValue = compilation,
                     ImplementationRequirements = ImplementationRequirements,
-                    TypedContextDescriptors = failureDescriptors
+                    TypedContextDescriptors = [.. SemanticTypedContextCatalog.Create(compilation.Model.Application, ImplementationRequirements, true)
+                        .Select(value => value with { ModelRevision = compilation.Model.Revision })]
                 };
             }
 
