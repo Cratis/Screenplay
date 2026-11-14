@@ -57,14 +57,14 @@ describe('when resolving projection property paths', () => {
 
 describe('when resolving scoped projection read models', () => {
     it('should select the nearest unqualified read model', () =>
-        shapes.viewProperties('Row', ['Inventory', 'Stock', 'Listing']).should.deep.equal(inventory));
+        expect(shapes.viewProperties('Row', ['Inventory', 'Stock', 'Listing'])).toEqual(inventory));
 
     it('should leave equally visible read models ambiguous', () =>
         expect(shapes.viewProperties('Row', [])).toBeNull());
 
     for (const reference of ['Summary.Row', 'Reports.Summary.Row', 'Reporting.Reports.Summary.Row']) {
         it(`should resolve ${reference} outside the caller scope`, () =>
-            shapes.viewProperties(reference, ['Inventory', 'Stock', 'Listing']).should.deep.equal(report));
+            expect(shapes.viewProperties(reference, ['Inventory', 'Stock', 'Listing'])).toEqual(report));
     }
 
     for (const reference of ['Inventory.Reports.Summary.Row', 'App.Reporting.Reports.Summary.Row']) {
