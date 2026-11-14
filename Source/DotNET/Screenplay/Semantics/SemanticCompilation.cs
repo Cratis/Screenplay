@@ -40,6 +40,12 @@ public sealed class SemanticCompilation
     public ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins { get; private init; } = ImmutableDictionary.Create<SemanticId, EffectiveSpecification>();
 
     /// <summary>
+    /// Gets the specifications excluded from an opt-in compilation, with their original errors and effective origins.
+    /// This sidecar is not part of ESM bytes or its revision.
+    /// </summary>
+    public ImmutableArray<RefusedSpecification> RefusedSpecifications { get; private set; } = [];
+
+    /// <summary>
     /// Gets the environment values the model needs to run - one per provider setting and per onboarding mail setting.
     /// This sidecar is not part of ESM bytes: providers and onboarding are realization metadata, and this is how a
     /// runtime reads what they need from a compilation without parsing the source again.
@@ -97,7 +103,13 @@ public sealed class SemanticCompilation
     public static SemanticCompilation Create(
         ExecutableSemanticModel model,
         SemanticDocumentSet documents,
-        SemanticSourceMap sourceMap)
+        SemanticSourceMap sourceMap) => Create(model, documents, sourceMap, []);
+
+    internal static SemanticCompilation Create(
+        ExecutableSemanticModel model,
+        SemanticDocumentSet documents,
+        SemanticSourceMap sourceMap,
+        ImmutableArray<RefusedSpecification> refusals)
     {
         if (model is null || documents is null || sourceMap is null)
         {
@@ -106,7 +118,9 @@ public sealed class SemanticCompilation
 
         var index = SemanticCompilationIndex.Create(model.Application, documents.IdentityCatalog.Application);
         var documentKeys = documents.Documents.Select(_ => _.StableKey).ToImmutableArray();
-        var addresses = index.Declarations.Keys.ToImmutableArray();
+        var refusedIds = refusals.SelectMany(refusal => refusal.DeclarationIds.Prepend(refusal.Id)).ToHashSet();
+        var refusedAddresses = documents.IdentityCatalog.Semantics.Where(assignment => refusedIds.Contains(assignment.Id)).Select(assignment => assignment.Address);
+        var addresses = index.Declarations.Keys.Concat(refusedAddresses).Distinct().ToImmutableArray();
         var eventAddresses = index.Events.Keys.ToImmutableArray();
         documents.IdentityCatalog.VerifyAgainst(documentKeys, addresses, eventAddresses);
 
@@ -142,10 +156,17 @@ public sealed class SemanticCompilation
         }
 
         SemanticModelProvenance.Record(model, documents.IdentityCatalog.Application, index.Declarations);
-        return new(model, documents, validatedSourceMap);
+        return new(model, documents, validatedSourceMap) { RefusedSpecifications = refusals };
     }
 
     internal SemanticCompilation WithSpecificationOrigins(ImmutableDictionary<SemanticId, EffectiveSpecification> origins) => Copy(origins: origins);
+
+    internal SemanticCompilation WithRefusedSpecifications(ImmutableArray<RefusedSpecification> refusals)
+    {
+        var copy = Copy();
+        copy.RefusedSpecifications = refusals;
+        return copy;
+    }
 
     internal SemanticCompilation WithEnvironment(EnvironmentRequirements environment) => Copy(environment: environment);
 
@@ -160,8 +181,12 @@ public sealed class SemanticCompilation
     /// <summary>
     /// Copies every realization sidecar onto a new compilation, replacing only the ones given.
     /// </summary>
-    internal SemanticCompilation WithSidecarsOf(SemanticCompilation other) =>
-        Copy(other.SpecificationOrigins, other.Environment, other.PassiveReadModels, other.Sinks, other.ReadModelSinks, other.GraphSinks, other.SystemConfigurations, other.Secrets);
+    internal SemanticCompilation WithSidecarsOf(SemanticCompilation other)
+    {
+        var copy = Copy(other.SpecificationOrigins, other.Environment, other.PassiveReadModels, other.Sinks, other.ReadModelSinks, other.GraphSinks, other.SystemConfigurations, other.Secrets);
+        copy.RefusedSpecifications = other.RefusedSpecifications;
+        return copy;
+    }
 
     SemanticCompilation Copy(
         ImmutableDictionary<SemanticId, EffectiveSpecification>? origins = null,
@@ -175,6 +200,7 @@ public sealed class SemanticCompilation
         new(Model, Documents, SourceMap)
         {
             SpecificationOrigins = origins ?? SpecificationOrigins,
+            RefusedSpecifications = RefusedSpecifications,
             Environment = environment ?? Environment,
             PassiveReadModels = passiveReadModels ?? PassiveReadModels,
             Sinks = sinks ?? Sinks,

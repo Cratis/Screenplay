@@ -16,6 +16,12 @@ namespace Cratis.Screenplay;
 public record CompilationResult<TResult>(TResult? Value, IEnumerable<Diagnostic> Diagnostics)
 {
     /// <summary>
+    /// Gets an opt-in executable value with broken specifications excluded, only when all errors belong to those specifications.
+    /// This does not change <see cref="Success"/>, <see cref="Value"/>, or the error diagnostics.
+    /// </summary>
+    public TResult? SpecificationRefusedValue { get; init; }
+
+    /// <summary>
     /// Gets the code attachments blocking executable admission, even when <see cref="Value"/> is absent.
     /// </summary>
     public ImmutableArray<SemanticImplementationRequirement> ImplementationRequirements { get; init; } = [];

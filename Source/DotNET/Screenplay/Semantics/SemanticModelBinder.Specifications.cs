@@ -14,6 +14,28 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        internal CompilationResult<SemanticCompilation> CompleteCompilation(
+            SemanticCompilation compilation,
+            ImmutableArray<SemanticTypedContextDescriptor> descriptors,
+            ImmutableArray<SemanticTypedContextDescriptor> failureDescriptors)
+        {
+            if (HasErrors)
+            {
+                return new(null, Diagnostics)
+                {
+                    SpecificationRefusedValue = compilation,
+                    ImplementationRequirements = ImplementationRequirements,
+                    TypedContextDescriptors = failureDescriptors
+                };
+            }
+
+            return new(compilation, Diagnostics)
+            {
+                ImplementationRequirements = ImplementationRequirements,
+                TypedContextDescriptors = [.. descriptors.Select(value => value with { ModelRevision = compilation.Model.Revision })]
+            };
+        }
+
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.NonBacktracking)]
         private static partial Regex IsoInstant();
 
@@ -34,6 +56,27 @@ public sealed partial class SemanticModelBinder
             Dictionary<string, SemanticCommand> commands)
         {
             var origin = expansion.Specifications.SingleOrDefault(item => ReferenceEquals(item.Effective, specification));
+            var id = documents.IdentityCatalog.ResolveSemantic(SemanticAddress.ForSpecification(slice, specification.Name));
+            _specificationBindings[specification] = (id, origin);
+            var diagnosticStart = _diagnostics.Count;
+            var sourceStart = _sourceMapEntries.Count;
+            try
+            {
+                return BindSpecificationCore(slice, specification, commands, origin);
+            }
+            finally
+            {
+                _specificationSources[id] = [.. _sourceMapEntries.Skip(sourceStart).Select(entry => entry.SemanticId)];
+                RecordSpecificationErrors(id, origin, diagnosticStart);
+            }
+        }
+
+        SemanticSpecification? BindSpecificationCore(
+            SemanticAddress slice,
+            SpecificationSyntax specification,
+            Dictionary<string, SemanticCommand> commands,
+            EffectiveSpecification? origin)
+        {
             if (specification.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' description is authoring metadata.", specification.Location);
