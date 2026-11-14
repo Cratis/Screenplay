@@ -79437,6 +79437,17 @@
       "title": "A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked secret into a read-model property, so the value becomes part of the read model and its query results.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY1143",
+      "name": "ScreenWithoutPersona",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found a screen whose bound commands and queries are definitely denied to every declared persona.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

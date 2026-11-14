@@ -704,4 +704,5 @@ export const DiagnosticCodes = {
     UnexpectedTokenInAvailable: 'PLAY1140',
     UnclosedAvailableGroup: 'PLAY1141',
     SecretConceptProjected: 'PLAY1142',
+    ScreenWithoutPersona: 'PLAY1143',
 } as const;

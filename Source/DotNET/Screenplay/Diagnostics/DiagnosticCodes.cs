@@ -4391,6 +4391,11 @@ public static class DiagnosticCodes
     public const string ExtensionComponentPlatformUnsupported = "PLAY1118";
 
     /// <summary>
+    /// An opt-in check found a screen whose bound commands and queries are definitely denied to every declared persona.
+    /// </summary>
+    public const string ScreenWithoutPersona = "PLAY1143";
+
+    /// <summary>
     /// A screen's <c>sketch</c>, <c>mockup</c> or <c>image</c> line names no file.
     /// </summary>
     public const string InvalidScreenVisual = "PLAY0950";
