@@ -13,6 +13,8 @@ import { filesOf, narrowTo, scopeOf } from './boardScope';
 export interface BoardCompilation {
     readonly name: string;
     readonly root?: vscode.Uri;
+    // Every .play file the board compiled, named relative to the root. These are the only files it may open.
+    readonly files: readonly string[];
     readonly result: CompilationResult<ApplicationSyntax>;
     readonly wholeApplication?: ApplicationSyntax;
 }
@@ -33,7 +35,7 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
     if (root === undefined) {
         const name = nameOf(document.uri.fsPath);
         if (document.uri.scheme !== 'file' || fileImports(document.getText().split(/\r?\n/)).length === 0) {
-            return { name, result: parse(document.getText()) };
+            return { name, files: [], result: parse(document.getText()) };
         }
         // Imports are relative to the document's folder and may climb out of it, so every file of the workspace
         // folder is named relative to the document's folder.
@@ -42,12 +44,15 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
         documents.set(path.basename(document.uri.fsPath), document.getText());
         const rootFile = path.basename(document.uri.fsPath);
         const result = compileApplication(documents, [rootFile]);
-        return { name, root: folder, result };
+        // Only the files the compile reached - the document and what it imports - may be opened from the board.
+        const reached = new Set(result.documents.map(document => document.path));
+        reached.add(rootFile);
+        return { name, root: folder, files: [...reached], result };
     }
     const rootUri = vscode.Uri.file(root);
     const sources = await sourcesBeneath(rootUri, rootUri);
     const application = compileEventModelApplication(sources, applicationFileName);
-    const whole = { name: path.basename(root), root: rootUri, result: application, wholeApplication: application.value };
+    const whole = { name: path.basename(root), root: rootUri, files: sources.map(source => source.path), result: application, wholeApplication: application.value };
     const documentPath = path.relative(root, document.uri.fsPath).split(path.sep).join('/');
     if (documentPath === applicationFileName) {
         return whole;
@@ -62,6 +67,7 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
     return {
         name: nameOf(document.uri.fsPath),
         root: rootUri,
+        files: whole.files,
         wholeApplication: application.value,
         result: { value: narrowed, diagnostics, success: !diagnostics.some(diagnostic => diagnostic.severity === 'error') },
     };
