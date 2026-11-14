@@ -7,7 +7,7 @@ description: "Use Screenplay remove with to delete a read-model instance or one 
 
 Screenplay's `remove with` deletes a read-model instance, or one collection item when declared inside `children`. Choose the scope first: removing a member from a group should leave the group and its other members intact. To clear one optional object instead, use [`clear with` in a nested block](nested).
 
-The language also parses `remove via join`, but its execution depends on scope. Chronicle supports it for removing children across parents; it does not execute root-level `remove via join`. Screenplay's reference evaluator rejects the root form as well. The root `remove via join` examples below illustrate declarations, not working cascade-deletion paths.
+The language also parses `remove via join`, but its execution depends on scope. Chronicle supports it for removing children across parents; it does not execute root-level `remove via join`. Screenplay's reference evaluator rejects the root form as well. The root `remove via join` examples below illustrate declarations, not working cascade-deletion paths. Root-level reference semantics are tracked in [#563](https://github.com/Cratis/Screenplay/issues/563).
 
 ## Remove With
 
@@ -77,7 +77,7 @@ children members identified by userId
 
 Inside a child collection, `remove via join` removes elements whose identity matches the removal event's key, across all parents. Its name does not mean it follows an arbitrary reference property.
 
-At the root, the following syntax parses but does not remove an instance in Chronicle:
+At the root, the following syntax parses but does not remove an instance in Chronicle. It is not executable yet ([#563](https://github.com/Cratis/Screenplay/issues/563)): `validate` accepts it, but `test` refuses the whole projection with `UnsupportedProjectionBlock`, so every specification that depends on that projection is reported as unsupported. Leave it out of a model you want to run:
 
 ```pdl
 remove via join on {EventType}

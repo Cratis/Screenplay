@@ -211,7 +211,8 @@ backend. Owned by #1253 (language and contract), Cratis/Stage#1064 (loading) and
 **Two channels, one contract.**
 
 - A **full extension** is one **OCI artifact** holding the contract (`/extension/contract.play`), an optional
-  backend in any supported language, an optional frontend (`/extension/frontend/`) and optional
+  backend in any supported language (`/extension/backend/`, laid out per tier as Cratis/Stage#1065 and
+  Cratis/Stage#1066 specify), an optional frontend (`/extension/frontend/`) and optional
   Screenplay-authored UI (`/extension/ui/*.play`). It is the only way to ship a backend.
 - A **frontend-only component package** may instead be an **npm** package. It has no backend, so it needs no
   process.
@@ -664,7 +665,7 @@ sample shows a REST system and a chat system across a reaction, a workflow and a
 | Inbound traffic | Cratis/Stage#1068 |
 | The built-in `http` extension | Cratis/Stage#1069 |
 | Component contract and hosting | Cratis/Scene#296, Cratis/Stage#1070 |
-| CLI: create, verify, restore, configure | Cratis/cli#575, #576, #578, #577 |
+| CLI: create, verify, restore, configure | Cratis/cli#575, Cratis/cli#576, Cratis/cli#578, Cratis/cli#577 |
 | Templates | Cratis/Templates#104 |
 | Operation phases in commands | Cratis/Arc#3792 |
 | Corpus skills | Cratis/AI#1121 |
@@ -759,7 +760,7 @@ Resolved by the work that landed under #1248. The resolutions are recorded here;
    and SDKs (Cratis/Stage#1065) and tiers (Cratis/Stage#1066).
 5. Frontends: Cratis/Scene#296, #1255 and Cratis/Stage#1070; inbound traffic (Cratis/Stage#1068) and the `http`
    built-in (Cratis/Stage#1069).
-6. Tooling and templates (Cratis/Templates#104, Cratis/cli#575, #576, #577), operations in Arc (Cratis/Arc#3792),
+6. Tooling and templates (Cratis/Templates#104, Cratis/cli#575, Cratis/cli#576, Cratis/cli#577), operations in Arc (Cratis/Arc#3792),
    and the documentation map (#1256) last.
 
 ## Verification
