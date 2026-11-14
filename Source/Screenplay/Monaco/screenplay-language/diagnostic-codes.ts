@@ -372,6 +372,10 @@ export const diagnosticCodes = {
     removeKeyWithoutDynamicKey: 'PLAY0956',
     invalidDynamicKey: 'PLAY0957',
     clearDynamicKey: 'PLAY0963',
+    invalidGraphCollect: 'PLAY1142',
+    graphCollectTargetMismatch: 'PLAY1143',
+    nestedGraphCollect: 'PLAY1144',
+    graphCollectQueryShape: 'PLAY1145',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
