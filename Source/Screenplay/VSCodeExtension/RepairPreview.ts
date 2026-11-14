@@ -14,4 +14,5 @@ export interface RepairPreview {
     executable: ServerDiagnostic[];
     executableReady: boolean;
     droppedComments: unknown[];
+    retiredAddresses?: string[];
 }
