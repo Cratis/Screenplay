@@ -29,7 +29,7 @@ import { givenGraphPrefix, GraphStepHelpers, parseGraphStep, thenGraphPrefix } f
 import { SpecificationGraphSyntax } from '../Syntax/Graphs';
 import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationInvocationSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 import { TagSyntax } from '../Syntax/Declarations';
-import { parseTag } from './DeclarationParsers';
+import { TagExpectationParser } from './TagExpectationParser';
 import { parseStructuredValue, StructuredMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
@@ -719,8 +719,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
     let eventSource: ExpressionSyntax | null = null;
     let stream: SpecificationStreamSyntax | undefined;
     let noStream: SpecificationNoStreamSyntax | undefined;
-    const tags: TagSyntax[] = [];
-    let noTags: SpecificationNoTagsSyntax | undefined;
+    const tagExpectations = new TagExpectationParser(context, eventKeyword);
     let hasRoute = false;
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
@@ -731,11 +730,8 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
             continue;
         }
         const mapping = mappingPattern.exec(child.content);
-        if (mapping !== null) {
-            addFixtureValue(context, values, mappingOf(context, child, mapping));
-        } else if ((firstWord(child.content) === 'tag' && child.content !== 'tag') || child.content === 'no tags') {
-            noTags = parseTagExpectation(context, child, eventKeyword, tags, noTags);
-        } else if (firstWord(child.content) === 'stream' || child.content.startsWith('no stream')) {
+        if (tagExpectations.tryParseValue(child, mapping, values)) continue;
+        if (firstWord(child.content) === 'stream' || child.content.startsWith('no stream')) {
             if (eventKeyword === undefined) {
                 context.error(DiagnosticCodes.SpecificationStreamOnCommand, 'A command occurrence cannot declare a route; assert it on a then event.', locationOf(child));
                 context.skipBlock(child.indent);
@@ -773,46 +769,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
         }
     }
-    return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }), ...(tags.length === 0 ? {} : { tags }), ...(noTags === undefined ? {} : { noTags }) };
-}
-
-function parseTagExpectation(context: ParserContext, line: SourceLine, eventKeyword: string | undefined, tags: TagSyntax[], noTags: SpecificationNoTagsSyntax | undefined): SpecificationNoTagsSyntax | undefined {
-    const rejectChildren = (): void => {
-        const child = context.peekChild(line.indent);
-        if (child !== undefined) {
-            context.error(DiagnosticCodes.InvalidEventTagExpectation, 'A tag expectation cannot have children.', locationOf(child));
-            context.skipBlock(line.indent);
-        }
-    };
-    if (eventKeyword !== 'then') {
-        context.error(DiagnosticCodes.InvalidEventTagExpectation, "Tags are asserted only on a 'then' event; a 'given', 'when', redelivery or example occurrence cannot declare 'tag' or 'no tags'.", locationOf(line));
-        context.skipBlock(line.indent);
-        return noTags;
-    }
-    if (line.content === 'no tags') {
-        let result = noTags;
-        if (noTags !== undefined || tags.length > 0) context.error(DiagnosticCodes.InvalidEventTagExpectation, "'no tags' cannot be repeated or combined with 'tag' lines.", locationOf(line));
-        else result = { kind: 'SpecificationNoTagsSyntax', location: locationOf(line) };
-        rejectChildren();
-        return result;
-    }
-    rejectChildren();
-    if (noTags !== undefined) {
-        context.error(DiagnosticCodes.InvalidEventTagExpectation, "'tag' cannot be combined with 'no tags'.", locationOf(line));
-        return noTags;
-    }
-    const tag = parseTag(context, line, false);
-    if (tag === undefined) return noTags;
-    if (tag.value.kind !== 'LiteralExpressionSyntax') {
-        context.error(DiagnosticCodes.InvalidEventTagExpectation, 'An expected tag is a literal - an identifier or a string; a context expression is resolved at append time and cannot be asserted.', locationOf(line));
-        return noTags;
-    }
-    if (typeof tag.value.value !== 'string' || tag.value.value.trim().length === 0) {
-        context.error(DiagnosticCodes.InvalidEventTagExpectation, 'An expected tag is a nonblank string literal or identifier.', locationOf(line));
-        return noTags;
-    }
-    tags.push(tag);
-    return noTags;
+    return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }), ...tagExpectations.syntax };
 }
 
 export function parseSpecificationStream(context: ParserContext, header: SourceLine, route: RegExpExecArray): SpecificationStreamSyntax {

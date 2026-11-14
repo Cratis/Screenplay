@@ -9,6 +9,7 @@ import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { parseSpecificationStream, rejectSpecificationRouteChildren, specificationStream } from './SpecificationParser';
 import { parseDescription } from './DescriptionParser';
 import { caseReferences, parseSpecificationValue as parseMappingSource } from './SpecificationCaseParser';
+import { TagExpectationParser } from './TagExpectationParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -54,6 +55,7 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
 } {
     const values: PropertyMappingSyntax[] = [];
     const generatedValues: PropertyMappingSyntax[] = [];
+    const tagExpectations = new TagExpectationParser(context);
     let eventSource: ExpressionSyntax | null = null;
     let description: string | null = null;
     let stream: SpecificationStreamSyntax | undefined;
@@ -92,12 +94,8 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
             }
             continue;
         }
-        if (match !== null) {
-            addFixtureValue(context, values, { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(child), context), location: locationOf(child) }, generatedValues);
-        } else if ((firstWord(child.content) === 'tag' && child.content !== 'tag') || child.content === 'no tags') {
-            context.error(DiagnosticCodes.InvalidEventTagExpectation, "Tags are asserted only on a 'then' event; a 'given', 'when', redelivery or example occurrence cannot declare 'tag' or 'no tags'.", locationOf(child));
-            context.skipBlock(child.indent);
-        } else if (firstWord(child.content) === 'for') {
+        if (tagExpectations.tryParseValue(child, match, values, generatedValues)) continue;
+        if (firstWord(child.content) === 'for') {
             const source = child.content.substring('for'.length).trim();
             if (source.length === 0) context.error(DiagnosticCodes.InvalidSpecificationEventSource, "Invalid event-source assertion 'for' - expected 'for <value>'", locationOf(child));
             else if (eventSource !== null) context.error(DiagnosticCodes.DuplicateSpecificationEventSource, 'A specification step can declare its event-source assertion only once', locationOf(child));

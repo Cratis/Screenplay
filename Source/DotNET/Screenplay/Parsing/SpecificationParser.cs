@@ -796,8 +796,7 @@ internal static partial class SpecificationParser
         ExpressionSyntax? eventSource = null;
         SpecificationStreamSyntax? stream = null;
         SpecificationNoStreamSyntax? noStream = null;
-        var tags = new List<TagSyntax>();
-        SpecificationNoTagsSyntax? noTags = null;
+        var tagExpectations = new TagExpectations(context, eventKeyword);
         var hasRoute = false;
         while (context.TryPeekChild(parent.Indent, out var child))
         {
@@ -813,17 +812,7 @@ internal static partial class SpecificationParser
             }
 
             var mapping = MappingRegex().Match(child.Content);
-            if (mapping.Success)
-            {
-                AddFixtureValue(context, values, ParseSpecificationMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
-                continue;
-            }
-
-            if ((LineText.FirstWord(child.Content) == "tag" && child.Content != "tag") || child.Content == "no tags")
-            {
-                ParseTagExpectation(context, child, eventKeyword, tags, ref noTags);
-                continue;
-            }
+            if (tagExpectations.TryParseValue(child, mapping, values)) continue;
 
             if (LineText.FirstWord(child.Content) == "stream" || child.Content.StartsWith("no stream", StringComparison.Ordinal))
             {
@@ -886,57 +875,7 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
         }
 
-        return (values, eventSource, stream, noStream, tags, noTags);
-    }
-
-    static void ParseTagExpectation(ParserContext context, SourceLine line, string? eventKeyword, List<TagSyntax> tags, ref SpecificationNoTagsSyntax? noTags)
-    {
-        if (eventKeyword != "then")
-        {
-            context.Error(DiagnosticCodes.InvalidEventTagExpectation, "Tags are asserted only on a 'then' event; a 'given', 'when', redelivery or example occurrence cannot declare 'tag' or 'no tags'.", line.Location);
-            context.SkipBlock(line.Indent);
-            return;
-        }
-
-        if (line.Content == "no tags")
-        {
-            if (noTags is not null || tags.Count > 0)
-            {
-                context.Error(DiagnosticCodes.InvalidEventTagExpectation, "'no tags' cannot be repeated or combined with 'tag' lines.", line.Location);
-            }
-            else
-            {
-                noTags = new(line.Location);
-            }
-
-            RejectSpecificationTagChildren(context, line);
-            return;
-        }
-
-        RejectSpecificationTagChildren(context, line);
-        if (noTags is not null)
-        {
-            context.Error(DiagnosticCodes.InvalidEventTagExpectation, "'tag' cannot be combined with 'no tags'.", line.Location);
-            return;
-        }
-
-        if (TagParser.Parse(context, line) is not { } tag) return;
-        if (tag.Value is not LiteralExpressionSyntax)
-        {
-            context.Error(DiagnosticCodes.InvalidEventTagExpectation, "An expected tag is a literal - an identifier or a string; a context expression is resolved at append time and cannot be asserted.", line.Location);
-            return;
-        }
-
-        tags.Add(tag);
-    }
-
-    static void RejectSpecificationTagChildren(ParserContext context, SourceLine line)
-    {
-        if (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Error(DiagnosticCodes.InvalidEventTagExpectation, "A tag expectation cannot have children.", child.Location);
-            context.SkipBlock(line.Indent);
-        }
+        return (values, eventSource, stream, noStream, tagExpectations.Tags, tagExpectations.NoTags);
     }
 
     static SpecificationStreamSyntax ParseSpecificationStream(ParserContext context, SourceLine header, Match route)
