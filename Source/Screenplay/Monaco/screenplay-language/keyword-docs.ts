@@ -151,7 +151,7 @@ export const keywordDocs: Record<string, string> = {
     sourceType: 'Concurrency dimension — scope the check to an event source type.',
     streamType: 'Concurrency dimension — scope the check to an event stream type.',
     streamId: 'Concurrency dimension — scope the check to an event stream id.',
-    tag: 'Attaches a tag to appended events — a static identifier or string, or a `$context.` expression resolved at append time.',
+    tag: 'Attaches a tag to appended events — a static identifier or string, or a `$context.` expression resolved at append time. Under a `then` event in a specification it asserts one tag, in order; `no tags` asserts the event carries none. Executable from ESM v54.',
     seed: 'Declares events to seed into the event store per event source id — multiple blocks accumulate.',
     for: 'Names the event source of a production or seed group. Inside `produces event`, omission uses the command identifier unless another production targets a different source.',
     readmodel: 'Declares a read model — its name and properties — in a slice, or, in a specification, read model state: `given readmodel` establishes it, `then readmodel` asserts it, `then no readmodel <View> for <key>` asserts keyed absence. Members use primitives, concepts, top-level composite types or imported value-type names; another read model is an identity, not a reusable member type (PLAY0273).',

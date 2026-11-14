@@ -1453,12 +1453,14 @@ module Invoicing
         then events in any order
         then InvoiceRegistered
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          tag invoicing
           customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           invoiceNumber = "INV-000123"
           currency      = "NOK"
           status        = "draft"
         then DeferredPaymentInvoiceRegistered
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          no tags
           paymentTerms = "net30"
           dueDate      = "2026-12-31"
 
