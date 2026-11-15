@@ -263,8 +263,10 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets language v54, with graph queries that collect nested rows.</summary>
     public static readonly LanguageVersion V54 = new(54, 0);
 
+    /// <summary>Gets language v55, with exact ordered tag expectations on then events.</summary>
+    public static readonly LanguageVersion V55 = new(55, 0);
     /// <summary>Gets language v56, with screens declared free of any slice and the slices that adopt them.</summary>
-    public static readonly LanguageVersion V56 = new(55, 0);
+    public static readonly LanguageVersion V56 = new(56, 0);
 
     /// <summary>
     /// Parses a canonical, supported language version.
@@ -552,8 +554,10 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets semantic v54, with graph queries that collect nested rows.</summary>
     public static readonly SemanticVersion V54 = new(54, 0);
 
+    /// <summary>Gets semantic v55, with exact ordered tag expectations on then events.</summary>
+    public static readonly SemanticVersion V55 = new(55, 0);
     /// <summary>Gets semantic v56, with screens declared free of any slice and the slices that adopt them.</summary>
-    public static readonly SemanticVersion V56 = new(55, 0);
+    public static readonly SemanticVersion V56 = new(56, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.

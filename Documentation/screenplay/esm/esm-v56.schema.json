@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/esm/esm-v55.schema.json",
-  "title": "Cratis Screenplay executable semantic model 55.0",
+  "$id": "https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/esm/esm-v56.schema.json",
+  "title": "Cratis Screenplay executable semantic model 56.0",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,13 +17,13 @@
       "const": "cratis.screenplay.esm"
     },
     "schemaVersion": {
-      "const": 55
+      "const": 56
     },
     "languageVersion": {
       "type": "string"
     },
     "semanticVersion": {
-      "const": "55.0"
+      "const": "56.0"
     },
     "revision": {
       "type": "string"
@@ -3610,6 +3610,12 @@
         },
         "unrouted": {
           "type": "boolean"
+        },
+        "expectedTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

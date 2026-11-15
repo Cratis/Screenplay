@@ -49,7 +49,7 @@ internal static class SemanticArrayClassification
         "application/provides", "modules/provides", "features/provides", "slices/provides",
         "modules/available", "features/available", "slices/available", "commands/available", "queries/available", "screens/available",
         "availabilities/requirements", "source/by",
-        "appends/mappings", "appends/tags",
+        "appends/mappings", "appends/tags", "thenEvents/expectedTags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",
         "children/appends", "children/map", "nested/appends", "nested/map",
         "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations", "policies/reads", "policies/inputs", "authorization/mappings",

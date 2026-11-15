@@ -41,3 +41,9 @@ public record SpecificationStreamSyntax(string EventSource, string Stream, Sourc
 /// </summary>
 /// <param name="Location">The directive location.</param>
 public record SpecificationNoStreamSyntax(SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents an assertion that an expected event occurrence carries no tags.
+/// </summary>
+/// <param name="Location">The directive location.</param>
+public record SpecificationNoTagsSyntax(SourceLocation Location) : SyntaxNode(Location);

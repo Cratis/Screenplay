@@ -709,6 +709,7 @@ export const DiagnosticCodes = {
     GraphCollectTargetMismatch: 'PLAY1145',
     NestedGraphCollect: 'PLAY1146',
     GraphCollectQueryShape: 'PLAY1147',
+    InvalidEventTagExpectation: 'PLAY1148',
     InvalidShapeDeclaration: 'PLAY1149',
     InvalidScreenAdoption: 'PLAY1150',
     DuplicateShape: 'PLAY1151',

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.Json;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Execution;
 
@@ -38,6 +39,15 @@ internal static partial class McpSpecificationExecution
             $"Expected response: {DescribeResponse(expected.ThenReturns)}",
             $"Actual response: {DescribeResponse(accepted.Response)}",
             $"Expected query results: {string.Join("; ", expected.ThenQueries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}",
-            $"Actual query results: {string.Join("; ", accepted.Queries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}"
+            $"Actual query results: {string.Join("; ", accepted.Queries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}",
+            .. TagComparison(expected, accepted)
         ];
+
+    static IEnumerable<string> TagComparison(SemanticSpecification expected, SemanticAccepted accepted) =>
+        expected.ThenEvents.Any(fact => fact.ExpectedTags is not null)
+            ? [
+                $"Expected fact tags (null = unchecked): {JsonSerializer.Serialize(expected.ThenEvents.Select(fact => fact.ExpectedTags))}",
+                $"Actual fact tags: {JsonSerializer.Serialize(accepted.Facts.Select(fact => fact.Tags.IsDefault ? [] : fact.Tags))}"
+            ]
+            : [];
 }

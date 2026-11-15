@@ -352,6 +352,7 @@ internal static class SyntaxKinds
         typeof(SpecificationNoResultSyntax),
         typeof(SpecificationStreamSyntax),
         typeof(SpecificationNoStreamSyntax),
+        typeof(SpecificationNoTagsSyntax),
         typeof(SpecificationQueryResultSyntax),
         typeof(SpecificationQuerySyntax),
         typeof(SpecificationReadModelSyntax),

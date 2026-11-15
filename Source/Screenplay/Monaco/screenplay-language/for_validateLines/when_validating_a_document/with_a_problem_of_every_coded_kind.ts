@@ -203,6 +203,8 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(sinks, { compilerDiagnostics: parse(sinks.join('\n')).diagnostics }));
         const secretProjection = ['concept ApiKey : String secret', 'module M', '  feature F', '    slice StateView S', '      readmodel Row', '        id String', '        token ApiKey', '      event Recorded', '        token ApiKey', '      projection Keys => Row', '        from Recorded'];
         issues.push(...validateLines(secretProjection, { compilerDiagnostics: parse(secretProjection.join('\n')).diagnostics }));
+        const tagExpectation = ['module M', '  feature F', '    slice StateChange S', '      specification Tagged', '        given E', '          tag audit'];
+        issues.push(...validateLines(tagExpectation, { compilerDiagnostics: parse(tagExpectation.join('\n')).diagnostics }));
         const visuals = ['module M', '  feature F', '    slice StateChange A', '      event Added', '        title String', '    slice StateView S',
             '      shows event Added', '      shows event Added', '      shows event Removed', '      shows command A',
             '      screen Review', '        image', '        image Screens/review.pdf'];

@@ -7,14 +7,14 @@ using Cratis.Screenplay.Extensions;
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 /// <summary>
-/// Supplies the ESM v56 golden: every v54 construct plus screens declared free of any slice and the slices that adopt them.
+/// Supplies the ESM v56 golden: every v55 construct plus screens declared free of any slice and the slices that adopt them.
 /// </summary>
 public static partial class canonical_serialization_golden_vectors
 {
     /// <summary>
-    /// The source of the v56 golden: the v54 golden plus free screens at the top level and in a module, and a slice adopting both.
+    /// The source of the v56 golden: the v55 golden plus free screens at the top level and in a module, and a slice adopting both.
     /// </summary>
-    public const string FreeScreensSource = GraphCollectSource + """
+    public static string FreeScreensSource => ExpectedTagsSource + """
 
 
         shape Parcel

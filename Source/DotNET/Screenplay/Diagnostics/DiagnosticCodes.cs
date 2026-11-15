@@ -4607,6 +4607,11 @@ public static class DiagnosticCodes
     public const string GraphCollectQueryShape = "PLAY1147";
 
     /// <summary>
+    /// An event tag expectation - <c>tag &lt;value&gt;</c> or <c>no tags</c> - is misplaced, repeated, mixed or not a literal.
+    /// </summary>
+    public const string InvalidEventTagExpectation = "PLAY1148";
+
+    /// <summary>
     /// A <c>shape</c> declaration is malformed: it is not <c>shape &lt;Name&gt;</c> at the top level of a document, or a field line is not <c>&lt;name&gt; &lt;Type&gt;</c> without a key, identifier, subject or generated modifier.
     /// </summary>
     public const string InvalidShapeDeclaration = "PLAY1149";

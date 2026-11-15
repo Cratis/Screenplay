@@ -616,6 +616,7 @@ public static partial class SemanticModelCanonicalJson
         if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
         if (value.Route is not null) WriteFixtureRoute(writer, value.Route);
         if (value.Unrouted) writer.WriteBoolean("unrouted", true);
+        if (value.ExpectedTags is { IsDefault: false } expectedTags) WriteStringArray(writer, "expectedTags", expectedTags);
         writer.WriteEndObject();
     }
 

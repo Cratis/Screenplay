@@ -185,6 +185,7 @@ internal static partial class SemanticModelValidator
         ValidateFreeScreenVersion(application, semanticVersion);
         ValidateExtensionComponentVersion(application, semanticVersion);
         ValidateAvailabilityVersion(application, semanticVersion);
+        ValidateExpectedTagsVersion(application, semanticVersion);
         ValidateProjectionParityVersion(application, semanticVersion);
         ValidateStatePolicyVersion(application, semanticVersion);
         ValidateTextOperatorVersion(application, semanticVersion);

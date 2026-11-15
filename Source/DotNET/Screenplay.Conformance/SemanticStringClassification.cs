@@ -44,7 +44,7 @@ internal static class SemanticStringClassification
     {
         "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "hop/type", "returns/source", "members/source", "timeZone/id", "givenCaller/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
         "screens/title", "screens/description", "screens/scope", "needs/name", "needs/shape", "provisions/need", "provisions/by", "fields/field", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
-        "layout/fits", "regions/shows", "regions/title", "regions/actions", "agents/tokenKind",
+        "layout/fits", "regions/shows", "regions/title", "regions/actions", "agents/tokenKind", "thenEvents/expectedTags",
         "condition/path", "left/path", "right/path", "operand/path", "by/path", "value/path", "extensions/reference", "components/name", "components/component", "components/properties", "handles/signal",
     };
 
