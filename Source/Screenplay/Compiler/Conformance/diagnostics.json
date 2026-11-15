@@ -4405,7 +4405,7 @@
                 "  feature B",
                 "    slice StateView C",
                 "      screen S",
-                "        data Invoice"
+                "        data Invoice via query"
             ],
             "diagnostics": [
                 "PLAY0104@5"

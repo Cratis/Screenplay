@@ -4,7 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
     ComponentExposedValueSyntax, ComponentSlotSyntax, ComponentPropertySyntax, PresentationValueSyntax,
-    ScreenActionSyntax, ScreenGuardedActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenComponentSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax,
+    ScreenActionSyntax, ScreenGuardedActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenComponentSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax, ScreenNeedSyntax,
     ScreenNavigateSyntax, ScreenNavigationParameterSyntax, ScreenSectionSyntax, ScreenSlotSyntax, ScreenSummarySyntax, ScreenSyntax, ScreenTableSyntax,
     ScreenTemplateReferenceSyntax, ScreenTitleSyntax, ScreenToolbarSyntax, ScreenFit, ScreenShowSyntax, HookOpening, ScreenActionSubjectKind, ToolbarButtonSyntax, ToolbarEmphasis, ToolbarItemKind, ToolbarItemSyntax,
 } from '../Syntax/Screens';
@@ -44,6 +44,8 @@ import { addOutletOverride, parseOutletPosition, reportRepeatedPosition } from '
 
 const operand = `(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*))`;
 const header = pattern('^screen\\s+([A-Za-z_]\\w*)$');
+const need = pattern('^data\\s+([A-Za-z_]\\w*(?:\\[\\])?)(?:\\s+as\\s+([A-Za-z_]\\w*))?$');
+const templateHeader = pattern('^screen\\s+template(\\s|$)');
 const data = pattern('^data\\s+([\\w.]+(?:\\[\\])?)\\s+via\\s+query\\s+(\\w+(?:\\.\\w+)*)(?:\\s+by\\s+(\\w+))?$');
 const action = pattern('^action\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const label = pattern(`^label\\s+${operand}$`);
@@ -229,17 +231,24 @@ function parseDirective(context: ParserContext, line: SourceLine): ScreenDirecti
     }
 }
 
-function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax | undefined {
+// Whether a module-level line declares a screen template ('screen template <Name>') rather than a screen.
+export const isScreenTemplateHeader = (content: string): boolean => templateHeader.test(content);
+
+function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax | ScreenNeedSyntax | undefined {
+    const needMatch = need.exec(line.content);
+    if (needMatch !== null) {
+        return { kind: 'ScreenNeedSyntax', type: parseTypeRef(needMatch[1], locationOf(line)), alias: needMatch[2] ?? null, location: locationOf(line) };
+    }
     const match = data.exec(line.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidDataDirective, `Invalid data directive '${line.content}' - expected 'data <ReadModel> via query <Query> [by <param>]'`, locationOf(line));
+        context.error(DiagnosticCodes.InvalidDataDirective, `Invalid data directive '${line.content}' - expected 'data <ReadModel> via query <Query> [by <param>]' or, for data a slice provides, 'data <Shape>[] [as <alias>]'`, locationOf(line));
         return undefined;
     }
     return { kind: 'ScreenDataSyntax', type: parseTypeRef(match[1], locationOf(line)), query: match[2], by: match[3] ?? null, location: locationOf(line) };
 }
 
 function validateNonActionSubjectClause(context: ParserContext, line: SourceLine): void {
-    const grammar = new Map([['data', data], ['navigate', navigate], ['component', component], ['title', title]]).get(firstWord(line.content));
+    const grammar = new Map<string, { test(content: string): boolean }>([['data', { test: (content: string) => data.test(content) || need.test(content) }], ['navigate', navigate], ['component', component], ['title', title]]).get(firstWord(line.content));
     // Expressions, code and open-ended template references belong to their own parsers.
     if (grammar !== undefined) parseSubjectClause(context, line, false, content => grammar.test(content));
 }

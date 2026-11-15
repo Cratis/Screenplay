@@ -2005,6 +2005,22 @@ Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#col
 | `PLAY1145` | Error | A `collect` does not fit the read model: its property is not a list of a composite type (`Row[]`) or an optional composite type (`Row optional`), or its row assigns a property the type lacks, assigns one twice, leaves a required one out or assigns a value of another type. |
 | `PLAY1146` | Error | A `collect` is nested inside another `collect`. This version collects one level of rows; follow the edge from the root in a collect of its own. |
 | `PLAY1147` | Error | A query that collects does not have the shape of a view: it needs exactly one `match <alias>:<Label>` of its root node alone, its scalar returns come from the root, and a `where` condition names the root or a collected node, never a collected edge. |
+| `PLAY1148` | Error | A `shape` declaration is malformed: it is not `shape <Name>` at the top level of a document (a shape cannot sit in a module, a feature or a file imported into one), or a field line is not `<name> <Type>` or carries a key, identifier, subject or generated modifier. |
+| `PLAY1149` | Error | A `uses screen` adoption is malformed: it is not `uses screen <Name>` directly in a slice, a provision under it is not `data <Need> via query <Query> [by <param>]`, or a mapping under a provision is not `<field> from <path>`. |
+| `PLAY1150` | Error | A `shape` is declared more than once. A shape is declared once at the top level of the model. |
+| `PLAY1151` | Error | A screen is declared more than once in the same scope: at the top level of a document, in a module or in a feature. A slice may still declare a screen of the same name as a screen elsewhere; a reference resolves from where it is written, then by unique match. |
+| `PLAY1152` | Error | A screen needs the same shape twice (`data Invoice[]` and `data Invoice[]`) or two needs share an alias. Tell them apart with `data Invoice[] as overdue`, and provide it as `data overdue via query ...`. |
+| `PLAY1153` | Error | A slice adopts the same screen with `uses screen` more than once. Adopt it once and put every provision under that line. |
+| `PLAY1154` | Warning | A screen a slice adopts, or declares, needs data that no provision of the slice supplies. It is a warning while the model is being built; a release gate that treats warnings as errors fails on it, and executable screen admission refuses the model with a reason naming the screen and the shape. |
+| `PLAY1155` | Error | A provision names a shape or alias the adopted screen does not need. The message lists what the screen needs. |
+| `PLAY1156` | Error | A provision names data the adopted screen already sources with its own `data <ReadModel> via query`. A provision never overrides a source the screen resolves. |
+| `PLAY1157` | Error | One `uses screen` provides the same need more than once. |
+| `PLAY1158` | Error | A provision's query returns a list where the screen needs a single value, or a single value where it needs a list. |
+| `PLAY1159` | Error | A field the adopted screen reads, or its `shape` declares, is not a property of the providing query's read model, by the same name or through a `<field> from <path>` mapping. |
+| `PLAY1160` | Error | A read model property that provides a shape field has another type than the explicit `shape` declares for it. A concept stands for its underlying primitive. |
+| `PLAY1161` | Error | A provision's `by` names a parameter the providing query does not declare. |
+| `PLAY1162` | Error | A provision maps a field (`<field> from <path>`) that the adopted screen does not read and its `shape` does not declare. |
+| `PLAY1163` | Information | A screen declared outside any slice is not adopted by any slice. It is design-only: it never blocks the rest of the model. |
 
 ## Retired codes
 

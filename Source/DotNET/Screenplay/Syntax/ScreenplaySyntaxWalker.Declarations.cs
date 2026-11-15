@@ -120,6 +120,45 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
+    /// Visits a <see cref="ShapeSyntax"/> node and its fields.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ShapeSyntax"/> to visit.</param>
+    public virtual void VisitShape(ShapeSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var property in syntax.Properties)
+        {
+            VisitProperty(property);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="UsesScreenSyntax"/> node and its provisions.
+    /// </summary>
+    /// <param name="syntax">The <see cref="UsesScreenSyntax"/> to visit.</param>
+    public virtual void VisitUsesScreen(UsesScreenSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var provision in syntax.Provisions)
+        {
+            VisitScreenProvision(provision);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ScreenProvisionSyntax"/> node and its mappings.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenProvisionSyntax"/> to visit.</param>
+    public virtual void VisitScreenProvision(ScreenProvisionSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var mapping in syntax.Mappings)
+        {
+            VisitNode(mapping);
+        }
+    }
+
+    /// <summary>
     /// Visits a <see cref="StorylineStepSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="StorylineStepSyntax"/> to visit.</param>

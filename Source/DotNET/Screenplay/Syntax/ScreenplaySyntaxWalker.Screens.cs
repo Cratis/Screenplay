@@ -63,6 +63,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ScreenDataSyntax data:
                 VisitScreenData(data);
                 break;
+            case ScreenNeedSyntax need:
+                VisitScreenNeed(need);
+                break;
             case ScreenActionSyntax action:
                 VisitScreenAction(action);
                 break;
@@ -112,6 +115,16 @@ public abstract partial class ScreenplaySyntaxWalker
                 VisitNode(syntax);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ScreenNeedSyntax"/> node and its shape type.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenNeedSyntax"/> to visit.</param>
+    public virtual void VisitScreenNeed(ScreenNeedSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitTypeRef(syntax.Type);
     }
 
     /// <summary>

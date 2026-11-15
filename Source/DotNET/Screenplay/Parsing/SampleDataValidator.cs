@@ -70,7 +70,7 @@ internal static class SampleDataValidator
             }
         }
 
-        if (targets.Count == 0)
+        if (targets.Count == 0 && !application.Shapes.Any(shape => shape.Name == set.Shape))
         {
             context.Warning(
                 DiagnosticCodes.UnknownSampleDataShape,
@@ -80,6 +80,14 @@ internal static class SampleDataValidator
         }
 
         var validator = new SampleDataFieldValidator(application, pack, set, context);
+        foreach (var declared in application.Shapes.Where(shape => shape.Name == set.Shape))
+        {
+            foreach (var field in set.Rows.SelectMany(row => row.Fields))
+            {
+                validator.Validate($"shape '{declared.Name}'", declared.Properties, field);
+            }
+        }
+
         foreach (var target in targets)
         {
             foreach (var field in set.Rows.SelectMany(row => row.Fields))

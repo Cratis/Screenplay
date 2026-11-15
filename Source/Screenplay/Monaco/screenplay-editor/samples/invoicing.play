@@ -710,6 +710,12 @@ sample data NordicDemo
       channel = "Email"
       touched = null
       lastActivityAt = null
+  // A shape may also name a declared 'shape': its rows are checked against that contract.
+  shape InvoiceSummary
+    row
+      number = "INV-1001"
+      status = "sent"
+      dueDate = "2026-11-14"
 
 // ------------------------------------------------------------
 // Behaviors - named interaction wiring, attached with 'uses'
@@ -931,6 +937,32 @@ workflow CollectOverdue
     then invokes WriteOffInvoice
     then completes
 
+// ------------------------------------------------------------
+// Free screens - declared on their own, adopted by slices
+// ------------------------------------------------------------
+
+// A shape is the typed contract of the data a screen needs. It tightens what the compiler infers from
+// what the screen reads. The slice that adopts the screen supplies the data from one of its queries.
+shape InvoiceSummary
+  description "What the overview screens read of one invoice"
+  number InvoiceNumber
+  status InvoiceStatus
+  dueDate Date
+
+// A screen at the top of the document belongs to no module and no slice. 'data <Shape>[]' without a
+// query is a need; 'as' tells apart two needs of the same shape.
+screen InvoiceOverview
+  description "Open and overdue invoices side by side"
+  title "Overview"
+  data InvoiceSummary[] as open
+  data InvoiceSummary[] as overdue
+  table open
+    column number label "Open"
+    column dueDate
+  table overdue
+    column number label "Overdue"
+    column dueDate
+
 // ============================================================
 // The module
 // ============================================================
@@ -1124,6 +1156,14 @@ module Invoicing
 
     on submit navigate to CollectionsBoard
 
+  // A screen in a module is free too: any slice in the model may adopt it.
+  screen InvoiceDigest
+    title "Digest"
+    data InvoiceSummary[]
+    table InvoiceSummary
+      column number
+      column status
+
   // ==========================================================
   // Invoice management - staff only
   // ==========================================================
@@ -1135,6 +1175,14 @@ module Invoicing
       ```
     description "Registering and managing the lifecycle of invoices"
     authorize IsInvoicingStaff
+
+    // A screen in a feature is free as well; it resolves its names from here, whoever adopts it.
+    screen InvoiceInbox
+      title "Inbox"
+      data InvoiceSummary[]
+      table InvoiceSummary
+        column number
+        on row-click navigate to InvoiceDetails by number
 
     // The invoice list's buttons, filters and counters, for every screen of the feature.
     outlet actions extends
@@ -2108,6 +2156,20 @@ module Invoicing
         from InvoiceStatusChanged
           status = status
         remove with InvoiceCancelled
+
+      // The slice adopts the free screens and supplies the data each one needs from its own query. A name
+      // that differs is mapped with 'from'; a name that is the same matches on its own.
+      uses screen InvoiceOverview
+        data open via query ListInvoices
+          number from invoiceNumber
+        data overdue via query ListInvoices
+          number from invoiceNumber
+      uses screen InvoiceDigest
+        data InvoiceSummary via query ListInvoices
+          number from invoiceNumber
+      uses screen InvoiceInbox
+        data InvoiceSummary via query ListInvoices
+          number from invoiceNumber
 
       screen InvoiceList
         sketch Screens/invoice-list.sketch.svg
@@ -4395,6 +4457,7 @@ storyline GetPaid "An invoice from draft to payment"
   module Invoicing
   feature InvoiceManagement
   screen StartInvoiceDraftScreen "The manager starts a draft"
+  screen InvoiceOverview "The manager checks what is overdue"
   command StartInvoiceDraft
   slice RegisterInvoice "The draft becomes an invoice"
   event InvoiceRegistered

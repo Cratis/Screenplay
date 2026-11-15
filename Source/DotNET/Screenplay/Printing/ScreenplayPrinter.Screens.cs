@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -54,6 +55,11 @@ public partial class ScreenplayPrinter
             case ScreenDataSyntax data:
                 writer.Line(WriteScreenData(data));
                 break;
+            case ScreenNeedSyntax need:
+                writer.Line(need.Alias is null
+                    ? $"data {ScreenplaySyntaxText.TypeRef(need.Type)}"
+                    : $"data {ScreenplaySyntaxText.TypeRef(need.Type)} as {need.Alias}");
+                break;
             case ScreenActionSyntax action:
                 WriteScreenAction(writer, action);
                 break;
@@ -103,6 +109,38 @@ public partial class ScreenplayPrinter
                 break;
             default:
                 throw new UnsupportedSyntaxForPrinting("screen directive", directive.GetType().Name);
+        }
+    }
+
+    void WriteShape(ScreenplayWriter writer, ShapeSyntax shape)
+    {
+        using var anchor = writer.Anchor(shape);
+        writer.Line($"shape {shape.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, shape.Description, shape);
+            WriteProperties(writer, shape.Properties, ReservedWords.ReadModelBody);
+        }
+    }
+
+    void WriteUsesScreen(ScreenplayWriter writer, UsesScreenSyntax used)
+    {
+        using var anchor = writer.Anchor(used);
+        writer.Line($"uses screen {used.Screen}");
+        using (writer.Indent())
+        {
+            foreach (var provision in used.Provisions)
+            {
+                var head = $"data {provision.Need} via query {provision.Query}";
+                writer.Line(provision.By is null ? head : $"{head} by {provision.By}", provision);
+                using (writer.Indent())
+                {
+                    foreach (var mapping in provision.Mappings)
+                    {
+                        writer.Line($"{mapping.Field} from {mapping.Path}", mapping);
+                    }
+                }
+            }
         }
     }
 
