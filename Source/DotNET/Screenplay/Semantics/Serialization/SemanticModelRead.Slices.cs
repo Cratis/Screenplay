@@ -96,7 +96,7 @@ internal static partial class SemanticModelRead
             .Add("captures", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Captures = Array(ref reader, (ref Utf8JsonReader item) => Capture(ref item, state.SchemaVersion), property))
             .Add("direction", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Direction = ParseDirection(String(ref reader, property)))
             .Add("screens", LanguageVersion.V42.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Screens = Array(ref reader, (ref Utf8JsonReader item) => Screen(ref item, state.SchemaVersion), property))
-            .Add("adoptions", LanguageVersion.V55.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Adoptions = Array(ref reader, ScreenAdoption, property))
+            .Add("adoptions", LanguageVersion.V56.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Adoptions = Array(ref reader, ScreenAdoption, property))
             .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property))
             .Add("available", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, SliceState state, string property) => state.Available = Array(ref reader, AvailabilityRequirement, property));
 

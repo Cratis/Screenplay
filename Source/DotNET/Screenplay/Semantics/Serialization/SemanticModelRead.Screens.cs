@@ -41,8 +41,8 @@ internal static partial class SemanticModelRead
                 case "extensions" when schemaVersion >= 52: extensions = Array(ref reader, ScreenExtension, property); break;
                 case "available" when schemaVersion >= 53: available = Array(ref reader, AvailabilityRequirement, property); break;
                 case "components" when schemaVersion >= 52: components = Array(ref reader, ScreenComponent, property); break;
-                case "needs" when schemaVersion >= 55: needs = Array(ref reader, ScreenNeed, property); break;
-                case "scope" when schemaVersion >= 55: scope = String(ref reader, property); break;
+                case "needs" when schemaVersion >= 56: needs = Array(ref reader, ScreenNeed, property); break;
+                case "scope" when schemaVersion >= 56: scope = String(ref reader, property); break;
                 default: throw Unknown(property, "screen");
             }
         }

@@ -131,7 +131,7 @@ A [free screen](screens.md#free-screens-declare-a-screen-first-let-a-slice-adopt
 adopts it: the contract screen names the adopting slice and carries the data that slice's provisions resolve, with the read model
 paths mapped back to the screen's fields. A free screen no slice adopts is design-only and is not part of the contract. In the
 executable model such a screen is held by the application, with the needs it leaves to its adopters, and each adopting slice holds
-its `adoptions`; that is ESM v55, selected only when a free screen is admitted. Admission refuses a need no slice provides, with
+its `adoptions`; that is ESM v56, selected only when a free screen is admitted. Admission refuses a need no slice provides, with
 a reason that names the screen and the shape.
 
 The neutral members of every screen can also live in the executable model

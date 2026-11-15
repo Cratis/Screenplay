@@ -2062,13 +2062,13 @@ NeedDecl       = "data", Ident, [ "[]" ], [ "as", Ident ], NL ;
 
 (* A shape is the typed contract of the data a screen needs. Fields are written like a read model's
    properties but carry no key, identifier, subject or generated modifier; a shape is declared once, at the
-   top level of a document. PLAY1148 malformed or misplaced, PLAY1150 declared twice.                       *)
+   top level of a document. PLAY1149 malformed or misplaced, PLAY1151 declared twice.                       *)
 ShapeDecl      = "shape", Ident, NL,
                  INDENT, [ DescriptionDecl ], { PropertyDecl }, DEDENT ;
 
 (* A slice adopts a screen declared elsewhere and provides each need from a query of its own. A mapping
-   says which read model path provides a field whose name differs. PLAY1149 malformed, PLAY1153 adopted
-   twice, PLAY1154 a need is not provided, PLAY1155-PLAY1162 the provision does not hold, PLAY1163 a free
+   says which read model path provides a field whose name differs. PLAY1150 malformed, PLAY1154 adopted
+   twice, PLAY1155 a need is not provided, PLAY1156-PLAY1163 the provision does not hold, PLAY1164 a free
    screen nothing adopts is design-only.                                                                  *)
 UsesScreenDecl = "uses", "screen", Ident, NL,
                  [ INDENT, { ProvisionDecl }, DEDENT ] ;

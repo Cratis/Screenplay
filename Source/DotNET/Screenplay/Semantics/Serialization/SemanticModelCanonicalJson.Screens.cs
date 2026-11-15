@@ -28,7 +28,7 @@ public static partial class SemanticModelCanonicalJson
     static void WriteFreeScreens(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
     {
         if (application.Screens.IsDefaultOrEmpty) return;
-        if (version.Major < 55) throw new InvalidSemanticContract("Free screens require ESM v55 or later.");
+        if (version.Major < 56) throw new InvalidSemanticContract("Free screens require ESM v56 or later.");
         WriteArray(writer, "screens", application.Screens.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, screen) => WriteScreen(output, screen, version));
     }
 

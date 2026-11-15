@@ -17,7 +17,7 @@ internal static partial class SemanticModelValidator
     internal static bool UsesExtensionComponents(SemanticApplication application) =>
         SlicesOf(application).SelectMany(slice => slice.Screens).Concat(application.Screens).Any(screen => !screen.Components.IsDefaultOrEmpty || !screen.Extensions.IsDefaultOrEmpty);
 
-    // ESM v55 constructs: screens declared free of any slice, the needs a screen leaves to its adopters, and the adoptions.
+    // ESM v56 constructs: screens declared free of any slice, the needs a screen leaves to its adopters, and the adoptions.
     internal static bool UsesFreeScreens(SemanticApplication application) =>
         !application.Screens.IsDefaultOrEmpty ||
         SlicesOf(application).Any(slice => !slice.Adoptions.IsDefaultOrEmpty || slice.Screens.Any(screen => !screen.Needs.IsDefaultOrEmpty));
@@ -34,9 +34,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesFreeScreens(application),
             version,
-            SemanticVersion.V55,
-            "An ESM v55 model must declare a free screen or a screen adoption.",
-            "Free screens and screen adoptions require ESM v55.");
+            SemanticVersion.V56,
+            "An ESM v56 model must declare a free screen or a screen adoption.",
+            "Free screens and screen adoptions require ESM v56.");
 
     static void ValidateExtensionComponentVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(

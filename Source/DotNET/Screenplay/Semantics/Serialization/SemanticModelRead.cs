@@ -80,7 +80,7 @@ internal static partial class SemanticModelRead
             .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property))
             .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property))
             .Add("systems", LanguageVersion.V50.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Systems = Array(ref reader, System, property))
-            .Add("screens", LanguageVersion.V55.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Screens = Array(ref reader, (ref Utf8JsonReader item) => Screen(ref item, state.SchemaVersion), property))
+            .Add("screens", LanguageVersion.V56.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Screens = Array(ref reader, (ref Utf8JsonReader item) => Screen(ref item, state.SchemaVersion), property))
             .Add("audiences", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Audiences = Array(ref reader, Audience, property))
             .Add("availabilities", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Availabilities = Array(ref reader, Availability, property))
             .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property));

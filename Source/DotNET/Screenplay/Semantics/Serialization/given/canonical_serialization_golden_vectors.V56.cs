@@ -7,12 +7,12 @@ using Cratis.Screenplay.Extensions;
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 /// <summary>
-/// Supplies the ESM v55 golden: every v54 construct plus screens declared free of any slice and the slices that adopt them.
+/// Supplies the ESM v56 golden: every v54 construct plus screens declared free of any slice and the slices that adopt them.
 /// </summary>
 public static partial class canonical_serialization_golden_vectors
 {
     /// <summary>
-    /// The source of the v55 golden: the v54 golden plus free screens at the top level and in a module, and a slice adopting both.
+    /// The source of the v56 golden: the v54 golden plus free screens at the top level and in a module, and a slice adopting both.
     /// </summary>
     public const string FreeScreensSource = GraphCollectSource + """
 
@@ -64,15 +64,15 @@ public static partial class canonical_serialization_golden_vectors
         """;
 
     /// <summary>
-    /// Gets the canonical bytes of the v55 golden.
+    /// Gets the canonical bytes of the v56 golden.
     /// </summary>
-    public static byte[] EsmV55Bytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v55.json");
+    public static byte[] EsmV56Bytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v56.json");
 
     /// <summary>
-    /// Creates the v55 golden model.
+    /// Creates the v56 golden model.
     /// </summary>
     /// <returns>The model.</returns>
-    public static ExecutableSemanticModel CreateSemanticModelV55()
+    public static ExecutableSemanticModel CreateSemanticModelV56()
     {
         using var fixture = ExtensionFixture.Locked("acme/wallet", "1", ExtensionComponentContract);
         var previous = ExtensionContractResolver.Current;

@@ -263,8 +263,8 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets language v54, with graph queries that collect nested rows.</summary>
     public static readonly LanguageVersion V54 = new(54, 0);
 
-    /// <summary>Gets language v55, with screens declared free of any slice and the slices that adopt them.</summary>
-    public static readonly LanguageVersion V55 = new(55, 0);
+    /// <summary>Gets language v56, with screens declared free of any slice and the slices that adopt them.</summary>
+    public static readonly LanguageVersion V56 = new(55, 0);
 
     /// <summary>
     /// Parses a canonical, supported language version.
@@ -552,8 +552,8 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets semantic v54, with graph queries that collect nested rows.</summary>
     public static readonly SemanticVersion V54 = new(54, 0);
 
-    /// <summary>Gets semantic v55, with screens declared free of any slice and the slices that adopt them.</summary>
-    public static readonly SemanticVersion V55 = new(55, 0);
+    /// <summary>Gets semantic v56, with screens declared free of any slice and the slices that adopt them.</summary>
+    public static readonly SemanticVersion V56 = new(55, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1374,7 +1374,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV55Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV56Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1387,7 +1387,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV55Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV56Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

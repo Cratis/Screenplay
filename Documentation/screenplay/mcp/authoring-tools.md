@@ -395,9 +395,9 @@ A screen declared free of any slice, the shape of the data it needs and the slic
 | A slice's adoption of a screen | `UsesScreenSyntax` | `add` to `usedScreens` on a `SliceSyntax`; `replace` the `screen`; `remove` to stop adopting |
 | The query that provides one need | `ScreenProvisionSyntax`, `ScreenProvisionMappingSyntax` | `add` to a `UsesScreenSyntax`'s `provisions` or a provision's `mappings`; `replace` the `need`, `query`, `by`, a mapping's `field` or `path`; `remove` |
 
-A proposal that adopts a screen without providing every need is accepted with warning `PLAY1154`, as it is on disk; only the
+A proposal that adopts a screen without providing every need is accepted with warning `PLAY1155`, as it is on disk; only the
 executable-model export refuses it, with a reason that names the screen and the shape. A proposal that provides a need
-wrongly - an unknown need, a query of the wrong cardinality, a field the read model lacks - reports `PLAY1155` to `PLAY1162`
+wrongly - an unknown need, a query of the wrong cardinality, a field the read model lacks - reports `PLAY1156` to `PLAY1163`
 and cannot be applied under `Authoring` validation.
 
 A member that holds nothing is left out of the node JSON (a module without `outlets`, a toolbar without `buttons`, an

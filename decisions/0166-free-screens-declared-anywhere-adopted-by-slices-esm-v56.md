@@ -1,6 +1,6 @@
 ---
-id: 0165
-title: Screens are declared anywhere and adopted by slices, which provide the data they need (ESM v55)
+id: 0166
+title: Screens are declared anywhere and adopted by slices, which provide the data they need (ESM v56)
 status: accepted
 stage: designed
 class: contract
@@ -35,7 +35,7 @@ screen a slice declares in its own body is that screen declared in the slice sco
 models, their printing and their ESM v42 identities are unchanged. A free screen is printed where it was authored; a screen
 in a folder-composed model is read from whichever file declares it.
 
-A screen is declared once in a scope (`PLAY1151`). Two scopes may declare screens of the same name; a reference resolves from
+A screen is declared once in a scope (`PLAY1152`). Two scopes may declare screens of the same name; a reference resolves from
 where it is written, then by unique match (S3).
 
 ### S2. A slice adopts a screen with `uses screen`
@@ -49,7 +49,7 @@ slice StateView ListInvoices
 
 The adoption is many to many: a slice adopts several screens, a screen is adopted by several slices. Hooks (`button ... slice X`)
 and "the slice's screen" for a State Change input work on an adopted screen exactly as on one declared inline. The adopting slice
-is the slice the UI contract names for the screen. A slice adopts a screen once (`PLAY1153`); every provision goes under that line.
+is the slice the UI contract names for the screen. A slice adopts a screen once (`PLAY1154`); every provision goes under that line.
 
 ### S3. A screen resolves its names from where it is declared
 
@@ -81,12 +81,12 @@ shape Invoice
 ```
 
 A shape's fields are written like a read model's properties, but a shape has no key, identifier, subject or generated modifier:
-it is a contract on data, not a stored model (`PLAY1148`). A shape is declared once (`PLAY1150`) and only at the top level of a
+it is a contract on data, not a stored model (`PLAY1149`). A shape is declared once (`PLAY1151`) and only at the top level of a
 document.
 
 **The alias.** A screen that needs the same shape twice tells the needs apart with `as <alias>`; the alias is the need's name
 in the screen's own directives (`table overdue`) and in the provision (`data overdue via query ...`). A need without an alias
-is named by its shape. Two needs with one name are refused (`PLAY1152`).
+is named by its shape. Two needs with one name are refused (`PLAY1153`).
 
 ### S5. The adopting slice provides each need
 
@@ -95,20 +95,20 @@ shape field to a read model path where the names differ; a field whose name matc
 that:
 
 - the query exists (`PLAY0196`) and is one query of the slice or a unique match;
-- a list need is provided by a list query and a single need by a single-value query (`PLAY1158`);
+- a list need is provided by a list query and a single need by a single-value query (`PLAY1159`);
 - every field the screen reads, and every field its `shape` declares, is a property of the query's read model, by name or
-  by a `from` mapping (`PLAY1159`), and has a compatible type when the shape declares one (`PLAY1160`; a concept stands for
+  by a `from` mapping (`PLAY1160`), and has a compatible type when the shape declares one (`PLAY1161`; a concept stands for
   its underlying primitive);
-- `by` names a parameter the query declares (`PLAY1161`);
-- a mapping names a field the screen reads or the shape declares (`PLAY1162`);
-- the provision targets a need the screen has (`PLAY1155`), never one the screen already sources with its own
-  `data <ReadModel> via query` (`PLAY1156`), and provides it once (`PLAY1157`).
+- `by` names a parameter the query declares (`PLAY1162`);
+- a mapping names a field the screen reads or the shape declares (`PLAY1163`);
+- the provision targets a need the screen has (`PLAY1156`), never one the screen already sources with its own
+  `data <ReadModel> via query` (`PLAY1157`), and provides it once (`PLAY1158`).
 
 ### S6. Severities
 
-An adopted screen with an unprovided need is a **warning** (`PLAY1154`). It fails wherever warnings are errors - the check
+An adopted screen with an unprovided need is a **warning** (`PLAY1155`). It fails wherever warnings are errors - the check
 command's `--warnaserror` release gate and a gate file's `warningsAsErrors` - and executable screen admission refuses it with
-a reason that names the screen and the shape. A screen no slice adopts is **design-only** (`PLAY1163`, information): it never
+a reason that names the screen and the shape. A screen no slice adopts is **design-only** (`PLAY1164`, information): it never
 blocks the rest of the model and never reaches the executable model or the UI contract.
 
 ### S7. Actions and navigation have no contract
@@ -125,9 +125,9 @@ typed fields, as they are against a read model's properties.
 
 A storyline `screen` step, a `navigate to` and a `show` resolve to any screen, free or declared in a slice.
 
-## ESM v55
+## ESM v56
 
-Free screens are admitted into the executable model as ESM v55, numbered at admission under
+Free screens are admitted into the executable model as ESM v56, numbered at admission under
 [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md). Admission stays opt-in, as in
 [0149](0149-screens-in-the-executable-model.md).
 
@@ -141,7 +141,7 @@ Free screens are admitted into the executable model as ESM v55, numbered at admi
 - Admission refuses a model with an unprovided need, a provision of an unknown need, a duplicate adoption and a provision
   whose query does not return what the need asks for, each with a reason naming the screen and the shape.
 - A model without a free screen is written and read exactly as before: ESM v42 and every later version that predates this
-  one keep their bytes, and the binder selects v55 only when a free screen is admitted.
+  one keep their bytes, and the binder selects v56 only when a free screen is admitted.
 
 ## UI contract
 
@@ -153,22 +153,22 @@ to the screen's fields. A screen no slice adopts is not part of the contract.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY1148` | Error | A `shape` declaration is malformed or misplaced. |
-| `PLAY1149` | Error | A `uses screen`, a provision or a mapping is malformed. |
-| `PLAY1150` | Error | A shape is declared more than once. |
-| `PLAY1151` | Error | A screen is declared more than once in a scope. |
-| `PLAY1152` | Error | Two needs of a screen share a name. |
-| `PLAY1153` | Error | A slice adopts the same screen more than once. |
-| `PLAY1154` | Warning | An adopted screen has a need the slice does not provide. |
-| `PLAY1155` | Error | A provision names a need the screen does not have. |
-| `PLAY1156` | Error | A provision overrides a source the screen already resolves. |
-| `PLAY1157` | Error | A need is provided more than once. |
-| `PLAY1158` | Error | A provision's query returns a list where a single value is needed, or the reverse. |
-| `PLAY1159` | Error | A field the screen reads is not a property of the providing read model. |
-| `PLAY1160` | Error | A read model property has another type than the shape declares. |
-| `PLAY1161` | Error | A provision's `by` is not a parameter of the query. |
-| `PLAY1162` | Error | A mapping names a field the screen does not read and the shape does not declare. |
-| `PLAY1163` | Information | A free screen no slice adopts is design-only. |
+| `PLAY1149` | Error | A `shape` declaration is malformed or misplaced. |
+| `PLAY1150` | Error | A `uses screen`, a provision or a mapping is malformed. |
+| `PLAY1151` | Error | A shape is declared more than once. |
+| `PLAY1152` | Error | A screen is declared more than once in a scope. |
+| `PLAY1153` | Error | Two needs of a screen share a name. |
+| `PLAY1154` | Error | A slice adopts the same screen more than once. |
+| `PLAY1155` | Warning | An adopted screen has a need the slice does not provide. |
+| `PLAY1156` | Error | A provision names a need the screen does not have. |
+| `PLAY1157` | Error | A provision overrides a source the screen already resolves. |
+| `PLAY1158` | Error | A need is provided more than once. |
+| `PLAY1159` | Error | A provision's query returns a list where a single value is needed, or the reverse. |
+| `PLAY1160` | Error | A field the screen reads is not a property of the providing read model. |
+| `PLAY1161` | Error | A read model property has another type than the shape declares. |
+| `PLAY1162` | Error | A provision's `by` is not a parameter of the query. |
+| `PLAY1163` | Error | A mapping names a field the screen does not read and the shape does not declare. |
+| `PLAY1164` | Information | A free screen no slice adopts is design-only. |
 
 ## Compatibility
 

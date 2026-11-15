@@ -553,19 +553,19 @@ screen InvoiceOverview
 `data <Need> via query <Query> [by <param>]` provides one need. A nested `<field> from <path>` maps a field to a read model path
 where the names differ; a field whose name matches needs no mapping. The compiler checks that:
 
-- the query exists, and returns a list where the need is a list and a single value where it is single (`PLAY1158`);
+- the query exists, and returns a list where the need is a list and a single value where it is single (`PLAY1159`);
 - every field the screen reads, and every field its `shape` declares, is a property of the query's read model - by name or by a
-  `from` mapping (`PLAY1159`) - and has the type the shape declares, a concept standing for its underlying primitive (`PLAY1160`);
-- `by` names a parameter the query declares (`PLAY1161`);
-- a mapping names a field the screen reads or the shape declares (`PLAY1162`);
-- the provision targets a need the screen has (`PLAY1155`), never one the screen already sources with its own
-  `data <ReadModel> via query` (`PLAY1156`), and provides it once (`PLAY1157`);
-- a slice adopts a screen once (`PLAY1153`) and a screen needs a name once (`PLAY1152`).
+  `from` mapping (`PLAY1160`) - and has the type the shape declares, a concept standing for its underlying primitive (`PLAY1161`);
+- `by` names a parameter the query declares (`PLAY1162`);
+- a mapping names a field the screen reads or the shape declares (`PLAY1163`);
+- the provision targets a need the screen has (`PLAY1156`), never one the screen already sources with its own
+  `data <ReadModel> via query` (`PLAY1157`), and provides it once (`PLAY1158`);
+- a slice adopts a screen once (`PLAY1154`) and a screen needs a name once (`PLAY1153`).
 
-A need no provision supplies is a **warning** (`PLAY1154`) while the model is being built. It fails wherever warnings are
+A need no provision supplies is a **warning** (`PLAY1155`) while the model is being built. It fails wherever warnings are
 errors - `--warnaserror` and a gate file's `warningsAsErrors` - and [executable screen admission](ui-contract.md#screens-in-the-executable-model)
 refuses the model with a reason that names the screen and the shape. A free screen no slice adopts is **design-only**
-(`PLAY1163`, information): it never blocks the rest of the model, never enters the executable model and is not part of the
+(`PLAY1164`, information): it never blocks the rest of the model, never enters the executable model and is not part of the
 [UI contract](ui-contract.md).
 
 ### Names in a free screen
