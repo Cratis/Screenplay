@@ -52,7 +52,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Slot** — a named region a layout or template declares, which one parent fills.
 - **Outlet** — a named list of items a layout or template offers (`outlet <name> of actions|filters|tabs|stats|navigation`). Modules, features and screens inherit, extend or override it; `contribute to` adds to it from anywhere.
 - **Arrangement** — how a layout or template positions the slots it declares: responsive `flow` or pixel-precise `freeform`.
-- **Contribution point** — a named many-to-one extension point declared on a slot. `Navigation` is the first user of the mechanism.
+- **Contribution point** — a named many-to-one extension point, declared as a navigation outlet placed in a slot: `outlet <Point> of navigation in <slot>`. Screenplay 5's `<slot> contributes <Point>` is an error (`PLAY0895`).
 - **Contribution** — items or an entry added to an outlet, declared with `contribute to`. It attaches to the nearest enclosing structure declaring a matching outlet.
 - **UI profile** — a build's selections: `target platform`, `target size`, `layout`, `theme` and `packages`. Names artifacts; does not contain them.
 - **Design system** — the one design contract of an application: modes, tokens, components, words and contrast rules, with no values. See [Design system](design-system.md).

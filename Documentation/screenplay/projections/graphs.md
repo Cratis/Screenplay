@@ -129,7 +129,7 @@ The collection is a property of the event that is a list of a composite type (`P
 
 ## What a graph projection cannot say
 
-The read-model constructs `children`, `nested`, `join`, `all`, `clear with`, `remove via join`, `variant`, a projection-level `key` or `sequence`, and `automap` blocks have no meaning for a graph and are refused (`PLAY0872`). A malformed block, or a handler without its `key` (node) or `source` and `target` (edge), is `PLAY0873`. A node or edge built twice by one projection is `PLAY0874`. A projection for a graph that is not declared is `PLAY0866`.
+The read-model constructs `children`, `nested`, `join`, `all`, `clear with`, `variant`, a projection-level `key` or `sequence`, and `automap` blocks have no meaning for a graph and are refused (`PLAY0872`). `remove via join` is read as a malformed graph removal and refused with `PLAY0873`. A malformed block, or a handler without its `key` (node) or `source` and `target` (edge), is `PLAY0873`. A node or edge built twice by one projection is `PLAY0874`. A projection for a graph that is not declared is `PLAY0866`.
 
 ## Executable model
 
