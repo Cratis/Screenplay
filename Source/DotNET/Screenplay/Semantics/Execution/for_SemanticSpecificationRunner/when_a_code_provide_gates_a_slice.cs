@@ -5,7 +5,7 @@ using Cratis.Screenplay.Semantics.for_SemanticModelBinder.given;
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner;
 
-// A provided value computed by code (ESM v54) and the availability gate beside it are decided by the host. Specifications
+// A provided value computed by code (ESM v55) and the availability gate beside it are decided by the host. Specifications
 // always run with everything available, so the provide neither denies nor refuses the slice's specification.
 public class when_a_code_provide_gates_a_slice : a_semantic_binder
 {
@@ -48,6 +48,6 @@ public class when_a_code_provide_gates_a_slice : a_semantic_binder
         _result = new SemanticSpecificationRunner().Run(plan, plan.Specifications.Keys.Single());
     }
 
-    [Fact] void should_bind_the_code_provide() => _bound.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V54);
+    [Fact] void should_bind_the_code_provide() => _bound.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V55);
     [Fact] void should_run_the_specification_unchanged() => _result.Passed.ShouldBeTrue();
 }
