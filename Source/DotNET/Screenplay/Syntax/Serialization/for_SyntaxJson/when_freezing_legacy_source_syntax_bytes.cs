@@ -119,7 +119,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleProjectionParity(WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed))))))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTagExpectations(WithoutSampleProjectionParity(WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed)))))))),
                 "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
@@ -599,6 +599,29 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 {
                     Properties = readModel.Properties.Where(property => property.Property != "firstSentAt").ToArray()
                 }).ToArray()
+            }).ToArray()
+        }).ToArray()
+    };
+
+    // Current shared vectors cover tag expectations; keep the pre-feature source bytes frozen.
+    static ApplicationSyntax WithoutSampleTagExpectations(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutTagExpectations).ToArray() }).ToArray()
+    };
+
+    static FeatureSyntax WithoutTagExpectations(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutTagExpectations).ToArray(),
+        Slices = feature.Slices.Select(slice => slice with
+        {
+            Events = slice.Events.Select(@event => @event.Name == "DeferredPaymentInvoiceRegistered" ? @event with { Tags = null } : @event).ToArray(),
+            Commands = slice.Commands.Select(command => command with
+            {
+                Produces = command.Produces.Select(production => production.Event == "DeferredPaymentInvoiceRegistered" ? production with { Tags = null } : production).ToArray()
+            }).ToArray(),
+            Specifications = slice.Specifications.Select(specification => specification with
+            {
+                ThenEvents = specification.ThenEvents.Select(@event => @event with { Tags = [], NoTags = null }).ToArray()
             }).ToArray()
         }).ToArray()
     };

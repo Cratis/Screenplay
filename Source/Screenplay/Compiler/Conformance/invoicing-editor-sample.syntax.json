@@ -3110,7 +3110,15 @@
                           }
                         }
                       ],
-                      "tags": []
+                      "tags": [
+                        {
+                          "kind": "TagSyntax",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "audit"
+                          }
+                        }
+                      ]
                     }
                   ],
                   "properties": [
@@ -3784,7 +3792,15 @@
                       }
                     }
                   ],
-                  "tags": []
+                  "tags": [
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoicing"
+                      }
+                    }
+                  ]
                 }
               ],
               "examples": [
@@ -4069,6 +4085,22 @@
                         "kind": "LiteralExpressionSyntax",
                         "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
                       },
+                      "tags": [
+                        {
+                          "kind": "TagSyntax",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "invoicing"
+                          }
+                        },
+                        {
+                          "kind": "TagSyntax",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "audit"
+                          }
+                        }
+                      ],
                       "values": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -5707,6 +5739,9 @@
                       },
                       "noStream": {
                         "kind": "SpecificationNoStreamSyntax"
+                      },
+                      "noTags": {
+                        "kind": "SpecificationNoTagsSyntax"
                       },
                       "values": [
                         {

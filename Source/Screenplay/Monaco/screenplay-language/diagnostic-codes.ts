@@ -377,6 +377,7 @@ export const diagnosticCodes = {
     graphCollectTargetMismatch: 'PLAY1145',
     nestedGraphCollect: 'PLAY1146',
     graphCollectQueryShape: 'PLAY1147',
+    invalidEventTagExpectation: 'PLAY1148',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

@@ -4605,4 +4605,9 @@ public static class DiagnosticCodes
     /// A graph query that collects does not have the shape of a view: one <c>match</c> of its root node alone, scalar returns from the root, and conditions on the root or a collected node only.
     /// </summary>
     public const string GraphCollectQueryShape = "PLAY1147";
+
+    /// <summary>
+    /// An event tag expectation - <c>tag &lt;value&gt;</c> or <c>no tags</c> - is misplaced, repeated, mixed or not a literal.
+    /// </summary>
+    public const string InvalidEventTagExpectation = "PLAY1148";
 }

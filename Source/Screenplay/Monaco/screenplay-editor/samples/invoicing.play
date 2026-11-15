@@ -1346,6 +1346,7 @@ module Invoicing
         produces when ( paymentTerms == "net30" or paymentTerms == "net60" ) and isProForma == false
           DeferredPaymentInvoiceRegistered
             for invoiceId
+            tag audit
             paymentTerms = paymentTerms
             dueDate      = dueDate
 
@@ -1397,6 +1398,7 @@ module Invoicing
         dueDate Date
 
       event DeferredPaymentInvoiceRegistered
+        tag invoicing
         paymentTerms PaymentTerms
         dueDate      Date
 
@@ -1459,6 +1461,8 @@ module Invoicing
           status        = "draft"
         then DeferredPaymentInvoiceRegistered
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          tag invoicing
+          tag audit
           paymentTerms = "net30"
           dueDate      = "2026-12-31"
 
@@ -1721,6 +1725,7 @@ module Invoicing
         then InvoiceTagged
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
           no stream
+          no tags
           tag = "priority"
 
       specification RejectingAnEmptyTag

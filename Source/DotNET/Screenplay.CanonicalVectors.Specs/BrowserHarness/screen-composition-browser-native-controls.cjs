@@ -343,27 +343,40 @@ async function selectWorkItem(page, result, path, item) {
     return false;
 }
 
-// Reach a screen the way a user would: an authored navigation entry first, then browser history. A direct URL is used only
-// when neither exists, and that is recorded so the run shows the screen was not reachable through the UI.
+// Only an authored entry click followed by a route transition accepts UI navigation.
+// History and direct routing keep diagnostics running, but cannot clear a blocked navigation assertion.
 async function navigateByUi(page, result, path, screen, label = screen) {
     const target = `#/${screen}`;
+    if (hashRoute(page.url()) === target) {
+        const origin = screen === 'WorkItemList' ? 'WorkItemDetails' : 'WorkItemList';
+        await page.goto(`${baseUrl}/#/${origin}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        await page.waitForTimeout(1_500);
+    }
+    const navigation = page.getByRole('navigation');
     const entries = [
-        ['navigation link', page.getByRole('link', { name: label, exact: true })],
-        ['navigation menu item', page.getByRole('menuitem', { name: label, exact: true })],
-        ['navigation button', page.getByRole('button', { name: label, exact: true })],
-        ['navigation text', page.getByRole('navigation').getByText(label, { exact: true })]
+        ['navigation link', navigation.getByRole('link', { name: label, exact: true })],
+        ['navigation menu item', navigation.getByRole('menuitem', { name: label, exact: true })],
+        ['navigation button', navigation.getByRole('button', { name: label, exact: true })],
+        ['navigation text', navigation.getByText(label, { exact: true })]
     ];
 
     for (const [method, entry] of entries) {
         if (await entry.count() === 0 || !await entry.first().isVisible()) continue;
 
-        await entry.first().click();
-        await page.waitForTimeout(1_500);
-        if (hashRoute(page.url()) === target) {
+        const before = hashRoute(page.url());
+        try {
+            await entry.first().click({ timeout: 10_000 });
+            await page.waitForTimeout(1_500);
+        } catch {
+            continue;
+        }
+        if (before !== target && hashRoute(page.url()) === target) {
             record(result, path, 'passed', `${method}: ${page.url()}`);
             return;
         }
     }
+
+    block(result, path, `no authored navigation entry labelled "${label}" reached ${target}`);
 
     // goBack resolves to null for same-document hash changes, so an unchanged URL is what marks the start of history.
     for (let step = 0; step < 8 && hashRoute(page.url()) !== target && page.url().startsWith(baseUrl); step++) {
@@ -374,14 +387,14 @@ async function navigateByUi(page, result, path, screen, label = screen) {
     }
 
     if (hashRoute(page.url()) === target) {
-        record(result, path, 'passed', `history back: ${page.url()}`);
+        record(result, `${path}.fallback`, 'info', `diagnostic history back: ${page.url()}; UI navigation remains blocked`);
         return;
     }
 
     const navigationControls = await page.evaluate(() => Array.from(document.querySelectorAll('a, [role="menuitem"], nav button')).map(element => element.textContent?.trim()).filter(Boolean));
     await page.goto(`${baseUrl}/${target}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(2_000);
-    record(result, path, 'info', `url fallback; no UI path to ${screen} among ${JSON.stringify(navigationControls)}`);
+    record(result, `${path}.fallback`, 'info', `diagnostic URL fallback; UI navigation remains blocked for ${screen} among ${JSON.stringify(navigationControls)}`);
 }
 
 async function sectionText(page, heading) {
@@ -956,8 +969,60 @@ async function runBrowserFlow(result) {
     await browser.close();
 }
 
+// A page double exercises the actual navigation helper without Playwright, a browser or a runtime.
+function navigationTestPage({ present = true, clickRoute, historyRoute, initialRoute = '#/WorkItemDetails', clickThrows = false }) {
+    let url = `${baseUrl}/${initialRoute}`;
+    const calls = { clicks: 0, history: 0, direct: 0 };
+    const entry = {
+        count: async () => present ? 1 : 0,
+        first: () => entry,
+        isVisible: async () => true,
+        click: async () => {
+            calls.clicks++;
+            if (clickThrows) throw new Error('planted click failure');
+            if (clickRoute) url = `${baseUrl}/${clickRoute}`;
+        }
+    };
+    const navigation = { getByRole: () => entry, getByText: () => entry };
+    return {
+        calls,
+        url: () => url,
+        getByRole: role => {
+            if (role !== 'navigation') throw new Error('navigation entries must be scoped to navigation');
+            return navigation;
+        },
+        waitForTimeout: async () => {},
+        goBack: async () => { calls.history++; if (historyRoute) url = `${baseUrl}/${historyRoute}`; },
+        goto: async destination => { calls.direct++; url = destination; },
+        evaluate: async () => present ? ['Work items'] : []
+    };
+}
+
+async function navigationSelfTestChecks() {
+    const scenarios = [
+        ['a working authored entry reaches its destination', { clickRoute: '#/WorkItemList' }, 'passed'],
+        ['an inert entry stays blocked after history reaches the target', { historyRoute: '#/WorkItemList' }, 'blocked'],
+        ['an inert entry stays blocked after direct routing', {}, 'blocked'],
+        ['a missing entry stays blocked after history reaches the target', { present: false, historyRoute: '#/WorkItemList' }, 'blocked'],
+        ['a click reaching the wrong destination stays blocked', { clickRoute: '#/Elsewhere' }, 'blocked'],
+        ['a throwing click stays blocked after fallback', { clickThrows: true }, 'blocked'],
+        ['starting at the target cannot accept an inert entry', { initialRoute: '#/WorkItemList' }, 'blocked']
+    ];
+    const checks = [];
+    for (const [name, options, status] of scenarios) {
+        const page = navigationTestPage(options);
+        const result = { assertions: [], remainingBlockers: [] };
+        await navigateByUi(page, result, 'navigation', 'WorkItemList', 'Work items');
+        const assertion = result.assertions.filter(item => item.path === 'navigation');
+        const actual = [assertion.map(item => item.status), result.remainingBlockers.length, hashRoute(page.url()), page.calls.clicks > 0];
+        checks.push([name, actual, [[status], status === 'passed' ? 0 : 1, '#/WorkItemList', options.present !== false]]);
+        if (status === 'passed') checks.push(['a successful authored click needs no fallback', page.calls, { clicks: 1, history: 0, direct: 0 }]);
+    }
+    return checks;
+}
+
 // Checks the helpers the browser flow relies on, each against a planted wrong answer, without starting a runtime.
-function selfTest() {
+async function selfTest() {
     const renamed = 'Renamed selected B in browser';
     const commentQueryForB = { method: 'GET', url: `${baseUrl}/api/workspaces/tracking/all-comment-views?workItemId=${workItemB.id}` };
     const renamePost = { method: 'POST', url: `${baseUrl}/api/workspaces/tracking/rename-work-item/rename-work-item`, postData: JSON.stringify({ workItemId: workItemB.id, title: renamed }) };
@@ -981,7 +1046,8 @@ function selfTest() {
         ['commentId matches the Comment Id label', fieldLabelPattern('commentId').test('Comment Id'), true],
         ['commentId matches an unspaced commentId label', fieldLabelPattern('commentId').test('commentId'), true],
         ['commentId does not match the Work Item Id label', fieldLabelPattern('commentId').test('Work Item Id'), false],
-        ['workItemId does not match the Comment Id label', fieldLabelPattern('workItemId').test('Comment Id'), false]
+        ['workItemId does not match the Comment Id label', fieldLabelPattern('workItemId').test('Comment Id'), false],
+        ...await navigationSelfTestChecks()
     ];
 
     const failures = checks.filter(([, actual, expected]) => JSON.stringify(actual) !== JSON.stringify(expected));
@@ -990,7 +1056,7 @@ function selfTest() {
     process.exit(failures.length === 0 ? 0 : 1);
 }
 
-if (process.argv.includes('--self-test')) selfTest();
+if (process.argv.includes('--self-test')) selfTest().catch(error => { console.error(error); process.exit(1); });
 else (async () => {
     const runtime = startRuntime();
     const logs = [];

@@ -23,6 +23,19 @@ internal static partial class SemanticModelValidator
             slice.Queries.Any(query => !query.Available.IsDefaultOrEmpty) ||
             slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty));
 
+    // ESM v55 construct: an exact ordered tag expectation on a then event.
+    internal static bool UsesExpectedTags(SemanticApplication application) =>
+        SlicesOf(application).Any(slice => slice.Specifications.Any(specification =>
+            !specification.ThenEvents.IsDefaultOrEmpty && specification.ThenEvents.Any(value => value.ExpectedTags is not null)));
+
+    static void ValidateExpectedTagsVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesExpectedTags(application),
+            version,
+            SemanticVersion.V55,
+            "An ESM v55 model must declare an expected tag set on a then event.",
+            "Expected tag sets on then events require ESM v55.");
+
     static bool UsesAvailability(SemanticFeature feature) =>
         !feature.Available.IsDefaultOrEmpty || !feature.Provides.IsDefaultOrEmpty || feature.Features.Any(UsesAvailability);
 
