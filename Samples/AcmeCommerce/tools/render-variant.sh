@@ -14,8 +14,8 @@
 #      are listed in tools/render-bridge/drop-specifications.txt (one `<file>|<specification name>` per line) and removed.
 #   5. `reaction batches atomic` (ESM v22) and `command reads protected` / command `reads` (ESM v25) render: nothing is stripped
 #      (STRIP_READS=1 runs tools/render-bridge/strip_reads.py, the old behaviour for a renderer older than Stage#566/#574).
-#   6. A query a `performer` answers (Purchasing dashboard) is an opaque read Stage cannot render (STAGE-ESM-007): the figures are projected from the
-#      events instead, in tools/render-bridge/stand_in_for_unrendered.py. `add x by a * b` (ESM v29, Storefront BasketSize.addedValue) renders
+#   6. Fallback: if a `performer` answers the Purchasing dashboard query (an opaque read Stage cannot render, STAGE-ESM-007), the figures are
+#      projected from the events instead, in tools/render-bridge/stand_in_for_unrendered.py. The current model already projects them. `add x by a * b` (ESM v29, Storefront BasketSize.addedValue) renders
 #      since Stage#597 and is kept.
 #   7. A workflow with an `approval` step or a `decide` that reads the subject read model is refused (STAGE-LIFECYCLE-010: a rendered application has no
 #      approvals endpoint and its performer cannot read the subject yet). The Storefront workflow FulfilOrder is removed, with the state machine's
