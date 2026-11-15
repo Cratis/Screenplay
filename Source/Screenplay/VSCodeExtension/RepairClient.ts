@@ -46,6 +46,8 @@ export class RepairClient {
     #stderr = Buffer.alloc(0);
     #closed?: RepairFailure;
     readonly #frameBytes = 3 * 1024 * 1024; // JSON-RPC includes structured AND text copies.
+    /** Editor repair codes the connected server advertised with a safety contract the editor accepts. Empty until initialized. */
+    advertised: ReadonlySet<string> = new Set();
 
     constructor(launch: RepairLaunch, readonly onClose: (failure: RepairFailure) => void = () => {}, readonly timeoutMs = 60_000) {
         if (!isAbsolute(launch.executable) || !isAbsolute(launch.root) || launch.arguments.some(arg => typeof arg !== 'string' || arg.includes('\0'))) {
@@ -70,7 +72,7 @@ export class RepairClient {
         for (const required of ['repair-capabilities', 'open-workspace', 'read-workspace', 'propose-repair', 'read-proposal', 'workspace-state', 'discard-proposal', 'apply']) {
             if (!names.has(required)) throw new RepairFailure('UnsupportedContract', `Repair server lacks ${required}. Install a release containing repair contract v1.`);
         }
-        validateCapabilities(await this.tool('repair-capabilities', {}));
+        this.advertised = validateCapabilities(await this.tool('repair-capabilities', {}));
     }
 
     async tool(name: string, args: Record<string, unknown>, signal?: AbortSignal, beforeSend?: () => void, writeAttempt?: () => void): Promise<Record<string, unknown>> {
@@ -179,7 +181,17 @@ export class RepairClient {
     }
 }
 
-export function validateCapabilities(value: unknown): void {
+export const pinnedRepairs = ['PLAY0166', 'PLAY0478'];
+const unpinnedRepairs = ['PLAY0469', 'PLAY0516', 'PLAY0661', 'PLAY0664'];
+
+// The code's advertised contract must be exactly what the editor implements; anything else is not offered.
+function acceptsAdvertisedAction(action: Record<string, unknown>, pinned: boolean): boolean {
+    if (action.tool !== 'propose-repair' || action.requiredFormatting !== 'CanonicalizeTouchedDocuments' || action.pinRepairEvidence !== pinned) return false;
+    if (action.diagnosticCode !== 'PLAY0469') return true;
+    return action.canFixAll === false && action.individualReviewRequired === true && action.contractChange === true && action.retiresSemanticAddresses === true;
+}
+
+export function validateCapabilities(value: unknown): ReadonlySet<string> {
     const caps = object(value);
     if (caps.schema !== 'cratis.screenplay.mcp.repair-capabilities' || caps.schemaVersion !== 1 || caps.repairContractVersion !== 1 ||
         caps.savedFilesOnly !== true || caps.journaledApply !== true || object(caps.evidence).version !== 1 || object(caps.evidence).revisionPrefix !== 're1:' ||
@@ -187,14 +199,21 @@ export function validateCapabilities(value: unknown): void {
         throw new RepairFailure('UnsupportedContract', 'This server lacks the required saved-file, evidence-pinned repair contract v1. No unsafe fallback is available.');
     }
     text(caps.serverVersion);
-    for (const code of ['PLAY0166', 'PLAY0478']) {
-        const action = array(caps.actions).map(object).find(action => action.diagnosticCode === code);
-        if (!action || action.tool !== 'propose-repair' || action.pinRepairEvidence !== true || action.requiredFormatting !== 'CanonicalizeTouchedDocuments') {
-            throw new RepairFailure('UnsupportedContract', `Server lacks the required pinned ${code} action.`);
-        }
+    const actions = array(caps.actions).map(object);
+    const advertised = new Set<string>();
+    for (const code of pinnedRepairs) {
+        const action = actions.find(action => action.diagnosticCode === code);
+        if (!action || !acceptsAdvertisedAction(action, true)) throw new RepairFailure('UnsupportedContract', `Server lacks the required pinned ${code} action.`);
+        advertised.add(code);
+    }
+    // Optional repairs: an older server that does not advertise one simply does not offer it.
+    for (const code of unpinnedRepairs) {
+        const action = actions.find(action => action.diagnosticCode === code);
+        if (action && acceptsAdvertisedAction(action, false)) advertised.add(code);
     }
     const limits = object(caps.limits);
     for (const name of ['retainedProposals', 'bytePageBytes', 'itemPageItems', 'structuredResponseBytes', 'requestCharacters']) {
         if (integer(limits[name]) < 1) throw new RepairFailure('MalformedContract', 'Invalid repair limits.');
     }
+    return advertised;
 }
