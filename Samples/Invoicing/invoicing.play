@@ -938,6 +938,14 @@ workflow CollectOverdue
 module Invoicing
   purpose Billing
   provide region String from "Nordics"
+  // A provided value realized by code: a file beside the model, or an inline code block. The model names
+  // the member and its source; the runtime runs the code and the reference evaluator treats the value as opaque.
+  provide creditCeiling Int
+    file Provides/CreditCeiling.cs
+  provide reminderDays Int
+    ```csharp
+    return 14;
+    ```
   documentation
     ```markdown
     Invoicing owns billing decisions. Payment-provider facts enter through translation slices.

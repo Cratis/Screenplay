@@ -19638,6 +19638,41 @@
             "isOptional": false,
             "name": "String"
           }
+        },
+        {
+          "kind": "ProvideSyntax",
+          "name": "creditCeiling",
+          "source": {
+            "kind": "FileProvideSourceSyntax",
+            "file": {
+              "kind": "FileReferenceSyntax",
+              "path": "Provides/CreditCeiling.cs"
+            }
+          },
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "Int"
+          }
+        },
+        {
+          "kind": "ProvideSyntax",
+          "name": "reminderDays",
+          "source": {
+            "kind": "CodeProvideSourceSyntax",
+            "code": {
+              "kind": "CodeBlockSyntax",
+              "code": "return 14;",
+              "language": "csharp"
+            }
+          },
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "Int"
+          }
         }
       ],
       "purposes": [
