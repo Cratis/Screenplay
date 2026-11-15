@@ -479,6 +479,102 @@ screen InvoiceDashboard
           on row-click navigate to InvoiceDetails by invoiceId
 ````
 
+## Free screens: declare a screen first, let a slice adopt it
+
+A screen does not have to live in the slice that serves it. A designer can draw the invoice list before any slice exists,
+two slices can share one screen, and a storyline can walk through a screen nothing implements yet. Declare the screen at the top
+level of a document, in a module or in a feature, and say what data it needs without saying where the data comes from:
+
+```screenplay
+shape Invoice
+  number InvoiceNumber
+  amount Decimal
+  dueDate Date optional
+
+screen InvoiceList
+  title "Invoices"
+  data Invoice[]
+  table Invoice
+    column number label "Number"
+    column amount
+    on row-click navigate to InvoiceDetails by number
+```
+
+`data Invoice[]` with no `via query` is a **need**: data the screen reads and an adopting slice provides. A slice adopts the
+screen with `uses screen` and supplies each need from one of its queries:
+
+```screenplay
+module Invoicing
+  feature Paying
+    slice StateView ListInvoices
+      readmodel InvoiceRow
+        invoiceNumber InvoiceNumber
+        amount Decimal
+        dueDate Date optional
+      query ListInvoices => InvoiceRow[]
+      uses screen InvoiceList
+        data Invoice via query ListInvoices
+          number from invoiceNumber
+```
+
+The adoption is many to many: a slice may adopt several screens and a screen may be adopted by several slices. A screen a slice
+declares in its own body is simply a screen the slice adopts, so existing models are unchanged.
+
+### Needs and shapes
+
+The **shape** of a need is a contract with two sources.
+
+- **Inferred.** The fields the screen reads of the need - table columns, summary fields, the key of a row click, bound paths -
+  are the contract the compiler derives. Nothing else is required.
+- **Declared.** A top-level `shape` tightens the inference with typed fields. A shape's fields are written like a read model's
+  properties, without a key, identifier, subject or generated modifier, because a shape is a contract on data, not a stored
+  model. Declare a shape once, at the top level of a document.
+
+A screen that needs the same shape twice tells the needs apart with `as <alias>`, and provides each by its alias:
+
+```screenplay
+screen InvoiceOverview
+  data Invoice[] as overdue
+  data Invoice[] as open
+  table overdue
+    column number
+  table open
+    column number
+```
+
+```screenplay
+      uses screen InvoiceOverview
+        data overdue via query ListOverdue
+        data open via query ListOpen
+```
+
+### What the compiler checks in a provision
+
+`data <Need> via query <Query> [by <param>]` provides one need. A nested `<field> from <path>` maps a field to a read model path
+where the names differ; a field whose name matches needs no mapping. The compiler checks that:
+
+- the query exists, and returns a list where the need is a list and a single value where it is single (`PLAY1158`);
+- every field the screen reads, and every field its `shape` declares, is a property of the query's read model - by name or by a
+  `from` mapping (`PLAY1159`) - and has the type the shape declares, a concept standing for its underlying primitive (`PLAY1160`);
+- `by` names a parameter the query declares (`PLAY1161`);
+- a mapping names a field the screen reads or the shape declares (`PLAY1162`);
+- the provision targets a need the screen has (`PLAY1155`), never one the screen already sources with its own
+  `data <ReadModel> via query` (`PLAY1156`), and provides it once (`PLAY1157`);
+- a slice adopts a screen once (`PLAY1153`) and a screen needs a name once (`PLAY1152`).
+
+A need no provision supplies is a **warning** (`PLAY1154`) while the model is being built. It fails wherever warnings are
+errors - `--warnaserror` and a gate file's `warningsAsErrors` - and [executable screen admission](ui-contract.md#screens-in-the-executable-model)
+refuses the model with a reason that names the screen and the shape. A free screen no slice adopts is **design-only**
+(`PLAY1163`, information): it never blocks the rest of the model, never enters the executable model and is not part of the
+[UI contract](ui-contract.md).
+
+### Names in a free screen
+
+A name in a free screen - a query, a command, another screen - resolves from where the screen is **declared**, then by unique
+match anywhere in the model, as described in [How a name resolves](#how-a-name-resolves). An adopting slice never changes what a
+name in the screen means. A storyline `screen` step, a `navigate to` and a `show` reach free screens and slice screens alike, and
+[sample data](sample-data.md) may name a declared `shape` as the shape of its rows.
+
 ## How a name resolves
 
 A screen binds to things by name — `via query All`, `action RegisterInvoice`, `navigate to InvoiceDetails`. A bare name resolves **from the inside out**: the slice it is written in, then the enclosing feature, then the module, then the document. The innermost match wins.

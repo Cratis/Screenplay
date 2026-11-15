@@ -26,6 +26,7 @@ public class when_authoring_free_screens : given.an_authoring_connection
             slice StateView ListInvoices
               readmodel InvoiceRow
                 invoiceNumber String
+                customer String
                 amount Decimal
               query ListInvoices => InvoiceRow[]
               uses screen InvoiceList
@@ -38,7 +39,7 @@ public class when_authoring_free_screens : given.an_authoring_connection
     JsonElement[] _needs = [];
     JsonElement[] _adoptions = [];
     JsonElement[] _mappings = [];
-    string _renamedField = string.Empty;
+    string _redescribed = string.Empty;
     string _remappedField = string.Empty;
     string _removedAdoption = string.Empty;
     string _removedShape = string.Empty;
@@ -60,8 +61,8 @@ public class when_authoring_free_screens : given.an_authoring_connection
         _adoptions = Nodes("UsesScreenSyntax", revision);
         _mappings = Nodes("ScreenProvisionMappingSyntax", revision);
 
-        _renamedField = Text(Propose(Replacement(_shapes.Single(), node => node["properties"]!.AsArray()[0]!.AsObject()["name"] = "label")));
-        _remappedField = Text(Propose(Replacement(_mappings.Single(), node => node["path"] = "amount")));
+        _redescribed = Text(Propose(Replacement(_shapes.Single(), node => node["description"] = "What the invoice list reads")));
+        _remappedField = Text(Propose(Replacement(_mappings.Single(), node => node["path"] = "customer")));
         _removedAdoption = Text(Propose(new { operation = "remove", target = _adoptions.Single().GetProperty("handle") }));
         _removedShape = Text(Propose(new { operation = "remove", target = _shapes.Single().GetProperty("handle") }));
     }
@@ -70,8 +71,8 @@ public class when_authoring_free_screens : given.an_authoring_connection
     [Fact] void should_read_the_need_as_a_typed_node() => _needs.Length.ShouldEqual(1);
     [Fact] void should_read_the_adoption_as_a_typed_node() => _adoptions.Length.ShouldEqual(1);
     [Fact] void should_read_the_mapping_as_a_typed_node() => _mappings.Length.ShouldEqual(1);
-    [Fact] void should_replace_a_shape_field() => _renamedField.ShouldContain("shape Invoice\n  label String");
-    [Fact] void should_replace_a_mapping_path() => _remappedField.ShouldContain("number from amount");
+    [Fact] void should_replace_the_shape_description() => _redescribed.ShouldContain("shape Invoice\n  description \"What the invoice list reads\"");
+    [Fact] void should_replace_a_mapping_path() => _remappedField.ShouldContain("number from customer");
     [Fact] void should_remove_the_adoption() => _removedAdoption.ShouldNotContain("uses screen InvoiceList");
     [Fact] void should_keep_the_screen_when_removing_the_adoption() => _removedAdoption.ShouldContain("screen InvoiceList\n  data Invoice[]");
     [Fact] void should_remove_the_shape() => _removedShape.ShouldNotContain("shape Invoice");

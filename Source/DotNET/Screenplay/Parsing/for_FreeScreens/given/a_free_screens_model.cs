@@ -61,5 +61,5 @@ public class a_free_screens_model : Specification
 
     protected static string Slice(string body) =>
         "module Invoicing\n  feature Paying\n    slice StateView ListInvoices\n      readmodel InvoiceRow\n        invoiceNumber String\n        amount Decimal\n      query ListInvoices => InvoiceRow[]\n" +
-        string.Join("\n", body.Split('\n').Select(line => "      " + line)) + "\n";
+        string.Join('\n', body.Split('\n').Select(line => "      " + line)) + "\n";
 }

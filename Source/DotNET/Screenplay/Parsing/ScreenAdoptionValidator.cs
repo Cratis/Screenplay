@@ -45,7 +45,7 @@ internal static class ScreenAdoptionValidator
             }
 
             var used = new HashSet<ScreenSyntax>(ReferenceEqualityComparer.Instance);
-            foreach (var adoption in slice.UsedScreens)
+            foreach (var adoption in slice.UsedScreens.Where(adoption => adoption.Screen.Length > 0))
             {
                 var resolved = ResolveScreen(adoption, sliceScope, screens, pool, context);
                 if (resolved is null)
@@ -76,7 +76,7 @@ internal static class ScreenAdoptionValidator
             foreach (var (screen, location) in adoptions)
             {
                 var names = provided.TryGetValue(screen, out var found) ? found : [];
-                foreach (var need in Needs(screen).Where(need => !names.Contains(need.Name)))
+                foreach (var need in Needs(screen).DistinctBy(need => need.Name).Where(need => !names.Contains(need.Name)))
                 {
                     context.Warning(
                         DiagnosticCodes.UnprovidedScreenNeed,

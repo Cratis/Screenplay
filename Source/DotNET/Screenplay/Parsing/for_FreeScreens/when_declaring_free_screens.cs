@@ -13,7 +13,7 @@ public class when_declaring_free_screens : given.a_free_screens_model
 
     void Establish() => _result = new ScreenplayCompiler().Compile(Model);
 
-    [Fact] void should_report_no_warning_or_error() => string.Join("\n", _result.Diagnostics.Where(d => d.Severity != DiagnosticSeverity.Information).Select(d => $"{d.Code} {d.Severity} {d.Message}")).ShouldEqual(string.Empty);
+    [Fact] void should_report_no_warning_or_error() => string.Join('\n', _result.Diagnostics.Where(d => d.Severity != DiagnosticSeverity.Information).Select(d => $"{d.Code} {d.Severity} {d.Message}")).ShouldEqual(string.Empty);
     [Fact] void should_inform_that_the_unadopted_screen_is_design_only() => _result.Diagnostics.Single(d => d.Severity == DiagnosticSeverity.Information).Message.ShouldContain("InvoiceDetails");
     [Fact] void should_keep_the_shape() => _result.Value!.Shapes.Single().Properties.Select(property => property.Name).ShouldEqual(["number", "amount"]);
     [Fact] void should_keep_both_screens() => _result.Value!.Screens.Select(screen => screen.Name).ShouldEqual(["InvoiceList", "InvoiceDetails"]);
