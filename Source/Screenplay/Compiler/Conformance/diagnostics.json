@@ -4412,6 +4412,39 @@
             ]
         },
         {
+            "name": "malformed shape field",
+            "source": [
+                "shape Invoice",
+                "  number String key",
+                "  junk"
+            ],
+            "diagnostics": [
+                "PLAY1148@2",
+                "PLAY1148@3"
+            ]
+        },
+        {
+            "name": "malformed screen adoption",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      readmodel R",
+                "        v String",
+                "      query Q => R[]",
+                "      uses screen",
+                "      uses screen Other",
+                "        data Missing",
+                "        data Need via query Q",
+                "          number"
+            ],
+            "diagnostics": [
+                "PLAY1149@7",
+                "PLAY1149@9",
+                "PLAY1149@11"
+            ]
+        },
+        {
             "name": "invalid action directive",
             "source": [
                 "module A",

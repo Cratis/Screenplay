@@ -377,6 +377,22 @@ export const diagnosticCodes = {
     graphCollectTargetMismatch: 'PLAY1145',
     nestedGraphCollect: 'PLAY1146',
     graphCollectQueryShape: 'PLAY1147',
+    invalidShapeDeclaration: 'PLAY1148',
+    invalidScreenAdoption: 'PLAY1149',
+    duplicateShape: 'PLAY1150',
+    duplicateScreen: 'PLAY1151',
+    duplicateScreenNeed: 'PLAY1152',
+    duplicateScreenAdoption: 'PLAY1153',
+    unprovidedScreenNeed: 'PLAY1154',
+    unknownScreenNeed: 'PLAY1155',
+    provisionOverridesScreenSource: 'PLAY1156',
+    duplicateScreenProvision: 'PLAY1157',
+    screenNeedCardinalityMismatch: 'PLAY1158',
+    provisionFieldMissing: 'PLAY1159',
+    provisionFieldTypeMismatch: 'PLAY1160',
+    unknownProvisionParameter: 'PLAY1161',
+    unknownProvisionMapping: 'PLAY1162',
+    designOnlyScreen: 'PLAY1163',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
