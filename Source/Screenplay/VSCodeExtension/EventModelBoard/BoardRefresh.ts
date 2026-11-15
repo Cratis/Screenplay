@@ -12,6 +12,7 @@ const recompileDelay = 300;
 // Keeps one board in step with its application. The board compiles again when the document changes, when
 // another .play file of its folder application is edited, and when one is saved, created or deleted on
 // disk. Compiling is asynchronous, so a result is only shown when no later one was asked for meanwhile.
+// Disposal is final: a compilation still running then is dropped, and nothing schedules another.
 export class BoardRefresh implements vscode.Disposable {
     readonly #subscriptions: vscode.Disposable[] = [];
     #watcher: vscode.FileSystemWatcher | undefined;
@@ -19,6 +20,7 @@ export class BoardRefresh implements vscode.Disposable {
     #files: ReadonlySet<string> = new Set();
     #pending: ReturnType<typeof setTimeout> | undefined;
     #latest = 0;
+    #disposed = false;
 
     constructor(private readonly document: vscode.TextDocument, private readonly webview: vscode.Webview) {
         this.#subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
@@ -39,23 +41,36 @@ export class BoardRefresh implements vscode.Disposable {
     }
 
     soon(): void {
+        if (this.#disposed) {
+            return;
+        }
         clearTimeout(this.#pending);
         this.#pending = setTimeout(() => this.now(), recompileDelay);
     }
 
     now(): void {
+        if (this.#disposed) {
+            return;
+        }
         void this.#compile(++this.#latest);
     }
 
     dispose(): void {
+        if (this.#disposed) {
+            return;
+        }
+        this.#disposed = true;
+        this.#latest++;
         clearTimeout(this.#pending);
+        this.#pending = undefined;
         this.#watcher?.dispose();
+        this.#watcher = undefined;
         this.#subscriptions.forEach(subscription => subscription.dispose());
     }
 
     async #compile(request: number): Promise<void> {
         const compilation = await compileForBoard(this.document);
-        if (request !== this.#latest) {
+        if (this.#disposed || request !== this.#latest) {
             return;
         }
         this.#watch(compilation.root);
