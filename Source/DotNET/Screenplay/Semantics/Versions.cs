@@ -265,6 +265,7 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>Gets language v55, with exact ordered tag expectations on then events.</summary>
     public static readonly LanguageVersion V55 = new(55, 0);
+
     /// <summary>Gets language v56, with screens declared free of any slice and the slices that adopt them.</summary>
     public static readonly LanguageVersion V56 = new(56, 0);
 
@@ -556,6 +557,7 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>Gets semantic v55, with exact ordered tag expectations on then events.</summary>
     public static readonly SemanticVersion V55 = new(55, 0);
+
     /// <summary>Gets semantic v56, with screens declared free of any slice and the slices that adopt them.</summary>
     public static readonly SemanticVersion V56 = new(56, 0);
 
