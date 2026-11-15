@@ -300,7 +300,7 @@ ProvideDecl    = "provide", Ident, TypeRef,
    that declares it. Inheritance is by name and the nearest declaration wins; an override keeps the
    type. The built-in names tenant, identity, causedBy, causation, occurred, audiences, command and
    arguments are reserved. A query source must be a keyed snapshot query whose result type matches.
-   Provided values may not read each other in a cycle. Executable use reports PLAY0268 (#1300). *)
+   Provided values may not read each other in a cycle. A file or code source is an opaque attachment, ESM v54. *)
 PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
                | "publicTask" | "legitimateInterests" ;
 PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
