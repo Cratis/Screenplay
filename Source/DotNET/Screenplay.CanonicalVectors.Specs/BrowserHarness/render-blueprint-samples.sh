@@ -45,7 +45,7 @@ if (( cli_major < samples_major )); then
 fi
 
 mkdir -p "$work/packages"
-(cd "$work/packages" && npm init -y >/dev/null && npm install --no-audit --no-fund --silent \
+(cd "$work/packages" && npm init -y >/dev/null && npm install --no-audit --no-fund --loglevel=error \
     "@cratis/scene.blueprint.crm@${version}" "@cratis/scene.blueprint.ticketing@${version}" "@cratis/scene.blueprint.approvals@${version}" \
     "@cratis/scene.blueprint.inventory@${version}" "@cratis/scene.blueprint.hr@${version}" "@cratis/scene.blueprint.project-tracker@${version}" \
     "@cratis/scene.blueprint.administration@${version}" "@cratis/scene.blueprint.orders@${version}" \
