@@ -36,10 +36,11 @@ class RelativePattern {
 }
 
 // What the board refresh reached: each compilation it asked for, waiting until the spec finishes it, every
-// watcher it created and every message it posted to the board.
+// watcher it created, every board it mapped and every message it posted to the board.
 export const host = {
     compilations: [] as ((compilation: unknown) => void)[],
     watchers: [] as WatcherDouble[],
+    mappings: 0,
     messages: [] as unknown[],
     changeDocument: (_uri: unknown) => {},
 };
@@ -47,6 +48,7 @@ export const host = {
 export function reset(): void {
     host.compilations = [];
     host.watchers = [];
+    host.mappings = 0;
     host.messages = [];
     host.changeDocument = () => {};
 }
@@ -73,6 +75,7 @@ export function compileForBoard(): Promise<unknown> {
 }
 
 export function boardFor(_result: unknown, name: string) {
+    host.mappings++;
     return { type: 'showBoard', name };
 }
 

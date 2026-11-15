@@ -31,6 +31,7 @@ describe('when disposing during initial compilation', () => {
 
     it('should not watch the application', () => host.watchers.length.should.equal(0));
     it('should not take the application root', () => (refresh.root === undefined).should.be.true);
+    it('should not map the board', () => host.mappings.should.equal(0));
     it('should not show the board', () => host.messages.length.should.equal(0));
     it('should not compile again', () => host.compilations.length.should.equal(1));
 });

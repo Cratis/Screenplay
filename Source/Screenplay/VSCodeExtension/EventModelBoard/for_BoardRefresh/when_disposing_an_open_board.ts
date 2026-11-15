@@ -43,6 +43,7 @@ describe('when disposing an open board', () => {
     it('should have compiled again when an application file changed while open', () => compiledWhileOpen.should.equal(2));
     it('should dispose the watcher once', () => watcher.disposals.should.equal(1));
     it('should not watch again', () => host.watchers.length.should.equal(1));
+    it('should not map a compilation that finished after disposal', () => host.mappings.should.equal(1));
     it('should not show a compilation that finished after disposal', () => host.messages.length.should.equal(1));
     it('should not compile after disposal', () => host.compilations.length.should.equal(2));
 });
