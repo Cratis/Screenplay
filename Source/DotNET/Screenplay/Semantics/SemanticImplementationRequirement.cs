@@ -53,7 +53,12 @@ public enum SemanticImplementationRole
     WorkflowCompute,
 
     /// <summary>The body a state machine state runs on entry.</summary>
-    StateEntryBody
+    StateEntryBody,
+
+    /// <summary>
+    /// The body that computes a provided value (ESM v54, decision 0163).
+    /// </summary>
+    ProvideValue
 }
 
 /// <summary>Whether an attachment's content revision is known.</summary>

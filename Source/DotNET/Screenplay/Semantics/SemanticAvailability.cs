@@ -125,3 +125,9 @@ public sealed record SemanticHostProvideSource : SemanticProvideSource;
 /// </summary>
 /// <param name="Value">The operand.</param>
 public sealed record SemanticValueProvideSource(SemanticContextOperand Value) : SemanticProvideSource;
+
+/// <summary>
+/// The value is computed by a file or an inline code block, carried as an implementation attachment. ESM v54.
+/// </summary>
+/// <param name="Implementation">The requirement id of the <see cref="SemanticImplementationRole.ProvideValue"/> attachment that computes the value.</param>
+public sealed record SemanticCodeProvideSource(string Implementation) : SemanticProvideSource;

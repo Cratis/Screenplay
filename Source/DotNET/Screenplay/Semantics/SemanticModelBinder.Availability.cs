@@ -11,20 +11,23 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        ImmutableArray<SemanticProvidedValue> BindProvides(IEnumerable<ProvideSyntax> provides)
+        static SemanticCodeProvideSource? CodeProvideSource(SemanticImplementationRequirement? requirement) =>
+            requirement is null ? null : new SemanticCodeProvideSource(requirement.RequirementId);
+
+        ImmutableArray<SemanticProvidedValue> BindProvides(SemanticAddress owner, IEnumerable<ProvideSyntax> provides)
         {
             var bound = ImmutableArray.CreateBuilder<SemanticProvidedValue>();
             foreach (var provide in provides)
             {
-                if (BindProvide(provide) is { } value) bound.Add(value);
+                if (BindProvide(owner, provide) is { } value) bound.Add(value);
             }
 
             return bound.ToImmutable();
         }
 
-        SemanticProvidedValue? BindProvide(ProvideSyntax provide)
+        SemanticProvidedValue? BindProvide(SemanticAddress owner, ProvideSyntax provide)
         {
-            var source = BindProvideSource(provide);
+            var source = BindProvideSource(owner, provide);
             if (source is null) return null;
             if (!_readModels.TryGetValue(provide.Type.Name, out var readModel))
             {
@@ -34,7 +37,7 @@ public sealed partial class SemanticModelBinder
             return new(provide.Name, source) { ReadModel = readModel.Model.Id, Optional = provide.Type.IsOptional, Collection = provide.Type.IsCollection };
         }
 
-        SemanticProvideSource? BindProvideSource(ProvideSyntax provide)
+        SemanticProvideSource? BindProvideSource(SemanticAddress owner, ProvideSyntax provide)
         {
             switch (provide.Source)
             {
@@ -65,8 +68,12 @@ public sealed partial class SemanticModelBinder
                     }
 
                     return new SemanticQueryProvideSource(declared.Id, by.ToImmutable());
+                case FileProvideSourceSyntax file:
+                    return CodeProvideSource(RequireImplementation(SemanticImplementationRole.ProvideValue, owner, file.File, null, provide.Name));
+                case CodeProvideSourceSyntax code:
+                    return CodeProvideSource(RequireImplementation(SemanticImplementationRole.ProvideValue, owner, null, code.Code, provide.Name));
                 default:
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Provided value '{provide.Name}' takes its value from a file or code block, which no supported executable model (ESM) version carries yet (#1300).", provide.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Provided value '{provide.Name}' has a source that no supported executable model (ESM) version carries.", provide.Location);
                     return null;
             }
         }

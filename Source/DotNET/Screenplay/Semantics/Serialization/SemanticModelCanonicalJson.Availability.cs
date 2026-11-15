@@ -22,7 +22,7 @@ public static partial class SemanticModelCanonicalJson
     {
         if (provides.IsDefaultOrEmpty) return;
         RequireV53(version, "Provided values");
-        WriteArray(writer, "provides", provides, WriteProvidedValue);
+        WriteArray(writer, "provides", provides, (output, provided) => WriteProvidedValue(output, provided, version));
     }
 
     static void WriteAudiencesAndAvailabilities(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
@@ -132,7 +132,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteProvidedValue(Utf8JsonWriter writer, SemanticProvidedValue provided)
+    static void WriteProvidedValue(Utf8JsonWriter writer, SemanticProvidedValue provided, SemanticVersion version)
     {
         writer.WriteStartObject();
         CanonicalJson.WriteString(writer, "name", provided.Name);
@@ -161,6 +161,11 @@ public static partial class SemanticModelCanonicalJson
                 writer.WriteString("kind", "value");
                 writer.WritePropertyName("value");
                 WriteContextOperand(writer, value.Value);
+                break;
+            case SemanticCodeProvideSource code:
+                if (version.Major < 54) throw new InvalidSemanticContract("A provided value computed by a file or a code block requires ESM v54 or later.");
+                writer.WriteString("kind", "code");
+                CanonicalJson.WriteString(writer, "requirementId", code.Implementation);
                 break;
             default: throw new InvalidSemanticContract("Unknown provided value source.");
         }

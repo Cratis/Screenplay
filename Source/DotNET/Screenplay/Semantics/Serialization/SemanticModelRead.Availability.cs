@@ -181,6 +181,7 @@ internal static partial class SemanticModelRead
         SemanticId query = default;
         var by = ImmutableArray<SemanticContextOperand>.Empty;
         SemanticContextOperand? value = null;
+        string? requirementId = null;
         while (NextProperty(ref reader, seen, "provided value source") is { } property)
         {
             switch (property)
@@ -189,16 +190,25 @@ internal static partial class SemanticModelRead
                 case "query": query = SemanticId.Parse(String(ref reader, property)); break;
                 case "by": by = Array(ref reader, ContextOperand, property); break;
                 case "value": RequiredToken(ref reader, JsonTokenType.StartObject, property); value = ContextOperand(ref reader); break;
+                case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "provided value source");
             }
         }
 
+        return BuildProvideSource(kind, query, by, value, requirementId);
+    }
+
+    static SemanticProvideSource BuildProvideSource(string? kind, SemanticId query, ImmutableArray<SemanticContextOperand> by, SemanticContextOperand? value, string? requirementId)
+    {
+        var noQuery = !query.IsSet && by.IsEmpty;
+        var onlyValue = requirementId is null;
         return kind switch
         {
-            "query" when query.IsSet && value is null => new SemanticQueryProvideSource(query, by),
-            "host" when !query.IsSet && by.IsEmpty && value is null => new SemanticHostProvideSource(),
-            "value" when !query.IsSet && by.IsEmpty && value is not null => new SemanticValueProvideSource(value),
-            _ => throw Malformed("provided value source", "a query, host or value source")
+            "query" when query.IsSet && value is null && onlyValue => new SemanticQueryProvideSource(query, by),
+            "host" when noQuery && value is null && onlyValue => new SemanticHostProvideSource(),
+            "value" when noQuery && value is not null && onlyValue => new SemanticValueProvideSource(value),
+            "code" when noQuery && value is null && !string.IsNullOrEmpty(requirementId) => new SemanticCodeProvideSource(requirementId),
+            _ => throw Malformed("provided value source", "a query, host, value or code source")
         };
     }
 }
