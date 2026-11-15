@@ -373,7 +373,11 @@ export const diagnosticCodes = {
     invalidDynamicKey: 'PLAY0957',
     clearDynamicKey: 'PLAY0963',
     secretConceptProjected: 'PLAY1142',
-    invalidEventTagExpectation: 'PLAY1144',
+    invalidGraphCollect: 'PLAY1144',
+    graphCollectTargetMismatch: 'PLAY1145',
+    nestedGraphCollect: 'PLAY1146',
+    graphCollectQueryShape: 'PLAY1147',
+    invalidEventTagExpectation: 'PLAY1148',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

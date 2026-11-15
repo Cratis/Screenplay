@@ -7,31 +7,60 @@ using Cratis.Screenplay.Extensions;
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 /// <summary>
-/// Supplies the ESM v54 golden: every v53 construct plus exact ordered tag expectations on then events.
+/// Supplies the ESM v54 golden: every v53 construct plus graph queries that collect nested rows.
 /// </summary>
 public static partial class canonical_serialization_golden_vectors
 {
     /// <summary>
-    /// The source of the v54 golden: the v53 golden whose ReportShip slice asserts the tags of the event it appends.
+    /// The source of the v54 golden: the v53 golden plus a staff graph read as views.
     /// </summary>
-    public static readonly string ExpectedTagsSource = AvailabilitySource.Replace(
-        "        produces ShipReported\n          for shipId\n          shipId = shipId\n\n    slice StateView Fleet",
-        """
-                    produces ShipReported
-                      for shipId
-                      tag audit
-                      shipId = shipId
+    public const string GraphCollectSource = AvailabilitySource + """
 
-                  specification ReportedShipsCarryTheirTags
-                    when ReportShip
-                      shipId = "9c858901-8a57-4791-81fe-4c455b099bc9"
-                    then ShipReported
-                      for "9c858901-8a57-4791-81fe-4c455b099bc9"
-                      tag audit
-                      shipId = "9c858901-8a57-4791-81fe-4c455b099bc9"
 
-                slice StateView Fleet
-            """.Replace("\r", string.Empty), StringComparison.Ordinal);
+        type TeamPlacement
+          teamId Uuid
+          title  String
+          since  DateTime optional
+
+        type ManagerSummary
+          employeeId Uuid
+          name       String
+
+        module Staffing
+          feature Chart
+            slice StateView StaffViews
+              graph Staff
+                node Employee
+                  employeeId Uuid key
+                  name       String
+                node Team
+                  teamId Uuid key
+                  title  String
+                edge WORKS_IN source Employee target Team
+                  since DateTime optional
+                edge REPORTS_TO source Employee target Employee
+
+              readmodel EmployeeView
+                employeeId Uuid key
+                name       String
+                teams      TeamPlacement[]
+                manager    ManagerSummary optional
+
+              query EmployeesInTeam => EmployeeView[] graph Staff
+                filter teamId Uuid
+                match employee:Employee
+                where team.teamId = $teamId
+                return
+                  employeeId = employee.employeeId
+                  name       = employee.name
+                  teams      = collect employee -placement:WORKS_IN-> team:Team
+                    teamId = team.teamId
+                    title  = team.title
+                    since  = placement.since
+                  manager    = collect employee -REPORTS_TO-> manager:Employee
+                    employeeId = manager.employeeId
+                    name       = manager.name
+        """;
 
     /// <summary>
     /// Gets the canonical bytes of the v54 golden.
@@ -49,7 +78,7 @@ public static partial class canonical_serialization_golden_vectors
         ExtensionContractResolver.Current = fixture.Resolver();
         try
         {
-            var result = property_order_binding.AdmitScreens(ExpectedTagsSource);
+            var result = property_order_binding.AdmitScreens(GraphCollectSource);
             if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Refusals));
             return result.Compilation!.Model;
         }

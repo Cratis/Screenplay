@@ -267,6 +267,7 @@ internal static class SyntaxKinds
         typeof(GraphPatternHopSyntax),
         typeof(GraphConditionSyntax),
         typeof(GraphReturnSyntax),
+        typeof(GraphCollectSyntax),
         typeof(SpecificationGraphSyntax),
         typeof(SpecificationGraphNodeSyntax),
         typeof(SpecificationGraphEdgeSyntax),

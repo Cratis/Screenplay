@@ -1589,6 +1589,34 @@ FromClause     = "from", MappingSource ;
 PerformerDecl  = "performer", NL,
                  INDENT, ( FileDirective | InlineBlock ), DEDENT ;
 
+(* A query that reads a graph returns an ordinary read model (decision 0139).
+   See projections/graphs.md#reading-a-graph.                                 *)
+
+GraphQueryDecl = "query", Ident, "=>", [ "observable" ], TypeRef, "graph", Ident, NL,
+                 INDENT,
+                   { DescriptionDecl | ByClause | FilterClause | AuthorizeDecl
+                   | GraphMatch | GraphWhere },
+                   GraphReturn,
+                 DEDENT ;
+GraphMatch     = [ "optional" ], "match", GraphNode, { GraphHop }, NL ;
+GraphNode      = [ Ident, ":" ], Ident ;
+GraphHop       = ( "-", [ Ident, ":" ], Ident, "->" | "<-", [ Ident, ":" ], Ident, "-" ), GraphNode ;
+GraphWhere     = "where", GraphCondition, { "and", GraphCondition }, NL ;
+GraphCondition = Ident, ".", Ident, "=", ( "$", Ident | Literal ) ;
+GraphReturn    = "return", NL,
+                 INDENT, { GraphAssignment | GraphCollect }, DEDENT ;
+GraphAssignment = Ident, "=", Ident, ".", Ident, NL ;
+
+(* A collect assigns a read-model property the rows reached along one edge from
+   the query's root (decision 0163, ESM v54): a list of a composite type gets
+   every row, an optional composite type the first or null. Each row line reads
+   the reached node or the followed edge. A query that collects has one
+   "match" of its root alone; a collect nested in a collect is PLAY1146.
+   See projections/graphs.md#collect-nested-rows.                             *)
+
+GraphCollect   = Ident, "=", "collect", Ident, GraphHop, NL,
+                 INDENT, GraphAssignment, { GraphAssignment }, DEDENT ;
+
 (* -------------------------------------------------------------- *)
 (* Projections — PDL sub-language                                  *)
 (* -------------------------------------------------------------- *)
@@ -1779,8 +1807,8 @@ SpecificationNoStream = "no", "stream", NL ;
 SpecificationTag = "tag", ( Ident | String ), NL ;
 SpecificationNoTags = "no", "tags", NL ;
 (* Only a then event takes SpecificationTag lines (ordered, exact, duplicates kept)
-   or one SpecificationNoTags; the two never mix and take no children (PLAY1144).
-   Tag expectations are executable from ESM v54. *)
+   or one SpecificationNoTags; the two never mix and take no children (PLAY1148).
+   Tag expectations are executable from ESM v55. *)
 (* A route occurs at most once. Then, redelivery locators and event examples
    accept no stream. Only event examples carry routes; steps replace inherited
    routes as a whole. Routed given and when append require for; then and

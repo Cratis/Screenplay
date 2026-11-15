@@ -4,6 +4,7 @@
         { "name": "graphs", "path": "Source/Screenplay/Compiler/Conformance/graphs.play" },
         { "name": "graph-queries", "path": "Source/Screenplay/Compiler/Conformance/graph-queries.play" },
         { "name": "graph-foreach", "path": "Source/Screenplay/Compiler/Conformance/graph-foreach.play" },
+        { "name": "graph-collects", "path": "Source/Screenplay/Compiler/Conformance/graph-collects.play" },
         { "name": "projection-parity", "path": "Source/Screenplay/Compiler/Conformance/projection-parity.play" },
         { "name": "java-inline", "path": "Source/Screenplay/Compiler/Conformance/java-inline.play" },
         { "name": "command-reads", "path": "Source/Screenplay/Compiler/Conformance/command-reads.play" },

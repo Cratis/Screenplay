@@ -142,6 +142,7 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs', 'givenAbilityAnswers'],
     SpecificationEventSyntax: ['tags'],
     SliceSyntax: ['graphs', 'graphProjections', 'graphQueries'],
+    GraphQuerySyntax: ['collects'],
     InvokesSyntax: ['onRefused', 'branches'],
     OperationPhaseSyntax: ['invocations'],
     WorkflowNodeSyntax: ['mappings', 'returns'],

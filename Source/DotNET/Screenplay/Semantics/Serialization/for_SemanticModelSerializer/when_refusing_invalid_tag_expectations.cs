@@ -18,7 +18,7 @@ public class when_refusing_invalid_tag_expectations : a_plan_with_tag_expectatio
         _json = Encoding.UTF8.GetString(SemanticModelSerializer.Serialize(_model));
     }
 
-    [Fact] void should_refuse_tags_in_an_older_model() => Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(LanguageVersion.V53, SemanticVersion.V53, _model.Application));
+    [Fact] void should_refuse_tags_in_an_older_model() => Assert.Throws<InvalidSemanticContract>(() => ExecutableSemanticModel.Create(LanguageVersion.V54, SemanticVersion.V54, _model.Application));
     [Fact] void should_refuse_empty_tags_in_a_model() => Assert.Throws<InvalidSemanticContract>(() => Model([[]], [[""]]));
     [Fact] void should_refuse_whitespace_tags_in_a_model() => Assert.Throws<InvalidSemanticContract>(() => Model([[]], [[" "]]));
 
@@ -26,9 +26,9 @@ public class when_refusing_invalid_tag_expectations : a_plan_with_tag_expectatio
     void should_refuse_tags_in_an_older_document()
     {
         var document = JsonNode.Parse(_json)!;
-        document["schemaVersion"] = 53;
-        document["languageVersion"] = LanguageVersion.V53.ToString();
-        document["semanticVersion"] = SemanticVersion.V53.ToString();
+        document["schemaVersion"] = 54;
+        document["languageVersion"] = LanguageVersion.V54.ToString();
+        document["semanticVersion"] = SemanticVersion.V54.ToString();
         Assert.Throws<InvalidSemanticContract>(() => SemanticModelSerializer.Deserialize(Encoding.UTF8.GetBytes(document.ToJsonString())));
     }
 

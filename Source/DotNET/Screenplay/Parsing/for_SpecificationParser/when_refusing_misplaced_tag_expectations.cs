@@ -22,5 +22,5 @@ public class when_refusing_misplaced_tag_expectations : Specification
         "specification S\n  then E\n    tag \" \""
     }.Select(source => new ScreenplayCompiler().CompileSpecification(source).Diagnostics.Select(diagnostic => diagnostic.Code).ToArray()).ToArray();
 
-    [Fact] void should_report_play1144_for_every_misuse() => _codes.All(codes => codes.Contains("PLAY1144")).ShouldBeTrue();
+    [Fact] void should_report_play1148_for_every_misuse() => _codes.All(codes => codes.Contains("PLAY1148")).ShouldBeTrue();
 }

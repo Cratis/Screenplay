@@ -1,6 +1,6 @@
 ---
 title: "Screenplay extension contracts: the contract file, the manifest and the lock"
-description: "The formal contract of an extension package: the contract.play file and its manifest, how a system references a package, the screenplay.lock file, automatic restore and provider compatibility."
+description: "Reference for the contract.play file and manifest of an extension package, how a system references it, the screenplay.lock file, restore and compatibility."
 ---
 
 # Extension contracts

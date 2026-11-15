@@ -274,7 +274,7 @@ then InvoiceRegistered
   tag "billing"
 ```
 
-The expectation is exact: the event's tags must equal the listed tags in order, duplicates included. `no tags` asserts that the event carries none, and a `then` without either form leaves its tags unspecified. A value is an identifier or a string; a `$context` or `$env` expression is resolved when the event is appended and is not asserted. `tag` and `no tags` appear only under a `then` event, `no tags` cannot repeat or combine with `tag`, and the lines take no children; every violation reports `PLAY1144`. Tag expectations select executable semantic model **v54**; specifications without them keep their existing semantics.
+The expectation is exact: the event's tags must equal the listed tags in order, duplicates included. `no tags` asserts that the event carries none, and a `then` without either form leaves its tags unspecified. A value is an identifier or a string; a `$context` or `$env` expression is resolved when the event is appended and is not asserted. `tag` and `no tags` appear only under a `then` event, `no tags` cannot repeat or combine with `tag`, and the lines take no children; every violation reports `PLAY1148`. Tag expectations select executable semantic model **v55**; specifications without them keep their existing semantics.
 
 An event occurrence in `given`, `when append` or `then` can name a source-owned stream:
 

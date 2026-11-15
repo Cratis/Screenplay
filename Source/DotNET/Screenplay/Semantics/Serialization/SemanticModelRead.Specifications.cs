@@ -200,7 +200,7 @@ internal static partial class SemanticModelRead
             .Add("eventSource", (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.Source = Nested(ref reader, EventSource, property))
             .Add("route", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.Route = Nested(ref reader, FixtureRoute, property))
             .Add("unrouted", LanguageVersion.V8.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.ReadUnrouted(ref reader, property), state => state.Then)
-            .Add("expectedTags", LanguageVersion.V54.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.ExpectedTags = StringArray(ref reader, property), state => state.Then);
+            .Add("expectedTags", LanguageVersion.V55.Major, (ref Utf8JsonReader reader, SpecificationEventState state, string property) => state.ExpectedTags = StringArray(ref reader, property), state => state.Then);
 
         public bool Then { get; } = then;
 

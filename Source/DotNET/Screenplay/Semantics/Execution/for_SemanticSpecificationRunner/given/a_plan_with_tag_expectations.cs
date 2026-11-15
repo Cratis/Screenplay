@@ -27,8 +27,8 @@ public class a_plan_with_tag_expectations : a_bound_register_project_plan
         };
         var checksTags = expectedTags.Any(expected => expected is not null);
         return ExecutableSemanticModel.Create(
-            checksTags ? LanguageVersion.V54 : _plan.Model.LanguageVersion,
-            checksTags ? SemanticVersion.V54 : _plan.Model.SemanticVersion,
+            checksTags ? LanguageVersion.V55 : _plan.Model.LanguageVersion,
+            checksTags ? SemanticVersion.V55 : _plan.Model.SemanticVersion,
             application with { Modules = [module with { Features = [feature with { Slices = [.. feature.Slices.Select(value => value.Id == slice.Id ? updated : value)] }] }] });
     }
 

@@ -20,8 +20,8 @@ public class when_refusing_tags_on_typed_examples : Specification
         _payload = compiler.Parse(Source + "tag = \"payload\"");
     }
 
-    [Fact] void should_refuse_tag_with_the_tag_expectation_diagnostic() => _tagCodes.ShouldEqual(["PLAY1144"]);
-    [Fact] void should_refuse_no_tags_with_the_tag_expectation_diagnostic() => _noTagsCodes.ShouldEqual(["PLAY1144"]);
+    [Fact] void should_refuse_tag_with_the_tag_expectation_diagnostic() => _tagCodes.ShouldEqual(["PLAY1148"]);
+    [Fact] void should_refuse_no_tags_with_the_tag_expectation_diagnostic() => _noTagsCodes.ShouldEqual(["PLAY1148"]);
     [Fact] void should_still_accept_a_payload_property_named_tag() => _payload.Diagnostics.ShouldBeEmpty();
     [Fact] void should_keep_the_payload_mapping() => _payload.Value!.Modules.Single().Features.Single().Slices.Single().Examples.Single().Values.Single().Property.ShouldEqual("tag");
 }

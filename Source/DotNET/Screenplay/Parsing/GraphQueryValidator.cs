@@ -12,7 +12,7 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class GraphQueryValidator
 {
-    internal static void Validate(GraphQuerySyntax query, Dictionary<string, GraphSyntax> graphs, Dictionary<string, ReadModelSyntax> readModels, ParserContext context)
+    internal static void Validate(GraphQuerySyntax query, Dictionary<string, GraphSyntax> graphs, Dictionary<string, ReadModelSyntax> readModels, Dictionary<string, TypeSyntax> types, ParserContext context)
     {
         if (query.Graph.Length == 0) return;
         if (!graphs.TryGetValue(query.Graph, out var graph))
@@ -48,6 +48,40 @@ internal static class GraphQueryValidator
             }
         }
 
+        var collects = query.Collects.ToList();
+        var root = collects.Count > 0 ? ValidateCollectShape(query, context) : null;
+        foreach (var collect in collects)
+        {
+            if (root is not null && collect.From != root.Alias)
+            {
+                context.Error(DiagnosticCodes.InvalidGraphCollect, $"Collect '{collect.Property}' starts at '{collect.From}', but query '{query.Name}' collects from its root '{root.Alias}'", collect.Location);
+            }
+
+            var edge = graph.Edges.FirstOrDefault(candidate => candidate.Type == collect.Hop.Type);
+            if (edge is null)
+            {
+                context.Error(DiagnosticCodes.UnknownGraphQueryReference, $"Graph '{graph.Name}' does not declare edge '{collect.Hop.Type}'", collect.Hop.Location);
+            }
+            else if (root is not null)
+            {
+                var (from, to) = collect.Hop.Outgoing ? (root.Label, collect.Hop.Node.Label) : (collect.Hop.Node.Label, root.Label);
+                if (edge.Source != from || edge.Target != to)
+                {
+                    context.Error(DiagnosticCodes.GraphQueryEdgeMismatch, $"Edge '{collect.Hop.Type}' of graph '{graph.Name}' goes from '{edge.Source}' to '{edge.Target}', not from '{from}' to '{to}'", collect.Hop.Location);
+                }
+            }
+
+            if (collect.Hop.Alias is not null) Declare(collect.Hop.Alias, (false, collect.Hop.Type, false), collect.Hop.Location);
+            if (graph.Nodes.All(candidate => candidate.Label != collect.Hop.Node.Label))
+            {
+                context.Error(DiagnosticCodes.UnknownGraphQueryReference, $"Graph '{graph.Name}' does not declare node '{collect.Hop.Node.Label}'", collect.Hop.Node.Location);
+            }
+
+            if (collect.Hop.Node.Alias is not null) Declare(collect.Hop.Node.Alias, (true, collect.Hop.Node.Label, false), collect.Hop.Node.Location);
+        }
+
+        if (root is not null) ValidateCollectAliases(query, root, collects, context);
+
         var arguments = query.Filters.Concat(query.By is null ? [] : [query.By]).ToDictionary(argument => argument.Name, StringComparer.Ordinal);
         foreach (var condition in query.Conditions)
         {
@@ -66,6 +100,7 @@ internal static class GraphQueryValidator
         }
 
         ValidateReturns(query, graph, readModels, Property, aliases, context);
+        if (collects.Count > 0) ValidateCollects(query, graph, readModels, types, Property, context);
 
         void Declare(string alias, (bool IsNode, string Name, bool Optional) target, SourceLocation location)
         {
@@ -144,9 +179,98 @@ internal static class GraphQueryValidator
             }
         }
 
-        foreach (var missing in declared.Values.Where(candidate => !candidate.Type.IsOptional && !assigned.Contains(candidate.Name)))
+        var collected = query.Collects.Select(collect => collect.Property).ToHashSet(StringComparer.Ordinal);
+        foreach (var missing in declared.Values.Where(candidate => !candidate.Type.IsOptional && !assigned.Contains(candidate.Name) && !collected.Contains(candidate.Name)))
         {
             context.Error(DiagnosticCodes.GraphQueryReturnMismatch, $"Query '{query.Name}' does not return '{missing.Name}', which read model '{readModel.Name}' requires", query.Location);
+        }
+    }
+
+    // A query that collects reads like a view: one 'match' of its root node alone, so every row is one root.
+    static GraphPatternNodeSyntax? ValidateCollectShape(GraphQuerySyntax query, ParserContext context)
+    {
+        var matches = query.Matches.ToList();
+        if (matches.Count != 1 || matches[0].IsOptional || matches[0].Hops.Any() || matches[0].Start.Alias is null)
+        {
+            context.Error(DiagnosticCodes.GraphCollectQueryShape, $"Query '{query.Name}' collects, so it needs exactly one 'match <alias>:<Label>' of its root node alone - follow edges from the root with 'collect'", query.Location);
+            return matches.Count > 0 && matches[0].Start.Alias is not null ? matches[0].Start : null;
+        }
+
+        return matches[0].Start;
+    }
+
+    static void ValidateCollectAliases(GraphQuerySyntax query, GraphPatternNodeSyntax root, List<GraphCollectSyntax> collects, ParserContext context)
+    {
+        var edges = collects.Where(collect => collect.Hop.Alias is not null).Select(collect => collect.Hop.Alias).ToHashSet(StringComparer.Ordinal);
+        foreach (var condition in query.Conditions.Where(condition => edges.Contains(condition.Alias)))
+        {
+            context.Error(DiagnosticCodes.GraphCollectQueryShape, $"Condition on '{condition.Alias}' names a collected edge - a condition selects roots by a property of the root or of a collected node", condition.Location);
+        }
+
+        foreach (var @return in query.Returns.Where(@return => @return.Alias != root.Alias))
+        {
+            context.Error(DiagnosticCodes.GraphCollectQueryShape, $"'{@return.Property}' is returned from '{@return.Alias}', but a query that collects returns its scalar properties from its root '{root.Alias}'", @return.Location);
+        }
+    }
+
+    static void ValidateCollects(GraphQuerySyntax query, GraphSyntax graph, Dictionary<string, ReadModelSyntax> readModels, Dictionary<string, TypeSyntax> types, Func<GraphSyntax, string, string, SourceLocation, PropertySyntax?> property, ParserContext context)
+    {
+        if (!readModels.TryGetValue(query.ReturnType.Name, out var readModel)) return;
+        var declared = readModel.Properties.ToDictionary(candidate => candidate.Name, StringComparer.Ordinal);
+        var assigned = query.Returns.Select(@return => @return.Property).ToHashSet(StringComparer.Ordinal);
+        foreach (var collect in query.Collects)
+        {
+            if (!assigned.Add(collect.Property))
+            {
+                context.Error(DiagnosticCodes.GraphQueryReturnMismatch, $"'{collect.Property}' is returned twice", collect.Location);
+                continue;
+            }
+
+            if (!declared.TryGetValue(collect.Property, out var target))
+            {
+                context.Error(DiagnosticCodes.GraphQueryReturnMismatch, $"Read model '{readModel.Name}' has no property '{collect.Property}'", collect.Location);
+                continue;
+            }
+
+            if (!types.TryGetValue(target.Type.Name, out var row) || (!target.Type.IsCollection && !target.Type.IsOptional))
+            {
+                context.Error(DiagnosticCodes.GraphCollectTargetMismatch, $"'{collect.Property}' of read model '{readModel.Name}' must be a list of a composite type ('{target.Type.Name}[]') or an optional composite type ('{target.Type.Name} optional') to be collected", collect.Location);
+                continue;
+            }
+
+            var rowProperties = row.Properties.ToDictionary(candidate => candidate.Name, StringComparer.Ordinal);
+            var rowAssigned = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var @return in collect.Returns)
+            {
+                if (@return.Alias != collect.Hop.Alias && @return.Alias != collect.Hop.Node.Alias)
+                {
+                    context.Error(DiagnosticCodes.InvalidGraphCollect, $"'{@return.Property}' of collect '{collect.Property}' reads '{@return.Alias}' - a collected row reads the collected node or edge only", @return.Location);
+                    continue;
+                }
+
+                if (!rowAssigned.Add(@return.Property))
+                {
+                    context.Error(DiagnosticCodes.GraphCollectTargetMismatch, $"'{@return.Property}' of collect '{collect.Property}' is assigned twice", @return.Location);
+                    continue;
+                }
+
+                if (!rowProperties.TryGetValue(@return.Property, out var rowTarget))
+                {
+                    context.Error(DiagnosticCodes.GraphCollectTargetMismatch, $"Type '{row.Name}' has no property '{@return.Property}'", @return.Location);
+                    continue;
+                }
+
+                var source = property(graph, @return.Alias, @return.Source, @return.Location);
+                if (source is not null && (source.Type.Name != rowTarget.Type.Name || source.Type.IsCollection != rowTarget.Type.IsCollection))
+                {
+                    context.Error(DiagnosticCodes.GraphCollectTargetMismatch, $"'{@return.Property}' of type '{row.Name}' is a {ScreenplaySyntaxText(rowTarget)}, but '{@return.Alias}.{@return.Source}' is a {ScreenplaySyntaxText(source)}", @return.Location);
+                }
+            }
+
+            foreach (var missing in row.Properties.Where(candidate => !candidate.Type.IsOptional && !rowAssigned.Contains(candidate.Name)))
+            {
+                context.Error(DiagnosticCodes.GraphCollectTargetMismatch, $"Collect '{collect.Property}' does not assign '{missing.Name}', which type '{row.Name}' requires", collect.Location);
+            }
         }
     }
 

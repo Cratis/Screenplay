@@ -36,7 +36,24 @@ public record GraphQuerySyntax(
 
     /// <summary>Gets the description, when declared.</summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the nested rows the query collects along one edge from its root, each assigning one read-model property (ESM v54).
+    /// </summary>
+    public IEnumerable<GraphCollectSyntax> Collects { get; init; } = [];
 }
+
+/// <summary>
+/// Represents a read-model property assigned the rows reached along one edge from the query's root, written inside <c>return</c> as
+/// <c language="screenplay">&lt;property&gt; = collect &lt;root&gt; -[alias:]TYPE-&gt; [alias:]Label</c> (or <c>&lt;-[alias:]TYPE-</c> for an incoming edge),
+/// followed by one <c language="screenplay">&lt;property&gt; = &lt;alias&gt;.&lt;property&gt;</c> line per property of the row's composite type.
+/// </summary>
+/// <param name="Property">The read-model property the rows are assigned to.</param>
+/// <param name="From">The alias the collect starts at: the query's root.</param>
+/// <param name="Hop">The edge that is followed and the node it leads to.</param>
+/// <param name="Returns">The assignments of the row's properties from the followed node or edge.</param>
+/// <param name="Location">The source location.</param>
+public record GraphCollectSyntax(string Property, string From, GraphPatternHopSyntax Hop, IEnumerable<GraphReturnSyntax> Returns, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents one <c>match</c> or <c>optional match</c> path pattern: a start node followed by hops.
