@@ -34,9 +34,10 @@ internal static class GraphValidator
         }
 
         var readModels = slices.SelectMany(slice => slice.ReadModels ?? []).GroupBy(readModel => readModel.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var types = (application.Types ?? []).GroupBy(type => type.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         foreach (var query in slices.SelectMany(slice => slice.GraphQueries))
         {
-            GraphQueryValidator.Validate(query, byName, readModels, context);
+            GraphQueryValidator.Validate(query, byName, readModels, types, context);
         }
 
         foreach (var specification in slices.SelectMany(slice => slice.Specifications))

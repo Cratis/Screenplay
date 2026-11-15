@@ -110,6 +110,27 @@ it('accepts separate destination-intent capabilities without treating them as pi
     expect(() => validateCapabilities({ ...capabilities, intentActions: [{ diagnosticCode: 'PLAY0470', intentVersion: 1, pinRepairEvidence: false, canFixAll: false }] })).not.toThrow();
     expect(() => validateCapabilities({ ...capabilities, actions: [], intentActions: capabilities.actions })).toThrow();
 });
+const unpinned = (diagnosticCode: string, extra: Record<string, unknown> = {}) => ({ diagnosticCode, tool: 'propose-repair', pinRepairEvidence: false, requiredFormatting: 'CanonicalizeTouchedDocuments', ...extra });
+const identifierPayload = { canFixAll: false, individualReviewRequired: true, contractChange: true, retiresSemanticAddresses: true };
+it('advertises only the pinned repairs from an older server without optional ones', () => {
+    expect([...validateCapabilities(capabilities)]).toEqual(['PLAY0166', 'PLAY0478']);
+});
+it('advertises each optional repair the server lists with the contract the editor implements', () => {
+    const advertised = validateCapabilities({ ...capabilities, actions: [...capabilities.actions, unpinned('PLAY0469', identifierPayload), unpinned('PLAY0516'), unpinned('PLAY0661'), unpinned('PLAY0664'), unpinned('PLAY0999')] });
+    expect([...advertised].sort()).toEqual(['PLAY0166', 'PLAY0469', 'PLAY0478', 'PLAY0516', 'PLAY0661', 'PLAY0664']);
+});
+it.each([
+    ['a fix-all claim', { ...identifierPayload, canFixAll: true }],
+    ['no contract-change disclosure', { ...identifierPayload, contractChange: false }],
+    ['no retired-address disclosure', { canFixAll: false, individualReviewRequired: true, contractChange: true }],
+    ['an evidence pin', { ...identifierPayload, pinRepairEvidence: true }],
+    ['another formatting mode', { ...identifierPayload, requiredFormatting: 'PreserveTrivia' }],
+])('does not offer PLAY0469 when the server advertises %s', (_name, patch) => {
+    expect(validateCapabilities({ ...capabilities, actions: [...capabilities.actions, unpinned('PLAY0469', patch)] }).has('PLAY0469')).toBe(false);
+});
+it('does not offer an unpinned repair the server advertises with an evidence pin', () => {
+    expect(validateCapabilities({ ...capabilities, actions: [...capabilities.actions, unpinned('PLAY0661', { pinRepairEvidence: true })] }).has('PLAY0661')).toBe(false);
+});
 for (const patch of [{ repairContractVersion: 2 }, { schemaVersion: 2 }, { evidence: {} }, { savedFilesOnly: false }, { cancellation: {} }, { structuredFailures: {} }, { actions: [] }]) {
     it(`refuses unsupported/malformed/missing safety capabilities: ${JSON.stringify(patch)}`, () => {
         expect(() => validateCapabilities({ ...capabilities, ...patch })).toThrow();

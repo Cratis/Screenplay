@@ -31,7 +31,7 @@ internal static class SemanticStringClassification
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
         "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "navigation/screen", "actions/then", "handles/commands",
-        "ordering/sortBy", "operations/operation",
+        "ordering/sortBy", "operations/operation", "collects/row",
     };
 
     // Scoped literals whose property name is an identity name elsewhere.
@@ -42,7 +42,7 @@ internal static class SemanticStringClassification
 
     static readonly HashSet<string> _scopedLiterals = new(StringComparer.Ordinal)
     {
-        "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "returns/source", "timeZone/id", "givenCaller/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
+        "then/target", "mappings/property", "nodes/trigger", "edges/type", "hops/type", "hop/type", "returns/source", "members/source", "timeZone/id", "givenCaller/id", "contextMembers/type", "captures/key", "reducers/key", "claims/type", "map/source", "map/targets",
         "screens/title", "screens/description", "data/by", "fields/path", "actions/subject", "actions/when", "navigation/trigger", "navigation/by", "navigation/opens",
         "layout/fits", "regions/shows", "regions/title", "regions/actions", "agents/tokenKind",
         "condition/path", "left/path", "right/path", "operand/path", "by/path", "value/path", "extensions/reference", "components/name", "components/component", "components/properties", "handles/signal",

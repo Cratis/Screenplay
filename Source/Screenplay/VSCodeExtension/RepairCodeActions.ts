@@ -336,7 +336,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             // Capture the selected generation AFTER that reset, including failed initialization.
             const connecting = connect(true);
             const generation = connectionGeneration;
-            try { const owner = await connecting; const discovered = await owner.session.discover(); publish(owner, discovered.diagnostics); if (!discovered.choices.length) await vscode.window.showInformationMessage('No verified PLAY0166/PLAY0478/PLAY0516/PLAY0661/PLAY0664 repair is available. C# eligibility and refusals are unchanged.'); } catch (error) { await report(error, () => !disposed && generation === connectionGeneration); }
+            try { const owner = await connecting; const discovered = await owner.session.discover(); publish(owner, discovered.diagnostics); if (!discovered.choices.length) await vscode.window.showInformationMessage('No verified PLAY0166/PLAY0469/PLAY0478/PLAY0516/PLAY0661/PLAY0664 repair is available. C# eligibility and refusals are unchanged.'); } catch (error) { await report(error, () => !disposed && generation === connectionGeneration); }
         }),
         vscode.commands.registerCommand(previewCommand, async (token: unknown) => {
             const owner = current;
@@ -344,7 +344,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 if (typeof token !== 'string' || !owner) throw new RepairFailure('StaleSelection', 'Select a freshly discovered C# code action.');
                 authorize(owner);
                 const consentEpoch = owner.session.epoch;
-                const consent = await vscode.window.showWarningMessage('This repair canonically formats every touched document. PLAY0478 changes routing; it is not cleanup. Review all source and identity changes before applying.', { modal: true }, 'Propose and preview');
+                const consent = await vscode.window.showWarningMessage('This repair canonically formats every touched document. PLAY0478 changes routing and PLAY0469 changes the event contract; neither is cleanup. Review all source and identity changes before applying.', { modal: true }, 'Propose and preview');
                 if (consent !== 'Propose and preview') return;
                 authorize(owner);
                 if (owner.session.epoch !== consentEpoch) throw new RepairFailure('StaleEpoch', 'Workspace changed during formatting consent.');

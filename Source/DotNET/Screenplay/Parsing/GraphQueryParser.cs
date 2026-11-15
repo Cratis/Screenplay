@@ -45,6 +45,7 @@ internal static partial class GraphQueryParser
         var matches = new List<GraphMatchSyntax>();
         var conditions = new List<GraphConditionSyntax>();
         var returns = new List<GraphReturnSyntax>();
+        var collects = new List<GraphCollectSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -72,7 +73,7 @@ internal static partial class GraphQueryParser
                     ParseWhere(context, line, conditions);
                     break;
                 case "return":
-                    ParseReturn(context, line, returns);
+                    ParseReturn(context, line, returns, collects);
                     break;
                 default:
                     context.Error(DiagnosticCodes.InvalidGraphQuery, $"Unexpected '{line.Content}' in graph query body - expected description, by, filter, authorize, match, optional match, where or return", line.Location);
@@ -86,7 +87,7 @@ internal static partial class GraphQueryParser
             context.Error(DiagnosticCodes.InvalidGraphQuery, $"Graph query '{name}' needs at least one 'match' (not 'optional match')", header.Location);
         }
 
-        if (returns.Count == 0)
+        if (returns.Count == 0 && collects.Count == 0)
         {
             context.Error(DiagnosticCodes.InvalidGraphQuery, $"Graph query '{name}' needs a 'return' block that assigns the read model's properties", header.Location);
         }
@@ -95,6 +96,7 @@ internal static partial class GraphQueryParser
         {
             IsObservable = match.Groups[2].Success,
             Description = description,
+            Collects = collects,
             DirectiveLocations = directiveLocations
         };
     }
@@ -208,7 +210,7 @@ internal static partial class GraphQueryParser
         yield return text[start..];
     }
 
-    static void ParseReturn(ParserContext context, SourceLine line, List<GraphReturnSyntax> returns)
+    static void ParseReturn(ParserContext context, SourceLine line, List<GraphReturnSyntax> returns, List<GraphCollectSyntax> collects)
     {
         if (line.Content != "return")
         {
@@ -220,6 +222,13 @@ internal static partial class GraphQueryParser
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            var collect = CollectRegex().Match(child.Content);
+            if (collect.Success)
+            {
+                if (ParseCollect(context, child, collect) is { } parsed) collects.Add(parsed);
+                continue;
+            }
+
             var assignment = ReturnRegex().Match(child.Content);
             if (!assignment.Success)
             {
@@ -229,6 +238,56 @@ internal static partial class GraphQueryParser
 
             returns.Add(new(assignment.Groups[1].Value, assignment.Groups[2].Value, assignment.Groups[3].Value, child.Location));
         }
+    }
+
+    // '<property> = collect <root> -[alias:]TYPE-> [alias:]Label' and one '<property> = <alias>.<property>' line per row property beneath it.
+    static GraphCollectSyntax? ParseCollect(ParserContext context, SourceLine line, Match collect)
+    {
+        var property = collect.Groups[1].Value;
+        var text = collect.Groups[2].Value.TrimEnd();
+        var offset = collect.Groups[2].Index;
+        var start = CollectStartRegex().Match(text);
+        var hop = start.Success ? HopRegex().Match(text[start.Length..]) : Match.Empty;
+        var rows = new List<GraphReturnSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (CollectRegex().IsMatch(child.Content))
+            {
+                context.Error(DiagnosticCodes.NestedGraphCollect, $"'{child.Content}' collects inside a collect - this version collects one level of rows; follow the edge from the root in a collect of its own", child.Location);
+                context.SkipBlock(child.Indent);
+                continue;
+            }
+
+            var assignment = ReturnRegex().Match(child.Content);
+            if (!assignment.Success)
+            {
+                context.Error(DiagnosticCodes.InvalidGraphCollect, $"Invalid collected row '{child.Content}' - expected '<property> = <alias>.<property>' naming the collected node or edge", child.Location);
+                context.SkipBlock(child.Indent);
+                continue;
+            }
+
+            rows.Add(new(assignment.Groups[1].Value, assignment.Groups[2].Value, assignment.Groups[3].Value, child.Location));
+        }
+
+        if (!start.Success || !hop.Success || start.Length + hop.Length != text.Length)
+        {
+            context.Error(DiagnosticCodes.InvalidGraphCollect, $"Invalid collect '{text}' - expected '<root> -[alias:]TYPE-> [alias:]Label' or '<root> <-[alias:]TYPE- [alias:]Label': one edge from the query's root", line.Location);
+            return null;
+        }
+
+        if (rows.Count == 0)
+        {
+            context.Error(DiagnosticCodes.InvalidGraphCollect, $"Collect '{property}' needs one '<property> = <alias>.<property>' line per property of its row", line.Location);
+        }
+
+        var outgoing = hop.Groups["out"].Success;
+        var edgeAlias = outgoing ? hop.Groups["oa"] : hop.Groups["ia"];
+        var edgeType = outgoing ? hop.Groups["ot"] : hop.Groups["it"];
+        var hopOffset = offset + start.Length;
+        var node = new GraphPatternNodeSyntax(Alias(hop.Groups["na"]), hop.Groups["nl"].Value, line.LocationAt(hopOffset + hop.Groups["nl"].Index));
+        var followed = new GraphPatternHopSyntax(Alias(edgeAlias), edgeType.Value, outgoing, node, line.LocationAt(hopOffset));
+        return new(property, start.Groups[1].Value, followed, rows, line.Location);
     }
 
     [GeneratedRegex(@"^query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?(?:\?|\s+optional)?\s+graph\s+@?[\w.]+$", RegexOptions.NonBacktracking)]
@@ -251,4 +310,10 @@ internal static partial class GraphQueryParser
 
     [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)\.([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex ReturnRegex();
+
+    [GeneratedRegex(@"^([A-Za-z_]\w*)\s*=\s*collect(?:\s+(.*))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex CollectRegex();
+
+    [GeneratedRegex(@"^([A-Za-z_]\w*)", RegexOptions.NonBacktracking)]
+    private static partial Regex CollectStartRegex();
 }

@@ -23,7 +23,7 @@ internal static partial class SemanticModelValidator
             slice.Queries.Any(query => !query.Available.IsDefaultOrEmpty) ||
             slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty));
 
-    // ESM v54 constructs: a provided value computed by a file or an inline code block.
+    // ESM v55 constructs: a provided value computed by a file or an inline code block.
     internal static bool UsesCodeProvides(SemanticApplication application) =>
         HasCodeProvide(application.Provides) ||
         application.Modules.Any(module => HasCodeProvide(module.Provides) || module.Features.Any(UsesCodeProvides)) ||
@@ -43,9 +43,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesCodeProvides(application),
             version,
-            SemanticVersion.V54,
-            "An ESM v54 model must declare a provided value computed by a file or a code block.",
-            "A provided value computed by a file or a code block requires ESM v54.");
+            SemanticVersion.V55,
+            "An ESM v55 model must declare a provided value computed by a file or a code block.",
+            "A provided value computed by a file or a code block requires ESM v55.");
         ValidateFeatureVersion(
             UsesAvailability(application),
             version,

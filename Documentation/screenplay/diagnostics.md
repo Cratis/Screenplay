@@ -1232,7 +1232,7 @@ ESM v26 admits chronological Date/DateTime comparisons only in command `require`
 
 ESM v28 admits Uuid `==` and `!=` only in command `require` and `produces when`. `PLAY0268` refuses ordering, optional or collection operands, two different Uuid concepts, Uuid against text, `$context`, reaction `where`, and Uuid in validation rules and concept rules; a refused whole comparison reports only this code, without checking its literal. In an admitted comparison, a literal that is not a lowercase hyphenated 36-character Uuid reports `PLAY0273`. See [Uuid equality in command conditions](commands.md#uuid-equality-in-command-conditions).
 
-A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet. A `provide` from a file or code block no longer reports it: ESM v54 admits that value as an implementation attachment (decision 0163).
+A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet. A `provide` from a file or code block no longer reports it: ESM v55 admits that value as an implementation attachment (decision 0165).
 
 For executable-model dispositions, see `PLAY0268`–`PLAY0271` above and `PLAY0800` under [commands](#commands), [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
@@ -1994,6 +1994,17 @@ The `design system` construct and the `theme` that implements it. See [Design sy
 | `PLAY0928` | Warning | In some theme and mode, a component's text and background resolve to a pair below a `contrast` rule. The `disabled` state is not checked. |
 | `PLAY0929` | Warning | `accent`, `corners` or `font` in a `ui profile`'s `appearance` is deprecated; the value belongs in the selected theme. `appearance` keeps only `color scheme`. |
 | `PLAY0930` | Error | A theme's `implements`, `palette`, `values` or mode block is malformed or repeated. |
+
+## Graph queries that collect nested rows
+
+Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#collect-nested-rows) along one edge from its root, and selects ESM v54. Both compilers report these codes.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY1144` | Error | A `collect` is malformed: its line is not `<property> = collect <root> -[alias:]TYPE-> [alias:]Label` (or `<-[alias:]TYPE-`), it does not start at the query's root, it has no row lines, or a row line is not `<property> = <alias>.<property>` naming the collected node or edge. |
+| `PLAY1145` | Error | A `collect` does not fit the read model: its property is not a list of a composite type (`Row[]`) or an optional composite type (`Row optional`), or its row assigns a property the type lacks, assigns one twice, leaves a required one out or assigns a value of another type. |
+| `PLAY1146` | Error | A `collect` is nested inside another `collect`. This version collects one level of rows; follow the edge from the root in a collect of its own. |
+| `PLAY1147` | Error | A query that collects does not have the shape of a view: it needs exactly one `match <alias>:<Label>` of its root node alone, its scalar returns come from the root, and a `where` condition names the root or a collected node, never a collected edge. |
 
 ## Retired codes
 

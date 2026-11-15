@@ -34,7 +34,9 @@ function bytes(value: Buffer, args: Record<string, unknown>, revision: string) {
 }
 beforeEach(async () => {
     malformed = ''; version = 1; dirty = false; applied = false; calls = []; dispatchedArgs = undefined;
-    vi.spyOn(RepairClient.prototype, 'initialize').mockResolvedValue();
+    vi.spyOn(RepairClient.prototype, 'initialize').mockImplementation(async function (this: RepairClient) {
+        this.advertised = new Set(['PLAY0166', 'PLAY0478', 'PLAY0516', 'PLAY0661', 'PLAY0664']);
+    });
     vi.spyOn(RepairClient.prototype, 'tool').mockImplementation(async (name, args, _signal, guard, writeAttempt) => {
         guard?.(); writeAttempt?.(); calls.push(name);
         const binding = { before: base, after: candidate, repairEvidence: { beforeRevision: pin, candidateRevision: nextPin } };

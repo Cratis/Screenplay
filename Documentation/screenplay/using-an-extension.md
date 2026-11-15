@@ -1,6 +1,6 @@
 ---
 title: "Use an extension in a Screenplay model"
-description: "Add a system that references an extension package, restore it into the lock, configure settings and secrets, invoke abilities, place components on screens, specify the result, run it with cratis run and update it later."
+description: "Add an extension package to a Screenplay model: reference it from a system, restore the lock, configure settings, invoke abilities and place components."
 ---
 
 # Use an extension

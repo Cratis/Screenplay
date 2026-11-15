@@ -300,7 +300,7 @@ ProvideDecl    = "provide", Ident, TypeRef,
    that declares it. Inheritance is by name and the nearest declaration wins; an override keeps the
    type. The built-in names tenant, identity, causedBy, causation, occurred, audiences, command and
    arguments are reserved. A query source must be a keyed snapshot query whose result type matches.
-   Provided values may not read each other in a cycle. A file or code source is an opaque attachment, ESM v54. *)
+   Provided values may not read each other in a cycle. A file or code source is an opaque attachment, ESM v55. *)
 PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
                | "publicTask" | "legitimateInterests" ;
 PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
@@ -1588,6 +1588,34 @@ FromClause     = "from", MappingSource ;
 
 PerformerDecl  = "performer", NL,
                  INDENT, ( FileDirective | InlineBlock ), DEDENT ;
+
+(* A query that reads a graph returns an ordinary read model (decision 0139).
+   See projections/graphs.md#reading-a-graph.                                 *)
+
+GraphQueryDecl = "query", Ident, "=>", [ "observable" ], TypeRef, "graph", Ident, NL,
+                 INDENT,
+                   { DescriptionDecl | ByClause | FilterClause | AuthorizeDecl
+                   | GraphMatch | GraphWhere },
+                   GraphReturn,
+                 DEDENT ;
+GraphMatch     = [ "optional" ], "match", GraphNode, { GraphHop }, NL ;
+GraphNode      = [ Ident, ":" ], Ident ;
+GraphHop       = ( "-", [ Ident, ":" ], Ident, "->" | "<-", [ Ident, ":" ], Ident, "-" ), GraphNode ;
+GraphWhere     = "where", GraphCondition, { "and", GraphCondition }, NL ;
+GraphCondition = Ident, ".", Ident, "=", ( "$", Ident | Literal ) ;
+GraphReturn    = "return", NL,
+                 INDENT, { GraphAssignment | GraphCollect }, DEDENT ;
+GraphAssignment = Ident, "=", Ident, ".", Ident, NL ;
+
+(* A collect assigns a read-model property the rows reached along one edge from
+   the query's root (decision 0163, ESM v54): a list of a composite type gets
+   every row, an optional composite type the first or null. Each row line reads
+   the reached node or the followed edge. A query that collects has one
+   "match" of its root alone; a collect nested in a collect is PLAY1146.
+   See projections/graphs.md#collect-nested-rows.                             *)
+
+GraphCollect   = Ident, "=", "collect", Ident, GraphHop, NL,
+                 INDENT, GraphAssignment, { GraphAssignment }, DEDENT ;
 
 (* -------------------------------------------------------------- *)
 (* Projections — PDL sub-language                                  *)

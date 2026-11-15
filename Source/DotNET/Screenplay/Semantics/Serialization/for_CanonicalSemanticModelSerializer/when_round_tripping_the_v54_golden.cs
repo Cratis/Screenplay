@@ -24,7 +24,10 @@ public class when_round_tripping_the_v54_golden : Specification
     [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(_model).ShouldEqual(_bytes);
     [Fact] void should_select_v54() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V54);
     [Fact] void should_carry_a_revision() => _model.Revision.ShouldNotBeNull();
-    [Fact] void should_write_the_code_provide() => _text.ShouldContain("\"kind\":\"code\"");
-    [Fact] void should_write_the_requirement_id() => _text.ShouldContain("\"requirementId\":");
-    [Fact] void should_keep_the_v53_availability_constructs() => _text.ShouldContain("\"audiences\":[");
+    [Fact] void should_write_the_collects() => _text.ShouldContain("\"collects\":[");
+    [Fact] void should_write_a_list_collect() => _text.ShouldContain("\"cardinality\":\"many\"");
+    [Fact] void should_write_a_single_collect() => _text.ShouldContain("\"cardinality\":\"one\"");
+    [Fact] void should_write_an_edge_property_member() => _text.ShouldContain("\"kind\":\"edgeProperty\",\"source\":\"since\"");
+    [Fact] void should_keep_both_collects() => _model.Application.GraphQueries.Single(query => query.Name == "EmployeesInTeam").Collects.Length.ShouldEqual(2);
+    [Fact] void should_leave_v53_unextended() => EsmSchemaV53Support.Supports(LanguageVersion.V54, SemanticVersion.V54).ShouldBeFalse();
 }

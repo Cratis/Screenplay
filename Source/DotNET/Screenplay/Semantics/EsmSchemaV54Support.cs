@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Declares the language and semantic version pairs of ESM schema v54, which adds provided values computed by a file or a code block.
+/// Declares the language and semantic version pairs of ESM schema v54, which adds graph queries that collect nested rows.
 /// </summary>
 public static class EsmSchemaV54Support
 {

@@ -705,4 +705,8 @@ export const DiagnosticCodes = {
     UnclosedAvailableGroup: 'PLAY1141',
     SecretConceptProjected: 'PLAY1142',
     ScreenWithoutPersona: 'PLAY1143',
+    InvalidGraphCollect: 'PLAY1144',
+    GraphCollectTargetMismatch: 'PLAY1145',
+    NestedGraphCollect: 'PLAY1146',
+    GraphCollectQueryShape: 'PLAY1147',
 } as const;

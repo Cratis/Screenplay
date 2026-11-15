@@ -23,6 +23,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "ability-invocations",
         "graph-queries",
         "graph-foreach",
+        "graph-collects",
         "projection-parity",
         "reaction-batches",
         "identity",

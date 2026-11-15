@@ -75,6 +75,7 @@
     "click",
     "clock",
     "close",
+    "collect",
     "color",
     "colour",
     "column",
@@ -80695,6 +80696,50 @@
         "warning"
       ],
       "title": "An opt-in check found a screen whose bound commands and queries are definitely denied to every declared persona.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1144",
+      "name": "InvalidGraphCollect",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A graph query collect is malformed: its line is not \u003Cproperty\u003E = collect \u003Croot\u003E -[alias:]TYPE-\u003E [alias:]Label, it does not start at the query\u0027s root, or a row line is not \u003Cproperty\u003E = \u003Calias\u003E.\u003Cproperty\u003E naming the collected node or edge.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1145",
+      "name": "GraphCollectTargetMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A graph query collect does not fit the read model: its property is not a list of a composite type or an optional composite type, or its row does not assign exactly the properties of that type with compatible types.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1146",
+      "name": "NestedGraphCollect",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A graph query collect is nested inside another collect; this version collects one level of rows.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1147",
+      "name": "GraphCollectQueryShape",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A graph query that collects does not have the shape of a view: one match of its root node alone, scalar returns from the root, and conditions on the root or a collected node only.",
       "reserved": false,
       "retired": false
     }

@@ -1420,6 +1420,48 @@
         }
       }
     },
+    "GraphCollect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "hop": {
+          "$ref": "#/$defs/GraphHop"
+        },
+        "cardinality": {
+          "type": "string"
+        },
+        "row": {
+          "type": "string"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphCollectMember"
+          }
+        }
+      }
+    },
+    "GraphCollectMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "property": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
     "GraphCondition": {
       "type": "object",
       "additionalProperties": false,
@@ -1716,6 +1758,12 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/GraphReturn"
+          }
+        },
+        "collects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphCollect"
           }
         },
         "authorization": {
@@ -2471,9 +2519,6 @@
         },
         "value": {
           "$ref": "#/$defs/ContextOperand"
-        },
-        "requirementId": {
-          "type": "string"
         }
       }
     },

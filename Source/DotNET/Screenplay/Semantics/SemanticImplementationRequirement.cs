@@ -56,7 +56,7 @@ public enum SemanticImplementationRole
     StateEntryBody,
 
     /// <summary>
-    /// The body that computes a provided value (ESM v54, decision 0163).
+    /// The body that computes a provided value (ESM v55, decision 0165).
     /// </summary>
     ProvideValue
 }
