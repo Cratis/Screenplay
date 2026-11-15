@@ -337,7 +337,7 @@ rather than asking callers to rebuild them by hand.
 
 Supported declaration domains include concepts, types, **properties of declared
 composite types**, commands, events, read models, queries, modules, features and
-slices, event sources and their streams. Source and stream renames repair bound command and specification routes and migrate their catalog entries atomically, including a source's owned streams. Existing pins stay untouched; no pins are added automatically. Add `id` with a typed edit before renaming a declaration with stored events; an unpinned rename changes its stored name. Other property declarations are not automatic rename targets. Module/feature fragments change
+slices, event sources and their streams. Source and stream renames repair bound command and specification routes and migrate their catalog entries atomically, including a source's owned streams. Existing pins stay untouched; no pins are added automatically. Add `id` with a typed edit before renaming a declaration with stored events; an unpinned rename changes its stored name. A `provide` declaration is a rename target too: renaming the outermost declaration of a chain rewrites its overrides beneath it and every `$context.<name>` read that resolves to it, changing only the first path segment. Renaming an override, a built-in `$context` name, a name already provided in an overlapping scope, or a name with an unprovable read refuses. Other property declarations are not automatic rename targets. Module/feature fragments change
 together. Proven typed references and qualified descendant references are repaired;
 read-model output aliases remain distinct from projection builder identities.
 Event renames also update constraint `released by` references and screen/behavior

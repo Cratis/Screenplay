@@ -12,6 +12,8 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal static partial class WorkspaceIdentifierSpans
 {
+    const string ContextPrefix = "$context.";
+
     internal static bool Supports(SyntaxNode node, string member, string line)
     {
         var keyword = line.Split(' ', '\t')[0];
@@ -94,6 +96,7 @@ internal static partial class WorkspaceIdentifierSpans
             (FormPopulateViaQuerySyntax, "query") => keyword == "populate",
             (ScreenNavigateSyntax, "screen") => keyword == "navigate" || keyword == "on",
             (NamedTriggerSourceSyntax, "name") => keyword == "when",
+            (ComparisonConditionSyntax, "left") or (ContextExpressionSyntax, "path") => line.Contains(ContextPrefix, StringComparison.Ordinal),
             _ => false
         };
     }
@@ -103,6 +106,16 @@ internal static partial class WorkspaceIdentifierSpans
         if (identifierOffset is { } offset)
         {
             return Find(line, expected).Where(span => span.Offset == offset);
+        }
+
+        if (node is ComparisonConditionSyntax && member == "left")
+        {
+            return ContextReads(line, expected, 0);
+        }
+
+        if (node is ContextExpressionSyntax && member == "path")
+        {
+            return ContextReads(line, ContextPrefix + expected, ContextPrefix.Length);
         }
 
         if (node is EventSyntax && member == "name")
@@ -145,6 +158,22 @@ internal static partial class WorkspaceIdentifierSpans
         }
 
         return Find(line, expected);
+    }
+
+    // A rename changes only the text after $context.; a read is the whole token so a longer name or path never matches by prefix.
+    static IEnumerable<(int Offset, int Length)> ContextReads(string line, string token, int skip)
+    {
+        var comment = SourceLineSplitter.CommentStart(line);
+        if (comment >= 0) line = line[..comment];
+
+        for (var at = line.IndexOf(token, StringComparison.Ordinal); at >= 0; at = line.IndexOf(token, at + 1, StringComparison.Ordinal))
+        {
+            var end = at + token.Length;
+            if ((at == 0 || !(char.IsLetterOrDigit(line[at - 1]) || line[at - 1] is '_' or '.' or '$')) && (end == line.Length || !(char.IsLetterOrDigit(line[end]) || line[end] is '_' or '.')))
+            {
+                yield return (at + skip, token.Length - skip);
+            }
+        }
     }
 
     internal static IEnumerable<(int Offset, int Length)> Find(string line, string expected)
