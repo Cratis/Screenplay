@@ -94,8 +94,8 @@ A placed file can still declare application-wide elements such as concepts, type
 | Placed in | Its top level may also hold |
 | --- | --- |
 | the application | `module` |
-| a module | `description`, `authorize`, `import`, `screen template`, `dialog template`, `form`, `contribute`, `feature`, `on`, `uses` |
-| a feature | `description`, `authorize`, `import`, `feature`, `slice`, `contribute`, `on`, `uses` |
+| a module | `description`, `documentation`, `depends on`, `purpose`, `authorize`, `available`, `provide`, `import`, `screen template`, `dialog template`, `form`, `contribute`, `outlet`, `template`, `feature`, `example`, `on`, `uses` |
+| a feature | `description`, `documentation`, `depends on`, `purpose`, `authorize`, `available`, `provide`, `import`, `feature`, `slice`, `contribute`, `outlet`, `template`, `example`, `on`, `uses` |
 
 A file placed in a module may restate `module Ordering` - the module it is placed in - and its body joins the placement. Declaring any other module is an error. A `description` or `authorize` in a placed file belongs to the module or feature it is placed in, and merges with the others exactly as it does across a folder.
 
@@ -223,7 +223,7 @@ silently apply a saved-file proposal.
 
 ## Operation declarations across files
 
-[Systems](systems.md) stay application-scoped even in placed files; operations belong to their declared slice. Files compiled together share explicit operation declarations. `produces Register.NotifyAccounting` can select that operation from another slice in the same assembled model. Use enough owning scope to make the reference unique; ambiguous event/operation candidates are not guessed. Newly qualified productions must resolve to an explicit operation, not an event. An unquoted contract import does not invent an operation shape or kind. These constructs remain syntax-only, not admitted by any supported ESM version (`PLAY0268`).
+[Systems](systems.md) stay application-scoped even in placed files; operations belong to their declared slice. Files compiled together share explicit operation declarations. `produces Register.NotifyAccounting` can select that operation from another slice in the same assembled model. Use enough owning scope to make the reference unique; ambiguous event/operation candidates are not guessed. Newly qualified productions must resolve to an explicit operation, not an event. An unquoted contract import does not invent an operation shape or kind. Operations, and systems that declare no ability, remain syntax-only, not admitted by any supported ESM version (`PLAY0268`). A system that declares abilities is admitted in ESM v50, and a reaction that invokes an ability in ESM v51; see [Operation and system intent](mcp/authoring-tools.md#operation-and-system-intent).
 
 ## Import a public event contract (source only)
 
