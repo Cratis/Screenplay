@@ -1,0 +1,34 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Text;
+using Cratis.Screenplay.Semantics.Serialization.given;
+
+namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSerializer;
+
+public class when_round_tripping_the_v55_golden : Specification
+{
+    byte[] _bytes;
+    string _text;
+    ExecutableSemanticModel _model;
+
+    void Because()
+    {
+        golden_vector_regeneration.RegenerateWhenRequested();
+        _bytes = canonical_serialization_golden_vectors.EsmV55Bytes;
+        _model = SemanticModelSerializer.Deserialize(_bytes);
+        _text = Encoding.UTF8.GetString(_bytes);
+    }
+
+    [Fact] void should_pin_the_golden() => _bytes.ShouldEqual(SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV55()));
+    [Fact] void should_round_trip_strictly() => SemanticModelSerializer.Serialize(_model).ShouldEqual(_bytes);
+    [Fact] void should_select_v55() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V55);
+    [Fact] void should_carry_a_revision() => _model.Revision.ShouldNotBeNull();
+    [Fact] void should_write_the_free_screens() => _text.ShouldContain("\"screens\":[{");
+    [Fact] void should_write_the_needs() => _text.ShouldContain("\"needs\":[");
+    [Fact] void should_write_the_adoptions() => _text.ShouldContain("\"adoptions\":[");
+    [Fact] void should_keep_both_free_screens() => _model.Application.Screens.Select(screen => screen.Name).ShouldContainOnly(["ParcelBoard", "ParcelDetails"]);
+    [Fact] void should_keep_the_scope_of_a_module_screen() => _model.Application.Screens.Single(screen => screen.Name == "ParcelDetails").Scope.ShouldEqual("Logistics");
+    [Fact] void should_keep_both_needs_of_the_board() => _model.Application.Screens.Single(screen => screen.Name == "ParcelBoard").Needs.Select(need => need.Name).ShouldEqual(["waiting", "shipped"]);
+    [Fact] void should_leave_v53_unextended() => EsmSchemaV54Support.Supports(LanguageVersion.V55, SemanticVersion.V55).ShouldBeFalse();
+}

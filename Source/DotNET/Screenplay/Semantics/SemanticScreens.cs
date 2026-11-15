@@ -44,7 +44,55 @@ public sealed record SemanticScreen(
     /// Gets the components the screen places through a system's extension, in declaration order. ESM v52.
     /// </summary>
     public ImmutableArray<SemanticScreenComponent> Components { get; init; } = [];
+
+    /// <summary>
+    /// Gets the data the screen reads but does not source itself; the slice that adopts the screen provides it (ESM v55).
+    /// </summary>
+    public ImmutableArray<SemanticScreenNeed> Needs { get; init; } = [];
+
+    /// <summary>
+    /// Gets the dotted module and feature path a free screen is declared in, which is part of its identity, or <see langword="null"/>
+    /// for a screen a slice declares and for a free screen declared at the top level (ESM v55).
+    /// </summary>
+    public string? Scope { get; init; }
 }
+
+/// <summary>
+/// Represents data a free screen reads and the slice that adopts it provides (ESM v55).
+/// </summary>
+/// <param name="Name">The shape name, or the alias that tells two needs of the same shape apart.</param>
+/// <param name="Shape">The shape the screen needs.</param>
+/// <param name="Many">Whether the screen needs a list of the shape.</param>
+/// <param name="Fields">The fields the screen reads of the shape, in the order it reads them.</param>
+public sealed record SemanticScreenNeed(string Name, string Shape, bool Many, ImmutableArray<SemanticScreenField> Fields);
+
+/// <summary>
+/// Represents a slice adopting a free screen with the data it provides to the screen's needs (ESM v55).
+/// </summary>
+/// <param name="Screen">The identity of the adopted free screen.</param>
+/// <param name="Provisions">The query that provides each need of the screen.</param>
+public sealed record SemanticScreenAdoption(SemanticId Screen, ImmutableArray<SemanticScreenProvision> Provisions);
+
+/// <summary>
+/// Represents the query that provides one need of an adopted screen (ESM v55).
+/// </summary>
+/// <param name="Need">The name of the need the query provides.</param>
+/// <param name="Query">The identity of the providing query.</param>
+/// <param name="Fields">The read model paths that provide fields whose names differ from the need's.</param>
+public sealed record SemanticScreenProvision(string Need, SemanticId Query, ImmutableArray<SemanticScreenProvisionField> Fields)
+{
+    /// <summary>
+    /// Gets the query parameter the screen supplies.
+    /// </summary>
+    public string? By { get; init; }
+}
+
+/// <summary>
+/// Represents a field of a need provided from a read model path of another name (ESM v55).
+/// </summary>
+/// <param name="Field">The field the screen reads.</param>
+/// <param name="Path">The dotted read model path that provides it.</param>
+public sealed record SemanticScreenProvisionField(string Field, string Path);
 
 /// <summary>
 /// Represents an extension a screen needs.

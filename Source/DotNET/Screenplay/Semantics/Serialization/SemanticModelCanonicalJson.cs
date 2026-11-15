@@ -107,6 +107,7 @@ public static partial class SemanticModelCanonicalJson
         WriteApplicationTimeZone(writer, application, version);
         WriteAgents(writer, application.Agents);
         WriteSystems(writer, application.Systems);
+        WriteFreeScreens(writer, application, version);
         writer.WriteEndObject();
     }
 
@@ -199,6 +200,7 @@ public static partial class SemanticModelCanonicalJson
         if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
         if (slice.Direction is { } direction) writer.WriteString("direction", direction == SemanticTranslationDirection.Outbound ? "outbound" : "inbound");
         WriteScreens(writer, slice, version);
+        WriteAdoptions(writer, slice);
         WriteProvides(writer, slice.Provides, version);
         WriteAvailable(writer, slice.Available, version);
         writer.WriteEndObject();

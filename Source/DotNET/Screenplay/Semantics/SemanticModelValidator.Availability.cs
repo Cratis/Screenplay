@@ -21,7 +21,8 @@ internal static partial class SemanticModelValidator
         SlicesOf(application).Any(slice => !slice.Available.IsDefaultOrEmpty || !slice.Provides.IsDefaultOrEmpty ||
             slice.Commands.Any(command => !command.Available.IsDefaultOrEmpty) ||
             slice.Queries.Any(query => !query.Available.IsDefaultOrEmpty) ||
-            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty));
+            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty)) ||
+        application.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty);
 
     static bool UsesAvailability(SemanticFeature feature) =>
         !feature.Available.IsDefaultOrEmpty || !feature.Provides.IsDefaultOrEmpty || feature.Features.Any(UsesAvailability);
@@ -45,6 +46,7 @@ internal static partial class SemanticModelValidator
         var audiences = application.Audiences.Select(audience => audience.Name).ToHashSet(StringComparer.Ordinal);
         var availabilities = application.Availabilities.ToDictionary(availability => availability.Name, StringComparer.Ordinal);
         var queries = SlicesOf(application).SelectMany(slice => slice.Queries).Select(query => query.Id).ToHashSet();
+        foreach (var screen in application.Screens) ValidateGates(screen.Available, availabilities);
 
         foreach (var audience in application.Audiences) RequireName(audience.Name, "audience");
         foreach (var availability in application.Availabilities)

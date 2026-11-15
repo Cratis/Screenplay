@@ -81,13 +81,6 @@ internal static partial class ScreenplayValidator
     }
 
     /// <summary>
-    /// Gets the names of the read model(s) a projection builds. A projection with <c>variant</c> blocks builds
-    /// one read model per variant, named after the variant, rather than one named after the projection itself -
-    /// the projection's own name identifies the shared logical identity, not a read model.
-    /// </summary>
-    /// <param name="projection">The <see cref="ProjectionSyntax"/> to inspect.</param>
-    /// <returns>The read model name(s) the projection builds.</returns>
-    /// <summary>
     /// Gets every screen of the model with the scope it is declared in: the document, a module, a feature or a slice.
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> to read.</param>
@@ -124,6 +117,13 @@ internal static partial class ScreenplayValidator
         }
     }
 
+    /// <summary>
+    /// Gets the names of the read model(s) a projection builds. A projection with <c>variant</c> blocks builds
+    /// one read model per variant, named after the variant, rather than one named after the projection itself -
+    /// the projection's own name identifies the shared logical identity, not a read model.
+    /// </summary>
+    /// <param name="projection">The <see cref="ProjectionSyntax"/> to inspect.</param>
+    /// <returns>The read model name(s) the projection builds.</returns>
     internal static IEnumerable<string> ProjectionBuiltReadModelNames(ProjectionSyntax projection)
     {
         var variants = projection.Blocks.OfType<ProjectionVariantSyntax>().ToList();

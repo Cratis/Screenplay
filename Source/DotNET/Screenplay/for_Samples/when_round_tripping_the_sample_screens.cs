@@ -43,6 +43,11 @@ public class when_round_tripping_the_sample_screens : given.the_sample_workspace
     {
         public int Count { get; private set; }
 
-        public override void VisitScreen(ScreenSyntax syntax) => Count++;
+        // A slice's own screens and the free screens it adopts are served by that slice; a free screen no slice adopts is design-only.
+        public override void VisitSlice(SliceSyntax syntax)
+        {
+            Count += syntax.Screens.Count() + syntax.UsedScreens.Count();
+            base.VisitSlice(syntax);
+        }
     }
 }

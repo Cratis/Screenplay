@@ -80,6 +80,7 @@ internal static partial class SemanticModelRead
             .Add("contextMembers", LanguageVersion.V37.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.ReadContextMembers(ref reader, property))
             .Add("agents", LanguageVersion.V48.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Agents = Nested(ref reader, AgentExposure, property))
             .Add("systems", LanguageVersion.V50.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Systems = Array(ref reader, System, property))
+            .Add("screens", LanguageVersion.V55.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Screens = Array(ref reader, (ref Utf8JsonReader item) => Screen(ref item, state.SchemaVersion), property))
             .Add("audiences", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Audiences = Array(ref reader, Audience, property))
             .Add("availabilities", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Availabilities = Array(ref reader, Availability, property))
             .Add("provides", LanguageVersion.V53.Major, (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Provides = Array(ref reader, ProvidedValue, property));
@@ -118,6 +119,8 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticSystem> Systems { get; set; }
 
+        public ImmutableArray<SemanticScreen> Screens { get; set; } = [];
+
         public ImmutableArray<SemanticAudience> Audiences { get; set; } = [];
 
         public ImmutableArray<SemanticAvailability> Availabilities { get; set; } = [];
@@ -143,7 +146,7 @@ internal static partial class SemanticModelRead
         public SemanticApplication Build()
         {
             Required(HasIdentity && HasCollections && (SchemaVersion < LanguageVersion.V37.Major || TimeZone is not null), "application");
-            return new(Id, Name!, Concepts, Types, Modules) { Audiences = Audiences, Availabilities = Availabilities, Provides = Provides, Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents, Systems = Systems.IsDefault ? [] : Systems };
+            return new(Id, Name!, Concepts, Types, Modules) { Screens = Screens, Audiences = Audiences, Availabilities = Availabilities, Provides = Provides, Policies = Policies, Triggers = Triggers, StateMachines = StateMachines, Workflows = Workflows, Graphs = Graphs, GraphProjections = GraphProjections, GraphSpecifications = GraphSpecifications, GraphQueries = GraphQueries, EventSources = EventSources, ReactionProductionMode = ReactionProductionMode, CommandReadMode = CommandReadMode, TimeZone = TimeZone, ContextMembers = ContextMembers, Agents = Agents, Systems = Systems.IsDefault ? [] : Systems };
         }
     }
 

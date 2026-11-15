@@ -60,8 +60,8 @@ sealed class UiModelIndex
     /// <param name="slice">The dotted path of the screen's slice.</param>
     /// <param name="name">The command name.</param>
     /// <returns>The declaring slice path and the command, or null when no slice declares it.</returns>
-    internal (string Slice, CommandSyntax Command)? Command(string slice, string name) =>
-        Find(slice, candidate => candidate.Commands.FirstOrDefault(command => command.Name == name));
+    internal (string Slice, CommandSyntax Command)? Command(string slice, string name, bool nearest = false) =>
+        Find(slice, candidate => candidate.Commands.FirstOrDefault(command => command.Name == name), nearest);
 
     /// <summary>
     /// Finds a query by name, preferring the screen's own slice.
@@ -69,8 +69,8 @@ sealed class UiModelIndex
     /// <param name="slice">The dotted path of the screen's slice.</param>
     /// <param name="name">The query name.</param>
     /// <returns>The declaring slice path and the query, or null when no slice declares it.</returns>
-    internal (string Slice, QuerySyntax Query)? Query(string slice, string name) =>
-        Find(slice, candidate => candidate.Queries.FirstOrDefault(query => query.Name == name));
+    internal (string Slice, QuerySyntax Query)? Query(string slice, string name, bool nearest = false) =>
+        Find(slice, candidate => candidate.Queries.FirstOrDefault(query => query.Name == name), nearest);
 
     /// <summary>
     /// Finds the only command of a slice named by its slice name.
@@ -95,10 +95,24 @@ sealed class UiModelIndex
 
     internal ApiOperation? Operation(string slice, string name) => _operations.GetValueOrDefault((slice, name));
 
-    (string Slice, T Found)? Find<T>(string slice, Func<SliceSyntax, T?> find)
+    // A free screen resolves its names from where it is declared: the slice named first, otherwise the nearest one - the one that
+    // shares the most of the declaration path - and only then any one in the model.
+    static int SharedSegments(string path, string from)
+    {
+        var left = path.Split('.');
+        var right = from.Split('.');
+        var shared = 0;
+        while (shared < left.Length && shared < right.Length && left[shared] == right[shared]) shared++;
+        return shared;
+    }
+
+    (string Slice, T Found)? Find<T>(string slice, Func<SliceSyntax, T?> find, bool nearest = false)
         where T : class
     {
-        foreach (var (path, candidate) in _slices.OrderBy(entry => entry.Path == slice ? 0 : 1))
+        var ordered = nearest
+            ? _slices.OrderByDescending(entry => entry.Path == slice ? int.MaxValue : SharedSegments(entry.Path, slice))
+            : _slices.OrderBy(entry => entry.Path == slice ? 0 : 1);
+        foreach (var (path, candidate) in ordered)
         {
             if (find(candidate) is { } found) return (path, found);
         }
