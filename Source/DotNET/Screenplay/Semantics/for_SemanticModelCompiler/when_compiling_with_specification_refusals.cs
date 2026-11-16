@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelCompiler;
@@ -76,13 +77,66 @@ public class when_compiling_with_specification_refusals : given.a_specification_
     }
 
     [Fact]
-    void should_not_promote_failed_compilation_context_descriptors()
+    void should_publish_wrapper_ready_contexts_for_a_specification_refused_compilation()
     {
-        var source = Source.Replace("        produces Recorded", "        validate csharp\n          ```csharp\n          return true;\n          ```\n        produces Recorded", StringComparison.Ordinal);
-        Compile(source).TypedContextDescriptors.ShouldNotBeEmpty();
+        var source = Source.Replace("        produces Confirmed", "        validate\n          amount rule Positive\n            file Positive.cs\n        validate csharp\n          ```csharp\n          return true;\n          ```\n        produces Confirmed", StringComparison.Ordinal);
+        var successful = Compile(source);
         var result = Compile(source.Replace("when Record amount = 10", "when Record", StringComparison.Ordinal));
-        result.SpecificationRefusedValue.ShouldNotBeNull();
+        successful.Success.ShouldBeTrue();
+        successful.TypedContextDescriptors.Select(descriptor => descriptor.Role).ShouldContainOnly([SemanticImplementationRole.RulePredicate, SemanticImplementationRole.CommandValidation]);
+        successful.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady && descriptor.ModelRevision == successful.Value!.Model.Revision).ShouldBeTrue();
+        result.Success.ShouldBeFalse();
+        result.Value.ShouldBeNull();
+        var partial = result.SpecificationRefusedValue!;
+        partial.ShouldNotBeNull();
+        result.Diagnostics.ShouldContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        partial.RefusedSpecifications.Length.ShouldEqual(1);
+        Recording(partial).Specifications.ShouldBeEmpty();
+        Confirming(partial).Specifications.Length.ShouldEqual(1);
         result.TypedContextDescriptors.ShouldBeEmpty();
+        result.ContextsFor(result.ImplementationRequirements[0].RequirementId).ShouldBeEmpty();
+        result.SpecificationRefusedTypedContextDescriptors.Length.ShouldEqual(2);
+        result.SpecificationRefusedTypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady && descriptor.ModelRevision == partial.Model.Revision).ShouldBeTrue();
+        SemanticTypedContextSerializer.Serialize(result.SpecificationRefusedTypedContextDescriptors)
+            .SequenceEqual(SemanticTypedContextSerializer.Serialize([.. successful.TypedContextDescriptors.Select(descriptor => descriptor with { ModelRevision = partial.Model.Revision })])).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_not_promote_contexts_when_a_refused_specification_has_an_extension_error()
+    {
+        var source = Source.Replace("        produces Confirmed", "        validate\n          amount rule Positive\n            file Positive.cs\n        validate csharp\n          ```csharp\n          return true;\n          ```\n        produces Confirmed", StringComparison.Ordinal)
+            .Replace("when Record amount = 10", "when Record", StringComparison.Ordinal);
+        using var fixture = ExtensionFixture.Locked("cratis/stripe", "2", ExtensionContractSample.Stripe);
+        var previous = ExtensionContractResolver.Current;
+        try
+        {
+            ExtensionContractResolver.Current = fixture.Resolver();
+            var partial = Compile(source);
+            partial.SpecificationRefusedValue.ShouldNotBeNull();
+            partial.TypedContextDescriptors.ShouldBeEmpty();
+            partial.SpecificationRefusedTypedContextDescriptors.ShouldNotBeEmpty();
+            partial.SpecificationRefusedTypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady).ShouldBeTrue();
+            var result = Compile("""
+                concept Money : String
+
+                system Payments
+                  extension "cratis/stripe" version 2
+                  setting missing = "value"
+
+                """ + "\n" + source);
+            result.Success.ShouldBeFalse();
+            result.Value.ShouldBeNull();
+            result.SpecificationRefusedValue.ShouldBeNull();
+            result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownSystemSetting && diagnostic.Severity == DiagnosticSeverity.Error);
+            result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationProperty && diagnostic.Severity == DiagnosticSeverity.Error);
+            result.ImplementationRequirements.Select(requirement => requirement.Role).ShouldContainOnly([SemanticImplementationRole.RulePredicate, SemanticImplementationRole.CommandValidation]);
+            result.TypedContextDescriptors.ShouldBeEmpty();
+            result.SpecificationRefusedTypedContextDescriptors.ShouldBeEmpty();
+        }
+        finally
+        {
+            ExtensionContractResolver.Current = previous;
+        }
     }
 
     [Fact]
@@ -111,6 +165,7 @@ public class when_compiling_with_specification_refusals : given.a_specification_
         var result = Compile(Source);
         result.Success.ShouldBeTrue();
         result.SpecificationRefusedValue.ShouldBeNull();
+        result.SpecificationRefusedTypedContextDescriptors.ShouldBeEmpty();
         result.Value!.RefusedSpecifications.ShouldBeEmpty();
     }
 }

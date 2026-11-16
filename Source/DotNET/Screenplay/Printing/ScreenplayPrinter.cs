@@ -253,6 +253,8 @@ public sealed partial class ScreenplayPrinter :
         WriteSection(writer, application.UiProfiles ?? [], WriteUiProfile);
         WriteSection(writer, application.Templates, WriteTemplateAssignment);
         WriteSection(writer, application.Examples, WriteSpecificationExample);
+        WriteSection(writer, application.Shapes, WriteShape);
+        WriteSection(writer, application.Screens, WriteScreen);
         WriteSection(writer, application.Modules, WriteModule);
         WriteSection(writer, application.Seeds ?? [], WriteSeed);
         WriteSection(writer, application.Storylines, WriteStoryline);
@@ -806,6 +808,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
         AddSeparatedMembers(members, writer, module.Outlets, 10, WriteOutlet);
+        AddSeparatedMembers(members, writer, module.Screens, 11, WriteScreen);
         WriteMembers(members, module);
     }
 
@@ -1041,6 +1044,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, feature.Slices, 6, WriteSlice);
         AddSeparatedMembers(members, writer, feature.Contributions ?? [], 7, WriteContribution);
         AddMembers(members, feature.Outlets, 8, outlet => WriteOutlet(writer, outlet));
+        AddSeparatedMembers(members, writer, feature.Screens, 9, WriteScreen);
         WriteMembers(members, feature);
     }
 
@@ -1082,6 +1086,7 @@ public sealed partial class ScreenplayPrinter :
             AddSeparatedMembers(members, writer, slice.Reactions, 9, WriteReaction);
             AddMembers(members, slice.Templates, 10, template => WriteTemplateAssignment(writer, template));
             AddSeparatedMembers(members, writer, slice.Screens, 11, WriteScreen);
+            AddMembers(members, slice.UsedScreens, 11, used => WriteUsesScreen(writer, used));
             AddSeparatedMembers(members, writer, slice.Examples, 12, WriteSpecificationExample);
             AddSeparatedMembers(members, writer, slice.Specifications, 13, WriteSpecification);
             WriteMembers(members, slice);

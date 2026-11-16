@@ -153,6 +153,12 @@ public record SliceSyntax(
     public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
 
     /// <summary>
+    /// Gets the screens this slice adopts with <c>uses screen</c>, each with the data the slice provides to its needs.
+    /// A screen the slice declares in its own body is adopted by it without being listed here.
+    /// </summary>
+    public IEnumerable<UsesScreenSyntax> UsedScreens { get; init; } = [];
+
+    /// <summary>
     /// Gets the <c>graph</c> declarations of the slice.
     /// </summary>
     public IEnumerable<GraphSyntax> Graphs { get; init; } = [];

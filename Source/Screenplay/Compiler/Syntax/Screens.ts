@@ -76,6 +76,13 @@ export interface ScreenDataSyntax extends SyntaxNode {
     readonly by: string | null;
 }
 
+// 'data <Shape>[[]] [as <alias>]' - a need: data the screen reads and an adopting slice provides.
+export interface ScreenNeedSyntax extends SyntaxNode {
+    readonly kind: 'ScreenNeedSyntax';
+    readonly type: TypeRefSyntax;
+    readonly alias: string | null;
+}
+
 // 'action <Command>' with an optional 'label "..."' and 'navigate to ...'.
 export type ScreenActionSubjectKind = 'Item' | 'Screen';
 
@@ -302,6 +309,7 @@ export interface ScreenUsesBehaviorSyntax extends SyntaxNode {
 
 export type ScreenDirectiveSyntax =
     | ScreenDataSyntax
+    | ScreenNeedSyntax
     | ScreenActionSyntax
     | ScreenGuardedActionSyntax
     | ScreenNavigateSyntax

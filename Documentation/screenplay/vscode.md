@@ -573,6 +573,7 @@ yarn install
 yarn workspace @cratis/screenplay-compiler build
 yarn workspace @cratis/screenplay-event-models build
 yarn workspace @cratis/screenplay-language build
+yarn workspace @cratis/screenplay-views build
 yarn workspace screenplay build
 ```
 

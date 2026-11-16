@@ -1,0 +1,23 @@
+shape Invoice
+  number String
+  amount Decimal
+
+screen InvoiceList
+  data Invoice[]
+  table Invoice
+    column number
+    column amount
+
+module Billing
+  feature Paying
+    slice StateView ListInvoices
+      readmodel InvoiceRow
+        invoiceNumber String
+        amount String
+      query ListInvoices => InvoiceRow[]
+      query GetInvoice => InvoiceRow
+        by invoiceNumber String
+      uses screen InvoiceList
+        data Invoice via query GetInvoice by nothing
+          number from invoiceNumber
+          colour from amount

@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Extensions;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -42,6 +43,7 @@ public static class UiContractBuilder
         var index = new UiModelIndex(syntax, model, extensions);
         var screens = index.Slices
             .SelectMany(entry => entry.Slice.Screens.Select(screen => new UiScreenReader(index, entry.Path).Read(screen)))
+            .Concat(Adopted(syntax, index))
             .ToArray();
         return new(UiContract.Version, model?.Application.Name ?? application, screens) { ModelRevision = model?.Revision.ToString() };
     }
@@ -69,6 +71,29 @@ public static class UiContractBuilder
         var screens = contract.Screens.Where(screen => screen.Slice == scope || screen.Slice.StartsWith($"{scope}.", StringComparison.Ordinal)).ToArray();
         if (screens.Length == 0) throw new InvalidSemanticModelScope($"Scope '{scope}' names no module, feature or slice with a screen.");
         return contract with { Screens = screens };
+    }
+
+    // A free screen enters the contract once per slice that adopts it: the adopting slice, and the data its provisions resolve.
+    // A free screen no slice adopts is design-only and has no slice to serve it, so it is not part of the contract.
+    internal static IEnumerable<UiScreen> Adopted(ApplicationSyntax syntax, UiModelIndex index)
+    {
+        var scoped = ScreenplayValidator.ScopedScreens(syntax).ToList();
+        var pool = scoped.ConvertAll(entry => new Declaration(entry.Screen.Name, entry.Scope));
+        var scopes = new Dictionary<SliceSyntax, DeclarationScope>(ReferenceEqualityComparer.Instance);
+        foreach (var (scopedSlice, sliceScope) in ScreenplayValidator.ScopedSlices(syntax)) scopes[scopedSlice] = sliceScope;
+        foreach (var (path, slice) in index.Slices)
+        {
+            foreach (var used in slice.UsedScreens)
+            {
+                if (!scopes.TryGetValue(slice, out var scope) || ReferenceResolver.Resolve(used.Screen, scope, pool).Resolved is not { } resolved)
+                {
+                    continue;
+                }
+
+                var free = scoped[pool.IndexOf(resolved)];
+                yield return new UiScreenReader(index, path, used, string.Join('.', free.Scope.Segments)).Read(free.Screen);
+            }
+        }
     }
 
     internal static ApplicationSyntax MergedSyntax(ScreenplayWorkspace workspace)

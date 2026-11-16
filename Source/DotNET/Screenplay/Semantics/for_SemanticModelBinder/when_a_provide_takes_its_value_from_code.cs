@@ -21,7 +21,7 @@ public class when_a_provide_takes_its_value_from_code : given.a_semantic_binder
     SemanticCodeProvideSource Source => (SemanticCodeProvideSource)_result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Provides.Single().Source;
 
     [Fact] void should_admit_it() => _result.Success.ShouldBeTrue();
-    [Fact] void should_select_esm_v55() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V55);
+    [Fact] void should_select_esm_v57() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V57);
     [Fact] void should_carry_a_code_source() => Source.Implementation.ShouldNotBeEmpty();
     [Fact] void should_attach_one_provide_value_requirement() => _result.ImplementationRequirements.Single().Role.ShouldEqual(SemanticImplementationRole.ProvideValue);
     [Fact] void should_name_the_provided_value_as_the_member() => _result.ImplementationRequirements.Single().Member.ShouldEqual("limit");

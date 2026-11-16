@@ -77,7 +77,7 @@ children members identified by userId
 
 Inside a child collection, `remove via join` removes elements whose identity matches the removal event's key, across all parents. Its name does not mean it follows an arbitrary reference property.
 
-At the root, the following syntax parses but does not remove an instance in Chronicle. It is not executable yet ([#563](https://github.com/Cratis/Screenplay/issues/563)): `validate` accepts it, but `test` refuses the whole projection with `UnsupportedProjectionBlock`, so every specification that depends on that projection is reported as unsupported. Leave it out of a model you want to run:
+At the root, the following syntax parses but does not remove an instance in Chronicle. It is not executable yet ([#563](https://github.com/Cratis/Screenplay/issues/563)): validation (`screenplay <path>`) accepts it, but `screenplay test` refuses the whole projection with `UnsupportedProjectionBlock`, so every specification that depends on that projection is reported as unsupported. Leave it out of a model you want to run:
 
 ```pdl
 remove via join on {EventType}

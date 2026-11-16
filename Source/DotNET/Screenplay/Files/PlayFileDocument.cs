@@ -66,6 +66,7 @@ internal static class PlayFileDocument
     {
         Examples = [],
         ScreenTemplates = [],
+        Screens = [],
         DialogTemplates = [],
         Forms = [],
         Contributions = [],
@@ -85,6 +86,7 @@ internal static class PlayFileDocument
         Examples = [],
         Features = [],
         Slices = [],
+        Screens = [],
         Contributions = [],
         DependsOn = [],
         Description = null,

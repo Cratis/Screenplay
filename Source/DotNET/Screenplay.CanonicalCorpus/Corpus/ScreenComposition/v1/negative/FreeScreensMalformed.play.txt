@@ -1,0 +1,18 @@
+shape Invoice
+  number String key
+  junk
+
+module Billing
+  feature Paying
+    shape Nested
+      number String
+    slice StateView ListInvoices
+      readmodel InvoiceRow
+        invoiceNumber String
+      query ListInvoices => InvoiceRow[]
+      uses screen
+      uses screen Dup extra
+      uses screen Other
+        data Missing
+        data Missing via query ListInvoices
+          number

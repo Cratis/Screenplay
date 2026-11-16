@@ -53,7 +53,7 @@ public class when_inspecting_the_containment_it_traverses : Specification
     // are decided by the host before a request reaches the plan; specifications always run with everything available, so the
     // reference evaluator treats every gate as available and never reads them.
     [Fact] void should_only_carry_the_slice_members_the_plan_indexes() =>
-        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints", "Available", "Provides", "Reducers", "Reactions", "Captures", "Screens"]);
+        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints", "Available", "Provides", "Reducers", "Reactions", "Captures", "Screens", "Adoptions"]);
 
     [Fact] void should_only_nest_the_projection_levels_the_executor_walks() =>
         _projectionContainment.ShouldContainOnly(["SemanticProjection.Scope", "SemanticProjectionScope.Children", "SemanticProjectionScope.Nested", "SemanticProjectionChildren.Scope", "SemanticProjectionNested.Scope"]);

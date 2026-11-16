@@ -63,7 +63,7 @@ internal static class SyntaxJsonWriter
             if (node is InvokesSyntax invocation && member.Name == "onRefused" && !invocation.OnRefused.Any()) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "whenRedelivered" && value is null) continue;
             if (member.Name == "dependsOn" && member.ElementType == typeof(DependsOnSyntax) && value is IEnumerable<DependsOnSyntax> dependencies && !dependencies.Any()) continue;
-            if (OmitDefaults(node, member.Name, value)) continue;
+            if (SyntaxJsonDefaults.Omit(node, member.Name, value)) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 
@@ -79,11 +79,6 @@ internal static class SyntaxJsonWriter
 
     static bool OmitSampleRows(SyntaxNode node, string name, object? value) =>
         node is SampleDataFieldSyntax && name == "rows" && value is IEnumerable<SampleDataRowSyntax> rows && !rows.Any();
-
-    static bool OmitDefaults(SyntaxNode node, string member, object? value) =>
-        ClockSyntaxDefaults.Omit(node, member, value) || InvocationSyntaxDefaults.Omit(node, member, value) || CompositionDefaults.Omit(node, member, value) ||
-        (node is ScreenActionSyntax or ScreenGuardedActionSyntax or ToolbarItemSyntax && member == "subject" && value is null) ||
-        (node is ScreenActionSyntax && member == "inputs" && value is IEnumerable<InteractionArgumentSyntax> inputs && !inputs.Any());
 
     static object? WriteMember(SyntaxMember member, object? value, string path, int depth)
     {

@@ -47,13 +47,25 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax)).AddRange(resolution.CheckSettings(syntax));
         var diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]);
         var partial = extensionDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) ? null : result.SpecificationRefusedValue;
-        if (partial is not null)
+        if (partial is null)
         {
-            partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+            return result with { Diagnostics = diagnostics, SpecificationRefusedValue = null };
         }
 
-        return result with { Diagnostics = diagnostics, SpecificationRefusedValue = partial };
+        partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+        return result with
+        {
+            Diagnostics = diagnostics,
+            SpecificationRefusedValue = partial,
+            SpecificationRefusedTypedContextDescriptors = DescriptorsFor(partial, SemanticTypedContextCatalog.Create(partial.Model.Application, result.ImplementationRequirements, true))
+        };
     }
+
+    /// <summary>
+    /// Stamps typed descriptors with the revision of their validated compilation.
+    /// </summary>
+    static ImmutableArray<SemanticTypedContextDescriptor> DescriptorsFor(SemanticCompilation compilation, ImmutableArray<SemanticTypedContextDescriptor> descriptors) =>
+        [.. descriptors.Select(value => value with { ModelRevision = compilation.Model.Revision })];
 
     static SemanticCompilation AttachRefusalDiagnostics(SemanticCompilation compilation, IEnumerable<Diagnostic> originals, IEnumerable<Diagnostic> attached)
     {
@@ -87,7 +99,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectAvailabilityVersions(SemanticApplication application)
     {
-        if (SemanticModelValidator.UsesCodeProvides(application)) return (LanguageVersion.V55, SemanticVersion.V55);
+        if (SemanticModelValidator.UsesCodeProvides(application)) return (LanguageVersion.V57, SemanticVersion.V57);
+        if (SemanticModelValidator.UsesFreeScreens(application)) return (LanguageVersion.V56, SemanticVersion.V56);
+        if (SemanticModelValidator.UsesExpectedTags(application)) return (LanguageVersion.V55, SemanticVersion.V55);
         if (SemanticModelValidator.UsesGraphCollects(application)) return (LanguageVersion.V54, SemanticVersion.V54);
         return SemanticModelValidator.UsesAvailability(application) ? (LanguageVersion.V53, SemanticVersion.V53) : null;
     }
@@ -270,7 +284,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV55Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV57Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)

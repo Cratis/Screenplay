@@ -17,9 +17,10 @@ internal sealed class ModuleBody(string name)
     /// <summary>
     /// What a module body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, documentation, depends on <Name>, authorize, available, provide, import, screen template, dialog template, form, contribute, outlet, feature, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, available, provide, import, screen, screen template, dialog template, form, contribute, outlet, feature, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<ScreenTemplateSyntax> _screenTemplates = [];
+    readonly List<ScreenSyntax> _screens = [];
     readonly List<DialogTemplateSyntax> _dialogTemplates = [];
     readonly Dictionary<string, SourceLocation> _directiveLocations = [];
     readonly List<FeatureSyntax> _features = [];
@@ -107,7 +108,15 @@ internal sealed class ModuleBody(string name)
                 InteractionParser.ParseAttachment(context, line, _behaviors, _usedBehaviors);
                 return true;
             case "screen":
-                _screenTemplates.Add(LayoutParser.ParseScreenTemplate(context, line));
+                if (ScreenParser.IsTemplateHeader(line.Content))
+                {
+                    _screenTemplates.Add(LayoutParser.ParseScreenTemplate(context, line));
+                }
+                else
+                {
+                    _screens.Add(ScreenParser.Parse(context, line));
+                }
+
                 return true;
             case "dialog":
                 _dialogTemplates.Add(LayoutParser.ParseDialogTemplate(context, line));
@@ -166,6 +175,7 @@ internal sealed class ModuleBody(string name)
             Templates = _templates,
             Purposes = _purposes,
             Provides = _provides,
+            Screens = _screens,
             Available = _available,
             Outlets = _outlets,
             RetiredForms = _retiredForms.Count == 0 ? [] : [.. _retiredForms]

@@ -43,6 +43,11 @@ public sealed record SemanticSpecificationEvent(
     /// Gets whether a then-event explicitly requires an unrouted fact.
     /// </summary>
     public bool Unrouted { get; init; }
+
+    /// <summary>
+    /// Gets the exact ordered, duplicate-preserving tags a then-event requires on the appended fact; an empty array requires no tags and <see langword="null"/> leaves tags unchecked.
+    /// </summary>
+    public ImmutableArray<string>? ExpectedTags { get; init; }
 }
 
 /// <summary>

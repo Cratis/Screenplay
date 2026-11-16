@@ -78,6 +78,13 @@ internal static partial class ScreenParser
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The consumed line whose children are the directives.</param>
     /// <returns>The parsed <see cref="ScreenDirectiveSyntax">directives</see>.</returns>
+    /// <summary>
+    /// Gets whether a module-level line declares a screen template (<c>screen template &lt;Name&gt;</c>) rather than a screen.
+    /// </summary>
+    /// <param name="content">The trimmed line content.</param>
+    /// <returns><c>true</c> when the line starts <c>screen template</c>.</returns>
+    internal static bool IsTemplateHeader(string content) => TemplateHeaderRegex().IsMatch(content);
+
     internal static IReadOnlyList<ScreenDirectiveSyntax> ParseDirectiveBlock(ParserContext context, SourceLine line)
     {
         var directives = new List<ScreenDirectiveSyntax>();
@@ -250,17 +257,23 @@ internal static partial class ScreenParser
         }
     }
 
-    static ScreenDataSyntax? ParseData(ParserContext context, SourceLine line)
+    static ScreenDirectiveSyntax? ParseData(ParserContext context, SourceLine line)
     {
+        var need = NeedRegex().Match(line.Content);
+        if (need.Success)
+        {
+            return new ScreenNeedSyntax(PropertyLineParser.ParseTypeRef(need.Groups[1].Value, line.Location), need.Groups[2].Success ? need.Groups[2].Value : null, line.Location);
+        }
+
         var match = DataRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidDataDirective, $"Invalid data directive '{line.Content}' - expected 'data <ReadModel> via query <Query> [by <param>]'", line.Location);
+            context.Error(DiagnosticCodes.InvalidDataDirective, $"Invalid data directive '{line.Content}' - expected 'data <ReadModel> via query <Query> [by <param>]' or, for data a slice provides, 'data <Shape>[] [as <alias>]'", line.Location);
             return null;
         }
 
         var type = PropertyLineParser.ParseTypeRef(match.Groups[1].Value, line.Location);
-        return new(type, match.Groups[2].Value, match.Groups[3].Success ? match.Groups[3].Value : null, line.Location);
+        return new ScreenDataSyntax(type, match.Groups[2].Value, match.Groups[3].Success ? match.Groups[3].Value : null, line.Location);
     }
 
     static ScreenDirectiveSyntax? ParseAction(ParserContext context, SourceLine line)
@@ -699,6 +712,12 @@ internal static partial class ScreenParser
 
     [GeneratedRegex(@"^screen\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
+
+    [GeneratedRegex(@"^screen\s+template(\s|$)", RegexOptions.NonBacktracking)]
+    private static partial Regex TemplateHeaderRegex();
+
+    [GeneratedRegex(@"^data\s+([A-Za-z_]\w*(?:\[\])?)(?:\s+as\s+([A-Za-z_]\w*))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex NeedRegex();
 
     [GeneratedRegex(@"^data\s+([\w.]+(?:\[\])?)\s+via\s+query\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex DataRegex();

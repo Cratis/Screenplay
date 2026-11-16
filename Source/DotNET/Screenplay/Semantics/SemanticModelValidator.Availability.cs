@@ -21,13 +21,27 @@ internal static partial class SemanticModelValidator
         SlicesOf(application).Any(slice => !slice.Available.IsDefaultOrEmpty || !slice.Provides.IsDefaultOrEmpty ||
             slice.Commands.Any(command => !command.Available.IsDefaultOrEmpty) ||
             slice.Queries.Any(query => !query.Available.IsDefaultOrEmpty) ||
-            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty));
+            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty)) ||
+        application.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty);
 
-    // ESM v55 constructs: a provided value computed by a file or an inline code block.
+    // ESM v55 construct: an exact ordered tag expectation on a then event.
+    internal static bool UsesExpectedTags(SemanticApplication application) =>
+        SlicesOf(application).Any(slice => slice.Specifications.Any(specification =>
+            !specification.ThenEvents.IsDefaultOrEmpty && specification.ThenEvents.Any(value => value.ExpectedTags is not null)));
+
+    // ESM v57 constructs: a provided value computed by a file or an inline code block.
     internal static bool UsesCodeProvides(SemanticApplication application) =>
         HasCodeProvide(application.Provides) ||
         application.Modules.Any(module => HasCodeProvide(module.Provides) || module.Features.Any(UsesCodeProvides)) ||
         SlicesOf(application).Any(slice => HasCodeProvide(slice.Provides));
+
+    static void ValidateExpectedTagsVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesExpectedTags(application),
+            version,
+            SemanticVersion.V55,
+            "An ESM v55 model must declare an expected tag set on a then event.",
+            "Expected tag sets on then events require ESM v55.");
 
     static bool UsesAvailability(SemanticFeature feature) =>
         !feature.Available.IsDefaultOrEmpty || !feature.Provides.IsDefaultOrEmpty || feature.Features.Any(UsesAvailability);
@@ -43,9 +57,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesCodeProvides(application),
             version,
-            SemanticVersion.V55,
-            "An ESM v55 model must declare a provided value computed by a file or a code block.",
-            "A provided value computed by a file or a code block requires ESM v55.");
+            SemanticVersion.V57,
+            "An ESM v57 model must declare a provided value computed by a file or a code block.",
+            "A provided value computed by a file or a code block requires ESM v57.");
         ValidateFeatureVersion(
             UsesAvailability(application),
             version,
@@ -63,6 +77,7 @@ internal static partial class SemanticModelValidator
         var audiences = application.Audiences.Select(audience => audience.Name).ToHashSet(StringComparer.Ordinal);
         var availabilities = application.Availabilities.ToDictionary(availability => availability.Name, StringComparer.Ordinal);
         var queries = SlicesOf(application).SelectMany(slice => slice.Queries).Select(query => query.Id).ToHashSet();
+        foreach (var screen in application.Screens) ValidateGates(screen.Available, availabilities);
 
         foreach (var audience in application.Audiences) RequireName(audience.Name, "audience");
         foreach (var availability in application.Availabilities)

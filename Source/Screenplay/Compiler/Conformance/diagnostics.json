@@ -4405,10 +4405,43 @@
                 "  feature B",
                 "    slice StateView C",
                 "      screen S",
-                "        data Invoice"
+                "        data Invoice via query"
             ],
             "diagnostics": [
                 "PLAY0104@5"
+            ]
+        },
+        {
+            "name": "malformed shape field",
+            "source": [
+                "shape Invoice",
+                "  number String key",
+                "  junk"
+            ],
+            "diagnostics": [
+                "PLAY1149@2",
+                "PLAY1149@3"
+            ]
+        },
+        {
+            "name": "malformed screen adoption",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      readmodel R",
+                "        v String",
+                "      query Q => R[]",
+                "      uses screen",
+                "      uses screen Other",
+                "        data Missing",
+                "        data Need via query Q",
+                "          number"
+            ],
+            "diagnostics": [
+                "PLAY1150@7",
+                "PLAY1150@9",
+                "PLAY1150@11"
             ]
         },
         {

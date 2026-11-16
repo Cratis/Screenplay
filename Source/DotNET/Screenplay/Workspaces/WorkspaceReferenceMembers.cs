@@ -255,6 +255,7 @@ static class WorkspaceReferenceMembers
     {
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
         PropertyMappingSyntax => [("property", WorkspaceReferenceDomain.Property)],
+        TypeRefSyntax when entry.Parent is { } needParent && index.Find(needParent)?.Node is ScreenNeedSyntax => [],
         TypeRefSyntax => [("name", TypeDomain(entry, index))],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
         SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],

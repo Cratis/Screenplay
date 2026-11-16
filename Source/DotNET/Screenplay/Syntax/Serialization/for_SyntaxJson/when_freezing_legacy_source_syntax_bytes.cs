@@ -45,6 +45,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "personas-canvas",
         "users",
         "storylines",
+        "free-screens",
         "specification-tables",
         "guarded-actions",
         "guarded-interactions",
@@ -119,7 +120,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleProjectionParity(WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed))))))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleTagExpectations(WithoutSampleProjectionParity(WithoutSampleTextRules(WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(WithoutSamplePlacement(parsed)))))))),
                 "library-sample" => WithoutLibraryForms(given.legacy_library_action_subjects.Without(parsed)),
                 _ => parsed
             };
@@ -152,6 +153,9 @@ public partial class when_freezing_legacy_source_syntax_bytes
 
             // Screen visuals and slice placements have their own conformance vector; the frozen bytes predate them.
             if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutVisualsAndPlacements(legacy);
+
+            // Free screens, shapes and adoptions have their own conformance vector (free-screens); the frozen bytes predate them.
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutFreeScreens(legacy);
 
             // Template categories (PLAY0720) have their own conformance vector; the frozen bytes predate them.
             legacy = WithoutTemplateCategories(legacy);
@@ -370,6 +374,22 @@ public partial class when_freezing_legacy_source_syntax_bytes
     };
 
     // Graphs have their own conformance vector. Drop the slices that declare them from the frozen pre-graph bytes.
+    static ApplicationSyntax WithoutFreeScreens(ApplicationSyntax application) => application with
+    {
+        Shapes = [],
+        Screens = [],
+        Storylines = application.Storylines.Select(storyline => storyline with { Steps = storyline.Steps.Where(step => step.Target != "InvoiceOverview") }),
+        SampleDataPacks = application.SampleDataPacks.Select(pack => pack with { Sets = pack.Sets.Where(set => set.Shape != "InvoiceSummary") }),
+        Modules = application.Modules.Select(module => module with { Screens = [], Features = module.Features.Select(WithoutFreeScreens) })
+    };
+
+    static FeatureSyntax WithoutFreeScreens(FeatureSyntax feature) => feature with
+    {
+        Screens = [],
+        Slices = feature.Slices.Select(slice => slice with { UsedScreens = [] }),
+        Features = feature.Features.Select(WithoutFreeScreens)
+    };
+
     static ApplicationSyntax WithoutVisualsAndPlacements(ApplicationSyntax application) => application with
     {
         Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutVisualsAndPlacements) })
@@ -599,6 +619,29 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 {
                     Properties = readModel.Properties.Where(property => property.Property != "firstSentAt").ToArray()
                 }).ToArray()
+            }).ToArray()
+        }).ToArray()
+    };
+
+    // Current shared vectors cover tag expectations; keep the pre-feature source bytes frozen.
+    static ApplicationSyntax WithoutSampleTagExpectations(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with { Features = module.Features.Select(WithoutTagExpectations).ToArray() }).ToArray()
+    };
+
+    static FeatureSyntax WithoutTagExpectations(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutTagExpectations).ToArray(),
+        Slices = feature.Slices.Select(slice => slice with
+        {
+            Events = slice.Events.Select(@event => @event.Name == "DeferredPaymentInvoiceRegistered" ? @event with { Tags = null } : @event).ToArray(),
+            Commands = slice.Commands.Select(command => command with
+            {
+                Produces = command.Produces.Select(production => production.Event == "DeferredPaymentInvoiceRegistered" ? production with { Tags = null } : production).ToArray()
+            }).ToArray(),
+            Specifications = slice.Specifications.Select(specification => specification with
+            {
+                ThenEvents = specification.ThenEvents.Select(@event => @event with { Tags = [], NoTags = null }).ToArray()
             }).ToArray()
         }).ToArray()
     };
