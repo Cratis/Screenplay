@@ -93,9 +93,11 @@ public class when_compiling_with_specification_refusals : given.a_specification_
         partial.RefusedSpecifications.Length.ShouldEqual(1);
         Recording(partial).Specifications.ShouldBeEmpty();
         Confirming(partial).Specifications.Length.ShouldEqual(1);
-        result.TypedContextDescriptors.Length.ShouldEqual(2);
-        result.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady && descriptor.ModelRevision == partial.Model.Revision).ShouldBeTrue();
-        SemanticTypedContextSerializer.Serialize(result.TypedContextDescriptors)
+        result.TypedContextDescriptors.ShouldBeEmpty();
+        result.ContextsFor(result.ImplementationRequirements[0].RequirementId).ShouldBeEmpty();
+        result.SpecificationRefusedTypedContextDescriptors.Length.ShouldEqual(2);
+        result.SpecificationRefusedTypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady && descriptor.ModelRevision == partial.Model.Revision).ShouldBeTrue();
+        SemanticTypedContextSerializer.Serialize(result.SpecificationRefusedTypedContextDescriptors)
             .SequenceEqual(SemanticTypedContextSerializer.Serialize([.. successful.TypedContextDescriptors.Select(descriptor => descriptor with { ModelRevision = partial.Model.Revision })])).ShouldBeTrue();
     }
 
@@ -111,8 +113,9 @@ public class when_compiling_with_specification_refusals : given.a_specification_
             ExtensionContractResolver.Current = fixture.Resolver();
             var partial = Compile(source);
             partial.SpecificationRefusedValue.ShouldNotBeNull();
-            partial.TypedContextDescriptors.ShouldNotBeEmpty();
-            partial.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady).ShouldBeTrue();
+            partial.TypedContextDescriptors.ShouldBeEmpty();
+            partial.SpecificationRefusedTypedContextDescriptors.ShouldNotBeEmpty();
+            partial.SpecificationRefusedTypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady).ShouldBeTrue();
             var result = Compile("""
                 concept Money : String
 
@@ -127,8 +130,8 @@ public class when_compiling_with_specification_refusals : given.a_specification_
             result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownSystemSetting && diagnostic.Severity == DiagnosticSeverity.Error);
             result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationProperty && diagnostic.Severity == DiagnosticSeverity.Error);
             result.ImplementationRequirements.Select(requirement => requirement.Role).ShouldContainOnly([SemanticImplementationRole.RulePredicate, SemanticImplementationRole.CommandValidation]);
-            result.TypedContextDescriptors.Select(descriptor => descriptor.Role).ShouldContainOnly([SemanticImplementationRole.RulePredicate, SemanticImplementationRole.CommandValidation]);
-            result.TypedContextDescriptors.All(descriptor => !descriptor.IsWrapperReady && descriptor.ModelRevision is null).ShouldBeTrue();
+            result.TypedContextDescriptors.ShouldBeEmpty();
+            result.SpecificationRefusedTypedContextDescriptors.ShouldBeEmpty();
         }
         finally
         {
@@ -162,6 +165,7 @@ public class when_compiling_with_specification_refusals : given.a_specification_
         var result = Compile(Source);
         result.Success.ShouldBeTrue();
         result.SpecificationRefusedValue.ShouldBeNull();
+        result.SpecificationRefusedTypedContextDescriptors.ShouldBeEmpty();
         result.Value!.RefusedSpecifications.ShouldBeEmpty();
     }
 }

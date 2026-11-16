@@ -53,15 +53,19 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
 
         partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
-        return result with { Diagnostics = diagnostics, SpecificationRefusedValue = partial, TypedContextDescriptors = DescriptorsFor(partial, result.ImplementationRequirements) };
+        return result with
+        {
+            Diagnostics = diagnostics,
+            SpecificationRefusedValue = partial,
+            SpecificationRefusedTypedContextDescriptors = DescriptorsFor(partial, SemanticTypedContextCatalog.Create(partial.Model.Application, result.ImplementationRequirements, true))
+        };
     }
 
     /// <summary>
-    /// Publishes the trusted descriptors for a partial compilation whose only errors are refused specifications.
-    /// Only called once every other error source has been ruled out, so failed compilations keep their failure descriptors.
+    /// Stamps typed descriptors with the revision of their validated compilation.
     /// </summary>
-    static ImmutableArray<SemanticTypedContextDescriptor> DescriptorsFor(SemanticCompilation partial, ImmutableArray<SemanticImplementationRequirement> requirements) =>
-        [.. SemanticTypedContextCatalog.Create(partial.Model.Application, requirements, true).Select(value => value with { ModelRevision = partial.Model.Revision })];
+    static ImmutableArray<SemanticTypedContextDescriptor> DescriptorsFor(SemanticCompilation compilation, ImmutableArray<SemanticTypedContextDescriptor> descriptors) =>
+        [.. descriptors.Select(value => value with { ModelRevision = compilation.Model.Revision })];
 
     static SemanticCompilation AttachRefusalDiagnostics(SemanticCompilation compilation, IEnumerable<Diagnostic> originals, IEnumerable<Diagnostic> attached)
     {
@@ -250,6 +254,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var application = context.BindApplication();
             application = application with { Agents = context.BindAgents(application) };
             var descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
+            var failureDescriptors = descriptors;
             if (context.HasStructuralErrors)
             {
                 return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
@@ -302,7 +307,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
             var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap, context.RefusedSpecifications).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
-            return context.CompleteCompilation(compilation, descriptors);
+            return context.CompleteCompilation(compilation, descriptors, failureDescriptors);
         }
         catch (InvalidSemanticContract exception)
         {
