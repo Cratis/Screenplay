@@ -112,6 +112,9 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUser(user);
         }
 
+        foreach (var shape in syntax.Shapes) VisitShape(shape);
+        foreach (var screen in syntax.Screens) VisitScreen(screen);
+
         foreach (var storyline in syntax.Storylines)
         {
             VisitStoryline(storyline);
@@ -299,6 +302,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitOutlet(outlet);
         }
+
+        foreach (var screen in syntax.Screens) VisitScreen(screen);
 
         foreach (var feature in syntax.Features)
         {
@@ -694,6 +699,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFeature(feature);
         }
 
+        foreach (var screen in syntax.Screens) VisitScreen(screen);
+
         foreach (var slice in syntax.Slices)
         {
             VisitSlice(slice);
@@ -729,6 +736,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitFileReference(syntax.File);
         }
+
+        foreach (var used in syntax.UsedScreens) VisitUsesScreen(used);
 
         foreach (var command in syntax.Commands)
         {

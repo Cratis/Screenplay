@@ -42,13 +42,16 @@ sealed class UiExecutableReader
             foreach (var screen in slice.Screens) _screens[screen.Id] = screen;
         }
 
+        foreach (var screen in model.Application.Screens) _screens[screen.Id] = screen;
+
         foreach (var operation in ApiDescription.For(model).Operations) _operations[operation.Id] = operation;
     }
 
     internal UiContract Read()
     {
         var screens = ApiSlices.All(_model.Application)
-            .SelectMany(entry => entry.Slice.Screens.Select(screen => Screen(string.Join('.', entry.Path), entry.Slice.Id, screen)))
+            .SelectMany(entry => entry.Slice.Screens.Select(screen => Screen(string.Join('.', entry.Path), entry.Slice.Id, screen))
+                .Concat(entry.Slice.Adoptions.Select(adoption => Adopted(string.Join('.', entry.Path), entry.Slice.Id, adoption))))
             .ToArray();
         return new(UiContract.Version, _model.Application.Name, screens) { ModelRevision = _model.Revision.ToString() };
     }
@@ -61,6 +64,30 @@ sealed class UiExecutableReader
             Title = region.Title,
             Actions = [.. region.Actions]
         };
+
+    // A free screen reaches the contract once per adopting slice: it carries that slice and the data the slice's provisions resolve.
+    UiScreen Adopted(string slice, SemanticId sliceId, SemanticScreenAdoption adoption)
+    {
+        var screen = _screens[adoption.Screen];
+        var contract = Screen(slice, sliceId, screen);
+        var provided = adoption.Provisions.Select(provision => Provided(screen, provision));
+        return contract with { Data = [.. contract.Data, .. provided] };
+    }
+
+    UiData Provided(SemanticScreen screen, SemanticScreenProvision provision)
+    {
+        var need = screen.Needs.First(candidate => candidate.Name == provision.Need);
+        var query = _queries[provision.Query];
+        var operation = _operations.GetValueOrDefault(query.Id);
+        var paths = provision.Fields.ToDictionary(field => field.Field, field => field.Path, StringComparer.Ordinal);
+        return new(query.Name, _readModels[query.ReadModel].Name, query.Cardinality == SemanticQueryCardinality.Many, [.. need.Fields.Select(field => new UiField(paths.GetValueOrDefault(field.Property, field.Property), field.Label))])
+        {
+            By = provision.By,
+            QueryId = query.Id.ToString(),
+            Route = operation?.Route,
+            Live = operation?.Live ?? false
+        };
+    }
 
     UiScreen Screen(string slice, SemanticId sliceId, SemanticScreen screen) =>
         new(

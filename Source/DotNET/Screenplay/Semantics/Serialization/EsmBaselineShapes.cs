@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// </summary>
 internal static class EsmBaselineShapes
 {
-    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55];
+    internal static readonly ImmutableArray<uint> Majors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56];
 
     static readonly ImmutableHashSet<EsmBaselineShape> _owners =
     [
@@ -31,7 +31,7 @@ internal static class EsmBaselineShapes
     static readonly ImmutableDictionary<EsmBaselineShape, string> _definitions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Envelope"] = "schema schemaVersion languageVersion semanticVersion revision application:Application",
-        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification graphQueries@40:GraphQuery eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember agents@48:Agents systems@50:System audiences@53:Audience availabilities@53:Availability provides@53:Provide",
+        ["Application"] = "id name concepts:Concept types:Type modules:Module policies:Policy triggers@6:Trigger stateMachines@36:StateMachine workflows@36:Workflow graphs@38:Graph graphProjections@38:GraphProjection graphSpecifications@38:GraphSpecification graphQueries@40:GraphQuery eventSources@8:EventSourceDeclaration reactionProductionMode@22 commandReadMode@25 timeZone@37:ApplicationTimeZone contextMembers@37:ContextMember agents@48:Agents systems@50:System audiences@53:Audience availabilities@53:Availability provides@53:Provide screens@56:Screen",
         ["Agents"] = "tokenKind operations:AgentOperation",
         ["System"] = "id name abilities:Ability",
         ["Ability"] = "name effect inputs:AbilityField returns:AbilityField outcomes answersLater realization:AbilityRealization",
@@ -48,7 +48,7 @@ internal static class EsmBaselineShapes
         ["TypeReference"] = "kind primitive target collection optional",
         ["Module"] = "id name features:Feature provides@53:Provide available@53:AvailabilityRequirement",
         ["Feature"] = "id name features:Feature slices:Slice provides@53:Provide available@53:AvailabilityRequirement",
-        ["Slice"] = "id name kind events:EventContract commands:Command readModels:ReadModel projections:Projection reducers:Reducer queries:Query specifications:Specification constraints:Constraint reactions@6:Reaction captures@6:Capture direction@9 screens@42:Screen provides@53:Provide available@53:AvailabilityRequirement",
+        ["Slice"] = "id name kind events:EventContract commands:Command readModels:ReadModel projections:Projection reducers:Reducer queries:Query specifications:Specification constraints:Constraint reactions@6:Reaction captures@6:Capture direction@9 screens@42:Screen provides@53:Provide available@53:AvailabilityRequirement adoptions@56:ScreenAdoption",
         ["EventContract"] = "id contractId contractRevision name storedName@16 properties:Property tags visibility@9 origin@9 predecessor@4 priorRevisions@4:PriorRevision",
         ["PriorRevision"] = "contractRevision predecessor properties:Property tags",
         ["Command"] = "id name properties:Property validations:Validation codeValidations:CodeValidation produces:ProducedEvent requirements:Requirement authorization:Authorization destination:Destination response@7:Response route@8:CommandRoute handler@23:Handler reads@25:DecisionRead calendar@37:CommandCalendar available@53:AvailabilityRequirement",
@@ -182,8 +182,12 @@ internal static class EsmBaselineShapes
         ["CaptureField"] = "name kind value:Value record:CaptureRecord records:CaptureRecord",
         ["PinnedValue"] = "command targetProperty value:Value",
         ["WhenTrigger"] = "kind trigger values:PropertyValue",
-        ["Screen"] = "id name title description data:ScreenData actions:ScreenAction navigation:ScreenNavigation layout:ScreenLayout extensions@52:ScreenExtension components@52:ScreenComponent available@53:AvailabilityRequirement",
+        ["Screen"] = "id name title description data:ScreenData actions:ScreenAction navigation:ScreenNavigation layout:ScreenLayout extensions@52:ScreenExtension components@52:ScreenComponent available@53:AvailabilityRequirement needs@56:ScreenNeed scope@56",
         ["ScreenData"] = "query by fields:ScreenField",
+        ["ScreenNeed"] = "name shape many fields:ScreenField",
+        ["ScreenAdoption"] = "screen provisions:ScreenProvision",
+        ["ScreenProvision"] = "need query by fields:ScreenProvisionField",
+        ["ScreenProvisionField"] = "field path",
         ["ScreenField"] = "path label",
         ["ScreenAction"] = "command label subject inputs:ScreenInput when then",
         ["ScreenInput"] = "property from",

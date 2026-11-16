@@ -40,6 +40,11 @@ internal static partial class ScreenplayParser
         new("availability", null, (context, line, state) => state.Availabilities.Add(AvailabilityParser.ParseAvailability(context, line))),
         new("persona", null, (context, line, state) => state.Personas.Add(ParsePersona(context, line))),
         new("user", null, (context, line, state) => state.Users.Add(ParseUser(context, line))),
+        new("shape", (_, state) => state.HasPlacedBody, ParseRootMisplacedShape),
+        new("shape", null, (context, line, state) => state.Shapes.Add(ShapeParser.Parse(context, line))),
+        new("screen", (line, state) => state.HasPlacedBody && (state.ModuleBody is not null || !ScreenParser.IsTemplateHeader(line.Content)), ParseRootPlacedLine),
+        new("screen", (line, _) => ScreenParser.IsTemplateHeader(line.Content), (context, line, state) => ReportUnexpectedTopLevel(context, line, state.Placement)),
+        new("screen", null, (context, line, state) => state.Screens.Add(ScreenParser.Parse(context, line))),
         new("storyline", null, (context, line, state) => state.Storylines.Add(StorylineParser.Parse(context, line))),
         new("secret", null, (context, line, state) => { if (SystemConfigurationParser.ParseSecret(context, line) is { } secret) state.Secrets.Add(secret); }),
         new("sink", null, (context, line, state) => { if (SinkParser.ParseDeclaration(context, line) is { } sink) state.Sinks.Add(sink); }),
@@ -183,6 +188,12 @@ internal static partial class ScreenplayParser
         }
     }
 
+    static void ParseRootMisplacedShape(ParserContext context, SourceLine line, RootBodyState state)
+    {
+        context.Error(DiagnosticCodes.InvalidShapeDeclaration, "A shape is declared at the top level of a document, not in a file imported into a module or feature", line.Location);
+        context.SkipBlock(line.Indent);
+    }
+
     static void ParseRootPlacedLine(ParserContext context, SourceLine line, RootBodyState state) =>
         _ = state.ModuleBody?.TryParse(context, line) ?? state.FeatureBody!.TryParse(context, line);
 
@@ -279,6 +290,10 @@ internal static partial class ScreenplayParser
 
         public List<StorylineSyntax> Storylines { get; } = [];
 
+        public List<ShapeSyntax> Shapes { get; } = [];
+
+        public List<ScreenSyntax> Screens { get; } = [];
+
         public List<SinkSyntax> Sinks { get; } = [];
 
         public List<SecretSyntax> Secrets { get; } = [];
@@ -323,7 +338,7 @@ internal static partial class ScreenplayParser
         /// Gets a value indicating whether any construct the domain must precede was declared before it.
         /// </summary>
         public bool DeclaredBeforeDomain =>
-            Imports.Count > 0 || Concepts.Count > 0 || Types.Count > 0 || Policies.Count > 0 || Audiences.Count > 0 || Availabilities.Count > 0 || Purposes.Count > 0 || Provides.Count > 0 || Personas.Count > 0 || Users.Count > 0 || Storylines.Count > 0 || Sinks.Count > 0 || Modules.Count > 0 || Seeds.Count > 0 || Authentication is not null || Identity is not null || ApplicationContext is not null || Onboarding is not null || Agents is not null || UiProfiles.Count > 0 || Themes.Count > 0 || DesignSystems.Count > 0 || Triggers.Count > 0 || Layouts.Count > 0 || Systems.Count > 0 || EventSources.Count > 0 || Examples.Count > 0;
+            Imports.Count > 0 || Concepts.Count > 0 || Types.Count > 0 || Policies.Count > 0 || Audiences.Count > 0 || Availabilities.Count > 0 || Purposes.Count > 0 || Provides.Count > 0 || Personas.Count > 0 || Users.Count > 0 || Storylines.Count > 0 || Shapes.Count > 0 || Screens.Count > 0 || Sinks.Count > 0 || Modules.Count > 0 || Seeds.Count > 0 || Authentication is not null || Identity is not null || ApplicationContext is not null || Onboarding is not null || Agents is not null || UiProfiles.Count > 0 || Themes.Count > 0 || DesignSystems.Count > 0 || Triggers.Count > 0 || Layouts.Count > 0 || Systems.Count > 0 || EventSources.Count > 0 || Examples.Count > 0;
 
         /// <summary>
         /// Builds the <see cref="ApplicationSyntax"/>, placing the module or feature a placed document opened.
@@ -351,6 +366,8 @@ internal static partial class ScreenplayParser
                 Agents = Agents,
                 Users = Users,
                 Storylines = Storylines,
+                Shapes = Shapes,
+                Screens = Screens,
                 Sinks = Sinks,
                 Secrets = Secrets,
                 ReactionProductionMode = ReactionProductionMode,

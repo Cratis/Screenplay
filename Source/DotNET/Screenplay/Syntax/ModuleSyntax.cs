@@ -92,6 +92,11 @@ public record ModuleSyntax(
     public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
 
     /// <summary>
+    /// Gets the screens declared in the module itself, free of any slice. A slice adopts one with <c>uses screen</c>.
+    /// </summary>
+    public IEnumerable<ScreenSyntax> Screens { get; init; } = [];
+
+    /// <summary>
     /// Gets the outlets this module changes for the screens beneath it - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.
     /// An outlet it does not mention keeps the items it inherits.
     /// </summary>
@@ -183,6 +188,11 @@ public record FeatureSyntax(
     /// Gets the values this feature adds to <c>$context</c> for everything beneath it.
     /// </summary>
     public IEnumerable<ProvideSyntax> Provides { get; init; } = [];
+
+    /// <summary>
+    /// Gets the screens declared in the feature itself, free of any slice. A slice adopts one with <c>uses screen</c>.
+    /// </summary>
+    public IEnumerable<ScreenSyntax> Screens { get; init; } = [];
 
     /// <summary>
     /// Gets the outlets this feature changes for its screens - and its sub features' - <c>outlet &lt;name&gt; inherits|extends|overrides</c>.

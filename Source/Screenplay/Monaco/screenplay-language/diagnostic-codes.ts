@@ -378,6 +378,22 @@ export const diagnosticCodes = {
     nestedGraphCollect: 'PLAY1146',
     graphCollectQueryShape: 'PLAY1147',
     invalidEventTagExpectation: 'PLAY1148',
+    invalidShapeDeclaration: 'PLAY1149',
+    invalidScreenAdoption: 'PLAY1150',
+    duplicateShape: 'PLAY1151',
+    duplicateScreen: 'PLAY1152',
+    duplicateScreenNeed: 'PLAY1153',
+    duplicateScreenAdoption: 'PLAY1154',
+    unprovidedScreenNeed: 'PLAY1155',
+    unknownScreenNeed: 'PLAY1156',
+    provisionOverridesScreenSource: 'PLAY1157',
+    duplicateScreenProvision: 'PLAY1158',
+    screenNeedCardinalityMismatch: 'PLAY1159',
+    provisionFieldMissing: 'PLAY1160',
+    provisionFieldTypeMismatch: 'PLAY1161',
+    unknownProvisionParameter: 'PLAY1162',
+    unknownProvisionMapping: 'PLAY1163',
+    designOnlyScreen: 'PLAY1164',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

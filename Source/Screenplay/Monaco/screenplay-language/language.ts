@@ -33,6 +33,7 @@ export const constructKeywords = [
     'persona',
     'user',
     'storyline',
+    'uses',
     'sink',
     'sticky',
     'authentication',

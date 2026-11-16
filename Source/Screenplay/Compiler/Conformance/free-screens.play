@@ -1,0 +1,65 @@
+domain Billing
+
+concept InvoiceNumber : String
+
+shape InvoiceSummary
+  description "What the overview screens read of one invoice"
+  number InvoiceNumber
+  amount Decimal
+  dueDate Date optional
+
+screen InvoiceOverview
+  description "Open and overdue invoices side by side"
+  title "Overview"
+  data InvoiceSummary[] as open
+  data InvoiceSummary[] as overdue
+  table open
+    column number label "Open"
+    column dueDate
+  table overdue
+    column number label "Overdue"
+
+module Invoicing
+  screen InvoiceDigest
+    data InvoiceSummary[]
+    table InvoiceSummary
+      column number
+      column amount
+      on row-click navigate to InvoiceDetails by number
+
+  feature Paying
+    screen InvoiceDetails
+      data InvoiceSummary
+      summary InvoiceSummary
+        field number label "Number"
+
+    slice StateView ListInvoices
+      readmodel InvoiceRow
+        invoiceNumber InvoiceNumber
+        amount Decimal
+        dueDate Date optional
+      query ListInvoices => InvoiceRow[]
+        filter customer String optional
+      query GetInvoice => InvoiceRow
+        by invoiceNumber InvoiceNumber
+      uses screen InvoiceOverview
+        data open via query ListInvoices
+          number from invoiceNumber
+        data overdue via query ListInvoices by customer
+          number from invoiceNumber
+      uses screen InvoiceDigest
+        data InvoiceSummary via query ListInvoices
+          number from invoiceNumber
+      uses screen InvoiceDetails
+        data InvoiceSummary via query GetInvoice
+          number from invoiceNumber
+
+sample data Demo
+  shape InvoiceSummary
+    row
+      number = "INV-1001"
+      amount = 10
+
+storyline PayAnInvoice "A clerk pays an invoice"
+  screen InvoiceOverview "Pick the invoice"
+  screen InvoiceDetails

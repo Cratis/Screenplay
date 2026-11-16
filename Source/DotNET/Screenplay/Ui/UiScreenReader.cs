@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Ui;
@@ -10,9 +11,13 @@ namespace Cratis.Screenplay.Ui;
 /// </summary>
 /// <param name="index">The model index.</param>
 /// <param name="slice">The dotted path of the screen's slice.</param>
-internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
+/// <param name="adoption">The <c>uses screen</c> that adopts the screen into the slice, when the screen is free; its provisions resolve the screen's needs.</param>
+/// <param name="declaredAt">The dotted path of the module and feature a free screen is declared in; its own names resolve from there.</param>
+internal sealed partial class UiScreenReader(UiModelIndex index, string slice, UsesScreenSyntax? adoption = null, string? declaredAt = null)
 {
     readonly List<UiData> _data = [];
+    readonly List<string> _dataTargets = [];
+    readonly Dictionary<string, Dictionary<string, string>> _provisionMappings = new(StringComparer.Ordinal);
     readonly List<UiAction> _actions = [];
     readonly List<UiNavigation> _navigation = [];
     readonly Dictionary<string, List<UiField>> _fields = new(StringComparer.Ordinal);
@@ -20,6 +25,8 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
     readonly Dictionary<string, UiExtensionNeed> _extensions = new(StringComparer.Ordinal);
     string? _title;
     string? _template;
+
+    internal static IEnumerable<ScreenNeedSyntax> NeedsOf(ScreenSyntax screen) => ScreenAdoptionValidator.Needs(screen);
 
     /// <summary>
     /// Reads a screen.
@@ -31,7 +38,7 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
         var regions = Regions(screen.Directives.Concat(screen.Contributions.SelectMany(contribution => contribution.Directives)), true);
         _title ??= UiScreenText.FirstTitle(screen.Directives);
         foreach (var outlet in screen.Outlets) _scene.Outlet(outlet, Button);
-        var data = _data.Select(entry => entry with { Fields = _fields.GetValueOrDefault(entry.ReadModel) ?? [] }).ToArray();
+        var data = _data.Select((entry, position) => entry with { Fields = FieldsOf(_dataTargets[position], entry.ReadModel) }).ToArray();
         var layout = new UiLayout([.. screen.Fits.Select(fit => fit.ToString().ToLowerInvariant())], regions) { Template = _template };
         return new(screen.Name, slice, _title ?? screen.Name, data, _actions, _navigation, layout)
         {
@@ -40,6 +47,14 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
             Scene = _scene.Build(),
             Extensions = _extensions.Count == 0 ? null : [.. _extensions.Values]
         };
+    }
+
+    internal List<UiField> FieldsOf(string target, string readModel)
+    {
+        var fields = _fields.GetValueOrDefault(target) ?? _fields.GetValueOrDefault(readModel) ?? [];
+        return _provisionMappings.TryGetValue(target, out var mappings)
+            ? [.. fields.Select(field => mappings.TryGetValue(field.Property, out var path) ? field with { Property = path } : field)]
+            : fields;
     }
 
     List<UiRegion> Regions(IEnumerable<ScreenDirectiveSyntax> directives, bool top)
@@ -62,6 +77,9 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
                 return null;
             case ScreenDataSyntax data:
                 Data(data);
+                return null;
+            case ScreenNeedSyntax need:
+                Need(need);
                 return null;
             case ScreenActionSyntax action:
                 Action(action);
@@ -121,7 +139,7 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
 
     void Data(ScreenDataSyntax data)
     {
-        var found = index.Query(slice, data.Query);
+        var found = declaredAt is null ? index.Query(slice, data.Query) : index.Query(declaredAt, data.Query, true);
         var operation = found is { } query ? index.Operation(query.Slice, query.Query.Name) : null;
         var readModel = found?.Query.ReturnType.Name ?? data.Type.Name;
         _data.Add(new(data.Query, readModel, found?.Query.ReturnType.IsCollection ?? data.Type.IsCollection, [])
@@ -131,6 +149,30 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice)
             Route = operation?.Route,
             Live = operation?.Live ?? false
         });
+        _dataTargets.Add(data.Type.Name);
+    }
+
+    // A need is data the adopting slice provides: the provision names the query, and its mappings say which read model path
+    // each field the screen reads comes from. A need nothing provides carries no data, so the contract never invents a source.
+    void Need(ScreenNeedSyntax need)
+    {
+        var provision = adoption?.Provisions.FirstOrDefault(candidate => candidate.Need == need.Name);
+        if (provision is null)
+        {
+            return;
+        }
+
+        var found = index.Query(slice, provision.Query);
+        var operation = found is { } query ? index.Operation(query.Slice, query.Query.Name) : null;
+        _data.Add(new(provision.Query, found?.Query.ReturnType.Name ?? need.Type.Name, found?.Query.ReturnType.IsCollection ?? need.Type.IsCollection, [])
+        {
+            By = provision.By,
+            QueryId = operation?.Id.ToString(),
+            Route = operation?.Route,
+            Live = operation?.Live ?? false
+        });
+        _dataTargets.Add(need.Name);
+        _provisionMappings[need.Name] = provision.Mappings.ToDictionary(mapping => mapping.Field, mapping => mapping.Path, StringComparer.Ordinal);
     }
 
     void Fields(string target, IEnumerable<UiField> fields)

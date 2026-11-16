@@ -35,7 +35,7 @@ internal sealed partial class UiScreenReader
     UiAction Command(string name, string label, ScreenActionSubjectKind? subject, IEnumerable<InteractionArgumentSyntax> arguments, string? when)
     {
         var bindings = arguments.ToDictionary(argument => argument.Name, argument => argument.Binding, StringComparer.Ordinal);
-        var found = index.Command(slice, name);
+        var found = declaredAt is null ? index.Command(slice, name) : index.Command(declaredAt, name, true);
         var inputs = found is { } command
             ? command.Command.Properties.Where(property => !property.IsGenerated)
                 .Select(property => new UiInput(property.Name, UiScreenText.TypeName(property.Type), bindings.GetValueOrDefault(property.Name)))

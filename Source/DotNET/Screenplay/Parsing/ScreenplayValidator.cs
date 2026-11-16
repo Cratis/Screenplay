@@ -81,6 +81,43 @@ internal static partial class ScreenplayValidator
     }
 
     /// <summary>
+    /// Gets every screen of the model with the scope it is declared in: the document, a module, a feature or a slice.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to read.</param>
+    /// <returns>The screens, free ones before the ones a slice declares.</returns>
+    internal static IEnumerable<ScopedScreen> ScopedScreens(ApplicationSyntax application)
+    {
+        foreach (var screen in application.Screens)
+        {
+            yield return new(screen, new DeclarationScope([]), false);
+        }
+
+        foreach (var module in application.Modules)
+        {
+            foreach (var screen in module.Screens)
+            {
+                yield return new(screen, new DeclarationScope([module.Name]), false);
+            }
+
+            foreach (var (feature, scope) in AllFeaturesScoped(module.Features, [module.Name]))
+            {
+                foreach (var screen in feature.Screens)
+                {
+                    yield return new(screen, scope, false);
+                }
+            }
+        }
+
+        foreach (var (slice, scope) in ScopedSlices(application))
+        {
+            foreach (var screen in slice.Screens)
+            {
+                yield return new(screen, scope, true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets the names of the read model(s) a projection builds. A projection with <c>variant</c> blocks builds
     /// one read model per variant, named after the variant, rather than one named after the projection itself -
     /// the projection's own name identifies the shared logical identity, not a read model.
@@ -158,6 +195,7 @@ internal static partial class ScreenplayValidator
         AnonymousGateValidator.Validate(application, context);
         ValidateReadModels(slices, names.ReadModels, names.Events, context);
         ValidateTypes(application, names.Types, context);
+        foreach (var shape in application.Shapes) ValidatePropertyTypes(shape.Properties, $"shape '{shape.Name}'", names.Types, context);
         IdentityValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);
         ProvideValidator.Validate(application, names.Types.Union(names.ReadModels).ToHashSet(StringComparer.Ordinal), context);
         AvailabilityValidator.Validate(application, context);
@@ -202,12 +240,15 @@ internal static partial class ScreenplayValidator
         ValidateAdditionalEventReferences(application, declarations, names.Events, context);
         RunConsistencyValidators(application, declarations, expansion, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
-        var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
+        var scopedScreens = ScopedScreens(application).ToList();
+        var knownScreenDeclarations = scopedScreens.ConvertAll(entry => new Declaration(entry.Screen.Name, entry.Scope));
         ValidateSpecificationQueries(scopedSlices, [.. knownQueries, .. scopedSlices.SelectMany(entry => entry.Slice.GraphQueries.Select(query => new Declaration(query.Name, entry.Scope)))], context);
 
         var (knownCommandDeclarations, commandsByDeclaration) = CommandDeclarations(scopedSlices);
         var references = new InteractionReferences(knownCommandDeclarations, knownScreenDeclarations, knownQueries, _noNames, names.Events, _noNames);
         ValidateScreenReferences(scopedSlices, references, context);
+        ValidateFreeScreenReferences(scopedScreens, references, context);
+        ScreenAdoptionValidator.Validate(application, declarations, scopedScreens, context);
         GuardedActionValidator.Validate(application, declarations, context);
 
         // The dialog templates and triggers are only collected once the checks above have run.

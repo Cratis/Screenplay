@@ -19,7 +19,8 @@ import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
 import { parseProvide } from './ProvideParser';
 import { ProvideSyntax } from '../Syntax/ProvideSyntax';
-import { reportFeatureToolbar } from './ScreenParser';
+import { isScreenTemplateHeader, parseScreen, reportFeatureToolbar } from './ScreenParser';
+import type { ScreenSyntax } from '../Syntax/Screens';
 import { addOutletOverride, isNavigationRegion, reportNavigationRegion } from './OutletParser';
 import type { OutletSyntax } from '../Syntax/Outlets';
 import { collectInputUses } from './InputUses';
@@ -32,10 +33,10 @@ import { locationOf, SourceLine } from './SourceLine';
 export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 
 // Module members the C# compiler knows that this compiler does not model. They are skipped whole, not reported.
-const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute', 'navigation', 'template']);
+const opaqueModuleMembers = new Set(['on', 'uses', 'dialog', 'form', 'contribute', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
-export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, screen, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a module - written beneath a 'module' header, or at the top level of a file imported
 // into the module. The port of the C# ModuleBody.
@@ -46,6 +47,7 @@ export class ModuleBody {
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
+    readonly #screens: ScreenSyntax[] = [];
     readonly #provides: ProvideSyntax[] = [];
     readonly #available: AvailableSyntax[] = [];
     #description: string | null = null;
@@ -111,6 +113,13 @@ export class ModuleBody {
             case 'feature':
                 this.#features.push(parseFeature(context, line));
                 return true;
+            case 'screen':
+                if (isScreenTemplateHeader(line.content)) {
+                    collectInputUses(context, line);
+                } else {
+                    this.#screens.push(parseScreen(context, line));
+                }
+                return true;
             case 'navigation':
                 if (isNavigationRegion(line.content)) reportNavigationRegion(context, line);
                 else collectInputUses(context, line);
@@ -148,6 +157,7 @@ export class ModuleBody {
             ...(this.#provides.length > 0 ? { provides: this.#provides } : {}),
             ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
+            ...(this.#screens.length > 0 ? { screens: this.#screens } : {}),
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

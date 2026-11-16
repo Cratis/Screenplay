@@ -2173,6 +2173,46 @@
               "name": "rowActions"
             }
           ],
+          "screens": [
+            {
+              "kind": "ScreenSyntax",
+              "directives": [
+                {
+                  "kind": "ScreenTitleSyntax",
+                  "text": "Inbox"
+                },
+                {
+                  "kind": "ScreenNeedSyntax",
+                  "alias": null,
+                  "type": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "InvoiceSummary"
+                  }
+                },
+                {
+                  "kind": "ScreenTableSyntax",
+                  "columns": [
+                    {
+                      "kind": "ScreenColumnSyntax",
+                      "label": null,
+                      "property": "number"
+                    }
+                  ],
+                  "rowClick": {
+                    "kind": "ScreenNavigateSyntax",
+                    "by": "number",
+                    "parameters": [],
+                    "route": null,
+                    "screen": "InvoiceDetails"
+                  },
+                  "target": "InvoiceSummary"
+                }
+              ],
+              "name": "InvoiceInbox"
+            }
+          ],
           "slices": [
             {
               "kind": "SliceSyntax",
@@ -8775,7 +8815,79 @@
                   "whenTrigger": null
                 }
               ],
-              "type": "StateView"
+              "type": "StateView",
+              "usedScreens": [
+                {
+                  "kind": "UsesScreenSyntax",
+                  "provisions": [
+                    {
+                      "kind": "ScreenProvisionSyntax",
+                      "by": null,
+                      "mappings": [
+                        {
+                          "kind": "ScreenProvisionMappingSyntax",
+                          "field": "number",
+                          "path": "invoiceNumber"
+                        }
+                      ],
+                      "need": "open",
+                      "query": "ListInvoices"
+                    },
+                    {
+                      "kind": "ScreenProvisionSyntax",
+                      "by": null,
+                      "mappings": [
+                        {
+                          "kind": "ScreenProvisionMappingSyntax",
+                          "field": "number",
+                          "path": "invoiceNumber"
+                        }
+                      ],
+                      "need": "overdue",
+                      "query": "ListInvoices"
+                    }
+                  ],
+                  "screen": "InvoiceOverview"
+                },
+                {
+                  "kind": "UsesScreenSyntax",
+                  "provisions": [
+                    {
+                      "kind": "ScreenProvisionSyntax",
+                      "by": null,
+                      "mappings": [
+                        {
+                          "kind": "ScreenProvisionMappingSyntax",
+                          "field": "number",
+                          "path": "invoiceNumber"
+                        }
+                      ],
+                      "need": "InvoiceSummary",
+                      "query": "ListInvoices"
+                    }
+                  ],
+                  "screen": "InvoiceDigest"
+                },
+                {
+                  "kind": "UsesScreenSyntax",
+                  "provisions": [
+                    {
+                      "kind": "ScreenProvisionSyntax",
+                      "by": null,
+                      "mappings": [
+                        {
+                          "kind": "ScreenProvisionMappingSyntax",
+                          "field": "number",
+                          "path": "invoiceNumber"
+                        }
+                      ],
+                      "need": "InvoiceSummary",
+                      "query": "ListInvoices"
+                    }
+                  ],
+                  "screen": "InvoiceInbox"
+                }
+              ]
             },
             {
               "kind": "SliceSyntax",
@@ -19680,6 +19792,45 @@
           "kind": "PurposeReferenceSyntax",
           "name": "Billing"
         }
+      ],
+      "screens": [
+        {
+          "kind": "ScreenSyntax",
+          "directives": [
+            {
+              "kind": "ScreenTitleSyntax",
+              "text": "Digest"
+            },
+            {
+              "kind": "ScreenNeedSyntax",
+              "alias": null,
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": true,
+                "isOptional": false,
+                "name": "InvoiceSummary"
+              }
+            },
+            {
+              "kind": "ScreenTableSyntax",
+              "columns": [
+                {
+                  "kind": "ScreenColumnSyntax",
+                  "label": null,
+                  "property": "number"
+                },
+                {
+                  "kind": "ScreenColumnSyntax",
+                  "label": null,
+                  "property": "status"
+                }
+              ],
+              "rowClick": null,
+              "target": "InvoiceSummary"
+            }
+          ],
+          "name": "InvoiceDigest"
+        }
       ]
     },
     {
@@ -20073,11 +20224,123 @@
     }
   ],
   "reactionProductionMode": "Atomic",
+  "screens": [
+    {
+      "kind": "ScreenSyntax",
+      "description": "Open and overdue invoices side by side",
+      "directives": [
+        {
+          "kind": "ScreenTitleSyntax",
+          "text": "Overview"
+        },
+        {
+          "kind": "ScreenNeedSyntax",
+          "alias": "open",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": true,
+            "isOptional": false,
+            "name": "InvoiceSummary"
+          }
+        },
+        {
+          "kind": "ScreenNeedSyntax",
+          "alias": "overdue",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": true,
+            "isOptional": false,
+            "name": "InvoiceSummary"
+          }
+        },
+        {
+          "kind": "ScreenTableSyntax",
+          "columns": [
+            {
+              "kind": "ScreenColumnSyntax",
+              "label": "Open",
+              "property": "number"
+            },
+            {
+              "kind": "ScreenColumnSyntax",
+              "label": null,
+              "property": "dueDate"
+            }
+          ],
+          "rowClick": null,
+          "target": "open"
+        },
+        {
+          "kind": "ScreenTableSyntax",
+          "columns": [
+            {
+              "kind": "ScreenColumnSyntax",
+              "label": "Overdue",
+              "property": "number"
+            },
+            {
+              "kind": "ScreenColumnSyntax",
+              "label": null,
+              "property": "dueDate"
+            }
+          ],
+          "rowClick": null,
+          "target": "overdue"
+        }
+      ],
+      "name": "InvoiceOverview"
+    }
+  ],
   "secrets": [
     {
       "kind": "SecretSyntax",
       "description": "The API key of the transactional mail service",
       "name": "MailerApiKey"
+    }
+  ],
+  "shapes": [
+    {
+      "kind": "ShapeSyntax",
+      "description": "What the overview screens read of one invoice",
+      "name": "InvoiceSummary",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "number",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "InvoiceNumber"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "status",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "InvoiceStatus"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "dueDate",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "Date"
+          }
+        }
+      ]
     }
   ],
   "sinks": [
@@ -20482,6 +20745,12 @@
           "elementKind": "Screen",
           "note": "The manager starts a draft",
           "target": "StartInvoiceDraftScreen"
+        },
+        {
+          "kind": "StorylineStepSyntax",
+          "elementKind": "Screen",
+          "note": "The manager checks what is overdue",
+          "target": "InvoiceOverview"
         },
         {
           "kind": "StorylineStepSyntax",

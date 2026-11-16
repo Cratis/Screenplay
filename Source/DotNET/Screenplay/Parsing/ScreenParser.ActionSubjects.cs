@@ -45,17 +45,17 @@ internal static partial class ScreenParser
 
     static void ValidateNonActionSubjectClause(ParserContext context, SourceLine line)
     {
-        var grammar = LineText.FirstWord(line.Content) switch
+        Func<string, bool>? grammar = LineText.FirstWord(line.Content) switch
         {
-            "data" => DataRegex(),
-            "navigate" => NavigateRegex(),
-            "component" => ComponentRegex(),
-            "title" => TitleRegex(),
+            "data" => content => DataRegex().IsMatch(content) || NeedRegex().IsMatch(content),
+            "navigate" => NavigateRegex().IsMatch,
+            "component" => ComponentRegex().IsMatch,
+            "title" => TitleRegex().IsMatch,
             _ => null
         };
 
         // Expressions, code and open-ended template references belong to their own parsers.
-        if (grammar is not null) ParseSubjectClause(new(context, line, false, grammar.IsMatch), out _, out _);
+        if (grammar is not null) ParseSubjectClause(new(context, line, false, grammar), out _, out _);
     }
 
     static string? ParseSubjectLabel(ref string header, Match? labelWord)

@@ -269,6 +269,11 @@ sealed class SemanticCompilationIndex
             }
         }
 
+        foreach (var screen in application.Screens)
+        {
+            index.Register(SemanticAddress.ForFreeScreen(applicationIdentity, screen.Scope?.Split('.') ?? [], screen.Name), screen.Id);
+        }
+
         foreach (var module in application.Modules)
         {
             index.RegisterModule(module);

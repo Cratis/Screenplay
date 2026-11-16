@@ -24,6 +24,8 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticScreenExtension> extensions = [];
         ImmutableArray<SemanticScreenComponent> components = [];
         ImmutableArray<SemanticAvailabilityRequirement> available = [];
+        ImmutableArray<SemanticScreenNeed> needs = [];
+        string? scope = null;
         while (NextProperty(ref reader, seen, "screen") is { } property)
         {
             switch (property)
@@ -39,12 +41,102 @@ internal static partial class SemanticModelRead
                 case "extensions" when schemaVersion >= 52: extensions = Array(ref reader, ScreenExtension, property); break;
                 case "available" when schemaVersion >= 53: available = Array(ref reader, AvailabilityRequirement, property); break;
                 case "components" when schemaVersion >= 52: components = Array(ref reader, ScreenComponent, property); break;
+                case "needs" when schemaVersion >= 56: needs = Array(ref reader, ScreenNeed, property); break;
+                case "scope" when schemaVersion >= 56: scope = String(ref reader, property); break;
                 default: throw Unknown(property, "screen");
             }
         }
 
         Required(id.IsSet && name is not null && title is not null && !data.IsDefault && !actions.IsDefault && !navigation.IsDefault && layout is not null, "screen");
-        return new(id, name!, title!, data, actions, navigation, layout!) { Description = description, Extensions = extensions, Components = components, Available = available };
+        return new(id, name!, title!, data, actions, navigation, layout!) { Description = description, Extensions = extensions, Components = components, Available = available, Needs = needs, Scope = scope };
+    }
+
+    static SemanticScreenNeed ScreenNeed(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen need");
+        var seen = NewSeen();
+        string? name = null;
+        string? shape = null;
+        bool? many = null;
+        ImmutableArray<SemanticScreenField> fields = default;
+        while (NextProperty(ref reader, seen, "screen need") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "shape": shape = String(ref reader, property); break;
+                case "many": many = Boolean(ref reader, property); break;
+                case "fields": fields = Array(ref reader, ScreenField, property); break;
+                default: throw Unknown(property, "screen need");
+            }
+        }
+
+        Required(name is not null && shape is not null && many is not null && !fields.IsDefault, "screen need");
+        return new(name!, shape!, many!.Value, fields);
+    }
+
+    static SemanticScreenAdoption ScreenAdoption(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen adoption");
+        var seen = NewSeen();
+        SemanticId screen = default;
+        ImmutableArray<SemanticScreenProvision> provisions = default;
+        while (NextProperty(ref reader, seen, "screen adoption") is { } property)
+        {
+            switch (property)
+            {
+                case "screen": screen = SemanticId.Parse(String(ref reader, property)); break;
+                case "provisions": provisions = Array(ref reader, ScreenProvision, property); break;
+                default: throw Unknown(property, "screen adoption");
+            }
+        }
+
+        Required(screen.IsSet && !provisions.IsDefault, "screen adoption");
+        return new(screen, provisions);
+    }
+
+    static SemanticScreenProvision ScreenProvision(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen provision");
+        var seen = NewSeen();
+        string? need = null;
+        SemanticId query = default;
+        string? by = null;
+        ImmutableArray<SemanticScreenProvisionField> fields = default;
+        while (NextProperty(ref reader, seen, "screen provision") is { } property)
+        {
+            switch (property)
+            {
+                case "need": need = String(ref reader, property); break;
+                case "query": query = SemanticId.Parse(String(ref reader, property)); break;
+                case "by": by = String(ref reader, property); break;
+                case "fields": fields = Array(ref reader, ScreenProvisionField, property); break;
+                default: throw Unknown(property, "screen provision");
+            }
+        }
+
+        Required(need is not null && query.IsSet && !fields.IsDefault, "screen provision");
+        return new(need!, query, fields) { By = by };
+    }
+
+    static SemanticScreenProvisionField ScreenProvisionField(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "screen provision field");
+        var seen = NewSeen();
+        string? field = null;
+        string? path = null;
+        while (NextProperty(ref reader, seen, "screen provision field") is { } property)
+        {
+            switch (property)
+            {
+                case "field": field = String(ref reader, property); break;
+                case "path": path = String(ref reader, property); break;
+                default: throw Unknown(property, "screen provision field");
+            }
+        }
+
+        Required(field is not null && path is not null, "screen provision field");
+        return new(field!, path!);
     }
 
     static SemanticScreenExtension ScreenExtension(ref Utf8JsonReader reader)
