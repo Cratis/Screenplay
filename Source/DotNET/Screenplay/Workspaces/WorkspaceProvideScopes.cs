@@ -72,8 +72,13 @@ sealed class WorkspaceProvideScopes
     // A provide covers its own level and everything beneath it; an application-level provide covers every document.
     bool Covers(WorkspaceSyntaxEntry provide, WorkspaceSyntaxEntry entry) => Container(provide) is { } level && IsWithin(level, entry);
 
+    // Modules and features merge across files, so a level covers every fragment that declares the same logical level.
     bool IsWithin(WorkspaceSyntaxEntry level, WorkspaceSyntaxEntry entry) =>
-        level.Node is ApplicationSyntax || level.Handle == entry.Handle || Ancestors(entry).Any(ancestor => ancestor.Handle == level.Handle);
+        level.Node is ApplicationSyntax || IsSameLevel(level, entry) || Ancestors(entry).Any(ancestor => IsSameLevel(level, ancestor));
+
+    bool IsSameLevel(WorkspaceSyntaxEntry level, WorkspaceSyntaxEntry entry) =>
+        level.Handle == entry.Handle ||
+        (WorkspaceReferenceBindings.Name(level.Node) is { } name && IsSameDeclaration(entry, level, name, WorkspaceReferenceBindings.Scope(level, _index).Segments.ToArray()));
 
     WorkspaceSyntaxEntry? Container(WorkspaceSyntaxEntry provide) => provide.Parent is { } parent ? _index.Find(parent) : null;
 
