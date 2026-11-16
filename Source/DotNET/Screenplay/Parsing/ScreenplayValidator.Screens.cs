@@ -77,6 +77,21 @@ internal static partial class ScreenplayValidator
         }
     }
 
+    // A free screen's names resolve from where it is declared, never from the slice that adopts it.
+    static void ValidateFreeScreenReferences(
+        IReadOnlyList<ScopedScreen> screens,
+        InteractionReferences references,
+        ParserContext context)
+    {
+        foreach (var entry in screens.Where(entry => !entry.InSlice))
+        {
+            foreach (var directive in AllDirectives(entry.Screen.Directives))
+            {
+                ValidateDirectiveReferences(directive, entry.Scope, references, context);
+            }
+        }
+    }
+
     static void ValidateDirectiveReferences(ScreenDirectiveSyntax directive, DeclarationScope scope, InteractionReferences references, ParserContext context)
     {
         switch (directive)

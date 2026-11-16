@@ -56,6 +56,7 @@ internal static partial class SliceParser
         var captures = new List<CaptureSyntax>();
         var reactions = new List<ReactionSyntax>();
         var screens = new List<ScreenSyntax>();
+        var usedScreens = new List<UsesScreenSyntax>();
         var constraints = new List<ConstraintSyntax>();
         var specifications = new List<SpecificationSyntax>();
         var examples = new List<SpecificationExampleSyntax>();
@@ -173,6 +174,9 @@ internal static partial class SliceParser
                 case "screen":
                     screens.Add(ScreenParser.Parse(context, line));
                     break;
+                case "uses" when ScreenAdoptionParser.IsAdoption(line.Content):
+                    usedScreens.Add(ScreenAdoptionParser.Parse(context, line));
+                    break;
                 case "template":
                     if (TemplateAssignmentParser.Parse(context, line) is { } template)
                     {
@@ -214,6 +218,7 @@ internal static partial class SliceParser
             Templates = templates,
             Purposes = purposes,
             Provides = provides,
+            UsedScreens = usedScreens,
             Available = available,
             Placements = placements,
             Graphs = graphs,

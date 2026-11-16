@@ -46,7 +46,7 @@ describe('when reading shared data binding completeness vectors', () => {
         );
     });
     it('should skip invalid source even when it contains otherwise conflicting bindings', () => {
-        const compilation = parse(sourceOf(vectors.cases[0]) + '\n        data invalid');
+        const compilation = parse(sourceOf(vectors.cases[0]) + '\n        data invalid via query');
         expect(compilation.success).toBe(false);
         expect(completenessDiagnostics(compilation, ['all'])).toEqual([]);
     });

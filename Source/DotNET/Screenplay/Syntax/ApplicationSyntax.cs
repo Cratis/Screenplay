@@ -124,6 +124,16 @@ public record ApplicationSyntax(
     public IEnumerable<StorylineSyntax> Storylines { get; init; } = [];
 
     /// <summary>
+    /// Gets the top-level <c>shape</c> declarations: the typed contracts of the data screens need.
+    /// </summary>
+    public IEnumerable<ShapeSyntax> Shapes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the screens declared at the top level of the document, free of any slice. A slice adopts one with <c>uses screen</c>.
+    /// </summary>
+    public IEnumerable<ScreenSyntax> Screens { get; init; } = [];
+
+    /// <summary>
     /// Gets the named sinks read models and graphs may choose with a <c>sink</c> directive. Realization metadata, never part
     /// of the executable model; a read model or graph that names no sink uses its kind's implicit default sink.
     /// </summary>

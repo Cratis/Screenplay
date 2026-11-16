@@ -19,6 +19,53 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "screens", slice.Screens.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, screen) => WriteScreen(output, screen, version));
     }
 
+    static void WriteAdoptions(Utf8JsonWriter writer, SemanticSlice slice)
+    {
+        if (slice.Adoptions.IsDefaultOrEmpty) return;
+        WriteArray(writer, "adoptions", slice.Adoptions.OrderBy(_ => _.Screen.ToString(), StringComparer.Ordinal), WriteScreenAdoption);
+    }
+
+    static void WriteFreeScreens(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
+    {
+        if (application.Screens.IsDefaultOrEmpty) return;
+        if (version.Major < 56) throw new InvalidSemanticContract("Free screens require ESM v56 or later.");
+        WriteArray(writer, "screens", application.Screens.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, screen) => WriteScreen(output, screen, version));
+    }
+
+    static void WriteScreenAdoption(Utf8JsonWriter writer, SemanticScreenAdoption adoption)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("screen", adoption.Screen.ToString());
+        WriteArray(writer, "provisions", adoption.Provisions, WriteScreenProvision);
+        writer.WriteEndObject();
+    }
+
+    static void WriteScreenProvision(Utf8JsonWriter writer, SemanticScreenProvision provision)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "need", provision.Need);
+        writer.WriteString("query", provision.Query.ToString());
+        if (provision.By is { } by) CanonicalJson.WriteString(writer, "by", by);
+        WriteArray(writer, "fields", provision.Fields, (output, field) =>
+        {
+            output.WriteStartObject();
+            CanonicalJson.WriteString(output, "field", field.Field);
+            CanonicalJson.WriteString(output, "path", field.Path);
+            output.WriteEndObject();
+        });
+        writer.WriteEndObject();
+    }
+
+    static void WriteScreenNeed(Utf8JsonWriter writer, SemanticScreenNeed need)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", need.Name);
+        CanonicalJson.WriteString(writer, "shape", need.Shape);
+        writer.WriteBoolean("many", need.Many);
+        WriteArray(writer, "fields", need.Fields, WriteScreenField);
+        writer.WriteEndObject();
+    }
+
     static void WriteScreen(Utf8JsonWriter writer, SemanticScreen screen, SemanticVersion version)
     {
         writer.WriteStartObject();
@@ -26,7 +73,9 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", screen.Name);
         CanonicalJson.WriteString(writer, "title", screen.Title);
         if (screen.Description is { } description) CanonicalJson.WriteString(writer, "description", description);
+        if (screen.Scope is { } scope) CanonicalJson.WriteString(writer, "scope", scope);
         WriteArray(writer, "data", screen.Data, WriteScreenData);
+        if (!screen.Needs.IsDefaultOrEmpty) WriteArray(writer, "needs", screen.Needs, WriteScreenNeed);
         WriteArray(writer, "actions", screen.Actions, WriteScreenAction);
         WriteArray(writer, "navigation", screen.Navigation, WriteScreenNavigation);
         if (!screen.Extensions.IsDefaultOrEmpty) WriteArray(writer, "extensions", screen.Extensions, WriteScreenExtension);

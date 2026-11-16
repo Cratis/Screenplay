@@ -95,7 +95,7 @@ public static class SemanticScreenAvailability
     }
 
     static IEnumerable<SemanticScreen> ScreensOf(SemanticExecutionPlan plan) =>
-        plan.Model.Application.Modules.SelectMany(module => module.Features.SelectMany(SlicesOf)).SelectMany(slice => slice.Screens);
+        plan.Model.Application.Modules.SelectMany(module => module.Features.SelectMany(SlicesOf)).SelectMany(slice => slice.Screens).Concat(plan.Model.Application.Screens);
 
     static IEnumerable<SemanticSlice> SlicesOf(SemanticFeature feature) => feature.Slices.Concat(feature.Features.SelectMany(SlicesOf));
 

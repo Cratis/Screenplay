@@ -30,7 +30,7 @@ static class CompositionDefaults
 
     static readonly Dictionary<Type, Dictionary<string, Default>> _omittable = new()
     {
-        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["storylines"] = Default.Empty, ["sinks"] = Default.Empty, ["secrets"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
+        [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty, ["stickyNotes"] = Default.Empty, ["users"] = Default.Empty, ["storylines"] = Default.Empty, ["shapes"] = Default.Empty, ["screens"] = Default.Empty, ["sinks"] = Default.Empty, ["secrets"] = Default.Empty, ["stateMachines"] = Default.Empty, ["workflows"] = Default.Empty, ["designSystems"] = Default.Empty },
         [typeof(ThemeSyntax)] = new(StringComparer.Ordinal) { ["implements"] = Default.Null, ["palette"] = Default.Empty, ["values"] = Default.Empty, ["modeValues"] = Default.Empty },
         [typeof(SystemSyntax)] = new(StringComparer.Ordinal) { ["extension"] = Default.Null, ["settings"] = Default.Empty, ["activation"] = Default.Null },
         [typeof(ReadModelSyntax)] = new(StringComparer.Ordinal) { ["sink"] = Default.Null },
@@ -39,7 +39,7 @@ static class CompositionDefaults
         [typeof(SeedSyntax)] = new(StringComparer.Ordinal) { ["name"] = Default.Null, ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(EventSourceSyntax)] = new(StringComparer.Ordinal) { ["x"] = Default.Null, ["y"] = Default.Null },
         [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty, ["outlets"] = Default.Empty, ["fits"] = Default.Empty, ["visuals"] = Default.Empty },
-        [typeof(SliceSyntax)] = new(StringComparer.Ordinal) { ["placements"] = Default.Empty },
+        [typeof(SliceSyntax)] = new(StringComparer.Ordinal) { ["placements"] = Default.Empty, ["usedScreens"] = Default.Empty },
         [typeof(FormFieldSyntax)] = new(StringComparer.Ordinal) { ["choices"] = Default.Null },
         [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["slot"] = Default.Null },
         [typeof(SlotSyntax)] = new(StringComparer.Ordinal) { ["role"] = Default.Null, ["routed"] = Default.False, ["routedBy"] = Default.Null, ["primary"] = Default.False, ["optional"] = Default.False },
@@ -47,8 +47,8 @@ static class CompositionDefaults
         [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty, ["sliceKinds"] = Default.Empty, ["outlets"] = Default.Empty },
         [typeof(TemplateAssignmentSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
         [typeof(ScreenTemplateReferenceSyntax)] = new(StringComparer.Ordinal) { ["blueprint"] = Default.Null, ["version"] = Default.Null },
-        [typeof(ModuleSyntax)] = new(StringComparer.Ordinal) { ["outlets"] = Default.Empty },
-        [typeof(FeatureSyntax)] = new(StringComparer.Ordinal) { ["outlets"] = Default.Empty },
+        [typeof(ModuleSyntax)] = new(StringComparer.Ordinal) { ["outlets"] = Default.Empty, ["screens"] = Default.Empty },
+        [typeof(FeatureSyntax)] = new(StringComparer.Ordinal) { ["outlets"] = Default.Empty, ["screens"] = Default.Empty },
         [typeof(ToolbarItemSyntax)] = new(StringComparer.Ordinal) { ["confirm"] = Default.Null, ["enabledWhen"] = Default.Null },
         [typeof(ScreenToolbarSyntax)] = new(StringComparer.Ordinal) { ["buttons"] = Default.Empty },
         [typeof(ToolbarButtonSyntax)] = new(_outletItemMembers, StringComparer.Ordinal) { ["slice"] = Default.Null, ["emphasis"] = Default.Null, ["icon"] = Default.Null, ["authorize"] = Default.Null, ["confirm"] = Default.Null, ["runs"] = Default.Null, ["subject"] = Default.Null, ["opens"] = Default.Null, ["opensSlot"] = Default.Null, ["enabledWhen"] = Default.Null },

@@ -778,11 +778,13 @@ internal static partial class SpecificationParser
             For = body.For,
             Stream = body.Stream,
             NoStream = body.NoStream,
+            Tags = body.Tags,
+            NoTags = body.NoTags,
             InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
         };
     }
 
-    static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For, SpecificationStreamSyntax? Stream, SpecificationNoStreamSyntax? NoStream) ParseValuesWithEventSource(
+    static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For, SpecificationStreamSyntax? Stream, SpecificationNoStreamSyntax? NoStream, List<TagSyntax> Tags, SpecificationNoTagsSyntax? NoTags) ParseValuesWithEventSource(
         ParserContext context,
         SourceLine parent,
         List<PropertyMappingSyntax>? generated = null,
@@ -794,6 +796,7 @@ internal static partial class SpecificationParser
         ExpressionSyntax? eventSource = null;
         SpecificationStreamSyntax? stream = null;
         SpecificationNoStreamSyntax? noStream = null;
+        var tagExpectations = new TagExpectations(context, eventKeyword);
         var hasRoute = false;
         while (context.TryPeekChild(parent.Indent, out var child))
         {
@@ -809,11 +812,7 @@ internal static partial class SpecificationParser
             }
 
             var mapping = MappingRegex().Match(child.Content);
-            if (mapping.Success)
-            {
-                AddFixtureValue(context, values, ParseSpecificationMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
-                continue;
-            }
+            if (tagExpectations.TryParseValue(child, mapping, values)) continue;
 
             if (LineText.FirstWord(child.Content) == "stream" || child.Content.StartsWith("no stream", StringComparison.Ordinal))
             {
@@ -876,7 +875,7 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(child.Content)));
         }
 
-        return (values, eventSource, stream, noStream);
+        return (values, eventSource, stream, noStream, tagExpectations.Tags, tagExpectations.NoTags);
     }
 
     static SpecificationStreamSyntax ParseSpecificationStream(ParserContext context, SourceLine header, Match route)

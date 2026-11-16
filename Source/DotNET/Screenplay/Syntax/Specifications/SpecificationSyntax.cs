@@ -233,6 +233,16 @@ public record SpecificationEventSyntax(
     /// Gets the explicit unrouted expectation.
     /// </summary>
     public SpecificationNoStreamSyntax? NoStream { get; init; }
+
+    /// <summary>
+    /// Gets the expected tags of the appended event, in order and with duplicates, on a <c>then</c> event.
+    /// </summary>
+    public IEnumerable<TagSyntax> Tags { get; init; } = [];
+
+    /// <summary>
+    /// Gets the explicit expectation that the appended event carries no tags.
+    /// </summary>
+    public SpecificationNoTagsSyntax? NoTags { get; init; }
 }
 
 /// <summary>

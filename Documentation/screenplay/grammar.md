@@ -25,7 +25,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], [ ReactionBatchesPreamble ], [ CommandReadsPreamble ], [ TimeZoneDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | AudienceDecl | AvailabilityDecl | PurposeDecl | ProvideDecl
-               | PersonaDecl | UserDecl | StorylineDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
+               | PersonaDecl | UserDecl | StorylineDecl | ShapeDecl | ScreenDecl | SinkDecl | StickyNoteDecl | AuthenticationDecl | OnboardingDecl | IdentityDecl | ContextDecl | TriggerDecl | DesignSystemDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | SecretDecl | StateMachineDecl | WorkflowDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -752,6 +752,7 @@ Module         = "module", Ident, NL,
                    | AvailableDecl | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
+                   | ScreenDecl                       (* a free screen, adopted by slices *)
                    | ScreenTemplateDecl
                    | DialogTemplateDecl
                    | FormDecl
@@ -1050,6 +1051,7 @@ Feature        = "feature", Ident, NL,
                    | FileImport
                    | Feature
                    | SliceDecl
+                   | ScreenDecl                       (* a free screen, adopted by slices *)
                    | ExampleDecl
                    | ContributionDecl
                    | OutletChangeDecl                 (* changes an outlet for its screens *)
@@ -1077,6 +1079,7 @@ SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 TranslationDirectionDecl = "direction", ( "inbound" | "outbound" ), NL ;
 
 SliceBody      = TranslationDirectionDecl
+               | UsesScreenDecl
                | EventDecl
                | OperationDecl
                | CommandDecl
@@ -1804,6 +1807,11 @@ SpecificationStream = "stream", Ident, ".", Ident, NL,
 SpecificationStreamIdParts = "streamId", NL, INDENT, { SpecificationStreamIdPart }, DEDENT ;
 SpecificationStreamIdPart = Ident, "=", ConcreteValue, NL ;
 SpecificationNoStream = "no", "stream", NL ;
+SpecificationTag = "tag", ( Ident | String ), NL ;
+SpecificationNoTags = "no", "tags", NL ;
+(* Only a then event takes SpecificationTag lines (ordered, exact, duplicates kept)
+   or one SpecificationNoTags; the two never mix and take no children (PLAY1148).
+   Tag expectations are executable from ESM v55. *)
 (* A route occurs at most once. Then, redelivery locators and event examples
    accept no stream. Only event examples carry routes; steps replace inherited
    routes as a whole. Routed given and when append require for; then and
@@ -2049,7 +2057,28 @@ ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
 ToolbarConfirm = "confirm", LocalizableString, NL ;   (* asked before the command runs or the dialog opens *)
 
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
-                 [ "by", Ident ], NL ;
+                 [ "by", Ident ], NL
+               | NeedDecl ;
+
+(* A need: data a free screen reads and an adopting slice provides. The type is a shape name, a list
+   when it ends in "[]"; "as" tells two needs of one shape apart, and the alias names the need in the
+   screen's directives and in the provision. A malformed data directive is PLAY0104.                  *)
+NeedDecl       = "data", Ident, [ "[]" ], [ "as", Ident ], NL ;
+
+(* A shape is the typed contract of the data a screen needs. Fields are written like a read model's
+   properties but carry no key, identifier, subject or generated modifier; a shape is declared once, at the
+   top level of a document. PLAY1149 malformed or misplaced, PLAY1151 declared twice.                       *)
+ShapeDecl      = "shape", Ident, NL,
+                 INDENT, [ DescriptionDecl ], { PropertyDecl }, DEDENT ;
+
+(* A slice adopts a screen declared elsewhere and provides each need from a query of its own. A mapping
+   says which read model path provides a field whose name differs. PLAY1150 malformed, PLAY1154 adopted
+   twice, PLAY1155 a need is not provided, PLAY1156-PLAY1163 the provision does not hold, PLAY1164 a free
+   screen nothing adopts is design-only.                                                                  *)
+UsesScreenDecl = "uses", "screen", Ident, NL,
+                 [ INDENT, { ProvisionDecl }, DEDENT ] ;
+ProvisionDecl  = "data", Ident, "via", "query", QualifiedName, [ "by", Ident ], NL,
+                 [ INDENT, { Ident, "from", Path, NL }, DEDENT ] ;
 
 ActionSubject  = "for", ( "item" | "screen" ) ;
 

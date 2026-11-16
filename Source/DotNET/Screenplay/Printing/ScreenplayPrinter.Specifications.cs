@@ -271,6 +271,8 @@ public partial class ScreenplayPrinter
         {
             WriteSpecificationEventSource(writer, @event.For);
             WriteSpecificationRoute(writer, @event.Stream, @event.NoStream);
+            WriteTags(writer, @event.Tags);
+            if (@event.NoTags is { } noTags) writer.Line("no tags", noTags);
             WriteSpecificationValues(writer, @event.Values.Where(value => value.Property != ScalarInline(@event.Values, @event.InlineProperty)));
         }
     }

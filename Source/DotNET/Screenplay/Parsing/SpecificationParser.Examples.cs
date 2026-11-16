@@ -41,6 +41,7 @@ internal static partial class SpecificationParser
     static FixtureBody ParseFixtureBody(ParserContext context, SourceLine parent, Match? inline = null, bool allowGenerated = false, string? example = null)
     {
         var body = new FixtureBody();
+        var tagExpectations = new TagExpectations(context, null);
         AddInlineValue(context, parent, inline, body.Values);
         while (context.TryPeekChild(parent.Indent, out var child))
         {
@@ -89,11 +90,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            if (mapping.Success)
-            {
-                AddFixtureValue(context, body.Values, ParseSpecificationMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child), body.Generated);
-                continue;
-            }
+            if (tagExpectations.TryParseValue(child, mapping, body.Values, body.Generated)) continue;
 
             if (LineText.FirstWord(child.Content) == "for")
             {

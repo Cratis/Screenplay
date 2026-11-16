@@ -43,6 +43,8 @@ import { parseQuery } from './QueryParser';
 import { parseReaction } from './ReactionParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { parseScreen } from './ScreenParser';
+import { isScreenAdoption, parseScreenAdoption } from './ScreenAdoptionParser';
+import type { UsesScreenSyntax } from '../Syntax/Shapes';
 import { parseExample } from './SpecificationExampleParser';
 import { parseSpecification } from './SpecificationParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -92,6 +94,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const graphProjections: GraphProjectionSyntax[] = [];
     const graphQueries: GraphQuerySyntax[] = [];
     const screens: ScreenSyntax[] = [];
+    const usedScreens: UsesScreenSyntax[] = [];
     const reducers: ReducerSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -151,6 +154,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             readModels.push(parseReadModel(context, child));
         } else if (keyword === 'screen') {
             screens.push(parseScreen(context, child));
+        } else if (keyword === 'uses' && isScreenAdoption(child.content)) {
+            usedScreens.push(parseScreenAdoption(context, child));
         } else if (opaqueMembers.has(keyword)) {
             reducers.push(captureReducer(context, child));
             context.skipOpaqueBlock(child.indent);
@@ -161,7 +166,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     const syntax: SliceSyntax = {
-        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, ...(provides.length > 0 ? { provides } : {}), ...(available.length > 0 ? { available } : {}), ...(placements.length > 0 ? { placements } : {}), events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, ...(graphs.length > 0 ? { graphs } : {}), ...(graphProjections.length > 0 ? { graphProjections } : {}), ...(graphQueries.length > 0 ? { graphQueries } : {}), screens,
+        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, ...(provides.length > 0 ? { provides } : {}), ...(available.length > 0 ? { available } : {}), ...(placements.length > 0 ? { placements } : {}), ...(usedScreens.length > 0 ? { usedScreens } : {}), events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, ...(graphs.length > 0 ? { graphs } : {}), ...(graphProjections.length > 0 ? { graphProjections } : {}), ...(graphQueries.length > 0 ? { graphQueries } : {}), screens,
         location: locationOf(line),
     };
     dependencySources.set(syntax, { reducers });

@@ -15,7 +15,12 @@ internal static partial class SemanticModelValidator
 
     // ESM v52 constructs: extension components placed on screens, and the extensions a screen needs because of them.
     internal static bool UsesExtensionComponents(SemanticApplication application) =>
-        SlicesOf(application).SelectMany(slice => slice.Screens).Any(screen => !screen.Components.IsDefaultOrEmpty || !screen.Extensions.IsDefaultOrEmpty);
+        SlicesOf(application).SelectMany(slice => slice.Screens).Concat(application.Screens).Any(screen => !screen.Components.IsDefaultOrEmpty || !screen.Extensions.IsDefaultOrEmpty);
+
+    // ESM v56 constructs: screens declared free of any slice, the needs a screen leaves to its adopters, and the adoptions.
+    internal static bool UsesFreeScreens(SemanticApplication application) =>
+        !application.Screens.IsDefaultOrEmpty ||
+        SlicesOf(application).Any(slice => !slice.Adoptions.IsDefaultOrEmpty || slice.Screens.Any(screen => !screen.Needs.IsDefaultOrEmpty));
 
     static void ValidateScreenVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
@@ -24,6 +29,14 @@ internal static partial class SemanticModelValidator
             SemanticVersion.V42,
             "An ESM v42 model must declare a screen.",
             "Screens require ESM v42.");
+
+    static void ValidateFreeScreenVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesFreeScreens(application),
+            version,
+            SemanticVersion.V56,
+            "An ESM v56 model must declare a free screen or a screen adoption.",
+            "Free screens and screen adoptions require ESM v56.");
 
     static void ValidateExtensionComponentVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
@@ -48,11 +61,83 @@ internal static partial class SemanticModelValidator
             }
         }
 
+        void RegisterFreeScreens(SemanticApplication application)
+        {
+            RequireObjects(application.Screens, nameof(application.Screens), "free screen");
+            foreach (var screen in application.Screens)
+            {
+                Register(screen.Id, screen.Name, "free screen");
+                _screens.Add(screen.Id, screen);
+            }
+        }
+
+        void ValidateFreeScreens(SemanticApplication application)
+        {
+            foreach (var screen in application.Screens)
+            {
+                ValidateOwner(screen.Id, () => ValidateScreen(screen));
+            }
+        }
+
         void ValidateScreens(SemanticSlice slice)
         {
             foreach (var screen in slice.Screens)
             {
                 ValidateOwner(screen.Id, () => ValidateScreen(screen));
+                if (!screen.Needs.IsDefaultOrEmpty) throw new InvalidSemanticContract($"Screen '{screen.Name}' of slice '{slice.Name}' needs data nothing can provide; only a free screen has needs.");
+            }
+
+            RequireObjects(slice.Adoptions, nameof(slice.Adoptions), "screen adoption");
+            var adopted = new HashSet<SemanticId>();
+            foreach (var adoption in slice.Adoptions)
+            {
+                if (!adopted.Add(adoption.Screen)) throw new InvalidSemanticContract($"Slice '{slice.Name}' adopts screen '{adoption.Screen}' more than once.");
+                ValidateAdoption(slice, adoption);
+            }
+        }
+
+        void ValidateAdoption(SemanticSlice slice, SemanticScreenAdoption adoption)
+        {
+            var screen = _eventRoutesApplication.Screens.FirstOrDefault(candidate => candidate.Id == adoption.Screen)
+                ?? throw new InvalidSemanticContract($"Slice '{slice.Name}' adopts unknown free screen '{adoption.Screen}'.");
+            RequireObjects(adoption.Provisions, nameof(adoption.Provisions), "screen provision");
+            var provided = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var provision in adoption.Provisions)
+            {
+                var need = screen.Needs.FirstOrDefault(candidate => candidate.Name == provision.Need)
+                    ?? throw new InvalidSemanticContract($"Slice '{slice.Name}' provides '{provision.Need}', which screen '{screen.Name}' does not need.");
+                if (!provided.Add(provision.Need)) throw new InvalidSemanticContract($"Slice '{slice.Name}' provides need '{provision.Need}' of screen '{screen.Name}' more than once.");
+                if (!_queries.TryGetValue(provision.Query, out var query)) throw new InvalidSemanticContract($"Slice '{slice.Name}' provides need '{provision.Need}' of screen '{screen.Name}' from unknown query '{provision.Query}'.");
+                if (query.Cardinality == SemanticQueryCardinality.Many != need.Many)
+                {
+                    throw new InvalidSemanticContract($"Slice '{slice.Name}' provides need '{provision.Need}' of screen '{screen.Name}' from query '{query.Name}', which does not return {(need.Many ? "a list" : "a single value")}.");
+                }
+
+                RequireObjects(provision.Fields, nameof(provision.Fields), "screen provision field");
+                foreach (var field in provision.Fields)
+                {
+                    RequireText(field.Field, $"Screen '{screen.Name}' provision field");
+                    RequireText(field.Path, $"Screen '{screen.Name}' provision path");
+                }
+            }
+
+            foreach (var need in screen.Needs.Where(need => !provided.Contains(need.Name)))
+            {
+                throw new InvalidSemanticContract($"Slice '{slice.Name}' adopts screen '{screen.Name}' but does not provide its need '{need.Name}' of shape '{need.Shape}'.");
+            }
+        }
+
+        void ValidateScreenNeeds(SemanticScreen screen, string owner)
+        {
+            if (screen.Needs.IsDefaultOrEmpty) return;
+            RequireObjects(screen.Needs, nameof(screen.Needs), "screen need");
+            RejectDuplicateNames(screen.Needs.Select(_ => _.Name), $"need of screen '{screen.Name}'");
+            foreach (var need in screen.Needs)
+            {
+                RequireText(need.Name, $"{owner} need");
+                RequireText(need.Shape, $"{owner} need shape");
+                RequireObjects(need.Fields, nameof(need.Fields), "screen need field");
+                foreach (var field in need.Fields) RequireText(field.Property, $"{owner} need field");
             }
         }
 
@@ -72,6 +157,7 @@ internal static partial class SemanticModelValidator
                 RequireText(navigation.Trigger, $"{owner} navigation trigger");
             }
 
+            ValidateScreenNeeds(screen, owner);
             ValidateScreenComponents(screen, owner);
             RequireArray(screen.Layout.Fits, "fits");
             foreach (var fit in screen.Layout.Fits) RequireText(fit, $"{owner} fit");

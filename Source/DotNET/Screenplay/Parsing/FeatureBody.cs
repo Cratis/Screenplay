@@ -17,10 +17,11 @@ internal sealed class FeatureBody(string name)
     /// <summary>
     /// What a feature body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, contribute, outlet, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, screen, contribute, outlet, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<FeatureSyntax> _features = [];
     readonly List<SliceSyntax> _slices = [];
+    readonly List<ScreenSyntax> _screens = [];
     readonly List<SpecificationExampleSyntax> _examples = [];
     readonly Dictionary<string, SourceLocation> _directiveLocations = [];
     readonly List<ContributionSyntax> _contributions = [];
@@ -110,6 +111,9 @@ internal sealed class FeatureBody(string name)
             case "slice":
                 _slices.Add(SliceParser.Parse(context, line));
                 return true;
+            case "screen" when !ScreenParser.IsTemplateHeader(line.Content):
+                _screens.Add(ScreenParser.Parse(context, line));
+                return true;
             case "contribute":
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
@@ -152,6 +156,7 @@ internal sealed class FeatureBody(string name)
             Templates = _templates,
             Purposes = _purposes,
             Provides = _provides,
+            Screens = _screens,
             Available = _available,
             Outlets = _outlets,
             RetiredForms = _retiredForms.Count == 0 ? [] : [.. _retiredForms]

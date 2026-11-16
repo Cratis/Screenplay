@@ -44,6 +44,7 @@ internal static partial class PlayFolderMerge
             Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"module '{group.Key}'", context),
             Purposes = [.. parts.SelectMany(part => part.Purposes).DistinctBy(purpose => purpose.Name)],
             Provides = [.. parts.SelectMany(part => part.Provides)],
+            Screens = [.. parts.SelectMany(part => part.Screens)],
             Available = [.. parts.SelectMany(part => part.Available)],
             Authorize = parts.Exists(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
                 ? null
@@ -108,6 +109,7 @@ internal static partial class PlayFolderMerge
             Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"feature '{group.Key}'", context),
             Purposes = [.. parts.SelectMany(part => part.Purposes).DistinctBy(purpose => purpose.Name)],
             Provides = [.. parts.SelectMany(part => part.Provides)],
+            Screens = [.. parts.SelectMany(part => part.Screens)],
             Available = [.. parts.SelectMany(part => part.Available)],
             Authorize = parts.Exists(part => AuthorizeParser.OwnerWasRefused(part.FileImports))
                 ? null

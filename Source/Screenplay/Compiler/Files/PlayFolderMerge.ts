@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineSyntax } from '../Syntax/Storylines';
+import type { ShapeSyntax } from '../Syntax/Shapes';
 import { validateAgents } from '../Parsing/AgentsValidator';
 import { mergeStructuralInteractions } from '../Parsing/StructuralInteractionSites';
 import { validateIdentity } from '../Parsing/IdentityValidator';
@@ -81,6 +82,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
     const users = declaredInOneFile<UserSyntax>(applications.flatMap(application => application.users ?? []), 'user', diagnostics);
     const storylines = declaredInOneFile<StorylineSyntax>(applications.flatMap(application => application.storylines ?? []), 'storyline', diagnostics);
+    const shapes = declaredInOneFile<ShapeSyntax>(applications.flatMap(application => application.shapes ?? []), 'shape', diagnostics);
+    const screens = applications.flatMap(application => application.screens ?? []);
     const declaredPolicies = applications.flatMap(application => application.policies ?? []);
     const policies = declaredInOneFile(declaredPolicies, 'policy', diagnostics);
     // Like the C# merge, a policy dropped as repeated across files is not also reported as repeated within its file.
@@ -112,6 +115,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         personas,
         ...presentOnly('users', users),
         ...presentOnly('storylines', storylines),
+        ...presentOnly('shapes', shapes),
+        ...presentOnly('screens', screens),
         ...presentOnly('sinks', applications.flatMap(application => application.sinks ?? [])),
         policies,
         seeds: applications.flatMap(application => application.seeds ?? []),

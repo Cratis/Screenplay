@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Declares the language and semantic version pairs of ESM schema v55, which adds provided values computed by a file or a code block.
+/// Declares the language and semantic version pairs of ESM schema v55, which adds exact ordered tag expectations on then events.
 /// </summary>
 public static class EsmSchemaV55Support
 {
