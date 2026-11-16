@@ -96,6 +96,7 @@ internal static partial class WorkspaceIdentifierSpans
             (FormPopulateViaQuerySyntax, "query") => keyword == "populate",
             (ScreenNavigateSyntax, "screen") => keyword == "navigate" || keyword == "on",
             (NamedTriggerSourceSyntax, "name") => keyword == "when",
+            (ProvideSyntax, "name") => keyword == "provide",
             (ComparisonConditionSyntax, "left") or (ContextExpressionSyntax, "path") => line.Contains(ContextPrefix, StringComparison.Ordinal),
             _ => false
         };
@@ -116,6 +117,12 @@ internal static partial class WorkspaceIdentifierSpans
         if (node is ContextExpressionSyntax && member == "path")
         {
             return ContextReads(line, ContextPrefix + expected, ContextPrefix.Length);
+        }
+
+        if (node is ProvideSyntax && member == "name")
+        {
+            var name = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1);
+            return name == expected ? [(line.IndexOf(name, "provide".Length, StringComparison.Ordinal), name.Length)] : [];
         }
 
         if (node is EventSyntax && member == "name")
