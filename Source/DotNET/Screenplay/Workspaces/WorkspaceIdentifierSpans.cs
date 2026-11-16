@@ -12,12 +12,10 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal static partial class WorkspaceIdentifierSpans
 {
-    const string ContextPrefix = "$context.";
-
     internal static bool Supports(SyntaxNode node, string member, string line)
     {
         var keyword = line.Split(' ', '\t')[0];
-        return (node, member) switch
+        return WorkspaceProvideSpans.Supports(node, member, line) ?? (node, member) switch
         {
             (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
             (SpecificationSyntax, "name") => keyword == "specification",
@@ -96,8 +94,6 @@ internal static partial class WorkspaceIdentifierSpans
             (FormPopulateViaQuerySyntax, "query") => keyword == "populate",
             (ScreenNavigateSyntax, "screen") => keyword == "navigate" || keyword == "on",
             (NamedTriggerSourceSyntax, "name") => keyword == "when",
-            (ProvideSyntax, "name") => keyword == "provide",
-            (ComparisonConditionSyntax, "left") or (ContextExpressionSyntax, "path") => line.Contains(ContextPrefix, StringComparison.Ordinal),
             _ => false
         };
     }
@@ -109,20 +105,9 @@ internal static partial class WorkspaceIdentifierSpans
             return Find(line, expected).Where(span => span.Offset == offset);
         }
 
-        if (node is ComparisonConditionSyntax && member == "left")
+        if (WorkspaceProvideSpans.Find(node, member, line, expected) is { } provided)
         {
-            return ContextReads(line, expected, 0);
-        }
-
-        if (node is ContextExpressionSyntax && member == "path")
-        {
-            return ContextReads(line, ContextPrefix + expected, ContextPrefix.Length);
-        }
-
-        if (node is ProvideSyntax && member == "name")
-        {
-            var name = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1);
-            return name == expected ? [(line.IndexOf(name, "provide".Length, StringComparison.Ordinal), name.Length)] : [];
+            return provided;
         }
 
         if (node is EventSyntax && member == "name")
@@ -165,22 +150,6 @@ internal static partial class WorkspaceIdentifierSpans
         }
 
         return Find(line, expected);
-    }
-
-    // A rename changes only the text after $context.; a read is the whole token so a longer name or path never matches by prefix.
-    static IEnumerable<(int Offset, int Length)> ContextReads(string line, string token, int skip)
-    {
-        var comment = SourceLineSplitter.CommentStart(line);
-        if (comment >= 0) line = line[..comment];
-
-        for (var at = line.IndexOf(token, StringComparison.Ordinal); at >= 0; at = line.IndexOf(token, at + 1, StringComparison.Ordinal))
-        {
-            var end = at + token.Length;
-            if ((at == 0 || !(char.IsLetterOrDigit(line[at - 1]) || line[at - 1] is '_' or '.' or '$')) && (end == line.Length || !(char.IsLetterOrDigit(line[end]) || line[end] is '_' or '.')))
-            {
-                yield return (at + skip, token.Length - skip);
-            }
-        }
     }
 
     internal static IEnumerable<(int Offset, int Length)> Find(string line, string expected)

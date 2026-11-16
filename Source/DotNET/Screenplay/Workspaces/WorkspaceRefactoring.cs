@@ -40,6 +40,8 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         }
     }
 
+    internal static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
+
     internal WorkspaceAuthoringResult Rename(WorkspaceRenameRequest request)
     {
         if (request is null)
@@ -169,8 +171,6 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring($"Cannot merge distinct logical {target.Address!.Kind} declarations by renaming '{target.Address.Name}' to '{newName}'.");
         }
     }
-
-    internal static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
 
     static EventSyntax[] ConsistentGenerations(IEnumerable<EventSyntax> declarations)
     {
