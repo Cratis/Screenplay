@@ -15,7 +15,7 @@ internal static partial class WorkspaceIdentifierSpans
     internal static bool Supports(SyntaxNode node, string member, string line)
     {
         var keyword = line.Split(' ', '\t')[0];
-        return (node, member) switch
+        return WorkspaceProvideSpans.Supports(node, member, line) ?? (node, member) switch
         {
             (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
             (SpecificationSyntax, "name") => keyword == "specification",
@@ -103,6 +103,11 @@ internal static partial class WorkspaceIdentifierSpans
         if (identifierOffset is { } offset)
         {
             return Find(line, expected).Where(span => span.Offset == offset);
+        }
+
+        if (WorkspaceProvideSpans.Find(node, member, line, expected) is { } provided)
+        {
+            return provided;
         }
 
         if (node is EventSyntax && member == "name")

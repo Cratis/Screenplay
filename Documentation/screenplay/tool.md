@@ -594,7 +594,10 @@ Rename a module, feature, slice or declaration through the same proposal and app
 ```bash
 screenplay rename Billing.Invoices.Send.InvoiceSent InvoiceDispatched path/to/screenplays
 screenplay rename Billing.Invoices.Send.Invoice Bill --kind Command
+screenplay rename Billing.Invoices.vessel ship
 ```
+
+A `provide` declaration is addressed by the module, feature or slice it is declared at plus its name (just the name at the application level). Renaming it also rewrites its overrides and the `$context.<name>` reads that resolve to it; it has no semantic identity to keep.
 
 The address is the dotted path to the declaration, and the folder defaults to the current directory. Pass `--kind` (`Command`, `EventContract`, `ReadModel`, ...) when the address names more than one declaration. The rename repairs references across files, keeps the declaration's semantic identity, pins a renamed event's stored type name with `id`, and writes `.screenplay/identities.json` exactly as an MCP apply does, creating it on the first rename. It exits `0` when renamed, `1` when the rename was refused and `2` when it could not run.
 
