@@ -1232,7 +1232,7 @@ ESM v26 admits chronological Date/DateTime comparisons only in command `require`
 
 ESM v28 admits Uuid `==` and `!=` only in command `require` and `produces when`. `PLAY0268` refuses ordering, optional or collection operands, two different Uuid concepts, Uuid against text, `$context`, reaction `where`, and Uuid in validation rules and concept rules; a refused whole comparison reports only this code, without checking its literal. In an admitted comparison, a literal that is not a lowercase hyphenated 36-character Uuid reports `PLAY0273`. See [Uuid equality in command conditions](commands.md#uuid-equality-in-command-conditions).
 
-A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet.
+A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet. A `provide` from a file or code block no longer reports it: ESM v57 admits that value as an implementation attachment (decision 0167).
 
 For executable-model dispositions, see `PLAY0268`–`PLAY0271` above and `PLAY0800` under [commands](#commands), [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 

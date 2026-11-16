@@ -29,6 +29,12 @@ internal static partial class SemanticModelValidator
         SlicesOf(application).Any(slice => slice.Specifications.Any(specification =>
             !specification.ThenEvents.IsDefaultOrEmpty && specification.ThenEvents.Any(value => value.ExpectedTags is not null)));
 
+    // ESM v57 constructs: a provided value computed by a file or an inline code block.
+    internal static bool UsesCodeProvides(SemanticApplication application) =>
+        HasCodeProvide(application.Provides) ||
+        application.Modules.Any(module => HasCodeProvide(module.Provides) || module.Features.Any(UsesCodeProvides)) ||
+        SlicesOf(application).Any(slice => HasCodeProvide(slice.Provides));
+
     static void ValidateExpectedTagsVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
             UsesExpectedTags(application),
@@ -40,8 +46,20 @@ internal static partial class SemanticModelValidator
     static bool UsesAvailability(SemanticFeature feature) =>
         !feature.Available.IsDefaultOrEmpty || !feature.Provides.IsDefaultOrEmpty || feature.Features.Any(UsesAvailability);
 
+    static bool UsesCodeProvides(SemanticFeature feature) =>
+        HasCodeProvide(feature.Provides) || feature.Features.Any(UsesCodeProvides);
+
+    static bool HasCodeProvide(ImmutableArray<SemanticProvidedValue> provides) =>
+        !provides.IsDefaultOrEmpty && provides.Any(provided => provided.Source is SemanticCodeProvideSource);
+
     static void ValidateAvailabilityVersion(SemanticApplication application, SemanticVersion version)
     {
+        ValidateFeatureVersion(
+            UsesCodeProvides(application),
+            version,
+            SemanticVersion.V57,
+            "An ESM v57 model must declare a provided value computed by a file or a code block.",
+            "A provided value computed by a file or a code block requires ESM v57.");
         ValidateFeatureVersion(
             UsesAvailability(application),
             version,
@@ -160,19 +178,27 @@ internal static partial class SemanticModelValidator
             RequireName(provided.Name, "provided value");
             if ((provided.Type is null) == (provided.ReadModel is null)) throw new InvalidSemanticContract($"Provided value '{provided.Name}' needs exactly one of a type or a read model.");
             if (_reservedProvideNames.Contains(provided.Name)) throw new InvalidSemanticContract($"'{provided.Name}' is a built-in context name and cannot be provided.");
-            switch (provided.Source)
-            {
-                case SemanticQueryProvideSource query:
-                    if (!queries.Contains(query.Query)) throw new InvalidSemanticContract($"Provided value '{provided.Name}' names an unknown query.");
-                    foreach (var operand in query.By.IsDefault ? [] : query.By) ValidateContextOperand(operand);
-                    break;
-                case SemanticHostProvideSource:
-                    break;
-                case SemanticValueProvideSource value:
-                    ValidateContextOperand(value.Value);
-                    break;
-                default: throw new InvalidSemanticContract($"Provided value '{provided.Name}' has an unknown source.");
-            }
+            ValidateProvideSource(provided, queries);
+        }
+    }
+
+    static void ValidateProvideSource(SemanticProvidedValue provided, HashSet<SemanticId> queries)
+    {
+        switch (provided.Source)
+        {
+            case SemanticQueryProvideSource query:
+                if (!queries.Contains(query.Query)) throw new InvalidSemanticContract($"Provided value '{provided.Name}' names an unknown query.");
+                foreach (var operand in query.By.IsDefault ? [] : query.By) ValidateContextOperand(operand);
+                break;
+            case SemanticHostProvideSource:
+                break;
+            case SemanticValueProvideSource value:
+                ValidateContextOperand(value.Value);
+                break;
+            case SemanticCodeProvideSource code:
+                RequireName(code.Implementation, $"implementation requirement of provided value '{provided.Name}'");
+                break;
+            default: throw new InvalidSemanticContract($"Provided value '{provided.Name}' has an unknown source.");
         }
     }
 

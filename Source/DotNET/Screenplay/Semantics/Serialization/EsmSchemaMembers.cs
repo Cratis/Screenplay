@@ -191,7 +191,7 @@ internal static class EsmSchemaMembers
         ["AvailabilityCondition"] = "kind:s path:s operator:s operand:1 left:1 right:1",
         ["ContextOperand"] = "path:s value:1",
         ["Provide"] = "name:s type:1 readModel:s optional:b collection:b source:1",
-        ["ProvideSource"] = "kind:s query:s by:[] value:1"
+        ["ProvideSource"] = "kind:s query:s by:[] value:1 requirementId:s"
     }.ToImmutableDictionary(
         pair => Enum.Parse<EsmBaselineShape>(pair.Key),
         pair => pair.Value.Split(' ').Select(member => member.Split(':')).Select(parts => (parts[0], parts[1])).ToImmutableArray());
