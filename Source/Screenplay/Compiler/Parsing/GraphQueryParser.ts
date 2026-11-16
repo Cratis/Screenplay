@@ -4,7 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { ExpressionSyntax } from '../Syntax/Expressions';
-import { GraphConditionSyntax, GraphMatchSyntax, GraphPatternHopSyntax, GraphPatternNodeSyntax, GraphQuerySyntax, GraphReturnSyntax } from '../Syntax/Graphs';
+import { GraphCollectSyntax, GraphConditionSyntax, GraphMatchSyntax, GraphPatternHopSyntax, GraphPatternNodeSyntax, GraphQuerySyntax, GraphReturnSyntax } from '../Syntax/Graphs';
 import { QueryParameterSyntax } from '../Syntax/Queries';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { pattern } from '../Text/patterns';
@@ -24,6 +24,8 @@ const hopPattern = /\s*(?:-(?:([A-Za-z_]\w*):)?([A-Za-z_]\w*)->|<-(?:([A-Za-z_]\
 const conditionPattern = pattern('^([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)\\s*=\\s*(.+)$');
 const argumentPattern = pattern('^\\$[A-Za-z_]\\w*$');
 const returnPattern = pattern('^([A-Za-z_]\\w*)\\s*=\\s*([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
+const collectPattern = pattern('^([A-Za-z_]\\w*)\\s*=\\s*collect(?:\\s+(.*))?$');
+const collectStartPattern = /^([A-Za-z_]\w*)/u;
 
 // Whether a 'query' header declares a graph query: it ends in 'graph <Graph>'.
 export function isGraphQueryHeader(content: string): boolean {
@@ -43,6 +45,7 @@ export function parseGraphQuery(context: ParserContext, line: SourceLine): Graph
     const matches: GraphMatchSyntax[] = [];
     const conditions: GraphConditionSyntax[] = [];
     const returns: GraphReturnSyntax[] = [];
+    const collects: GraphCollectSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const word = firstWord(child.content);
@@ -61,7 +64,7 @@ export function parseGraphQuery(context: ParserContext, line: SourceLine): Graph
         } else if (word === 'where') {
             parseWhere(context, child, conditions);
         } else if (word === 'return') {
-            parseReturn(context, child, returns);
+            parseReturn(context, child, returns, collects);
         } else {
             context.error(DiagnosticCodes.InvalidGraphQuery, `Unexpected '${child.content}' in graph query body - expected description, by, filter, authorize, match, optional match, where or return`, locationOf(child));
             context.skipBlock(child.indent);
@@ -70,12 +73,12 @@ export function parseGraphQuery(context: ParserContext, line: SourceLine): Graph
     if (matches.length === 0 || matches.every(candidate => candidate.isOptional)) {
         context.error(DiagnosticCodes.InvalidGraphQuery, `Graph query '${name}' needs at least one 'match' (not 'optional match')`, locationOf(line));
     }
-    if (returns.length === 0) {
+    if (returns.length === 0 && collects.length === 0) {
         context.error(DiagnosticCodes.InvalidGraphQuery, `Graph query '${name}' needs a 'return' block that assigns the read model's properties`, locationOf(line));
     }
     return {
         kind: 'GraphQuerySyntax', name, returnType, graph: match[4], by, filters, authorize, matches, conditions, returns,
-        isObservable: match[2] !== undefined, description, location: locationOf(line),
+        isObservable: match[2] !== undefined, description, ...(collects.length > 0 ? { collects } : {}), location: locationOf(line),
     };
 }
 
@@ -166,7 +169,7 @@ function parseWhere(context: ParserContext, line: SourceLine, conditions: GraphC
     }
 }
 
-function parseReturn(context: ParserContext, line: SourceLine, returns: GraphReturnSyntax[]): void {
+function parseReturn(context: ParserContext, line: SourceLine, returns: GraphReturnSyntax[], collects: GraphCollectSyntax[]): void {
     if (line.content !== 'return') {
         context.error(DiagnosticCodes.InvalidGraphQuery, `Invalid '${line.content}' - expected 'return' followed by one '<property> = <alias>.<property>' line per read-model property`, locationOf(line));
         context.skipBlock(line.indent);
@@ -174,6 +177,12 @@ function parseReturn(context: ParserContext, line: SourceLine, returns: GraphRet
     }
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        const collect = collectPattern.exec(child.content);
+        if (collect !== null) {
+            const parsed = parseCollect(context, child, collect);
+            if (parsed !== undefined) collects.push(parsed);
+            continue;
+        }
         const assignment = returnPattern.exec(child.content);
         if (assignment === null) {
             context.error(DiagnosticCodes.InvalidGraphQuery, `Invalid return '${child.content}' - expected '<property> = <alias>.<property>'`, locationOf(child));
@@ -181,4 +190,51 @@ function parseReturn(context: ParserContext, line: SourceLine, returns: GraphRet
         }
         returns.push({ kind: 'GraphReturnSyntax', property: assignment[1], alias: assignment[2], source: assignment[3], location: locationOf(child) });
     }
+}
+
+// '<property> = collect <root> -[alias:]TYPE-> [alias:]Label' and one '<property> = <alias>.<property>' line per row property beneath it.
+function parseCollect(context: ParserContext, line: SourceLine, collect: RegExpExecArray): GraphCollectSyntax | undefined {
+    const property = collect[1];
+    const text = (collect[2] ?? '').trimEnd();
+    const offset = line.content.length - (collect[2] ?? '').length;
+    const start = collectStartPattern.exec(text);
+    let hop: RegExpExecArray | null = null;
+    if (start !== null) {
+        hopPattern.lastIndex = start[0].length;
+        hop = hopPattern.exec(text);
+    }
+    const rows: GraphReturnSyntax[] = [];
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        if (collectPattern.test(child.content)) {
+            context.error(DiagnosticCodes.NestedGraphCollect, `'${child.content}' collects inside a collect - this version collects one level of rows; follow the edge from the root in a collect of its own`, locationOf(child));
+            context.skipBlock(child.indent);
+            continue;
+        }
+        const assignment = returnPattern.exec(child.content);
+        if (assignment === null) {
+            context.error(DiagnosticCodes.InvalidGraphCollect, `Invalid collected row '${child.content}' - expected '<property> = <alias>.<property>' naming the collected node or edge`, locationOf(child));
+            context.skipBlock(child.indent);
+            continue;
+        }
+        rows.push({ kind: 'GraphReturnSyntax', property: assignment[1], alias: assignment[2], source: assignment[3], location: locationOf(child) });
+    }
+    if (start === null || hop === null || start[0].length + hop[0].length !== text.length) {
+        context.error(DiagnosticCodes.InvalidGraphCollect, `Invalid collect '${text}' - expected '<root> -[alias:]TYPE-> [alias:]Label' or '<root> <-[alias:]TYPE- [alias:]Label': one edge from the query's root`, locationOf(line));
+        return undefined;
+    }
+    if (rows.length === 0) {
+        context.error(DiagnosticCodes.InvalidGraphCollect, `Collect '${property}' needs one '<property> = <alias>.<property>' line per property of its row`, locationOf(line));
+    }
+    const at = (position: number): SourceLocation => ({ ...locationOf(line), column: line.indent + 1 + offset + position });
+    const outgoing = hop[2] !== undefined;
+    const hopOffset = start[0].length;
+    return {
+        kind: 'GraphCollectSyntax', property, from: start[1],
+        hop: {
+            kind: 'GraphPatternHopSyntax', alias: (outgoing ? hop[1] : hop[3]) ?? null, type: outgoing ? hop[2] : hop[4], outgoing,
+            node: node(hop[5], hop[6], at(hopOffset + hop[0].length - hop[6].length)), location: at(hopOffset),
+        },
+        returns: rows, location: locationOf(line),
+    };
 }

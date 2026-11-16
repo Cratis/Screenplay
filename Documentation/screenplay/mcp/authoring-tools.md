@@ -382,6 +382,24 @@ stale revision, apply, reopen.
 | The template a new screen starts from | `NewScreenTemplateSyntax` | `replace` the `name`, `blueprint` or `version`; `remove` |
 | A sample data pack and the pack the profile selects | `SampleDataPackSyntax`, `SampleDataSelectionSyntax` | `replace` a row value or the `active` pack; `remove` a pack - see [Sample data](../sample-data.md) |
 
+### Author a free screen and its adoption
+
+A screen declared free of any slice, the shape of the data it needs and the slice that adopts it are typed syntax too
+([Free screens](../screens.md#free-screens-declare-a-screen-first-let-a-slice-adopt-it)).
+
+| Construct | `read-ast` kind | Edit it with |
+| --- | --- | --- |
+| A shape, the typed contract of a screen's data | `ShapeSyntax` | `add` a `PropertySyntax` to `properties`; `replace` a field's name or type; `remove` a field or the shape |
+| A free screen at the top level, in a module or in a feature | `ScreenSyntax` | `add` to `screens` on an `ApplicationSyntax`, `ModuleSyntax` or `FeatureSyntax`; `replace` its directives; `remove` |
+| A need a screen leaves to its adopters | `ScreenNeedSyntax` | `replace` the `type` or the `alias`; `add` to a screen's `directives`; `remove` |
+| A slice's adoption of a screen | `UsesScreenSyntax` | `add` to `usedScreens` on a `SliceSyntax`; `replace` the `screen`; `remove` to stop adopting |
+| The query that provides one need | `ScreenProvisionSyntax`, `ScreenProvisionMappingSyntax` | `add` to a `UsesScreenSyntax`'s `provisions` or a provision's `mappings`; `replace` the `need`, `query`, `by`, a mapping's `field` or `path`; `remove` |
+
+A proposal that adopts a screen without providing every need is accepted with warning `PLAY1155`, as it is on disk; only the
+executable-model export refuses it, with a reason that names the screen and the shape. A proposal that provides a need
+wrongly - an unknown need, a query of the wrong cardinality, a field the read model lacks - reports `PLAY1156` to `PLAY1163`
+and cannot be applied under `Authoring` validation.
+
 A member that holds nothing is left out of the node JSON (a module without `outlets`, a toolbar without `buttons`, an
 item without `children`). Adding the first child still works: `add` accepts any member the node kind declares, so
 `add` with `member: "outlets"` on a module that has no outlet yet creates the first one.

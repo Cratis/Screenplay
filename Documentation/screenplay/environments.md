@@ -83,7 +83,7 @@ if (compiled.Success)
 }
 ```
 
-`EnvironmentRequirements` (namespace `Cratis.Screenplay.Environments`, package `Cratis.Screenplay`) holds `Keys` in declaration order and `Secrets`, the keys that must be supplied as secrets. Each `EnvironmentKey` has `Key`, `Source` (`AuthenticationProvider` or `Onboarding`), `Owner`, `Description`, `IsSecret` and `Location`. The requirements are not part of the executable semantic model and do not change its bytes.
+`EnvironmentRequirements` (namespace `Cratis.Screenplay.Environments`, package `Cratis.Screenplay`) holds `Keys` in declaration order and `Secrets`, the keys that must be supplied as secrets. Each `EnvironmentKey` has `Key`, `Source` (`AuthenticationProvider`, `Onboarding`, `Secret` or `SystemSetting`), `Owner`, `Description`, `IsSecret` and `Location`. The requirements are not part of the executable semantic model and do not change its bytes.
 
 ## System settings and named secrets
 
@@ -109,7 +109,7 @@ system Mailer
 
 An unknown setting, an unknown or unused secret and a duplicate mapping are errors; see [diagnostics](diagnostics.md) `PLAY0990` to `PLAY0997`. The `extension`, `setting` and `activation` lines are realization metadata: they change no bytes of the executable model, are exposed on the semantic compilation (`SystemConfigurations` and `Secrets`), and renderers include them in their render input.
 
-`EnvironmentRequirements` lists the implicit keys and the named secrets, each once, with its secret flag. The requirements inventory is implemented in C#; the TypeScript compiler parses and validates the same forms and exposes them on its syntax tree, but does not derive environment requirements.
+`EnvironmentRequirements` lists each named secret once, under `secrets.<Name>`, as a secret. It lists the implicit `systems.<System>.<setting>` keys only when it is given the extension contracts: `EnvironmentRequirements.For(application, contracts)` adds every contract setting the model does not map, with the contract's secret flag. The one-argument `EnvironmentRequirements.For(application)`, the `Environment` of a semantic compilation and `screenplay environment` are not given contracts, so they list no implicit system keys. The requirements inventory is implemented in C#; the TypeScript compiler parses and validates the same forms and exposes them on its syntax tree, but does not derive environment requirements.
 
 See also [Systems and abilities](systems.md). The CLI configuration documentation (Cratis/cli) links back here for the `systems.<System>.<setting>` keys.
 

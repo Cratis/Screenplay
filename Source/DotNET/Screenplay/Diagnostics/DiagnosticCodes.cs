@@ -4585,4 +4585,109 @@ public static class DiagnosticCodes
     /// into a read-model property, so the value becomes part of the read model and its query results.
     /// </summary>
     public const string SecretConceptProjected = "PLAY1142";
+
+    /// <summary>
+    /// A graph query <c>collect</c> is malformed: its line is not <c>&lt;property&gt; = collect &lt;root&gt; -[alias:]TYPE-&gt; [alias:]Label</c>, it does not start at the query's root, or a row line is not <c>&lt;property&gt; = &lt;alias&gt;.&lt;property&gt;</c> naming the collected node or edge.
+    /// </summary>
+    public const string InvalidGraphCollect = "PLAY1144";
+
+    /// <summary>
+    /// A graph query <c>collect</c> does not fit the read model: its property is not a list of a composite type or an optional composite type, or its row does not assign exactly the properties of that type with compatible types.
+    /// </summary>
+    public const string GraphCollectTargetMismatch = "PLAY1145";
+
+    /// <summary>
+    /// A graph query <c>collect</c> is nested inside another <c>collect</c>; this version collects one level of rows.
+    /// </summary>
+    public const string NestedGraphCollect = "PLAY1146";
+
+    /// <summary>
+    /// A graph query that collects does not have the shape of a view: one <c>match</c> of its root node alone, scalar returns from the root, and conditions on the root or a collected node only.
+    /// </summary>
+    public const string GraphCollectQueryShape = "PLAY1147";
+
+    /// <summary>
+    /// An event tag expectation - <c>tag &lt;value&gt;</c> or <c>no tags</c> - is misplaced, repeated, mixed or not a literal.
+    /// </summary>
+    public const string InvalidEventTagExpectation = "PLAY1148";
+
+    /// <summary>
+    /// A <c>shape</c> declaration is malformed: it is not <c>shape &lt;Name&gt;</c> at the top level of a document, or a field line is not <c>&lt;name&gt; &lt;Type&gt;</c> without a key, identifier, subject or generated modifier.
+    /// </summary>
+    public const string InvalidShapeDeclaration = "PLAY1149";
+
+    /// <summary>
+    /// A <c>uses screen</c> adoption is malformed: it is not <c>uses screen &lt;Name&gt;</c> in a slice, a provision is not <c>data &lt;Need&gt; via query &lt;Query&gt; [by &lt;param&gt;]</c>, or a mapping is not <c>&lt;field&gt; from &lt;path&gt;</c>.
+    /// </summary>
+    public const string InvalidScreenAdoption = "PLAY1150";
+
+    /// <summary>
+    /// A <c>shape</c> is declared more than once; a shape is declared once at the top level of the model.
+    /// </summary>
+    public const string DuplicateShape = "PLAY1151";
+
+    /// <summary>
+    /// A screen is declared more than once in the same scope, at the top level of the document, in a module or in a feature.
+    /// </summary>
+    public const string DuplicateScreen = "PLAY1152";
+
+    /// <summary>
+    /// A screen needs the same shape twice without telling the needs apart with <c>as &lt;alias&gt;</c>, or two needs share an alias.
+    /// </summary>
+    public const string DuplicateScreenNeed = "PLAY1153";
+
+    /// <summary>
+    /// A slice adopts the same screen with <c>uses screen</c> more than once.
+    /// </summary>
+    public const string DuplicateScreenAdoption = "PLAY1154";
+
+    /// <summary>
+    /// A screen a slice adopts, or declares, needs data no <c>uses screen</c> provision of the slice provides. A warning until the model arrives; the release gate and executable screen admission refuse it.
+    /// </summary>
+    public const string UnprovidedScreenNeed = "PLAY1155";
+
+    /// <summary>
+    /// A provision names a shape or alias that the adopted screen does not need.
+    /// </summary>
+    public const string UnknownScreenNeed = "PLAY1156";
+
+    /// <summary>
+    /// A provision names data the adopted screen already sources with <c>data &lt;ReadModel&gt; via query</c>; a provision never overrides a source the screen resolves.
+    /// </summary>
+    public const string ProvisionOverridesScreenSource = "PLAY1157";
+
+    /// <summary>
+    /// One <c>uses screen</c> provides the same need more than once.
+    /// </summary>
+    public const string DuplicateScreenProvision = "PLAY1158";
+
+    /// <summary>
+    /// A provision's query returns a list where the screen needs a single value, or a single value where it needs a list.
+    /// </summary>
+    public const string ScreenNeedCardinalityMismatch = "PLAY1159";
+
+    /// <summary>
+    /// A field the adopted screen reads, or its shape declares, is not a property of the providing query's read model - by the same name or by a <c>from</c> mapping.
+    /// </summary>
+    public const string ProvisionFieldMissing = "PLAY1160";
+
+    /// <summary>
+    /// A read model property that provides a shape field has another type than the explicit <c>shape</c> declares for it.
+    /// </summary>
+    public const string ProvisionFieldTypeMismatch = "PLAY1161";
+
+    /// <summary>
+    /// A provision's <c>by</c> names a parameter the providing query does not declare.
+    /// </summary>
+    public const string UnknownProvisionParameter = "PLAY1162";
+
+    /// <summary>
+    /// A provision maps a field that the adopted screen does not read and the shape does not declare.
+    /// </summary>
+    public const string UnknownProvisionMapping = "PLAY1163";
+
+    /// <summary>
+    /// A screen declared outside any slice that no slice adopts: it is design-only, and never blocks the rest of the model.
+    /// </summary>
+    public const string DesignOnlyScreen = "PLAY1164";
 }

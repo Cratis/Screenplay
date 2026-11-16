@@ -171,11 +171,17 @@ internal enum EsmBaselineShape
     ScreenExtension,
     ScreenComponent,
     ScreenSignalHandler,
+    ScreenNeed,
+    ScreenAdoption,
+    ScreenProvision,
+    ScreenProvisionField,
     Audience,
     Availability,
     AvailabilityRequirement,
     AvailabilityCondition,
     ContextOperand,
     Provide,
-    ProvideSource
+    ProvideSource,
+    GraphCollect,
+    GraphCollectMember
 }

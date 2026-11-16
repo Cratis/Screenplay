@@ -151,6 +151,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             case EventSyntax value: Declare("Event", value.Name, value, value.Description); break;
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
             case ScreenSyntax value: Declare("Screen", value.Name, value, value.Description); break;
+            case ShapeSyntax value: Declare("Shape", value.Name, value, value.Description); break;
             case ConceptSyntax value: Declare("Concept", value.Name, value, value.Description); break;
             case PurposeSyntax value: Declare("Purpose", value.Name, value, value.Description, new { reportOnly = true }); break;
             case TypeSyntax value: Declare("Type", value.Name, value); break;

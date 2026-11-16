@@ -27,6 +27,7 @@ import { StateMachineSyntax, WorkflowSyntax } from './Lifecycles';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
 import { ScreenSyntax } from './Screens';
+import type { ShapeSyntax, UsesScreenSyntax } from './Shapes';
 import type { OutletSyntax } from './Outlets';
 import { SpecificationExampleSyntax, SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
@@ -54,6 +55,8 @@ export interface SliceSyntax extends SyntaxNode {
     readonly provides?: readonly ProvideSyntax[];
     readonly placements?: readonly SlicePlacementSyntax[];
     readonly kind: 'SliceSyntax';
+    // The screens the slice adopts with 'uses screen', written only when present.
+    readonly usedScreens?: readonly UsesScreenSyntax[];
     // The 'available' gates, written only when present.
     readonly available?: readonly AvailableSyntax[];
     readonly direction?: TranslationDirection | null;
@@ -96,6 +99,8 @@ export interface FeatureSyntax extends SyntaxNode {
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
+    // The screens declared in the feature itself, written only when present.
+    readonly screens?: readonly ScreenSyntax[];
     // The 'available' gates, written only when present.
     readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
@@ -118,6 +123,8 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
+    // The screens declared in the module itself, written only when present.
+    readonly screens?: readonly ScreenSyntax[];
     // The 'available' gates, written only when present.
     readonly available?: readonly AvailableSyntax[];
     readonly documentation?: string | null;
@@ -188,6 +195,10 @@ export interface ApplicationSyntax extends SyntaxNode {
 
     // The storylines: named, ordered paths through the model - written only when present.
     readonly storylines?: readonly StorylineSyntax[];
+
+    // The top-level shapes and the screens declared free of any slice - written only when present.
+    readonly shapes?: readonly ShapeSyntax[];
+    readonly screens?: readonly ScreenSyntax[];
 
     // The named sinks read models and graphs may choose - written only when present.
     readonly sinks?: readonly SinkSyntax[];

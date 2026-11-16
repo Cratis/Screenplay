@@ -62,7 +62,16 @@ function auditArtifacts(files, sourceGuids, markers) {
     return findings;
 }
 
-// The portable backend contract of a model: slices, and the members of every command, event, read model and query.
+// Named, exact signature pairs only: { name, expected, recovered }. No recovery differences are currently accepted.
+const intentionalRecoveryDifferences = [];
+
+function normalizedSignature(type, modifiers = '') {
+    const words = modifiers.trim().split(/\s+/).filter(Boolean);
+    const optional = words.includes('optional') && !type.endsWith('?') ? '?' : '';
+    return [type + optional, ...words.filter(word => word !== 'optional').sort()].join(' ');
+}
+
+// The portable backend contract: declarations and owner-qualified member signatures, not just member names.
 function declarationsIn(text) {
     const declarations = new Set();
     let owner = null;
@@ -76,26 +85,32 @@ function declarationsIn(text) {
         const declaration = /^(slice\s+\w+|command|event|readmodel|query)\s+(\w+)/.exec(trimmed);
         if (declaration) {
             const kind = declaration[1].split(/\s+/)[0];
-            declarations.add(`${kind} ${declaration[2]}`);
-            owner = kind === 'slice' ? null : `${kind} ${declaration[2]}`;
+            const name = `${kind} ${declaration[2]}`;
+            const returns = /=>\s*(?:(observable)\s+)?([\w.]+(?:\[\]|\?)*)(.*)$/.exec(trimmed);
+            declarations.add(returns ? `${name} => ${normalizedSignature(returns[2], `${returns[1] ?? ''} ${returns[3]}`)}` : name);
+            owner = kind === 'slice' ? null : name;
             ownerIndent = indent;
             continue;
         }
 
         // A member is `name Type`, where the type token ends the word. A recovered model also carries source references
         // such as `file Workspaces/Tracking/X.cs`, which are provenance, not members.
-        const member = /^(\w+)\s+([A-Z][\w[\]?]*)(?:\s|$)/.exec(trimmed);
-        if (owner && indent === ownerIndent + 2 && member && !['produces', 'for', 'by', 'from', 'when', 'then', 'given', 'file'].includes(member[1])) {
-            declarations.add(`${owner}.${member[1]}`);
+        const member = /^(by\s+)?(\w+)\s+([A-Z][\w.]*(?:\[\]|\?)*)(?:\s+(.*))?$/.exec(trimmed);
+        if (owner && indent === ownerIndent + 2 && member && !['produces', 'for', 'from', 'when', 'then', 'given', 'file'].includes(member[2])) {
+            const modifiers = `${member[1] ? 'by ' : ''}${member[4] ?? ''}`;
+            declarations.add(`${owner}.${member[2]} ${normalizedSignature(member[3], modifiers)}`);
         }
     }
     return declarations;
 }
 
-function compareDeclarations(expected, actual) {
+function compareDeclarations(expected, actual, differences = intentionalRecoveryDifferences) {
+    if (expected.size === 0 || actual.size === 0) throw new Error('Recovery contract comparison requires declarations on both sides');
+    const allowed = differences.filter(difference => difference.name && expected.has(difference.expected) && actual.has(difference.recovered) && !actual.has(difference.expected));
+    if (allowed.length !== differences.length) throw new Error('Recovery contract difference is unnamed, stale or does not match its exact signature pair');
     return {
-        missing: [...expected].filter(declaration => !actual.has(declaration)).sort(),
-        unexpected: [...actual].filter(declaration => !expected.has(declaration)).sort()
+        missing: [...expected].filter(declaration => !actual.has(declaration) && !allowed.some(difference => difference.expected === declaration)).sort(),
+        unexpected: [...actual].filter(declaration => !expected.has(declaration) && !allowed.some(difference => difference.recovered === declaration)).sort()
     };
 }
 
@@ -229,6 +244,33 @@ function audit() {
     process.exit(result.status === 'passed' ? 0 : 1);
 }
 
+function contractSignatureChecks(sourceModel) {
+    const expected = declarationsIn(sourceModel);
+    const compareMutation = (before, after) => compareDeclarations(expected, declarationsIn(sourceModel.replace(before, after)));
+    const query = 'query Find => observable CommentView[]\n  by id CommentId\n';
+    const allowed = [{ name: 'fixture-only concept lowering', expected: 'command AddComment.commentId CommentId identifier', recovered: 'command AddComment.commentId Uuid identifier' }];
+    const comparisonIsRejected = (before, after, differences = []) => {
+        try { compareDeclarations(declarationsIn(before), declarationsIn(after), differences); return false; }
+        catch { return true; }
+    };
+    return [
+        ['empty contract scans cannot pass', comparisonIsRejected('', ''), true],
+        ['a changed type is rejected', compareMutation('text String', 'text Integer'), { missing: ['command AddComment.text String'], unexpected: ['command AddComment.text Integer'] }],
+        ['a scalar changed to an array is rejected', compareMutation('text String', 'text String[]'), { missing: ['command AddComment.text String'], unexpected: ['command AddComment.text String[]'] }],
+        ['a removed identifier modifier is rejected', compareMutation('CommentId identifier', 'CommentId'), { missing: ['command AddComment.commentId CommentId identifier'], unexpected: ['command AddComment.commentId CommentId'] }],
+        ['an optional member becoming required is rejected', compareDeclarations(declarationsIn('readmodel View\n  text String?\n'), declarationsIn('readmodel View\n  text String\n')).missing, ['readmodel View.text String?']],
+        ['optional spellings normalize equally', compareDeclarations(declarationsIn('readmodel View\n  text String optional\n'), declarationsIn('readmodel View\n  text String?\n')), { missing: [], unexpected: [] }],
+        ['a removed key modifier is rejected', compareDeclarations(declarationsIn('readmodel View\n  id Uuid key\n'), declarationsIn('readmodel View\n  id Uuid\n')).missing, ['readmodel View.id Uuid key']],
+        ['modifier order and spacing normalize equally', normalizedSignature('Uuid', 'identifier   generated'), normalizedSignature('Uuid', 'generated identifier')],
+        ['query results and keys retain their signatures', [...declarationsIn(query)], ['query Find => CommentView[] observable', 'query Find.id CommentId by']],
+        ['a changed query key type is rejected', compareDeclarations(declarationsIn(query), declarationsIn(query.replace('id CommentId', 'id String'))).missing, ['query Find.id CommentId by']],
+        ['a changed query result shape is rejected', compareDeclarations(declarationsIn(query), declarationsIn(query.replace('CommentView[]', 'CommentView'))).missing, ['query Find => CommentView[] observable']],
+        ['an exact named recovery difference is allowed', compareDeclarations(expected, declarationsIn(sourceModel.replace('CommentId identifier', 'Uuid identifier')), allowed), { missing: [], unexpected: [] }],
+        ['an allowlisted type change cannot hide modifier removal', comparisonIsRejected(sourceModel, sourceModel.replace('CommentId identifier', 'Uuid'), allowed), true],
+        ['an unnecessary recovery exception is rejected', comparisonIsRejected(sourceModel, sourceModel, allowed), true]
+    ];
+}
+
 // Each scanner must find what was planted and stay silent on a clean artifact.
 function selfTest() {
     const sourceGuid = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
@@ -244,12 +286,12 @@ function selfTest() {
         ['a home folder path is found', findingsFor('"path":"/Users/someone/app"').length, 1],
         ['a host name is found', findingsFor('built on build-agent-7').length, 1],
         ['a version number is not a timestamp', findingsFor('"version":"2026.10.9"').length, 0],
-        ['command members are declarations', [...declarationsIn(sourceModel)].sort(), ['command AddComment', 'command AddComment.commentId', 'command AddComment.text', 'event CommentAdded', 'event CommentAdded.text', 'slice AddComment']],
+        ['command members are declarations', [...declarationsIn(sourceModel)].sort(), ['command AddComment', 'command AddComment.commentId CommentId identifier', 'command AddComment.text String', 'event CommentAdded', 'event CommentAdded.text String', 'slice AddComment']],
         ['produces clauses are not members', declarationsIn(sourceModel).has('command AddComment.produces'), false],
-        ['a dropped event member is reported missing', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel.replace('      event CommentAdded\n        text String\n', '      event CommentAdded\n'))).missing, ['event CommentAdded.text']],
+        ['a dropped event member is reported missing', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel.replace('      event CommentAdded\n        text String\n', '      event CommentAdded\n'))).missing, ['event CommentAdded.text String']],
         ['an identical recovery has no differences', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel)), { missing: [], unexpected: [] }],
         ['a recovered source reference is not a member', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel.replace('      event CommentAdded\n', '      event CommentAdded\n        file Workspaces/Tracking/AddComment/AddComment.cs\n'))), { missing: [], unexpected: [] }],
-        ['a renamed member type is still compared', declarationsIn('      readmodel CommentView\n        texts String[]\n').has('readmodel CommentView.texts'), true],
+        ...contractSignatureChecks(sourceModel),
         ['every diagnostic code is read', diagnosticCodes('{"code":"PLAY0263"},{"code":"STAGE-SCENE-ACTION-001"},{"code":"CLI0017"}'), ['PLAY0263', 'STAGE-SCENE-ACTION-001', 'CLI0017']]
     ];
 

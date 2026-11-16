@@ -1,0 +1,20 @@
+shape Invoice
+  number String
+
+shape Invoice
+  number String
+
+screen Dup
+  title "One"
+
+screen Dup
+  title "Two"
+
+module Billing
+  feature Paying
+    slice StateView ListInvoices
+      readmodel InvoiceRow
+        invoiceNumber String
+      query ListInvoices => InvoiceRow[]
+      uses screen Dup
+      uses screen Dup

@@ -44,13 +44,26 @@ these are not recommendations for the latest package set.
 | Corpus parse, print and admission | Screenplay 4.116.0 | PASS: `for_ScreenCompositionCorpus`; single-file, folder, reordered and relocated forms produce identical outcomes. |
 | CLI render | CLI 3.41.0 + Stage 4.51.3 | PASS with two preserved guarded-action warnings. 38 artifacts, byte-identical across two renders, with no timestamps, foreign GUIDs, absolute paths or environment bytes (`screen-composition-render-audit.cjs`). |
 | CLI profile rejection | CLI 3.41.0 | PASS: unknown package `CLI-RENDER-007` and missing layout `CLI-RENDER-008` each produce exit 5 and nothing published; a modified managed `scene.json` is refused and left untouched. CLI 3.40.6 still published artifacts for both invalid profile changes. |
-| Render then recover | CLI 3.41.0 | PASS: `cratis screenplay generate` recovers all 45 slices and the command, event, read model and query members declared by the rendered source. CLI 3.40.6 refused it with `CLI0017`. |
+| Render then recover | CLI 3.41.0 | PASS for declaration names only: `cratis screenplay generate` recovers the slice, command, event, read model, query and member names compared by the recorded audit. That comparison did not establish member types, collection/optional shape or identifier/key modifiers. CLI 3.40.6 refused generation with `CLI0017`. |
 
 `ScreenCompositionCorpus.V1.ReleasedVectorResults` retains earlier failed and partial runs. The public harnesses live
 in `Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/`: `screen-composition-browser-native-controls.cjs`
 checks browser behavior, `screen-composition-render-audit.cjs` checks deterministic and portable artifacts, profile
 rejection and recovery, and the MCP transcript checks revision-safe editing. Results from one vector do not clear
 failures in another.
+
+The recovery audit now compares owner-qualified member signatures, retaining types, collection and optional shape,
+identifier/key modifiers, query key types and query result signatures. Whitespace, modifier order and the `Type?` /
+`Type optional` spellings are normalized; recovered `file` provenance is not a member. The named
+`intentionalRecoveryDifferences` allowlist accepts only exact expected/recovered signature pairs and currently has
+no entries. The earlier recorded result does not establish a pass under this stricter comparison.
+
+The browser harness checks authored navigation entry presence separately from navigation behavior. The
+`browser.navigation.ui.WorkItemList` assertion passes only when clicking an entry labelled "Work items" in the
+navigation changes the route to `#/WorkItemList`. An inert entry, a wrong destination or a missing entry leaves
+that assertion blocked. History-back and direct-route fallbacks may collect further diagnostics but cannot clear
+it. If already at the target, the helper first opens another screen so an inert click cannot pass. Earlier browser
+results do not establish a pass under this stricter navigation check.
 
 ## Browser blockers
 

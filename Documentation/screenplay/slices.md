@@ -87,7 +87,7 @@ The optional `file` line names the repository relative file this declaration is 
 
 Use `description` for a human-readable summary. On a [specification](specifications.md), it names the rule or case that scenario witnesses. Use `documentation` for longer reasoning: assumptions, boundaries and rejected alternatives that should stay with the model.
 
-Modules, features, slices, commands, events, read models and reactions accept one nonempty `documentation` block with a `markdown` fence. It belongs directly in the declaration body, not under a reaction trigger. A bare `documentation` line never declares a property; `documentation String` still declares a typed property where properties are allowed.
+Modules, features, slices, commands, events, read models, [graphs](graphs.md) and reactions accept one nonempty `documentation` block with a `markdown` fence. It belongs directly in the declaration body, not under a reaction trigger. A bare `documentation` line never declares a property; `documentation String` still declares a typed property where properties are allowed.
 
 ````screenplay
 module Invoicing

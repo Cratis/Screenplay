@@ -152,6 +152,11 @@ public sealed record SemanticApplication(
     public ImmutableArray<SemanticGraphQuery> GraphQueries { get; init; } = [];
 
     /// <summary>
+    /// Gets the screens declared free of any slice, which slices adopt (ESM v56).
+    /// </summary>
+    public ImmutableArray<SemanticScreen> Screens { get; init; } = [];
+
+    /// <summary>
     /// Gets the declared event sources, or an empty collection for models without event routes.
     /// </summary>
     public ImmutableArray<SemanticEventSource> EventSources { get; init; } = [];
@@ -287,4 +292,9 @@ public sealed record SemanticSlice(
     /// Gets the screens of the slice. Screens are admitted from ESM v42 when binding opts in to them.
     /// </summary>
     public ImmutableArray<SemanticScreen> Screens { get; init; } = [];
+
+    /// <summary>
+    /// Gets the free screens this slice adopts, with the data it provides to their needs (ESM v56).
+    /// </summary>
+    public ImmutableArray<SemanticScreenAdoption> Adoptions { get; init; } = [];
 }

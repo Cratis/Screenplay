@@ -49,8 +49,10 @@ export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
             } else if (message.type === 'viewOptionsChanged') {
                 return this.saveViewOptions(message.options);
             } else if (message.type === 'showSource') {
-                const file = message.path !== undefined && board.root !== undefined ? vscode.Uri.joinPath(board.root, message.path) : document.uri;
-                void showSource(file, message.line);
+                const file = message.path === undefined ? document.uri : board.sourceFor(message.path);
+                if (file !== undefined) {
+                    void showSource(file, message.line);
+                }
             }
         });
         panel.onDidDispose(() => {
@@ -80,7 +82,7 @@ export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
 // Opens the document in the text editor beside the board, at a line when one is given.
 export async function showSource(uri: vscode.Uri, line?: number): Promise<void> {
     const editor = await vscode.window.showTextDocument(uri, { viewColumn: vscode.ViewColumn.Beside });
-    if (line !== undefined) {
+    if (typeof line === 'number' && Number.isInteger(line) && line > 0) {
         const position = new vscode.Position(Math.max(0, line - 1), 0);
         editor.selection = new vscode.Selection(position, position);
         editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);

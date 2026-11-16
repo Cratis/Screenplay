@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { CaseValueExpressionSyntax, ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { TagSyntax } from './Declarations';
 import { SpecificationGraphSyntax } from './Graphs';
 import { SpecificationParameterSyntax } from './SpecificationParameterSyntax';
 import { SpecificationCaseSyntax } from './SpecificationCaseSyntax';
@@ -43,6 +44,13 @@ export interface SpecificationEventSyntax extends SyntaxNode {
     readonly for: ExpressionSyntax | null;
     readonly stream?: SpecificationStreamSyntax | null;
     readonly noStream?: SpecificationNoStreamSyntax | null;
+    // Expected tags of a then event, in order and with duplicates; noTags asserts the event carries none.
+    readonly tags?: readonly TagSyntax[];
+    readonly noTags?: SpecificationNoTagsSyntax | null;
+}
+
+export interface SpecificationNoTagsSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationNoTagsSyntax';
 }
 
 export interface SpecificationStreamSyntax extends SyntaxNode {

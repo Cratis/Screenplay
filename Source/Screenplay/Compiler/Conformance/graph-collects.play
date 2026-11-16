@@ -1,0 +1,66 @@
+// Graph queries that collect nested rows along one edge from their root (ESM v54, decision 0163).
+
+concept PersonId : Uuid
+concept GroupId  : Uuid
+concept Name     : String
+
+type GroupMembership
+  id    GroupId
+  name  Name
+  since DateTime optional
+
+type GroupSummary
+  id   GroupId
+  name Name
+
+module Organization
+  feature Chart
+    slice StateView OrganizationViews
+      graph Organization
+        node Person
+          personId PersonId key
+          name     Name
+        node Group
+          groupId GroupId key
+          name    Name
+        edge MEMBER_OF source Person target Group
+          since DateTime optional
+        edge PART_OF source Group target Group
+
+      readmodel PersonWithGroups
+        id     PersonId key
+        name   Name
+        groups GroupMembership[]
+
+      readmodel GroupWithParent
+        id     GroupId key
+        parent GroupSummary optional
+
+      query PeopleWithGroups => PersonWithGroups[] graph Organization
+        description "Every person, with the groups they belong to"
+        filter groupId GroupId
+        match person:Person
+        where group.groupId = $groupId
+        return
+          id     = person.personId
+          name   = person.name
+          groups = collect person -membership:MEMBER_OF-> group:Group
+            id    = group.groupId
+            name  = group.name
+            since = membership.since
+
+      query GroupsWithParent => GroupWithParent[] graph Organization
+        match group:Group
+        return
+          id     = group.groupId
+          parent = collect group -PART_OF-> parent:Group
+            id   = parent.groupId
+            name = parent.name
+
+      query ChildGroups => GroupWithParent[] graph Organization
+        match child:Group
+        return
+          id     = child.groupId
+          parent = collect child <-PART_OF- parent:Group
+            id   = parent.groupId
+            name = parent.name

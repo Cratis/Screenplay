@@ -26,6 +26,27 @@ concept PersonName   : String
 concept GroupName    : String
 concept RoleName     : String
 
+// The rows the organization's views nest: what a person, a group or a role
+// assignment looks like when it is reached along an edge.
+type GroupMembership
+  id    GroupId
+  name  GroupName
+  since DateTime
+
+type GroupSummary
+  id   GroupId
+  name GroupName
+
+type MemberSummary
+  id    PersonId
+  name  PersonName
+  since DateTime
+
+type RoleAssignment
+  id           GroupId
+  assignmentId AssignmentId
+  role         RoleName
+
 policy IsAdministrator
   require role "Administrator"
 
@@ -548,3 +569,329 @@ module Organization
           no node Person "6fa459ea-ee8a-4ca4-894e-db77e160355e"
           no edge MEMBER_OF from "6fa459ea-ee8a-4ca4-894e-db77e160355e" to "0f8fad5b-d9cb-469f-a165-70867728950e"
           has node Group "0f8fad5b-d9cb-469f-a165-70867728950e"
+
+  feature Views
+    description "The organization graph read as people with their groups, groups with their members and parent, and people with their roles"
+
+    authorize IsAdministrator
+
+    slice StateView OrganizationViews
+      description "Read the organization graph as people with their groups, groups with their members and parent, and people with their roles"
+
+      readmodel PersonWithGroups
+        id     PersonId key
+        name   PersonName
+        groups GroupMembership[]
+
+      readmodel GroupWithMembers
+        id      GroupId key
+        name    GroupName
+        members MemberSummary[]
+
+      readmodel GroupWithParent
+        id     GroupId key
+        name   GroupName
+        parent GroupSummary optional
+
+      readmodel PersonRoles
+        id    PersonId key
+        roles RoleAssignment[]
+
+      // A collect follows one edge from the query's root and nests a row per
+      // edge it finds. A condition on a collected node picks which people are
+      // returned; it never narrows the groups collected for them.
+      query PeopleWithGroups => PersonWithGroups[] graph Organization
+        description "Every person, with the groups they belong to and since when"
+        filter groupId GroupId
+        match person:Person
+        where group.groupId = $groupId
+        return
+          id     = person.personId
+          name   = person.name
+          groups = collect person -membership:MEMBER_OF-> group:Group
+            id    = group.groupId
+            name  = group.name
+            since = membership.since
+
+      query GroupsWithMembers => GroupWithMembers[] graph Organization
+        description "Every group, with the people who belong to it"
+        match group:Group
+        return
+          id      = group.groupId
+          name    = group.name
+          members = collect group <-membership:MEMBER_OF- member:Person
+            id    = member.personId
+            name  = member.name
+            since = membership.since
+
+      query GroupsWithParent => GroupWithParent[] graph Organization
+        description "Every group, with the group it is part of, if any"
+        match group:Group
+        return
+          id     = group.groupId
+          name   = group.name
+          parent = collect group -PART_OF-> parent:Group
+            id   = parent.groupId
+            name = parent.name
+
+      query RolesOf => PersonRoles optional graph Organization
+        description "One person, with every role they hold - two roles in one group are two rows"
+        by personId PersonId
+        match person:Person
+        where person.personId = $personId
+        return
+          id    = person.personId
+          roles = collect person -assignment:HAS_ROLE-> group:Group
+            id           = group.groupId
+            assignmentId = assignment.assignmentId
+            role         = assignment.role
+
+      screen OrganizationViews
+        template Dialog
+          body
+            title "The organization"
+
+      specification SeeingPeopleInAGroupWithAllTheirGroups
+        given caller
+          authenticated
+          role "Administrator"
+        given graph Organization
+          has node Person "00000000-0000-0000-0000-000000000001"
+            name = "Ada"
+          has node Person "00000000-0000-0000-0000-000000000002"
+            name = "Grace"
+          has node Person "00000000-0000-0000-0000-000000000003"
+            name = "Linus"
+          has node Group "00000000-0000-0000-0000-000000000101"
+            name = "Engineering"
+          has node Group "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+          has node Group "00000000-0000-0000-0000-000000000103"
+            name = "Research"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101"
+            since = "2026-01-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000103"
+            since = "2026-02-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102"
+            since = "2026-03-01T00:00:00Z"
+          has edge PART_OF from "00000000-0000-0000-0000-000000000102" to "00000000-0000-0000-0000-000000000101"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000201"
+            assignmentId = "00000000-0000-0000-0000-000000000201"
+            role         = "Lead"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000202"
+            assignmentId = "00000000-0000-0000-0000-000000000202"
+            role         = "Reviewer"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102" identified by "00000000-0000-0000-0000-000000000203"
+            assignmentId = "00000000-0000-0000-0000-000000000203"
+            role         = "Lead"
+        then query PeopleWithGroups
+          arguments
+            groupId = "00000000-0000-0000-0000-000000000101"
+          result
+            id   = "00000000-0000-0000-0000-000000000001"
+            name = "Ada"
+            groups
+              item
+                id    = "00000000-0000-0000-0000-000000000101"
+                name  = "Engineering"
+                since = "2026-01-01T00:00:00Z"
+              item
+                id    = "00000000-0000-0000-0000-000000000103"
+                name  = "Research"
+                since = "2026-02-01T00:00:00Z"
+
+      specification SeeingTheMembersOfEveryGroup
+        given caller
+          authenticated
+          role "Administrator"
+        given graph Organization
+          has node Person "00000000-0000-0000-0000-000000000001"
+            name = "Ada"
+          has node Person "00000000-0000-0000-0000-000000000002"
+            name = "Grace"
+          has node Person "00000000-0000-0000-0000-000000000003"
+            name = "Linus"
+          has node Group "00000000-0000-0000-0000-000000000101"
+            name = "Engineering"
+          has node Group "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+          has node Group "00000000-0000-0000-0000-000000000103"
+            name = "Research"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101"
+            since = "2026-01-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000103"
+            since = "2026-02-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102"
+            since = "2026-03-01T00:00:00Z"
+          has edge PART_OF from "00000000-0000-0000-0000-000000000102" to "00000000-0000-0000-0000-000000000101"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000201"
+            assignmentId = "00000000-0000-0000-0000-000000000201"
+            role         = "Lead"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000202"
+            assignmentId = "00000000-0000-0000-0000-000000000202"
+            role         = "Reviewer"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102" identified by "00000000-0000-0000-0000-000000000203"
+            assignmentId = "00000000-0000-0000-0000-000000000203"
+            role         = "Lead"
+        then query GroupsWithMembers
+          result
+            id   = "00000000-0000-0000-0000-000000000101"
+            name = "Engineering"
+            members
+              item
+                id    = "00000000-0000-0000-0000-000000000001"
+                name  = "Ada"
+                since = "2026-01-01T00:00:00Z"
+          result
+            id   = "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+            members
+              item
+                id    = "00000000-0000-0000-0000-000000000002"
+                name  = "Grace"
+                since = "2026-03-01T00:00:00Z"
+          result
+            id   = "00000000-0000-0000-0000-000000000103"
+            name = "Research"
+            members
+              item
+                id    = "00000000-0000-0000-0000-000000000001"
+                name  = "Ada"
+                since = "2026-02-01T00:00:00Z"
+
+      specification SeeingTheParentOfEveryGroup
+        given caller
+          authenticated
+          role "Administrator"
+        given graph Organization
+          has node Person "00000000-0000-0000-0000-000000000001"
+            name = "Ada"
+          has node Person "00000000-0000-0000-0000-000000000002"
+            name = "Grace"
+          has node Person "00000000-0000-0000-0000-000000000003"
+            name = "Linus"
+          has node Group "00000000-0000-0000-0000-000000000101"
+            name = "Engineering"
+          has node Group "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+          has node Group "00000000-0000-0000-0000-000000000103"
+            name = "Research"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101"
+            since = "2026-01-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000103"
+            since = "2026-02-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102"
+            since = "2026-03-01T00:00:00Z"
+          has edge PART_OF from "00000000-0000-0000-0000-000000000102" to "00000000-0000-0000-0000-000000000101"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000201"
+            assignmentId = "00000000-0000-0000-0000-000000000201"
+            role         = "Lead"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000202"
+            assignmentId = "00000000-0000-0000-0000-000000000202"
+            role         = "Reviewer"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102" identified by "00000000-0000-0000-0000-000000000203"
+            assignmentId = "00000000-0000-0000-0000-000000000203"
+            role         = "Lead"
+        then query GroupsWithParent
+          result
+            id     = "00000000-0000-0000-0000-000000000101"
+            name   = "Engineering"
+            parent = null
+          result
+            id   = "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+            parent
+              id   = "00000000-0000-0000-0000-000000000101"
+              name = "Engineering"
+          result
+            id     = "00000000-0000-0000-0000-000000000103"
+            name   = "Research"
+            parent = null
+
+      specification SeeingEveryRoleAPersonHolds
+        given caller
+          authenticated
+          role "Administrator"
+        given graph Organization
+          has node Person "00000000-0000-0000-0000-000000000001"
+            name = "Ada"
+          has node Person "00000000-0000-0000-0000-000000000002"
+            name = "Grace"
+          has node Person "00000000-0000-0000-0000-000000000003"
+            name = "Linus"
+          has node Group "00000000-0000-0000-0000-000000000101"
+            name = "Engineering"
+          has node Group "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+          has node Group "00000000-0000-0000-0000-000000000103"
+            name = "Research"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101"
+            since = "2026-01-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000103"
+            since = "2026-02-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102"
+            since = "2026-03-01T00:00:00Z"
+          has edge PART_OF from "00000000-0000-0000-0000-000000000102" to "00000000-0000-0000-0000-000000000101"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000201"
+            assignmentId = "00000000-0000-0000-0000-000000000201"
+            role         = "Lead"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000202"
+            assignmentId = "00000000-0000-0000-0000-000000000202"
+            role         = "Reviewer"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102" identified by "00000000-0000-0000-0000-000000000203"
+            assignmentId = "00000000-0000-0000-0000-000000000203"
+            role         = "Lead"
+        then query RolesOf
+          arguments
+            personId = "00000000-0000-0000-0000-000000000001"
+          result
+            id = "00000000-0000-0000-0000-000000000001"
+            roles
+              item
+                id           = "00000000-0000-0000-0000-000000000101"
+                assignmentId = "00000000-0000-0000-0000-000000000201"
+                role         = "Lead"
+              item
+                id           = "00000000-0000-0000-0000-000000000101"
+                assignmentId = "00000000-0000-0000-0000-000000000202"
+                role         = "Reviewer"
+
+      specification APersonWithNoRolesHasAnEmptyList
+        given caller
+          authenticated
+          role "Administrator"
+        given graph Organization
+          has node Person "00000000-0000-0000-0000-000000000001"
+            name = "Ada"
+          has node Person "00000000-0000-0000-0000-000000000002"
+            name = "Grace"
+          has node Person "00000000-0000-0000-0000-000000000003"
+            name = "Linus"
+          has node Group "00000000-0000-0000-0000-000000000101"
+            name = "Engineering"
+          has node Group "00000000-0000-0000-0000-000000000102"
+            name = "Platform"
+          has node Group "00000000-0000-0000-0000-000000000103"
+            name = "Research"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101"
+            since = "2026-01-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000103"
+            since = "2026-02-01T00:00:00Z"
+          has edge MEMBER_OF from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102"
+            since = "2026-03-01T00:00:00Z"
+          has edge PART_OF from "00000000-0000-0000-0000-000000000102" to "00000000-0000-0000-0000-000000000101"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000201"
+            assignmentId = "00000000-0000-0000-0000-000000000201"
+            role         = "Lead"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000001" to "00000000-0000-0000-0000-000000000101" identified by "00000000-0000-0000-0000-000000000202"
+            assignmentId = "00000000-0000-0000-0000-000000000202"
+            role         = "Reviewer"
+          has edge HAS_ROLE from "00000000-0000-0000-0000-000000000002" to "00000000-0000-0000-0000-000000000102" identified by "00000000-0000-0000-0000-000000000203"
+            assignmentId = "00000000-0000-0000-0000-000000000203"
+            role         = "Lead"
+        then query RolesOf
+          arguments
+            personId = "00000000-0000-0000-0000-000000000003"
+          result
+            id = "00000000-0000-0000-0000-000000000003"
+            roles none

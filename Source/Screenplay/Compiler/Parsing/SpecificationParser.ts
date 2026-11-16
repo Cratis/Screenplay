@@ -8,7 +8,7 @@ import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
     SpecificationAbilityAnswerSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
-    SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
+    SpecificationNoTagsSyntax, SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
@@ -28,6 +28,8 @@ import { LifecycleExpectationKind, LifecycleExpectationSyntax, LifecycleOutcomeS
 import { givenGraphPrefix, GraphStepHelpers, parseGraphStep, thenGraphPrefix } from './SpecificationGraphParser';
 import { SpecificationGraphSyntax } from '../Syntax/Graphs';
 import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationInvocationSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
+import { TagSyntax } from '../Syntax/Declarations';
+import { TagExpectationParser } from './TagExpectationParser';
 import { parseStructuredValue, StructuredMarker, tryParseStructuredMapping } from './StructuredBlockParser';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
@@ -711,12 +713,13 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
 export const specificationStream = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
 const specificationStreamId = pattern('^streamId\\s*=(?!=|>)\\s*(.+)$');
 
-function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], inline?: RegExpExecArray, eventKeyword?: string): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax } {
+function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], inline?: RegExpExecArray, eventKeyword?: string): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax; tags?: TagSyntax[]; noTags?: SpecificationNoTagsSyntax } {
     const values: PropertyMappingSyntax[] = [];
     addInlineValue(context, parent, inline, values);
     let eventSource: ExpressionSyntax | null = null;
     let stream: SpecificationStreamSyntax | undefined;
     let noStream: SpecificationNoStreamSyntax | undefined;
+    const tagExpectations = new TagExpectationParser(context, eventKeyword);
     let hasRoute = false;
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
@@ -727,9 +730,8 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
             continue;
         }
         const mapping = mappingPattern.exec(child.content);
-        if (mapping !== null) {
-            addFixtureValue(context, values, mappingOf(context, child, mapping));
-        } else if (firstWord(child.content) === 'stream' || child.content.startsWith('no stream')) {
+        if (tagExpectations.tryParseValue(child, mapping, values)) continue;
+        if (firstWord(child.content) === 'stream' || child.content.startsWith('no stream')) {
             if (eventKeyword === undefined) {
                 context.error(DiagnosticCodes.SpecificationStreamOnCommand, 'A command occurrence cannot declare a route; assert it on a then event.', locationOf(child));
                 context.skipBlock(child.indent);
@@ -767,7 +769,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child), diagnosticText('text', child.content));
         }
     }
-    return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }) };
+    return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }), ...tagExpectations.syntax };
 }
 
 export function parseSpecificationStream(context: ParserContext, header: SourceLine, route: RegExpExecArray): SpecificationStreamSyntax {

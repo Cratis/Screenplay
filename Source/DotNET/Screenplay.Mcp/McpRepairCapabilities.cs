@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpRepairCapabilities
 {
-    static readonly string[] _actions = ["PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564", "PLAY0614", "PLAY0653", "PLAY0661", "PLAY0683", "PLAY0684", "PLAY0688", "PLAY0701", "PLAY0786", "PLAY0787", "PLAY0824", "PLAY0825"];
+    static readonly string[] _actions = ["PLAY0166", "PLAY0469", "PLAY0478", "PLAY0516", "PLAY0563", "PLAY0564", "PLAY0614", "PLAY0653", "PLAY0661", "PLAY0664", "PLAY0683", "PLAY0684", "PLAY0688", "PLAY0701", "PLAY0786", "PLAY0787", "PLAY0824", "PLAY0825"];
 
     internal static object Read() => McpJson.ToolResult(new
     {
@@ -15,13 +15,7 @@ static class McpRepairCapabilities
         schemaVersion = 1,
         serverVersion = typeof(McpConnection).Assembly.GetName().Version!.ToString(),
         repairContractVersion = 1,
-        actions = _actions.Select(code => new
-        {
-            diagnosticCode = code,
-            tool = "propose-repair",
-            requiredFormatting = code == "PLAY0653" || code == "PLAY0824" || code == "PLAY0825" ? "PreserveTrivia" : "CanonicalizeTouchedDocuments",
-            pinRepairEvidence = string.Equals(code, "PLAY0166", StringComparison.Ordinal) || string.Equals(code, "PLAY0478", StringComparison.Ordinal)
-        }),
+        actions = _actions.Select(Action),
         intentActions = new[]
         {
             new
@@ -51,4 +45,24 @@ static class McpRepairCapabilities
             requestCharacters = McpConnection.MaximumRequestCharacters
         }
     });
+
+    static Dictionary<string, object> Action(string code)
+    {
+        var action = new Dictionary<string, object>
+        {
+            ["diagnosticCode"] = code,
+            ["tool"] = "propose-repair",
+            ["requiredFormatting"] = code == "PLAY0653" || code == "PLAY0824" || code == "PLAY0825" ? "PreserveTrivia" : "CanonicalizeTouchedDocuments",
+            ["pinRepairEvidence"] = string.Equals(code, "PLAY0166", StringComparison.Ordinal) || string.Equals(code, "PLAY0478", StringComparison.Ordinal)
+        };
+        if (string.Equals(code, "PLAY0469", StringComparison.Ordinal))
+        {
+            action["canFixAll"] = false;
+            action["individualReviewRequired"] = true;
+            action["contractChange"] = true;
+            action["retiresSemanticAddresses"] = true;
+        }
+
+        return action;
+    }
 }

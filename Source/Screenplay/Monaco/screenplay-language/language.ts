@@ -33,6 +33,7 @@ export const constructKeywords = [
     'persona',
     'user',
     'storyline',
+    'uses',
     'sink',
     'sticky',
     'authentication',
@@ -310,6 +311,7 @@ export const clauseKeywords = [
     'target',
     'identified',
     'detach',
+    'collect', // A graph query's return: '<property> = collect <root> -[alias:]TYPE-> [alias:]Label' nests a row per edge reached.
     'at',
     'where',
     'invokes',

@@ -241,6 +241,10 @@ There is no separate optional flag on the filter: its type reference carries opt
 
 A query call is identified by the query, its `by` key and its supplied filter values. Two calls of one unkeyed query with different filters are distinct. Both arrays are omitted when empty. Consumers must explicitly admit v14 or refuse the model rather than drop its filters.
 
+## Queries that read a graph
+
+A query that ends in `graph <Graph>` follows a path over a declared [graph](graphs.md) and returns its read model, flat or with [nested rows it collects](projections/graphs.md#collect-nested-rows) along an edge. Its `match`, `where` and `return` are described in [reading a graph](projections/graphs.md#reading-a-graph).
+
 ## The `performer` block
 
 Most queries need nothing more than their return type — the read model a [projection](projections/index.md) already builds is the answer. When a snapshot query needs its own logic, `performer` is where it goes. Stage loads the read-model collection once as `readModels` and runs a verified synchronous C# body to return the result. It is the query's counterpart to a command's [handler](commands.md#the-handler-block), and it takes the same two shapes: a `file` reference, or an inline block.

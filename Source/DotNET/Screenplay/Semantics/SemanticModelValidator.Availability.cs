@@ -21,7 +21,21 @@ internal static partial class SemanticModelValidator
         SlicesOf(application).Any(slice => !slice.Available.IsDefaultOrEmpty || !slice.Provides.IsDefaultOrEmpty ||
             slice.Commands.Any(command => !command.Available.IsDefaultOrEmpty) ||
             slice.Queries.Any(query => !query.Available.IsDefaultOrEmpty) ||
-            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty));
+            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty)) ||
+        application.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty);
+
+    // ESM v55 construct: an exact ordered tag expectation on a then event.
+    internal static bool UsesExpectedTags(SemanticApplication application) =>
+        SlicesOf(application).Any(slice => slice.Specifications.Any(specification =>
+            !specification.ThenEvents.IsDefaultOrEmpty && specification.ThenEvents.Any(value => value.ExpectedTags is not null)));
+
+    static void ValidateExpectedTagsVersion(SemanticApplication application, SemanticVersion version) =>
+        ValidateFeatureVersion(
+            UsesExpectedTags(application),
+            version,
+            SemanticVersion.V55,
+            "An ESM v55 model must declare an expected tag set on a then event.",
+            "Expected tag sets on then events require ESM v55.");
 
     static bool UsesAvailability(SemanticFeature feature) =>
         !feature.Available.IsDefaultOrEmpty || !feature.Provides.IsDefaultOrEmpty || feature.Features.Any(UsesAvailability);
@@ -45,6 +59,7 @@ internal static partial class SemanticModelValidator
         var audiences = application.Audiences.Select(audience => audience.Name).ToHashSet(StringComparer.Ordinal);
         var availabilities = application.Availabilities.ToDictionary(availability => availability.Name, StringComparer.Ordinal);
         var queries = SlicesOf(application).SelectMany(slice => slice.Queries).Select(query => query.Id).ToHashSet();
+        foreach (var screen in application.Screens) ValidateGates(screen.Available, availabilities);
 
         foreach (var audience in application.Audiences) RequireName(audience.Name, "audience");
         foreach (var availability in application.Availabilities)

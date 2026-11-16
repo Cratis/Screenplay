@@ -103,14 +103,14 @@ replenishment (F-C) and change of price (F-D).
   `DOMAINS="Catalog Storefront Sales Purchasing Warehouse"` is the whole application). Stage renders neither Translate slices nor public
   events (Stage#79, #212, #213). The variant therefore moves each inbound private event into a bridge command
   (`render-bridge/bridge_translations.py`), deletes `translation/` and drops the specifications that cannot render
-  (`render-bridge/drop-specifications.txt`, each with its reason). Two constructs are replaced because Stage does not render them
-  (`render-bridge/stand_in_for_unrendered.py`): the Purchasing dashboard answered by a `performer` is projected from the events
-  instead (STAGE-ESM-007) and the Storefront basket's `add addedValue by unitPrice * quantity` is left out (STAGE-ESM-050,
-  Chronicle adds one event property). Protected decision reads and `reaction batches atomic` are rendered, so nothing is stripped
-  (`STRIP_READS=1` restores the old strip). Every difference is documented in the script header. Proven for all five domains with a
+  (`render-bridge/drop-specifications.txt`, each with its reason). `render-bridge/stand_in_for_unrendered.py` is a fallback: if the
+  Purchasing dashboard is answered by a `performer` (STAGE-ESM-007), it is projected from the events instead. The current model already
+  projects it, so the step replaces nothing. The Storefront basket's `add addedValue by unitPrice * quantity` renders since Stage#597 and is kept. Protected decision reads and `reaction batches atomic` are rendered, so nothing is stripped
+  (`STRIP_READS=1` restores the old strip). Every difference is documented in the script header. The default variant (Catalog and
+  Storefront) renders with the cratis CLI 3.136.3, and its generated `dotnet test` passes. Earlier, before Stage#597, it was proven for all five domains with a
   Stage carrying Stage#590, #593 and #594 (Stage 4.177.1 plus #594 until it is released: a local pack, CLI built against it): `cratis render`, `dotnet build` 0 warnings / 0 errors,
   `npm run build`, generated `dotnet test` 459/459. Then:
-  `dotnet build`, `npm install`, `npm run build`, `dotnet test AcmeCommerce.Specs`.
+  `dotnet build`, `npm install`, `npm run build`, `dotnet test` (the generated specs are in the application project).
 - `_packages/scene.commerce` is plain ES modules with React external. `cratis render --package-set
   tools/packages/acme-commerce.package-set.json` approves it (see `Scene/Documentation/package-hosting.md`). A live Stage
   (`cratis run`) cannot load a custom package that was not built in.

@@ -23,7 +23,8 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { parseExample } from './SpecificationExampleParser';
-import { reportFeatureToolbar } from './ScreenParser';
+import { isScreenTemplateHeader, parseScreen, reportFeatureToolbar } from './ScreenParser';
+import type { ScreenSyntax } from '../Syntax/Screens';
 import { addOutletOverride } from './OutletParser';
 import type { OutletSyntax } from '../Syntax/Outlets';
 import { parseSlice } from './SliceParser';
@@ -35,7 +36,7 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute', 'template']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, contribute, outlet, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, screen, contribute, outlet, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.
@@ -49,6 +50,7 @@ export class FeatureBody {
     readonly #provides: ProvideSyntax[] = [];
     readonly #available: AvailableSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
+    readonly #screens: ScreenSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -115,6 +117,10 @@ export class FeatureBody {
             case 'slice':
                 this.#slices.push(parseSlice(context, line));
                 return true;
+            case 'screen':
+                if (isScreenTemplateHeader(line.content)) return false;
+                this.#screens.push(parseScreen(context, line));
+                return true;
             default:
                 if (opaqueFeatureMembers.has(keyword)) {
                     collectInputUses(context, line);
@@ -137,6 +143,7 @@ export class FeatureBody {
             ...(this.#provides.length > 0 ? { provides: this.#provides } : {}),
             ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
+            ...(this.#screens.length > 0 ? { screens: this.#screens } : {}),
             features: this.#features,
             slices: this.#slices,
             examples: this.#examples,
