@@ -163,7 +163,7 @@ public static partial class SemanticModelCanonicalJson
                 WriteContextOperand(writer, value.Value);
                 break;
             case SemanticCodeProvideSource code:
-                if (version.Major < 55) throw new InvalidSemanticContract("A provided value computed by a file or a code block requires ESM v55 or later.");
+                if (version.Major < 57) throw new InvalidSemanticContract("A provided value computed by a file or a code block requires ESM v57 or later.");
                 writer.WriteString("kind", "code");
                 CanonicalJson.WriteString(writer, "requirementId", code.Implementation);
                 break;
