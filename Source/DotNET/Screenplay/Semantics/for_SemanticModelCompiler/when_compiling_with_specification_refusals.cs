@@ -104,21 +104,30 @@ public class when_compiling_with_specification_refusals : given.a_specification_
     {
         var source = Source.Replace("        produces Confirmed", "        validate\n          amount rule Positive\n            file Positive.cs\n        validate csharp\n          ```csharp\n          return true;\n          ```\n        produces Confirmed", StringComparison.Ordinal)
             .Replace("when Record amount = 10", "when Record", StringComparison.Ordinal);
+        using var fixture = ExtensionFixture.Locked("cratis/stripe", "2", ExtensionContractSample.Stripe);
         var previous = ExtensionContractResolver.Current;
         try
         {
-            ExtensionContractResolver.Current = new(ExtensionCache.Default, fixedLock: ExtensionLock.Empty);
+            ExtensionContractResolver.Current = fixture.Resolver();
             var partial = Compile(source);
             partial.SpecificationRefusedValue.ShouldNotBeNull();
             partial.TypedContextDescriptors.ShouldNotBeEmpty();
             partial.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady).ShouldBeTrue();
-            var result = Compile("system Payments\n  extension \"cratis/missing\" version 1\n" + source);
+            var result = Compile("""
+                concept Money : String
+
+                system Payments
+                  extension "cratis/stripe" version 2
+                  setting missing = "value"
+
+                """ + "\n" + source);
             result.Success.ShouldBeFalse();
             result.Value.ShouldBeNull();
             result.SpecificationRefusedValue.ShouldBeNull();
-            result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.ExtensionNotLocked && diagnostic.Severity == DiagnosticSeverity.Error);
+            result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownSystemSetting && diagnostic.Severity == DiagnosticSeverity.Error);
             result.Diagnostics.ShouldContain(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationProperty && diagnostic.Severity == DiagnosticSeverity.Error);
-            result.TypedContextDescriptors.ShouldNotBeEmpty();
+            result.ImplementationRequirements.Select(requirement => requirement.Role).ShouldContainOnly([SemanticImplementationRole.RulePredicate, SemanticImplementationRole.CommandValidation]);
+            result.TypedContextDescriptors.Select(descriptor => descriptor.Role).ShouldContainOnly([SemanticImplementationRole.RulePredicate, SemanticImplementationRole.CommandValidation]);
             result.TypedContextDescriptors.All(descriptor => !descriptor.IsWrapperReady && descriptor.ModelRevision is null).ShouldBeTrue();
         }
         finally
