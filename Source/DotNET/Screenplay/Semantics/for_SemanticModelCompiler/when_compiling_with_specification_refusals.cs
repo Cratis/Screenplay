@@ -112,7 +112,7 @@ public class when_compiling_with_specification_refusals : given.a_specification_
             partial.SpecificationRefusedValue.ShouldNotBeNull();
             partial.TypedContextDescriptors.ShouldNotBeEmpty();
             partial.TypedContextDescriptors.All(descriptor => descriptor.IsWrapperReady).ShouldBeTrue();
-            var result = Compile("system Payments\n  extension \"cratis/missing\"\n\n" + source);
+            var result = Compile("system Payments\n  extension \"cratis/missing\" version 1\n" + source);
             result.Success.ShouldBeFalse();
             result.Value.ShouldBeNull();
             result.SpecificationRefusedValue.ShouldBeNull();
