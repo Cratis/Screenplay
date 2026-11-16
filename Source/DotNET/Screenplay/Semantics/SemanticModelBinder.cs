@@ -47,13 +47,25 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var extensionDiagnostics = resolution.Diagnostics.AddRange(new ExtensionUseSites(resolution).Check(syntax)).AddRange(resolution.CheckSettings(syntax));
         var diagnostics = DiagnosticSubjects.Attach(syntax, [.. extensionDiagnostics, .. result.Diagnostics]);
         var partial = extensionDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) ? null : result.SpecificationRefusedValue;
-        if (partial is not null)
+        if (partial is null)
         {
-            partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+            return result with { Diagnostics = diagnostics, SpecificationRefusedValue = null };
         }
 
-        return result with { Diagnostics = diagnostics, SpecificationRefusedValue = partial };
+        partial = AttachRefusalDiagnostics(partial, result.Diagnostics, diagnostics.Skip(extensionDiagnostics.Length));
+        return result with
+        {
+            Diagnostics = diagnostics,
+            SpecificationRefusedValue = partial,
+            SpecificationRefusedTypedContextDescriptors = DescriptorsFor(partial, SemanticTypedContextCatalog.Create(partial.Model.Application, result.ImplementationRequirements, true))
+        };
     }
+
+    /// <summary>
+    /// Stamps typed descriptors with the revision of their validated compilation.
+    /// </summary>
+    static ImmutableArray<SemanticTypedContextDescriptor> DescriptorsFor(SemanticCompilation compilation, ImmutableArray<SemanticTypedContextDescriptor> descriptors) =>
+        [.. descriptors.Select(value => value with { ModelRevision = compilation.Model.Revision })];
 
     static SemanticCompilation AttachRefusalDiagnostics(SemanticCompilation compilation, IEnumerable<Diagnostic> originals, IEnumerable<Diagnostic> attached)
     {

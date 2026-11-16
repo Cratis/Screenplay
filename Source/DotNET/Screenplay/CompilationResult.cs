@@ -30,6 +30,12 @@ public record CompilationResult<TResult>(TResult? Value, IEnumerable<Diagnostic>
     public ImmutableArray<SemanticTypedContextDescriptor> TypedContextDescriptors { get; init; } = [];
 
     /// <summary>
+    /// Gets trusted typed contexts for <see cref="SpecificationRefusedValue"/>, or an empty array when no opt-in value is available.
+    /// Failed compilations retain their original failure contexts in <see cref="TypedContextDescriptors"/>.
+    /// </summary>
+    public ImmutableArray<SemanticTypedContextDescriptor> SpecificationRefusedTypedContextDescriptors { get; init; } = [];
+
+    /// <summary>
     /// Gets a value indicating whether the compilation succeeded without errors.
     /// </summary>
     public bool Success => Value is not null && !Diagnostics.Any(_ => _.Severity == DiagnosticSeverity.Error);

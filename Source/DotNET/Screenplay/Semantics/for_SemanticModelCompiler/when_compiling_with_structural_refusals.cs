@@ -43,6 +43,19 @@ public class when_compiling_with_structural_refusals : given.a_specification_ref
     }
 
     [Fact]
+    void should_not_publish_wrapper_ready_contexts_for_an_unbound_handler()
+    {
+        var source = Source.Replace("        produces Recorded\n          for id\n          amount = amount", "        handler\n          file Record.cs", StringComparison.Ordinal)
+            .Replace("when Record amount = 10", "when Record", StringComparison.Ordinal);
+        var result = Compile(source);
+        result.Success.ShouldBeFalse();
+        result.Value.ShouldBeNull();
+        result.SpecificationRefusedValue.ShouldBeNull();
+        result.TypedContextDescriptors.ShouldNotBeEmpty();
+        result.TypedContextDescriptors.All(descriptor => descriptor.ModelRevision is null && !descriptor.IsWrapperReady).ShouldBeTrue();
+    }
+
+    [Fact]
     void should_not_classify_by_shared_diagnostic_code()
     {
         var specification = Compile(Source.Replace("when Record amount = 10", "when Unknown amount = 10", StringComparison.Ordinal));

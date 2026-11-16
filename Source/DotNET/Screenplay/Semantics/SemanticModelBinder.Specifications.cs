@@ -32,7 +32,7 @@ public sealed partial class SemanticModelBinder
             return new(compilation, Diagnostics)
             {
                 ImplementationRequirements = ImplementationRequirements,
-                TypedContextDescriptors = [.. descriptors.Select(value => value with { ModelRevision = compilation.Model.Revision })]
+                TypedContextDescriptors = DescriptorsFor(compilation, descriptors)
             };
         }
 
