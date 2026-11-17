@@ -17,6 +17,8 @@ P="$OUT/$DOMAIN"; rm -rf "$P" "$OUT/$DOMAIN.zip"; mkdir -p "$P"
 # the root file carries the `domain` line and the application preamble (reaction batches atomic, command reads protected)
 sed -E "s/^domain +[A-Za-z0-9]+\$/domain $DOMAIN/" "$SAMPLE/application.play" > "$P/domain.play"
 cp -R "$SAMPLE/Shared" "$P/Shared"; cp -R "$SAMPLE/$DOMAIN" "$P/$DOMAIN"
+# the design system names the default theme of the whole application (Catalog's); a standalone domain declares only its own theme, so the default becomes it
+sed -i.bak -E "s/^( *default theme )Acme[A-Za-z]+\$/\1Acme$DOMAIN/" "$P/Shared/design-system.play"; find "$P" -name "*.bak" -delete
 if [ "$KEEP_LOCAL_NAMES" != "1" ]; then
   # inbound contracts declared as: event <Published>At<Consumer> from "<Origin>"
   grep -rhoE 'event +[A-Za-z0-9]+At[A-Za-z0-9]+ +from +"[A-Za-z]+"' "$P/$DOMAIN" 2>/dev/null | awk '{print $2}' | sort -u | while read -r LOCAL; do
