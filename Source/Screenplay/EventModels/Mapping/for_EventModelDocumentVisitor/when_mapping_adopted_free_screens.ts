@@ -43,7 +43,7 @@ describe('when mapping adopted free screens', () => {
     const other = slice_named(document, 'NothingAdopted');
 
     it('should draw the adopted screen for the adopting slice', () => adopting.actors!.length.should.be.greaterThan(0));
-    it('should draw a prototype for the adopting slice', () => adopting.actors![0].elements.length.should.be.greaterThan(0));
+    it('should say the adopting slice has a screen', () => adopting.actors![0].hasScreen.should.be.true);
     it('should draw no screen for a slice that adopts nothing', () => other.actors!.length.should.equal(0));
 });
 
@@ -74,7 +74,10 @@ describe('when mapping screens declared at every level', () => {
     const document = toEventModelDocument(parse(levels).value, 'Billing');
     const slice = slice_named(document, 'InNested');
 
-    it('should draw every screen the slice resolves, from the nearest scope outwards and then by a unique name', () => slice.actors![0].elements.length.should.be.greaterThan(3));
+    it('should say the slice has a screen once, however many it resolves', () => {
+        slice.actors!.length.should.equal(1);
+        slice.actors![0].hasScreen.should.be.true;
+    });
 });
 
 describe('when two screens of one name are declared and an adopter names it', () => {

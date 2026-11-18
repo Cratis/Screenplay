@@ -159,7 +159,7 @@ describe('when the proposal adds a screen to a slice', () => {
         const boards = compile(module('Projects', slice0()));
         const proposed = structuredClone(boards.current.document);
         target = firstSlice(proposed);
-        target.actors.push({ id: 'actor-1', type: 0, layout: 0, windowWidth: 800, windowHeight: 600, elements: [{ id: 'screen-1', name: 'RegisterScreen', type: 'panel', width: 100, height: 50, ZIndex: 0, visibility: 0, isEnabled: true, opacity: 1, anchoring: 0, properties: { canvas: { x: 0, y: 0 } } }] });
+        target.actors.push({ id: 'actor-1', type: 0, layout: 0, windowWidth: 0, windowHeight: 0, hasScreen: true });
         sets = boardChanges(boards.current.document, proposed);
     });
 

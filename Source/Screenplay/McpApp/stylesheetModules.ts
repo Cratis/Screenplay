@@ -8,4 +8,3 @@ declare module '@cratis/components/styles';
 declare module '@cratis/components/theme';
 declare module '@cratis/event-models/theme';
 declare module '@cratis/event-models/styles';
-declare module '@cratis/scene/styles';
