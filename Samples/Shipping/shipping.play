@@ -1,5 +1,6 @@
 // Shipping: asking systems outside the model for something. Two systems, a REST carrier and a chat
-// service, are invoked from a reaction, a workflow and a state machine.
+// service, are invoked from reactions. The parcel's lifecycle and the Pickup workflow never call them: they send commands, and the
+// reactions answer. (A workflow or state machine that invokes an ability directly parses but does not bind yet - #1252.)
 domain Acme.Shipping
 
 command reads protected
@@ -35,53 +36,136 @@ system Chat
 
 policy Dispatchers
   require authenticated
-
-// A state's entry can invoke an ability. The inputs are mapped from the subject or given as values.
+persona Dispatcher
+  description "Watches the parcels leave the warehouse and steps in when a pickup cannot be booked"
+  goal "Every packed parcel has a pickup"
+  goal "Hear about a problem before the customer does"
+  policy Dispatchers
+// A parcel's life. The state machine follows ParcelView and only observes: a pickup the carrier cannot take is not the end of the
+// parcel, it is a state of its own that the Pickup workflow leaves again.
 statemachine ParcelFlow
-  description "Where a parcel is, from packed to shipped"
+  description "Where a parcel is: packed, waiting for a pickup, booked, on its way, delivered or sent back"
   follows ParcelView
   state Packed initial
-    entering invokes Chat.Post
-      channel = "#dispatch"
-      text = "A parcel is packed"
-    on PickupBooked -> Shipped
-  state Shipped final
-
-// A workflow action invokes an ability too. A value can come from an earlier node's result
-// (BookPickup.trackingNumber) and each answer the ability can give has an edge.
+    on PickupBooked -> Booked
+    on PickupUnavailable -> Unbookable
+    on PickupBookingFailed -> Unbookable
+  state Unbookable
+    entering starts Pickup
+    on PickupBooked -> Booked
+  state Booked
+    on ParcelCollected -> InTransit
+  state InTransit
+    on ParcelDelivered -> Delivered
+    on ParcelReturned -> Returned
+  state Delivered final
+  state Returned final
+  specification AFullCarrierPutsTheParcelOnHold
+    description "No capacity on the first try puts the parcel in Unbookable, which starts the Pickup workflow"
+    given OrderPacked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      shippingAddress = "1 Main Street"
+    when append PickupUnavailable
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    then is Unbookable
+    then starts Pickup
+  specification ALaterBookingMovesItOn
+    description "A booking that arrives while the parcel waits for a pickup moves it to Booked"
+    given OrderPacked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      shippingAddress = "1 Main Street"
+    given PickupUnavailable
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append PickupBooked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      trackingNumber = "TRK-2"
+    then is Booked
+  specification ADeliveryBeforeCollectionChangesNothing
+    description "Booked allows no way to Delivered, so a delivery reported before the carrier collected the parcel is ignored"
+    given OrderPacked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      shippingAddress = "1 Main Street"
+    given PickupBooked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      trackingNumber = "TRK-1"
+    when append ParcelDelivered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      signedBy = "A. Receiver"
+    then is Booked
+  specification ADeliveryEndsTheParcelsLife
+    given OrderPacked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      shippingAddress = "1 Main Street"
+    given PickupBooked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      trackingNumber = "TRK-1"
+    given ParcelCollected
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when append ParcelDelivered
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      signedBy = "A. Receiver"
+    then is Delivered
+// The carrier had no room or could not be reached. Waiting costs nothing, so the workflow waits a few hours, asks for the pickup
+// again and gives the carrier an hour to answer. The ability calls are the reactions' business (RetryPickupBooking talks to the
+// carrier, TellDispatchers to the chat); the workflow only sends the commands that make them happen. A pickup that still has not
+// been booked is escalated to a dispatcher.
 workflow Pickup
-  description "Books the pickup and tells the dispatchers"
+  description "Waits for the carrier to have room, asks for the pickup again and escalates it when the carrier still does not book"
   for ParcelView
+  trigger when ParcelFlow enters Unbookable
+    -> WaitForCapacity
   trigger Manual manual
-    -> BookPickup
-  action BookPickup invokes Carrier.BookPickup attempts 3
-    parcelId = parcelId
-    address = "1 Main Street"
-    next -> Tell
-    NoCapacity -> Escalate
-    failed -> Escalate
-  action Tell invokes Chat.Post
-    channel = "#dispatch"
-    text = BookPickup.trackingNumber
-  action Escalate invokes Chat.Post
-    channel = "#escalations"
-    text = "No pickup could be booked"
-
+    -> AskAgain
+  wait WaitForCapacity for 4 hours
+    resumed -> AskAgain
+  action AskAgain invokes RequestPickup
+    next -> AwaitBooking
+  wait AwaitBooking for PickupBooked expires after 1 hour
+    expired -> Escalate
+  action Escalate invokes EscalatePickup
+  specification ARetryThatBooksEndsTheWorkflow
+    description "The carrier books the second request within the hour, so nobody is bothered"
+    given OrderPacked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      shippingAddress = "1 Main Street"
+    given PickupUnavailable
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    when start "9c858901-8a57-4791-81fe-4c455b099bc9"
+    outcome WaitForCapacity resumed
+    outcome AwaitBooking resumed
+    then invokes RequestPickup
+    then completes
+  specification APickupThatIsNeverBookedIsEscalated
+    description "The carrier never books it: after the hour a dispatcher is asked to take over"
+    given OrderPacked
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+      shippingAddress = "1 Main Street"
+    given PickupBookingFailed
+      for "9c858901-8a57-4791-81fe-4c455b099bc9"
+      reason = "carrier unavailable"
+    when start "9c858901-8a57-4791-81fe-4c455b099bc9"
+    outcome WaitForCapacity resumed
+    outcome AwaitBooking expired
+    then invokes RequestPickup
+    then invokes EscalatePickup
+    then completes
 module Shipping
+  authorize Dispatchers
   feature Pickup
     slice Automation PickupBooking
       description "Books a pickup with the carrier once a parcel is packed"
-
-      readmodel ParcelView
-        parcelId ParcelId
-        status String
-
-      projection ParcelView
-        from OrderPacked
-          parcelId = $eventSourceId
-          status   = "packed"
-        from PickupBooked
-          status = "booked"
 
       event OrderPacked
         parcelId ParcelId
@@ -151,3 +235,242 @@ module Shipping
         then PickupBookingFailed
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
           reason = "carrier unavailable"
+    slice StateChange RequestPickup
+      description "A dispatcher, or the Pickup workflow, asks for a pickup to be booked again"
+      command RequestPickup
+        parcelId ParcelId identifier
+        shippingAddress String
+        produces PickupRequested
+          for parcelId
+          parcelId = parcelId
+          shippingAddress = shippingAddress
+      event PickupRequested
+        parcelId ParcelId
+        shippingAddress String
+      screen RequestPickupDialog
+        title "Ask for the pickup"
+        action RequestPickup
+          label "Ask for the pickup"
+      specification ARequestIsRecorded
+        given caller
+          authenticated
+        when RequestPickup
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+    slice StateChange EscalatePickup
+      description "A pickup nobody could book is raised with a dispatcher"
+      command EscalatePickup
+        parcelId ParcelId identifier
+        produces PickupEscalated
+          for parcelId
+          parcelId = parcelId
+      event PickupEscalated
+        parcelId ParcelId
+      screen EscalatePickupDialog
+        title "Escalate the pickup"
+        action EscalatePickup
+          label "Escalate the pickup"
+      specification AnEscalationIsRecorded
+        given caller
+          authenticated
+        when EscalatePickup
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then PickupEscalated
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    slice Automation RetryPickupBooking
+      description "Asks the carrier again each time a pickup is requested"
+      reaction RetryPickupBooking
+        description "Books the requested pickup and records the answer"
+        runs as system
+        when PickupRequested
+          parcelId
+          shippingAddress
+          invokes Carrier.BookPickup
+            parcelId = parcelId
+            address = shippingAddress
+            on returned
+              produces PickupBooked
+                trackingNumber = $result.trackingNumber
+            on NoCapacity
+              produces PickupUnavailable
+                parcelId = parcelId
+            on failed
+              produces PickupBookingFailed
+                reason = $failure.reason
+      specification TheCarrierBooksOnTheSecondTry
+        given Carrier.BookPickup returns
+          trackingNumber = "TRK-2"
+        when append PickupRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupBooked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          trackingNumber = "TRK-2"
+        then invokes Carrier.BookPickup
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          address = "1 Main Street"
+      specification TheCarrierIsStillFull
+        given Carrier.BookPickup answers NoCapacity
+        when append PickupRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then PickupUnavailable
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    slice Automation TellDispatchers
+      description "Tells the dispatchers in chat when a pickup is escalated"
+      reaction TellDispatchers
+        description "Posts the escalation to the escalations channel"
+        runs as system
+        when PickupEscalated
+          parcelId
+          invokes Chat.Post
+            channel = "#escalations"
+            text = "No pickup could be booked"
+      specification AnEscalationIsPosted
+        when append PickupEscalated
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then invokes Chat.Post
+          channel = "#escalations"
+          text = "No pickup could be booked"
+  feature Tracking
+    slice StateChange MarkCollected
+      description "A dispatcher records that the carrier collected the parcel"
+      command MarkCollected
+        parcelId ParcelId identifier
+        produces ParcelCollected
+          for parcelId
+          parcelId = parcelId
+      event ParcelCollected
+        parcelId ParcelId
+      screen MarkCollectedDialog
+        title "Mark as collected"
+        action MarkCollected
+          label "Mark as collected"
+      specification ACollectionIsRecorded
+        given caller
+          authenticated
+        when MarkCollected
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then ParcelCollected
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    slice StateChange MarkDelivered
+      description "A dispatcher records that the parcel reached the receiver"
+      command MarkDelivered
+        parcelId ParcelId identifier
+        signedBy String
+        produces ParcelDelivered
+          for parcelId
+          parcelId = parcelId
+          signedBy = signedBy
+      event ParcelDelivered
+        parcelId ParcelId
+        signedBy String
+      screen MarkDeliveredDialog
+        title "Mark as delivered"
+        action MarkDelivered
+          label "Mark as delivered"
+      specification ADeliveryIsRecorded
+        given caller
+          authenticated
+        when MarkDelivered
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          signedBy = "A. Receiver"
+        then ParcelDelivered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          signedBy = "A. Receiver"
+    slice StateChange ReturnParcel
+      description "A dispatcher records that the carrier sent the parcel back"
+      command ReturnParcel
+        parcelId ParcelId identifier
+        reason String
+        produces ParcelReturned
+          for parcelId
+          parcelId = parcelId
+          reason = reason
+      event ParcelReturned
+        parcelId ParcelId
+        reason String
+      screen ReturnParcelDialog
+        title "Return to sender"
+        action ReturnParcel
+          label "Return to sender"
+      specification AReturnIsRecorded
+        given caller
+          authenticated
+        when ReturnParcel
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "Nobody home on three attempts"
+        then ParcelReturned
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "Nobody home on three attempts"
+    slice StateView ParcelBoard
+      description "Every parcel and where it stands, from packed to delivered"
+      readmodel ParcelView
+        parcelId ParcelId key
+        shippingAddress String optional
+        status String
+      query AllParcels => observable ParcelView[]
+        description "Every parcel, kept current as the carrier reports"
+      query ParcelById => ParcelView optional
+        by parcelId ParcelId
+      projection ParcelProjection => ParcelView
+        from OrderPacked
+          parcelId        = $eventSourceId
+          shippingAddress = shippingAddress
+          status          = "packed"
+        from PickupBooked
+          status = "booked"
+        from PickupUnavailable
+          status = "unbookable"
+        from PickupBookingFailed
+          status = "unbookable"
+        from ParcelCollected
+          status = "in transit"
+        from ParcelDelivered
+          status = "delivered"
+        from ParcelReturned
+          status = "returned"
+      screen ParcelBoardScreen
+        title "Parcels"
+        section parcels
+          title "Where every parcel stands"
+          data ParcelView[] via query AllParcels
+          table parcels
+            column shippingAddress label "Address"
+            column status label "Status"
+      specification APackedParcelAppearsOnTheBoard
+        given caller
+          authenticated
+        when append OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        then readmodel ParcelView
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status = "packed"
+      specification ADeliveredParcelIsMarkedDelivered
+        given caller
+          authenticated
+        given OrderPacked
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          shippingAddress = "1 Main Street"
+        when append ParcelDelivered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          signedBy = "A. Receiver"
+        then readmodel ParcelView
+          parcelId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status = "delivered"

@@ -28,7 +28,8 @@ screenplay --warnaserror Samples/<Sample>
 | [Administration](Administration) | 1 file, 9 slices | An application built from the Administration blueprint: users, roles and permissions, settings and an audit log. |
 | [AcmeCommerce](AcmeCommerce) | many small files | A full multi-domain application - Catalog, Storefront, Sales, Purchasing, Warehouse - in one folder tree: shared kernel, per-domain shell (own logo, theme, menu) with hierarchical navigation, public events between contexts, blueprint screens and a custom component package. |
 | [Commerce](Commerce) | many small files | An application composed with [imports](../Documentation/screenplay/imports.md) at every level: a root file that reads like a table of contents, a file per module and per feature that imports its own folder, and one file per slice that holds only the slice. |
-| [TimeTracking](TimeTracking) | many small files | An application composed from one root glob. Module files declare their features inline and import each feature's folder, and each step of the story is a file of its own. |
+| [TimeTracking](TimeTracking) | many small files | An application composed from one root glob. Module files declare their features inline and import each feature's folder, and each step of the story is a file of its own. A week and a payroll run each have a state machine and a workflow: a chase that escalates, and a hand-over that sends again. |
+| [Shipping](Shipping) | 1 file, 9 slices | A parcel's journey with a carrier and a chat service: reactions that call the outside systems, a state machine that follows the parcel and a workflow that waits, asks again and escalates when the carrier cannot take it. |
 
 ## What every sample keeps to
 
