@@ -1,0 +1,178 @@
+// The life of a payroll run, and the wait for the provider.
+//
+// A run is opened, filled with approved hours, handed to the external payroll provider and, finally, acknowledged by it.
+// The state machine follows the PayrollRun read model. The hand-over is the part that goes wrong in practice: the provider's
+// webhook is missed, or its endpoint is down, and nobody notices until pay day. The workflow waits for the acknowledgement
+// and, when it does not come, sends the run again before it asks a payroll officer to take over.
+statemachine PayrollRunLifecycle
+  description "Where a payroll run is: open for hours, handed to the provider, or acknowledged by it"
+  follows PayrollRun
+  state Open initial
+    // An empty run is not handed over: ExportPayrollRun refuses it, and the guard says the same.
+    on PayrollRunExported when lineCount > 0 -> Exported
+  state Exported
+    entering starts DeliverPayrollRun
+    on PayrollRunAcknowledged -> Acknowledged
+  state Acknowledged final
+  specification AFilledRunIsHandedToTheProvider
+    description "Exporting a run with hours on it moves it to Exported, and Exported starts the wait for the provider"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    when append PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    then is Exported
+    then starts DeliverPayrollRun
+  specification AnEmptyRunStaysOpen
+    description "A run nothing was queued on is not handed over, so it does not start the wait"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    when append PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 0
+      totalHours   = 0
+    then is Open
+  specification TheProviderTakesTheRunIn
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    given PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    when append PayrollRunAcknowledged
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId      = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      acceptedLines     = 1
+      providerReference = "PAY-2026-40"
+    then is Acknowledged
+// Exporting again is safe: ExportPayrollRun only warns about a run that was exported before, and the provider takes the
+// same run twice as one. The officer is the last resort, and an unanswered request fails the run so that somebody sees it.
+workflow DeliverPayrollRun
+  description "Waits a day for the provider to acknowledge a run, sends it again, and asks a payroll officer when it still does not"
+  for PayrollRun
+  trigger when PayrollRunLifecycle enters Exported
+    -> AwaitAcknowledgement
+  wait AwaitAcknowledgement for PayrollRunAcknowledged expires after 1 day
+    expired -> SendAgain
+  action SendAgain invokes ExportPayrollRun attempts 3 timeout 2 minutes retry after 1 minute
+    next -> AwaitSecondAcknowledgement
+    failed -> AskAnOfficer
+  wait AwaitSecondAcknowledgement for PayrollRunAcknowledged expires after 1 day
+    expired -> AskAnOfficer
+  // Approved means the officer has fixed what stopped the provider: the run is sent once more.
+  approval AskAnOfficer by PayrollOfficer expires after 2 days
+    approved -> SendAgain
+  specification AnAcknowledgedRunNeedsNothingMore
+    description "The provider acknowledges within the day, so the run is never sent twice"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    when append PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    outcome AwaitAcknowledgement resumed
+    then completes
+  specification AMissedAcknowledgementSendsTheRunAgain
+    description "No acknowledgement within the day: the run is sent again, and the second wait is answered"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    when append PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    outcome AwaitAcknowledgement expired
+    outcome AwaitSecondAcknowledgement resumed
+    then invokes ExportPayrollRun
+    then completes
+  specification AnUnreachableProviderGoesToAnOfficer
+    description "Every attempt to send the run fails, so a payroll officer is asked and the run waits for the answer"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    when append PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    outcome AwaitAcknowledgement expired
+    outcome SendAgain failed
+    then invokes ExportPayrollRun
+    then invokes ExportPayrollRun
+    then invokes ExportPayrollRun
+    then waits at AskAnOfficer
+  specification AnOfficerWhoNeverAnswersFailsTheRun
+    description "Nobody acknowledges, the second wait runs out and the officer does not answer: the run fails where somebody will see it"
+    given PayrollRunOpened
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    given HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    when append PayrollRunExported
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    outcome AwaitAcknowledgement expired
+    outcome AwaitSecondAcknowledgement expired
+    outcome AskAnOfficer expired
+    then invokes ExportPayrollRun
+    then fails at AskAnOfficer

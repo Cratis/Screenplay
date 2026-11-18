@@ -6,6 +6,13 @@ The foundation enums pin their current zero-based member numbers, preserving exe
 
 The root declares `reaction batches atomic` for local and imported reactions: each trigger occurrence's direct productions and each selected refusal branch form separate all-or-none batches; invoked commands remain separate transactions (ESM v22).
 
+## Lifecycles
+Two things in a consultancy are processes rather than single decisions, so each has a state machine and a workflow. Both are top level declarations in a `Lifecycle.play` beside the module file that owns the story.
+| Where | State machine | Workflow |
+| --- | --- | --- |
+| `Timesheets/Lifecycle.play` | `TimesheetLifecycle`: `Draft`, `Submitted`, `Returned`, `Approved`. A returned week goes back to `Submitted` the way it first went; an empty week never leaves `Draft`. | `ChaseTimesheet`: a submitted week nobody decides is chased. The manager is reminded after three days and the approval is escalated after two more. A week returned in the meantime reminds its consultant instead. |
+| `Payroll/Lifecycle.play` | `PayrollRunLifecycle`: `Open`, `Exported`, `Acknowledged`. An empty run is never exported. | `DeliverPayrollRun`: waits a day for the provider's acknowledgement, sends the run again, and asks a payroll officer when it still does not come. A payroll officer who never answers fails the run where somebody sees it. |
+The state machines follow read models (`TimesheetProgress` in `Timesheets/Reporting/FollowingAWeek.play`, and `PayrollRun`), so they never decide - the commands do. The workflows only send commands: the three reminders and the escalation are slices of their own in `Timesheets/Approval`, with a screen and specifications each, and the board's sections open them.
 ## Monthly lookup keys
 
 `Timesheets/Reporting/CheckingEngagementMonths.play` declares a monthly row keyed by engagement and reporting month. Its single-instance query supplies both parts in a `by` block. `ClosingAnEngagementMonth.play` supplies the same parts in a command reads block. Screens use a collection query because scalar screen lookups cannot supply composite keys.

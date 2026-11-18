@@ -1,0 +1,89 @@
+// Where one week stands, as the lifecycle sees it: started, handed in, returned to the consultant, or approved.
+// The TimesheetLifecycle state machine (Timesheets/Lifecycle.play) follows this read model.
+slice StateView TimesheetProgress
+  description "Where each week stands, from the first entry to approval"
+  readmodel TimesheetProgress
+    description "One week's progress"
+    timesheetId  TimesheetId key
+    consultantId ConsultantId optional
+    status       String
+    totalHours   WeeklyHours
+    reason       String optional
+  query TimesheetProgressById => TimesheetProgress optional
+    description "Where one week stands"
+    by timesheetId TimesheetId
+    authorize IsEngagementManager
+  query AllTimesheetProgress => observable TimesheetProgress[]
+    description "Where every week stands"
+    authorize IsEngagementManager
+  projection TimesheetProgressProjection => TimesheetProgress
+    from TimesheetStarted key timesheetId
+      status       = "draft"
+      totalHours   = 0
+      reason       = ""
+    from TimesheetSubmitted key timesheetId
+      status     = "submitted"
+      totalHours = totalHours
+    from TimesheetRejected key timesheetId
+      status = "returned"
+      reason = reason
+    from TimesheetApproved key timesheetId
+      status = "approved"
+  screen TimesheetProgressScreen
+    title "Week progress"
+    section progress
+      title "Where every week stands"
+      data TimesheetProgress[] via query AllTimesheetProgress
+      table progress
+        column consultantId label "Consultant"
+        column status       label "Status"
+        column totalHours   label "Hours"
+        column reason       label "Reason it was returned"
+  specification AHandedInWeekIsSubmitted
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    then readmodel TimesheetProgress
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      status      = "submitted"
+      totalHours  = 37.5
+  specification AReturnedWeekKeepsItsReason
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    given TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    when append TimesheetRejected
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = "Tuesday is booked on the wrong engagement"
+      rejectedBy  = "kari.nordmann"
+    then readmodel TimesheetProgress
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      status      = "returned"
+      reason      = "Tuesday is booked on the wrong engagement"
+    then query TimesheetProgressById
+      arguments
+        timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      result
+        status = "returned"

@@ -88,6 +88,16 @@ slice StateView TimesheetBoard
         table submitted
           column consultantId label $strings.timesheets.fields.consultant
           on row-click navigate to RejectTimesheetDialog by timesheetId
+      section nudgeApprover
+        title "Remind the approver"
+        table submitted
+          column consultantId label $strings.timesheets.fields.consultant
+          on row-click navigate to NudgeApproverDialog by timesheetId
+      section escalateApproval
+        title "Escalate the approval"
+        table submitted
+          column consultantId label $strings.timesheets.fields.consultant
+          on row-click navigate to EscalateApprovalDialog by timesheetId
     section drafts
       title $strings.timesheets.board.drafts
       data DraftTimesheet[] via query DraftTimesheets
@@ -106,6 +116,7 @@ slice StateView TimesheetBoard
       data ReturnedTimesheet[] via query ReturnedTimesheets
       table returned
         column reason label $strings.timesheets.fields.reason
+        on row-click navigate to NudgeConsultantDialog by timesheetId
 
   specification SubmittingMovesAWeekIntoReview
     given caller
