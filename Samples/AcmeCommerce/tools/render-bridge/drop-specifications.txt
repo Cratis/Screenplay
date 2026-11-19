@@ -1,11 +1,6 @@
 # Specifications the render variant cannot take. One `<file>|<specification name>` per line.
-# The rejection comes from the decision read of ApproveOrder; ApproveOrder's event triggers ConfirmApprovedOrder, whose command ConfirmOrder reads the same
-# view under the same key, so the expected message could also be the reaction's. Stage cannot tell the two apart statically (STAGE-ESM-011), and refuses it.
-Sales/model/approval.play|AnApprovedOrderCannotBeApprovedAgain
-# `then invokes` of a reaction with `on refused` branches (STAGE-ESM-016), and an appended event that is an append-time constraint target in a
-# reactor scenario (STAGE-ESM-011): Stage cannot render these yet (Cratis/Stage#1082). Remove these entries when it can.
+# Stage v6.2.2 renders the four Warehouse reaction specifications and Sales AnApprovedOrderCannotBeApprovedAgain;
+# their 35 generated assertions pass in the five-domain variant (682 generated assertions in total).
+# Purchasing's `then invokes` scenario with `on refused` branches is still absent from emitted C# and TRX,
+# even when present in the render input. Stage v6.2.2 reports no error/diagnostic for this omission (formerly STAGE-ESM-016).
 Purchasing/model/replenishment.play|AutoReplenishDraftsAnOrderForThePreferredSupplier
-Warehouse/model/overview.play|RaisingTheAlarmOnTheFirstCrossing
-Warehouse/model/overview.play|StayingSilentWhileTheAlarmIsOpen
-Warehouse/model/reservations.play|ReservingWhatTheShelfCovers
-Warehouse/model/dispatch.play|DispatchingTakesTheUnitsOffTheShelf
