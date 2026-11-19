@@ -1,6 +1,4 @@
 # Specifications the render variant cannot take. One `<file>|<specification name>` per line.
-# Stage v6.2.2 renders the four Warehouse reaction specifications and Sales AnApprovedOrderCannotBeApprovedAgain;
-# their 35 generated assertions pass in the five-domain variant (682 generated assertions in total).
-# Purchasing's `then invokes` scenario with `on refused` branches is still absent from emitted C# and TRX,
-# even when present in the render input. Stage v6.2.2 reports no error/diagnostic for this omission (formerly STAGE-ESM-016).
+# Purchasing's `then invokes` scenario with `on refused` branches renders no specification and no diagnostic
+# (formerly STAGE-ESM-016). Remove this entry when Cratis/Stage#1172 renders it.
 Purchasing/model/replenishment.play|AutoReplenishDraftsAnOrderForThePreferredSupplier
