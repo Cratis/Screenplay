@@ -20,7 +20,9 @@ export function expectTimelineFindingOnTheConsumer(board: Element): void {
     const label = marker.getAttribute('aria-label')!;
     label.should.contain('PLAY0516');
     label.should.contain(parse(timelineFindingSource, 'work.play').diagnostics[0].message);
-    marker.getAttribute('title')!.should.equal(label);
+    // The annotation is said once: by the board's own tooltip, and to a screen reader by the accessible name
+    // above. The marker carries no native title, which would show the same words a second time.
+    (marker.getAttribute('title') === null).should.be.true;
     (producer.querySelector('.event-model-annotation-badge') === null).should.be.true;
     const event = board.querySelector('[data-out-of-order="true"]')!;
     (event !== null).should.be.true;

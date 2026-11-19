@@ -56,7 +56,9 @@ export function expectRoutesOnlyInTheBadge(board: Element): void {
     const label = badge!.getAttribute('aria-label')!;
     expect(label).toContain('then 1: E — stream A.S; streamId period = "<2026 & 10>", projectId = "p"');
     expect(label).toContain('Admitted by ESM v8');
-    expect(badge!.getAttribute('title')).toBe(label);
+    // The board says the annotation once: its own tooltip shows it, and the accessible name above speaks it. A
+    // native title would be a second tooltip with the same words, so the marker deliberately carries none.
+    expect(badge!.getAttribute('title')).toBeNull();
     const slice = board.querySelector<HTMLElement>('.event-modeling-grid-slice-column-header .event-model-annotation-badge');
     expect(slice).not.toBeNull();
     expect(slice!.getAttribute('data-severity')).toBe('information');
