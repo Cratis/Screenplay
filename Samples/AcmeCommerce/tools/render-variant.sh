@@ -10,8 +10,9 @@
 #      invoke the receiving domain's command, and the private events of the receiving domain declared in a StateChange slice.
 #   2. LEGACY_TEXT_RULES=1 (cratis 3.71.0 only, admits ESM <= v20): concept text rules (starts with / contains / not contains,
 #      ESM v24) become `matches` rules. Not needed on cratis >= 3.75.0.
-#   3. A command whose event triggers a reaction cannot have a rendered specification (STAGE-ESM-011): those specifications
-#      are listed in tools/render-bridge/drop-specifications.txt (one `<file>|<specification name>` per line) and removed.
+#   3. Specifications the renderer cannot take are listed in tools/render-bridge/drop-specifications.txt
+#      (one `<file>|<specification name>` per line) and removed. Each entry names its reason;
+#      since Stage 6.2.2 (cratis CLI 3.140.0) only the Purchasing `then invokes` scenario remains (Cratis/Stage#1172).
 #   5. `reaction batches atomic` (ESM v22) and `command reads protected` / command `reads` (ESM v25) render: nothing is stripped
 #      (STRIP_READS=1 runs tools/render-bridge/strip_reads.py, the old behaviour for a renderer older than Stage#566/#574).
 #   6. Fallback: if a `performer` answers the Purchasing dashboard query (an opaque read Stage cannot render, STAGE-ESM-007), the figures are
