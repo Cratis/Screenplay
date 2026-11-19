@@ -56,7 +56,9 @@ export function expectRoutesOnlyInTheBadge(board: Element): void {
     const label = badge!.getAttribute('aria-label')!;
     expect(label).toContain('then 1: E — stream A.S; streamId period = "<2026 & 10>", projectId = "p"');
     expect(label).toContain('Admitted by ESM v8');
-    expect(badge!.getAttribute('title')).toBe(label);
+    // The board carries no native `title` beside the accessible name any more; the label above is the
+    // whole assertion.
+    expect(badge!.getAttribute('title')).toBeNull();
     const slice = board.querySelector<HTMLElement>('.event-modeling-grid-slice-column-header .event-model-annotation-badge');
     expect(slice).not.toBeNull();
     expect(slice!.getAttribute('data-severity')).toBe('information');

@@ -3,8 +3,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, EventModelPresentationProvider, type EventModelBoardHandle, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
-import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay } from '@cratis/screenplay-views';
-import type { DependencyOverlay } from '@cratis/screenplay-event-models';
+import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay, useScreenplayBoardScreens, useScreenplayScreenRuntime } from '@cratis/screenplay-views';
+import { noScreenDocuments, type DependencyOverlay } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChangeLabel } from './boardChangeLabel';
 import { boardChanges } from './boardChanges';
@@ -93,6 +93,9 @@ export const BoardApp = () => {
     }, [board]);
 
     const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model, boardHost);
+    const screens = board?.screens ?? noScreenDocuments;
+    const screenRuntime = useScreenplayScreenRuntime(screens, host.dark);
+    const boardScreens = useScreenplayBoardScreens(screens, screenRuntime);
 
     const style = { height: boardHeight(host.container) };
     if (boards === undefined) {
@@ -126,7 +129,7 @@ export const BoardApp = () => {
                             <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
                         </> : (
                             <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
-                                <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                                <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly editor={{ selection: overlay.selection }} screens={boardScreens} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
                             </BoardErrorBoundary>
                         )}
                     </div>
@@ -146,6 +149,13 @@ export const BoardApp = () => {
             {board !== undefined && board.errors > 0 && (
                 <div className='screenplay-mcp-board__problems' role='status'>
                     {board.errors === 1 ? '1 error' : `${board.errors} errors`} - the board shows what could be read.
+                </div>
+            )}
+            {/* Not a diagnostic: the model compiles, and a screen the bridge could not carry keeps the board's
+                own placeholder window. It says why a screen shows less than the .play reads. */}
+            {board !== undefined && board.screenFindings.length > 0 && (
+                <div className='screenplay-mcp-board__notes' role='status'>
+                    {board.screenFindings.length === 1 ? '1 screen note' : `${board.screenFindings.length} screen notes`} - the board draws the screens it could read.
                 </div>
             )}
         </div>

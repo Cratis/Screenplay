@@ -36,6 +36,17 @@ body {
     border-bottom: 1px solid var(--vscode-inputValidation-errorBorder);
 }
 
+/* Screen notes are not errors: the model compiles and the board draws. Shown in the editor's information
+   colours so a thin screen does not read as a broken model. */
+.screenplay-board__problems--notes {
+    background: var(--vscode-inputValidation-infoBackground);
+    border-bottom-color: var(--vscode-inputValidation-infoBorder);
+}
+
+.screenplay-board__problems-note {
+    opacity: 0.85;
+}
+
 .screenplay-board__problems ul {
     margin: 0.25rem 0 0;
     padding-left: 1.25rem;

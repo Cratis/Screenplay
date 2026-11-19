@@ -87,6 +87,19 @@ highlight the board, and inferred dependencies do not prove executable readiness
 
 [Timeline findings](../imports.md#timeline-diagnostics) appear in the consumer slice header's information badge.
 
+### Screens
+
+A slice that designs a screen gets a row for each [persona](../personas.md) who
+may use it, and the screen is drawn as the screen itself - its title, tables,
+summaries, actions, sections and components, in the host's light or dark theme
+and at the size it was designed in. It is a miniature of the design; nothing in
+it can be pressed or typed into.
+
+A screen the board cannot draw shows an empty window instead, with a note in the
+lower left saying how many screens it was. A screen whose design lives in a file
+is such a screen - only Studio reads the design - and it is not an error: the
+rest of the board is drawn as usual.
+
 ### Spacing and text size
 
 The event model board starts with **comfortable** spacing and **medium** text.

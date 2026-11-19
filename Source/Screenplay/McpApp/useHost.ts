@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { App } from '@modelcontextprotocol/ext-apps/app-with-deps';
-import { applyHostTheme } from './applyHostTheme';
+import { applyHostTheme, hostThemeIsDark } from './applyHostTheme';
 import { documentsSignature } from './documentsSignature';
 import type { HostContainer } from './HostContainer';
 import { toVisualizedModel } from './toVisualizedModel';
@@ -18,6 +18,8 @@ export const watchIntervalMilliseconds = 2000;
 export interface Host {
     readonly model?: VisualizedModel | Error;
     readonly container?: HostContainer;
+    // Whether the host shows the board on a dark surface, so the screens on it are drawn in the same theme.
+    readonly dark: boolean;
     // Draws the board again from the server, with the arguments it was first drawn with. Left out when the
     // host does not let views call the server.
     readonly refresh?: () => void;
@@ -31,6 +33,7 @@ export function useHost(): Host {
     const app = useMemo(() => new App({ name: 'Screenplay event model board', version: '1.0.0' }, { availableDisplayModes: ['inline', 'fullscreen'] }), []);
     const [model, setModel] = useState<VisualizedModel | Error>();
     const [container, setContainer] = useState<HostContainer>();
+    const [dark, setDark] = useState(true);
     const [toolArguments, setToolArguments] = useState<Record<string, unknown>>({});
     const [connected, setConnected] = useState(false);
     const drawn = useRef<string | undefined>(undefined);
@@ -46,12 +49,14 @@ export function useHost(): Host {
         app.ontoolresult = result => setModel(remember(toVisualizedModel(result)));
         app.onhostcontextchanged = () => {
             applyHostTheme(app.getHostContext()?.theme);
+            setDark(hostThemeIsDark(app.getHostContext()?.theme));
             setContainer(app.getHostContext());
         };
         app.onteardown = async () => ({});
         app.connect()
             .then(() => {
                 applyHostTheme(app.getHostContext()?.theme);
+                setDark(hostThemeIsDark(app.getHostContext()?.theme));
                 setContainer(app.getHostContext());
                 setConnected(true);
             })
@@ -105,6 +110,7 @@ export function useHost(): Host {
     return {
         model,
         container,
+        dark,
         refresh: hostCapabilities?.serverTools ? refresh : undefined,
         toggleFullscreen: displayModes.includes('fullscreen') ? toggleFullscreen : undefined,
     };

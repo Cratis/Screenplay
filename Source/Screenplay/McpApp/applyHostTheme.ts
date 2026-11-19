@@ -5,8 +5,14 @@
 // follow `color-scheme` (@cratis/event-models/theme), and the @cratis/components tokens follow the
 // `cratis-dark` and `cratis-light` classes, which also win over the operating system's preference. Both
 // are set, so the board and the page around it agree. A host that says nothing gets dark, as before.
+// Whether the host shows the board on a dark surface. One definition, so what the page is put in and what the
+// screens on the board are drawn in can never disagree. A host that says nothing gets dark, as before.
+export function hostThemeIsDark(theme: string | undefined): boolean {
+    return theme !== 'light';
+}
+
 export function applyHostTheme(theme: string | undefined): void {
-    const light = theme === 'light';
+    const light = !hostThemeIsDark(theme);
     const root = document.documentElement;
     root.classList.toggle('cratis-light', light);
     root.classList.toggle('cratis-dark', !light);

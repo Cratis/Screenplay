@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as esbuild from 'esbuild';
+import { statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const production = process.argv.includes('--production');
@@ -41,10 +42,34 @@ const webview = {
     logLevel: 'info',
 };
 
+// What the webview may weigh in the bundle that ships. It grew from 2.16 MB to 7.08 MB when the board started
+// drawing the real screens instead of a placeholder window: Scene's renderer, its blueprint packages and
+// PrimeReact travel with it (Cratis/StudioIssues#1420). The script is read from disk inside the editor rather
+// than downloaded, so the cost is install size and the first parse, not a page load - but it must not grow
+// again without anyone noticing, which is what this is. Raise it deliberately, with the measurement in the
+// pull request. Only the production bundle is held to it; a development build keeps its names and is larger.
+const webviewBudgetBytes = 8_000_000;
+
+function guardWebviewSize() {
+    const bytes = statSync(webview.outfile).size;
+    const megabytes = (bytes / 1_000_000).toFixed(2);
+    if (!production) {
+        console.log(`[esbuild] ${webview.outfile} is ${megabytes} MB; the ${(webviewBudgetBytes / 1_000_000).toFixed(2)} MB budget applies to the production bundle.`);
+        return;
+    }
+    if (bytes > webviewBudgetBytes) {
+        console.error(`[esbuild] ${webview.outfile} is ${megabytes} MB, over the ${(webviewBudgetBytes / 1_000_000).toFixed(2)} MB budget. Load what grew it on demand, or raise the budget in esbuild.mjs with the measurement in the pull request.`);
+        process.exitCode = 1;
+        return;
+    }
+    console.log(`[esbuild] ${webview.outfile} is ${megabytes} MB of the ${(webviewBudgetBytes / 1_000_000).toFixed(2)} MB budget.`);
+}
+
 if (watch) {
     const contexts = await Promise.all([esbuild.context(extension), esbuild.context(webview)]);
     await Promise.all(contexts.map(context => context.watch()));
     console.log('[esbuild] watching...');
 } else {
     await Promise.all([esbuild.build(extension), esbuild.build(webview)]);
+    guardWebviewSize();
 }

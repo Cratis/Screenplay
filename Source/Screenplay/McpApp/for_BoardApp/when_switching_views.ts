@@ -18,8 +18,8 @@ vi.mock('../boardChrome', () => ({ boardChrome: {} }));
 vi.mock('../useHost', () => ({ useHost: () => ({ model: {}, refresh: vi.fn(), toggleFullscreen: vi.fn() }) }));
 vi.mock('../compileBoards', () => ({ compileBoards: () => compiled }));
 const compiled = {
-    current: { document: { collections: [] }, dependencies: dependencyMapFor(parse('module Current').value), errors: 0 },
-    proposed: { document: { collections: [] }, dependencies: dependencyMapFor(parse('module Proposed').value), errors: 0 },
+    current: { document: { collections: [] }, dependencies: dependencyMapFor(parse('module Current').value), errors: 0, screens: {}, screenFindings: [] },
+    proposed: { document: { collections: [] }, dependencies: dependencyMapFor(parse('module Proposed').value), errors: 0, screens: {}, screenFindings: [] },
 };
 const render = () => hooks.render(BoardApp);
 const tools = () => render().find(element => element.type === BoardTools)!;

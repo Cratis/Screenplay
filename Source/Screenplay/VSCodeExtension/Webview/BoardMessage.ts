@@ -1,11 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import type { DependencyMap, DependencyOverlay } from '@cratis/screenplay-event-models';
+import type { DependencyMap, DependencyOverlay, ScreenDocuments } from '@cratis/screenplay-event-models';
+import type { ConversionFinding as ScreenFinding } from '@cratis/scene.screenplay';
 import type { BoardDensity, BoardTextSize } from '@cratis/event-models';
 
 // What the extension tells the board webview, and what the webview tells it back. Both sides import this,
 // so a message cannot be renamed on one side only.
+
+export type { ScreenFinding };
 
 // One problem the compiler found, as the webview lists it.
 export interface BoardProblem {
@@ -16,13 +19,21 @@ export interface BoardProblem {
     readonly path?: string;
 }
 
-// The board for a document: the event model document to draw and the problems found compiling it.
+// The board for a document: the event model document to draw, the Scene documents of its screens, and the
+// problems found compiling it. The screens travel beside the document because the board holds nothing of a
+// screen itself - it knows only that a role has one, and the webview draws it.
 export interface ShowBoardMessage {
     readonly type: 'show';
     readonly document: unknown;
     readonly dependencies: DependencyMap;
     readonly overlay?: DependencyOverlay;
     readonly problems: readonly BoardProblem[];
+
+    // The Scene document of every screen, by the key the board draws it under.
+    readonly screens: ScreenDocuments;
+
+    // What a screen said that could not be drawn, listed under the problems so a thin screen is explained.
+    readonly screenFindings: readonly ScreenFinding[];
 }
 
 // How the person last chose to view boards: how much of each slice is drawn, whether properties are

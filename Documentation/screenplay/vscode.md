@@ -44,11 +44,19 @@ These are modeled screens, not a running application. [Timeline
 findings](imports.md#timeline-diagnostics) appear in the consumer slice header's
 information badge.
 
-The window is a placeholder: the board itself draws nothing of a screen's
-design, and the extension does not yet hand it one to draw, so every role with a
-screen shows the same empty window. Studio draws the real screen, and
-[Cratis/StudioIssues#1420](https://github.com/Cratis/StudioIssues/issues/1420)
-tracks bringing that here.
+A screen the extension can read is drawn as the screen itself - its title,
+tables, summaries, actions, sections and components, in the board's own theme and
+at the size it was designed in - not as an outline of boxes. It is a miniature,
+and nothing in it can be pressed or typed into: the board shows the design, the
+running application is where it works.
+
+The empty window still appears for a screen the board cannot draw: a screen whose
+design lives in a file (`screen Orders` with `file "..."`), where only Studio
+reads the design. A note under the problems bar says which screen it was and why;
+it is not an error, and the rest of the board is unaffected. A screen whose
+module declares a `form` is drawn with that action's button rather than its form,
+because a `.play` module's `form` is not yet part of the model the extension
+reads.
 
 Select a problem above the board to open its source line. The board draws what
 it can read even when there are errors, and it does not run specifications. Use

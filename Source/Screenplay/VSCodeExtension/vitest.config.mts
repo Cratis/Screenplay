@@ -12,6 +12,9 @@ export default defineConfig({
         include: ['**/for_*/**/*.ts'],
         exclude: ['**/node_modules/**', '**/dist/**', '**/out/**', '**/given/**'],
         setupFiles: ['./vitest.setup.ts'],
+        // Scene's packages import their own stylesheets for their effect, and Node cannot load a .css file.
+        // Inlining them puts them through Vite, which is also how the hosts bundle them.
+        server: { deps: { inline: [/@cratis[/\\]scene\./] } },
     },
     resolve: {
         alias: {

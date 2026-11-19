@@ -4,12 +4,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { ToolbarButton } from '@cratis/components/Toolbar';
-import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay } from '@cratis/screenplay-views';
-import type { DependencyMap, DependencyOverlay } from '@cratis/screenplay-event-models';
+import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay, useScreenplayBoardScreens, useScreenplayScreenRuntime } from '@cratis/screenplay-views';
+import { noScreenDocuments, type DependencyMap, type DependencyOverlay, type ScreenDocuments } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
-import { BoardProblem, ExtensionToBoardMessage } from './BoardMessage';
+import { BoardProblem, ExtensionToBoardMessage, ScreenFinding } from './BoardMessage';
 import { Problems } from './Problems';
 import { defaultPresentation, usePresentation } from './usePresentation';
 import { vscode } from './vscodeApi';
@@ -19,6 +19,8 @@ interface Board {
     readonly dependencies: DependencyMap;
     readonly overlay?: DependencyOverlay;
     readonly problems: readonly BoardProblem[];
+    readonly screens: ScreenDocuments;
+    readonly screenFindings: readonly ScreenFinding[];
 }
 
 const noOverlay: DependencyOverlay = { scopes: [] };
@@ -53,7 +55,14 @@ export const BoardApp = () => {
     useEffect(() => {
         const receive = (event: MessageEvent<ExtensionToBoardMessage>) => {
             if (event.data.type === 'show') {
-                setBoard({ document: event.data.document, dependencies: event.data.dependencies, overlay: event.data.overlay, problems: event.data.problems });
+                setBoard({
+                    document: event.data.document,
+                    dependencies: event.data.dependencies,
+                    overlay: event.data.overlay,
+                    problems: event.data.problems,
+                    screens: event.data.screens ?? noScreenDocuments,
+                    screenFindings: event.data.screenFindings ?? [],
+                });
             }
         };
         window.addEventListener('message', receive);
@@ -73,6 +82,10 @@ export const BoardApp = () => {
     }, [board]);
 
     const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model, boardHost);
+    // The board in the webview is always drawn dark (see applyDarkTheme), so the screens on it are too.
+    const screens = board?.screens ?? noScreenDocuments;
+    const screenRuntime = useScreenplayScreenRuntime(screens, true);
+    const boardScreens = useScreenplayBoardScreens(screens, screenRuntime);
     if (board === undefined || model === undefined) {
         return <div className='screenplay-board__message'>Compiling…</div>;
     }
@@ -83,7 +96,7 @@ export const BoardApp = () => {
     </>;
     return (
         <div ref={boardHost} className='screenplay-board'>
-            <Problems problems={board.problems} onShowSource={showSource} />
+            <Problems problems={board.problems} screenFindings={board.screenFindings} onShowSource={showSource} />
             <div className='screenplay-board__canvas'>
                 <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
                     {model instanceof Error ? <>
@@ -93,7 +106,7 @@ export const BoardApp = () => {
                         <MenuDropdownOpenProvider>
                             <EventModelPresentationProvider presentation={presentation} onChange={changePresentation}>
                                 <BoardErrorBoundary resetWhenChanged={presentation} onReset={() => changePresentation(defaultPresentation)}>
-                                    <EventModelBoard document={model} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                                    <EventModelBoard document={model} readOnly editor={{ selection: overlay.selection }} screens={boardScreens} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
                                 </BoardErrorBoundary>
                             </EventModelPresentationProvider>
                         </MenuDropdownOpenProvider>

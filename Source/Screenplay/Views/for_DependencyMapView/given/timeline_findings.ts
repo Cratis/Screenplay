@@ -20,7 +20,10 @@ export function expectTimelineFindingOnTheConsumer(board: Element): void {
     const label = marker.getAttribute('aria-label')!;
     label.should.contain('PLAY0516');
     label.should.contain(parse(timelineFindingSource, 'work.play').diagnostics[0].message);
-    marker.getAttribute('title')!.should.equal(label);
+    // The board says the finding once: a visual tooltip and the accessible name. It carries no native
+    // `title` any more - that would be a second tooltip with the same words - so the accessible name above is
+    // the whole assertion.
+    (marker.getAttribute('title') === null).should.be.true;
     (producer.querySelector('.event-model-annotation-badge') === null).should.be.true;
     const event = board.querySelector('[data-out-of-order="true"]')!;
     (event !== null).should.be.true;

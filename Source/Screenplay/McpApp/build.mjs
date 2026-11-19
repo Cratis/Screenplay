@@ -81,6 +81,19 @@ const page = `<!DOCTYPE html>
 </html>
 `;
 
+// What the page may weigh. The host's sandbox loads nothing from the server, so everything the board draws
+// with is inlined here and the whole page travels as one MCP resource - there is no second chunk to fetch on
+// demand. Drawing the real screens instead of a placeholder window grew it from 3.19 MB to 8.34 MB: Scene's
+// renderer, its blueprint packages and PrimeReact (Cratis/StudioIssues#1420). It must not grow again
+// unnoticed; raise this deliberately, with the measurement in the pull request.
+const pageBudgetCharacters = 9_000_000;
+
 await mkdir('dist', { recursive: true });
 await writeFile('dist/event-model-board.html', page);
-console.log(`dist/event-model-board.html: ${page.length} characters`);
+const megabytes = (page.length / 1_000_000).toFixed(2);
+if (page.length > pageBudgetCharacters) {
+    console.error(`dist/event-model-board.html is ${megabytes} MB, over the ${(pageBudgetCharacters / 1_000_000).toFixed(2)} MB budget. A host downloads the whole page, so draw less or raise the budget in build.mjs with the measurement in the pull request.`);
+    process.exitCode = 1;
+} else {
+    console.log(`dist/event-model-board.html: ${page.length} characters (${megabytes} MB of the ${(pageBudgetCharacters / 1_000_000).toFixed(2)} MB budget)`);
+}
