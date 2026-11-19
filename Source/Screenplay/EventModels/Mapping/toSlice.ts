@@ -52,7 +52,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
             ...proseOf({ description: query.description }),
             parameters: [query.by, ...query.byParts ?? [], ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
-        actors: toUserExperience(slice.screens, scope.path, audience),
+        actors: toUserExperience(slice.screens, audience),
         specifications: toSpecifications(slice.specifications, scope, owners, command?.id, readModel),
         commentCount: 0,
     };

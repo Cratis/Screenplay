@@ -14,7 +14,7 @@ function screens_of(...lines: string[]): readonly ScreenSyntax[] {
 
 describe('when a slice has screens', () => {
     const screens = screens_of('screen Orders', '  title "Orders"');
-    const actors = toUserExperience(screens, 'M/F/S');
+    const actors = toUserExperience(screens);
 
     it('should give the role a row', () => actors.length.should.equal(1));
     it('should say the role has a screen', () => actors[0].hasScreen.should.be.true);
@@ -29,7 +29,7 @@ describe('when a slice has screens', () => {
 
 describe('when a slice has several screens', () => {
     const screens = screens_of('screen Orders', '  title "Orders"', 'screen OrderDetail', '  title "Order"');
-    const actors = toUserExperience(screens, 'M/F/S');
+    const actors = toUserExperience(screens);
 
     it('should still give the role one row', () => actors.length.should.equal(1));
     it('should say it has a screen', () => actors[0].hasScreen.should.be.true);
@@ -37,12 +37,12 @@ describe('when a slice has several screens', () => {
 
 describe('when several roles use the slice', () => {
     const screens = screens_of('screen Orders', '  title "Orders"');
-    const actors = toUserExperience(screens, 'M/F/S', ['buyer', 'seller']);
+    const actors = toUserExperience(screens, ['buyer', 'seller']);
 
     it('should give each of them a row', () => actors.map(actor => actor.id).should.deep.equal(['buyer', 'seller']));
     it('should say each has a screen', () => actors.map(actor => actor.hasScreen).should.deep.equal([true, true]));
 });
 
 describe('when a slice has no screen', () => {
-    it('should give it no row at all', () => toUserExperience([], 'M/F/S').length.should.equal(0));
+    it('should give it no row at all', () => toUserExperience([]).length.should.equal(0));
 });

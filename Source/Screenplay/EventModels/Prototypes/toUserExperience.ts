@@ -20,11 +20,10 @@ export const userActor: ActorDocument = {
 //
 // A .play document never sizes the window a screen was designed in, so the window is left unsaid (0) and whoever
 // draws the screen uses its own default, exactly as a Studio role whose window was never resized does.
-export function toUserExperience(screens: readonly ScreenSyntax[], path: string, actorIds: readonly string[] = [userActor.id]): UserExperienceActorDocument[] {
+export function toUserExperience(screens: readonly ScreenSyntax[], actorIds: readonly string[] = [userActor.id]): UserExperienceActorDocument[] {
     if (screens.length === 0) {
         return [];
     }
 
-    void path;
     return actorIds.map(id => ({ id, type: ActorType.uiRole, hasScreen: true, layout: PrototypeLayout.absolute, windowWidth: 0, windowHeight: 0 }));
 }
