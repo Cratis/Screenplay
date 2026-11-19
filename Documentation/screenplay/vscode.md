@@ -37,11 +37,18 @@ on the open file's slices; open `application.play` for the whole application.*
 ## Inspect the flow and check the source
 
 Read the board across modules and features. Each slice is a column with its
-command, produced events and read model, with specifications beneath it. Screen
-prototypes appear above the slice in the row of each
-[persona](personas.md) who may use them. These are modeled screens, not a running
-application. [Timeline findings](imports.md#timeline-diagnostics) appear in the
-consumer slice header's information badge.
+command, produced events and read model, with specifications beneath it. A slice
+whose file designs a screen gets a row for each
+[persona](personas.md) who may use it, with a window standing in for the screen.
+These are modeled screens, not a running application. [Timeline
+findings](imports.md#timeline-diagnostics) appear in the consumer slice header's
+information badge.
+
+The window is a placeholder: the board itself draws nothing of a screen's
+design, and the extension does not yet hand it one to draw, so every role with a
+screen shows the same empty window. Studio draws the real screen, and
+[Cratis/StudioIssues#1420](https://github.com/Cratis/StudioIssues/issues/1420)
+tracks bringing that here.
 
 Select a problem above the board to open its source line. The board draws what
 it can read even when there are errors, and it does not run specifications. Use
