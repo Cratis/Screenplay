@@ -8,4 +8,7 @@ export * from './Mapping/EventModelDocumentVisitor';
 export * from './Mapping/compileEventModelApplication';
 export * from './Mapping/timelineAnnotations';
 export * from './Mapping/withSliceAnnotations';
+export * from './Screens/screenDocumentKey';
+export * from './Screens/screensOfApplication';
+export * from './Screens/sliceScreens';
 export * from './Dependencies';

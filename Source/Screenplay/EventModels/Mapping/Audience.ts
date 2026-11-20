@@ -65,6 +65,11 @@ export class Audience {
         return actors;
     }
 
+    // The name each actor goes by, so a screen named after a persona can be matched to the row it is drawn on.
+    namesByActorId(): ReadonlyMap<string, string> {
+        return new Map([...this.personas.map(persona => [persona.actor.id, persona.actor.name] as const), [userActor.id, userActor.name] as const]);
+    }
+
     // Every persona's row, then the generic user's when a screen fell to them. No rows when there is no screen.
     actors(): ActorDocument[] {
         if (this.used.size === 0) {

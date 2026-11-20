@@ -35,10 +35,11 @@
         "test": "vitest run --coverage"
     },
     "dependencies": {
+        "@cratis/scene.screenplay": "6.2.0",
         "@cratis/screenplay-compiler": "workspace:*"
     },
     "devDependencies": {
-        "@cratis/event-models": "0.370.0",
+        "@cratis/event-models": "0.371.0",
         "@types/chai": "^5.2.3",
         "@vitest/coverage-v8": "5.0.5",
         "ajv": "^8.20.0",
