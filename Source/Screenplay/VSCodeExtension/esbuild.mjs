@@ -44,8 +44,11 @@ const webview = {
 
 // What the webview may weigh, in bytes. Everything the board draws with is bundled into one file that the
 // editor parses before anything appears, and Scene's renderer - which draws the screens - is the largest
-// thing in it. The ceiling is headroom over what it weighs today, not a target: a change that needs more
-// than this is a change worth looking at, so raise it deliberately and say why rather than quietly.
+// thing in it: a production build weighed 2.06 MB before the board could draw screens and 6.74 MB after.
+// The ceiling is headroom over that, not a target: a change that needs more than this is a change worth
+// looking at, so raise it deliberately and say why rather than quietly. Should the weight become a problem
+// before a ceiling is reached, the way down is to load Scene's renderer as its own chunk and keep drawing
+// the placeholder until it arrives - what a board already shows for a screen it has no document for.
 const webviewCeiling = 8 * 1024 * 1024;
 
 function holdTheWebviewToItsBudget() {
