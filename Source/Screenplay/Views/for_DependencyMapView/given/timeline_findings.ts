@@ -20,7 +20,10 @@ export function expectTimelineFindingOnTheConsumer(board: Element): void {
     const label = marker.getAttribute('aria-label')!;
     label.should.contain('PLAY0516');
     label.should.contain(parse(timelineFindingSource, 'work.play').diagnostics[0].message);
-    marker.getAttribute('title')!.should.equal(label);
+    // The board draws the hover text with its own tooltip instead of a title attribute, so the marker carries
+    // the whole text as its accessible name and sits inside the tooltip that shows it.
+    (marker.getAttribute('title') === null).should.be.true;
+    (marker.closest('.grid-tooltip-root') !== null).should.be.true;
     (producer.querySelector('.event-model-annotation-badge') === null).should.be.true;
     const event = board.querySelector('[data-out-of-order="true"]')!;
     (event !== null).should.be.true;

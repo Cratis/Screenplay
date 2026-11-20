@@ -56,7 +56,10 @@ export function expectRoutesOnlyInTheBadge(board: Element): void {
     const label = badge!.getAttribute('aria-label')!;
     expect(label).toContain('then 1: E — stream A.S; streamId period = "<2026 & 10>", projectId = "p"');
     expect(label).toContain('Admitted by ESM v8');
-    expect(badge!.getAttribute('title')).toBe(label);
+    // The board draws the hover text with its own tooltip instead of a title attribute, so the marker carries
+    // the whole text as its accessible name and sits inside the tooltip that shows it.
+    expect(badge!.getAttribute('title')).toBeNull();
+    expect(badge!.closest('.grid-tooltip-root')).not.toBeNull();
     const slice = board.querySelector<HTMLElement>('.event-modeling-grid-slice-column-header .event-model-annotation-badge');
     expect(slice).not.toBeNull();
     expect(slice!.getAttribute('data-severity')).toBe('information');
