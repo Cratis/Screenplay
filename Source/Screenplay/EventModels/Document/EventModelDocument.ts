@@ -43,30 +43,16 @@ export interface ActorDocument {
     persona?: { id: string; name: string };
 }
 
-// What a UI role sees in one slice - the screens drawn as prototype elements (@cratis/scene UIElement data).
+// What a UI role has in one slice: that it has a screen, and the window the screen was designed in. The board
+// draws nothing of a screen itself - a host that can draw one hands it the Scene document, and otherwise the
+// board draws a placeholder window (Cratis/Studio decisions 0026 and 0027).
 export interface UserExperienceActorDocument {
     id: string;
     type: number;
-    elements: PrototypeElementDocument[];
+    hasScreen: boolean;
     layout: number;
     windowWidth: number;
     windowHeight: number;
-}
-
-// One element of a prototype. 'type' is the placeholder the board draws it as when no component library
-// is registered to render it - a button, a data table, a panel.
-export interface PrototypeElementDocument {
-    id: string;
-    name: string;
-    type: string;
-    width: number;
-    height: number;
-    ZIndex: number;
-    visibility: number;
-    isEnabled: boolean;
-    opacity: number;
-    anchoring: number;
-    properties: { canvas: { x: number; y: number } };
 }
 
 export interface ModuleDocument {

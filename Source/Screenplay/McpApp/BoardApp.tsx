@@ -3,7 +3,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, EventModelPresentationProvider, type EventModelBoardHandle, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
-import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView, useDependencyOverlay } from '@cratis/screenplay-views';
+import {
+    defaultDependencyMapOptions, dependencyMapMenuItems, noBoardScreens, DependencyMapView, DependencyView,
+    useDependencyOverlay, useScreenplayBoardScreens, useScreenplayScreenRuntime,
+} from '@cratis/screenplay-views';
 import type { DependencyOverlay } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChangeLabel } from './boardChangeLabel';
@@ -93,6 +96,9 @@ export const BoardApp = () => {
     }, [board]);
 
     const overlay = useDependencyOverlay(board?.overlay ?? noOverlay, model instanceof Error ? undefined : model, boardHost);
+    const screens = board?.screens ?? noBoardScreens;
+    const screenRuntime = useScreenplayScreenRuntime(screens);
+    const boardScreens = useScreenplayBoardScreens(screens, screenRuntime);
 
     const style = { height: boardHeight(host.container) };
     if (boards === undefined) {
@@ -126,7 +132,7 @@ export const BoardApp = () => {
                             <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
                         </> : (
                             <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
-                                <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                                <EventModelBoard key={attempt} handle={boardHandle} document={model} changes={shownChanges?.changes} initialFocus={first === undefined ? undefined : { id: first }} readOnly screens={boardScreens} editor={{ selection: overlay.selection }} sliceLinks={overlay.sliceLinks} showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
                             </BoardErrorBoundary>
                         )}
                     </div>

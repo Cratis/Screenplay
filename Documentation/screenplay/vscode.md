@@ -37,11 +37,24 @@ on the open file's slices; open `application.play` for the whole application.*
 ## Inspect the flow and check the source
 
 Read the board across modules and features. Each slice is a column with its
-command, produced events and read model, with specifications beneath it. Screen
-prototypes appear above the slice in the row of each
-[persona](personas.md) who may use them. These are modeled screens, not a running
-application. [Timeline findings](imports.md#timeline-diagnostics) appear in the
-consumer slice header's information badge.
+command, produced events and read model, with specifications beneath it. A slice
+whose file designs a screen gets a row for each
+[persona](personas.md) who may use it, showing the screen that persona uses.
+These are modeled screens, not a running application. [Timeline
+findings](imports.md#timeline-diagnostics) appear in the consumer slice header's
+information badge.
+
+The board draws the screen itself, in the same renderer and the default
+appearance Studio draws it with: the title, data, table, summary, toolbar,
+component, panel, section and action directives the screen states, laid out at
+the size of the window it was designed in and scaled down. It is a picture, not
+a running screen - nothing in it can be pressed, focused or tabbed to.
+
+A role whose screen cannot be drawn keeps the empty placeholder window, and the
+area above the board says which screen it was and why. That is not an error in
+the model: it means the screen states something no Scene document can hold yet -
+a screen that keeps its design in a separate file, for instance - and the rest
+of the board is unaffected.
 
 Select a problem above the board to open its source line. The board draws what
 it can read even when there are errors, and it does not run specifications. Use

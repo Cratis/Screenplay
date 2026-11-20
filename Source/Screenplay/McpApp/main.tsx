@@ -10,7 +10,6 @@ import '@cratis/components/styles';
 import '@cratis/components/theme';
 import '@cratis/event-models/theme';
 import '@cratis/event-models/styles';
-import '@cratis/scene/styles';
 import './board.css';
 import { applyHostTheme } from './applyHostTheme';
 import { BoardApp } from './BoardApp';

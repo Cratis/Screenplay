@@ -13,3 +13,6 @@ export { overlayState } from './dependencyOverlay';
 export type { OverlayEmphasis, OverlayLink, OverlayState } from './dependencyOverlay';
 export { useDependencyOverlay } from './useDependencyOverlay';
 export type { DependencyOverlayBoardProps, OverlayModel } from './useDependencyOverlay';
+export { useScreenplayBoardScreens, useScreenplayScreenRuntime } from './Screens/ScreenplayScreens';
+export { boardScreenDocumentFor, hasBoardScreens, noBoardScreens, readBoardScreens } from './Screens/boardScreens';
+export type { BoardScreenDocuments } from './Screens/boardScreens';

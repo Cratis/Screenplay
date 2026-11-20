@@ -10,5 +10,8 @@ export default defineConfig({
         include: ['**/for_*/**/*.ts'],
         exclude: ['**/node_modules/**', '**/dist/**', '**/given/**'],
         setupFiles: ['./vitest.setup.ts'],
+        // Scene's renderer imports its own stylesheets. Node has no loader for a .css file, so the packages
+        // that draw a screen are processed by Vite here rather than required straight out of node_modules.
+        server: { deps: { inline: [/@cratis[\\/]scene\./] } },
     },
 });

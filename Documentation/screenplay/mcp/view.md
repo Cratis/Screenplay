@@ -42,6 +42,13 @@ keeps the current list of hosts. In a client that does not draw the board, use t
 The board follows the host's light or dark theme, and changes with it while it is
 on screen. It is dark when the host says nothing about its theme.
 
+A slice whose file designs a screen shows that screen on each persona's row,
+drawn in the same renderer and the default appearance Studio draws it with. It
+is a picture, not a running screen: nothing in it can be pressed, focused or
+tabbed to. A screen the board cannot draw keeps an empty placeholder window,
+which is not an error in the model - the screen states something no Scene
+document can hold yet, and the rest of the board is unaffected.
+
 ## Show the model on disk
 
 ```text

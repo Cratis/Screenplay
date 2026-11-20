@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as esbuild from 'esbuild';
+import { statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const production = process.argv.includes('--production');
@@ -41,10 +42,30 @@ const webview = {
     logLevel: 'info',
 };
 
+// What the webview may weigh, in bytes. Everything the board draws with is bundled into one file that the
+// editor parses before anything appears, and Scene's renderer - which draws the screens - is the largest
+// thing in it. The ceiling is headroom over what it weighs today, not a target: a change that needs more
+// than this is a change worth looking at, so raise it deliberately and say why rather than quietly.
+const webviewCeiling = 8 * 1024 * 1024;
+
+function holdTheWebviewToItsBudget() {
+    const weight = statSync(webview.outfile).size;
+    const megabytes = size => `${(size / (1024 * 1024)).toFixed(2)} MB`;
+    if (weight > webviewCeiling) {
+        console.error(`The webview bundle is ${megabytes(weight)}, over its ${megabytes(webviewCeiling)} ceiling.`);
+        console.error('Either take weight out of it, draw the heavy part on demand, or raise the ceiling in esbuild.mjs deliberately.');
+        process.exit(1);
+    }
+    console.log(`[esbuild] webview ${megabytes(weight)} of ${megabytes(webviewCeiling)}`);
+}
+
 if (watch) {
     const contexts = await Promise.all([esbuild.context(extension), esbuild.context(webview)]);
     await Promise.all(contexts.map(context => context.watch()));
     console.log('[esbuild] watching...');
 } else {
     await Promise.all([esbuild.build(extension), esbuild.build(webview)]);
+    if (production) {
+        holdTheWebviewToItsBudget();
+    }
 }
