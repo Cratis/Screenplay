@@ -33,7 +33,7 @@ describe('when mapping every construct', () => {
 
     it('should draw the screens no persona is authorized for for the user', () => {
         document.collections[0].actors.map(actor => actor.name).should.deep.equal(['Clerk', 'Visitor', userActor.name, 'System']);
-        slice_named(document, 'CustomerList').actors.map(actor => [actor.id, actor.elements.length > 0]).should.deep.equal([[userActor.id, true]]);
+        slice_named(document, 'CustomerList').actors.map(actor => [actor.id, actor.hasScreen]).should.deep.equal([[userActor.id, true]]);
         slice_named(document, 'Register').actors.should.deep.equal([]);
     });
 
