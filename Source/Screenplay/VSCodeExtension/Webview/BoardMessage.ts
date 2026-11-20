@@ -16,13 +16,23 @@ export interface BoardProblem {
     readonly path?: string;
 }
 
-// The board for a document: the event model document to draw and the problems found compiling it.
+// The board for a document: the event model document to draw, the Scene document of every screen the board
+// can draw, what a screen said that could not be drawn, and the problems found compiling it.
 export interface ShowBoardMessage {
     readonly type: 'show';
     readonly document: unknown;
     readonly dependencies: DependencyMap;
     readonly overlay?: DependencyOverlay;
+    readonly screens: Readonly<Record<string, string>>;
+    readonly screenFindings: readonly BoardScreenFinding[];
     readonly problems: readonly BoardProblem[];
+}
+
+// One screen the board could not draw, as the webview lists it. It is never an error: the role keeps the
+// board's placeholder window, and this says which screen it was and why.
+export interface BoardScreenFinding {
+    readonly screen: string;
+    readonly message: string;
 }
 
 // How the person last chose to view boards: how much of each slice is drawn, whether properties are

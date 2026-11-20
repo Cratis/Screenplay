@@ -81,6 +81,19 @@ const page = `<!DOCTYPE html>
 </html>
 `;
 
+// What the page may weigh, in bytes. The host is handed the whole view as one resource and renders it in a
+// sandbox that loads nothing else, so everything the board draws with - Scene's renderer for the screens
+// included - is inside this one file. The ceiling is headroom over what it weighs today, not a target:
+// raise it deliberately and say why rather than letting the view grow quietly.
+const pageCeiling = 10 * 1024 * 1024;
+
 await mkdir('dist', { recursive: true });
 await writeFile('dist/event-model-board.html', page);
-console.log(`dist/event-model-board.html: ${page.length} characters`);
+const weight = Buffer.byteLength(page);
+const megabytes = size => `${(size / (1024 * 1024)).toFixed(2)} MB`;
+console.log(`dist/event-model-board.html: ${megabytes(weight)} of ${megabytes(pageCeiling)}`);
+if (weight > pageCeiling) {
+    console.error(`The view is ${megabytes(weight)}, over its ${megabytes(pageCeiling)} ceiling.`);
+    console.error('Either take weight out of it or raise the ceiling in build.mjs deliberately.');
+    process.exit(1);
+}

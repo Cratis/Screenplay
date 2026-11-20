@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { type PlayFileSource } from '@cratis/screenplay-compiler';
-import { compileEventModelApplication, dependencyMapFor, dependencyOverlayFor, timelineAnnotations, toEventModelDocument, withSliceAnnotations } from '@cratis/screenplay-event-models';
+import { compileEventModelApplication, dependencyMapFor, dependencyOverlayFor, screensOfApplication, timelineAnnotations, toEventModelDocument, withSliceAnnotations } from '@cratis/screenplay-event-models';
 import { applyChanges } from './applyChanges';
 import type { CompiledBoard } from './CompiledBoard';
 import type { CompiledBoards } from './CompiledBoards';
@@ -25,6 +25,7 @@ function compile(sources: readonly PlayFileSource[], application: string): Compi
         document: withSliceAnnotations(toEventModelDocument(compilation.value, application), timelineAnnotations(compilation.value, compilation.diagnostics)),
         dependencies: dependencyMapFor(compilation.value),
         overlay: dependencyOverlayFor(compilation.value),
+        screens: screensOfApplication(compilation.value).documents,
         errors: compilation.diagnostics.filter(diagnostic => diagnostic.severity === 'error').length,
     };
 }
