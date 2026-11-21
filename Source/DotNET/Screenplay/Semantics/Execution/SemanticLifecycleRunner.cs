@@ -248,7 +248,7 @@ public static class SemanticLifecycleRunner
     {
         readonly Dictionary<string, SemanticWorkflowNode> _nodes = workflow.Nodes.ToDictionary(node => node.Name, StringComparer.Ordinal);
         readonly Dictionary<string, int> _arrivals = new(StringComparer.Ordinal);
-        readonly HashSet<string> _pendingJoins = new(StringComparer.Ordinal);
+        readonly List<string> _pendingJoins = [];
         readonly HashSet<string> _completedJoins = new(StringComparer.Ordinal);
         int _iterations = 1;
 
@@ -275,7 +275,7 @@ public static class SemanticLifecycleRunner
             if (!Step(start)) return;
 
             // A branch ending at a join does not complete the run until every reached join is satisfied.
-            if (_pendingJoins.Count > 0) Suspend(_pendingJoins.First());
+            if (_pendingJoins.Count > 0) Suspend(_pendingJoins[0]);
             else End = RunEnd.Completed;
         }
 
@@ -405,7 +405,7 @@ public static class SemanticLifecycleRunner
             };
             if (arrivals < threshold)
             {
-                _pendingJoins.Add(node.Name);
+                if (!_pendingJoins.Contains(node.Name, StringComparer.Ordinal)) _pendingJoins.Add(node.Name);
                 return "next";
             }
 
