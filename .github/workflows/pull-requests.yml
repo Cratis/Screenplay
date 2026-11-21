@@ -167,9 +167,28 @@ jobs:
     permissions:
       contents: read
 
+  # Cratis/Workflows is a trusted first-party ref; the workflow pins and checksums its script itself.
   ai-corpus:
     if: ${{ github.event.pull_request.base.ref == 'main' }}
-    uses: ./.github/workflows/verify-ai-corpus-impact.yml
+    uses: Cratis/Workflows/.github/workflows/verify-ai-corpus-impact.yml@main
+    with:
+      paths: |
+        Source/DotNET/Screenplay/**
+        Source/DotNET/Screenplay.Mcp/**
+        Source/DotNET/Tool/**
+        Source/DotNET/Screenplay.CanonicalCorpus/**
+        Source/Screenplay/Compiler/**
+        Source/Screenplay/Monaco/**
+        Source/Screenplay/VSCodeExtension/**
+        Source/Screenplay/EventModels/**
+        Source/Screenplay/McpApp/**
+        Documentation/screenplay/**
+        Samples/**
+      exclude-paths: |
+        **/for_*
+        **/for_*/**
+        **/*.Specs
+        **/*.Specs/**
     permissions:
       contents: read
       pull-requests: read
