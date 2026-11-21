@@ -21,7 +21,7 @@ describe('when serializing a specification document with examples', () => {
     it('should retain the examples key and its full syntax contents on every root', () => {
         for (const root of wire) {
             Object.hasOwn(root, 'examples').should.equal(true);
-            root.examples.should.deep.equal([{
+            root.examples!.should.deep.equal([{
                 kind: 'SpecificationExampleSyntax', name: 'Sample', type: 'C', for: null, generatedValues: [], description: null,
                 values: [{ kind: 'PropertyMappingSyntax', property: 'amount', source: { kind: 'LiteralExpressionSyntax', value: { literalType: 'ExactNumber', value: '1' } } }],
             }]);
