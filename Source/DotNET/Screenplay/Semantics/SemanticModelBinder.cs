@@ -194,6 +194,38 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         _ => (LanguageVersion.V1, SemanticVersion.V1)
     };
 
+    // Every refusal of a model that no executable model admits, in report order: command productions, agent exposure, read-model
+    // member types, identity details, then public-event boundaries. Any diagnostic collected here, of any severity, refuses the model.
+    static List<Diagnostic> CollectAdmissionDiagnostics(ApplicationSyntax syntax)
+    {
+        var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
+        var memberTypes = ParserContext.ForDiagnostics();
+        var agents = ParserContext.ForDiagnostics();
+        AgentsValidator.Validate(syntax, agents, deferImportedReferences: false);
+        foreach (var diagnostic in agents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) memberTypes.Add(diagnostic);
+        ReadModelMemberTypeValidator.Validate(syntax, memberTypes, rejectUnknownTypes: true);
+        admission.AddRange(memberTypes.Diagnostics);
+        if (syntax.Identity?.Details.Any() == true)
+        {
+            var identityAdmission = new IdentityAdmission(syntax);
+            identityAdmission.VisitApplication(syntax);
+            admission.AddRange(identityAdmission.Diagnostics);
+        }
+
+        // Public-event boundaries are checked on the assembled model whenever it uses them, and also when the admission walk
+        // already refused something else; a model that uses none of them is not walked again, so programmatically built
+        // syntax the binder reports itself is not visited twice.
+        if (usesPublicEvents || admission.Count > 0)
+        {
+            var publicEvents = ParserContext.ForDiagnostics();
+            new PublicEventMetadataValidator(publicEvents).VisitApplication(syntax);
+            PublicEventUsageValidator.Validate(syntax, publicEvents);
+            admission.AddRange(publicEvents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        }
+
+        return admission;
+    }
+
     CompilationResult<SemanticCompilation> BindCore(
         string applicationName,
         ApplicationSyntax syntax,
@@ -296,38 +328,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             context.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location);
             return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
         }
-    }
-
-    // Every refusal of a model that no executable model admits, in report order: command productions, agent exposure, read-model
-    // member types, identity details, then public-event boundaries. Any diagnostic collected here, of any severity, refuses the model.
-    static List<Diagnostic> CollectAdmissionDiagnostics(ApplicationSyntax syntax)
-    {
-        var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
-        var memberTypes = ParserContext.ForDiagnostics();
-        var agents = ParserContext.ForDiagnostics();
-        AgentsValidator.Validate(syntax, agents, deferImportedReferences: false);
-        foreach (var diagnostic in agents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) memberTypes.Add(diagnostic);
-        ReadModelMemberTypeValidator.Validate(syntax, memberTypes, rejectUnknownTypes: true);
-        admission.AddRange(memberTypes.Diagnostics);
-        if (syntax.Identity?.Details.Any() == true)
-        {
-            var identityAdmission = new IdentityAdmission(syntax);
-            identityAdmission.VisitApplication(syntax);
-            admission.AddRange(identityAdmission.Diagnostics);
-        }
-
-        // Public-event boundaries are checked on the assembled model whenever it uses them, and also when the admission walk
-        // already refused something else; a model that uses none of them is not walked again, so programmatically built
-        // syntax the binder reports itself is not visited twice.
-        if (usesPublicEvents || admission.Count > 0)
-        {
-            var publicEvents = ParserContext.ForDiagnostics();
-            new PublicEventMetadataValidator(publicEvents).VisitApplication(syntax);
-            PublicEventUsageValidator.Validate(syntax, publicEvents);
-            admission.AddRange(publicEvents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
-        }
-
-        return admission;
     }
 
     sealed class IdentityAdmission(ApplicationSyntax application) : ScreenplaySyntaxWalker
