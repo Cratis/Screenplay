@@ -155,22 +155,30 @@ function policyNames(expression: string): string[] {
     return (expression.match(/[A-Za-z_]\w*/g) ?? []).filter((token) => !policyOperators.has(token));
 }
 
-export function validateLines(lines: string[], context: ValidationContext = {}): ValidationIssue[] {
-    const fences = fenceMap(lines);
-    const scanned = scanDocument(lines);
-    const application = context.application ?? mergeSymbols();
-    const input = symbolsForBuffer(lines, { ...application, authoringPath: context.path ?? application.authoringPath, authoringPlacement: context.placement ?? application.authoringPlacement });
-    const analysis = responseAnalysis(lines, input.authoringDocuments ?? input.authoringSources?.filter(source => source !== lines.join('\n')), input.authoringPlacement, input.authoringPath, input.authoringPlacementResolved);
-    const routeLines = new Set(analysis.eventSources.routes.map(route => route.location.line - 1));
-    const symbols = { ...scanned, commands: scanned.commands.map(command => ({ ...command,
-        properties: command.properties.filter(property => !routeLines.has(property.line)),
-        produces: command.produces?.filter(production => !analysis.operationProductionLines?.has(production.line)),
-        productionHeaders: command.productionHeaders?.filter(line => !analysis.operationProductionLines?.has(line)),
-    })) };
-    const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
-    const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
-    const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
-    issues.push(...validateProductionDestinations(lines, symbols));
+const individuallyForwardedCodes = new Set<string>([DiagnosticCodes.ReducerIdentityMismatch, DiagnosticCodes.InvalidSpecificationExampleBody, DiagnosticCodes.UnknownRuleImplementationDirective, DiagnosticCodes.InvalidValidationRule, DiagnosticCodes.RepeatedDeclarationAcrossFiles]);
+const forwardedCodePattern = /^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY062[1-9]$|^PLAY063[0-9]$|^PLAY064[0-9]$|^PLAY065[0-2]$|^PLAY065[4-6]$|^PLAY066[0-6]$|^PLAY072[0-2]$|^PLAY089[0-9]$|^PLAY090[0-9]$|^PLAY091[0-9]$|^PLAY092[0-9]$|^PLAY093[0-9]$|^PLAY095[013-5]$|^PLAY096[4-9]$|^PLAY097[0-9]$|^PLAY098[0-2]$|^PLAY1142$|^PLAY074[14]$/;
+
+function isMemberTypeDiagnostic(diagnostic: AnalysisDiagnostic): boolean {
+    return diagnostic.code === DiagnosticCodes.InvalidSemanticBinding && diagnostic.message.startsWith("Read model '") && diagnostic.message.includes("' references unsupported type '");
+}
+
+// Whether the code alone is not enough: the message or the line decides that the diagnostic is one the editor forwards.
+function isForwardedByContent(diagnostic: AnalysisDiagnostic, identityDetails: readonly { readonly line: number }[] | undefined): boolean {
+    switch (diagnostic.code) {
+        case DiagnosticCodes.UnknownType:
+            return (identityDetails ?? []).some(detail => detail.line === diagnostic.location.line - 1);
+        case DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles:
+            return diagnostic.message.includes('identity block') || diagnostic.message.includes('context block');
+        case DiagnosticCodes.DuplicateDeclaration:
+            return diagnostic.message.startsWith('Duplicate declaration of policy ');
+        default:
+            return false;
+    }
+}
+
+// Forwards the compiler diagnostics that reach the markers into `issues`, in the order the compiler reported them. The lines of an
+// unknown event and of a read-model member type that the compiler reported are returned, because the heuristic checks must not repeat them.
+function forwardCompilerDiagnostics(lines: string[], diagnostics: readonly AnalysisDiagnostic[], identityDetails: readonly { readonly line: number }[] | undefined, issues: ValidationIssue[]): { unknownEventLines: Set<number>; memberTypeLines: Set<number> } {
     // One parser pass covers committed types, including query results and trigger data, without
     // speculative property scans mistaking tags, paths, strings or code for optionality.
     const generationCodes = new Set<string>([DiagnosticCodes.UnknownGenerationStrategy, DiagnosticCodes.InvalidGenerationArgument, DiagnosticCodes.InvalidGenerationModifier, DiagnosticCodes.DuplicateGenerationModifier, DiagnosticCodes.DuplicateGeneration, DiagnosticCodes.InvalidGenerationPrimitive, DiagnosticCodes.InvalidGenerationPrefix, DiagnosticCodes.InvalidGenerationAlphabet, DiagnosticCodes.InvalidTypeIdPrefix, DiagnosticCodes.GenerationSizeOutsideRange, DiagnosticCodes.ReservedSequenceGeneration, DiagnosticCodes.LowGenerationEntropy, DiagnosticCodes.LowGeneratedIdentifierEntropy, DiagnosticCodes.RefutedGeneratedConceptRule, DiagnosticCodes.UnprovenGeneratedConceptRule, DiagnosticCodes.GenerationSupportBudgetExceeded, DiagnosticCodes.EmptyGenerationSupport]);
@@ -206,24 +214,47 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         DiagnosticCodes.InvalidInvocationMapping,
     ]);
     const complianceCodes = new Set<string>([DiagnosticCodes.InvalidPurposeDeclaration, DiagnosticCodes.InvalidPurposeVocabulary, DiagnosticCodes.DuplicatePurposeField, DiagnosticCodes.DuplicatePurposeDeclaration, DiagnosticCodes.UnknownPurpose, DiagnosticCodes.PurposeInterestMismatch, DiagnosticCodes.PersonalDataWithoutPurpose, DiagnosticCodes.SpecialDataWithoutCondition, DiagnosticCodes.CriminalDataWithoutAuthorization, DiagnosticCodes.PurposeWithoutBasis, DiagnosticCodes.UnusedPurpose, DiagnosticCodes.UnknownConceptDirective, DiagnosticCodes.AttributeReasonWithoutAttribute, DiagnosticCodes.DuplicateAttributeReason, DiagnosticCodes.LegacyComplianceMarker, DiagnosticCodes.DuplicateComplianceMarker, DiagnosticCodes.UnknownComplianceMarker, DiagnosticCodes.InvalidSecretScope, DiagnosticCodes.DuplicateSecretScope, DiagnosticCodes.SecretScopeIgnoredForPii, DiagnosticCodes.InvalidPersonalDataQualifier, DiagnosticCodes.DuplicateSpecialCategory]);
-    const compilerUnknownEventLines = new Set<number>();
-    const compilerMemberTypeLines = new Set<number>();
-    for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
-        const identityType = diagnostic.code === DiagnosticCodes.UnknownType && (analysis.identityDetails ?? []).some(detail => detail.line === diagnostic.location.line - 1);
-        const memberType = diagnostic.code === DiagnosticCodes.InvalidSemanticBinding && diagnostic.message.startsWith("Read model '") && diagnostic.message.includes("' references unsupported type '");
-        if (memberType) compilerMemberTypeLines.add(diagnostic.location.line - 1);
-        const singletonDuplicate = diagnostic.code === DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles && (diagnostic.message.includes('identity block') || diagnostic.message.includes('context block'));
-        const policyDuplicate = diagnostic.code === DiagnosticCodes.DuplicateDeclaration && diagnostic.message.startsWith('Duplicate declaration of policy ');
-        if (!policyDuplicate && !identityType && !memberType && !singletonDuplicate && !generationCodes.has(diagnostic.code) && !enumerationCodes.has(diagnostic.code) && !complianceCodes.has(diagnostic.code) && !optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && !dependencyCodes.has(diagnostic.code) && !authoringCodes.has(diagnostic.code) && !graphCollectCodes.has(diagnostic.code) && !freeScreenCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.ReducerIdentityMismatch && diagnostic.code !== DiagnosticCodes.InvalidSpecificationExampleBody && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY062[1-9]$|^PLAY063[0-9]$|^PLAY064[0-9]$|^PLAY065[0-2]$|^PLAY065[4-6]$|^PLAY066[0-6]$|^PLAY072[0-2]$|^PLAY089[0-9]$|^PLAY090[0-9]$|^PLAY091[0-9]$|^PLAY092[0-9]$|^PLAY093[0-9]$|^PLAY095[013-5]$|^PLAY096[4-9]$|^PLAY097[0-9]$|^PLAY098[0-2]$|^PLAY1142$|^PLAY074[14]$/.test(diagnostic.code)) continue;
+    const forwardedCodeSets = [generationCodes, enumerationCodes, complianceCodes, optionalCodes, policyCodes, consistencyCodes, timelineCodes, dependencyCodes, authoringCodes, graphCollectCodes, freeScreenCodes, individuallyForwardedCodes];
+    const unknownEventLines = new Set<number>();
+    const memberTypeLines = new Set<number>();
+    for (const diagnostic of diagnostics) {
         const line = diagnostic.location.line - 1;
+        const memberType = isMemberTypeDiagnostic(diagnostic);
+        if (memberType) memberTypeLines.add(line);
+        const forwarded = memberType
+            || isForwardedByContent(diagnostic, identityDetails)
+            || forwardedCodeSets.some(codes => codes.has(diagnostic.code))
+            || forwardedCodePattern.test(diagnostic.code);
+        if (!forwarded) continue;
         if (diagnostic.code === DiagnosticCodes.OmittedProductionDestination && issues.some(existing => existing.code === diagnostic.code && existing.line === line)) continue;
         if (diagnostic.code === DiagnosticCodes.UnknownEvent) {
-            if (compilerUnknownEventLines.has(line)) continue;
-            compilerUnknownEventLines.add(line);
+            if (unknownEventLines.has(line)) continue;
+            unknownEventLines.add(line);
         }
         const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
         issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));
     }
+
+    return { unknownEventLines, memberTypeLines };
+}
+
+export function validateLines(lines: string[], context: ValidationContext = {}): ValidationIssue[] {
+    const fences = fenceMap(lines);
+    const scanned = scanDocument(lines);
+    const application = context.application ?? mergeSymbols();
+    const input = symbolsForBuffer(lines, { ...application, authoringPath: context.path ?? application.authoringPath, authoringPlacement: context.placement ?? application.authoringPlacement });
+    const analysis = responseAnalysis(lines, input.authoringDocuments ?? input.authoringSources?.filter(source => source !== lines.join('\n')), input.authoringPlacement, input.authoringPath, input.authoringPlacementResolved);
+    const routeLines = new Set(analysis.eventSources.routes.map(route => route.location.line - 1));
+    const symbols = { ...scanned, commands: scanned.commands.map(command => ({ ...command,
+        properties: command.properties.filter(property => !routeLines.has(property.line)),
+        produces: command.produces?.filter(production => !analysis.operationProductionLines?.has(production.line)),
+        productionHeaders: command.productionHeaders?.filter(line => !analysis.operationProductionLines?.has(line)),
+    })) };
+    const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
+    const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
+    const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
+    issues.push(...validateProductionDestinations(lines, symbols));
+    const { unknownEventLines: compilerUnknownEventLines, memberTypeLines: compilerMemberTypeLines } = forwardCompilerDiagnostics(lines, context.compilerDiagnostics ?? analysis.diagnostics, analysis.identityDetails, issues);
 
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name) && !compilerUnknownEventLines.has(line)) {
