@@ -120,7 +120,7 @@ Before Docker starts, `cratis run` checks that every `extension` line is pinned 
 
 ### Host-provided ability answers
 
-A .NET live host can pass an `ISemanticAbilityInvoker` to `SemanticReactionSettlement` and call `SettleAsync`. The invoker receives the system, ability, evaluated inputs, reaction, causing fact, occurrence time and a stable invocation identity. It returns a `SemanticAbilityAnswer`: `Returned` selects `on returned` and supplies `$result.<field>`, `Outcome` selects the named branch and supplies `$outcome`, and `Failed` selects `on failed` and supplies `$reason`. A missing branch produces no facts. Host exceptions and cancellation propagate rather than becoming authored failure answers.
+A .NET live host can pass an `ISemanticAbilityInvoker` to `SemanticReactionSettlement` and call `SettleAsync`. The invoker receives the system, ability, evaluated inputs, reaction, causing fact, occurrence time and a stable invocation identity. It returns a `SemanticAbilityAnswer`: `Returned` selects `on returned` and supplies `$result.<field>`, `Outcome` selects the named branch and supplies `$outcome`, and `Failed` selects `on failed` and supplies `$failure.reason`. A missing branch produces no facts. Host exceptions and cancellation propagate rather than becoming authored failure answers.
 
 ```csharp
 var settlement = new SemanticReactionSettlement(evaluator, abilityInvoker);
