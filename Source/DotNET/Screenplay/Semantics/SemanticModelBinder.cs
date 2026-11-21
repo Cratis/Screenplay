@@ -194,27 +194,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         _ => (LanguageVersion.V1, SemanticVersion.V1)
     };
 
-    CompilationResult<SemanticCompilation> BindCore(
-        string applicationName,
-        ApplicationSyntax syntax,
-        SemanticDocumentSet documents)
+    // Every refusal of a model that no executable model admits, in report order: command productions, agent exposure, read-model
+    // member types, identity details, then public-event boundaries. Any diagnostic collected here, of any severity, refuses the model.
+    static List<Diagnostic> CollectAdmissionDiagnostics(ApplicationSyntax syntax)
     {
-        if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
-        {
-            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
-        }
-
-        var numeric = SourceNumericModes.Errors(syntax);
-        if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
-        if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
-        {
-            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
-                DiagnosticCodes.UnsupportedSemanticSyntax,
-                "Exact numeric source mode is not admitted by any supported executable model (ESM) version yet (#285); this source/syntax implementation does not execute exact documents.",
-                syntax.Location,
-                DiagnosticArguments.ForIssue("Cratis/Screenplay#285"))]);
-        }
-
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
         var memberTypes = ParserContext.ForDiagnostics();
         var agents = ParserContext.ForDiagnostics();
@@ -240,6 +223,31 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             admission.AddRange(publicEvents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
         }
 
+        return admission;
+    }
+
+    CompilationResult<SemanticCompilation> BindCore(
+        string applicationName,
+        ApplicationSyntax syntax,
+        SemanticDocumentSet documents)
+    {
+        if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
+        {
+            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
+        }
+
+        var numeric = SourceNumericModes.Errors(syntax);
+        if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
+        if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
+        {
+            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
+                DiagnosticCodes.UnsupportedSemanticSyntax,
+                "Exact numeric source mode is not admitted by any supported executable model (ESM) version yet (#285); this source/syntax implementation does not execute exact documents.",
+                syntax.Location,
+                DiagnosticArguments.ForIssue("Cratis/Screenplay#285"))]);
+        }
+
+        var admission = CollectAdmissionDiagnostics(syntax);
         if (admission.Count > 0)
         {
             return CompilationResult<SemanticCompilation>.Failed(admission);
