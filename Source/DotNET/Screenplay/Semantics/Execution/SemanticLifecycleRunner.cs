@@ -248,6 +248,8 @@ public static class SemanticLifecycleRunner
     {
         readonly Dictionary<string, SemanticWorkflowNode> _nodes = workflow.Nodes.ToDictionary(node => node.Name, StringComparer.Ordinal);
         readonly Dictionary<string, int> _arrivals = new(StringComparer.Ordinal);
+        readonly List<string> _pendingJoins = [];
+        readonly HashSet<string> _completedJoins = new(StringComparer.Ordinal);
         int _iterations = 1;
 
         public List<SemanticId> Sent { get; } = [];
@@ -270,9 +272,15 @@ public static class SemanticLifecycleRunner
 
         public void Walk(string start)
         {
-            End = RunEnd.Completed;
-            Step(start);
+            if (!Step(start)) return;
+
+            // A branch ending at a join does not complete the run until every reached join is satisfied.
+            if (_pendingJoins.Count > 0) Suspend(_pendingJoins[0]);
+            else End = RunEnd.Completed;
         }
+
+        static bool IsFailureOutlet(string? outlet) =>
+            string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal);
 
         // Returns true while the run is still going.
         bool Step(string name)
@@ -287,10 +295,8 @@ public static class SemanticLifecycleRunner
                     case SemanticWorkflowNodeKind.Trigger:
                         outlet = "next";
                         break;
-                    case SemanticWorkflowNodeKind.Action when node.Ability is not null:
-                        var abilityOutlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet ?? "next";
-                        for (var attempt = 0; attempt < (abilityOutlet == "failed" ? node.MaxAttempts ?? 1 : 1); attempt++) Invoked.Add((node.System, node.Ability));
-                        outlet = abilityOutlet;
+                    case SemanticWorkflowNodeKind.Action:
+                        outlet = Act(node);
                         break;
                     case SemanticWorkflowNodeKind.Compute:
                         outlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet
@@ -301,11 +307,6 @@ public static class SemanticLifecycleRunner
                             return false;
                         }
 
-                        break;
-                    case SemanticWorkflowNodeKind.Action:
-                        var taken = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet ?? "next";
-                        for (var attempt = 0; attempt < (taken == "failed" ? node.MaxAttempts ?? 1 : 1); attempt++) Sent.Add(node.Command);
-                        outlet = taken;
                         break;
                     case SemanticWorkflowNodeKind.Decision:
                         outlet = subject is not null && SemanticConditionEvaluator.Evaluate(node.Condition!, subject) ? node.WhenTrue : node.WhenFalse;
@@ -335,7 +336,7 @@ public static class SemanticLifecycleRunner
                 var edge = workflow.Edges.FirstOrDefault(candidate => candidate.From == node.Name && candidate.Outlet == outlet);
                 if (edge is null)
                 {
-                    if (string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal))
+                    if (IsFailureOutlet(outlet))
                     {
                         End = RunEnd.Failed;
                         Node = node.Name;
@@ -351,6 +352,19 @@ public static class SemanticLifecycleRunner
             End = RunEnd.Failed;
             Node = name;
             return false;
+        }
+
+        string Act(SemanticWorkflowNode node)
+        {
+            var outlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet ?? "next";
+            var attempts = outlet == "failed" ? node.MaxAttempts ?? 1 : 1;
+            for (var attempt = 0; attempt < attempts; attempt++)
+            {
+                if (node.Ability is not null) Invoked.Add((node.System, node.Ability));
+                else Sent.Add(node.Command);
+            }
+
+            return outlet;
         }
 
         void Suspend(string node)
@@ -380,25 +394,24 @@ public static class SemanticLifecycleRunner
         // A join reached in a branch counts as an arrival and ends that branch; once its mode is satisfied it continues.
         string? Join(SemanticWorkflowNode node, out bool ends)
         {
+            ends = true;
+            if (_completedJoins.Contains(node.Name)) return "next";
             var arrivals = _arrivals[node.Name] = _arrivals.GetValueOrDefault(node.Name) + 1;
-            var expected = Math.Max(1, workflow.Edges.Count(edge => edge.To == node.Name)) * _iterations;
-            var satisfied = node.JoinMode switch
+            var threshold = node.JoinMode switch
             {
-                SemanticJoinMode.Any => arrivals >= 1,
-                SemanticJoinMode.AtLeast => arrivals >= node.JoinCount,
-                _ => arrivals >= expected
+                SemanticJoinMode.Any => 1,
+                SemanticJoinMode.AtLeast => node.JoinCount!.Value,
+                _ => Math.Max(1, workflow.Edges.Count(edge => edge.To == node.Name)) * _iterations
             };
-            var limit = expected;
-            if (node.JoinMode == SemanticJoinMode.Any)
+            if (arrivals < threshold)
             {
-                limit = 1;
-            }
-            else if (node.JoinMode == SemanticJoinMode.AtLeast)
-            {
-                limit = node.JoinCount!.Value;
+                if (!_pendingJoins.Contains(node.Name, StringComparer.Ordinal)) _pendingJoins.Add(node.Name);
+                return "next";
             }
 
-            ends = !satisfied || arrivals > limit;
+            _pendingJoins.Remove(node.Name);
+            _completedJoins.Add(node.Name);
+            ends = false;
             return "next";
         }
     }

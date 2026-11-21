@@ -93,9 +93,9 @@ The reference evaluator computes decisions from the subject read model and recor
 | `when start <key>` | Starts the run by hand for the subject key, through a `manual` or scheduled trigger. |
 | `outcome <Node> <outlet>` | The outlet an action (`next`, `failed`, `refused`), wait (`resumed`, `expired`), approval (`approved`, `rejected`, `expired`) or foreach takes. An action defaults to `next`; a failed action invokes its command once per attempt. `refused` means the command was handed on and something rejected it; it is distinct from `failed`, which means the invocation itself broke, and a refused command is not retried. |
 | `then invokes <Command>` | A command was invoked. Every command invoked is stated, in order. |
-| `then completes` | The run ended without failing. |
+| `then completes` | The run ended without failing, and every join it reached got the arrivals its threshold needs. |
 | `then fails at <Node>` | The run failed at the node. |
-| `then waits at <Node>` | The run is suspended at a wait or an approval. |
+| `then waits at <Node>` | The run is suspended at a wait or an approval, or at a join that has fewer arrivals than its threshold (`all` or `at least n`). |
 
 ```text
 specification TheRunWaitsForTheCarrier

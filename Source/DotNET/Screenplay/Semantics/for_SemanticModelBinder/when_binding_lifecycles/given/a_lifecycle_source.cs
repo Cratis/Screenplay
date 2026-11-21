@@ -216,7 +216,7 @@ internal static class a_lifecycle_source
             then invokes TagInvoice
             then invokes TagInvoice
             then invokes WriteOff
-            then completes
+            then waits at Final
 
           specification TheRunWaits
             given InvoiceRegistered
@@ -253,7 +253,7 @@ internal static class a_lifecycle_source
             then invokes ChargeFee
             then invokes ChargeFee
             then invokes OfferPlan
-            then completes
+            then waits at Final
 
           specification AStartedRunFails
             given InvoiceRegistered
@@ -270,7 +270,7 @@ internal static class a_lifecycle_source
             then invokes ChargeFee
             then invokes ChargeFee
             then invokes WriteOff
-            then completes
+            then waits at Final
 
         """;
 }
