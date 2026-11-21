@@ -423,6 +423,16 @@ unsupported or conflict result as failure, not as an empty successful append.
 This API does not fire clock, startup, shutdown or application triggers, and it does not execute captures.
 A reached reaction body without an admitted provider returns `SemanticUnsupported`; the host owns body execution.
 
+### Supply live ability answers
+
+For event-triggered `invokes <System>.<Ability>`, pass an `ISemanticAbilityInvoker` as the settlement's second constructor argument and await `SettleAsync(plan, world, appended, occurred, cancellationToken)`. The invoker receives evaluated inputs and the cause's context. Returned values, named outcomes and failures select the same branches as specification answers. Without an invoker, the existing synchronous `Settle` and scripted specification answers behave as before. With an invoker, synchronous `Settle` throws `InvalidOperationException`; it never silently substitutes the default returned answer or blocks on host I/O.
+
+`context.Identity.Key` is a stable deduplication key: reaction identity, the cause's zero-based index in the world's full fact log, and the raw trigger and invocation ordinals (including filtered triggers and command invocations). Use the same complete log prefix on retries. Two equal facts at different positions are distinct causes. Host exceptions and cancellation propagate; they are not converted into `on failed` answers. A host answer's system and ability are not validated during initial settlement; an outcome with no matching branch produces no facts.
+
+An invoker can return `SemanticAbilityAnswerKind.Pending` to defer its answer. That invocation produces no branch facts, while later invocations and other reactions continue. Persist the accepted result's `PendingInvocations` with its facts. Later call `SettleAnswerAsync(plan, currentWorld, pending, completedAnswer, cancellationToken)`: it resolves the pending record's `TriggerIndex` and `InvocationIndex` directly, restores the original cause and occurrence, and produces only the selected branch's facts and their cascades without calling that ability again or re-evaluating `where`. `Pending` is host-only; specifications still script `returns`, `answers` or `fails`.
+
+The host owns transport, timeouts, delivery retries and deduplication. Answering is a separate guarded write, like step 5 below: atomically record that `pending.Identity.Key` was answered with the resumed batch. Applying an answer twice can append duplicate facts. Screenplay can roll back tentative facts on failure, not external effects already performed by the invoker. See [Host-provided ability answers](using-an-extension.md#host-provided-ability-answers) for the API flow.
+
 ### Append a settled command in a live host
 
 A host that writes to a store runs the command in five steps, ending in a guarded batch write
@@ -431,7 +441,7 @@ A host that writes to a store runs the command in five steps, ending in a guarde
 1. **Decide.** Call `SemanticEvaluator.Decide` on the world you read.
 2. **Extend.** Read the log up to its current tail and call `SemanticEvaluator.ExtendWorld` with every fact after the decided world.
 3. **Commit.** Call `SemanticDecision.Commit` with the extended world. Only a fact that matches the decision's dependencies conflicts; irrelevant facts are settled against.
-4. **Settle.** Run `SemanticReactionSettlement.Settle` on the accepted result.
+4. **Settle.** Run `SemanticReactionSettlement.Settle` on the accepted result, or await `SettleAsync` when supplying a live ability invoker.
 5. **Write.** Persist the command's facts and the settlement's facts as one batch, guarded on the log holding exactly the extended world's facts.
 
 Two windows can lose a race, and each has its own rule:

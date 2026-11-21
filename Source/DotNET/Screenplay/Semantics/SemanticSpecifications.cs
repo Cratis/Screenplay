@@ -17,7 +17,10 @@ public enum SemanticAbilityAnswerKind
     Outcome = 1,
 
     /// <summary>The ability failed.</summary>
-    Failed = 2
+    Failed = 2,
+
+    /// <summary>The live host will answer later; not valid as a specification answer.</summary>
+    Pending = 3
 }
 
 /// <summary>
