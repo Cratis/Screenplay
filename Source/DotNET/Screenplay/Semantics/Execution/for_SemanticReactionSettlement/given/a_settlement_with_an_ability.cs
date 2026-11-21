@@ -33,6 +33,7 @@ public class a_settlement_with_an_ability : a_settlement
                 returns
                   value String
                 outcome Busy
+                outcome Unhandled
             module M
               feature F
                 slice Automation Work

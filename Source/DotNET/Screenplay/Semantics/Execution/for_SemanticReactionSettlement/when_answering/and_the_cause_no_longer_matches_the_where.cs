@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Semantics.Execution.for_SemanticReactionSettlement.w
 public class and_the_cause_no_longer_matches_the_where : given.a_settlement_with_an_ability
 {
     SemanticPendingAbilityInvocation _pending;
-    SemanticAccepted _resumed;
+    SemanticRejected _resumed;
 
     void Establish()
     {
@@ -55,12 +55,13 @@ public class and_the_cause_no_longer_matches_the_where : given.a_settlement_with
         _pending = _accepted.PendingInvocations.Single();
         var changedCause = _pending.Cause with { Values = [new(_pending.Cause.Values.Single().TargetProperty, SemanticValue.Boolean(false))] };
         var completed = Answer(SemanticAbilityAnswerKind.Returned) with { Values = [new("value", SemanticValue.Text("resumed"))] };
-        _resumed = (SemanticAccepted)await _settlement.SettleAnswerAsync(_plan, _world, _pending with { Cause = changedCause }, completed);
+        _resumed = (SemanticRejected)await _settlement.SettleAnswerAsync(_plan, _world, _pending with { Cause = changedCause }, completed);
     }
 
     [Fact] void should_count_the_excluded_trigger_in_the_locator() => _pending.TriggerIndex.ShouldEqual(1);
     [Fact] void should_use_the_same_trigger_ordinal_in_the_identity() => _pending.Identity.TriggerIndex.ShouldEqual(_pending.TriggerIndex);
     [Fact] void should_keep_the_raw_invocation_ordinal() => _pending.InvocationIndex.ShouldEqual(0);
-    [Fact] void should_resume_the_original_branch_without_rechecking_where() => Value(_resumed.Facts.Single()).ShouldEqual(SemanticValue.Text("resumed"));
+    [Fact] void should_reject_the_mismatched_cause() => _resumed.Category.ShouldEqual(SemanticRejectionCategory.Contract);
+    [Fact] void should_keep_the_world() => _resumed.World.ShouldEqual(_world);
     [Fact] void should_not_invoke_the_now_matching_trigger() => _calls.Count.ShouldEqual(1);
 }

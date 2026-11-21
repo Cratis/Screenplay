@@ -363,6 +363,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
         var answer = hostAnswer ?? AbilityAnswers.FirstOrDefault(candidate => candidate.System == invocation.System && string.Equals(candidate.Ability, invocation.Ability, StringComparison.Ordinal));
         if (answer?.Kind == SemanticAbilityAnswerKind.Pending)
         {
+            ValidateAbilityAnswer(invocation, answer, allowPending: true);
             _pendingInvocations.Add(new(context.Identity, context.Identity.TriggerIndex, context.Identity.Index, context.System, context.Ability, inputs, context.Cause, context.Occurred));
             return null;
         }
@@ -371,6 +372,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
 
     SemanticExecutionResult? ProduceAbilityAnswer(ReactionEvaluation evaluation, SemanticInvocation invocation, SemanticAbilityAnswer? answer)
     {
+        ValidateAbilityAnswer(invocation, answer);
         var selector = answer?.Kind switch
         {
             SemanticAbilityAnswerKind.Outcome => answer.Outcome,
@@ -394,6 +396,7 @@ internal sealed partial class SemanticReactionLoop(ISemanticEvaluator evaluator,
     SemanticExecutionResult? ApplyPendingAnswer(SemanticPendingAbilityInvocation pending, SemanticAbilityAnswer answer) => Evaluate(() =>
     {
         if (!IsCompletedAnswer(pending, answer)) throw new InvalidSemanticContract("A pending invocation must be resumed with its completed ability answer.");
+        ValidatePendingCause(pending);
         var reaction = plan.RunningReactions.FirstOrDefault(candidate => candidate.Id == pending.Identity.Reaction)
             ?? throw new InvalidSemanticContract("The pending invocation's reaction is not in the execution plan.");
         var values = pending.Cause.Values.ToDictionary(value => value.TargetProperty, value => value.Value);

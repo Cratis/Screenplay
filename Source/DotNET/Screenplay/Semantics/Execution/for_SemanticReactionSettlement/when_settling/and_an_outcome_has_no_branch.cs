@@ -5,7 +5,7 @@ namespace Cratis.Screenplay.Semantics.Execution.for_SemanticReactionSettlement.w
 
 public class and_an_outcome_has_no_branch : given.a_settlement_with_an_ability
 {
-    void Establish() => _answer = Answer(SemanticAbilityAnswerKind.Outcome) with { Outcome = "Unknown" };
+    void Establish() => _answer = Answer(SemanticAbilityAnswerKind.Outcome) with { Outcome = "Unhandled" };
     async Task Because() => await SettleAsync();
 
     [Fact] void should_accept_without_producing_a_fact() => _accepted.Facts.ShouldBeEmpty();
