@@ -91,22 +91,7 @@ public sealed partial class SemanticModelBinder
 
             if (!ValidateClockSpecificationAdmission(specification)) return null;
 
-            // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
-            // same model - its bytes are those of the 'then query' spelling.
-            if (specification.WhenQuery is { } performed)
-            {
-                var results = specification.ThenResults.ToList();
-                if (results.Select(result => result.Exactly).Distinct().Count() > 1)
-                {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification '{specification.Name}' compares some results exactly and some not; the executable model compares all of a query's results one way.", specification.Location);
-                    return null;
-                }
-
-                specification = specification with
-                {
-                    ThenQueries = [.. specification.ThenQueries, new SpecificationQuerySyntax(performed.Query, performed.Arguments, results, performed.Location) { Exactly = results.Count > 0 && results[0].Exactly }]
-                };
-            }
+            if (!TryNormalisePerformedQuery(specification, out specification)) return null;
 
             var opaque = specification.ThenQueries.FirstOrDefault(value => ReachesOpaqueQuery(slice, value));
             if (opaque is not null)
@@ -214,6 +199,27 @@ public sealed partial class SemanticModelBinder
                 WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture),
                 ThenInvocations = [.. specification.ThenInvocations.Select(expected => BindSpecificationInvocation(specification, expected)).OfType<SemanticSpecificationInvocation>()]
             };
+        }
+
+        // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
+        // same model - its bytes are those of the 'then query' spelling. Returns false once the refusal is reported.
+        bool TryNormalisePerformedQuery(SpecificationSyntax specification, out SpecificationSyntax normalised)
+        {
+            normalised = specification;
+            if (specification.WhenQuery is not { } performed) return true;
+
+            var results = specification.ThenResults.ToList();
+            if (results.Select(result => result.Exactly).Distinct().Count() > 1)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification '{specification.Name}' compares some results exactly and some not; the executable model compares all of a query's results one way.", specification.Location);
+                return false;
+            }
+
+            normalised = specification with
+            {
+                ThenQueries = [.. specification.ThenQueries, new SpecificationQuerySyntax(performed.Query, performed.Arguments, results, performed.Location) { Exactly = results.Count > 0 && results[0].Exactly }]
+            };
+            return true;
         }
 
         void ValidateSpecificationCompleteness(SemanticAddress slice, SpecificationSyntax specification, SemanticCommand? command, EffectiveSpecification expanded)
