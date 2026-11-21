@@ -109,8 +109,9 @@ evidence exist, not whether the corpus is correct; until those backstops land, r
 ## 6. Local verification
 
 Mirror CI (`.github/workflows/dotnet-build.yml`, `javascript-build.yml`). Run each phase on its own, and
-only the affected ones while iterating; run the full set before reporting done. For changes to the corpus
-impact gate, run `node --test .github/scripts/tests/*.test.mjs` and `actionlint` if available. After editing
+only the affected ones while iterating; run the full set before reporting done. The corpus impact gate is the
+shared Cratis/Workflows check; changes to its paths live in `.github/workflows/pull-requests.yml` (run
+`actionlint` if available), and changes to its logic belong in Cratis/Workflows. After editing
 comment evidence, re-run the failed gate (`gh run rerun <run-id> --failed --repo Cratis/Screenplay`): comment
 edits do not trigger it, but a re-run reads live state.
 

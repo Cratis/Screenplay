@@ -167,6 +167,7 @@ jobs:
     permissions:
       contents: read
 
+  # Cratis/Workflows is a trusted first-party ref; the workflow pins and checksums its script itself.
   ai-corpus:
     if: ${{ github.event.pull_request.base.ref == 'main' }}
     uses: Cratis/Workflows/.github/workflows/verify-ai-corpus-impact.yml@main
