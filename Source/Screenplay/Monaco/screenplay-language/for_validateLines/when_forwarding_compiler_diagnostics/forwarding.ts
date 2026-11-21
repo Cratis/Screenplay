@@ -120,6 +120,21 @@ describe('when forwarding compiler diagnostics', () => {
         });
     });
 
+    describe('and an identity detail line receives both an unknown type and a member type problem', () => {
+        const lines = ['identity', '  department String from claim "department"', 'command C'];
+        const unknownType = compilerDiagnostic(DiagnosticCodes.UnknownType, 2, 10, 'unknown', 'error');
+        const memberType = compilerDiagnostic(DiagnosticCodes.InvalidSemanticBinding, 2, 3, "Read model 'M' references unsupported type 'Missing'.", 'error');
+        const issues = validateLines(lines, { compilerDiagnostics: [unknownType, memberType] });
+
+        it('should drop every unknown type marker on that line', () => {
+            ofCode(issues, DiagnosticCodes.UnknownType).filter(issue => issue.line === 1).length.should.equal(0);
+        });
+
+        it('should still forward the member type error', () => {
+            ofCode(issues, DiagnosticCodes.InvalidSemanticBinding).map(issue => issue.line).should.deep.equal([1]);
+        });
+    });
+
     describe('and the compiler reports codes at the edge of a forwarded range', () => {
         const forwarded = (code: string) => ofCode(validateLines(['command C'], { compilerDiagnostics: [compilerDiagnostic(code, 1, 1, 'edge', 'error')] }), code).length;
 
