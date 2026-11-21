@@ -22,23 +22,7 @@ public sealed partial class SemanticModelBinder
             var validator = new SemanticValueValidator(application.Concepts.ToDictionary(concept => concept.Id), application.Types.ToDictionary(type => type.Id));
             foreach (var table in expansion.Specifications.Where(specification => specification.Case is not null).Select(specification => specification.Authored).Distinct(ReferenceEqualityComparer.Instance).OfType<SpecificationSyntax>())
             {
-                foreach (var row in table.Cases)
-                {
-                    foreach (var assignment in row.Values)
-                    {
-                        var parameter = table.Parameters.Single(item => item.Name == assignment.Property);
-                        try
-                        {
-                            var target = BindTypeReference(parameter.Type);
-                            var value = BindConcreteValue(assignment.Source, target, "specification case", true);
-                            if (value is not null) validator.Validate(value, target, $"case '{row.Name}' parameter '{parameter.Name}'");
-                        }
-                        catch (InvalidSemanticContract failure)
-                        {
-                            Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' cannot be admitted: {failure.Message}", assignment.Source.Location, DiagnosticArguments.Empty.With("case", DiagnosticArgument.Text(row.Name)).With("parameter", DiagnosticArgument.Text(parameter.Name)).With("type", DiagnosticArgument.Text(parameter.Type.Name)));
-                        }
-                    }
-                }
+                ValidateCaseAdmission(table, validator);
             }
             var slices = syntax.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).ToArray();
             foreach (var resolved in expansion.ResolvedExamples)
@@ -89,6 +73,33 @@ public sealed partial class SemanticModelBinder
                 }
 
                 AdmitExampleValue(example, destination, destinationType, resolved.Kind, validator, generatedDestination);
+            }
+        }
+
+        void ValidateCaseAdmission(SpecificationSyntax table, SemanticValueValidator validator)
+        {
+            foreach (var row in table.Cases)
+            {
+                var start = _diagnostics.Count;
+                foreach (var assignment in row.Values)
+                {
+                    var parameter = table.Parameters.Single(item => item.Name == assignment.Property);
+                    try
+                    {
+                        var target = BindTypeReference(parameter.Type);
+                        var value = BindConcreteValue(assignment.Source, target, "specification case", true);
+                        if (value is not null) validator.Validate(value, target, $"case '{row.Name}' parameter '{parameter.Name}'");
+                    }
+                    catch (InvalidSemanticContract failure)
+                    {
+                        Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' cannot be admitted: {failure.Message}", assignment.Source.Location, DiagnosticArguments.Empty.With("case", DiagnosticArgument.Text(row.Name)).With("parameter", DiagnosticArgument.Text(parameter.Name)).With("type", DiagnosticArgument.Text(parameter.Type.Name)));
+                    }
+                }
+
+                foreach (var origin in expansion.Specifications.Where(origin => ReferenceEquals(origin.Authored, table) && ReferenceEquals(origin.Case, row)))
+                {
+                    if (_specificationBindings.TryGetValue(origin.Effective, out var binding)) RecordSpecificationErrors(binding.Id, binding.Origin, start);
+                }
             }
         }
 

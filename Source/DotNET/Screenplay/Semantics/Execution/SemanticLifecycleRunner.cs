@@ -240,7 +240,7 @@ public static class SemanticLifecycleRunner
             return null;
         }
         var instances = accepted.World.ReadModels.Where(instance => instance.ReadModel == readModel).ToArray();
-        var instance = instances.FirstOrDefault(candidate => SemanticValueRules.AreEqual(candidate.Key, key)) ?? (instances.Length == 1 ? instances[0] : null);
+        var instance = instances.FirstOrDefault(candidate => SemanticValueRules.AreEqual(candidate.Key, key));
         return instance?.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
     }
 

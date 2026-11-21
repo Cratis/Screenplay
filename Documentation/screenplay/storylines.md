@@ -24,6 +24,8 @@ storyline <Name> ["<title>"]
   stands in when there is none.
 - Each step is one line. `<kind>` is `module`, `feature`, `slice`, `command`, `event`, `readmodel`, `query`,
   `screen` or `reaction`. The order of the lines is the order of the path.
+- A `screen` step names any screen: one declared in a slice or a [free screen](screens.md#free-screens-declare-a-screen-first-let-a-slice-adopt-it)
+  declared at the top level, in a module or in a feature, whether or not a slice has adopted it yet.
 - `<reference>` is the element's name. When the name alone matches several elements of that kind, qualify it
   with the module, feature or slice it sits in, such as `Requests.RequestReturn`.
 - The optional note says what happens at that step.

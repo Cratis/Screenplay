@@ -10,13 +10,14 @@
 #      invoke the receiving domain's command, and the private events of the receiving domain declared in a StateChange slice.
 #   2. LEGACY_TEXT_RULES=1 (cratis 3.71.0 only, admits ESM <= v20): concept text rules (starts with / contains / not contains,
 #      ESM v24) become `matches` rules. Not needed on cratis >= 3.75.0.
-#   3. A command whose event triggers a reaction cannot have a rendered specification (STAGE-ESM-011): those specifications
-#      are listed in tools/render-bridge/drop-specifications.txt (one `<file>|<specification name>` per line) and removed.
+#   3. Specifications the renderer cannot take are listed in tools/render-bridge/drop-specifications.txt
+#      (one `<file>|<specification name>` per line) and removed. Each entry names its reason;
+#      since Stage 6.2.2 (cratis CLI 3.140.0) only the Purchasing `then invokes` scenario remains (Cratis/Stage#1172).
 #   5. `reaction batches atomic` (ESM v22) and `command reads protected` / command `reads` (ESM v25) render: nothing is stripped
 #      (STRIP_READS=1 runs tools/render-bridge/strip_reads.py, the old behaviour for a renderer older than Stage#566/#574).
-#   6. A query a `performer` answers (Purchasing dashboard) is an opaque read Stage cannot render (STAGE-ESM-007): the figures are projected from the
-#      events instead. `add x by a * b` (ESM v29, Storefront BasketSize.addedValue) is refused by STAGE-ESM-050 (Chronicle adds one event property):
-#      the total is left out. Both in tools/render-bridge/stand_in_for_unrendered.py.
+#   6. Fallback: if a `performer` answers the Purchasing dashboard query (an opaque read Stage cannot render, STAGE-ESM-007), the figures are
+#      projected from the events instead, in tools/render-bridge/stand_in_for_unrendered.py. The current model already projects them. `add x by a * b` (ESM v29, Storefront BasketSize.addedValue) renders
+#      since Stage#597 and is kept.
 #   7. A workflow with an `approval` step or a `decide` that reads the subject read model is refused (STAGE-LIFECYCLE-010: a rendered application has no
 #      approvals endpoint and its performer cannot read the subject yet). The Storefront workflow FulfilOrder is removed, with the state machine's
 #      `starts FulfilOrder` entry action and the `then starts FulfilOrder` assertion; the state machine itself stays.
@@ -69,7 +70,7 @@ rm -rf "$V"/*/translation
 # 1b. what Stage cannot render yet: atomic reaction batches (ESM v22), protected decision reads (ESM v25)
 # Stage (>= the release carrying #566/#574) renders both, so nothing is stripped unless STRIP_READS=1 asks for the old behaviour
 if [ "$STRIP_READS" = "1" ]; then python3 "$HERE/render-bridge/strip_reads.py" "$V"; fi
-# 1c. stand-ins for what Stage cannot render yet: a performer query (STAGE-ESM-007), a product operand in a projection (STAGE-ESM-050)
+# 1c. a stand-in for what Stage cannot render yet: a performer query (STAGE-ESM-007)
 python3 "$HERE/render-bridge/stand_in_for_unrendered.py" "$V"
 # 1d. workflows Stage cannot render yet (STAGE-LIFECYCLE-010): the Storefront FulfilOrder workflow and what starts it
 if [ -f "$V/Storefront/model/lifecycle.play" ]; then
@@ -128,4 +129,4 @@ if [ -f "$HERE/render-bridge/bridge.play.txt" ]; then mkdir -p "$V/RenderBridge"
 rm -rf "$DEST"
 ARGS=""; [ "$PACKAGE_SET" = "1" ] && ARGS="--package-set $HERE/packages/acme-commerce.package-set.json"
 $CRATIS render "$V" --target cratis --name AcmeCommerce --destination "$DEST" $ARGS "$@"
-echo "rendered to $DEST - next: (cd $DEST && dotnet build && npm install && npm run build && dotnet test AcmeCommerce.Specs)"
+echo "rendered to $DEST - next: (cd $DEST && dotnet build && npm install && npm run build && dotnet test)"

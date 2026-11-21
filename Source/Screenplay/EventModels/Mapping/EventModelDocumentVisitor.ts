@@ -9,6 +9,7 @@ import { Audience } from './Audience';
 import { EventOwners } from './EventOwners';
 import { proseOf } from './proseOf';
 import { SliceScope } from './SliceScope';
+import { withAdoptedScreens } from './withAdoptedScreens';
 import { systemActor } from './systemActor';
 import { toSlice } from './toSlice';
 
@@ -26,7 +27,7 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
         const audience = Audience.of(syntax.personas, syntax.availabilities ?? []);
         const order = authoredOrderOf(syntax);
         // Expand against the whole declaration inventory, but retain the authored order sidecar.
-        const effective = expandSpecificationExamples(syntax);
+        const effective = withAdoptedScreens(expandSpecificationExamples(syntax));
         const owners = new EventOwners(effective.modules, new SchemaSynthesizer(effective), new AuthoringProductionResolver(effective), effective.systems ?? []);
         const modules = ordered(effective.modules, [], order).map((module, index) => toModule(module, index, owners, audience, order));
         return {

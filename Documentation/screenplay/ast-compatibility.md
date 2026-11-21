@@ -101,6 +101,10 @@ Screenplay 6 replaced `LayoutSyntax.Navigation`, `ModuleSyntax.Navigation`, `Mod
 
 `ScreenToolbarSyntax.Buttons` is an additive init-only collection of `ToolbarButtonSyntax` (`Id`, `Title`, optional `Slice`, `Emphasis`, `Icon`, `Runs`). The JSON omits `buttons` when empty and the optional members when null. `ToolbarEmphasis` (`Primary`, `Secondary`, `Quiet`) is append-only. See [Toolbar buttons](screens.md#toolbar-buttons).
 
+## Free screens
+
+Screenplay 6 lets a screen stand outside a slice (decision [0166](../../decisions/0166-free-screens-declared-anywhere-adopted-by-slices-esm-v56.md)). The additions are all init-only members with empty defaults and new node kinds, so no positional record of the public tree changes: `ApplicationSyntax.Shapes` (`ShapeSyntax`: `Name`, `Properties`, optional `Description`) and `ApplicationSyntax.Screens`, `ModuleSyntax.Screens` and `FeatureSyntax.Screens` (the free `ScreenSyntax`), `SliceSyntax.UsedScreens` (`UsesScreenSyntax`: `Screen`, `Provisions`; a `ScreenProvisionSyntax` is `Need`, `Query`, optional `By` and `Mappings` of `ScreenProvisionMappingSyntax`, `Field`, `Path`), and `ScreenNeedSyntax` (`Type`, optional `Alias`), a new `ScreenDirectiveSyntax`. The JSON omits `shapes`, `screens` and `usedScreens` when empty, so a model without free screens serializes exactly as before. A `ScreenSyntax` a slice declares in its own body stays in `SliceSyntax.Screens`. See [Free screens](screens.md#free-screens-declare-a-screen-first-let-a-slice-adopt-it).
+
 ## Enum member numbers
 
 `ConceptSyntax.ValueNumbers` is a nullable init-only collection of int32, not a positional constructor parameter. Absent numbers stay null and the syntax JSON omits `valueNumbers`, keeping existing documents' bytes. Populated numbers parallel `values` in authored order; cardinality must match, numbers must be unique, and the concept must be an enum. Preserve the distinction between absent and populated numbers when rewriting. Positional pins retain the original executable bytes; other numbers select ESM v12 and become the optional canonical `numbers` member, parallel to ESM `values`. Consumers must explicitly admit that contract.

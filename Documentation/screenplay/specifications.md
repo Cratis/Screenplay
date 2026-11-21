@@ -263,6 +263,19 @@ Assign a property only once within each fixture or step. An inline assignment re
 
 Specification `stream` and `no stream` statements select executable semantic model **v8**. The reference runner places routed history and appended facts, and compares explicitly stated routes. Specifications without these statements keep their existing semantics.
 
+## Event tags
+
+A `then` event states the tags it must carry with `tag <value>` lines, or states that it carries none with `no tags`:
+
+```screenplay
+then InvoiceRegistered
+  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+  tag invoicing
+  tag "billing"
+```
+
+The expectation is exact: the event's tags must equal the listed tags in order, duplicates included. `no tags` asserts that the event carries none, and a `then` without either form leaves its tags unspecified. A value is an identifier or a string; a `$context` or `$env` expression is resolved when the event is appended and is not asserted. `tag` and `no tags` appear only under a `then` event, `no tags` cannot repeat or combine with `tag`, and the lines take no children; every violation reports `PLAY1148`. Tag expectations select executable semantic model **v55**; specifications without them keep their existing semantics.
+
 An event occurrence in `given`, `when append` or `then` can name a source-owned stream:
 
 ```screenplay

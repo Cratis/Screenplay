@@ -25,7 +25,7 @@ internal static class SemanticArrayClassification
         "application/concepts", "application/types", "application/modules", "application/triggers", "application/eventSources",
         "modules/features", "features/features", "features/slices",
         "slices/events", "slices/commands", "slices/readModels", "slices/projections", "slices/queries",
-        "slices/specifications", "slices/reactions", "slices/captures", "slices/screens",
+        "slices/specifications", "slices/reactions", "slices/captures", "slices/screens", "application/screens",
         "types/properties", "events/properties", "commands/properties", "readModels/properties", "triggers/properties",
         "priorRevisions/properties", "eventSources/streams", "queries/keyParts",
         "application/systems",
@@ -49,7 +49,7 @@ internal static class SemanticArrayClassification
         "application/provides", "modules/provides", "features/provides", "slices/provides",
         "modules/available", "features/available", "slices/available", "commands/available", "queries/available", "screens/available",
         "availabilities/requirements", "source/by",
-        "appends/mappings", "appends/tags",
+        "appends/mappings", "appends/tags", "thenEvents/expectedTags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",
         "children/appends", "children/map", "nested/appends", "nested/map",
         "commands/codeValidations", "commands/produces", "commands/reads", "commands/requirements", "commands/validations", "policies/reads", "policies/inputs", "authorization/mappings",
@@ -71,7 +71,7 @@ internal static class SemanticArrayClassification
         "application/graphs", "application/graphProjections", "application/graphSpecifications",
         "graphs/nodes", "graphs/edges", "nodes/properties", "edges/properties",
         "graphProjections/nodes", "graphProjections/edges", "nodes/handlers", "edges/handlers", "handlers/mappings",
-        "application/graphQueries", "graphQueries/arguments", "graphQueries/matches", "graphQueries/conditions", "graphQueries/returns", "matches/hops",
+        "application/graphQueries", "graphQueries/arguments", "graphQueries/matches", "graphQueries/conditions", "graphQueries/returns", "graphQueries/collects", "collects/members", "matches/hops",
         "graphSpecifications/thenQueries", "thenQueries/arguments", "thenQueries/rows", "rows/values",
         "graphSpecifications/given", "graphSpecifications/givenGraphs", "graphSpecifications/thenGraphs", "givenGraphs/elements", "thenGraphs/elements", "elements/values",
         "stateMachines/transitions", "states/entering", "workflows/edges", "specifications/given", "specifications/outcomes", "specifications/then",
@@ -83,7 +83,7 @@ internal static class SemanticArrayClassification
         "specifications/thenEvents", "specifications/thenInvocations", "specifications/thenQueries", "specifications/thenReadModels",
         "thenQueries/filters", "thenQueries/results", "when/fields",
         "value/values", "key/values", "streamId/values", "operand/values", "values/values",
-        "screens/data", "screens/actions", "screens/navigation", "screens/extensions", "screens/components", "components/properties", "components/handles", "handles/commands", "data/fields", "actions/inputs", "layout/fits", "layout/regions", "regions/regions", "regions/actions",
+        "slices/adoptions", "adoptions/provisions", "provisions/fields", "screens/needs", "needs/fields", "screens/data", "screens/actions", "screens/navigation", "screens/extensions", "screens/components", "components/properties", "components/handles", "handles/commands", "data/fields", "actions/inputs", "layout/fits", "layout/regions", "regions/regions", "regions/actions",
     ];
 
     static readonly ImmutableDictionary<string, SemanticArrayRule> _rules = BuildRules();

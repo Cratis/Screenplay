@@ -37,5 +37,6 @@ static class ViewBuilders
 
     internal static bool Opaque(ReadModelSyntax model, ConsistencyDeclarations declarations) => declarations.Slices.Any(entry =>
         (entry.Slice.Reducers ?? []).Any(reducer => ReferenceEquals(ReadModel(reducer.ReadModel, entry.Scope, declarations), model)) ||
-        entry.Slice.Queries.Any(query => query.Performer is not null && ReferenceEquals(ReadModel(query.ReturnType.Name, entry.Scope, declarations), model)));
+        entry.Slice.Queries.Any(query => query.Performer is not null && ReferenceEquals(ReadModel(query.ReturnType.Name, entry.Scope, declarations), model)) ||
+        entry.Slice.GraphQueries.Any(query => query.Collects.Any() && ReferenceEquals(ReadModel(query.ReturnType.Name, entry.Scope, declarations), model)));
 }

@@ -6,12 +6,13 @@ events of the organization leave behind.
 
 ```text
 Organization/
-  organization.play   one policy and persona, eight command slices, one graph slice with its projection
+  organization.play   one policy and persona, eight command slices, one graph slice with its projection,
+                      and one slice that reads the graph as views
 ```
 
 | Persona | Policy | Sees the screens of |
 | --- | --- | --- |
-| `Administrator` | `IsAdministrator` | every dialog: register or remove a person, create or nest a group, add or remove a member, assign or revoke a role |
+| `Administrator` | `IsAdministrator` | every dialog: register or remove a person, create or nest a group, add or remove a member, assign or revoke a role, and the organization views |
 
 ## What to read it for
 
@@ -27,8 +28,16 @@ Organization/
 - **A named sink.** `sink People for graphs` declares a logical place to store graphs, and `sink People` in the
   graph puts the organization there. The deployment maps `People` to a real graph database; see
   [Sinks](../../Documentation/screenplay/sinks.md).
+- **Reading the graph as views.** The `OrganizationViews` slice reads the graph with four queries that
+  `collect` nested rows along an edge from their root: `PeopleWithGroups` (each person with the groups they
+  belong to and since when, read from the `MEMBER_OF` edge), `GroupsWithMembers` (an incoming edge),
+  `GroupsWithParent` (one optional row over the self edge `PART_OF`) and `RolesOf` (one row per `HAS_ROLE`
+  edge, so two roles in one group are two rows). A condition on a collected node picks which people are
+  returned; it never narrows the groups collected for them. See
+  [Collect nested rows](../../Documentation/screenplay/projections/graphs.md#collect-nested-rows).
 - **Specifications about a graph.** `then graph Organization` asserts `has node`, `has edge`, `no node` and
-  `no edge`; `given graph` seeds a graph before the action.
+  `no edge`; `given graph` seeds a graph before the action, and `then query` asserts the rows a graph query
+  returns, collected rows included.
 
 ## Verify
 

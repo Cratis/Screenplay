@@ -447,6 +447,17 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
     public static SemanticAddress ForScreen(SemanticAddress slice, string name) => BuildSliceDeclaration(SemanticKind.Screen, slice, name);
 
     /// <summary>
+    /// Creates the address of a screen declared free of any slice. The declaration key is qualified by the module and feature
+    /// the screen is declared in, so screens of the same name in different scopes keep different identities.
+    /// </summary>
+    /// <param name="application">The application identity.</param>
+    /// <param name="scope">The module and feature names the screen is declared in; empty for a screen at the top level.</param>
+    /// <param name="name">The screen name.</param>
+    /// <returns>The screen address.</returns>
+    public static SemanticAddress ForFreeScreen(ApplicationIdentity application, IEnumerable<string> scope, string name) =>
+        Build(SemanticKind.Screen, [ApplicationPart(application), Part(SemanticAddressPartKind.Declaration, string.Join('.', scope.Append(name)))]);
+
+    /// <summary>
     /// Creates a property address below a legal property owner.
     /// </summary>
     /// <param name="owner">A composite-type, trigger, command, event-contract, or read-model address.</param>
@@ -559,7 +570,8 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
             SemanticKind.Slice => IsSlice(parts),
             SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource or SemanticKind.System => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
             SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Projection or SemanticKind.Query or SemanticKind.Specification or
-                SemanticKind.Reaction or SemanticKind.Capture or SemanticKind.Screen => IsSliceDeclaration(parts),
+                SemanticKind.Reaction or SemanticKind.Capture => IsSliceDeclaration(parts),
+            SemanticKind.Screen => IsSliceDeclaration(parts) || Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
             SemanticKind.Property => IsProperty(parts),
             SemanticKind.QueryArgument => IsQueryArgument(parts),
             SemanticKind.EventStream => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration, SemanticAddressPartKind.OwnerKind, SemanticAddressPartKind.Member) &&

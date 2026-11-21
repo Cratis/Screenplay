@@ -10,7 +10,7 @@ Choose a Screenplay generation strategy by what the value must do: identify an e
 - A client-minted identity is an input. Do not mark it `generated`; enforce its uniqueness through a constraint or unique event contract.
 - A generated identifier is not an authorization mechanism. Apply policies independently.
 - An idempotency key represents a repeated request, not a newly drawn value. Generation supplies neither idempotency nor deduplication. A deterministic future `derive` also needs uniqueness or freshness enforcement; derivation alone cannot enforce idempotency.
-- A gapless sequence needs an allocator, not randomness. `generate sequence` is reserved.
+- A gapless sequence needs an allocator, not randomness. `generate sequence` is reserved; see [why sequences are not available yet](#sequences-why-not-yet).
 - Do not generate secrets with the admitted strategies. Secret generation requires a cryptographically secure source, `secret` classification and the separate hashing/derive admission; it is not executable yet.
 
 ## Match the shape to the job
@@ -30,6 +30,16 @@ Choose a Screenplay generation strategy by what the value must do: identify an e
 Prefixes help a person recognize a value but add no random bits. UUIDv7, ULID and TypeID expose creation time, so choose them only when that is acceptable. For NanoID, a smaller alphabet needs a longer code to retain the same randomness.
 
 Entropy measures the randomness in a value, in bits. Generated identifiers require at least 64 random bits; a unique constraint cannot waive that floor. For a shorter non-identifier code, add a single-property unique constraint on the event property it populates. That prevents a duplicate append, but does not make collisions less likely or cause generation to retry. Dates and checksums do not enlarge the random portion of an invoice reference. Use the [strategy reference](strategies.md) to compare exact encodings and collision bounds.
+
+## Sequences: why not yet
+
+`generate sequence` is reserved. Binding, describe, propose-ast and propose-source refuse it with `PLAY0682`, and nothing is admitted. `random` and `pattern` draw each value independently, so their values are neither ordered nor guaranteed collision-free. A `rule` has no store to count against. Reading the highest value and adding one in a handler races and produces duplicates, and a failure after reserving a number leaves a gap.
+
+[Decision 0123](https://github.com/Cratis/Screenplay/blob/main/decisions/0123-store-backed-sequences-through-a-chronicle-allocator.md) is proposed, not shipped. It describes one allocator event source per counter key, built from the counter name and scope parts such as `InvoiceNumber/2026`. The allocation is appended atomically with the business event in one batch and guarded by a concurrency scope on the tail.
+
+On contention the caller receives a concurrency outcome and resubmits. Admission also waits for Chronicle kernel 19.40.1 or later, race vectors, retry-scope and freshness evidence, and an Arc allocation step that does not exist yet.
+
+Even when admitted, a sequence promises values that are unique per counter and increasing, not that no numbers are missing. Gaps remain possible through writes that bypass the allocator, imports, redaction and older kernels. Until then, use `pattern` with a date and checksum for a readable reference, or `ulid` or `uuidv7` for a time-ordered identity (values created in the same millisecond are not guaranteed to be ordered). Do not imitate a sequence in `Handle`.
 
 ## Declare and verify
 

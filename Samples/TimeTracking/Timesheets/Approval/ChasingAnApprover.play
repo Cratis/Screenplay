@@ -1,0 +1,38 @@
+// The chase of a submitted week: after three days without a decision the manager is reminded.
+slice StateChange NudgeApprover
+  description "Reminds the engagement manager that a week is still waiting for a decision"
+  command NudgeApprover
+    timesheetId TimesheetId identifier
+    authorize IsEngagementManager
+    produces ApproverNudged
+      for timesheetId
+      timesheetId = timesheetId
+      raisedAt    = $context.occurred
+  event ApproverNudged
+    timesheetId TimesheetId
+    raisedAt    DateTime
+  screen NudgeApproverDialog
+    template TimesheetDialog
+      body
+        title "Remind the approver"
+      actions
+        action NudgeApprover
+          label "Remind"
+  specification TheApproverIsNudged
+    given caller
+      authenticated
+      role "EngagementManager"
+    given clock "2026-10-02T09:00:00Z"
+    when NudgeApprover
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then ApproverNudged
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      raisedAt    = "2026-10-02T09:00:00Z"
+  specification ConsultantsCannotNudgeApprover
+    given caller
+      authenticated
+      role "Consultant"
+    when NudgeApprover
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then denied

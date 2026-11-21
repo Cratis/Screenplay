@@ -19,6 +19,30 @@ The executable semantic model (ESM) carries portable model meaning, not permissi
 
 A render planner decides how to realize admitted semantics for its target. It returns an artifact plan, while the caller owns publication and runtime orchestration. Source adapters likewise contribute evidence, not authority to change the workspace. These boundaries let you reuse the model without treating syntax recognition or a successful compilation as proof of runtime support.
 
+### Opt into specification-refused compilations (.NET)
+
+`SemanticModelCompiler.Compile` still returns `Success == false` and `Value == null`
+when a specification has binding errors. A host that needs the executable model
+without those specifications can explicitly read
+`CompilationResult<SemanticCompilation>.SpecificationRefusedValue`:
+
+```csharp
+var result = compiler.Compile(applicationName, documents);
+var executable = result.Value ?? result.SpecificationRefusedValue;
+```
+
+This opt-in value is present only when every error belongs to a specification
+binding or case-value validation scope. Syntax, structural, extension-resolution,
+and semantic-contract validation errors leave it absent. Broken specifications are
+removed, not repaired. `executable.RefusedSpecifications` identifies each removed
+specification by its authoritative `Id`, original Error `Diagnostics`, and effective
+`Origin` when available. Healthy identities, documents, and source mappings remain;
+refusals are a sidecar, not a new ESM field or version.
+
+Keep reporting `result.Diagnostics` and treating the result as failed verification.
+Reading this member does not change CLI, verification, or MCP success behavior,
+and does not admit the remaining model for a target automatically.
+
 ## Two-direction architecture
 
 ```mermaid
@@ -292,6 +316,11 @@ A policy condition using unary `not` also selects v7 under 0027. Its canonical v
 | 50.0 | Systems with abilities (`"systems"` on the application, each with `"abilities"`, effect classes, typed inputs and returned values, outcomes and realization) | 50 | [0159](https://github.com/Cratis/Screenplay/blob/main/decisions/0159-systems-with-abilities-extensions-and-durable-invocations.md) | `full-esm-v50.json` | `EsmGoldenVectors.Get(50)` |
 | 51.0 | Ability invocations from reactions, workflow actions and state entries: the call's inputs, one branch per answer (`returned`, `failed` or a declared outcome) and the answers a specification scripts for an ability | 51 | [0159](https://github.com/Cratis/Screenplay/blob/main/decisions/0159-systems-with-abilities-extensions-and-durable-invocations.md) | `full-esm-v51.json` | `EsmGoldenVectors.Get(51)` |
 | 52.0 | Extension components on screens (`extensions` and `components` on a screen, each component placed through its system with the properties the screen gives it and the commands each handled signal executes; admitted with `ExecutableScreens.Admit`, so a default compilation is unchanged) | 52 | [0159](https://github.com/Cratis/Screenplay/blob/main/decisions/0159-systems-with-abilities-extensions-and-durable-invocations.md) | `full-esm-v52.json` | `EsmGoldenVectors.Get(52)` |
+| 53.0 | Provided values and availability gates (`"provides"` on the application, modules and slices; the application's `"audiences"` and `"availabilities"`; `"available"` gates on modules, features, slices, commands, queries and screens). See [Provided values](context.md#provided-values) and [Audiences and availability](availability.md) | 53 | [0161](https://github.com/Cratis/Screenplay/blob/main/decisions/0161-context-values-provided-down-the-model-tree.md), [0162](https://github.com/Cratis/Screenplay/blob/main/decisions/0162-availability-gates-audiences-and-engine-ownership.md) | `full-esm-v53.json` | `EsmGoldenVectors.Get(53)` |
+| 54.0 | A graph query that collects nested rows along an edge from its root (`"collects"` on a graph query: the read-model property, the root alias, the followed hop, the cardinality `many` or `one`, the row type and members of kind `property` or `edgeProperty`) | 54 | [0163](https://github.com/Cratis/Screenplay/blob/main/decisions/0163-graph-views-collect-nested-rows-esm-v54.md) | `full-esm-v54.json` | `EsmGoldenVectors.Get(54)` |
+| 55.0 | Exact ordered tag expectations on a specification's then event (`"expectedTags"`, including an empty array for `no tags`) | 55 | [0165](https://github.com/Cratis/Screenplay/blob/main/decisions/0165-then-events-assert-exact-ordered-tags-esm-v55.md) | `full-esm-v55.json` | `EsmGoldenVectors.Get(55)` |
+| 56.0 | Screens declared free of any slice and the slices that adopt them (`screens` on the application, with the `needs` a screen leaves to its adopters and the `scope` of a screen declared in a module or feature; `adoptions` on a slice, each naming the adopted screen and the query that provides each need; admitted with `ExecutableScreens.Admit`, so a default compilation is unchanged) | 55 | [0165](https://github.com/Cratis/Screenplay/blob/main/decisions/0166-free-screens-declared-anywhere-adopted-by-slices-esm-v56.md) | `full-esm-v56.json` | `EsmGoldenVectors.Get(55)` |
+| 57.0 | A provided value computed by a file or code block (`"kind":"code"` and `"requirementId"` on its source; opaque to the reference evaluator) | 57 | [0167](https://github.com/Cratis/Screenplay/blob/main/decisions/0167-provide-from-code-is-an-implementation-attachment.md) | `full-esm-v57.json` | `EsmGoldenVectors.Get(57)` |
 
 A model that declares a `set once` projection mapping or a children `insert first` or `sort by` selects language/semantic `43.0` and `schemaVersion: 43`, also when its screens are admitted; the version number is provisional until it is admitted by consumers; see [decision 0150](https://github.com/Cratis/Screenplay/blob/main/decisions/0150-projection-parity-esm-v43.md). `insert last` is what a children block does without an ordering and keeps the model's version.
 

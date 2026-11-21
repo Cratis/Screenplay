@@ -28,6 +28,11 @@ const cases: readonly { name: string; target: ExpressionSyntax; text: string }[]
     { name: 'causation property', target: { kind: 'CausedByExpressionSyntax', property: 'subject', location }, text: '$causedBy.subject' },
     { name: 'refusal member', target: { kind: 'RefusalExpressionSyntax', member: 'message', location }, text: '$refusal.message' },
     { name: 'case parameter', target: { kind: 'CaseValueExpressionSyntax', parameter: 'owner', location }, text: 'case.owner' },
+    { name: 'invocation root', target: { kind: 'InvocationValueExpressionSyntax', source: 'outcome', member: '', location }, text: '$outcome' },
+    { name: 'invocation member', target: { kind: 'InvocationValueExpressionSyntax', source: 'result', member: 'owner', location }, text: '$result.owner' },
+    { name: 'negative clock offset', target: { kind: 'ClockOffsetExpressionSyntax', clock: 'today', amount: -7, unit: 'days', location }, text: 'today - 7 days' },
+    { name: 'positive clock offset', target: { kind: 'ClockOffsetExpressionSyntax', clock: 'now', amount: 2, unit: 'hours', location }, text: 'now + 2 hours' },
+    { name: 'date extraction', target: { kind: 'DateOfExpressionSyntax', operand: { kind: 'ContextExpressionSyntax', path: 'occurred', location }, location }, text: 'date of $context.occurred' },
     {
         name: 'interpolated template',
         target: { kind: 'TemplateExpressionSyntax', parts: [

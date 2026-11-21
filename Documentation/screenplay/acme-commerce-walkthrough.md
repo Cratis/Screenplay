@@ -679,12 +679,10 @@ A standalone domain has no name clash, so the package gives every inbound contra
 `tools/render-variant.sh` copies selected domains into an adapted model, then invokes `cratis render`. It needs the Cratis CLI
 and Python 3 on `PATH`. Review its header before using the result: the variant deliberately differs from the authored model.
 
-The default selection is `DOMAINS="Catalog Storefront"`, but both commands below currently fail before reaching
-`cratis render`. The script removes Sales, then unconditionally opens `Sales/model/approval.play` while processing
-`tools/render-bridge/drop-specifications.txt`. `PACKAGE_SET=1` does not avoid this missing-file failure. The default needs a
-separate script fix before it can be used.
+The default selection is `DOMAINS="Catalog Storefront"`. Entries in `tools/render-bridge/drop-specifications.txt` that
+name a file from a domain outside the selection are skipped, so the default selection reaches `cratis render`.
 
-These are the helper's invocation forms from the repository root, not working default rendering commands:
+Run the helper from the repository root:
 
 ```bash
 Samples/AcmeCommerce/tools/render-variant.sh                 # custom component blocks and package references removed

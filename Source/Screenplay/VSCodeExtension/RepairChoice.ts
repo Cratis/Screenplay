@@ -9,4 +9,6 @@ export interface RepairChoice {
     title: string;
     location: RepairLocation;
     subject: { revision: string; documentId: string; path: string };
+    /** Semantic addresses a contract-changing repair retires, as the server described them. */
+    retiredAddresses?: string[];
 }

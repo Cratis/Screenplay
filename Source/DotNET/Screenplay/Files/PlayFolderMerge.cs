@@ -72,6 +72,8 @@ internal static partial class PlayFolderMerge
             // in another - and the folder is one application.
             Users = DeclaredInOneFile(applications.SelectMany(application => application.Users), user => user.Name, user => user.Location, "user", context),
             Storylines = DeclaredInOneFile(applications.SelectMany(application => application.Storylines), storyline => storyline.Name, storyline => storyline.Location, "storyline", context),
+            Shapes = DeclaredInOneFile(applications.SelectMany(application => application.Shapes), shape => shape.Name, shape => shape.Location, "shape", context),
+            Screens = [.. applications.SelectMany(application => application.Screens)],
             ReactionProductionMode = MergeReactionProductionMode(applications, context),
             CommandReadMode = MergeCommandReadMode(applications, context),
             TimeZone = MergeTimeZone(applications, context),

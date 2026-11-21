@@ -16,12 +16,24 @@ namespace Cratis.Screenplay;
 public record CompilationResult<TResult>(TResult? Value, IEnumerable<Diagnostic> Diagnostics)
 {
     /// <summary>
+    /// Gets an opt-in executable value with broken specifications excluded, only when all errors belong to those specifications.
+    /// This does not change <see cref="Success"/>, <see cref="Value"/>, or the error diagnostics.
+    /// </summary>
+    public TResult? SpecificationRefusedValue { get; init; }
+
+    /// <summary>
     /// Gets the code attachments blocking executable admission, even when <see cref="Value"/> is absent.
     /// </summary>
     public ImmutableArray<SemanticImplementationRequirement> ImplementationRequirements { get; init; } = [];
 
     /// <summary>Ordered typed context sidecars; they are not canonical executable-model bytes.</summary>
     public ImmutableArray<SemanticTypedContextDescriptor> TypedContextDescriptors { get; init; } = [];
+
+    /// <summary>
+    /// Gets trusted typed contexts for <see cref="SpecificationRefusedValue"/>, or an empty array when no opt-in value is available.
+    /// Failed compilations retain their original failure contexts in <see cref="TypedContextDescriptors"/>.
+    /// </summary>
+    public ImmutableArray<SemanticTypedContextDescriptor> SpecificationRefusedTypedContextDescriptors { get; init; } = [];
 
     /// <summary>
     /// Gets a value indicating whether the compilation succeeded without errors.

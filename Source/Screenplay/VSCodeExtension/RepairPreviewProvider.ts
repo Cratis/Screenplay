@@ -102,7 +102,8 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
         }
         const summary = [
             `# ${preview.title}`, '',
-            preview.code === 'PLAY0478' ? '**Routing change:** events will explicitly target the command identifier. This is not a cleanup.' : preview.code === 'PLAY0661' ? 'Supply missing key parts for command reads only. Queries and trigger reads are not repaired.' : preview.code === 'PLAY0664' ? 'Remove the redundant production route. Other routing remains unchanged.' : 'Declare the produced event only where the C# compiler has proved the repair eligible.', '',
+            preview.code === 'PLAY0478' ? '**Routing change:** events will explicitly target the command identifier. This is not a cleanup.' : preview.code === 'PLAY0661' ? 'Supply missing key parts for command reads only. Queries and trigger reads are not repaired.' : preview.code === 'PLAY0664' ? 'Remove the redundant production route. Other routing remains unchanged.' : preview.code === 'PLAY0469' ? '**Event contract change:** the inline identifier payload is removed. This is not a cleanup and it is never applied in bulk. Review the retired semantic addresses below.' : 'Declare the produced event only where the C# compiler has proved the repair eligible.', '',
+            ...(preview.retiredAddresses ? ['## Retired semantic addresses', ...preview.retiredAddresses.map(address => `- ${address}`), ''] : []),
             '**Whole-document formatting:** all touched sources are canonically reprinted. Inspect every source diff and the identity-state diff.',
             '**Apply writes outside the editor.** It is not normal editor Undo. Use an exclusive writer; journaled rollback does not provide crash-atomic visibility across files.',
             'No AI, build, implementation execution or runtime confirmation is performed.', '',

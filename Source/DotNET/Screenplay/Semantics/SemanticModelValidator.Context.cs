@@ -58,6 +58,7 @@ internal static partial class SemanticModelValidator
 
             RegisterEventSources(application);
             RegisterTriggers(application);
+            RegisterFreeScreens(application);
             foreach (var module in application.Modules)
             {
                 RegisterModule(module);
@@ -78,6 +79,7 @@ internal static partial class SemanticModelValidator
 
             ValidateBoundary(ValidateEventSources);
             ValidateBoundary(ValidateTriggers);
+            ValidateBoundary(() => ValidateFreeScreens(application));
             ValidateBoundary(() => ValidateLifecycles(application));
             foreach (var slice in AllSlices(application))
             {

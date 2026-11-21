@@ -47,6 +47,11 @@ internal sealed class StorylineDeclarations
             }
         }
 
+        foreach (var free in ScreenplayValidator.ScopedScreens(application).Where(entry => !entry.InSlice))
+        {
+            Add(StorylineElementKind.Screen, free.Screen.Name, free.Scope.Segments, free.Screen);
+        }
+
         foreach (var (slice, scope) in ScreenplayValidator.ScopedSlices(application))
         {
             var segments = scope.Segments;

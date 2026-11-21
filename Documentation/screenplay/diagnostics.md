@@ -478,6 +478,8 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0075` | Error | A mapping line in a projection is not one the language can read. |
 | `PLAY0452` | Warning | More than one `automap` or `no automap` appears in the same projection scope. The last setting wins; printing preserves the authored settings and their individual comments. |
 | `PLAY0514` | Warning | A projection mapping, `children`, or `nested` target is absent from the declared read-model or element shape. Unknown or imported shapes are not guessed. |
+| `PLAY1142` | Warning | A projection or reducer copies a value whose concept is marked `secret` (including `pii secret`) into a read-model property, so the value becomes part of the read model and its query results. Reported for an explicit mapping whose target or source event property has a secret concept, for a property AutoMap fills from a same-named secret event property, and for a reducer that builds a read-model property with a secret concept. Metadata, literal and aggregate sources are not reported. The message names the projection or reducer, the concept and the read-model property path. There is no automatic repair: decide whether the read model needs the value at all. |
+| `PLAY1143` | Warning | Opt-in `personas` check: every command and query a screen binds is definitely denied to every declared persona's synthesized caller, so the screen offers them nothing. |
 
 ### Reducer instance identity
 
@@ -1230,7 +1232,7 @@ ESM v26 admits chronological Date/DateTime comparisons only in command `require`
 
 ESM v28 admits Uuid `==` and `!=` only in command `require` and `produces when`. `PLAY0268` refuses ordering, optional or collection operands, two different Uuid concepts, Uuid against text, `$context`, reaction `where`, and Uuid in validation rules and concept rules; a refused whole comparison reports only this code, without checking its literal. In an admitted comparison, a literal that is not a lowercase hyphenated 36-character Uuid reports `PLAY0273`. See [Uuid equality in command conditions](commands.md#uuid-equality-in-command-conditions).
 
-A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet.
+A refusal family moves out of PLAY0268 into its own code when a host must act on it differently; PLAY0268 means not representable in a supported ESM version yet. A `provide` from a file or code block no longer reports it: ESM v57 admits that value as an implementation attachment (decision 0167).
 
 For executable-model dispositions, see `PLAY0268`–`PLAY0271` above and `PLAY0800` under [commands](#commands), [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
@@ -1887,6 +1889,7 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1139` | Warning | A screen action, form or reaction `invokes` a command whose audiences can be off while the invoker's are on, so the invocation can be refused as not available. `when` conditions are opaque and skipped; a reaction is never gated. |
 | `PLAY1140` | Error | An `available for` or `available with` line holds a token that is not a name, `and`, `or` or a parenthesis. |
 | `PLAY1141` | Error | A parenthesis in an `available for` or `available with` line is never closed. |
+| `PLAY1148` | Error | An event tag expectation is misplaced, repeated, mixed or not a literal: `tag <value>` and `no tags` are written only under a `then` event, `no tags` cannot be repeated or combined with `tag`, the value is an identifier or a string, and the line takes no children. |
 
 ## Screen visuals and slice placements
 
@@ -1992,6 +1995,33 @@ The `design system` construct and the `theme` that implements it. See [Design sy
 | `PLAY0928` | Warning | In some theme and mode, a component's text and background resolve to a pair below a `contrast` rule. The `disabled` state is not checked. |
 | `PLAY0929` | Warning | `accent`, `corners` or `font` in a `ui profile`'s `appearance` is deprecated; the value belongs in the selected theme. `appearance` keeps only `color scheme`. |
 | `PLAY0930` | Error | A theme's `implements`, `palette`, `values` or mode block is malformed or repeated. |
+
+## Graph queries that collect nested rows
+
+Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#collect-nested-rows) along one edge from its root, and selects ESM v54. Both compilers report these codes.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY1144` | Error | A `collect` is malformed: its line is not `<property> = collect <root> -[alias:]TYPE-> [alias:]Label` (or `<-[alias:]TYPE-`), it does not start at the query's root, it has no row lines, or a row line is not `<property> = <alias>.<property>` naming the collected node or edge. |
+| `PLAY1145` | Error | A `collect` does not fit the read model: its property is not a list of a composite type (`Row[]`) or an optional composite type (`Row optional`), or its row assigns a property the type lacks, assigns one twice, leaves a required one out or assigns a value of another type. |
+| `PLAY1146` | Error | A `collect` is nested inside another `collect`. This version collects one level of rows; follow the edge from the root in a collect of its own. |
+| `PLAY1147` | Error | A query that collects does not have the shape of a view: it needs exactly one `match <alias>:<Label>` of its root node alone, its scalar returns come from the root, and a `where` condition names the root or a collected node, never a collected edge. |
+| `PLAY1149` | Error | A `shape` declaration is malformed: it is not `shape <Name>` at the top level of a document (a shape cannot sit in a module, a feature or a file imported into one), or a field line is not `<name> <Type>` or carries a key, identifier, subject or generated modifier. |
+| `PLAY1150` | Error | A `uses screen` adoption is malformed: it is not `uses screen <Name>` directly in a slice, a provision under it is not `data <Need> via query <Query> [by <param>]`, or a mapping under a provision is not `<field> from <path>`. |
+| `PLAY1151` | Error | A `shape` is declared more than once. A shape is declared once at the top level of the model. |
+| `PLAY1152` | Error | A screen is declared more than once in the same scope: at the top level of a document, in a module or in a feature. A slice may still declare a screen of the same name as a screen elsewhere; a reference resolves from where it is written, then by unique match. |
+| `PLAY1153` | Error | A screen needs the same shape twice (`data Invoice[]` and `data Invoice[]`) or two needs share an alias. Tell them apart with `data Invoice[] as overdue`, and provide it as `data overdue via query ...`. |
+| `PLAY1154` | Error | A slice adopts the same screen with `uses screen` more than once. Adopt it once and put every provision under that line. |
+| `PLAY1155` | Warning | A screen a slice adopts, or declares, needs data that no provision of the slice supplies. It is a warning while the model is being built; a release gate that treats warnings as errors fails on it, and executable screen admission refuses the model with a reason naming the screen and the shape. |
+| `PLAY1156` | Error | A provision names a shape or alias the adopted screen does not need. The message lists what the screen needs. |
+| `PLAY1157` | Error | A provision names data the adopted screen already sources with its own `data <ReadModel> via query`. A provision never overrides a source the screen resolves. |
+| `PLAY1158` | Error | One `uses screen` provides the same need more than once. |
+| `PLAY1159` | Error | A provision's query returns a list where the screen needs a single value, or a single value where it needs a list. |
+| `PLAY1160` | Error | A field the adopted screen reads, or its `shape` declares, is not a property of the providing query's read model, by the same name or through a `<field> from <path>` mapping. |
+| `PLAY1161` | Error | A read model property that provides a shape field has another type than the explicit `shape` declares for it. A concept stands for its underlying primitive. |
+| `PLAY1162` | Error | A provision's `by` names a parameter the providing query does not declare. |
+| `PLAY1163` | Error | A provision maps a field (`<field> from <path>`) that the adopted screen does not read and its `shape` does not declare. |
+| `PLAY1164` | Information | A screen declared outside any slice is not adopted by any slice. It is design-only: it never blocks the rest of the model. |
 
 ## Retired codes
 

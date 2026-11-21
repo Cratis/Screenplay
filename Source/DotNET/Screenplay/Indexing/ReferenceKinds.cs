@@ -47,9 +47,12 @@ static class ReferenceKinds
         TypeRefSyntax value when owner is IdentityDetailSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "identityDetailType")],
         TypeRefSyntax value when owner is ProvideSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "provideType")],
         TypeRefSyntax value when owner is QuerySyntax query && ReferenceEquals(query.ReturnType, value) && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "queryResult")],
+        TypeRefSyntax when owner is ScreenNeedSyntax => [], // a need names a shape the screen infers or a top-level shape declares; either is valid
         TypeRefSyntax value when owner is ScreenSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel"], "dataReadModel")],
         TypeRefSyntax value when !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["Concept", "Type"], "type")],
         ScreenDataSyntax value => [(value.Query, ["Query"], "dataQuery")],
+        UsesScreenSyntax value => [(value.Screen, ["Screen"], "usesScreen")],
+        ScreenProvisionSyntax value => [(value.Query, ["Query"], "provisionQuery")],
         ContributionSyntax value => [(value.ContributionPoint, ["ContributionPoint"], "contributes")],
         ScreenActionSyntax value => [(value.Command, ["Command"], "action")],
         ScreenActionAlternativeSyntax value => [(value.Command, ["Command"], "actionAlternative")],

@@ -167,4 +167,15 @@ export interface GraphQuerySyntax extends SyntaxNode {
     readonly returns: readonly GraphReturnSyntax[];
     readonly isObservable: boolean;
     readonly description: string | null;
+    readonly collects?: readonly GraphCollectSyntax[];
+}
+
+// '<property> = collect <root> -[alias:]TYPE-> [alias:]Label' (or '<-[alias:]TYPE-') in a graph query 'return', with one
+// '<property> = <alias>.<property>' line per property of the row's composite type beneath it (ESM v54).
+export interface GraphCollectSyntax extends SyntaxNode {
+    readonly kind: 'GraphCollectSyntax';
+    readonly property: string;
+    readonly from: string;
+    readonly hop: GraphPatternHopSyntax;
+    readonly returns: readonly GraphReturnSyntax[];
 }

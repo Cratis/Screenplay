@@ -44,6 +44,13 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         foreach (var @return in syntax.Returns) VisitNode(@return);
+        foreach (var collect in syntax.Collects)
+        {
+            VisitNode(collect);
+            VisitNode(collect.Hop);
+            VisitNode(collect.Hop.Node);
+            foreach (var @return in collect.Returns) VisitNode(@return);
+        }
     }
 
     public virtual void VisitGraph(GraphSyntax syntax)

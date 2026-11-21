@@ -76,7 +76,7 @@ public sealed record CompletenessChecks(ImmutableHashSet<CompletenessCheck> Sele
             (CompletenessCheck.QueryKeys, ["query-keys", "PLAY0535"]),
             (CompletenessCheck.EventConsumers, ["event-consumers", "PLAY0536"]),
             (CompletenessCheck.Navigation, ["navigation", "PLAY0537"]),
-            (CompletenessCheck.Personas, ["personas", "PLAY0574", "PLAY0575", "PLAY0576"]),
+            (CompletenessCheck.Personas, ["personas", "PLAY0574", "PLAY0575", "PLAY0576", "PLAY1143"]),
             (CompletenessCheck.Purposes, ["purposes", "PLAY0602", "PLAY0603", "PLAY0604", "PLAY0605", "PLAY0606"]),
             (CompletenessCheck.Privilege, ["privilege", "PLAY0652"]),
             (CompletenessCheck.EnumPinning, ["enum-pinning", "PLAY0671"])

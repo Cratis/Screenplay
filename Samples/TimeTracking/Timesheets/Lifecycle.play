@@ -1,0 +1,178 @@
+// The life of a week, and the chase that keeps it moving.
+//
+// A timesheet is handed in, may be returned and handed in again, and ends when it is approved. The state machine only
+// observes that: it follows the TimesheetProgress read model and never decides what may happen - the commands do.
+// The workflow is what keeps a week from sitting still: nobody decides a submitted week, or the consultant never fixes a
+// returned one, and payroll waits for everybody. Both are top level declarations, so they sit beside the module files.
+statemachine TimesheetLifecycle
+  description "Where a week is: in progress, handed in, returned to the consultant, or approved"
+  follows TimesheetProgress
+  state Draft initial
+    // The command already refuses an empty week; the guard keeps the lifecycle honest about it too.
+    on TimesheetSubmitted when totalHours > 0 -> Submitted
+  state Submitted
+    on TimesheetApproved -> Approved
+    on TimesheetRejected -> Returned
+  // A returned week goes back to the manager the same way it first went.
+  state Returned
+    on TimesheetSubmitted when totalHours > 0 -> Submitted
+  state Approved final
+  specification HandingInAWeekAsksForApproval
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    then is Submitted
+  specification AReturnedWeekCanBeHandedInAgain
+    description "Returning a week does not end it: handing it in again puts it back in front of the manager"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    given TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    given TimesheetRejected
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = "Tuesday is booked on the wrong engagement"
+      rejectedBy  = "kari.nordmann"
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 36
+    then is Submitted
+  specification AnApprovalOfAWeekNobodyHandedInIsIgnored
+    description "Draft allows no way to Approved, so an approval that arrives for a week still in progress changes nothing"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetApproved
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+      approvedBy   = "kari.nordmann"
+    then is Draft
+  specification AnEmptyWeekStaysInProgress
+    description "A week without hours is not handed in, whatever the event says"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 0
+    then is Draft
+// A submitted week must not wait for ever. After three days without a decision the manager is reminded; if two more days
+// pass, the approval is escalated. A week that was returned in the meantime is no longer the manager's to decide, so its
+// consultant is reminded instead. A manager can also start the chase by hand.
+workflow ChaseTimesheet
+  description "Reminds the manager of a week nobody has decided, escalates it, and reminds the consultant of a returned week"
+  for TimesheetProgress
+  trigger when TimesheetLifecycle enters Submitted
+    -> AwaitDecision
+  trigger Manual manual
+    -> AwaitDecision
+  wait AwaitDecision for TimesheetApproved expires after 3 days
+    expired -> StillSubmitted
+  decide StillSubmitted when status == "submitted"
+    "waiting for the manager" -> NudgeApprover
+    "returned to the consultant" -> NudgeConsultant
+  action NudgeApprover invokes NudgeApprover
+    next -> AwaitSecondDecision
+  wait AwaitSecondDecision for TimesheetApproved expires after 2 days
+    expired -> Escalate
+  action Escalate invokes EscalateApproval
+  action NudgeConsultant invokes NudgeConsultant
+  specification ADecisionInTimeEndsTheChase
+    description "The manager approves within three days, so nobody is reminded"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    outcome AwaitDecision resumed
+    then completes
+  specification ASilentManagerIsRemindedAndThenEscalated
+    description "Nobody decides for three days and then two more: the manager is reminded, then the approval is escalated"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    outcome AwaitDecision expired
+    outcome AwaitSecondDecision expired
+    then invokes NudgeApprover
+    then invokes EscalateApproval
+    then completes
+  specification AReminderIsEnoughWhenTheManagerThenDecides
+    description "The manager decides after the reminder, so the approval is not escalated"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    outcome AwaitDecision expired
+    outcome AwaitSecondDecision resumed
+    then invokes NudgeApprover
+    then completes
+  specification AReturnedWeekRemindsTheConsultant
+    description "Started by hand for a week that was returned in the meantime: the consultant is reminded, not the manager"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    given TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    given TimesheetRejected
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      reason      = "Tuesday is booked on the wrong engagement"
+      rejectedBy  = "kari.nordmann"
+    when start "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    outcome AwaitDecision expired
+    then invokes NudgeConsultant
+    then completes

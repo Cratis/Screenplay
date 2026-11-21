@@ -1,0 +1,38 @@
+// The chase of a returned week: the consultant is reminded to correct it and hand it in again.
+slice StateChange NudgeConsultant
+  description "Reminds a consultant that a returned week still has to be fixed and handed in again"
+  command NudgeConsultant
+    timesheetId TimesheetId identifier
+    authorize IsEngagementManager
+    produces ConsultantNudged
+      for timesheetId
+      timesheetId = timesheetId
+      raisedAt    = $context.occurred
+  event ConsultantNudged
+    timesheetId TimesheetId
+    raisedAt    DateTime
+  screen NudgeConsultantDialog
+    template TimesheetDialog
+      body
+        title "Remind the consultant"
+      actions
+        action NudgeConsultant
+          label "Remind"
+  specification TheConsultantIsNudged
+    given caller
+      authenticated
+      role "EngagementManager"
+    given clock "2026-10-02T09:00:00Z"
+    when NudgeConsultant
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then ConsultantNudged
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      raisedAt    = "2026-10-02T09:00:00Z"
+  specification ConsultantsCannotNudgeConsultant
+    given caller
+      authenticated
+      role "Consultant"
+    when NudgeConsultant
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then denied

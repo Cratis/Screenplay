@@ -405,6 +405,11 @@ public static partial class AttachmentFiles
             }
         }
 
-        static FileReferenceSyntax? ValidationFile(SyntaxNode node) => (node as FileValidateSyntax)?.File;
+        static FileReferenceSyntax? ValidationFile(SyntaxNode node) => node switch
+        {
+            FileValidateSyntax value => value.File,
+            FileProvideSourceSyntax value => value.File,
+            _ => null
+        };
     }
 }

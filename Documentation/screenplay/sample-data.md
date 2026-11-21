@@ -29,11 +29,11 @@ Declare packs at the top level, alongside `seed` and `ui profile`. Each pack nam
 | --- | --- |
 | `title` | An optional display title, such as `CRM · Nordic SMB`, once per pack. Without one, the pack is displayed by its name. |
 | `locale` | An optional BCP 47 locale tag, such as `nb-NO` or `en-GB`, once per pack. It identifies the data's locale and can guide Scene's generated rows when no pack supplies a requested shape. It does not translate authored text. |
-| `shape <ReadModel>` | Rows for a read model with the same name, or one mapped by the profile. Each shape can appear once per pack. |
+| `shape <Name>` | Rows for a read model with the same name, or one mapped by the profile, or for a declared [`shape`](screens.md#needs-and-shapes) of that name. Each shape can appear once per pack. |
 | `row` | One record, with fields in authored order. Omitted fields remain absent in the syntax and Stage conversion; do not rely on them being generated individually. |
 | `<field> = <literal>` | A quoted string, number, `true`, `false` or `null`. Numbers retain their authored token. |
 
-The C# compiler checks authored fields against the matching read model. Unknown properties produce `PLAY0710`; values that do not fit the property type produce `PLAY0711`.
+The C# compiler checks authored fields against the matching read model, or against the typed fields of the matching declared `shape` - the data a [free screen](screens.md#free-screens-declare-a-screen-first-let-a-slice-adopt-it) needs, which no read model holds until a slice adopts the screen. Unknown properties produce `PLAY0710`; values that do not fit the property type produce `PLAY0711`.
 
 | Property type | Accepted literal |
 | --- | --- |

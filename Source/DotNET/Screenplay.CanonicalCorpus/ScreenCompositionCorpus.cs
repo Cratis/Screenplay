@@ -20,6 +20,7 @@ public static class ScreenCompositionCorpus
     const string UiProfileRootLegacySourceCase = "ui-profile-root-legacy-layout";
     const string UiProfileQuotedThemeSourceCase = "ui-profile-quoted-theme";
     const string DesignSystemSourceCase = "design-system-positive";
+    const string FreeScreensSourceCase = "free-screens-positive";
     const string UiProfileAppearanceDeprecatedSourceCase = "ui-profile-appearance-deprecated";
 
     /// <summary>
@@ -190,6 +191,24 @@ public static class ScreenCompositionCorpus
                         "NewScreenTemplateSyntax",
                         "ExposureSyntax",
                         "ExposedPropertySyntax"
+                    ]
+                },
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = FreeScreensSourceCase,
+                    Document = Document("free-screens-positive", "positive/FreeScreens.play", $"{Prefix}.positive.FreeScreens.play.txt"),
+                    Requires = "Screenplay free screens (decision 0166): a shape, screens declared at the top level, in a module and in a feature that state their needs without a query, a slice that adopts them with provisions and field mappings, a need told apart with an alias, sample data for a shape and a storyline that walks through free screens",
+                    PendingReason = null,
+                    ExpectedSyntaxKinds =
+                    [
+                        "ShapeSyntax",
+                        "ScreenSyntax",
+                        "ScreenNeedSyntax",
+                        "UsesScreenSyntax",
+                        "ScreenProvisionSyntax",
+                        "ScreenProvisionMappingSyntax",
+                        "SampleDataSetSyntax",
+                        "StorylineStepSyntax"
                     ]
                 },
                 new CanonicalTypedScreenSourceCase
@@ -398,6 +417,40 @@ public static class ScreenCompositionCorpus
                     Diagnostic("PLAY0930", "Theme 'Broken' already declares which design system it implements"),
                     Diagnostic("PLAY0930", "Invalid palette line 'odd line' - expected '<name> = \"<value>\"' or '<name> = <reference>'"),
                     Diagnostic("PLAY0926", "The ui profile 'Desktop' selects theme 'Plain', which does not implement the design system 'Contoso'")),
+                Rejection(
+                    "free-screens-provisions-invalid",
+                    "FreeScreensProvisionsInvalid",
+                    Diagnostic("PLAY1153", "Screen 'InvoiceList' needs 'Invoice' more than once - tell the needs apart with 'data Invoice[] as <alias>'"),
+                    Diagnostic("PLAY1155", "Screen 'InvoiceList' needs 'Invoice' and slice 'ListInvoices' does not provide it - add 'data Invoice via query <Query>' under 'uses screen InvoiceList'"),
+                    Diagnostic("PLAY1156", "Screen 'InvoiceList' does not need 'Customer' - it needs 'Invoice', 'Invoice'"),
+                    Diagnostic("PLAY1157", "Screen 'Sourced' already sources 'InvoiceRow' with its own 'data InvoiceRow via query' - a provision never overrides a source the screen resolves")),
+                Rejection(
+                    "free-screens-provisions-unresolved",
+                    "FreeScreensProvisionsUnresolved",
+                    Diagnostic("PLAY1159", "Screen 'InvoiceList' needs a list for 'Invoice', and query 'GetInvoice' returns a single value"),
+                    Diagnostic("PLAY1162", "Query 'GetInvoice' has no parameter 'nothing' to supply with 'by nothing'"),
+                    Diagnostic("PLAY1161", "'amount' of read model 'InvoiceRow' is String, and shape 'Invoice' declares 'amount' as Decimal"),
+                    Diagnostic("PLAY1163", "Screen 'InvoiceList' does not read 'colour' of 'Invoice', so there is nothing to map it to - it reads 'number', 'amount'")),
+                Rejection(
+                    "free-screens-declarations-invalid",
+                    "FreeScreensDeclarationsInvalid",
+                    Diagnostic("PLAY1151", "Duplicate shape 'Invoice' - a shape is declared once"),
+                    Diagnostic("PLAY1164", "Screen 'Dup' is not adopted by any slice - it is design-only until a slice adds 'uses screen Dup'"),
+                    Diagnostic("PLAY1152", "Duplicate screen 'Dup' - a screen is declared once in a scope"),
+                    Diagnostic("PLAY1164", "Screen 'Dup' is not adopted by any slice - it is design-only until a slice adds 'uses screen Dup'"),
+                    Diagnostic("PLAY0198", "Ambiguous screen 'Dup' - it matches 2 declarations equally well (, ); qualify it to say which"),
+                    Diagnostic("PLAY0198", "Ambiguous screen 'Dup' - it matches 2 declarations equally well (, ); qualify it to say which")),
+                Rejection(
+                    "free-screens-malformed",
+                    "FreeScreensMalformed",
+                    Diagnostic("PLAY1149", "Shape field 'number' cannot carry a key, identifier, subject or generated modifier - a shape is a contract on data, not a stored model"),
+                    Diagnostic("PLAY1149", "Invalid shape field 'junk' - expected '<name> <Type>'"),
+                    Diagnostic("PLAY0024", "Unexpected 'shape' in feature body - expected description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, screen, contribute, outlet, example, 'on <trigger>' or 'uses <Behavior>'"),
+                    Diagnostic("PLAY1150", "Invalid screen adoption 'uses screen' - expected 'uses screen <Name>'"),
+                    Diagnostic("PLAY1150", "Invalid screen adoption 'uses screen Dup extra' - expected 'uses screen <Name>'"),
+                    Diagnostic("PLAY0197", "Unknown screen 'Other' - nothing in scope declares it"),
+                    Diagnostic("PLAY1150", "Invalid provision 'data Missing' - expected 'data <Need> via query <Query> [by <param>]'"),
+                    Diagnostic("PLAY1150", "Invalid mapping 'number' - expected '<field> from <path>'")),
                 Rejection(
                     "sample-data-unknown-pack",
                     "SampleDataUnknownPack",

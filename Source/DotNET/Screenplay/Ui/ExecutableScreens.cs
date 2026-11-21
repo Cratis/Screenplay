@@ -44,17 +44,21 @@ public static class ExecutableScreens
         ArgumentNullException.ThrowIfNull(syntax);
         ArgumentNullException.ThrowIfNull(compilation);
         var model = compilation.Model;
-        if (SemanticModelValidator.UsesScreens(model.Application)) return new(compilation, []);
+        if (SemanticModelValidator.UsesScreens(model.Application) || SemanticModelValidator.UsesFreeScreens(model.Application)) return new(compilation, []);
 
         var resolver = new ExecutableScreenResolver(syntax, compilation);
         var screens = resolver.Resolve();
         if (!resolver.Refusals.IsEmpty) return new(null, resolver.Refusals);
-        if (screens.Count == 0) return new(compilation, []);
+        if (screens.Count == 0 && resolver.FreeScreens.IsEmpty) return new(compilation, []);
 
-        var application = model.Application with { Modules = [.. model.Application.Modules.Select(module => module with { Features = WithScreens(module.Features, screens) })] };
+        var application = model.Application with
+        {
+            Screens = resolver.FreeScreens,
+            Modules = [.. model.Application.Modules.Select(module => module with { Features = WithScreens(module.Features, screens, resolver.Adoptions) })]
+        };
         try
         {
-            var (languageVersion, semanticVersion) = BoundVersions(model, screens);
+            var (languageVersion, semanticVersion) = BoundVersions(model, screens, resolver.FreeScreens);
             var admitted = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application, utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
             return new(SemanticCompilation.Create(admitted, compilation.Documents, compilation.SourceMap).WithSidecarsOf(compilation), []);
         }
@@ -65,17 +69,25 @@ public static class ExecutableScreens
     }
 
     // A screen that places an extension component is an ESM v52 screen; every other screen stays at the model's own version, or v42.
-    static (LanguageVersion Language, SemanticVersion Semantic) BoundVersions(ExecutableSemanticModel model, IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens)
+    static (LanguageVersion Language, SemanticVersion Semantic) BoundVersions(ExecutableSemanticModel model, IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens, ImmutableArray<SemanticScreen> free)
     {
+        if (!free.IsEmpty && !model.SemanticVersion.IsAtLeast(SemanticVersion.V56)) return (LanguageVersion.V56, SemanticVersion.V56);
         if (screens.Values.SelectMany(found => found).Any(screen => !screen.Available.IsDefaultOrEmpty) && !model.SemanticVersion.IsAtLeast(SemanticVersion.V53)) return (LanguageVersion.V53, SemanticVersion.V53);
         if (screens.Values.SelectMany(found => found).Any(screen => !screen.Components.IsDefaultOrEmpty) && !model.SemanticVersion.IsAtLeast(SemanticVersion.V52)) return (LanguageVersion.V52, SemanticVersion.V52);
         return model.SemanticVersion.IsAtLeast(SemanticVersion.V43) ? (model.LanguageVersion, model.SemanticVersion) : (LanguageVersion.V42, SemanticVersion.V42);
     }
 
-    static ImmutableArray<SemanticFeature> WithScreens(ImmutableArray<SemanticFeature> features, IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens) =>
+    static ImmutableArray<SemanticFeature> WithScreens(
+        ImmutableArray<SemanticFeature> features,
+        IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens,
+        IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreenAdoption>> adoptions) =>
         [.. features.Select(feature => feature with
         {
-            Features = WithScreens(feature.Features, screens),
-            Slices = [.. feature.Slices.Select(slice => screens.TryGetValue(slice.Id, out var found) ? slice with { Screens = found } : slice)]
+            Features = WithScreens(feature.Features, screens, adoptions),
+            Slices = [.. feature.Slices.Select(slice =>
+            {
+                var withScreens = screens.TryGetValue(slice.Id, out var found) ? slice with { Screens = found } : slice;
+                return adoptions.TryGetValue(slice.Id, out var adopted) ? withScreens with { Adoptions = adopted } : withScreens;
+            })]
         })];
 }

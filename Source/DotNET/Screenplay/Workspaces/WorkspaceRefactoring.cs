@@ -40,6 +40,8 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         }
     }
 
+    internal static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
+
     internal WorkspaceAuthoringResult Rename(WorkspaceRenameRequest request)
     {
         if (request is null)
@@ -170,8 +172,6 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         }
     }
 
-    static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
-
     static EventSyntax[] ConsistentGenerations(IEnumerable<EventSyntax> declarations)
     {
         var generations = declarations.ToArray();
@@ -239,15 +239,20 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or AudienceSyntax or AvailabilitySyntax or SinkSyntax or SecretSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or AudienceSyntax or AvailabilitySyntax or SinkSyntax or SecretSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax)))
+        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or PersonaSyntax or AudienceSyntax or AvailabilitySyntax or SinkSyntax or SecretSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax or ProvideSyntax)) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or AudienceSyntax or AvailabilitySyntax or SinkSyntax or SecretSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or EventStreamIdPartSyntax or ProvideSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, stream, stream id part, sink or secret declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, stream, stream id part, sink, secret or provide declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
         {
             throw new InvalidWorkspaceAuthoring("The expected name must match exactly and the new name must be one unqualified identifier (letters, digits, underscore).");
+        }
+
+        if (target.Node is ProvideSyntax)
+        {
+            return WorkspaceProvideRefactorings.Rename(workspace, index, target, request);
         }
 
         // A known hierarchy collision is already a conclusive refusal, even with incomplete source elsewhere.
