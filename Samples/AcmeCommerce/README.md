@@ -103,9 +103,8 @@ replenishment (F-C) and change of price (F-D).
   `DOMAINS="Catalog Storefront Sales Purchasing Warehouse"` is the whole application). Stage renders neither Translate slices nor public
   events (Stage#79, #212, #213). The variant therefore moves each inbound private event into a bridge command
   (`render-bridge/bridge_translations.py`), deletes `translation/` and drops the specifications that cannot render
-  (`render-bridge/drop-specifications.txt`, each with its reason). Since Stage 6.2.2 (cratis CLI 3.140.0) the Warehouse reaction
-  specifications and the Sales approval refusal render; Purchasing `AutoReplenishDraftsAnOrderForThePreferredSupplier` stays dropped
-  until Cratis/Stage#1172. `render-bridge/stand_in_for_unrendered.py` is a fallback: if the
+  (`render-bridge/drop-specifications.txt`, each with its reason). Since Stage 6.2.4 (cratis CLI 3.140.1) every specification renders, including the Warehouse reaction
+  specifications, the Sales approval refusal and Purchasing `AutoReplenishDraftsAnOrderForThePreferredSupplier`, so the list is empty. `render-bridge/stand_in_for_unrendered.py` is a fallback: if the
   Purchasing dashboard is answered by a `performer` (STAGE-ESM-007), it is projected from the events instead. The current model already
   projects it, so the step replaces nothing. The Storefront basket's `add addedValue by unitPrice * quantity` renders since Stage#597 and is kept. Protected decision reads and `reaction batches atomic` are rendered, so nothing is stripped
   (`STRIP_READS=1` restores the old strip). Every difference is documented in the script header. The default variant (Catalog and
