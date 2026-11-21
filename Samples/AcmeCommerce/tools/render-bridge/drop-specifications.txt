@@ -1,4 +1,2 @@
 # Specifications the render variant cannot take. One `<file>|<specification name>` per line.
-# Purchasing's `then invokes` scenario with `on refused` branches renders no specification and no diagnostic
-# (formerly STAGE-ESM-016). Remove this entry when Cratis/Stage#1172 renders it.
-Purchasing/model/replenishment.play|AutoReplenishDraftsAnOrderForThePreferredSupplier
+# Since Stage 6.2.4 (cratis CLI 3.140.1) nothing is dropped: the list is empty.

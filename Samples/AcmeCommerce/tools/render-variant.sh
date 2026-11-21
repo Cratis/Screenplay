@@ -12,7 +12,7 @@
 #      ESM v24) become `matches` rules. Not needed on cratis >= 3.75.0.
 #   3. Specifications the renderer cannot take are listed in tools/render-bridge/drop-specifications.txt
 #      (one `<file>|<specification name>` per line) and removed. Each entry names its reason;
-#      since Stage 6.2.2 (cratis CLI 3.140.0) only the Purchasing `then invokes` scenario remains (Cratis/Stage#1172).
+#      since Stage 6.2.4 (cratis CLI 3.140.1) nothing is dropped and the list is empty.
 #   5. `reaction batches atomic` (ESM v22) and `command reads protected` / command `reads` (ESM v25) render: nothing is stripped
 #      (STRIP_READS=1 runs tools/render-bridge/strip_reads.py, the old behaviour for a renderer older than Stage#566/#574).
 #   6. Fallback: if a `performer` answers the Purchasing dashboard query (an opaque read Stage cannot render, STAGE-ESM-007), the figures are
