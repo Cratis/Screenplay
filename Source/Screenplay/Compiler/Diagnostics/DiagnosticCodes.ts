@@ -726,4 +726,5 @@ export const DiagnosticCodes = {
     UnknownProvisionParameter: 'PLAY1162',
     UnknownProvisionMapping: 'PLAY1163',
     DesignOnlyScreen: 'PLAY1164',
+    InvalidInvocationMapping: 'PLAY1165',
 } as const;

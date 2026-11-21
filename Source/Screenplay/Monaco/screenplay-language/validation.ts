@@ -203,6 +203,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         DiagnosticCodes.UnknownProvisionParameter,
         DiagnosticCodes.UnknownProvisionMapping,
         DiagnosticCodes.DesignOnlyScreen,
+        DiagnosticCodes.InvalidInvocationMapping,
     ]);
     const complianceCodes = new Set<string>([DiagnosticCodes.InvalidPurposeDeclaration, DiagnosticCodes.InvalidPurposeVocabulary, DiagnosticCodes.DuplicatePurposeField, DiagnosticCodes.DuplicatePurposeDeclaration, DiagnosticCodes.UnknownPurpose, DiagnosticCodes.PurposeInterestMismatch, DiagnosticCodes.PersonalDataWithoutPurpose, DiagnosticCodes.SpecialDataWithoutCondition, DiagnosticCodes.CriminalDataWithoutAuthorization, DiagnosticCodes.PurposeWithoutBasis, DiagnosticCodes.UnusedPurpose, DiagnosticCodes.UnknownConceptDirective, DiagnosticCodes.AttributeReasonWithoutAttribute, DiagnosticCodes.DuplicateAttributeReason, DiagnosticCodes.LegacyComplianceMarker, DiagnosticCodes.DuplicateComplianceMarker, DiagnosticCodes.UnknownComplianceMarker, DiagnosticCodes.InvalidSecretScope, DiagnosticCodes.DuplicateSecretScope, DiagnosticCodes.SecretScopeIgnoredForPii, DiagnosticCodes.InvalidPersonalDataQualifier, DiagnosticCodes.DuplicateSpecialCategory]);
     const compilerUnknownEventLines = new Set<number>();

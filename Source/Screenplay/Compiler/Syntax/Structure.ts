@@ -181,7 +181,7 @@ export interface ApplicationSyntax extends SyntaxNode {
     readonly personas: readonly PersonaSyntax[];
 
     // Parser-owned typed trigger shapes for consistency checks, not part of the syntax wire projection.
-    readonly declaredTriggers?: readonly { readonly name: string; readonly data: readonly PropertySyntax[] }[];
+    readonly declaredTriggers?: readonly { readonly name: string; readonly data: readonly PropertySyntax[]; readonly untypedValues?: readonly string[] }[];
 
     // The files the document imports at its top level - whole documents, merged into the application.
     readonly fileImports: readonly FileImportSyntax[];

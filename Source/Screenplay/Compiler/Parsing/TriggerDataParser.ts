@@ -32,7 +32,7 @@ export function parseTriggerData(context: ParserContext, line: SourceLine): void
     context.skipOpaqueBlock(line.indent);
 }
 
-export function parseTriggerDeclaration(context: ParserContext, header: SourceLine): readonly PropertySyntax[] {
+export function parseTriggerDeclaration(context: ParserContext, header: SourceLine, untypedValues: string[] = []): readonly PropertySyntax[] {
     const start = context.triggerData.length;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
@@ -40,7 +40,13 @@ export function parseTriggerDeclaration(context: ParserContext, header: SourceLi
             parseDescription(context, line, null, `Trigger '${header.content}'`);
         } else if (!isFileDirective(line)) {
             parseTriggerData(context, line);
+            untypedValues.push(...untypedDeclarationValues(line));
         }
     }
     return context.triggerData.slice(start);
+}
+
+// Untyped declaration values have a known name but an intentionally unknown shape.
+function untypedDeclarationValues(line: SourceLine): readonly string[] {
+    return /^@?[a-z_]\w*$/.test(line.content) ? [line.content.replace(/^@/, '')] : [];
 }

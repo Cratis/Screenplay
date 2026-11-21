@@ -2023,6 +2023,12 @@ Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#col
 | `PLAY1163` | Error | A provision maps a field (`<field> from <path>`) that the adopted screen does not read and its `shape` does not declare. |
 | `PLAY1164` | Information | A screen declared outside any slice is not adopted by any slice. It is design-only: it never blocks the rest of the model. |
 
+## Invocation mapping paths
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY1165` | Error | A reaction `invokes` mapping names a field absent from the declared command or triggering event/trigger, or traverses a collection as though it were one record. Use a declared scalar or nested record path, or pass the collection itself to a collection field. A dotted path does not imply collection fan-out, and compilation does not discard a path prefix to find a matching field. Values whose declared shape is unknown remain unchecked beyond their known fields. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

@@ -11,6 +11,17 @@ import { ValidationIssue, validateLines } from '../../validation';
 // One document holding every condition the editor and the compiler both check, so a condition added
 // later without a code fails here rather than reaching a user as a codeless squiggle.
 const document = [
+    'module InvocationMappingPaths',
+    '  feature F',
+    '    slice Automation S',
+    '      event Occurred',
+    '        note String',
+    '      command Record',
+    '        note String',
+    '      reaction R',
+    '        when Occurred',
+    '          invokes Record',
+    '            note = missing',
     'system Carrier',
     '  ability Send often',
     '    parcel Parcel',

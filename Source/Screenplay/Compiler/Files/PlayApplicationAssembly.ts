@@ -31,6 +31,7 @@ import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
 import { validatePublicEventUsage } from '../Parsing/PublicEventUsageValidator';
 import { validateOperations } from '../Parsing/OperationValidator';
+import { validateInvocationMappings } from '../Parsing/InvocationMappingValidator';
 import { CompilationResult, discoverImports, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { EventSourceSyntax } from '../Syntax/EventSources';
@@ -102,6 +103,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
+    validateInvocationMappings(merged.value, context);
     validatePublicEventUsage(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateConstraintProperties(merged.value, context);

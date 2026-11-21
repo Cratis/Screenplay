@@ -153,6 +153,7 @@ internal static partial class ScreenplayValidator
         SpecificationStreamValidator.Validate(application, declarations, context, expansion);
         OperationValidator.Validate(application, declarations, context);
         InvocationValidator.Validate(application, declarations, context);
+        new InvocationMappingValidator(application, declarations, context).Validate();
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);
         CommandResponseValidator.Validate(application, declarations, context);
