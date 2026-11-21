@@ -4,7 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { PropertySyntax } from '../Syntax/Declarations';
-import { dependencySources } from '../Syntax/DependencySources';
+import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { InvokesSyntax, ReactionTriggerSyntax } from '../Syntax/Reactions';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
@@ -81,7 +81,7 @@ class InvocationMappingValidator {
 
     private isRead(path: string, trigger: ReactionTriggerSyntax): boolean {
         const root = path.split('.')[0];
-        return dependencySources.get(trigger)?.reads.some(read => (read.alias ?? read.readModel) === root) === true;
+        return (dependencySourcesOf(trigger).reads ?? []).some(read => (read.alias ?? read.readModel) === root);
     }
 
     private isEnumeration(path: string, target: PropertySyntax | null): boolean {
