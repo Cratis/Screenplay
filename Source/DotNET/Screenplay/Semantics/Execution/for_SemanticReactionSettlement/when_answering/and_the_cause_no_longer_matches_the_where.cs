@@ -20,19 +20,20 @@ public class and_the_cause_no_longer_matches_the_where : given.a_settlement_with
             module M
               feature F
                 slice Automation Work
+                  event Excluded
+                    allowed Bool
                   event Started
                     allowed Bool
                   event Continued
                     value String
                   reaction Send
-                    when Started
+                    when Excluded
                       allowed
                       invokes Carrier.Send
                         message = "excluded"
                         on returned
                           produces Continued
                             value = "wrong branch"
-                    where allowed == false
                     when Started
                       allowed
                       invokes Carrier.Send

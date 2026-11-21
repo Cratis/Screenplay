@@ -8,6 +8,15 @@ public class and_a_specification_uses_a_pending_answer : given.a_settlement_with
     Exception _caught;
 
     void Establish() => PrepareAbility(extra: """
+                  readmodel Status
+                    itemId String
+                  query StatusById => Status optional
+                    by itemId String
+                  projection StatusProjection => Status
+                    from Started
+                      itemId = $eventSourceId
+                    from Continued
+                      itemId = $eventSourceId
                   specification Answer
                     given Carrier.Send returns
                       value = "ok"
@@ -29,7 +38,7 @@ public class and_a_specification_uses_a_pending_answer : given.a_settlement_with
                 {
                     Slices = [.. feature.Slices.Select(slice => slice with
                     {
-                        Specifications = [.. slice.Specifications.Select(specification => specification with { AbilityAnswers = [Answer(SemanticAbilityAnswerKind.Pending)] })]
+                        Specifications = [.. slice.Specifications.Select(specification => specification with { GivenAbilityAnswers = [Answer(SemanticAbilityAnswerKind.Pending)] })]
                     })]
                 })]
             })]

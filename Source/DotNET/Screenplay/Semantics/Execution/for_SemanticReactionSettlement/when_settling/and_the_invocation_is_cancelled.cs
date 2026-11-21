@@ -12,12 +12,11 @@ public class and_the_invocation_is_cancelled : given.a_settlement_with_an_abilit
     void Establish()
     {
         _cancellation = new();
-        _invoker.InvokeAsync(Arg.Any<SemanticAbilityInvocationContext>(), Arg.Any<CancellationToken>()).Returns(async call =>
+        _invoker.InvokeAsync(Arg.Any<SemanticAbilityInvocationContext>(), Arg.Any<CancellationToken>()).Returns(call =>
         {
             _received = call.Arg<CancellationToken>();
             _cancellation.Cancel();
-            await Task.Delay(Timeout.Infinite, _received);
-            return _answer;
+            return ValueTask.FromCanceled<SemanticAbilityAnswer>(_received);
         });
     }
 

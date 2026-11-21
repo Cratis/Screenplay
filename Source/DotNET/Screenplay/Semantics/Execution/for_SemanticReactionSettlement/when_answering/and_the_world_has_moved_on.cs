@@ -16,7 +16,9 @@ public class and_the_world_has_moved_on : given.a_pending_invocation
         _resumed = (SemanticAccepted)await _settlement.SettleAnswerAsync(_plan, moved, _pending, _answer);
     }
 
-    [Fact] void should_produce_the_same_fact_as_an_immediate_answer() => _resumed.Facts.AsEnumerable().ShouldEqual(_immediate.Facts);
+    [Fact] void should_produce_the_same_fact_as_an_immediate_answer() => (_resumed.Facts.Single() with { Values = [], Tags = [] }).ShouldEqual(_immediate.Facts.Single() with { Values = [], Tags = [] });
+    [Fact] void should_produce_the_same_values_as_an_immediate_answer() => _resumed.Facts.SelectMany(fact => fact.Values).ShouldEqual(_immediate.Facts.SelectMany(fact => fact.Values));
+    [Fact] void should_produce_the_same_tags_as_an_immediate_answer() => _resumed.Facts.SelectMany(fact => fact.Tags).ShouldEqual(_immediate.Facts.SelectMany(fact => fact.Tags));
     [Fact] void should_keep_the_intervening_fact() => _resumed.World.Facts.Length.ShouldEqual(3);
     [Fact] void should_not_reinvoke_on_resume() => _calls.Count.ShouldEqual(2);
 }

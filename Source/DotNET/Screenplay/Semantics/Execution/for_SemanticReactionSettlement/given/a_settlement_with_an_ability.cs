@@ -56,7 +56,7 @@ public class a_settlement_with_an_ability : a_settlement
                             value = $outcome
                         on failed
                           produces Failed
-                            value = $reason
+                            value = $failure.reason
             {{additionalInvocation}}
             {{extra}}
             """);

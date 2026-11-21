@@ -36,5 +36,7 @@ public class and_equal_facts_cause_repeated_invocations : given.a_settlement_wit
     [Fact] void should_distinguish_invocations_by_index() => _first.Select(identity => identity.Index).ShouldEqual([0, 1, 0, 1]);
     [Fact] void should_have_unique_keys() => _first.Select(identity => identity.Key).Distinct().Count().ShouldEqual(4);
     [Fact] void should_reproduce_identities_on_retry() => _retry.AsEnumerable().ShouldEqual(_first);
-    [Fact] void should_reproduce_facts_on_retry() => _retryFacts.AsEnumerable().ShouldEqual(_firstFacts);
+    [Fact] void should_reproduce_facts_on_retry() => _retryFacts.Select(fact => fact with { Values = [], Tags = [] }).ShouldEqual(_firstFacts.Select(fact => fact with { Values = [], Tags = [] }));
+    [Fact] void should_reproduce_values_on_retry() => _retryFacts.SelectMany(fact => fact.Values).ShouldEqual(_firstFacts.SelectMany(fact => fact.Values));
+    [Fact] void should_reproduce_tags_on_retry() => _retryFacts.SelectMany(fact => fact.Tags).ShouldEqual(_firstFacts.SelectMany(fact => fact.Tags));
 }
