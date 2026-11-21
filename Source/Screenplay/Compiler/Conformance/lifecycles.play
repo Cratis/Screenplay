@@ -206,7 +206,7 @@ workflow Collect
     then invokes TagInvoice
     then invokes TagInvoice
     then invokes WriteOff
-    then completes
+    then waits at Final
 
   specification TheRunWaits
     given InvoiceRegistered
@@ -243,7 +243,7 @@ workflow Collect
     then invokes ChargeFee
     then invokes ChargeFee
     then invokes OfferPlan
-    then completes
+    then waits at Final
 
   specification AStartedRunFails
     given InvoiceRegistered
@@ -260,4 +260,4 @@ workflow Collect
     then invokes ChargeFee
     then invokes ChargeFee
     then invokes WriteOff
-    then completes
+    then waits at Final

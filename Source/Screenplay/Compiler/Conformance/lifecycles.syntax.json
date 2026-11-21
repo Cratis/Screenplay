@@ -1903,8 +1903,8 @@
             },
             {
               "kind": "LifecycleExpectationSyntax",
-              "expectation": "Completes",
-              "target": null
+              "expectation": "Waits",
+              "target": "Final"
             }
           ],
           "whenAppended": {
@@ -2107,8 +2107,8 @@
             },
             {
               "kind": "LifecycleExpectationSyntax",
-              "expectation": "Completes",
-              "target": null
+              "expectation": "Waits",
+              "target": "Final"
             }
           ],
           "whenAppended": {
@@ -2208,8 +2208,8 @@
             },
             {
               "kind": "LifecycleExpectationSyntax",
-              "expectation": "Completes",
-              "target": null
+              "expectation": "Waits",
+              "target": "Final"
             }
           ],
           "whenAppended": null,
