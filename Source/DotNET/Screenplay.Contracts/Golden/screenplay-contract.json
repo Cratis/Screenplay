@@ -85367,6 +85367,17 @@
       "title": "A screen declared outside any slice that no slice adopts: it is design-only, and never blocks the rest of the model.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY1165",
+      "name": "InvalidInvocationMapping",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A reaction invocation mapping names an unknown field or traverses a collection as a record.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

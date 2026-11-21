@@ -27,6 +27,7 @@ import { ExtensionContract } from './Syntax/ExtensionContract';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
 import { validateInvocations } from './Parsing/InvocationValidator';
+import { validateInvocationMappings } from './Parsing/InvocationMappingValidator';
 import { validateSystemConfiguration } from './Parsing/SystemConfigurationValidator';
 import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
@@ -105,6 +106,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateConstraintProperties(value, context);
         validateOperations(value, context);
         validateInvocations(value, context);
+        validateInvocationMappings(value, context);
         validateSystemConfiguration(value, context);
         validatePublicEventUsage(value, context);
         validateSpecificationCases(value, context);

@@ -4690,4 +4690,9 @@ public static class DiagnosticCodes
     /// A screen declared outside any slice that no slice adopts: it is design-only, and never blocks the rest of the model.
     /// </summary>
     public const string DesignOnlyScreen = "PLAY1164";
+
+    /// <summary>
+    /// A reaction invocation mapping names an unknown field or traverses a collection as a record.
+    /// </summary>
+    public const string InvalidInvocationMapping = "PLAY1165";
 }

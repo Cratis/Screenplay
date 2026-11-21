@@ -394,6 +394,7 @@ export const diagnosticCodes = {
     unknownProvisionParameter: 'PLAY1162',
     unknownProvisionMapping: 'PLAY1163',
     designOnlyScreen: 'PLAY1164',
+    invalidInvocationMapping: 'PLAY1165',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
