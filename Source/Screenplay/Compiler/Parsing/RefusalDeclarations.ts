@@ -16,12 +16,14 @@ export class RefusalDeclarations {
     readonly concepts;
     private readonly events;
     private readonly knownTypes: Set<string>;
+    private readonly scalarTypes: Set<string>;
 
     constructor(readonly application: ApplicationSyntax) {
         this.slices = new AuthoringProductionResolver(application).slices;
         this.types = uniqueByName(application.types);
         this.concepts = uniqueByName(application.concepts);
         this.knownTypes = new Set([...primitives, ...application.types.map(type => type.name), ...application.concepts.map(concept => concept.name)]);
+        this.scalarTypes = new Set([...primitives, ...application.concepts.filter(concept => !application.types.some(type => type.name === concept.name)).map(concept => concept.name)]);
         this.events = new Map(this.slices.map(({ slice }) => {
             const latest = new Map<string, ReturnType<typeof eventDeclarations>[number]>();
             for (const event of eventDeclarations(slice)) {
@@ -64,10 +66,14 @@ export class RefusalDeclarations {
             if (matches.length !== 1) return null;
             const property = matches[0];
             if (index === parts.length - 1) return property;
-            if (primitives.has(property.type.name) || this.concepts.has(property.type.name) && !this.application.types.some(type => type.name === property.type.name)) return null;
+            if (this.isScalar(property.type.name)) return null;
             properties = this.types.get(property.type.name)?.properties ?? null;
         }
         return null;
+    }
+
+    isScalar(name: string): boolean {
+        return this.scalarTypes.has(name);
     }
 
     compatible(source: TypeRefSyntax, target: TypeRefSyntax): boolean | null {

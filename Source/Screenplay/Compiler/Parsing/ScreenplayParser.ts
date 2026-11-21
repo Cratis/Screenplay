@@ -353,9 +353,10 @@ function addTheme(context: ParserContext, theme: ThemeSyntax, themes: ThemeSynta
 }
 
 function parseRootTrigger(context: ParserContext, line: SourceLine, state: RootState): void {
-    const data = parseTriggerDeclaration(context, line);
+    const untypedValues: string[] = [];
+    const data = parseTriggerDeclaration(context, line, untypedValues);
     const name = /^trigger\s+([A-Za-z_]\w*)$/.exec(line.content)?.[1];
-    if (name !== undefined) state.declaredTriggers.push({ name, data });
+    if (name !== undefined) state.declaredTriggers.push({ name, data, untypedValues });
 }
 
 function parseRootOpaque(context: ParserContext, line: SourceLine, state: RootState): void {

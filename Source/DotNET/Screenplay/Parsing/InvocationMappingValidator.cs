@@ -30,16 +30,37 @@ internal sealed class InvocationMappingValidator(ApplicationSyntax application, 
         var sources = Sources(trigger, scope);
         foreach (var invocation in trigger.Invokes ?? [])
         {
-            var command = invocation.IsAbility ? null : declarations.Resolve(invocation.Command, scope, owner => owner.Commands, command => command.Name)?.Node;
             foreach (var mapping in invocation.Mappings)
             {
-                var target = Resolve(command?.Properties, mapping.Property, mapping.Location, $"Command '{invocation.Command}'");
-                if (mapping.Source is PathExpressionSyntax path && !IsOtherSource(path.Path, target, trigger))
-                {
-                    Resolve(sources, path.Path, mapping.Location, "Trigger");
-                }
+                var target = Target(invocation, mapping, scope);
+                ValidateSource(mapping, target, trigger, sources);
             }
         }
+    }
+
+    void ValidateSource(PropertyMappingSyntax mapping, PropertySyntax? target, ReactionTriggerSyntax trigger, IEnumerable<PropertySyntax>? sources)
+    {
+        if (target is null) return;
+
+        // An imported input type can still have an unknown enum or record shape.
+        if (declarations.Compatible(target.Type, target.Type) is null) return;
+        if (mapping.Source is not PathExpressionSyntax path) return;
+        if (IsOtherSource(path.Path, target, trigger)) return;
+        Resolve(sources, path.Path, mapping.Location, "Trigger");
+    }
+
+    PropertySyntax? Target(InvokesSyntax invocation, PropertyMappingSyntax mapping, DeclarationScope scope)
+    {
+        if (invocation.IsAbility)
+        {
+            var ability = application.Systems.SelectMany(system => system.Abilities.Where(ability => invocation.Command == $"{system.Name}.{ability.Name}")).FirstOrDefault();
+
+            // Ability validation already owns unknown input diagnostics.
+            return declarations.Property(ability?.Inputs, mapping.Property, out _);
+        }
+
+        var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, command => command.Name)?.Node;
+        return Resolve(command?.Properties, mapping.Property, mapping.Location, $"Command '{invocation.Command}'");
     }
 
     IEnumerable<PropertySyntax>? Sources(ReactionTriggerSyntax trigger, DeclarationScope scope)
@@ -61,12 +82,14 @@ internal sealed class InvocationMappingValidator(ApplicationSyntax application, 
         return null;
     }
 
-    bool IsOtherSource(string path, PropertySyntax? target, ReactionTriggerSyntax trigger)
+    bool IsOtherSource(string path, PropertySyntax target, ReactionTriggerSyntax trigger)
     {
-        if (path.StartsWith('$') || path.Equals("now", StringComparison.Ordinal) || path.Equals("today", StringComparison.Ordinal)) return true;
+        if (path.StartsWith('$')) return true;
+        if (path.Equals("now", StringComparison.Ordinal)) return true;
+        if (path.Equals("today", StringComparison.Ordinal)) return true;
         var root = path.Split('.')[0];
         if ((trigger.Reads ?? []).Any(read => (read.Alias ?? read.ReadModel) == root)) return true;
-        return target is not null && IsEnumeration(path, target);
+        return IsEnumeration(path, target);
     }
 
     bool IsEnumeration(string path, PropertySyntax target) => application.Concepts.Any(concept =>

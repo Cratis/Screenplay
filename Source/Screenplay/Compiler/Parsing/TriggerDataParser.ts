@@ -32,24 +32,21 @@ export function parseTriggerData(context: ParserContext, line: SourceLine): void
     context.skipOpaqueBlock(line.indent);
 }
 
-export function parseTriggerDeclaration(context: ParserContext, header: SourceLine): readonly PropertySyntax[] {
+export function parseTriggerDeclaration(context: ParserContext, header: SourceLine, untypedValues: string[] = []): readonly PropertySyntax[] {
     const start = context.triggerData.length;
-    const untyped: PropertySyntax[] = [];
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (firstWord(line.content) === 'description') {
             parseDescription(context, line, null, `Trigger '${header.content}'`);
         } else if (!isFileDirective(line)) {
             parseTriggerData(context, line);
-            untyped.push(...untypedDeclarationValues(line));
+            untypedValues.push(...untypedDeclarationValues(line));
         }
     }
-    return [...context.triggerData.slice(start), ...untyped];
+    return context.triggerData.slice(start);
 }
 
 // Untyped declaration values have a known name but an intentionally unknown shape.
-function untypedDeclarationValues(line: SourceLine): readonly PropertySyntax[] {
-    if (!/^@?[a-z_]\w*$/.test(line.content)) return [];
-    const location = locationOf(line);
-    return [{ kind: 'PropertySyntax', name: line.content.replace(/^@/, ''), type: { kind: 'TypeRefSyntax', name: '', isCollection: false, isOptional: false, location }, isIdentifier: false, location }];
+function untypedDeclarationValues(line: SourceLine): readonly string[] {
+    return /^@?[a-z_]\w*$/.test(line.content) ? [line.content.replace(/^@/, '')] : [];
 }

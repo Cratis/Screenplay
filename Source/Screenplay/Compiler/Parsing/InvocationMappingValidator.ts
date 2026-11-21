@@ -5,12 +5,12 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { dependencySources } from '../Syntax/DependencySources';
-import { ReactionTriggerSyntax } from '../Syntax/Reactions';
+import { InvokesSyntax, ReactionTriggerSyntax } from '../Syntax/Reactions';
+import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { RefusalDeclarations } from './RefusalDeclarations';
 
-const primitives = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 const clocks = new Set(['now', 'today']);
 
 // Occurrence paths are single values, not an implicit iteration over a collection.
@@ -35,14 +35,26 @@ class InvocationMappingValidator {
     private validateTrigger(trigger: ReactionTriggerSyntax, slice: SliceSyntax): void {
         const sources = this.sources(trigger, slice);
         for (const invocation of trigger.invokes ?? []) {
-            const command = invocation.command.includes('.') ? null : this.declarations.resolve(invocation.command, slice, owner => owner.commands)?.node;
             for (const mapping of invocation.mappings ?? []) {
-                const target = this.resolve(command?.properties ?? null, mapping.property, mapping.location, `Command '${invocation.command}'`);
+                const target = this.target(invocation, mapping, slice);
+                if (target === null) continue;
+                // An imported input type can still have an unknown enum or record shape.
+                if (this.declarations.compatible(target.type, target.type) === null) continue;
                 if (mapping.source.kind === 'PathExpressionSyntax' && !this.isOtherSource(mapping.source.path, target, trigger)) {
                     this.resolve(sources, mapping.source.path, mapping.location, 'Trigger');
                 }
             }
         }
+    }
+
+    private target(invocation: InvokesSyntax, mapping: PropertyMappingSyntax, slice: SliceSyntax): PropertySyntax | null {
+        if (invocation.command.includes('.')) {
+            const ability = (this.application.systems ?? []).flatMap(system => system.abilities.filter(ability => invocation.command === `${system.name}.${ability.name}`))[0];
+            // Ability validation already owns unknown input diagnostics.
+            return this.declarations.property(ability?.inputs ?? null, mapping.property);
+        }
+        const command = this.declarations.resolve(invocation.command, slice, owner => owner.commands)?.node;
+        return this.resolve(command?.properties ?? null, mapping.property, mapping.location, `Command '${invocation.command}'`);
     }
 
     private sources(trigger: ReactionTriggerSyntax, slice: SliceSyntax): readonly PropertySyntax[] | null {
@@ -51,7 +63,12 @@ class InvocationMappingValidator {
         const occurrence = this.declarations.event(source.name, slice);
         if (occurrence !== null) return occurrence.properties;
         const declared = this.application.declaredTriggers?.filter(candidate => candidate.name === source.name) ?? [];
-        return declared.length === 1 ? declared[0].data : null;
+        if (declared.length !== 1) return null;
+        return [...declared[0].data, ...(declared[0].untypedValues ?? []).map(name => this.untypedSource(name, source.location))];
+    }
+
+    private untypedSource(name: string, location: SourceLocation): PropertySyntax {
+        return { kind: 'PropertySyntax', name, type: { kind: 'TypeRefSyntax', name: '', isCollection: false, isOptional: false, location }, isIdentifier: false, location };
     }
 
     private isOtherSource(path: string, target: PropertySyntax | null, trigger: ReactionTriggerSyntax): boolean {
@@ -94,6 +111,6 @@ class InvocationMappingValidator {
     }
 
     private hasShape(name: string): boolean {
-        return primitives.has(name) || this.declarations.concepts.has(name) || this.declarations.types.has(name);
+        return this.declarations.isScalar(name) || this.declarations.types.has(name);
     }
 }
