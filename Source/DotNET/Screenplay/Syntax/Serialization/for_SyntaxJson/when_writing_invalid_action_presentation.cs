@@ -14,7 +14,7 @@ public class when_writing_invalid_action_presentation : Specification
 
     void Because()
     {
-        var parsed = ScreenplayCompiler.Parse("screen Broken\n  action Retry for item\n    presentation placement \"\"");
+        var parsed = new ScreenplayCompiler().Parse("screen Broken\n  action Retry for item\n    presentation placement \"\"");
         _diagnostics = parsed.Diagnostics;
         _exception = Catch.Exception(() => _wire = SyntaxJson.Serialize(parsed.Value!));
     }
