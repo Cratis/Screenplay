@@ -28,5 +28,5 @@ public class and_a_table_follows_a_two_segment_component : given.a_compiler
         _triggers = [.. result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidInteractionTrigger)];
     }
 
-    [Fact] void should_reject_the_trigger_on_the_table() => _triggers.Length.ShouldEqual(1);
+    [Fact] void should_reject_the_trigger_on_the_table() => _triggers.Select(diagnostic => diagnostic.Location.Line).ShouldContainOnly(9);
 }

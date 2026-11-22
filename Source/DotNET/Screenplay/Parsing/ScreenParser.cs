@@ -335,6 +335,7 @@ internal static partial class ScreenParser
     static (string? Blueprint, string Name, string? Version) ParseTemplateName(ParserContext context, SourceLine line)
     {
         var name = line.Content["template".Length..].Trim();
+
         if (!TemplateReferenceText.StartsBlueprint(name))
         {
             return (null, name, null);
