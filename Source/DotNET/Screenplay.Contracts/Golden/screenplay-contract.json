@@ -85378,6 +85378,31 @@
       "title": "A reaction invocation mapping names an unknown field or traverses a collection as a record.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY1167",
+      "name": "AgentToolCountExceedsRecommendation",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An agents block exposes more than the recommended number of distinct operations.",
+      "reserved": false,
+      "retired": false,
+      "arguments": [
+        {
+          "name": "count",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The number of distinct resolved exposed operations, in decimal."
+        },
+        {
+          "name": "recommendedMaximum",
+          "kind": "text",
+          "optional": false,
+          "meaning": "The recommended maximum number of exposed operations, in decimal."
+        }
+      ]
     }
   ],
   "mcpTools": [
