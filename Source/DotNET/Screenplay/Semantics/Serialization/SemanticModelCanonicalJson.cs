@@ -13,7 +13,7 @@ public static partial class SemanticModelCanonicalJson
     public const string Schema = "cratis.screenplay.esm";
     internal const uint SchemaVersion = 1;
 
-    static readonly FrozenDictionary<SemanticValidationRuleKind, string> ValidationKindNames = new Dictionary<SemanticValidationRuleKind, string>
+    static readonly FrozenDictionary<SemanticValidationRuleKind, string> _validationKindNames = new Dictionary<SemanticValidationRuleKind, string>
     {
         [SemanticValidationRuleKind.NotEmpty] = "notEmpty",
         [SemanticValidationRuleKind.Maximum] = "maximum",
@@ -947,7 +947,7 @@ public static partial class SemanticModelCanonicalJson
     }
 
     static string ValidationKind(SemanticValidationRuleKind value) =>
-        ValidationKindNames.TryGetValue(value, out var name) ? name : throw Unknown(nameof(SemanticValidationRuleKind), value);
+        _validationKindNames.TryGetValue(value, out var name) ? name : throw Unknown(nameof(SemanticValidationRuleKind), value);
 
     static string ContextValue(SemanticEventContextValueKind kind) => kind switch
     {
