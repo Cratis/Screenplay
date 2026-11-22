@@ -279,9 +279,6 @@ public static class SemanticLifecycleRunner
 
         public bool Started { get; set; } = true;
 
-        static bool IsFailureOutlet(string? outlet) =>
-            string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal);
-
         public string Describe() => !Started ? "no run started" : End switch
         {
             RunEnd.Completed => "the run completed",
@@ -298,6 +295,9 @@ public static class SemanticLifecycleRunner
             if (_pendingJoins.Count > 0) Suspend(_pendingJoins[0]);
             else End = RunEnd.Completed;
         }
+
+        static bool IsFailureOutlet(string? outlet) =>
+            string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal);
 
         // Returns true while the run is still going.
         bool Step(string name)
