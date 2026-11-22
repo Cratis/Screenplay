@@ -8245,13 +8245,6 @@
                       "subject": "Item"
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "RegisterInvoice",
-                      "label": null,
-                      "navigate": null,
-                      "subject": "Screen"
-                    },
-                    {
                       "kind": "ScreenToolbarSyntax",
                       "buttons": [
                         {
