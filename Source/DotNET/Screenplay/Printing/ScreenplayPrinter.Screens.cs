@@ -12,8 +12,6 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
-    static bool HasScreenActionBody(ScreenActionSyntax action) => action.Label is not null || action.Navigate is not null || action.Inputs.Any();
-
     void WriteScreen(ScreenplayWriter writer, ScreenSyntax screen)
     {
         using var anchor = writer.Anchor(screen);
@@ -222,35 +220,6 @@ public partial class ScreenplayPrinter
         }
 
         return head;
-    }
-
-    void WriteScreenAction(ScreenplayWriter writer, ScreenActionSyntax action)
-    {
-        using var anchor = writer.Anchor(action);
-        writer.Line($"action {action.Command}{WriteActionSubject(action.Subject)}");
-        if (!HasScreenActionBody(action))
-        {
-            return;
-        }
-
-        using (writer.Indent())
-        {
-            if (action.Label is not null)
-            {
-                writer.DirectiveLine($"label {ScreenplaySyntaxText.LocalizableString(action.Label)}", action, "label");
-            }
-
-            foreach (var input in action.Inputs) writer.Line($"with {input.Name} from {input.Binding}", input);
-
-            if (action.Navigate is not null)
-            {
-                writer.Line(WriteScreenNavigate(action.Navigate), action.Navigate);
-                using (writer.Indent())
-                {
-                    WriteScreenNavigateBody(writer, action.Navigate);
-                }
-            }
-        }
     }
 
     void WriteScreenTemplateReference(ScreenplayWriter writer, ScreenTemplateReferenceSyntax template)

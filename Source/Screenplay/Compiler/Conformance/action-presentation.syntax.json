@@ -1,0 +1,272 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Items",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Retry",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "id",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "List",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "Rows",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Item"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Item",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "id",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Rows",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Item"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": null,
+                        "parameters": [],
+                        "route": null,
+                        "screen": "Local"
+                      },
+                      "presentation": [
+                        {
+                          "kind": "PresentationValueSyntax",
+                          "name": "placement",
+                          "value": "row-menu"
+                        }
+                      ],
+                      "subject": "Item"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Retry",
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Screen"
+                    },
+                    {
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenActionSyntax",
+                          "command": "Retry",
+                          "label": null,
+                          "navigate": null,
+                          "presentation": [
+                            {
+                              "kind": "PresentationValueSyntax",
+                              "name": "placement",
+                              "value": "future-menu"
+                            }
+                          ],
+                          "subject": "Item"
+                        }
+                      ],
+                      "name": "more"
+                    }
+                  ],
+                  "name": "Local"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView",
+              "usedScreens": [
+                {
+                  "kind": "UsesScreenSyntax",
+                  "provisions": [
+                    {
+                      "kind": "ScreenProvisionSyntax",
+                      "by": null,
+                      "mappings": [],
+                      "need": "ItemRow",
+                      "query": "Rows"
+                    }
+                  ],
+                  "screen": "Shared"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Work"
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "screens": [
+    {
+      "kind": "ScreenSyntax",
+      "directives": [
+        {
+          "kind": "ScreenNeedSyntax",
+          "alias": null,
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": true,
+            "isOptional": false,
+            "name": "ItemRow"
+          }
+        },
+        {
+          "kind": "ScreenSectionSyntax",
+          "directives": [
+            {
+              "kind": "ScreenActionSyntax",
+              "command": "Retry",
+              "inputs": [
+                {
+                  "kind": "InteractionArgumentSyntax",
+                  "binding": "item.id",
+                  "name": "id"
+                }
+              ],
+              "label": "Retry",
+              "navigate": null,
+              "presentation": [
+                {
+                  "kind": "PresentationValueSyntax",
+                  "name": "placement",
+                  "value": "row-menu"
+                },
+                {
+                  "kind": "PresentationValueSyntax",
+                  "name": "extension",
+                  "value": "future"
+                }
+              ],
+              "subject": "Item"
+            }
+          ],
+          "name": "operations"
+        }
+      ],
+      "name": "Shared"
+    }
+  ],
+  "seeds": [],
+  "shapes": [
+    {
+      "kind": "ShapeSyntax",
+      "description": null,
+      "name": "ItemRow",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "id",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "Uuid"
+          }
+        }
+      ]
+    }
+  ],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

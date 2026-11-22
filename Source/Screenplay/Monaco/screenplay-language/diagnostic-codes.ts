@@ -205,6 +205,7 @@ export const diagnosticCodes = {
     changedActionSubject: 'PLAY0819',
     ambiguousActionInputBinding: 'PLAY0820',
     unsupportedActionSubjectContext: 'PLAY0821',
+    invalidActionPresentation: 'PLAY1166',
     unreachableActionAlternative: 'PLAY0347',
     unknownActionArgumentProperty: 'PLAY0348',
     invalidRefusalBranch: 'PLAY0538',

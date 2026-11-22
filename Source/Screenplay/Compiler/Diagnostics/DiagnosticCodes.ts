@@ -6,6 +6,7 @@
 export const DiagnosticCodes = {
     InvalidSemanticBinding: 'PLAY0273',
     InvalidActionSubjectClause: 'PLAY0817',
+    InvalidActionPresentation: 'PLAY1166',
     InferredActionSubject: 'PLAY0818',
     ChangedActionSubject: 'PLAY0819',
     AmbiguousActionInputBinding: 'PLAY0820',

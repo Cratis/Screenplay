@@ -36,7 +36,7 @@ import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
 import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvocationBranchSyntax, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
-import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
+import { InteractionArgumentSyntax, ScreenActionSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
     SpecificationExampleSyntax, SpecificationAbilityAnswerSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax, SpecificationNoTagsSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationInvocationSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
@@ -985,6 +985,12 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.position) this.visitNode(syntax.position);
     }
 
+    visitScreenAction(syntax: ScreenActionSyntax): void {
+        syntax.inputs?.forEach(input => this.visitInteractionArgument(input));
+        syntax.presentation?.forEach(value => this.visitNode(value));
+        if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
+    }
+
     visitScreenDirective(syntax: ScreenDirectiveSyntax): void {
         if (syntax.kind === 'ScreenGuardedActionSyntax') {
             this.visitScreenGuardedAction(syntax);
@@ -997,8 +1003,7 @@ export abstract class ScreenplaySyntaxWalker {
                 this.visitTypeRef(syntax.type);
                 break;
             case 'ScreenActionSyntax':
-                syntax.inputs?.forEach(input => this.visitInteractionArgument(input));
-                if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
+                this.visitScreenAction(syntax);
                 break;
             case 'ScreenNavigateSyntax':
                 syntax.parameters.forEach(parameter => {

@@ -2099,7 +2099,12 @@ ActionOtherwise   = "otherwise", "hidden", NL
 
 ActionOption   = NavigateDecl
                | InteractionArgument
-               | "label", LocalizableString, NL ;
+               | "label", LocalizableString, NL
+               | "presentation", Ident, LocalizableString, NL ;
+(* Action presentation requires an explicit "for item" on a plain command action.
+   Keys are unique and placement is nonempty. "row-menu" requests advisory grouping;
+   unknown keys and nonempty placement values are retained. No hint means the flat
+   action bar, regardless of action count. Guarded actions do not accept it. *)
 
 NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL,
                  [ INDENT, { NavigateOption }, DEDENT ] ;

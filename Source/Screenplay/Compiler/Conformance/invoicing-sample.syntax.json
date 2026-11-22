@@ -8203,6 +8203,55 @@
                       "kind": "ScreenBehaviorSyntax"
                     },
                     {
+                      "kind": "ScreenActionSyntax",
+                      "command": "SendInvoiceReminder",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.invoiceId",
+                          "name": "invoiceId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "presentation": [
+                        {
+                          "kind": "PresentationValueSyntax",
+                          "name": "placement",
+                          "value": "row-menu"
+                        }
+                      ],
+                      "subject": "Item"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "CancelInvoice",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.invoiceId",
+                          "name": "invoiceId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "presentation": [
+                        {
+                          "kind": "PresentationValueSyntax",
+                          "name": "placement",
+                          "value": "row-menu"
+                        }
+                      ],
+                      "subject": "Item"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "RegisterInvoice",
+                      "label": null,
+                      "navigate": null,
+                      "subject": "Screen"
+                    },
+                    {
                       "kind": "ScreenToolbarSyntax",
                       "buttons": [
                         {
@@ -8212,13 +8261,6 @@
                           "id": "newInvoice",
                           "slice": "Invoicing.InvoiceManagement.RegisterInvoice",
                           "title": "$strings.invoices.actions.newInvoice"
-                        },
-                        {
-                          "kind": "ToolbarButtonSyntax",
-                          "emphasis": "Quiet",
-                          "id": "cancelInvoice",
-                          "slice": "CancelInvoice",
-                          "title": "$strings.invoices.actions.cancel"
                         }
                       ],
                       "items": [

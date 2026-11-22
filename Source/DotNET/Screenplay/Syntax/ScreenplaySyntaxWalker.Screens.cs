@@ -145,6 +145,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var input in syntax.Inputs) VisitInteractionArgument(input);
+        foreach (var presentation in syntax.Presentation) VisitNode(presentation);
 
         if (syntax.Navigate is not null)
         {

@@ -64,6 +64,20 @@ Choose whether an action applies to the selected data item (`for item`) or to th
 
 Write the subject explicitly in new documents so the reader does not have to infer whether selection matters. [Action subjects](action-subjects.md) explains how the compiler supplies omitted subjects and binds command inputs.
 
+## Advisory row-menu placement
+
+A plain command action with an explicit `for item` may request row-menu grouping:
+
+```screenplay
+action SendInvoiceReminder for item
+  with invoiceId from item.invoiceId
+  presentation placement "row-menu"
+```
+
+The hint changes presentation only. It does not change the action's subject, selection requirements, inputs, authorization, validation, execution or order. Omit it to keep the flat action bar; there is no action-count threshold. Keep at least one action unhinted when only some belong in a menu.
+
+Each presentation key occurs once and `placement` must be nonempty. Unknown keys and unknown nonempty placement values are retained so consumers can preserve them or fall back. Hints are not accepted on screen-scoped, implicit-subject or guarded actions. Syntax/AST JSON preserves authored values; [the UI contract](ui-contract.md) exposes them only in its optional `scene.actions` presentation layer. The neutral action contract and executable model are unchanged. A renderer must implement the hint before it changes the UI; declaring it alone does not enable row menus in Stage.
+
 ## One action, several commands
 
 Use a label-headed **guarded action** when one user decision can run different commands as the displayed item's state changes. The label is a quoted string or a `$strings.<key>` reference; it replaces the plain action's `label` child.

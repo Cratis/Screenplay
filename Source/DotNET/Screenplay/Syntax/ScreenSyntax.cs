@@ -108,6 +108,11 @@ public record ScreenActionSyntax(string Command, string? Label, ScreenNavigateSy
     /// Gets the explicitly authored command input bindings.
     /// </summary>
     public IEnumerable<InteractionArgumentSyntax> Inputs { get; init; } = [];
+
+    /// <summary>
+    /// Gets advisory presentation values; they do not change the action's subject or execution.
+    /// </summary>
+    public IEnumerable<PresentationValueSyntax> Presentation { get; init; } = [];
 }
 
 /// <summary>

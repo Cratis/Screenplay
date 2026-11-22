@@ -201,7 +201,7 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
                 ? [...items.validateItems, { label: 'checksum', insertText: 'checksum ${1|luhn,mod11,mod97|}', documentation: 'Exact trailing check digits over preceding ASCII digits. String concepts only; also validates inputs and stored values.' }]
                 : items.validateItems;
         case 'action':
-            return items.actionItems;
+            return items.plainActionItemsFor(header);
         case 'table':
         case 'summary':
             return items.tableItems;

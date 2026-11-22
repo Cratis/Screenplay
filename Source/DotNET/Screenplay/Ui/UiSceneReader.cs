@@ -16,6 +16,15 @@ sealed class UiSceneReader
     readonly List<UiSceneComponent> _components = [];
     readonly List<UiSceneToolbar> _toolbars = [];
     readonly List<UiSceneOutlet> _outlets = [];
+    readonly List<UiSceneAction> _actions = [];
+
+    internal void Action(ScreenActionSyntax action, int actionIndex)
+    {
+        if (!action.Presentation.Any()) return;
+        var presentation = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (var value in action.Presentation) presentation[value.Name] = value.Value;
+        _actions.Add(new(actionIndex, action.Command, presentation));
+    }
 
     /// <summary>
     /// Adds a template the screen uses.
@@ -87,9 +96,9 @@ sealed class UiSceneReader
     /// Builds the Scene layer, or null when the screen uses no Scene vocabulary.
     /// </summary>
     /// <returns>The layer.</returns>
-    internal UiScene? Build() => _templates.Count + _components.Count + _toolbars.Count + _outlets.Count == 0
+    internal UiScene? Build() => _templates.Count + _components.Count + _toolbars.Count + _outlets.Count + _actions.Count == 0
         ? null
-        : new(_templates, _components, _toolbars, _outlets);
+        : new(_templates, _components, _toolbars, _outlets) { Actions = _actions.Count == 0 ? null : _actions };
 
     static UiSceneButton Button(ToolbarButtonSyntax button) => new(button.Id, button.Title)
     {

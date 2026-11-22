@@ -7,6 +7,11 @@ internal static class ActionSubjectInvariants
 {
     internal static void Validate(SyntaxNode node)
     {
+        if (node is ScreenActionSyntax action && ScreenActionPresentation.InvalidReason(action) is { } reason)
+        {
+            throw new InvalidSyntaxJson(reason);
+        }
+
         if (node is ToolbarItemSyntax { Subject: not null, Kind: not ToolbarItemKind.Action })
         {
             throw new InvalidSyntaxJson("Only an action toolbar item can have a subject.");

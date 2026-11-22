@@ -136,7 +136,7 @@ const omittedWhenNull: Record<string, readonly string[]> = {
 
 // Members omitted from the wire form when empty arrays, by node kind.
 const omittedWhenEmpty: Record<string, readonly string[]> = {
-    ScreenActionSyntax: ['inputs'],
+    ScreenActionSyntax: ['inputs', 'presentation'],
     ModuleSyntax: ['dependsOn'],
     FeatureSyntax: ['dependsOn'],
     SpecificationSyntax: ['parameters', 'cases', 'givenGraphs', 'thenGraphs', 'givenAbilityAnswers'],
