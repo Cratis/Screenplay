@@ -79,7 +79,7 @@ Authoring metadata follows this rule: `SpecificationSyntax.Description` and the 
 
 `ScreenActionSyntax.Presentation` is an init-only `IEnumerable<PresentationValueSyntax>`, defaulting to empty; the positional constructor and deconstruction are unchanged. TypeScript exposes optional `presentation` with `PresentationValueSyntax` entries. Each entry has `name`, `value` and its source location. Preserve authored order and unknown keys/values during AST rewrites.
 
-AST JSON omits an empty collection and accepts older actions without the member as empty. Explicit null, wrong shapes, duplicate keys, empty keys and empty/whitespace `placement` values are rejected. Nonempty presentation requires an explicit item subject. The UI contract exposes a key-sorted string dictionary in `scene.actions`; `UiAction` and the ESM are unchanged, and no executable schema version is selected by the hint.
+AST JSON omits an empty collection and accepts older actions without the member as empty. Readers reject explicit null, wrong shapes, duplicate keys, empty keys and empty/whitespace `placement` values. Writers preserve erroneous presentation on partially typed documents so authoring tools can describe them alongside diagnostics; this does not make those documents valid reader input. Nonempty presentation requires an explicit item subject. The UI contract exposes a key-sorted string dictionary in `scene.actions`; `UiAction` and the ESM are unchanged, and no executable schema version is selected by the hint.
 
 ## Atomic reaction production mode
 

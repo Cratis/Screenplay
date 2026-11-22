@@ -17,6 +17,8 @@ const actionOf = (syntax: ApplicationSyntax) => syntax.screens![0].directives[0]
 const action = actionOf(application);
 const wire = () => JSON.parse(JSON.stringify(toSyntaxJson(application))) as { screens: { directives: { presentation?: unknown }[] }[] };
 const value = (name: unknown, value: unknown) => ({ kind: 'PresentationValueSyntax', name, value });
+const withAction = (replacement: ScreenActionSyntax): ApplicationSyntax => ({ ...application, screens: [{ ...application.screens![0], directives: [replacement] }] });
+const duplicateAction: ScreenActionSyntax = { ...action, presentation: [action.presentation![0], action.presentation![0]] };
 
 describe('when preserving action presentation', () => {
     it('should round trip values through AST JSON', () => expect(toSyntaxJson(actionOf(decodeExactSyntaxJson(JSON.stringify(toSyntaxJson(application))) as ApplicationSyntax))).toEqual(toSyntaxJson(action)));
@@ -39,7 +41,19 @@ describe('when preserving action presentation', () => {
         });
     }
     for (const subject of [null, 'Screen']) {
-        it(`should reject typed presentation without item scope: ${subject}`, () => expect(() => toSyntaxJson({ ...action, subject } as ScreenActionSyntax)).toThrow(InvalidSyntaxJson));
+        it(`should serialize but reject reading typed presentation without item scope: ${subject}`, () => {
+            const serialized = toSyntaxJson(withAction({ ...action, subject } as ScreenActionSyntax));
+            expect(() => decodeExactSyntaxJson(JSON.stringify(serialized))).toThrow(InvalidSyntaxJson);
+        });
     }
-    it('should reject duplicate typed keys', () => expect(() => toSyntaxJson({ ...action, presentation: [action.presentation![0], action.presentation![0]] } as ScreenActionSyntax)).toThrow(InvalidSyntaxJson));
+    it('should serialize duplicate typed keys without throwing', () => expect(() => toSyntaxJson(duplicateAction)).not.toThrow());
+    it('should reject duplicate typed keys when reading', () => {
+        const serialized = toSyntaxJson(withAction(duplicateAction));
+        expect(() => decodeExactSyntaxJson(JSON.stringify(serialized))).toThrow(InvalidSyntaxJson);
+    });
+    it('should serialize an erroneous partial document alongside its diagnostic', () => {
+        const partial = parse('numbers exact\nscreen Broken\n  action Retry for screen\n    presentation placement "row-menu"');
+        expect(partial.diagnostics.some(diagnostic => diagnostic.code === 'PLAY1166')).toBe(true);
+        expect(() => toSyntaxJson(partial.value)).not.toThrow();
+    });
 });

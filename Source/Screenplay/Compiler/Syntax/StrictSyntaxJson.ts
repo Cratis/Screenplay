@@ -4,6 +4,7 @@
 import { sourceLocation } from '../Diagnostics/SourceLocation';
 import { isExactNumberToken, parseExactNumber } from './ExactNumber';
 import { validateSyntaxInvariants } from './SyntaxInvariants';
+import { validateActionPresentation } from './ScreenActionPresentation';
 import { validateSyntaxMembers } from './SyntaxMemberContracts';
 import { syntaxDefinitions } from './SyntaxDefinitions';
 import { SyntaxNode } from './SyntaxNode';
@@ -103,6 +104,7 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
             (result as unknown as { location: ReturnType<typeof sourceLocation> }).location = sourceLocation(1, 1);
             validateSyntaxMembers(result as unknown as SyntaxNode);
             validateSyntaxInvariants(result as unknown as SyntaxNode);
+            validateActionPresentation(result as unknown as SyntaxNode);
         }
         return result;
     }

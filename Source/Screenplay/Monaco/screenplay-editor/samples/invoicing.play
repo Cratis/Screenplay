@@ -2201,8 +2201,6 @@ module Invoicing
         action CancelInvoice for item
           with invoiceId from item.invoiceId
           presentation placement "row-menu"
-        // No presentation hint: the renderer keeps the default flat action bar.
-        action RegisterInvoice for screen
         toolbar invoiceActions
           item register navigate to RegisterInvoiceScreen
             label "Register invoice"

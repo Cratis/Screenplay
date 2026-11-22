@@ -7,11 +7,12 @@ import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 
 const invalidValueMessage = 'Action presentation requires a key and string value.';
 
-export function validateActionPresentation(node: SyntaxNode, validateCollection: (value: unknown, kind: string, message: string) => void): void {
+// The reader calls this after restoring the schema-validated shape. Writers preserve erroneous
+// parser output so authoring tools can describe a partial document alongside its diagnostics.
+export function validateActionPresentation(node: SyntaxNode): void {
     if (node.kind !== 'ScreenActionSyntax') return;
     const action = node as ScreenActionSyntax;
     if (action.presentation === undefined) return;
-    validateCollection(action.presentation, 'PresentationValueSyntax', 'Action presentation must be a collection of values.');
     const reason = invalidActionPresentation(action.presentation, action.subject);
     if (reason !== undefined) throw new InvalidSyntaxJson(reason);
 }

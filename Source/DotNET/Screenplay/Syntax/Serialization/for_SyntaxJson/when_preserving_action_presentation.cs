@@ -59,5 +59,8 @@ public class when_preserving_action_presentation : Specification
     }
 
     [Fact]
-    void should_reject_duplicate_typed_values() => Catch.Exception(() => SyntaxJson.Serialize(_action with { Presentation = [.. _action.Presentation, _action.Presentation.First()] })).ShouldBeOfExactType<InvalidSyntaxJson>();
+    void should_reject_duplicate_typed_values() => Catch.Exception(() => SyntaxJson.Deserialize(SyntaxJson.Serialize(_action with { Presentation = [.. _action.Presentation, _action.Presentation.First()] }))).ShouldBeOfExactType<InvalidSyntaxJson>();
+
+    [Fact]
+    void should_serialize_duplicate_typed_values_without_throwing() => Catch.Exception(() => SyntaxJson.Serialize(_action with { Presentation = [.. _action.Presentation, _action.Presentation.First()] })).ShouldBeNull();
 }

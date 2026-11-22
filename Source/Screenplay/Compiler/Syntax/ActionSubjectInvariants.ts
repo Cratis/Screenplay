@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
-import { validateActionPresentation } from './ScreenActionPresentation';
 import { ScreenActionSyntax, ScreenGuardedActionSyntax, ToolbarItemSyntax } from './Screens';
 import { SyntaxNode } from './SyntaxNode';
 
@@ -12,7 +11,6 @@ export function validateActionSubject(node: SyntaxNode, validateCollection: (val
     if (!isValidActionSubject(action.subject)) throw new InvalidSyntaxJson('An action subject must be Item or Screen.');
     if (hasInapplicableToolbarSubject(action)) throw new InvalidSyntaxJson('Only an action toolbar item can have a subject.');
     if (action.kind === 'ScreenActionSyntax' && action.inputs !== undefined) validateCollection(action.inputs, 'InteractionArgumentSyntax', 'Action inputs must be a collection of arguments.');
-    validateActionPresentation(action, validateCollection);
 }
 
 function isValidActionSubject(subject: unknown): boolean {
