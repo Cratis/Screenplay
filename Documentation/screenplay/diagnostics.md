@@ -273,6 +273,8 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0800` | `subject` | declaration | no | The command whose handler requires a constrained implementation attachment. | — |
 | `PLAY0810` | `query` | text | no | The performer query that declares the argument. | — |
 | `PLAY0810` | `argument` | text | no | The context-sourced argument that cannot be supplied to the performer. | — |
+| `PLAY1167` | `count` | text | no | The number of distinct resolved exposed operations, in decimal. | — |
+| `PLAY1167` | `recommendedMaximum` | text | no | The recommended maximum number of exposed operations, in decimal. | — |
 
 ## The catalogue
 
