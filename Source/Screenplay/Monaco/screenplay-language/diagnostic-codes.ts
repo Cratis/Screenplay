@@ -29,6 +29,7 @@ export const diagnosticCodes = {
     ungatedAgentOperation: 'PLAY0980',
     agentGlobalQueryRefused: 'PLAY0981',
     unsupportedAgentQueryKind: 'PLAY0982',
+    agentToolCountExceedsRecommendation: 'PLAY1167',
     duplicateAbility: 'PLAY0983',
     invalidAbilityEffectClass: 'PLAY0984',
     reservedAbilityOutcomeName: 'PLAY0985',

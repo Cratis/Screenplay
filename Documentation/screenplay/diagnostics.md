@@ -273,6 +273,8 @@ For `PLAY0268`, `subject` is attached by the binder after it finishes, from sour
 | `PLAY0800` | `subject` | declaration | no | The command whose handler requires a constrained implementation attachment. | — |
 | `PLAY0810` | `query` | text | no | The performer query that declares the argument. | — |
 | `PLAY0810` | `argument` | text | no | The context-sourced argument that cannot be supplied to the performer. | — |
+| `PLAY1167` | `count` | text | no | The number of distinct resolved exposed operations, in decimal. | — |
+| `PLAY1167` | `recommendedMaximum` | text | no | The recommended maximum number of exposed operations, in decimal. | — |
 
 ## The catalogue
 
@@ -1795,6 +1797,7 @@ An `agents` block is an explicit operation allowlist, not an authorization grant
 | `PLAY0980` | Warning | An exposed operation has no effective module, feature or operation authorization gate. Any token holder satisfying the scope can call it. Add an appropriate `authorize` clause. |
 | `PLAY0981` | Error | An exposed query is scoped to `global`. Global queries cannot be exposed to agents. |
 | `PLAY0982` | Error | An exposed query is performed or graph-backed and has no portable operation identity yet. Both compilers refuse it rather than returning a partial capability surface. |
+| `PLAY1167` | Warning | An otherwise valid agents block exposes more than 20 distinct resolved queries and commands. Expose at most 20 focused operations to keep agent tool selection effective. The warning is attached to the block after imported references are resolved; it does not change compilation success, authorization or exported capabilities. Named text arguments `count` and `recommendedMaximum` give the decimal counts. |
 
 ## Ability diagnostics
 

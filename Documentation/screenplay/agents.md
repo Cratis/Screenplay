@@ -24,6 +24,8 @@ Each entry requires one nonempty literal description and one scope. A query may 
 
 Only `tokens personal` is supported. OAuth tokens and approval directives are rejected rather than silently ignored. An empty block with `tokens personal` is valid but warns that it exposes nothing. Unlisted operations remain unexposed; the compiler reports their aggregate count without changing the model's authorization.
 
+Exposing more than 20 distinct operations produces Warning `PLAY1167` on the `agents` block. Keep the allowlist focused to make agent tool selection effective. Both queries and commands count, including operations resolved from imported files; declarations left unexposed do not count. The recommendation is not a limit: the warning does not fail compilation, remove capabilities or change exported executable-model or manifest bytes. Invalid exposure entries keep their existing errors and suppress this advice until corrected.
+
 An operation with no effective authorization produces Warning `PLAY0980`: any token holder can call it. Add an appropriate `authorize` gate to protect it; adding an allowlist entry is not a substitute for that gate.
 
 ## Query limitations

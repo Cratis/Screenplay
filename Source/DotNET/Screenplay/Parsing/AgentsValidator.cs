@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
@@ -9,6 +10,8 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>Validates explicit agent exposure against the composed application's existing operations.</summary>
 internal static class AgentsValidator
 {
+    const int RecommendedMaximum = 20;
+
     static readonly DeclarationScope _root = new([]);
 
     public static void Validate(ApplicationSyntax application, ParserContext context, bool deferImportedReferences)
@@ -25,7 +28,22 @@ internal static class AgentsValidator
         }
 
         if (deferred || context.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) return;
+        ReportExposureCount(agents, exposed.Count, context);
         ReportUnexposed(agents, targets, exposed, context);
+    }
+
+    static void ReportExposureCount(AgentsSyntax agents, int count, ParserContext context)
+    {
+        if (count > RecommendedMaximum)
+        {
+            context.Warning(
+                DiagnosticCodes.AgentToolCountExceedsRecommendation,
+                $"The agents block exposes {count} operations; expose at most {RecommendedMaximum} focused operations to keep agent tool selection effective",
+                agents.Location,
+                DiagnosticArguments.Empty
+                    .With("count", DiagnosticArgument.Text(count.ToString(CultureInfo.InvariantCulture)))
+                    .With("recommendedMaximum", DiagnosticArgument.Text(RecommendedMaximum.ToString(CultureInfo.InvariantCulture))));
+        }
     }
 
     static void ReportUnexposed(AgentsSyntax agents, IReadOnlyList<AgentOperationCatalog.Target> targets, HashSet<(AgentOperationKind Kind, string Name)> exposed, ParserContext context)

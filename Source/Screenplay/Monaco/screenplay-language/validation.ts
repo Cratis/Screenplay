@@ -156,7 +156,7 @@ function policyNames(expression: string): string[] {
 }
 
 const individuallyForwardedCodes = new Set<string>([DiagnosticCodes.ReducerIdentityMismatch, DiagnosticCodes.InvalidSpecificationExampleBody, DiagnosticCodes.UnknownRuleImplementationDirective, DiagnosticCodes.InvalidValidationRule, DiagnosticCodes.RepeatedDeclarationAcrossFiles]);
-const forwardedCodePattern = /^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY062[1-9]$|^PLAY063[0-9]$|^PLAY064[0-9]$|^PLAY065[0-2]$|^PLAY065[4-6]$|^PLAY066[0-6]$|^PLAY072[0-2]$|^PLAY089[0-9]$|^PLAY090[0-9]$|^PLAY091[0-9]$|^PLAY092[0-9]$|^PLAY093[0-9]$|^PLAY095[013-5]$|^PLAY096[4-9]$|^PLAY097[0-9]$|^PLAY098[0-2]$|^PLAY1142$|^PLAY074[14]$/;
+const forwardedCodePattern = /^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY062[1-9]$|^PLAY063[0-9]$|^PLAY064[0-9]$|^PLAY065[0-2]$|^PLAY065[4-6]$|^PLAY066[0-6]$|^PLAY072[0-2]$|^PLAY089[0-9]$|^PLAY090[0-9]$|^PLAY091[0-9]$|^PLAY092[0-9]$|^PLAY093[0-9]$|^PLAY095[013-5]$|^PLAY096[4-9]$|^PLAY097[0-9]$|^PLAY098[0-2]$|^PLAY1142$|^PLAY1167$|^PLAY074[14]$/;
 
 function isMemberTypeDiagnostic(diagnostic: AnalysisDiagnostic): boolean {
     return diagnostic.code === DiagnosticCodes.InvalidSemanticBinding && diagnostic.message.startsWith("Read model '") && diagnostic.message.includes("' references unsupported type '");

@@ -728,4 +728,5 @@ export const DiagnosticCodes = {
     UnknownProvisionMapping: 'PLAY1163',
     DesignOnlyScreen: 'PLAY1164',
     InvalidInvocationMapping: 'PLAY1165',
+    AgentToolCountExceedsRecommendation: 'PLAY1167',
 } as const;

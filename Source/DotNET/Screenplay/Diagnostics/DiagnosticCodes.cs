@@ -4698,4 +4698,10 @@ public static class DiagnosticCodes
     /// A reaction invocation mapping names an unknown field or traverses a collection as a record.
     /// </summary>
     public const string InvalidInvocationMapping = "PLAY1165";
+
+    /// <summary>
+    /// An agents block exposes more than the recommended number of distinct operations.
+    /// </summary>
+    [DiagnosticArgumentDefinitions("count:text;The number of distinct resolved exposed operations, in decimal.", "recommendedMaximum:text;The recommended maximum number of exposed operations, in decimal.")]
+    public const string AgentToolCountExceedsRecommendation = "PLAY1167";
 }
