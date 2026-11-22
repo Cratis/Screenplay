@@ -4,7 +4,8 @@
 import { diagnosticText } from '../Diagnostics/DiagnosticArgument';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import type { AgentOperationKind, AgentOperationSyntax, AgentsSyntax } from '../Syntax/Agents';
-import type { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
+import type { QuerySyntax } from '../Syntax/Queries';
+import type { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import type { ParserContext } from './ParserContext';
 import { isPerformedQuery } from './QueryParser';
 
@@ -50,7 +51,7 @@ function reportExposureCount(agents: AgentsSyntax, count: number, context: Parse
 
 function reportUnexposed(agents: AgentsSyntax, targets: readonly Target[], exposed: ReadonlySet<string>, context: ParserContext): void {
     if (agents.operations.length === 0) context.warning(DiagnosticCodes.AgentsExposeNothing, 'The agents block exposes no operations', agents.location);
-    const unexposed = targets.filter(target => !exposed.has(`${target.kind}:${target.name}`)).map(target => target.name).sort();
+    const unexposed = targets.filter(target => !exposed.has(targetKey(target))).map(target => target.name).sort();
     if (unexposed.length > 0) {
         const suffix = unexposed.length > 10 ? `, and ${unexposed.length - 10} more` : '';
         context.information(DiagnosticCodes.UnexposedAgentOperations, `${unexposed.length} of ${targets.length} queries and commands are not exposed to agents: ${unexposed.slice(0, 10).join(', ')}${suffix}`, agents.location);
@@ -60,15 +61,25 @@ function reportUnexposed(agents: AgentsSyntax, targets: readonly Target[], expos
 function inFeature(feature: FeatureSyntax, parents: readonly string[], authorized: boolean): Target[] {
     const path = [...parents, feature.name];
     const gated = authorized || feature.authorize !== null;
-    const targets = feature.slices.flatMap(slice => {
-        const name = (operation: string) => [...path, slice.name, operation].join('.');
-        return [
-            ...slice.commands.map(command => ({ kind: 'Command' as const, name: name(command.name), authorized: gated || command.authorize !== null })),
-            ...slice.queries.map(query => ({ kind: 'Query' as const, name: name(query.name), authorized: gated || query.authorize !== null, global: query.scope === 'global', refusedKind: isPerformedQuery(query) ? 'performed query' : undefined })),
-            ...(slice.graphQueries ?? []).map(query => ({ kind: 'Query' as const, name: name(query.name), authorized: gated || query.authorize != null, refusedKind: 'graph query' }))
-        ];
-    });
+    const targets = feature.slices.flatMap(slice => inSlice(slice, path, gated));
     return [...targets, ...feature.features.flatMap(child => inFeature(child, path, gated))];
+}
+
+function inSlice(slice: SliceSyntax, parents: readonly string[], authorized: boolean): Target[] {
+    const name = (operation: string) => [...parents, slice.name, operation].join('.');
+    return [
+        ...slice.commands.map(command => ({ kind: 'Command' as const, name: name(command.name), authorized: authorized || command.authorize !== null })),
+        ...slice.queries.map(query => queryTarget(query, name(query.name), authorized)),
+        ...(slice.graphQueries ?? []).map(query => ({ kind: 'Query' as const, name: name(query.name), authorized: authorized || query.authorize != null, refusedKind: 'graph query' }))
+    ];
+}
+
+function queryTarget(query: QuerySyntax, name: string, authorized: boolean): Target {
+    return { kind: 'Query', name, authorized: authorized || query.authorize !== null, global: query.scope === 'global', refusedKind: isPerformedQuery(query) ? 'performed query' : undefined };
+}
+
+function targetKey(target: Target): string {
+    return `${target.kind}:${target.name}`;
 }
 
 function validateFields(operation: AgentOperationSyntax, context: ParserContext): void {
@@ -88,7 +99,7 @@ function validateReference(operation: AgentOperationSyntax, targets: readonly Ta
         return;
     }
     const target = candidates[0];
-    const key = `${target.kind}:${target.name}`;
+    const key = targetKey(target);
     if (exposed.has(key)) context.error(DiagnosticCodes.DuplicateAgentOperation, `Agent operation '${target.name}' is exposed more than once`, operation.location);
     exposed.add(key);
     validateTarget(operation, target, context);
