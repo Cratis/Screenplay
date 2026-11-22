@@ -4,7 +4,7 @@
 import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
 import type { ScreenProvisionSyntax, ShapeSyntax, UsesScreenSyntax } from './Shapes';
 import { AgentOperationSyntax, AgentsSyntax, AgentTokensSyntax } from './Agents';
-import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
+import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphEdgeSyntax, SpecificationGraphElementSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import type { OutletItemSyntax, OutletSyntax } from './Outlets';
@@ -754,16 +754,24 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecificationGraph(syntax: SpecificationGraphSyntax): void {
         this.visitNode(syntax);
         for (const element of syntax.elements) {
-            this.visitNode(element);
-            if (element.kind === 'SpecificationGraphNodeSyntax') {
-                this.visitExpression(element.key);
-            } else {
-                this.visitExpression(element.source);
-                this.visitExpression(element.target);
-                if (element.identity != null) this.visitExpression(element.identity);
-            }
-            element.properties.forEach(node => this.visitPropertyMapping(node));
+            this.visitSpecificationGraphElement(element);
         }
+    }
+
+    private visitSpecificationGraphElement(syntax: SpecificationGraphElementSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'SpecificationGraphNodeSyntax') {
+            this.visitExpression(syntax.key);
+        } else {
+            this.visitSpecificationGraphEdgeEndpoints(syntax);
+        }
+        syntax.properties.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    private visitSpecificationGraphEdgeEndpoints(syntax: SpecificationGraphEdgeSyntax): void {
+        this.visitExpression(syntax.source);
+        this.visitExpression(syntax.target);
+        if (syntax.identity != null) this.visitExpression(syntax.identity);
     }
 
     visitConstraint(syntax: ConstraintSyntax): void {
