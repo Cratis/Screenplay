@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Buffers;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Text.Json;
 
@@ -11,6 +12,31 @@ public static partial class SemanticModelCanonicalJson
 {
     public const string Schema = "cratis.screenplay.esm";
     internal const uint SchemaVersion = 1;
+
+    static readonly FrozenDictionary<SemanticValidationRuleKind, string> ValidationKindNames = new Dictionary<SemanticValidationRuleKind, string>
+    {
+        [SemanticValidationRuleKind.NotEmpty] = "notEmpty",
+        [SemanticValidationRuleKind.Maximum] = "maximum",
+        [SemanticValidationRuleKind.Minimum] = "minimum",
+        [SemanticValidationRuleKind.Equal] = "equal",
+        [SemanticValidationRuleKind.NotEqual] = "notEqual",
+        [SemanticValidationRuleKind.GreaterThan] = "greaterThan",
+        [SemanticValidationRuleKind.GreaterThanOrEqual] = "greaterThanOrEqual",
+        [SemanticValidationRuleKind.LessThan] = "lessThan",
+        [SemanticValidationRuleKind.LessThanOrEqual] = "lessThanOrEqual",
+        [SemanticValidationRuleKind.Length] = "length",
+        [SemanticValidationRuleKind.AllGreaterThan] = "allGreaterThan",
+        [SemanticValidationRuleKind.AllGreaterThanOrEqual] = "allGreaterThanOrEqual",
+        [SemanticValidationRuleKind.Matches] = "matches",
+        [SemanticValidationRuleKind.Checksum] = "checksum",
+        [SemanticValidationRuleKind.Contains] = "contains",
+        [SemanticValidationRuleKind.NotContains] = "notContains",
+        [SemanticValidationRuleKind.StartsWith] = "startsWith",
+        [SemanticValidationRuleKind.EndsWith] = "endsWith",
+        [SemanticValidationRuleKind.DecimalPlaces] = "decimalPlaces",
+        [SemanticValidationRuleKind.RulePredicate] = "rulePredicate",
+        [SemanticValidationRuleKind.CodeValidation] = "codeValidation"
+    }.ToFrozenDictionary();
 
     internal static byte[] Serialize(ExecutableSemanticModel model)
     {
@@ -766,32 +792,42 @@ public static partial class SemanticModelCanonicalJson
                 writer.WriteBoolean("value", boolean.Value);
                 break;
             case SemanticArrayValue array:
-                if (array.Values.IsDefault || array.Values.Any(_ => _ is null))
-                {
-                    throw new InvalidSemanticContract("A semantic array value is malformed.");
-                }
-
-                WriteArray(writer, "values", array.Values, WriteValue);
+                WriteArrayValue(writer, array);
                 break;
             case SemanticCompositeValue objectValue:
-                if (objectValue.Properties.IsDefault ||
-                    objectValue.Properties.Any(_ => _ is not { TargetProperty.IsSet: true, Value: not null }) ||
-                    objectValue.Properties.Select(_ => _.TargetProperty).Distinct().Count() != objectValue.Properties.Length)
-                {
-                    throw new InvalidSemanticContract("A semantic object value is malformed.");
-                }
-
-                WriteArray(
-                    writer,
-                    "properties",
-                    objectValue.Properties.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal),
-                    WritePropertyValue);
+                WriteCompositeValue(writer, objectValue);
                 break;
             default:
                 throw new InvalidSemanticContract("A semantic value variant is malformed or unknown.");
         }
 
         writer.WriteEndObject();
+    }
+
+    static void WriteArrayValue(Utf8JsonWriter writer, SemanticArrayValue array)
+    {
+        if (array.Values.IsDefault || array.Values.Any(_ => _ is null))
+        {
+            throw new InvalidSemanticContract("A semantic array value is malformed.");
+        }
+
+        WriteArray(writer, "values", array.Values, WriteValue);
+    }
+
+    static void WriteCompositeValue(Utf8JsonWriter writer, SemanticCompositeValue objectValue)
+    {
+        if (objectValue.Properties.IsDefault ||
+            objectValue.Properties.Any(_ => _ is not { TargetProperty.IsSet: true, Value: not null }) ||
+            objectValue.Properties.Select(_ => _.TargetProperty).Distinct().Count() != objectValue.Properties.Length)
+        {
+            throw new InvalidSemanticContract("A semantic object value is malformed.");
+        }
+
+        WriteArray(
+            writer,
+            "properties",
+            objectValue.Properties.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal),
+            WritePropertyValue);
     }
 
     static void WriteOptionalExpression(Utf8JsonWriter writer, string name, SemanticExpression? expression)
@@ -910,31 +946,8 @@ public static partial class SemanticModelCanonicalJson
         }
     }
 
-    static string ValidationKind(SemanticValidationRuleKind value) => value switch
-    {
-        SemanticValidationRuleKind.NotEmpty => "notEmpty",
-        SemanticValidationRuleKind.Maximum => "maximum",
-        SemanticValidationRuleKind.Minimum => "minimum",
-        SemanticValidationRuleKind.Equal => "equal",
-        SemanticValidationRuleKind.NotEqual => "notEqual",
-        SemanticValidationRuleKind.GreaterThan => "greaterThan",
-        SemanticValidationRuleKind.GreaterThanOrEqual => "greaterThanOrEqual",
-        SemanticValidationRuleKind.LessThan => "lessThan",
-        SemanticValidationRuleKind.LessThanOrEqual => "lessThanOrEqual",
-        SemanticValidationRuleKind.Length => "length",
-        SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
-        SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
-        SemanticValidationRuleKind.Matches => "matches",
-        SemanticValidationRuleKind.Checksum => "checksum",
-        SemanticValidationRuleKind.Contains => "contains",
-        SemanticValidationRuleKind.NotContains => "notContains",
-        SemanticValidationRuleKind.StartsWith => "startsWith",
-        SemanticValidationRuleKind.EndsWith => "endsWith",
-        SemanticValidationRuleKind.DecimalPlaces => "decimalPlaces",
-        SemanticValidationRuleKind.RulePredicate => "rulePredicate",
-        SemanticValidationRuleKind.CodeValidation => "codeValidation",
-        _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
-    };
+    static string ValidationKind(SemanticValidationRuleKind value) =>
+        ValidationKindNames.TryGetValue(value, out var name) ? name : throw Unknown(nameof(SemanticValidationRuleKind), value);
 
     static string ContextValue(SemanticEventContextValueKind kind) => kind switch
     {
