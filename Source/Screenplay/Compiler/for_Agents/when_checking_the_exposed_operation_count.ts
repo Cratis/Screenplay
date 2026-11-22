@@ -34,6 +34,6 @@ describe('when checking the exposed operation count', () => {
         warnings[0].severity.should.equal('warning');
         warnings[0].message.should.equal('The agents block exposes 21 operations; expose at most 20 focused operations to keep agent tool selection effective');
         warnings[0].location.should.deep.equal({ path: 'agents.play', line: text.split('\n').indexOf('agents') + 1, column: 1 });
-        warnings[0].arguments.should.deep.equal({ count: { kind: 'text', value: '21' }, recommendedMaximum: { kind: 'text', value: '20' } });
+        warnings[0].arguments!.should.deep.equal({ count: { kind: 'text', value: '21' }, recommendedMaximum: { kind: 'text', value: '20' } });
     });
 });
