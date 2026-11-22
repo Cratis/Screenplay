@@ -40,9 +40,9 @@ internal static class AgentsValidator
                 DiagnosticCodes.AgentToolCountExceedsRecommendation,
                 $"The agents block exposes {count} operations; expose at most {RecommendedMaximum} focused operations to keep agent tool selection effective",
                 agents.Location,
-                DiagnosticArguments.Of(
-                    ("count", DiagnosticArgument.Text(count.ToString(CultureInfo.InvariantCulture))),
-                    ("recommendedMaximum", DiagnosticArgument.Text(RecommendedMaximum.ToString(CultureInfo.InvariantCulture)))));
+                DiagnosticArguments.Empty
+                    .With("count", DiagnosticArgument.Text(count.ToString(CultureInfo.InvariantCulture)))
+                    .With("recommendedMaximum", DiagnosticArgument.Text(RecommendedMaximum.ToString(CultureInfo.InvariantCulture))));
         }
     }
 
