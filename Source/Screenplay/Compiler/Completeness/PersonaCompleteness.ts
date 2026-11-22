@@ -7,7 +7,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { SliceReferenceCollector } from '../Dependencies/SliceReferences';
 import { RefusalDeclarations } from '../Parsing/RefusalDeclarations';
 import { AuthorizeSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
-import { ExpressionSyntax } from '../Syntax/Expressions';
+import { ClockOffsetExpressionSyntax, ExpressionSyntax, LiteralExpressionSyntax, TemplateInterpolationSyntax, TemplateTextSyntax } from '../Syntax/Expressions';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
 import { AnonymousConditionSyntax, AuthenticatedConditionSyntax, ClaimConditionSyntax, PolicyConditionSyntax, RoleConditionSyntax, StateConditionSyntax } from '../Syntax/Policies';
 import { SpecificationCallerSyntax } from '../Syntax/Specifications';
@@ -75,28 +75,29 @@ function references(requirement: PolicyRequirementSyntax): readonly string[] {
 }
 
 function evaluate(gates: readonly AuthorizeSyntax[], caller: SpecificationCallerSyntax, application: ApplicationSyntax): Truth {
-    return gates.reduce<Truth>((truth, gate) => combine(truth, 'And', requirementTruth(gate.requirement, application.policies ?? [], condition => conditionTruth(condition, atom => {
-        if (atom.kind === 'AuthenticatedConditionSyntax') return caller.authenticated;
-        if (atom.kind === 'AnonymousConditionSyntax') return true;
-        if (atom.kind === 'RoleConditionSyntax') return caller.roles.includes(atom.role);
-        if (atom.kind === 'ClaimConditionSyntax' && !atom.matchesSubject && atom.matches?.kind === 'LiteralExpressionSyntax' && typeof atom.matches.value === 'string') {
-            const value = atom.matches.value;
-            return caller.claims.some(claim => ordinalClaimKey(claim.type) === ordinalClaimKey(atom.claim) && claim.value === value);
-        }
-        return null;
-    }))), true);
+    return gates.reduce<Truth>((truth, gate) => combine(truth, 'And', requirementTruth(gate.requirement, application.policies ?? [], condition => conditionTruth(condition, atom => atomTruth(atom, caller)))), true);
+}
+
+function atomTruth(atom: PolicyConditionSyntax, caller: SpecificationCallerSyntax): Truth {
+    if (atom.kind === 'AuthenticatedConditionSyntax') return caller.authenticated;
+    if (atom.kind === 'AnonymousConditionSyntax') return true;
+    if (atom.kind === 'RoleConditionSyntax') return caller.roles.includes(atom.role);
+    if (atom.kind === 'ClaimConditionSyntax') return claimTruth(atom, caller);
+    return null;
+}
+
+function claimTruth(atom: ClaimConditionSyntax, caller: SpecificationCallerSyntax): Truth {
+    if (atom.matchesSubject || atom.matches?.kind !== 'LiteralExpressionSyntax') return null;
+    if (typeof atom.matches.value !== 'string') return null;
+    const value = atom.matches.value;
+    return caller.claims.some(claim => ordinalClaimKey(claim.type) === ordinalClaimKey(atom.claim) && claim.value === value);
 }
 
 const quote = (value: string) => '"' + value.replace(/[\\"\n\r\t]/g, character => ({ '\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t' })[character]!) + '"';
 
 function expressionText(expression: ExpressionSyntax): string {
     switch (expression.kind) {
-        case 'LiteralExpressionSyntax': {
-            const value = expression.value;
-            if (typeof value === 'string') return quote(value);
-            if (value !== null && typeof value === 'object') return value.value;
-            return typeof value === 'number' ? numberText(value) : String(value);
-        }
+        case 'LiteralExpressionSyntax': return literalText(expression);
         case 'PathExpressionSyntax': return expression.path;
         case 'ContextExpressionSyntax': return `$context.${expression.path}`;
         case 'IdentityExpressionSyntax': return `$identity.${expression.path}`;
@@ -110,12 +111,28 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'InvocationValueExpressionSyntax': return expression.member.length === 0 ? `$${expression.source}` : `$${expression.source}.${expression.member}`;
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'RawExpressionSyntax': return expression.text;
-        case 'ClockOffsetExpressionSyntax': return `${expression.clock} ${expression.amount < 0 ? '-' : '+'} ${Math.abs(expression.amount)} ${expression.unit}`;
+        case 'ClockOffsetExpressionSyntax': return clockOffsetText(expression);
         case 'DateOfExpressionSyntax': return `date of ${expressionText(expression.operand)}`;
-        case 'TemplateExpressionSyntax': return '`' + expression.parts.map(part => part.kind === 'TemplateTextSyntax' ? part.text : '${' + expressionText(part.expression) + '}').join('') + '`';
+        case 'TemplateExpressionSyntax': return '`' + expression.parts.map(templatePartText).join('') + '`';
         case 'ListExpressionSyntax': return `[${expression.items.map(structuredText).join(',')}]`;
         case 'ObjectExpressionSyntax': return `{${expression.members.map(member => `${JSON.stringify(member.name)}:${structuredText(member.value)}`).join(',')}}`;
     }
+}
+
+function literalText(expression: LiteralExpressionSyntax): string {
+    const value = expression.value;
+    if (typeof value === 'string') return quote(value);
+    if (value !== null && typeof value === 'object') return value.value;
+    return typeof value === 'number' ? numberText(value) : String(value);
+}
+
+function clockOffsetText(expression: ClockOffsetExpressionSyntax): string {
+    const sign = expression.amount < 0 ? '-' : '+';
+    return `${expression.clock} ${sign} ${Math.abs(expression.amount)} ${expression.unit}`;
+}
+
+function templatePartText(part: TemplateTextSyntax | TemplateInterpolationSyntax): string {
+    return part.kind === 'TemplateTextSyntax' ? part.text : '${' + expressionText(part.expression) + '}';
 }
 
 function structuredText(expression: ExpressionSyntax): string {
@@ -126,6 +143,10 @@ function numberText(value: number): string {
     if (Number.isInteger(value) && value >= -9223372036854775808 && value < 9223372036854775808) return BigInt(value).toString();
     const text = String(value);
     if (!text.includes('e')) return text;
+    return expandExponent(text);
+}
+
+function expandExponent(text: string): string {
     const [mantissa, exponent] = text.split('e');
     const negative = mantissa.startsWith('-');
     const unsigned = negative ? mantissa.slice(1) : mantissa;
@@ -142,7 +163,11 @@ function conditionText(condition: PolicyConditionSyntax): string {
     if (condition.kind !== 'LogicalPolicyConditionSyntax') return condition.kind === 'NotPolicyConditionSyntax' ? `not ${conditionText(condition.operand)}` : atomText(condition);
     const left = conditionText(condition.left);
     const right = conditionText(condition.right);
-    return `${condition.left.kind === 'LogicalPolicyConditionSyntax' && condition.left.operator !== condition.operator ? `(${left})` : left} ${condition.operator.toLowerCase()} ${condition.right.kind === 'LogicalPolicyConditionSyntax' ? `(${right})` : right}`;
+    const parenthesizeLeft = condition.left.kind === 'LogicalPolicyConditionSyntax' && condition.left.operator !== condition.operator;
+    const parenthesizeRight = condition.right.kind === 'LogicalPolicyConditionSyntax';
+    const leftText = parenthesizeLeft ? `(${left})` : left;
+    const rightText = parenthesizeRight ? `(${right})` : right;
+    return `${leftText} ${condition.operator.toLowerCase()} ${rightText}`;
 }
 
 function atomText(condition: AnonymousConditionSyntax | AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | StateConditionSyntax): string {

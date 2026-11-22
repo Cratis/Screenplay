@@ -121,7 +121,7 @@ jobs:
           printf 'sdk=%s\n' "$sdk" >> "$GITHUB_OUTPUT"
       - name: Cache native NuGet packages
         id: native-nuget
-        uses: Cratis/Workflows/.github/actions/dotnet-cache@3f8a8a7ef75f72b6b089638b68ec2f9af8f593e3 # Workflows snapshot 2026-11-01 (issue #1139)
+        uses: Cratis/Workflows/.github/actions/dotnet-cache@main
         with:
           path: ~/.nuget/packages
           key-prefix: native-nuget-v1-${{ matrix.rid }}-${{ runner.arch }}-sdk${{ steps.native-nuget-context.outputs.sdk }}
@@ -136,7 +136,7 @@ jobs:
             **/global.json
             .github/workflows/mcp-desktop.yml
             .github/workflows/native-editor-repairs.yml
-          mode: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'save' || 'restore' }}
+          mode: restore
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.x'
