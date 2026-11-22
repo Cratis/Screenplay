@@ -164,6 +164,9 @@ public sealed partial class ScreenplayPrinter :
         _ => field.Value ?? string.Empty
     };
 
+    static string ProfileLogoValue(ProfileIdentitySyntax identity) =>
+        identity.LogoKind == "icon" && identity.LogoValue is { } icon && IsIconWord(icon) ? icon : StringLiteral.Quote(identity.LogoValue ?? string.Empty);
+
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
         using var anchor = writer.Anchor(application);
@@ -395,9 +398,6 @@ public sealed partial class ScreenplayPrinter :
             }
         }
     }
-
-    static string ProfileLogoValue(ProfileIdentitySyntax identity) =>
-        identity.LogoKind == "icon" && identity.LogoValue is { } icon && IsIconWord(icon) ? icon : StringLiteral.Quote(identity.LogoValue ?? string.Empty);
 
     void WriteProfileAppearance(ScreenplayWriter writer, ProfileAppearanceSyntax appearance)
     {
