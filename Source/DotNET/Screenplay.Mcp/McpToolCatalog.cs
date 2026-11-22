@@ -80,35 +80,45 @@ static class McpToolCatalog
     internal static void Validate(string name, JsonElement arguments, bool visual = false)
     {
         var tool = _tools.SingleOrDefault(tool => tool.Name == name && (visual || name != McpVisualization.ToolName)) ?? throw new McpFailure($"Unknown tool '{name}'.", -32602);
+        RequireFormattingConsent(name, arguments);
+        McpJson.ValidateObject(arguments, tool.Properties, tool.Required);
+        foreach (var property in arguments.EnumerateObject())
+        {
+            ValidateArgument(name, property);
+        }
+    }
+
+    static void RequireFormattingConsent(string name, JsonElement arguments)
+    {
         if (name == "propose-repair" && arguments.ValueKind == JsonValueKind.Object && !arguments.TryGetProperty("formatting", out _))
         {
             throw new McpFailure("FormattingConsentRequired: diagnostic repairs require explicit formatting consent; use the discovered requiredFormatting.", -32602) { FailureKind = "FormattingConsentRequired" };
         }
+    }
 
-        McpJson.ValidateObject(arguments, tool.Properties, tool.Required);
-        foreach (var property in arguments.EnumerateObject())
+    static void ValidateArgument(string name, JsonProperty property)
+    {
+        var schema = McpToolSchemas.Argument(name, property.Name);
+        var expected = schema["type"]!.GetValue<string>();
+        if (!MatchesArgumentType(property.Value, expected))
         {
-            var schema = McpToolSchemas.Argument(name, property.Name);
-            var expected = schema["type"]!.GetValue<string>();
-            var matches = expected switch
-            {
-                "array" => property.Value.ValueKind == JsonValueKind.Array,
-                "boolean" => property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False,
-                "integer" => property.Value.ValueKind == JsonValueKind.Number && property.Value.TryGetInt32(out _),
-                "object" => property.Value.ValueKind == JsonValueKind.Object,
-                _ => property.Value.ValueKind == JsonValueKind.String
-            };
-            if (!matches)
-            {
-                throw new McpFailure($"'{property.Name}' must be {expected}.", -32602);
-            }
+            throw new McpFailure($"'{property.Name}' must be {expected}.", -32602);
+        }
 
-            if (schema["enum"] is { } choices && !choices.AsArray().Any(choice => choice!.GetValue<string>() == property.Value.GetString()))
-            {
-                throw new McpFailure($"Unsupported value for '{property.Name}'.", -32602);
-            }
+        if (schema["enum"] is { } choices && !choices.AsArray().Any(choice => choice!.GetValue<string>() == property.Value.GetString()))
+        {
+            throw new McpFailure($"Unsupported value for '{property.Name}'.", -32602);
         }
     }
+
+    static bool MatchesArgumentType(JsonElement value, string expected) => expected switch
+    {
+        "array" => value.ValueKind == JsonValueKind.Array,
+        "boolean" => value.ValueKind is JsonValueKind.True or JsonValueKind.False,
+        "integer" => value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out _),
+        "object" => value.ValueKind == JsonValueKind.Object,
+        _ => value.ValueKind == JsonValueKind.String
+    };
 
     static McpToolDefinition[] WithReleaseBaselinePins(McpToolDefinition[] tools) => [.. tools.Select(tool =>
         tool.Name.StartsWith("propose", StringComparison.Ordinal) || tool.Name == "expand-layout" || tool.Name == "apply" || tool.Name == "read-proposal"

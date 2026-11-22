@@ -164,6 +164,9 @@ public sealed partial class ScreenplayPrinter :
         _ => field.Value ?? string.Empty
     };
 
+    static string ProfileLogoValue(ProfileIdentitySyntax identity) =>
+        identity.LogoKind == "icon" && identity.LogoValue is { } icon && IsIconWord(icon) ? icon : StringLiteral.Quote(identity.LogoValue ?? string.Empty);
+
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
         using var anchor = writer.Anchor(application);
@@ -340,72 +343,86 @@ public sealed partial class ScreenplayPrinter :
         if (uiProfile.Root is { } root)
         {
             BlankBetween(writer, ref hasContent);
-            writer.Line($"root template {WriteTemplateReference(root.Blueprint, root.Name, root.Version)}", root);
-            using (writer.Indent())
-            {
-                foreach (var option in root.Options)
-                {
-                    writer.Line($"option {option.Name} {ShellOptionValue(option)}", option);
-                }
-            }
+            WriteRootTemplate(writer, root);
         }
 
         if (uiProfile.Identity is { } identity)
         {
             BlankBetween(writer, ref hasContent);
-            writer.Line("identity", identity);
-            using (writer.Indent())
-            {
-                if (identity.Name is not null)
-                {
-                    writer.Line($"name {StringLiteral.Quote(identity.Name)}");
-                }
-
-                if (identity.LogoKind is not null)
-                {
-                    var value = identity.LogoKind == "icon" && identity.LogoValue is { } icon && IsIconWord(icon) ? icon : StringLiteral.Quote(identity.LogoValue ?? string.Empty);
-                    writer.Line($"logo {identity.LogoKind} {value}");
-                }
-
-                if (identity.ShowName is { } showName)
-                {
-                    writer.Line($"show name {(showName ? "true" : "false")}");
-                }
-            }
+            WriteProfileIdentity(writer, identity);
         }
 
         if (uiProfile.Appearance is { } appearance)
         {
             BlankBetween(writer, ref hasContent);
-            writer.Line("appearance", appearance);
-            using (writer.Indent())
-            {
-                if (appearance.ColorScheme is not null)
-                {
-                    writer.Line($"color scheme {appearance.ColorScheme}");
-                }
-
-                if (appearance.Accent is not null)
-                {
-                    writer.Line($"accent {StringLiteral.Quote(appearance.Accent)}");
-                }
-
-                if (appearance.Corners is not null)
-                {
-                    writer.Line($"corners {appearance.Corners}");
-                }
-
-                if (appearance.Font is not null)
-                {
-                    writer.Line($"font {appearance.Font}");
-                }
-            }
+            WriteProfileAppearance(writer, appearance);
         }
 
         if (uiProfile.NewScreenTemplate is { } newScreenTemplate)
         {
             BlankBetween(writer, ref hasContent);
             writer.Line($"new screens use template {WriteTemplateReference(newScreenTemplate.Blueprint, newScreenTemplate.Name, newScreenTemplate.Version)}", newScreenTemplate);
+        }
+    }
+
+    void WriteRootTemplate(ScreenplayWriter writer, RootTemplateSyntax root)
+    {
+        writer.Line($"root template {WriteTemplateReference(root.Blueprint, root.Name, root.Version)}", root);
+        using (writer.Indent())
+        {
+            foreach (var option in root.Options)
+            {
+                writer.Line($"option {option.Name} {ShellOptionValue(option)}", option);
+            }
+        }
+    }
+
+    void WriteProfileIdentity(ScreenplayWriter writer, ProfileIdentitySyntax identity)
+    {
+        writer.Line("identity", identity);
+        using (writer.Indent())
+        {
+            if (identity.Name is not null)
+            {
+                writer.Line($"name {StringLiteral.Quote(identity.Name)}");
+            }
+
+            if (identity.LogoKind is not null)
+            {
+                writer.Line($"logo {identity.LogoKind} {ProfileLogoValue(identity)}");
+            }
+
+            if (identity.ShowName is { } showName)
+            {
+                writer.Line($"show name {(showName ? "true" : "false")}");
+            }
+        }
+    }
+
+    void WriteProfileAppearance(ScreenplayWriter writer, ProfileAppearanceSyntax appearance)
+    {
+        writer.Line("appearance", appearance);
+        using (writer.Indent())
+        {
+            if (appearance.ColorScheme is not null)
+            {
+                writer.Line($"color scheme {appearance.ColorScheme}");
+            }
+
+            if (appearance.Accent is not null)
+            {
+                writer.Line($"accent {StringLiteral.Quote(appearance.Accent)}");
+            }
+
+            if (appearance.Corners is not null)
+            {
+                writer.Line($"corners {appearance.Corners}");
+            }
+
+            if (appearance.Font is not null)
+            {
+                writer.Line($"font {appearance.Font}");
+            }
         }
     }
 
@@ -683,18 +700,23 @@ public sealed partial class ScreenplayPrinter :
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);
             }
 
-            if (policy.File is not null)
+            WritePolicyImplementation(writer, policy);
+        }
+    }
+
+    void WritePolicyImplementation(ScreenplayWriter writer, PolicySyntax policy)
+    {
+        if (policy.File is not null)
+        {
+            WriteFile(writer, policy.File);
+            if (policy.Code is not null)
             {
-                WriteFile(writer, policy.File);
-                if (policy.Code is not null)
-                {
-                    WriteOmittedCode(writer, policy.Code, ReadsOneImplementation("a policy"));
-                }
+                WriteOmittedCode(writer, policy.Code, ReadsOneImplementation("a policy"));
             }
-            else if (policy.Code is not null)
-            {
-                WriteCodeBlock(writer, policy.Code);
-            }
+        }
+        else if (policy.Code is not null)
+        {
+            WriteCodeBlock(writer, policy.Code);
         }
     }
 
