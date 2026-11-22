@@ -2195,10 +2195,10 @@ module Invoicing
         on interval 30 seconds
           refresh ListInvoices
         // Advisory grouping only: these commands still use the selected invoice and their usual forms.
-        action SendInvoiceReminder for item
+        action TagInvoice for item
           with invoiceId from item.invoiceId
           presentation placement "row-menu"
-        action CancelInvoice for item
+        action ChangeInvoiceStatus for item
           with invoiceId from item.invoiceId
           presentation placement "row-menu"
         toolbar invoiceActions
@@ -2212,6 +2212,7 @@ module Invoicing
             presentation placement "secondary"
           // Buttons invoke State Change slices; the slice names the command and the dialog it opens over the page.
           button newInvoice title $strings.invoices.actions.newInvoice slice Invoicing.InvoiceManagement.RegisterInvoice emphasis primary icon add
+          button cancelInvoice title $strings.invoices.actions.cancel slice CancelInvoice emphasis quiet
         component Cratis.Components.DataGrid invoiceGrid
           context from query ListInvoices
           property title = "Invoices"

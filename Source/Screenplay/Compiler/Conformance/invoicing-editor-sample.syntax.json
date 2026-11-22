@@ -8204,7 +8204,7 @@
                     },
                     {
                       "kind": "ScreenActionSyntax",
-                      "command": "SendInvoiceReminder",
+                      "command": "TagInvoice",
                       "inputs": [
                         {
                           "kind": "InteractionArgumentSyntax",
@@ -8225,7 +8225,7 @@
                     },
                     {
                       "kind": "ScreenActionSyntax",
-                      "command": "CancelInvoice",
+                      "command": "ChangeInvoiceStatus",
                       "inputs": [
                         {
                           "kind": "InteractionArgumentSyntax",
@@ -8254,6 +8254,13 @@
                           "id": "newInvoice",
                           "slice": "Invoicing.InvoiceManagement.RegisterInvoice",
                           "title": "$strings.invoices.actions.newInvoice"
+                        },
+                        {
+                          "kind": "ToolbarButtonSyntax",
+                          "emphasis": "Quiet",
+                          "id": "cancelInvoice",
+                          "slice": "CancelInvoice",
+                          "title": "$strings.invoices.actions.cancel"
                         }
                       ],
                       "items": [

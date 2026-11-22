@@ -868,9 +868,9 @@ public partial class when_freezing_legacy_source_syntax_bytes
         });
 
     // The living sample demonstrates row-menu hints in its current shared vectors. The protected
-    // historical bytes predate these three root actions; keep every older directive unchanged.
+    // historical bytes predate these two root actions; keep every older directive unchanged.
     static ScreenSyntax WithoutSampleRowMenuActions(ScreenSyntax screen) => screen.Name == "InvoiceList"
-        ? screen with { Directives = screen.Directives.Where(directive => directive is not ScreenActionSyntax { Command: "SendInvoiceReminder" or "CancelInvoice" or "RegisterInvoice" }) }
+        ? screen with { Directives = screen.Directives.Where(directive => directive is not ScreenActionSyntax { Command: "TagInvoice" or "ChangeInvoiceStatus" }) }
         : screen;
 
     // Payments now start from the due/overdue rows. Restore only the former toolbar for the
