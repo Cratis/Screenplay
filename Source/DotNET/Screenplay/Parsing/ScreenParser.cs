@@ -288,57 +288,6 @@ internal static partial class ScreenParser
         return ParsePlainAction(context, line, (header, inlineLabel, subject));
     }
 
-    static ScreenActionSyntax? ParsePlainAction(ParserContext context, SourceLine line, (string Header, string? Label, ScreenActionSubjectKind? Subject) header)
-    {
-        var match = ActionRegex().Match(header.Header);
-        if (!match.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidActionDirective, $"Invalid action directive '{line.Content}' - expected 'action <Command>'", line.Location);
-            context.SkipBlock(line.Indent);
-            return null;
-        }
-
-        var label = header.Label;
-        var labelLocation = label is null ? null : line.Location;
-        ScreenNavigateSyntax? navigate = null;
-        var inputs = new List<InteractionArgumentSyntax>();
-
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            var labelMatch = LabelRegex().Match(child.Content);
-            if (labelMatch.Success)
-            {
-                label = OperandText(labelMatch, 1);
-                labelLocation = child.Location;
-            }
-            else if (LineText.FirstWord(child.Content) == "navigate")
-            {
-                navigate = ParseNavigate(context, child.Content, child);
-            }
-            else if (LineText.FirstWord(child.Content) == "with")
-            {
-                AddPlainActionInput(context, child, inputs);
-            }
-            else
-            {
-                context.Error(DiagnosticCodes.UnknownActionDirective, $"Unexpected '{child.Content}' in action - expected 'label \"...\"' or 'navigate to ...'", child.Location);
-            }
-        }
-
-        return new ScreenActionSyntax(match.Groups[1].Value, label, navigate, line.Location)
-        {
-            Subject = header.Subject,
-            Inputs = inputs,
-            DirectiveLocations = labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = labelLocation }
-        };
-    }
-
-    static void AddPlainActionInput(ParserContext context, SourceLine child, List<InteractionArgumentSyntax> inputs)
-    {
-        if (ParsePlainActionInput(context, child, inputs) is { } input) inputs.Add(input);
-    }
-
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)
     {
         var name = line.Content["template".Length..].Trim();

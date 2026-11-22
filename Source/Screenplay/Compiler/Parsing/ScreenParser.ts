@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { parsePlainScreenAction } from './ScreenActionParser';
 import {
     ComponentExposedValueSyntax, ComponentSlotSyntax, ComponentPropertySyntax, PresentationValueSyntax,
     ScreenActionSyntax, ScreenGuardedActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenComponentSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax, ScreenNeedSyntax,
@@ -14,8 +15,8 @@ import { pattern } from '../Text/patterns';
 import { parseAuthorize } from './AuthorizeParser';
 import { AvailableSyntax } from '../Syntax/Availability';
 import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
-import { parsePlainActionInput, parseSubjectClause } from './ActionSubjectClause';
-import { InteractionArgumentSyntax, ScreenVisualSyntax } from '../Syntax/Screens';
+import { parseSubjectClause } from './ActionSubjectClause';
+import { ScreenVisualSyntax } from '../Syntax/Screens';
 import { parseScreenVisual } from './ScreenVisualParser';
 import { parseFencedText } from './CodeBlockParser';
 import { parseMappingSource } from './ExpressionParser';
@@ -269,28 +270,7 @@ function parseActionHeader(context: ParserContext, line: SourceLine, parsed: Ret
         context.skipBlock(line.indent);
         return undefined;
     }
-    let text: string | null = parsed.label ?? null;
-    let target: ScreenNavigateSyntax | null = null;
-    const inputs: InteractionArgumentSyntax[] = [];
-    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
-        context.reader.takeSignificant();
-        const labelMatch = label.exec(child.content);
-        if (labelMatch !== null) {
-            text = operandText(labelMatch, 1);
-        } else if (firstWord(child.content) === 'navigate') {
-            target = parseNavigate(context, child.content, child) ?? null;
-        } else if (firstWord(child.content) === 'with') {
-            addPlainActionInput(context, child, inputs);
-        } else {
-            context.error(DiagnosticCodes.UnknownActionDirective, `Unexpected '${child.content}' in action - expected 'label "..."' or 'navigate to ...'`, locationOf(child));
-        }
-    }
-    return { kind: 'ScreenActionSyntax', command: match[1], label: text, navigate: target, ...(inputs.length === 0 ? {} : { inputs }), location: locationOf(line) };
-}
-
-function addPlainActionInput(context: ParserContext, line: SourceLine, inputs: InteractionArgumentSyntax[]): void {
-    const input = parsePlainActionInput(context, line, inputs);
-    if (input !== undefined) inputs.push(input);
+    return parsePlainScreenAction(context, line, { ...parsed, command: match[1] }, { navigate: parseNavigate, presentation: parsePresentationValue });
 }
 
 function parseNavigate(context: ParserContext, text: string, line: SourceLine): ScreenNavigateSyntax | undefined {

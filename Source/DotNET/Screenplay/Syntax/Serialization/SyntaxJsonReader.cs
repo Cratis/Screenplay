@@ -41,7 +41,17 @@ internal static class SyntaxJsonReader
         var node = descriptor.Create(values);
         ImplementationInvariants.Validate(node);
         ActionSubjectInvariants.Validate(node);
+        ValidatePresentation(node);
         return node;
+    }
+
+    static void ValidatePresentation(SyntaxNode node)
+    {
+        if (node is not ScreenActionSyntax action) return;
+        if (ScreenActionPresentation.InvalidReason(action) is { } reason)
+        {
+            throw new InvalidSyntaxJson(reason);
+        }
     }
 
     static Dictionary<string, JsonElement> Properties(JsonElement value, string path)

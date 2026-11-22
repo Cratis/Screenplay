@@ -17,7 +17,21 @@ public sealed record UiScene(
     IReadOnlyList<UiSceneTemplate> Templates,
     IReadOnlyList<UiSceneComponent> Components,
     IReadOnlyList<UiSceneToolbar> Toolbars,
-    IReadOnlyList<UiSceneOutlet> Outlets);
+    IReadOnlyList<UiSceneOutlet> Outlets)
+{
+    /// <summary>
+    /// Gets presentation for plain command actions, in declaration order, when authored.
+    /// </summary>
+    public IReadOnlyList<UiSceneAction>? Actions { get; init; }
+}
+
+/// <summary>
+/// Advisory presentation for a plain command action; its neutral action contract is unchanged.
+/// </summary>
+/// <param name="ActionIndex">The zero-based index in the screen's neutral actions list, distinguishing repeated commands.</param>
+/// <param name="Command">The command exposed by the action.</param>
+/// <param name="Presentation">The presentation values sorted by key.</param>
+public sealed record UiSceneAction(int ActionIndex, string Command, IReadOnlyDictionary<string, string> Presentation);
 
 /// <summary>
 /// A Scene template a screen uses.

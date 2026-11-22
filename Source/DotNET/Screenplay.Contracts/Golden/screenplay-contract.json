@@ -85380,6 +85380,17 @@
       "retired": false
     },
     {
+      "code": "PLAY1166",
+      "name": "InvalidActionPresentation",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Malformed, duplicate or empty action presentation value.",
+      "reserved": false,
+      "retired": false
+    },
+    {
       "code": "PLAY1167",
       "name": "AgentToolCountExceedsRecommendation",
       "severity": "warning",

@@ -2030,6 +2030,7 @@ Decision 0163 lets a graph query [collect nested rows](projections/graphs.md#col
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
+| `PLAY1166` | Error | Invalid action presentation: hints require a plain action with explicit `for item`; keys must be unique and nonempty, and `placement` must be nonempty. Unknown keys and nonempty placement values are retained. Omit the hint to keep the flat action bar. |
 | `PLAY1165` | Error | A reaction `invokes` mapping names a field absent from the declared command or triggering event/trigger, or traverses a collection as though it were one record. Use a declared scalar or nested record path, or pass the collection itself to a collection field. A dotted path does not imply collection fan-out, and compilation does not discard a path prefix to find a matching field. Values whose declared shape is unknown remain unchecked beyond their known fields. |
 
 ## Retired codes
