@@ -52,306 +52,222 @@ export class Validator {
         const markers: editor.IMarkerData[] = [];
         const content = model.getValue();
 
-        // Skip validation if content is empty or only whitespace
-        // This prevents spurious errors when the model is first created before content is loaded
-        if (!content.trim()) {
-            return markers;
-        }
+        // Avoid spurious errors before content is loaded.
+        if (!content.trim()) return markers;
 
-        // Normalize line endings and split
         const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+        const header = this.prepareHeader(lines, markers);
+        if (!header) return markers;
 
-        // Find the first non-empty, non-comment line
-        let firstNonEmptyLineIndex = 0;
-        let firstLine = '';
-        for (let i = 0; i < lines.length; i++) {
-            const trimmed = lines[i].trim();
-            if (trimmed && !trimmed.startsWith('#')) {
-                firstNonEmptyLineIndex = i;
-                firstLine = trimmed;
-                break;
-            }
-        }
+        this.validateBody(lines, header, markers);
+        this.appendEventContextMarkers(lines, markers);
+        return markers;
+    }
 
-        if (!firstLine) {
-            // This should not happen since we already checked for empty content above,
-            // but if it does (content is all comments), just return without error
-            return markers;
-        }
+    private prepareHeader(lines: string[], markers: editor.IMarkerData[]): { activeSchema: JsonSchema | undefined; readModelName: string | null } | undefined {
+        const firstNonEmptyLineIndex = lines.findIndex(line => {
+            const trimmed = line.trim();
+            return !!trimmed && !trimmed.startsWith('#');
+        });
+        if (firstNonEmptyLineIndex < 0) return undefined;
 
-        // Validate first meaningful line - projection declaration
-        // Supports both "projection Name => ReadModel" and ad hoc "projection Name"
+        const firstLine = lines[firstNonEmptyLineIndex].trim();
         const projectionWithReadModelMatch = firstLine.match(/^projection\s+([\w.]+)\s*=>\s*([\w.]+)\s*$/);
         const projectionAdHocMatch = !projectionWithReadModelMatch && firstLine.match(/^projection\s+([\w.]+)\s*$/);
 
         if (!projectionWithReadModelMatch && !projectionAdHocMatch) {
-            const lineNumber = firstNonEmptyLineIndex + 1;
-            markers.push(this.createError(lineNumber, 1, firstLine.length + 1, 'Projection definition must start with "projection <ProjectionName>" or "projection <ProjectionName> => <ReadModelIdentifier>"'));
-            return markers;
+            markers.push(this.createMarker({ lineNumber: firstNonEmptyLineIndex + 1, col: 1, length: firstLine.length }, 8, 'Projection definition must start with "projection <ProjectionName>" or "projection <ProjectionName> => <ReadModelIdentifier>"'));
+            return undefined;
         }
+        if (!projectionWithReadModelMatch) return { activeSchema: undefined, readModelName: null };
 
-        let activeSchema: JsonSchema | undefined;
-        let readModelName: string | null = null;
+        const readModelName = projectionWithReadModelMatch[2];
+        const readModelExists = this.resolveReadModelIdentifier(readModelName) !== null;
+        const isDraftReadModel = this.isDraftReadModel(readModelName);
+        const location = { lineNumber: firstNonEmptyLineIndex + 1, col: this.getReadModelStartColumn(firstLine, readModelName), length: readModelName.length };
+        this.validateReadModelReference({ name: readModelName, exists: readModelExists, isDraft: isDraftReadModel, location }, markers);
 
-        if (projectionWithReadModelMatch) {
-            readModelName = projectionWithReadModelMatch[2];
+        // Check draft precedence separately, retaining the header's second lookup.
+        const isDraft = this.isDraftReadModel(readModelName);
+        const activeReadModel = isDraft ? null : this.resolveReadModelInfo(readModelName);
+        const activeSchema = isDraft ? this.draftReadModel!.schema : activeReadModel?.schema;
+        return { activeSchema, readModelName };
+    }
 
-            // Validate read model exists in schemas or is a draft
-            const readModelExists = this.resolveReadModelIdentifier(readModelName) !== null;
-            const isDraftReadModel = this.isDraftReadModel(readModelName);
-            const readModelStartColumn = this.getReadModelStartColumn(firstLine, readModelName);
-
-            if (!readModelExists && !isDraftReadModel) {
-                const lineNumber = firstNonEmptyLineIndex + 1;
-                const col = readModelStartColumn;
-                markers.push(this.createError(lineNumber, col, col + readModelName.length, `Read model '${readModelName}' not found`));
-            } else if (isDraftReadModel) {
-                // Show info marker for draft read models - they exist but haven't been saved yet
-                const lineNumber = firstNonEmptyLineIndex + 1;
-                const col = readModelStartColumn;
-                markers.push(this.createInfo(lineNumber, col, col + readModelName.length, `Read model '${readModelName}' is a draft (not yet saved)`));
-            }
-
-            // Get the active read model schema for property validation (check draft first)
-            const isDraft = this.isDraftReadModel(readModelName);
-            const activeReadModel = isDraft ? null : this.resolveReadModelInfo(readModelName);
-            activeSchema = isDraft ? this.draftReadModel!.schema : activeReadModel?.schema;
+    private validateReadModelReference(reference: { name: string; exists: boolean; isDraft: boolean; location: { lineNumber: number; col: number; length: number } }, markers: editor.IMarkerData[]): void {
+        if (!reference.exists && !reference.isDraft) {
+            markers.push(this.createMarker(reference.location, 8, `Read model '${reference.name}' not found`));
+        } else if (reference.isDraft) {
+            markers.push(this.createMarker(reference.location, 2, `Read model '${reference.name}' is a draft (not yet saved)`));
         }
-        // For ad hoc projections (no read model), activeSchema stays undefined — property validation is skipped
+    }
 
-        // Validate subsequent lines
-        const contextStack: JsonSchema[] = [activeSchema!];
-        const indentStack: number[] = [0]; // Track indentation levels for context
-        let lastIndent = 0;
+    private validateBody(lines: string[], root: { activeSchema: JsonSchema | undefined; readModelName: string | null }, markers: editor.IMarkerData[]): void {
+        // These stacks intentionally remain independent: joins do not push a schema.
+        const state = {
+            contextStack: [root.activeSchema],
+            indentStack: [0],
+            lastIndent: 0,
+            eventContextStack: [new Map<string, { lineNumber: number; col: number }>()],
+        };
 
-        // Track event types at each context level to detect duplicates
-        // Each entry in the stack represents events seen at that context level
-        type EventInfo = { lineNumber: number; col: number };
-        const eventContextStack: Map<string, EventInfo>[] = [new Map()];
-
+        // Keep starting at index 1, even when comments precede the header.
         for (let i = 1; i < lines.length; i++) {
-            const lineNumber = i + 1;
-            const line = lines[i];
-            const trimmed = line.trim();
-
+            const text = lines[i];
+            const trimmed = text.trim();
             if (!trimmed || trimmed.startsWith('#')) continue;
 
-            // Calculate current indentation
-            const currentIndent = line.search(/\S/);
+            const line = { text, trimmed, lineNumber: i + 1, indent: text.search(/\S/) };
+            this.leaveNestedContexts(line, state);
+            const currentEventContext = state.eventContextStack[state.eventContextStack.length - 1];
 
-            // Pop context when dedenting (exiting a children block)
-            while (currentIndent < lastIndent && indentStack.length > 1) {
-                const poppedIndent = indentStack.pop();
-                if (poppedIndent !== undefined && currentIndent < poppedIndent) {
-                    contextStack.pop();
-                    eventContextStack.pop();
-                }
-            }
-            lastIndent = currentIndent;
+            // These are independent checks in source order, not an exclusive grammar dispatcher.
+            this.validateEventReference(line, trimmed.match(/^from\s+([\w-]+)/), currentEventContext, markers);
+            this.enterVariant(line, state, markers);
+            this.validateEventReference(line, trimmed.match(/^enters\s+on\s+([\w-]+)/), currentEventContext, markers);
+            this.validateEventReference(line, trimmed.match(/^events\s+([\w-]+)/), currentEventContext, markers);
+            this.validateEventReference(line, trimmed.match(/^remove\s+(?:with|via\s+join\s+on)\s+([\w-]+)/), currentEventContext, markers);
+            this.validatePropertyTargets(line, state.contextStack[state.contextStack.length - 1], markers);
+            this.enterChildren(line, state, markers);
+            this.validateJoin(line, root, state, markers);
+            this.validateKey(line, root.activeSchema, markers);
+        }
+    }
 
-            // Get the current event context (events seen at this level)
-            const currentEventContext = eventContextStack[eventContextStack.length - 1];
-
-            // Validate event types in from/every blocks
-            const fromMatch = trimmed.match(/^from\s+([\w-]+)/);
-            if (fromMatch) {
-                const eventType = fromMatch[1];
-                const col = line.indexOf(eventType) + 1;
-
-                if (Object.keys(this.eventSchemas).length > 0 && !this.eventSchemas[eventType]) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Event type '${eventType}' not found`));
-                }
-
-                // Check for duplicate events at this level
-                if (currentEventContext.has(eventType)) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Duplicate event type '${eventType}' - event types can only be used once at each level`));
-                } else {
-                    currentEventContext.set(eventType, { lineNumber, col });
-                }
-            }
-
-            // Validate variant declarations - each names its own read model, which becomes the active
-            // schema for property validation inside the block (mirrors the projection-header handling above).
-            const variantMatch = trimmed.match(/^variant\s+([\w.]+)\s*$/);
-            if (variantMatch) {
-                const [, variantName] = variantMatch;
-                const col = line.indexOf(variantName) + 1;
-                const isDraft = this.isDraftReadModel(variantName);
-                const readModelExists = this.resolveReadModelIdentifier(variantName) !== null;
-
-                if (!readModelExists && !isDraft) {
-                    markers.push(this.createError(lineNumber, col, col + variantName.length, `Read model '${variantName}' not found`));
-                } else if (isDraft) {
-                    markers.push(this.createInfo(lineNumber, col, col + variantName.length, `Read model '${variantName}' is a draft (not yet saved)`));
-                }
-
-                const variantSchema = isDraft ? this.draftReadModel!.schema : this.resolveReadModelInfo(variantName)?.schema;
-                contextStack.push(variantSchema!);
-                indentStack.push(currentIndent);
-                eventContextStack.push(new Map());
-            }
-
-            // Validate 'enters on' - the event that activates a variant. Read exactly like a 'from' block for
-            // event-existence and duplicate-at-this-level purposes.
-            const entersOnMatch = trimmed.match(/^enters\s+on\s+([\w-]+)/);
-            if (entersOnMatch) {
-                const eventType = entersOnMatch[1];
-                const col = line.indexOf(eventType) + 1;
-
-                if (Object.keys(this.eventSchemas).length > 0 && !this.eventSchemas[eventType]) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Event type '${eventType}' not found`));
-                }
-
-                if (currentEventContext.has(eventType)) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Duplicate event type '${eventType}' - event types can only be used once at each level`));
-                } else {
-                    currentEventContext.set(eventType, { lineNumber, col });
-                }
-            }
-
-            // Validate event types in join/remove blocks
-            const eventsMatch = trimmed.match(/^events\s+([\w-]+)/);
-            if (eventsMatch) {
-                const eventType = eventsMatch[1];
-                const col = line.indexOf(eventType) + 1;
-
-                if (Object.keys(this.eventSchemas).length > 0 && !this.eventSchemas[eventType]) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Event type '${eventType}' not found`));
-                }
-
-                // Check for duplicate events at this level (within join blocks)
-                if (currentEventContext.has(eventType)) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Duplicate event type '${eventType}' - event types can only be used once at each level`));
-                } else {
-                    currentEventContext.set(eventType, { lineNumber, col });
-                }
-            }
-
-            const removeWithMatch = trimmed.match(/^remove\s+(?:with|via\s+join\s+on)\s+([\w-]+)/);
-            if (removeWithMatch) {
-                const eventType = removeWithMatch[1];
-                const col = line.indexOf(eventType) + 1;
-
-                if (Object.keys(this.eventSchemas).length > 0 && !this.eventSchemas[eventType]) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Event type '${eventType}' not found`));
-                }
-
-                // Check for duplicate events at this level
-                if (currentEventContext.has(eventType)) {
-                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Duplicate event type '${eventType}' - event types can only be used once at each level`));
-                } else {
-                    currentEventContext.set(eventType, { lineNumber, col });
-                }
-            }
-
-            // Validate property assignments
-            const assignmentMatch = trimmed.match(/^(\w+)\s*=\s*(.+)$/);
-            if (assignmentMatch) {
-                const currentSchema = contextStack[contextStack.length - 1];
-                if (currentSchema?.properties) {
-                    const [, propertyName] = assignmentMatch;
-                    if (!currentSchema.properties[propertyName]) {
-                        const col = line.indexOf(propertyName) + 1;
-                        const schemaName = this.getSchemaName(currentSchema) || 'current schema';
-                        markers.push(this.createWarning(lineNumber, col, col + propertyName.length, `Property '${propertyName}' not found in ${schemaName}`));
-                    }
-                }
-            }
-
-            // Validate increment/decrement/count targets
-            const numericOpMatch = trimmed.match(/^(?:increment|decrement|count)\s+(\w+)$/);
-            if (numericOpMatch) {
-                const currentSchema = contextStack[contextStack.length - 1];
-                if (currentSchema?.properties) {
-                    const [, propertyName] = numericOpMatch;
-                    if (!currentSchema.properties[propertyName]) {
-                        const col = line.indexOf(propertyName) + 1;
-                        const schemaName = this.getSchemaName(currentSchema) || 'current schema';
-                        markers.push(this.createWarning(lineNumber, col, col + propertyName.length, `Property '${propertyName}' not found in ${schemaName}`));
-                    }
-                }
-            }
-
-            // Validate add/subtract targets
-            const addSubMatch = trimmed.match(/^(?:add|subtract)\s+(\w+)\s+by\s+/);
-            if (addSubMatch) {
-                const currentSchema = contextStack[contextStack.length - 1];
-                if (currentSchema?.properties) {
-                    const [, propertyName] = addSubMatch;
-                    if (!currentSchema.properties[propertyName]) {
-                        const col = line.indexOf(propertyName) + 1;
-                        const schemaName = this.getSchemaName(currentSchema) || 'current schema';
-                        markers.push(this.createWarning(lineNumber, col, col + propertyName.length, `Property '${propertyName}' not found in ${schemaName}`));
-                    }
-                }
-            }
-
-            // Validate children references
-            const childrenMatch = trimmed.match(/^children\s+(\w+)\s+identified\s+by\s+/);
-            if (childrenMatch) {
-                const currentSchema = contextStack[contextStack.length - 1];
-                if (currentSchema?.properties) {
-                    const [, propertyName] = childrenMatch;
-                    const prop = currentSchema.properties[propertyName];
-                    if (!prop) {
-                        const col = line.indexOf(propertyName) + 1;
-                        const schemaName = this.getSchemaName(currentSchema) || 'current schema';
-                        markers.push(this.createWarning(lineNumber, col, col + propertyName.length, `Collection property '${propertyName}' not found in ${schemaName}`));
-                    } else if (prop.type !== 'array' && !prop.items) {
-                        const col = line.indexOf(propertyName) + 1;
-                        markers.push(this.createWarning(lineNumber, col, col + propertyName.length, `Property '${propertyName}' is not a collection (array) type`));
-                    } else {
-                        // Push child schema onto context stack for validating nested properties
-                        const childSchema = prop.items;
-                        if (childSchema) {
-                            contextStack.push(childSchema);
-                            indentStack.push(currentIndent);
-                            // Push a new event context for the children block
-                            eventContextStack.push(new Map());
-                        }
-                    }
-                }
-            }
-
-            // Validate join references
-            const joinMatch = trimmed.match(/^join\s+(\w+)\s+on\s+(\w+)/);
-            if (joinMatch && activeSchema?.properties) {
-                const [, collectionName, joinProperty] = joinMatch;
-                const collectionProp = activeSchema.properties[collectionName];
-                if (!collectionProp) {
-                    const col = line.indexOf(collectionName) + 1;
-                    markers.push(this.createWarning(lineNumber, col, col + collectionName.length, `Collection property '${collectionName}' not found in read model '${readModelName}'`));
-                } else if (collectionProp.type !== 'array' && !collectionProp.items) {
-                    const col = line.indexOf(collectionName) + 1;
-                    markers.push(this.createWarning(lineNumber, col, col + collectionName.length, `Property '${collectionName}' is not a collection (array) type`));
-                }
-
-                if (!activeSchema.properties[joinProperty]) {
-                    const col = line.indexOf(joinProperty, line.indexOf('on')) + 1;
-                    markers.push(this.createWarning(lineNumber, col, col + joinProperty.length, `Property '${joinProperty}' not found in read model '${readModelName}'`));
-                }
-
-                // Push a new event context for the join block
-                eventContextStack.push(new Map());
-                indentStack.push(currentIndent);
-            }
-
-            // Validate key references for composite keys
-            const keyMatch = trimmed.match(/^key\s+(\w+)\s*$/);
-            if (keyMatch && activeSchema) {
-                const [, keyName] = keyMatch;
-                // Check if it's a composite key type (should exist in definitions or as a property)
-                const isInDefinitions = activeSchema.definitions && activeSchema.definitions[keyName];
-                const isProperty = activeSchema.properties && activeSchema.properties[keyName];
-
-                if (!isInDefinitions && !isProperty && !this.isBuiltInExpression(keyName)) {
-                    const col = line.indexOf(keyName) + 1;
-                    markers.push(this.createWarning(lineNumber, col, col + keyName.length, `Composite key type '${keyName}' not found in read model schema`));
-                }
+    private leaveNestedContexts(line: { indent: number }, state: { contextStack: (JsonSchema | undefined)[]; indentStack: number[]; lastIndent: number; eventContextStack: Map<string, { lineNumber: number; col: number }>[] }): void {
+        while (line.indent < state.lastIndent && state.indentStack.length > 1) {
+            const poppedIndent = state.indentStack.pop();
+            if (poppedIndent !== undefined && line.indent < poppedIndent) {
+                state.contextStack.pop();
+                state.eventContextStack.pop();
             }
         }
+        state.lastIndent = line.indent;
+    }
 
-        // Share the host's event-context path checks and catalog resolution, including dynamic dictionary keys.
+    private validateEventReference(line: { text: string; lineNumber: number }, match: RegExpMatchArray | null, currentEventContext: Map<string, { lineNumber: number; col: number }>, markers: editor.IMarkerData[]): void {
+        if (!match) return;
+
+        const eventType = match[1];
+        const col = line.text.indexOf(eventType) + 1;
+        const location = { lineNumber: line.lineNumber, col, length: eventType.length };
+        if (Object.keys(this.eventSchemas).length > 0 && !this.eventSchemas[eventType]) {
+            markers.push(this.createMarker(location, 8, `Event type '${eventType}' not found`));
+        }
+        if (currentEventContext.has(eventType)) {
+            markers.push(this.createMarker(location, 8, `Duplicate event type '${eventType}' - event types can only be used once at each level`));
+        } else {
+            currentEventContext.set(eventType, { lineNumber: line.lineNumber, col });
+        }
+    }
+
+    private enterVariant(line: { text: string; trimmed: string; lineNumber: number; indent: number }, state: { contextStack: (JsonSchema | undefined)[]; indentStack: number[]; eventContextStack: Map<string, { lineNumber: number; col: number }>[] }, markers: editor.IMarkerData[]): void {
+        const variantMatch = line.trimmed.match(/^variant\s+([\w.]+)\s*$/);
+        if (!variantMatch) return;
+
+        const [, variantName] = variantMatch;
+        const col = line.text.indexOf(variantName) + 1;
+        const isDraft = this.isDraftReadModel(variantName);
+        const readModelExists = this.resolveReadModelIdentifier(variantName) !== null;
+        const location = { lineNumber: line.lineNumber, col, length: variantName.length };
+        this.validateReadModelReference({ name: variantName, exists: readModelExists, isDraft, location }, markers);
+
+        const variantSchema = isDraft ? this.draftReadModel!.schema : this.resolveReadModelInfo(variantName)?.schema;
+        state.contextStack.push(variantSchema);
+        state.indentStack.push(line.indent);
+        state.eventContextStack.push(new Map());
+    }
+
+    private validatePropertyTargets(line: { text: string; trimmed: string; lineNumber: number }, schema: JsonSchema | undefined, markers: editor.IMarkerData[]): void {
+        this.validatePropertyTarget(line, line.trimmed.match(/^(\w+)\s*=\s*(.+)$/), schema, markers);
+        this.validatePropertyTarget(line, line.trimmed.match(/^(?:increment|decrement|count)\s+(\w+)$/), schema, markers);
+        this.validatePropertyTarget(line, line.trimmed.match(/^(?:add|subtract)\s+(\w+)\s+by\s+/), schema, markers);
+    }
+
+    private validatePropertyTarget(line: { text: string; lineNumber: number }, match: RegExpMatchArray | null, schema: JsonSchema | undefined, markers: editor.IMarkerData[]): void {
+        if (!match || !schema?.properties) return;
+
+        const [, propertyName] = match;
+        if (schema.properties[propertyName]) return;
+
+        const location = { lineNumber: line.lineNumber, col: line.text.indexOf(propertyName) + 1, length: propertyName.length };
+        const schemaName = this.getSchemaName(schema) || 'current schema';
+        markers.push(this.createMarker(location, 4, `Property '${propertyName}' not found in ${schemaName}`));
+    }
+
+    private enterChildren(line: { text: string; trimmed: string; lineNumber: number; indent: number }, state: { contextStack: (JsonSchema | undefined)[]; indentStack: number[]; eventContextStack: Map<string, { lineNumber: number; col: number }>[] }, markers: editor.IMarkerData[]): void {
+        const childrenMatch = line.trimmed.match(/^children\s+(\w+)\s+identified\s+by\s+/);
+        const currentSchema = state.contextStack[state.contextStack.length - 1];
+        if (!childrenMatch || !currentSchema?.properties) return;
+
+        const [, propertyName] = childrenMatch;
+        const prop = currentSchema.properties[propertyName];
+        if (!prop) {
+            const location = { lineNumber: line.lineNumber, col: line.text.indexOf(propertyName) + 1, length: propertyName.length };
+            const schemaName = this.getSchemaName(currentSchema) || 'current schema';
+            markers.push(this.createMarker(location, 4, `Collection property '${propertyName}' not found in ${schemaName}`));
+            return;
+        }
+        if (prop.type !== 'array' && !prop.items) {
+            const location = { lineNumber: line.lineNumber, col: line.text.indexOf(propertyName) + 1, length: propertyName.length };
+            markers.push(this.createMarker(location, 4, `Property '${propertyName}' is not a collection (array) type`));
+            return;
+        }
+        const childSchema = prop.items;
+        if (!childSchema) return;
+
+        state.contextStack.push(childSchema);
+        state.indentStack.push(line.indent);
+        state.eventContextStack.push(new Map());
+    }
+
+    private validateJoin(line: { text: string; trimmed: string; lineNumber: number; indent: number }, root: { activeSchema: JsonSchema | undefined; readModelName: string | null }, state: { indentStack: number[]; eventContextStack: Map<string, { lineNumber: number; col: number }>[] }, markers: editor.IMarkerData[]): void {
+        const joinMatch = line.trimmed.match(/^join\s+(\w+)\s+on\s+(\w+)/);
+        const { activeSchema, readModelName } = root;
+        if (!joinMatch || !activeSchema?.properties) return;
+
+        const [, collectionName, joinProperty] = joinMatch;
+        const collectionProp = activeSchema.properties[collectionName];
+        this.validateJoinCollection(line, { collectionName, collectionProp, readModelName }, markers);
+
+        if (!activeSchema.properties[joinProperty]) {
+            const col = line.text.indexOf(joinProperty, line.text.indexOf('on')) + 1;
+            const location = { lineNumber: line.lineNumber, col, length: joinProperty.length };
+            markers.push(this.createMarker(location, 4, `Property '${joinProperty}' not found in read model '${readModelName}'`));
+        }
+
+        // A join pushes an event context and indent, but never a schema context.
+        state.eventContextStack.push(new Map());
+        state.indentStack.push(line.indent);
+    }
+
+    private validateJoinCollection(line: { text: string; lineNumber: number }, collection: { collectionName: string; collectionProp: JsonSchema | undefined; readModelName: string | null }, markers: editor.IMarkerData[]): void {
+        const { collectionName, collectionProp, readModelName } = collection;
+        if (!collectionProp) {
+            const location = { lineNumber: line.lineNumber, col: line.text.indexOf(collectionName) + 1, length: collectionName.length };
+            markers.push(this.createMarker(location, 4, `Collection property '${collectionName}' not found in read model '${readModelName}'`));
+        } else if (collectionProp.type !== 'array' && !collectionProp.items) {
+            const location = { lineNumber: line.lineNumber, col: line.text.indexOf(collectionName) + 1, length: collectionName.length };
+            markers.push(this.createMarker(location, 4, `Property '${collectionName}' is not a collection (array) type`));
+        }
+    }
+
+    private validateKey(line: { text: string; trimmed: string; lineNumber: number }, activeSchema: JsonSchema | undefined, markers: editor.IMarkerData[]): void {
+        const keyMatch = line.trimmed.match(/^key\s+(\w+)\s*$/);
+        if (!keyMatch || !activeSchema) return;
+
+        const [, keyName] = keyMatch;
+        const isInDefinitions = activeSchema.definitions && activeSchema.definitions[keyName];
+        const isProperty = activeSchema.properties && activeSchema.properties[keyName];
+        if (isInDefinitions || isProperty) return;
+        if (this.isBuiltInExpression(keyName)) return;
+
+        const location = { lineNumber: line.lineNumber, col: line.text.indexOf(keyName) + 1, length: keyName.length };
+        markers.push(this.createMarker(location, 4, `Composite key type '${keyName}' not found in read model schema`));
+    }
+
+    private appendEventContextMarkers(lines: string[], markers: editor.IMarkerData[]): void {
+        // Shared path checks stay after all local diagnostics, including later lines.
         for (const issue of validateEventContextPaths(lines, fenceMap(lines))) {
             markers.push({
                 severity: issue.severity === 'error' ? 8 : 4,
@@ -363,8 +279,6 @@ export class Validator {
                 code: issue.code,
             });
         }
-
-        return markers;
     }
 
     private resolveReadModelInfo(readModelToken: string): ReadModelInfo | null {
@@ -396,35 +310,13 @@ export class Validator {
         return text.startsWith('$') || ['true', 'false', 'null'].includes(text);
     }
 
-    private createError(line: number, startCol: number, endCol: number, message: string): editor.IMarkerData {
+    private createMarker(location: { lineNumber: number; col: number; length: number }, severity: number, message: string): editor.IMarkerData {
         return {
-            severity: 8, // Error
-            startLineNumber: line,
-            startColumn: startCol,
-            endLineNumber: line,
-            endColumn: endCol,
-            message,
-        };
-    }
-
-    private createWarning(line: number, startCol: number, endCol: number, message: string): editor.IMarkerData {
-        return {
-            severity: 4, // Warning
-            startLineNumber: line,
-            startColumn: startCol,
-            endLineNumber: line,
-            endColumn: endCol,
-            message,
-        };
-    }
-
-    private createInfo(line: number, startCol: number, endCol: number, message: string): editor.IMarkerData {
-        return {
-            severity: 2, // Info (hint) - shows as blue/green squiggly
-            startLineNumber: line,
-            startColumn: startCol,
-            endLineNumber: line,
-            endColumn: endCol,
+            severity,
+            startLineNumber: location.lineNumber,
+            startColumn: location.col,
+            endLineNumber: location.lineNumber,
+            endColumn: location.col + location.length,
             message,
         };
     }
