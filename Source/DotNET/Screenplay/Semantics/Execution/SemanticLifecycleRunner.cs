@@ -50,26 +50,8 @@ public static class SemanticLifecycleRunner
         var application = model.Application;
         if (application.StateMachines.All(machine => machine.Specifications.IsDefaultOrEmpty) && application.Workflows.All(workflow => workflow.Specifications.IsDefaultOrEmpty)) return [];
         var compilation = SemanticExecutionPlan.CompileForSpecifications(model);
-        foreach (var machine in application.StateMachines)
-        {
-            foreach (var specification in machine.Specifications)
-            {
-                results.Add(compilation.Plan is null
-                    ? new(machine.Name, specification.Name, ["The model cannot be planned for execution."])
-                    : new(machine.Name, specification.Name, RunStateMachine(compilation.Plan, machine, specification)));
-            }
-        }
-
-        foreach (var workflow in application.Workflows)
-        {
-            foreach (var specification in workflow.Specifications)
-            {
-                results.Add(compilation.Plan is null
-                    ? new(workflow.Name, specification.Name, ["The model cannot be planned for execution."])
-                    : new(workflow.Name, specification.Name, RunWorkflow(compilation.Plan, workflow, specification)));
-            }
-        }
-
+        AppendStateMachineResults(application, compilation, results);
+        AppendWorkflowResults(application, compilation, results);
         return results.ToImmutable();
     }
 
@@ -81,11 +63,41 @@ public static class SemanticLifecycleRunner
     /// <param name="facts">The facts in order.</param>
     /// <param name="key">The identity of the instance.</param>
     /// <returns>The current state and the entering effects of the last fact.</returns>
-    public static (string State, ImmutableArray<SemanticStateEntry> Effects) Derive(SemanticExecutionPlan plan, SemanticStateMachine machine, ImmutableArray<SemanticFact> facts, SemanticValue key) =>
-        Derive(plan, machine, facts, key, []);
-
-    static (string State, ImmutableArray<SemanticStateEntry> Effects) Derive(SemanticExecutionPlan plan, SemanticStateMachine machine, ImmutableArray<SemanticFact> facts, SemanticValue key, List<string> problems)
+    public static (string State, ImmutableArray<SemanticStateEntry> Effects) Derive(SemanticExecutionPlan plan, SemanticStateMachine machine, ImmutableArray<SemanticFact> facts, SemanticValue key)
     {
+        var derived = DeriveState(plan, machine, facts, key);
+        return (derived.State, derived.Effects);
+    }
+
+    static void AppendStateMachineResults(SemanticApplication application, SemanticExecutionPlanCompilation compilation, ImmutableArray<SemanticLifecycleSpecificationResult>.Builder results)
+    {
+        foreach (var machine in application.StateMachines)
+        {
+            foreach (var specification in machine.Specifications)
+            {
+                results.Add(compilation.Plan is null
+                    ? new(machine.Name, specification.Name, ["The model cannot be planned for execution."])
+                    : new(machine.Name, specification.Name, RunStateMachine(compilation.Plan, machine, specification)));
+            }
+        }
+    }
+
+    static void AppendWorkflowResults(SemanticApplication application, SemanticExecutionPlanCompilation compilation, ImmutableArray<SemanticLifecycleSpecificationResult>.Builder results)
+    {
+        foreach (var workflow in application.Workflows)
+        {
+            foreach (var specification in workflow.Specifications)
+            {
+                results.Add(compilation.Plan is null
+                    ? new(workflow.Name, specification.Name, ["The model cannot be planned for execution."])
+                    : new(workflow.Name, specification.Name, RunWorkflow(compilation.Plan, workflow, specification)));
+            }
+        }
+    }
+
+    static (string State, ImmutableArray<SemanticStateEntry> Effects, List<string> Problems) DeriveState(SemanticExecutionPlan plan, SemanticStateMachine machine, ImmutableArray<SemanticFact> facts, SemanticValue key)
+    {
+        var problems = new List<string>();
         var state = machine.States.Single(candidate => candidate.IsInitial).Name;
         var effects = ImmutableArray<SemanticStateEntry>.Empty;
         for (var index = 0; index < facts.Length; index++)
@@ -93,19 +105,28 @@ public static class SemanticLifecycleRunner
             effects = [];
             var fact = facts[index];
             if (!SemanticValueRules.AreEqual(fact.Destination, key)) continue;
-            var values = ModelValues(plan, machine.ReadModel, facts[..(index + 1)], key, problems);
-            var allowed = machine.Transitions.Where(transition => transition.From == state).Select(transition => transition.To).ToHashSet(StringComparer.Ordinal);
-            foreach (var transition in machine.Transitions.Where(transition => transition.Event == fact.EventContract))
-            {
-                if (!allowed.Contains(transition.To)) continue;
-                if (transition.Guard is not null && (values is null || !SemanticConditionEvaluator.Evaluate(transition.Guard, values))) continue;
-                state = transition.To;
-                effects = machine.States.Single(candidate => candidate.Name == state).Entering;
-                break;
-            }
+            var (values, problem) = ModelValues(plan, machine.ReadModel, facts[..(index + 1)], key);
+            if (problem is not null) problems.Add(problem);
+            var transition = FindTransition(machine, state, fact, values);
+            if (transition is null) continue;
+            state = transition.To;
+            effects = machine.States.Single(candidate => candidate.Name == state).Entering;
         }
 
-        return (state, effects);
+        return (state, effects, problems);
+    }
+
+    static SemanticStateTransition? FindTransition(SemanticStateMachine machine, string state, SemanticFact fact, Dictionary<SemanticId, SemanticValue>? values)
+    {
+        var allowed = machine.Transitions.Where(transition => transition.From == state).Select(transition => transition.To).ToHashSet(StringComparer.Ordinal);
+        return machine.Transitions.Where(transition => transition.Event == fact.EventContract)
+            .FirstOrDefault(transition => allowed.Contains(transition.To) && GuardMatches(transition, values));
+    }
+
+    static bool GuardMatches(SemanticStateTransition transition, Dictionary<SemanticId, SemanticValue>? values)
+    {
+        if (transition.Guard is null) return true;
+        return values is not null && SemanticConditionEvaluator.Evaluate(transition.Guard, values);
     }
 
     static ImmutableArray<string> RunStateMachine(SemanticExecutionPlan plan, SemanticStateMachine machine, SemanticLifecycleSpecification specification)
@@ -115,8 +136,7 @@ public static class SemanticLifecycleRunner
         var facts = Facts(plan, specification, out var rejection);
         if (rejection is not null) return [rejection];
         var key = facts[^1].Destination;
-        var problems = new List<string>();
-        var (state, effects) = Derive(plan, machine, facts, key, problems);
+        var (state, effects, problems) = DeriveState(plan, machine, facts, key);
         failures.AddRange(problems.Distinct());
         foreach (var expectation in specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.State))
         {
@@ -138,44 +158,17 @@ public static class SemanticLifecycleRunner
         var failures = ImmutableArray.CreateBuilder<string>();
         var facts = Facts(plan, specification, out var rejection);
         if (rejection is not null) return [rejection];
-        SemanticValue key;
-        SemanticWorkflowNode? trigger = null;
-        if (specification.WhenAppended is not null)
-        {
-            key = facts[^1].Destination;
-            var before = facts[..^1];
-            trigger = workflow.Nodes.Where(node => node.Kind == SemanticWorkflowNodeKind.Trigger).FirstOrDefault(node => node.TriggerKind switch
-            {
-                SemanticWorkflowTriggerKind.Event => node.Event == facts[^1].EventContract,
-                SemanticWorkflowTriggerKind.StateEntered => StateEntered(plan, workflow, node, before, facts, key),
-                _ => false
-            });
-        }
-        else
-        {
-            key = specification.WhenStarted ?? SemanticValue.Null;
-            trigger = workflow.Nodes.FirstOrDefault(node => node.Kind == SemanticWorkflowNodeKind.Trigger && node.TriggerKind is SemanticWorkflowTriggerKind.Manual or SemanticWorkflowTriggerKind.Schedule);
-        }
-
-        var problems = new List<string>();
-        var run = new Run(workflow, specification, ModelValues(plan, workflow.Subject, facts, key, problems));
-        failures.AddRange(problems.Distinct());
+        var key = specification.WhenAppended is not null ? facts[^1].Destination : specification.WhenStarted ?? SemanticValue.Null;
+        var trigger = FindTrigger(plan, workflow, specification, facts);
+        var (values, problem) = ModelValues(plan, workflow.Subject, facts, key);
+        var run = new Run(workflow, specification, values);
+        if (problem is not null) failures.Add(problem);
         if (trigger is not null) run.Walk(trigger.Name);
         else run.Started = false;
         foreach (var expectation in specification.Then)
         {
-            switch (expectation.Kind)
-            {
-                case SemanticLifecycleExpectationKind.Completes when run.End != RunEnd.Completed:
-                    failures.Add($"Expected the run to complete, but {run.Describe()}.");
-                    break;
-                case SemanticLifecycleExpectationKind.Fails when run.End != RunEnd.Failed || run.Node != expectation.Target:
-                    failures.Add($"Expected the run to fail at '{expectation.Target}', but {run.Describe()}.");
-                    break;
-                case SemanticLifecycleExpectationKind.Waits when run.End != RunEnd.Waiting || run.Node != expectation.Target:
-                    failures.Add($"Expected the run to wait at '{expectation.Target}', but {run.Describe()}.");
-                    break;
-            }
+            var failure = WorkflowExpectationFailure(run, expectation);
+            if (failure is not null) failures.Add(failure);
         }
 
         string[] expectedSends = [.. specification.Then.Where(expectation => expectation.Kind == SemanticLifecycleExpectationKind.Sends).Select(expectation => CommandName(plan, expectation.Command))];
@@ -184,10 +177,35 @@ public static class SemanticLifecycleRunner
         return failures.ToImmutable();
     }
 
-    static bool StateEntered(SemanticExecutionPlan plan, SemanticWorkflow workflow, SemanticWorkflowNode node, ImmutableArray<SemanticFact> before, ImmutableArray<SemanticFact> after, SemanticValue key)
+    static SemanticWorkflowNode? FindTrigger(SemanticExecutionPlan plan, SemanticWorkflow workflow, SemanticLifecycleSpecification specification, ImmutableArray<SemanticFact> facts)
+    {
+        if (specification.WhenAppended is null)
+        {
+            return workflow.Nodes.FirstOrDefault(node => node.Kind == SemanticWorkflowNodeKind.Trigger && node.TriggerKind is SemanticWorkflowTriggerKind.Manual or SemanticWorkflowTriggerKind.Schedule);
+        }
+
+        return workflow.Nodes.Where(node => node.Kind == SemanticWorkflowNodeKind.Trigger).FirstOrDefault(node => node.TriggerKind switch
+        {
+            SemanticWorkflowTriggerKind.Event => node.Event == facts[^1].EventContract,
+            SemanticWorkflowTriggerKind.StateEntered => StateEntered(plan, workflow, node, facts),
+            _ => false
+        });
+    }
+
+    static string? WorkflowExpectationFailure(Run run, SemanticLifecycleExpectation expectation) => expectation.Kind switch
+    {
+        SemanticLifecycleExpectationKind.Completes when run.End != RunEnd.Completed => $"Expected the run to complete, but {run.Describe()}.",
+        SemanticLifecycleExpectationKind.Fails when run.End != RunEnd.Failed || run.Node != expectation.Target => $"Expected the run to fail at '{expectation.Target}', but {run.Describe()}.",
+        SemanticLifecycleExpectationKind.Waits when run.End != RunEnd.Waiting || run.Node != expectation.Target => $"Expected the run to wait at '{expectation.Target}', but {run.Describe()}.",
+        _ => null
+    };
+
+    static bool StateEntered(SemanticExecutionPlan plan, SemanticWorkflow workflow, SemanticWorkflowNode node, ImmutableArray<SemanticFact> after)
     {
         var machine = plan.Model.Application.StateMachines.FirstOrDefault(candidate => candidate.Name == node.StateMachine);
         if (machine is null || machine.ReadModel != workflow.Subject) return false;
+        var key = after[^1].Destination;
+        var before = after[..^1];
         return Derive(plan, machine, before, key).State != node.State && Derive(plan, machine, after, key).State == node.State;
     }
 
@@ -225,23 +243,22 @@ public static class SemanticLifecycleRunner
     }
 
     // The followed read model as it is after the facts, keyed by property identity; null when the facts build no instance of it.
-    static Dictionary<SemanticId, SemanticValue>? ModelValues(SemanticExecutionPlan plan, SemanticId readModel, ImmutableArray<SemanticFact> facts, SemanticValue key, List<string> problems)
+    static (Dictionary<SemanticId, SemanticValue>? Values, string? Problem) ModelValues(SemanticExecutionPlan plan, SemanticId readModel, ImmutableArray<SemanticFact> facts, SemanticValue key)
     {
-        if (facts.IsEmpty) return null;
+        if (facts.IsEmpty) return (null, null);
         var established = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts, default);
         if (established is not SemanticAccepted accepted)
         {
-            problems.Add(established switch
+            return (null, established switch
             {
                 SemanticUnsupported unsupported => $"The facts cannot be projected: {unsupported.Details}",
                 SemanticRejected rejected => $"The facts are rejected: {rejected.Details}",
                 _ => "The facts cannot be projected."
             });
-            return null;
         }
         var instances = accepted.World.ReadModels.Where(instance => instance.ReadModel == readModel).ToArray();
         var instance = instances.FirstOrDefault(candidate => SemanticValueRules.AreEqual(candidate.Key, key));
-        return instance?.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
+        return (instance?.Values.ToDictionary(value => value.TargetProperty, value => value.Value), null);
     }
 
     sealed class Run(SemanticWorkflow workflow, SemanticLifecycleSpecification specification, Dictionary<SemanticId, SemanticValue>? subject)
@@ -262,6 +279,9 @@ public static class SemanticLifecycleRunner
 
         public bool Started { get; set; } = true;
 
+        static bool IsFailureOutlet(string? outlet) =>
+            string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal);
+
         public string Describe() => !Started ? "no run started" : End switch
         {
             RunEnd.Completed => "the run completed",
@@ -279,9 +299,6 @@ public static class SemanticLifecycleRunner
             else End = RunEnd.Completed;
         }
 
-        static bool IsFailureOutlet(string? outlet) =>
-            string.Equals(outlet, "failed", StringComparison.Ordinal) || string.Equals(outlet, "refused", StringComparison.Ordinal) || string.Equals(outlet, "rejected", StringComparison.Ordinal) || string.Equals(outlet, "expired", StringComparison.Ordinal);
-
         // Returns true while the run is still going.
         bool Step(string name)
         {
@@ -289,69 +306,65 @@ public static class SemanticLifecycleRunner
             while (guard++ < 10_000)
             {
                 var node = _nodes[name];
-                string? outlet;
-                switch (node.Kind)
-                {
-                    case SemanticWorkflowNodeKind.Trigger:
-                        outlet = "next";
-                        break;
-                    case SemanticWorkflowNodeKind.Action:
-                        outlet = Act(node);
-                        break;
-                    case SemanticWorkflowNodeKind.Compute:
-                        outlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet
-                            ?? (workflow.Edges.Any(edge => edge.From == node.Name && edge.Outlet == "next") ? "next" : null);
-                        if (outlet is null)
-                        {
-                            Suspend(node.Name);
-                            return false;
-                        }
-
-                        break;
-                    case SemanticWorkflowNodeKind.Decision:
-                        outlet = subject is not null && SemanticConditionEvaluator.Evaluate(node.Condition!, subject) ? node.WhenTrue : node.WhenFalse;
-                        break;
-                    case SemanticWorkflowNodeKind.Wait when node.Duration is not null:
-                        outlet = "resumed";
-                        break;
-                    case SemanticWorkflowNodeKind.Wait or SemanticWorkflowNodeKind.Approval:
-                        outlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet;
-                        if (outlet is null)
-                        {
-                            Suspend(node.Name);
-                            return false;
-                        }
-
-                        break;
-                    case SemanticWorkflowNodeKind.ForEach:
-                        if (!FanOut(node)) return false;
-                        outlet = "completed";
-                        break;
-                    default:
-                        outlet = Join(node, out var ends);
-                        if (ends) return true;
-                        break;
-                }
-
-                var edge = workflow.Edges.FirstOrDefault(candidate => candidate.From == node.Name && candidate.Outlet == outlet);
-                if (edge is null)
-                {
-                    if (IsFailureOutlet(outlet))
-                    {
-                        End = RunEnd.Failed;
-                        Node = node.Name;
-                        return false;
-                    }
-
-                    return true;
-                }
-
-                name = edge.To;
+                var resolution = ResolveOutlet(node);
+                if (resolution.BranchResult is { } branchResult) return branchResult;
+                var continuation = FollowEdge(node, resolution.Outlet);
+                if (continuation.BranchResult is { } terminalResult) return terminalResult;
+                name = continuation.Next!;
             }
 
             End = RunEnd.Failed;
             Node = name;
             return false;
+        }
+
+        // A null branch result follows an edge; a value ends this branch without changing global completion.
+        (string? Outlet, bool? BranchResult) ResolveOutlet(SemanticWorkflowNode node) => node.Kind switch
+        {
+            SemanticWorkflowNodeKind.Trigger => ("next", null),
+            SemanticWorkflowNodeKind.Decision => (subject is not null && SemanticConditionEvaluator.Evaluate(node.Condition!, subject) ? node.WhenTrue : node.WhenFalse, null),
+            SemanticWorkflowNodeKind.ForEach => FanOut(node) ? ("completed", null) : (null, false),
+            _ => ResolveActivityOutlet(node)
+        };
+
+        (string? Outlet, bool? BranchResult) ResolveActivityOutlet(SemanticWorkflowNode node)
+        {
+            switch (node.Kind)
+            {
+                case SemanticWorkflowNodeKind.Action:
+                    return (Act(node), null);
+                case SemanticWorkflowNodeKind.Compute:
+                    return ResolveOutcome(node);
+                case SemanticWorkflowNodeKind.Wait when node.Duration is not null:
+                    return ("resumed", null);
+                case SemanticWorkflowNodeKind.Wait or SemanticWorkflowNodeKind.Approval:
+                    return ResolveOutcome(node);
+                default:
+                    var outlet = Join(node, out var ends);
+                    return (outlet, ends ? true : null);
+            }
+        }
+
+        string? ComputeDefault(SemanticWorkflowNode node) =>
+            workflow.Edges.Any(edge => edge.From == node.Name && edge.Outlet == "next") ? "next" : null;
+
+        (string? Outlet, bool? BranchResult) ResolveOutcome(SemanticWorkflowNode node)
+        {
+            var outlet = specification.Outcomes.FirstOrDefault(outcome => outcome.Node == node.Name)?.Outlet;
+            if (outlet is null && node.Kind == SemanticWorkflowNodeKind.Compute) outlet = ComputeDefault(node);
+            if (outlet is not null) return (outlet, null);
+            Suspend(node.Name);
+            return (null, false);
+        }
+
+        (string? Next, bool? BranchResult) FollowEdge(SemanticWorkflowNode node, string? outlet)
+        {
+            var edge = workflow.Edges.FirstOrDefault(candidate => candidate.From == node.Name && candidate.Outlet == outlet);
+            if (edge is not null) return (edge.To, null);
+            if (!IsFailureOutlet(outlet)) return (null, true);
+            End = RunEnd.Failed;
+            Node = node.Name;
+            return (null, false);
         }
 
         string Act(SemanticWorkflowNode node)
@@ -397,15 +410,9 @@ public static class SemanticLifecycleRunner
             ends = true;
             if (_completedJoins.Contains(node.Name)) return "next";
             var arrivals = _arrivals[node.Name] = _arrivals.GetValueOrDefault(node.Name) + 1;
-            var threshold = node.JoinMode switch
+            if (arrivals < JoinThreshold(node))
             {
-                SemanticJoinMode.Any => 1,
-                SemanticJoinMode.AtLeast => node.JoinCount!.Value,
-                _ => Math.Max(1, workflow.Edges.Count(edge => edge.To == node.Name)) * _iterations
-            };
-            if (arrivals < threshold)
-            {
-                if (!_pendingJoins.Contains(node.Name, StringComparer.Ordinal)) _pendingJoins.Add(node.Name);
+                RecordPendingJoin(node.Name);
                 return "next";
             }
 
@@ -413,6 +420,18 @@ public static class SemanticLifecycleRunner
             _completedJoins.Add(node.Name);
             ends = false;
             return "next";
+        }
+
+        int JoinThreshold(SemanticWorkflowNode node) => node.JoinMode switch
+        {
+            SemanticJoinMode.Any => 1,
+            SemanticJoinMode.AtLeast => node.JoinCount!.Value,
+            _ => Math.Max(1, workflow.Edges.Count(edge => edge.To == node.Name)) * _iterations
+        };
+
+        void RecordPendingJoin(string name)
+        {
+            if (!_pendingJoins.Contains(name, StringComparer.Ordinal)) _pendingJoins.Add(name);
         }
     }
 }

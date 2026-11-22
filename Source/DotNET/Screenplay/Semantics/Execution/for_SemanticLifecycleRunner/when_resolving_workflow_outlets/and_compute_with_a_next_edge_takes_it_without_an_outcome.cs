@@ -3,7 +3,7 @@
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticLifecycleRunner.when_resolving_workflow_outlets;
 
-public class and_compute_with_a_next_edge_uses_that_default : given.a_join_workflow
+public class and_compute_with_a_next_edge_takes_it_without_an_outcome : given.a_join_workflow
 {
     void Establish() => BindWorkflow("  trigger Started manual\n    -> Risk\n  compute Risk\n    returns\n      score String\n    ```csharp\n    return new { score = \"low\" };\n    ```\n    next -> Tag\n  action Tag invokes TagInvoice", "    then invokes TagInvoice\n    then completes");
 
