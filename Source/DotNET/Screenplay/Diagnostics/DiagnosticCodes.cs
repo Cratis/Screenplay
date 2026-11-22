@@ -41,6 +41,9 @@ public static class DiagnosticCodes
     /// <summary>A guarded screen action cannot obtain an item from a collection.</summary>
     public const string UnsupportedActionSubjectContext = "PLAY0821";
 
+    /// <summary>Malformed, duplicate or empty action presentation value.</summary>
+    public const string InvalidActionPresentation = "PLAY1166";
+
     // The document and its top level.
 
     /// <summary>

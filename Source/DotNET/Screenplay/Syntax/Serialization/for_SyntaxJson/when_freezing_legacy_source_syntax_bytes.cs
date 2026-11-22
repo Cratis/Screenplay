@@ -765,7 +765,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
                 Contributions = feature.Contributions?.Select(WithoutNavigationItem),
                 Slices = feature.Slices.Select(slice => slice with
                 {
-                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(screen)), Contributions = [] })
+                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(WithoutSampleRowMenuActions(screen))), Contributions = [] })
                 })
             })
         })
@@ -866,6 +866,12 @@ public partial class when_freezing_legacy_source_syntax_bytes
             },
             _ => directive
         });
+
+    // The living sample demonstrates row-menu hints in its current shared vectors. The protected
+    // historical bytes predate these two root actions; keep every older directive unchanged.
+    static ScreenSyntax WithoutSampleRowMenuActions(ScreenSyntax screen) => screen.Name == "InvoiceList"
+        ? screen with { Directives = screen.Directives.Where(directive => directive is not ScreenActionSyntax { Command: "TagInvoice" or "ChangeInvoiceStatus" }) }
+        : screen;
 
     // Payments now start from the due/overdue rows. Restore only the former toolbar for the
     // frozen baseline; the current vectors protect identity-carrying rows and query population.

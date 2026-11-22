@@ -134,6 +134,7 @@ export const keywordDocs: Record<string, string> = {
     subject: 'In policy `matches subject`, the identifier of the thing acted on, not the caller. The caller is `$context.causedBy.subject`.',
     data: 'Binds a read model to a screen through a query.',
     action: 'Makes a command available on a screen. `action "Label"` declares one button with ordered `when … execute` alternatives over the nearest data item or selected row. No subject hides it; commands still enforce authorization and validation.',
+    presentation: 'Advisory renderer metadata. On a plain `action Command for item`, `presentation placement "row-menu"` requests row-menu grouping without changing subjects, inputs or execution. Omission keeps the flat action bar. Each key occurs once; placement must be nonempty. Unknown keys and nonempty values are preserved for consumers.',
     otherwise: 'The final fallback of a guarded action: `otherwise hidden` or `otherwise execute <Command>`. In an item interaction, bare `otherwise` opens a fallback action list. No subject runs nothing, including fallback; authorization never falls through.',
     hidden: 'Hides a guarded action when no condition matches. Without a subject the action is always hidden, even with an execute fallback.',
     execute: 'Executes a command. A guarded screen action selects it by the first matching condition; explicit `with … from` bindings precede same-name item fields, its declared form and renderer input.',

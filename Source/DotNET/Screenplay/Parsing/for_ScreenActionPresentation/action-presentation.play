@@ -1,0 +1,35 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+numbers exact
+
+shape ItemRow
+  id Uuid
+
+screen Shared
+  data ItemRow[]
+  section operations
+    action Retry for item label "Retry"
+      with id from item.id
+      presentation placement "row-menu"
+      presentation extension "future"
+
+module Work
+  feature Items
+    slice StateView List
+      command Retry
+        id Uuid identifier
+      readmodel Item
+        id Uuid key
+      query Rows => Item[]
+      uses screen Shared
+        data ItemRow via query Rows
+      screen Local
+        data Item[] via query Rows
+        action Retry for item
+          presentation placement "row-menu"
+          navigate to Local
+        action Retry for screen
+        section more
+          action Retry for item
+            presentation placement "future-menu"

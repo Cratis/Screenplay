@@ -15,7 +15,10 @@ internal static class SyntaxJsonDefaults
         OmitTagExpectations(node, member, value);
 
     static bool OmitScreenDefaults(SyntaxNode node, string member, object? value) =>
-        OmitSubject(node, member, value) || OmitInputs(node, member, value);
+        OmitSubject(node, member, value) || OmitInputs(node, member, value) || OmitPresentation(node, member, value);
+
+    static bool OmitPresentation(SyntaxNode node, string member, object? value) =>
+        node is ScreenActionSyntax && member == "presentation" && value is IEnumerable<PresentationValueSyntax> presentation && !presentation.Any();
 
     static bool OmitSubject(SyntaxNode node, string member, object? value) =>
         node is ScreenActionSyntax or ScreenGuardedActionSyntax or ToolbarItemSyntax && member == "subject" && value is null;

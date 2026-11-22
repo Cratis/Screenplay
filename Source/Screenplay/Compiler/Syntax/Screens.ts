@@ -90,6 +90,8 @@ export interface ScreenActionSyntax extends SyntaxNode {
     readonly kind: 'ScreenActionSyntax';
     readonly subject?: ScreenActionSubjectKind | null;
     readonly inputs?: readonly InteractionArgumentSyntax[];
+    /** Advisory presentation; it does not change the action's subject or execution. */
+    readonly presentation?: readonly PresentationValueSyntax[];
     readonly command: string;
     readonly label: string | null;
     readonly navigate: ScreenNavigateSyntax | null;

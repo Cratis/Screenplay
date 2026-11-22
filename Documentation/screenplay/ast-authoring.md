@@ -9,6 +9,10 @@ description: The Cratis Screenplay AST authoring API supports typed syntax edits
 
 Use nullable `description` on `SpecificationSyntax` and nullable `documentation` on `ModuleSyntax`, `FeatureSyntax`, `SliceSyntax`, `CommandSyntax`, `ReadModelSyntax` and `ReactionSyntax`. `EventSyntax` retains its existing fields. The typed AST carries the text without changing executable semantics; preserve these members during replacements. MCP `declaration-details` includes both fields in the summary for supporting kinds. See [Descriptions and documentation](slices.md#descriptions-and-documentation) for the source forms.
 
+## Action presentation
+
+Preserve `ScreenActionSyntax.Presentation` (TypeScript `presentation`) when replacing an action. It defaults to an empty collection and contains ordered `PresentationValueSyntax` entries with a name, string value and location. Nonempty presentation requires an explicit item subject, unique nonempty keys and a nonempty `placement`. `placement "row-menu"` is advisory grouping only; unknown keys and nonempty values survive. An empty collection is omitted from AST JSON, so older actions keep their flat action bar. Presentation is surfaced only in UI `scene.actions`, not neutral `UiAction` or the executable model. See [AST compatibility](ast-compatibility.md#advisory-action-presentation).
+
 ## Agent allowlist
 
 Preserve optional `ApplicationSyntax.agents` during root replacements. Omit it for no agent exposure; do not infer entries from authorization or from the operations present in the application. An explicit `AgentsSyntax` holds ordered `operations` and `tokens`. Each `AgentOperationSyntax` records `syntaxKind` (`Query` or `Command`), `reference`, `scope` (`Read` or `Write`) and a literal `description`; `AgentTokensSyntax.syntaxKind` records `Personal` or the currently refused `OAuth`. Validation requires exactly one personal-token declaration, a nonempty description and an explicit scope per entry, with write scope for commands. Resolve references against the composed application, not a partial imported file. See [Agents](agents.md) for authorization and query restrictions.

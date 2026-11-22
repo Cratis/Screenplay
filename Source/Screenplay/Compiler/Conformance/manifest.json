@@ -72,6 +72,7 @@
         { "name": "optional-legacy", "path": "Source/Screenplay/Compiler/Conformance/optional-legacy.play" },
         { "name": "inline-events", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/InlineEvents/inline.play" },
         { "name": "explicit-events", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/InlineEvents/explicit.play" },
+        { "name": "action-presentation", "path": "Source/DotNET/Screenplay/Parsing/for_ScreenActionPresentation/action-presentation.play" },
         { "name": "constructs", "path": "Source/Screenplay/Compiler/Conformance/constructs.play" },
         { "name": "register-project", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v2/source/RegisterProject.play" },
         { "name": "register-project-legacy", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v1-legacy/source/single/RegisterProject.play" },

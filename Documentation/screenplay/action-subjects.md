@@ -5,6 +5,8 @@ description: "Use for item for actions on selected data and for screen for scree
 
 # Action subjects
 
+For advisory row-menu grouping, a plain command action must explicitly say `for item` before adding `presentation placement "row-menu"`. The hint never changes subject inference, selection, input binding, authorization or execution. Omission keeps the default flat action bar. See [advisory placement](screens.md#advisory-row-menu-placement); guarded and screen-scoped actions do not accept this child.
+
 An action's subject says whether it acts on a selected data item or on the screen as a whole. Use `for item` for an action that needs the displayed record or a selected row, and `for screen` for an action that does not depend on selection.
 
 Here, retrying uses an item's identity, while adding an item stays available independently of row selection:

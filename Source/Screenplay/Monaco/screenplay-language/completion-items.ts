@@ -512,6 +512,12 @@ export const actionItems: CompletionEntry[] = [
     { label: 'label', insertText: 'label "${1:text}"', documentation: 'The display label of the action.' },
 ];
 
+export function plainActionItemsFor(header: string | undefined): CompletionEntry[] {
+    return /^action\s+[\w.]+\s+for\s+item(?:\s+label\b.*)?$/.test(header ?? '')
+        ? [...actionItems, { label: 'presentation placement', insertText: 'presentation placement "${1:row-menu}"', documentation: 'Advisory row-menu grouping for this explicit item action. Omit to keep the flat action bar; it never changes selection, inputs or execution.' }]
+        : actionItems;
+}
+
 export const guardedActionItems: CompletionEntry[] = [
     { label: 'when … execute', insertText: 'when item.${1:status} == "${2:open}" execute ${3:CommandName}', documentation: 'First matching alternative selects the command; authorization never falls through.' },
     { label: 'otherwise hidden', insertText: 'otherwise hidden', documentation: 'Hides the action when no alternative matches; also the default.' },

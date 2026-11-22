@@ -54,6 +54,7 @@ absent and the CLI says so on standard error.
 | Member | Meaning |
 | --- | --- |
 | `data` | One entry per query the screen shows: the read model, whether it is a list, the value it is narrowed `by`, the fields shown with their labels (empty when the screen shows them all) and whether it is `live` |
+| `scene` | Optional renderer presentation, including `actions: [{ actionIndex, command, presentation }]` for plain item actions with authored hints. `presentation` is a string dictionary sorted by key (for example `{ "placement": "row-menu" }`); absent hints add no entry. `actionIndex` is the zero-based index into the neutral `actions` list, so repeated commands remain distinct. |
 | `actions` | One entry per command the screen issues: what it applies to (`screen` or `item`), its inputs with their types and the screen value that fills each one (`from`), and, for an action that picks one of several commands, the condition in `when` |
 | `navigation` | Where the screen leads and what leads there: a `link`, a table `row`, an `action`, a toolbar `button` or a behavior trigger such as `click`, with the value passed `by` and how the target `opens` |
 | `layout` | Where the screen `fits` (`page`, `dialog`, `drawer`, `pane`, `panel`), the screen shape (`template`) it follows, and its regions: `template`, `slot`, `section`, `list`, `details`, `embed`, `component` and `toolbar`, with the actions placed in each |

@@ -8203,6 +8203,48 @@
                       "kind": "ScreenBehaviorSyntax"
                     },
                     {
+                      "kind": "ScreenActionSyntax",
+                      "command": "TagInvoice",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.invoiceId",
+                          "name": "invoiceId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "presentation": [
+                        {
+                          "kind": "PresentationValueSyntax",
+                          "name": "placement",
+                          "value": "row-menu"
+                        }
+                      ],
+                      "subject": "Item"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "ChangeInvoiceStatus",
+                      "inputs": [
+                        {
+                          "kind": "InteractionArgumentSyntax",
+                          "binding": "item.invoiceId",
+                          "name": "invoiceId"
+                        }
+                      ],
+                      "label": null,
+                      "navigate": null,
+                      "presentation": [
+                        {
+                          "kind": "PresentationValueSyntax",
+                          "name": "placement",
+                          "value": "row-menu"
+                        }
+                      ],
+                      "subject": "Item"
+                    },
+                    {
                       "kind": "ScreenToolbarSyntax",
                       "buttons": [
                         {

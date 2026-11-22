@@ -2194,6 +2194,13 @@ module Invoicing
           refresh ListInvoices
         on interval 30 seconds
           refresh ListInvoices
+        // Advisory grouping only: these commands still use the selected invoice and their usual forms.
+        action TagInvoice for item
+          with invoiceId from item.invoiceId
+          presentation placement "row-menu"
+        action ChangeInvoiceStatus for item
+          with invoiceId from item.invoiceId
+          presentation placement "row-menu"
         toolbar invoiceActions
           item register navigate to RegisterInvoiceScreen
             label "Register invoice"
