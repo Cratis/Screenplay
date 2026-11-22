@@ -241,7 +241,7 @@ export class Validator {
         state.indentStack.push(line.indent);
     }
 
-    private validateJoinCollection(line: { text: string; lineNumber: number }, collection: { collectionName: string; collectionProp: JsonSchema | undefined; readModelName: string | null }, markers: editor.IMarkerData[]): void {
+    private validateJoinCollection(line: { text: string; lineNumber: number }, collection: { collectionName: string; collectionProp: { type?: string; items?: JsonSchema } | undefined; readModelName: string | null }, markers: editor.IMarkerData[]): void {
         const { collectionName, collectionProp, readModelName } = collection;
         if (!collectionProp) {
             const location = { lineNumber: line.lineNumber, col: line.text.indexOf(collectionName) + 1, length: collectionName.length };
