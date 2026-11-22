@@ -89,15 +89,20 @@ internal static partial class WorkspaceTimelineRepairs
 
     static string? ReferencedEvent(SyntaxNode node) => node switch
     {
+        NamedTriggerSourceSyntax reference => reference.Name,
+        ReducerRuleSyntax reference => reference.Event,
+        ReadsSyntax reference => reference.ReadModel,
+        _ => ReferencedProjectionEvent(node)
+    };
+
+    static string? ReferencedProjectionEvent(SyntaxNode node) => node switch
+    {
         EventSpecSyntax reference => reference.Event,
         JoinEventSyntax reference => reference.Event,
         ProjectionEntersOnSyntax reference => reference.Event,
-        NamedTriggerSourceSyntax reference => reference.Name,
         RemoveWithSyntax reference => reference.Event,
         RemoveViaJoinSyntax reference => reference.Event,
         ClearWithSyntax reference => reference.Event,
-        ReducerRuleSyntax reference => reference.Event,
-        ReadsSyntax reference => reference.ReadModel,
         _ => null
     };
 
@@ -114,6 +119,13 @@ internal static partial class WorkspaceTimelineRepairs
 
         var parent = index.Find(consumerEntry.Parent!)!;
         var scope = new RepairScope(index, timeline, finding, subject, parent, left, right);
+        return RepairInScope(scope, consumerEntry, producerEntry);
+    }
+
+    static TimelineRecipe? RepairInScope(RepairScope scope, WorkspaceSyntaxEntry consumerEntry, WorkspaceSyntaxEntry producerEntry)
+    {
+        var left = scope.Consumer;
+        var right = scope.Producer;
         var imports = left.Node is FileImportSyntax && right.Node is FileImportSyntax;
 
         // Whole-glob moves are tried before freezing the currently reached files into a list.
