@@ -18,7 +18,7 @@ public class when_checking_the_exposed_operation_count : given.an_agent_model
     [InlineData(30)]
     void should_warn_only_above_twenty_distinct_operations(int count)
     {
-        var result = Compiler.Compile(Source(count), "agents.play");
+        var result = Compiler.Compile(Source(count));
         result.Success.ShouldBeTrue();
         result.Diagnostics.Count(diagnostic => diagnostic.Code == Code).ShouldEqual(count > 20 ? 1 : 0);
     }
@@ -27,10 +27,9 @@ public class when_checking_the_exposed_operation_count : given.an_agent_model
     void should_report_the_count_at_the_block_with_typed_arguments()
     {
         var source = Source(21);
-        var warning = Compiler.Compile(source, "agents.play").Diagnostics.Single(diagnostic => diagnostic.Code == Code);
+        var warning = Compiler.Compile(source).Diagnostics.Single(diagnostic => diagnostic.Code == Code);
         warning.Severity.ShouldEqual(DiagnosticSeverity.Warning);
         warning.Message.ShouldEqual("The agents block exposes 21 operations; expose at most 20 focused operations to keep agent tool selection effective");
-        warning.Location.Path.ShouldEqual("agents.play");
         warning.Location.Line.ShouldEqual(source.Split('\n').ToList().IndexOf("agents") + 1);
         warning.Location.Column.ShouldEqual(1);
         warning.Arguments["count"].ShouldEqual(DiagnosticArgument.Text("21"));
