@@ -1,6 +1,177 @@
 {
     "description": "Guarded syntax-only fixtures use an external data shape so subject validation stays unknown. Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        {
+            "name": "Twenty-one composed agent operations produce one nonblocking count warning",
+            "validate": true,
+            "source": [],
+            "files": {
+                "model.play": [
+                    "policy Staff", "  require role \"Staff\"", "module M", "  authorize Staff", "  feature F", "    slice StateChange S",
+                    "      readmodel Row", "        id String",
+                    "      command A01", "      command A02", "      command A03", "      command A04", "      command A05",
+                    "      command A06", "      command A07", "      command A08", "      command A09", "      command A10",
+                    "      command A11", "      command A12", "      command A13", "      command A14", "      command A15",
+                    "      command A16", "      command A17", "      command A18", "      command A19", "      command A20",
+                    "      query All => Row[]"
+                ],
+                "agents.play": [
+                    "import \"model.play\"", "agents", "  tokens personal",
+                    "  command A01", "    scope write", "    description \"Operation\"",
+                    "  command A02", "    scope write", "    description \"Operation\"",
+                    "  command A03", "    scope write", "    description \"Operation\"",
+                    "  command A04", "    scope write", "    description \"Operation\"",
+                    "  command A05", "    scope write", "    description \"Operation\"",
+                    "  command A06", "    scope write", "    description \"Operation\"",
+                    "  command A07", "    scope write", "    description \"Operation\"",
+                    "  command A08", "    scope write", "    description \"Operation\"",
+                    "  command A09", "    scope write", "    description \"Operation\"",
+                    "  command A10", "    scope write", "    description \"Operation\"",
+                    "  command A11", "    scope write", "    description \"Operation\"",
+                    "  command A12", "    scope write", "    description \"Operation\"",
+                    "  command A13", "    scope write", "    description \"Operation\"",
+                    "  command A14", "    scope write", "    description \"Operation\"",
+                    "  command A15", "    scope write", "    description \"Operation\"",
+                    "  command A16", "    scope write", "    description \"Operation\"",
+                    "  command A17", "    scope write", "    description \"Operation\"",
+                    "  command A18", "    scope write", "    description \"Operation\"",
+                    "  command A19", "    scope write", "    description \"Operation\"",
+                    "  command A20", "    scope write", "    description \"Operation\"",
+                    "  query All", "    scope read", "    description \"Read rows\""
+                ]
+            },
+            "roots": ["agents.play"],
+            "diagnostics": ["PLAY1167@2"],
+            "locations": ["agents.play:2:1"],
+            "severities": ["warning"],
+            "messages": ["The agents block exposes 21 operations; expose at most 20 focused operations to keep agent tool selection effective"],
+            "arguments": [{"count": {"kind": "text", "value": "21"}, "recommendedMaximum": {"kind": "text", "value": "20"}}]
+        },
+        {
+            "name": "Twenty composed agent operations do not produce count advice",
+            "validate": true,
+            "source": [],
+            "files": {
+                "model.play": [
+                    "policy Staff", "  require role \"Staff\"", "module M", "  authorize Staff", "  feature F", "    slice StateChange S",
+                    "      command A01", "      command A02", "      command A03", "      command A04", "      command A05",
+                    "      command A06", "      command A07", "      command A08", "      command A09", "      command A10",
+                    "      command A11", "      command A12", "      command A13", "      command A14", "      command A15",
+                    "      command A16", "      command A17", "      command A18", "      command A19", "      command A20"
+                ],
+                "agents.play": [
+                    "import \"model.play\"", "agents", "  tokens personal",
+                    "  command A01", "    scope write", "    description \"Operation\"",
+                    "  command A02", "    scope write", "    description \"Operation\"",
+                    "  command A03", "    scope write", "    description \"Operation\"",
+                    "  command A04", "    scope write", "    description \"Operation\"",
+                    "  command A05", "    scope write", "    description \"Operation\"",
+                    "  command A06", "    scope write", "    description \"Operation\"",
+                    "  command A07", "    scope write", "    description \"Operation\"",
+                    "  command A08", "    scope write", "    description \"Operation\"",
+                    "  command A09", "    scope write", "    description \"Operation\"",
+                    "  command A10", "    scope write", "    description \"Operation\"",
+                    "  command A11", "    scope write", "    description \"Operation\"",
+                    "  command A12", "    scope write", "    description \"Operation\"",
+                    "  command A13", "    scope write", "    description \"Operation\"",
+                    "  command A14", "    scope write", "    description \"Operation\"",
+                    "  command A15", "    scope write", "    description \"Operation\"",
+                    "  command A16", "    scope write", "    description \"Operation\"",
+                    "  command A17", "    scope write", "    description \"Operation\"",
+                    "  command A18", "    scope write", "    description \"Operation\"",
+                    "  command A19", "    scope write", "    description \"Operation\"",
+                    "  command A20", "    scope write", "    description \"Operation\""
+                ]
+            },
+            "roots": ["agents.play"],
+            "diagnostics": [],
+            "severities": []
+        },
+        {
+            "name": "Missing descriptions remain errors and suppress advice for twenty-one operations",
+            "validate": true,
+            "source": [],
+            "files": {
+                "model.play": [
+                    "policy Staff", "  require role \"Staff\"", "module M", "  authorize Staff", "  feature F", "    slice StateChange S",
+                    "      command A01", "      command A02", "      command A03", "      command A04", "      command A05",
+                    "      command A06", "      command A07", "      command A08", "      command A09", "      command A10",
+                    "      command A11", "      command A12", "      command A13", "      command A14", "      command A15",
+                    "      command A16", "      command A17", "      command A18", "      command A19", "      command A20", "      command A21"
+                ],
+                "agents.play": [
+                    "import \"model.play\"", "agents", "  tokens personal",
+                    "  command A01", "    scope write", "    description \"Operation\"",
+                    "  command A02", "    scope write", "    description \"Operation\"",
+                    "  command A03", "    scope write", "    description \"Operation\"",
+                    "  command A04", "    scope write", "    description \"Operation\"",
+                    "  command A05", "    scope write", "    description \"Operation\"",
+                    "  command A06", "    scope write", "    description \"Operation\"",
+                    "  command A07", "    scope write", "    description \"Operation\"",
+                    "  command A08", "    scope write", "    description \"Operation\"",
+                    "  command A09", "    scope write", "    description \"Operation\"",
+                    "  command A10", "    scope write", "    description \"Operation\"",
+                    "  command A11", "    scope write", "    description \"Operation\"",
+                    "  command A12", "    scope write", "    description \"Operation\"",
+                    "  command A13", "    scope write", "    description \"Operation\"",
+                    "  command A14", "    scope write", "    description \"Operation\"",
+                    "  command A15", "    scope write", "    description \"Operation\"",
+                    "  command A16", "    scope write", "    description \"Operation\"",
+                    "  command A17", "    scope write", "    description \"Operation\"",
+                    "  command A18", "    scope write", "    description \"Operation\"",
+                    "  command A19", "    scope write", "    description \"Operation\"",
+                    "  command A20", "    scope write", "    description \"Operation\"",
+                    "  command A21", "    scope write"
+                ]
+            },
+            "roots": ["agents.play"],
+            "diagnostics": ["PLAY0969@64"],
+            "locations": ["agents.play:64:3"],
+            "severities": ["error"],
+            "messages": ["An exposed operation requires a nonempty literal description"]
+        },
+        {
+            "name": "Qualified aliases do not become another distinct exposed operation",
+            "validate": true,
+            "source": [],
+            "files": {
+                "model.play": [
+                    "policy Staff", "  require role \"Staff\"", "module M", "  authorize Staff", "  feature F", "    slice StateChange S",
+                    "      command A01", "      command A02", "      command A03", "      command A04", "      command A05",
+                    "      command A06", "      command A07", "      command A08", "      command A09", "      command A10",
+                    "      command A11", "      command A12", "      command A13", "      command A14", "      command A15",
+                    "      command A16", "      command A17", "      command A18", "      command A19", "      command A20"
+                ],
+                "agents.play": [
+                    "import \"model.play\"", "agents", "  tokens personal",
+                    "  command A01", "    scope write", "    description \"Operation\"",
+                    "  command A02", "    scope write", "    description \"Operation\"",
+                    "  command A03", "    scope write", "    description \"Operation\"",
+                    "  command A04", "    scope write", "    description \"Operation\"",
+                    "  command A05", "    scope write", "    description \"Operation\"",
+                    "  command A06", "    scope write", "    description \"Operation\"",
+                    "  command A07", "    scope write", "    description \"Operation\"",
+                    "  command A08", "    scope write", "    description \"Operation\"",
+                    "  command A09", "    scope write", "    description \"Operation\"",
+                    "  command A10", "    scope write", "    description \"Operation\"",
+                    "  command A11", "    scope write", "    description \"Operation\"",
+                    "  command A12", "    scope write", "    description \"Operation\"",
+                    "  command A13", "    scope write", "    description \"Operation\"",
+                    "  command A14", "    scope write", "    description \"Operation\"",
+                    "  command A15", "    scope write", "    description \"Operation\"",
+                    "  command A16", "    scope write", "    description \"Operation\"",
+                    "  command A17", "    scope write", "    description \"Operation\"",
+                    "  command A18", "    scope write", "    description \"Operation\"",
+                    "  command A19", "    scope write", "    description \"Operation\"",
+                    "  command A20", "    scope write", "    description \"Operation\"",
+                    "  command M.F.S.A01", "    scope write", "    description \"Alias\""
+                ]
+            },
+            "roots": ["agents.play"],
+            "diagnostics": ["PLAY0968@64"],
+            "locations": ["agents.play:64:3"],
+            "severities": ["error"]
+        },
         { "name": "Ability invocation mappings accept qualified enumeration members", "validate": true, "source": ["concept Priority : Enum", "  high", "system Alerts", "  ability Send", "    priority Priority", "module M", "  feature F", "    slice Automation S", "      event Occurred", "      reaction R", "        when Occurred", "          invokes Alerts.Send", "            priority = Priority.high"], "diagnostics": [] },
         { "name": "Ability invocation mappings accept bare enumeration members", "validate": true, "source": ["concept Priority : Enum", "  high", "system Alerts", "  ability Send", "    priority Priority", "module M", "  feature F", "    slice Automation S", "      event Occurred", "      reaction R", "        when Occurred", "          invokes Alerts.Send", "            priority = high"], "diagnostics": [] },
         { "name": "Unknown ability input mappings keep only their existing diagnostics", "validate": true, "source": ["concept Priority : Enum", "  high", "system Alerts", "  ability Send", "    priority Priority", "module M", "  feature F", "    slice Automation S", "      event Occurred", "      reaction R", "        when Occurred", "          invokes Alerts.Send", "            unknown = Priority.high"], "diagnostics": ["PLAY1004@13", "PLAY1003@12"] },
