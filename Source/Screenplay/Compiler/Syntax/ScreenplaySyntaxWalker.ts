@@ -4,7 +4,7 @@
 import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
 import type { ScreenProvisionSyntax, ShapeSyntax, UsesScreenSyntax } from './Shapes';
 import { AgentOperationSyntax, AgentsSyntax, AgentTokensSyntax } from './Agents';
-import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphSyntax } from './Graphs';
+import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphEdgeSyntax, SpecificationGraphElementSyntax, SpecificationGraphSyntax } from './Graphs';
 import { CommandCalendarSyntax, TimeZoneSyntax } from './Calendar';
 import { ApplicationContextSyntax, ContextMemberSyntax } from './Structure';
 import type { OutletItemSyntax, OutletSyntax } from './Outlets';
@@ -36,7 +36,7 @@ import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
 import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvocationBranchSyntax, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
-import { InteractionArgumentSyntax, ScreenActionSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
+import { ComponentExposedValueSyntax, ComponentPropertySyntax, ComponentSlotSyntax, InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenActionSyntax, ScreenComponentSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenNavigateSyntax, ScreenSyntax, ScreenTemplateReferenceSyntax, ScreenToolbarSyntax, ToolbarButtonSyntax, ToolbarItemSyntax } from './Screens';
 import {
     SpecificationExampleSyntax, SpecificationAbilityAnswerSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationTimeZoneSyntax, SpecificationGeneratedValueSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax, SpecificationNoTagsSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationInvocationSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
@@ -754,16 +754,24 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecificationGraph(syntax: SpecificationGraphSyntax): void {
         this.visitNode(syntax);
         for (const element of syntax.elements) {
-            this.visitNode(element);
-            if (element.kind === 'SpecificationGraphNodeSyntax') {
-                this.visitExpression(element.key);
-            } else {
-                this.visitExpression(element.source);
-                this.visitExpression(element.target);
-                if (element.identity != null) this.visitExpression(element.identity);
-            }
-            element.properties.forEach(node => this.visitPropertyMapping(node));
+            this.visitSpecificationGraphElement(element);
         }
+    }
+
+    private visitSpecificationGraphElement(syntax: SpecificationGraphElementSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'SpecificationGraphNodeSyntax') {
+            this.visitExpression(syntax.key);
+        } else {
+            this.visitSpecificationGraphEdgeEndpoints(syntax);
+        }
+        syntax.properties.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    private visitSpecificationGraphEdgeEndpoints(syntax: SpecificationGraphEdgeSyntax): void {
+        this.visitExpression(syntax.source);
+        this.visitExpression(syntax.target);
+        if (syntax.identity != null) this.visitExpression(syntax.identity);
     }
 
     visitConstraint(syntax: ConstraintSyntax): void {
@@ -1006,16 +1014,10 @@ export abstract class ScreenplaySyntaxWalker {
                 this.visitScreenAction(syntax);
                 break;
             case 'ScreenNavigateSyntax':
-                syntax.parameters.forEach(parameter => {
-                    this.visitNode(parameter);
-                    this.visitUiBinding(parameter.binding);
-                });
+                this.visitScreenNavigationParameters(syntax);
                 break;
             case 'ScreenTemplateReferenceSyntax':
-                syntax.slots.forEach(slot => {
-                    this.visitNode(slot);
-                    slot.directives.forEach(node => this.visitScreenDirective(node));
-                });
+                this.visitScreenTemplateReferenceSlots(syntax);
                 break;
             case 'ScreenSectionSyntax':
                 syntax.directives.forEach(node => this.visitScreenDirective(node));
@@ -1028,41 +1030,73 @@ export abstract class ScreenplaySyntaxWalker {
                 syntax.fields.forEach(node => this.visitNode(node));
                 break;
             case 'ScreenComponentSyntax':
-                if (syntax.context !== null) this.visitUiBinding(syntax.context);
-                syntax.properties.forEach(property => {
-                    this.visitNode(property);
-                    if (property.binding !== null) this.visitUiBinding(property.binding);
-                    if (property.value !== null) this.visitExpression(property.value);
-                });
-                syntax.exposes.forEach(exposed => {
-                    this.visitNode(exposed);
-                    this.visitUiBinding(exposed.binding);
-                });
-                syntax.presentation.forEach(node => this.visitNode(node));
-                syntax.slots.forEach(slot => {
-                    this.visitNode(slot);
-                    slot.directives.forEach(node => this.visitScreenDirective(node));
-                });
+                this.visitScreenComponentChildren(syntax);
                 break;
             case 'ScreenToolbarSyntax':
-                syntax.items.forEach(item => {
-                    this.visitNode(item);
-                    item.parameters.forEach(parameter => {
-                        this.visitNode(parameter);
-                        this.visitUiBinding(parameter.binding);
-                    });
-                    item.presentation.forEach(node => this.visitNode(node));
-                    if (item.enabledWhen) this.visitCondition(item.enabledWhen);
-                });
-                (syntax.buttons ?? []).forEach(button => {
-                    this.visitNode(button);
-                    if (button.enabledWhen) this.visitCondition(button.enabledWhen);
-                });
+                this.visitScreenToolbarChildren(syntax);
                 break;
             case 'ScreenCodeSyntax':
                 this.visitNode(syntax.code);
                 break;
         }
+    }
+
+    private visitScreenNavigationParameters(syntax: ScreenNavigateSyntax): void {
+        syntax.parameters.forEach(parameter => {
+            this.visitNode(parameter);
+            this.visitUiBinding(parameter.binding);
+        });
+    }
+
+    private visitScreenTemplateReferenceSlots(syntax: ScreenTemplateReferenceSyntax): void {
+        syntax.slots.forEach(slot => {
+            this.visitNode(slot);
+            slot.directives.forEach(node => this.visitScreenDirective(node));
+        });
+    }
+
+    private visitScreenComponentChildren(syntax: ScreenComponentSyntax): void {
+        if (syntax.context !== null) this.visitUiBinding(syntax.context);
+        syntax.properties.forEach(property => this.visitComponentProperty(property));
+        syntax.exposes.forEach(exposed => this.visitComponentExposedValue(exposed));
+        syntax.presentation.forEach(node => this.visitNode(node));
+        syntax.slots.forEach(slot => this.visitComponentSlot(slot));
+    }
+
+    private visitComponentProperty(syntax: ComponentPropertySyntax): void {
+        this.visitNode(syntax);
+        if (syntax.binding !== null) this.visitUiBinding(syntax.binding);
+        if (syntax.value !== null) this.visitExpression(syntax.value);
+    }
+
+    private visitComponentExposedValue(syntax: ComponentExposedValueSyntax): void {
+        this.visitNode(syntax);
+        this.visitUiBinding(syntax.binding);
+    }
+
+    private visitComponentSlot(syntax: ComponentSlotSyntax): void {
+        this.visitNode(syntax);
+        syntax.directives.forEach(node => this.visitScreenDirective(node));
+    }
+
+    private visitScreenToolbarChildren(syntax: ScreenToolbarSyntax): void {
+        syntax.items.forEach(item => this.visitToolbarItem(item));
+        (syntax.buttons ?? []).forEach(button => this.visitToolbarButton(button));
+    }
+
+    private visitToolbarItem(syntax: ToolbarItemSyntax): void {
+        this.visitNode(syntax);
+        syntax.parameters.forEach(parameter => {
+            this.visitNode(parameter);
+            this.visitUiBinding(parameter.binding);
+        });
+        syntax.presentation.forEach(node => this.visitNode(node));
+        if (syntax.enabledWhen) this.visitCondition(syntax.enabledWhen);
+    }
+
+    private visitToolbarButton(syntax: ToolbarButtonSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.enabledWhen) this.visitCondition(syntax.enabledWhen);
     }
 
     visitScreenGuardedAction(syntax: ScreenGuardedActionSyntax): void {

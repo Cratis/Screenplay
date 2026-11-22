@@ -194,6 +194,20 @@ export function parseSpecificationSource(source: string, path?: string, language
 
 function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string, read: (context: ParserContext, line: SourceLine) => T, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly T[]> {
     const context = sourceContext(splitLines(source, true, path), path, languages, true);
+    const { value, examples } = readSourceFamily(context, keyword, read);
+    const isEmptyExactDocument = context.sourceOptions.numericMode === 'exact' && value.length === 0 && context.diagnostics.length === 0;
+    if (isEmptyExactDocument) {
+        context.error(emptySourceFamilyDiagnosticCode(keyword), `Document must contain at least one ${keyword}`, context.start);
+    }
+    const roots = keyword === 'specification' && examples.length > 0 ? value.map(node => ({ ...node, examples })) : value;
+    if (keyword === 'specification') {
+        const application = parseApplication(sourceContext([], path, languages), [], documentPlacement);
+        validateSpecificationCases({ ...application, examples }, context, roots as unknown as SpecificationSyntax[]);
+    }
+    return { value: roots, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
+}
+
+function readSourceFamily<T extends SyntaxNode>(context: ParserContext, keyword: string, read: (context: ParserContext, line: SourceLine) => T): { value: T[]; examples: SpecificationExampleSyntax[] } {
     const value: T[] = [];
     const examples: SpecificationExampleSyntax[] = [];
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
@@ -205,14 +219,13 @@ function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string
             context.skipOpaqueBlock(line.indent);
         }
     }
-    if (context.sourceOptions.numericMode === 'exact' && value.length === 0 && context.diagnostics.length === 0) {
-        const code = keyword === 'projection' ? DiagnosticCodes.ProjectionDocumentWithoutProjection : keyword === 'capture' ? DiagnosticCodes.CaptureDocumentWithoutCapture : DiagnosticCodes.SpecificationDocumentWithoutSpecification;
-        context.error(code, `Document must contain at least one ${keyword}`, context.start);
+    return { value, examples };
+}
+
+function emptySourceFamilyDiagnosticCode(keyword: string): string {
+    switch (keyword) {
+        case 'projection': return DiagnosticCodes.ProjectionDocumentWithoutProjection;
+        case 'capture': return DiagnosticCodes.CaptureDocumentWithoutCapture;
+        default: return DiagnosticCodes.SpecificationDocumentWithoutSpecification;
     }
-    const roots = keyword === 'specification' && examples.length > 0 ? value.map(node => ({ ...node, examples })) : value;
-    if (keyword === 'specification') {
-        const application = parseApplication(sourceContext([], path, languages), [], documentPlacement);
-        validateSpecificationCases({ ...application, examples }, context, roots as unknown as SpecificationSyntax[]);
-    }
-    return { value: roots, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }

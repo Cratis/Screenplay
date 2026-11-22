@@ -1,0 +1,140 @@
+# Copyright (c) Cratis. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for full license information.
+name: Warm NuGet cache
+
+# Build jobs only restore. Seed the shared cache when its inputs change, and
+# weekly so it is not evicted between dependency changes.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.csproj"
+      - "**/*.props"
+      - "**/*.targets"
+      - "**/packages.lock.json"
+      - "**/[Nn]u[Gg]et.[Cc]onfig"
+      - "**/*.slnx"
+      - "**/*.sln"
+      - "**/global.json"
+      - ".github/workflows/mcp-desktop.yml"
+      - ".github/workflows/native-editor-repairs.yml"
+      - ".github/workflows/warm-nuget-cache.yml"
+  schedule:
+    - cron: "41 4 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  restore:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
+      - name: Cache NuGet packages
+        id: nuget
+        uses: Cratis/Workflows/.github/actions/dotnet-cache@main
+        with:
+          mode: save
+          prune-on-miss: 'true'
+
+      # Debug includes inline specifications; Release and the net10.0 specs
+      # have their own restore graphs. Populate all three before saving.
+      - name: Restore every configuration
+        if: steps.nuget.outputs.cache-hit != 'true'
+        run: |
+          dotnet restore --property:Configuration=Debug
+          dotnet restore --property:Configuration=Debug --property:SpecTargetFramework=net10.0
+          dotnet restore --property:Configuration=Release
+
+  native:
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: osx-arm64
+            runner: macos-15
+          - rid: osx-x64
+            runner: macos-15-intel
+          - rid: win-x64
+            runner: windows-latest
+          - rid: linux-x64
+            runner: ubuntu-latest
+          - rid: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            10.0.x
+            11.0.x
+
+      - name: Resolve native NuGet SDK cohort
+        id: native-nuget-context
+        run: |
+          sdk="$(dotnet --version)"
+          test -n "$sdk"
+          printf 'sdk=%s\n' "$sdk" >> "$GITHUB_OUTPUT"
+
+      - name: Cache native NuGet packages
+        id: native-nuget
+        uses: Cratis/Workflows/.github/actions/dotnet-cache@main
+        with:
+          path: ~/.nuget/packages
+          key-prefix: native-nuget-v1-${{ matrix.rid }}-${{ runner.arch }}-sdk${{ steps.native-nuget-context.outputs.sdk }}
+          key-files: |
+            **/packages.lock.json
+            **/*.props
+            **/*.targets
+            **/*.csproj
+            **/[Nn]u[Gg]et.[Cc]onfig
+            **/*.slnx
+            **/*.sln
+            **/global.json
+            .github/workflows/mcp-desktop.yml
+            .github/workflows/native-editor-repairs.yml
+          mode: save
+          prune-on-miss: 'true'
+
+      - name: Restore self-contained server
+        if: steps.native-nuget.outputs.cache-hit != 'true'
+        env:
+          RID: ${{ matrix.rid }}
+        run: dotnet restore Source/DotNET/Tool/Tool.csproj --property:Configuration=Release --runtime "$RID" --property:SelfContained=true --property:PackAsTool=false
+
+      - name: Restore native Windows specifications
+        if: runner.os == 'Windows' && steps.native-nuget.outputs.cache-hit != 'true'
+        run: |
+          dotnet restore Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --property:Configuration=Debug
+          dotnet restore Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj --property:Configuration=Debug
