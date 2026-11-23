@@ -14,6 +14,29 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ScreenParser
 {
+    static readonly Dictionary<string, Action<ParserContext, SourceLine, ComponentBody>> _componentChildren = new(StringComparer.Ordinal)
+    {
+        ["context"] = (context, child, body) => body.Context = UiBindingParser.Parse(context, child.Content["context".Length..].Trim(), child.Location),
+        ["id"] = (context, child, body) => body.StableId = ParseStableId(context, child),
+        ["property"] = (context, child, body) =>
+        {
+            if (ParseComponentProperty(context, child) is { } property) body.Properties.Add(property);
+        },
+        ["icon"] = (_, child, body) => body.Icon = child.Content["icon".Length..].Trim(),
+        ["presentation"] = (context, child, body) =>
+        {
+            if (ParsePresentation(context, child) is { } value) body.Presentation.Add(value);
+        },
+        ["exposes"] = (context, child, body) =>
+        {
+            if (ParseComponentExposes(context, child) is { } exposed) body.Exposes.Add(exposed);
+        },
+        ["slot"] = (context, child, body) => body.Slots.Add(ParseComponentSlot(context, child, "slot")),
+        ["outlet"] = ParseComponentOutlet,
+        ["on"] = ParseComponentAttachment,
+        ["uses"] = ParseComponentAttachment
+    };
+
     /// <summary>
     /// Parses a screen from its already consumed header line.
     /// </summary>
@@ -290,31 +313,7 @@ internal static partial class ScreenParser
 
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)
     {
-        var name = line.Content["template".Length..].Trim();
-        string? blueprint = null;
-        string? version = null;
-        if (TemplateReferenceText.StartsBlueprint(name))
-        {
-            if (TemplateReferenceText.TryParseBlueprint(name, out var reference))
-            {
-                (blueprint, name, version) = reference;
-                if (version is not null && !TemplateVersionRange.IsValid(version))
-                {
-                    context.Error(
-                        DiagnosticCodes.InvalidTemplateVersionRange,
-                        $"The template version range '{version}' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as \"^1.2\"",
-                        line.Location);
-                }
-            }
-            else
-            {
-                context.Error(
-                    DiagnosticCodes.UnknownLayoutDirective,
-                    $"Invalid template reference '{line.Content}' - expected 'template <Name>' or 'template blueprint <Blueprint> <Name> [version \"<range>\"]'",
-                    line.Location);
-            }
-        }
-
+        var (blueprint, name, version) = ParseTemplateName(context, line);
         var slots = new List<ScreenSlotSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -327,20 +326,39 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            var directives = new List<ScreenDirectiveSyntax>();
-            while (context.TryPeekChild(child.Indent, out var slotChild))
-            {
-                context.Reader.TakeSignificant();
-                if (ParseDirective(context, slotChild) is { } directive)
-                {
-                    directives.Add(directive);
-                }
-            }
-
-            slots.Add(new(child.Content, directives, child.Location));
+            slots.Add(new(child.Content, ParseDirectiveBlock(context, child), child.Location));
         }
 
         return new(name, slots, line.Location) { Blueprint = blueprint, Version = version };
+    }
+
+    static (string? Blueprint, string Name, string? Version) ParseTemplateName(ParserContext context, SourceLine line)
+    {
+        var name = line.Content["template".Length..].Trim();
+
+        if (!TemplateReferenceText.StartsBlueprint(name))
+        {
+            return (null, name, null);
+        }
+
+        if (!TemplateReferenceText.TryParseBlueprint(name, out var reference))
+        {
+            context.Error(
+                DiagnosticCodes.UnknownLayoutDirective,
+                $"Invalid template reference '{line.Content}' - expected 'template <Name>' or 'template blueprint <Blueprint> <Name> [version \"<range>\"]'",
+                line.Location);
+            return (null, name, null);
+        }
+
+        if (reference.Version is { } version && !TemplateVersionRange.IsValid(version))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidTemplateVersionRange,
+                $"The template version range '{version}' is not one Scene understands - use '*', an exact version or a ^, ~, >=, >, <= or < range such as \"^1.2\"",
+                line.Location);
+        }
+
+        return reference;
     }
 
     static ScreenSectionSyntax ParseSection(ParserContext context, SourceLine line)
@@ -402,18 +420,7 @@ internal static partial class ScreenParser
             // with 'on', plus 'uses', is a behavior attached to the table.
             if (InteractionParser.IsInteractionDirective(child))
             {
-                if (LineText.FirstWord(child.Content) == "uses")
-                {
-                    if (InteractionParser.ParseUses(context, child) is { } tableUses)
-                    {
-                        usedBehaviors.Add(tableUses);
-                    }
-                }
-                else if (InteractionParser.ParseInlineBehavior(context, child) is { } tableBehavior)
-                {
-                    behaviors.Add(tableBehavior);
-                }
-
+                InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                 continue;
             }
 
@@ -454,75 +461,50 @@ internal static partial class ScreenParser
             return null;
         }
 
-        UiBindingSyntax? dataContext = null;
-        string? stableId = null;
-        string? icon = null;
-        var properties = new List<ComponentPropertySyntax>();
-        var exposes = new List<ComponentExposedValueSyntax>();
-        var presentation = new List<PresentationValueSyntax>();
-        var slots = new List<ComponentSlotSyntax>();
-        var behaviors = new List<BehaviorSyntax>();
-        var usedBehaviors = new List<UsesBehaviorSyntax>();
+        var body = new ComponentBody(match.Groups[1].Value.Count(character => character == '.') == 1);
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(child.Content))
+            if (_componentChildren.TryGetValue(LineText.FirstWord(child.Content), out var parseChild))
             {
-                case "context":
-                    dataContext = UiBindingParser.Parse(context, child.Content["context".Length..].Trim(), child.Location);
-                    break;
-                case "id":
-                    stableId = ParseStableId(context, child);
-                    break;
-                case "property":
-                    if (ParseComponentProperty(context, child) is { } property) properties.Add(property);
-                    break;
-                case "icon":
-                    icon = child.Content["icon".Length..].Trim();
-                    break;
-                case "presentation":
-                    if (ParsePresentation(context, child) is { } value) presentation.Add(value);
-                    break;
-                case "exposes":
-                    if (ParseComponentExposes(context, child) is { } exposed) exposes.Add(exposed);
-                    break;
-                case "slot":
-                    slots.Add(ParseComponentSlot(context, child, "slot"));
-                    break;
-                case "outlet":
-                    var renamed = child.Content["outlet".Length..].Trim();
-                    context.Error(DiagnosticCodes.RemovedComponentOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed}' in a component", $"slot {renamed}"), child.Location);
-                    var componentSlot = ParseComponentSlot(context, child, "outlet");
-                    context.Retire(new RetiredOutlet(RetiredOutletPlace.Component, componentSlot.Name, componentSlot, child.Location));
-                    slots.Add(componentSlot);
-                    break;
-                case "on":
-                case "uses":
-                    // <System>.<Component> comes from an extension, whose contract names the signals an 'on' line may handle.
-                    context.AcceptsSignalTriggers = match.Groups[1].Value.Count(character => character == '.') == 1;
-                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
-                    context.AcceptsSignalTriggers = false;
-                    break;
-                default:
-                    context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, id, property, icon, presentation, exposes, slot, on or uses", child.Location);
-                    context.SkipBlock(child.Indent);
-                    break;
+                parseChild(context, child, body);
+                continue;
             }
+
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, id, property, icon, presentation, exposes, slot, on or uses", child.Location);
+            context.SkipBlock(child.Indent);
         }
 
         return new(match.Groups[1].Value, match.Groups[2].Value, line.Location)
         {
-            StableId = stableId,
-            Context = dataContext,
-            Properties = properties,
-            Exposes = exposes,
-            Presentation = presentation,
-            Icon = string.IsNullOrWhiteSpace(icon) ? null : icon,
-            Slots = slots,
-            Behaviors = behaviors,
-            UsedBehaviors = usedBehaviors
+            StableId = body.StableId,
+            Context = body.Context,
+            Properties = body.Properties,
+            Exposes = body.Exposes,
+            Presentation = body.Presentation,
+            Icon = string.IsNullOrWhiteSpace(body.Icon) ? null : body.Icon,
+            Slots = body.Slots,
+            Behaviors = body.Behaviors,
+            UsedBehaviors = body.UsedBehaviors
         };
+    }
+
+    static void ParseComponentOutlet(ParserContext context, SourceLine child, ComponentBody body)
+    {
+        var renamed = child.Content["outlet".Length..].Trim();
+        context.Error(DiagnosticCodes.RemovedComponentOutlet, SlotsAndOutletsMigration.Renamed($"'outlet {renamed}' in a component", $"slot {renamed}"), child.Location);
+        var componentSlot = ParseComponentSlot(context, child, "outlet");
+        context.Retire(new RetiredOutlet(RetiredOutletPlace.Component, componentSlot.Name, componentSlot, child.Location));
+        body.Slots.Add(componentSlot);
+    }
+
+    static void ParseComponentAttachment(ParserContext context, SourceLine child, ComponentBody body)
+    {
+        // <System>.<Component> comes from an extension, whose contract names the signals an 'on' line may handle.
+        context.AcceptsSignalTriggers = body.AcceptsSignals;
+        InteractionParser.ParseAttachment(context, child, body.Behaviors, body.UsedBehaviors);
+        context.AcceptsSignalTriggers = false;
     }
 
     static ComponentPropertySyntax? ParseComponentProperty(ParserContext context, SourceLine line)
@@ -582,66 +564,74 @@ internal static partial class ScreenParser
             return null;
         }
 
-        var kind = match.Groups[2].Value switch
-        {
-            "action" => ToolbarItemKind.Action,
-            "navigate" => ToolbarItemKind.Navigate,
-            _ => ToolbarItemKind.Dialog
-        };
-        var item = new ToolbarItemSyntax(match.Groups[1].Value, kind, match.Groups[3].Value, line.Location) { Subject = subject };
-        var label = inlineLabel;
-        string? icon = null;
-        string? confirm = null;
-        ConditionSyntax? enabledWhen = null;
         var parameters = new List<ScreenNavigationParameterSyntax>();
         var presentation = new List<PresentationValueSyntax>();
+        var item = new ToolbarItemSyntax(match.Groups[1].Value, ToolbarItemKindOf(match.Groups[2].Value), match.Groups[3].Value, line.Location)
+        {
+            Subject = subject,
+            Label = inlineLabel,
+            Parameters = parameters,
+            Presentation = presentation
+        };
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            var labelMatch = LabelRegex().Match(child.Content);
-            if (labelMatch.Success)
+            if (ReadToolbarItemValue(context, child, item) is { } updated)
             {
-                label = OperandText(labelMatch, 1);
+                item = updated;
                 continue;
             }
 
-            var confirmMatch = ConfirmRegex().Match(child.Content);
-            if (confirmMatch.Success)
-            {
-                confirm = OperandText(confirmMatch, 1);
-                continue;
-            }
-
-            if (enabledWhen is null && ToolbarButtonParser.IsEnabledWhen(child.Content, out var enabled))
-            {
-                enabledWhen = ToolbarButtonParser.ParseEnabledWhen(context, child, enabled);
-                continue;
-            }
-
-            var parameter = ParameterRegex().Match(child.Content);
-            if (parameter.Success)
-            {
-                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child), child.Location));
-                continue;
-            }
-
-            if (LineText.FirstWord(child.Content) == "icon")
-            {
-                icon = child.Content["icon".Length..].Trim();
-                continue;
-            }
-
-            if (ParsePresentation(context, child) is { } value)
-            {
-                presentation.Add(value);
-                continue;
-            }
-
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, enabled when, parameter or presentation", child.Location);
+            ReadToolbarItemEntry(context, child, parameters, presentation);
         }
 
-        return item with { Label = label, Icon = icon, Confirm = confirm, Parameters = parameters, Presentation = presentation, EnabledWhen = enabledWhen };
+        return item;
+    }
+
+    static ToolbarItemKind ToolbarItemKindOf(string keyword) => keyword switch
+    {
+        "action" => ToolbarItemKind.Action,
+        "navigate" => ToolbarItemKind.Navigate,
+        _ => ToolbarItemKind.Dialog
+    };
+
+    static ToolbarItemSyntax? ReadToolbarItemValue(ParserContext context, SourceLine child, ToolbarItemSyntax item)
+    {
+        if (LabelRegex().Match(child.Content) is { Success: true } label)
+        {
+            return item with { Label = OperandText(label, 1) };
+        }
+
+        if (ConfirmRegex().Match(child.Content) is { Success: true } confirm)
+        {
+            return item with { Confirm = OperandText(confirm, 1) };
+        }
+
+        if (item.EnabledWhen is null && ToolbarButtonParser.IsEnabledWhen(child.Content, out var enabled))
+        {
+            return item with { EnabledWhen = ToolbarButtonParser.ParseEnabledWhen(context, child, enabled) };
+        }
+
+        return LineText.FirstWord(child.Content) == "icon" ? item with { Icon = child.Content["icon".Length..].Trim() } : null;
+    }
+
+    static void ReadToolbarItemEntry(ParserContext context, SourceLine child, List<ScreenNavigationParameterSyntax> parameters, List<PresentationValueSyntax> presentation)
+    {
+        var parameter = ParameterRegex().Match(child.Content);
+        if (parameter.Success)
+        {
+            parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child), child.Location));
+            return;
+        }
+
+        if (ParsePresentation(context, child) is { } value)
+        {
+            presentation.Add(value);
+            return;
+        }
+
+        context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, confirm, enabled when, parameter or presentation", child.Location);
     }
 
     static PresentationValueSyntax? ParsePresentation(ParserContext context, SourceLine line)
@@ -736,4 +726,31 @@ internal static partial class ScreenParser
 
     [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.NonBacktracking)]
     private static partial Regex FieldRegex();
+
+    /// <summary>
+    /// Collects what the children of one <c>component</c> directive declare.
+    /// </summary>
+    /// <param name="acceptsSignals">Whether the component comes from an extension, whose <c>on</c> lines may handle signals.</param>
+    sealed class ComponentBody(bool acceptsSignals)
+    {
+        public bool AcceptsSignals { get; } = acceptsSignals;
+
+        public UiBindingSyntax? Context { get; set; }
+
+        public string? StableId { get; set; }
+
+        public string? Icon { get; set; }
+
+        public List<ComponentPropertySyntax> Properties { get; } = [];
+
+        public List<ComponentExposedValueSyntax> Exposes { get; } = [];
+
+        public List<PresentationValueSyntax> Presentation { get; } = [];
+
+        public List<ComponentSlotSyntax> Slots { get; } = [];
+
+        public List<BehaviorSyntax> Behaviors { get; } = [];
+
+        public List<UsesBehaviorSyntax> UsedBehaviors { get; } = [];
+    }
 }
