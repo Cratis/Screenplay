@@ -70,91 +70,7 @@ internal static partial class ProjectionParser
 
         var name = match.Groups[1].Value;
         var readModel = match.Groups[2].Success ? match.Groups[2].Value : null;
-        string? sequence = null;
-        string? description = null;
-        SourceLocation? sequenceLocation = null;
-        var autoMap = AutoMapMode.Inherit;
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-        KeySyntax? key = null;
-        var blocks = new List<ProjectionBlockSyntax>();
-        FileReferenceSyntax? file = null;
-
-        while (context.TryPeekChild(header.Indent, out var line))
-        {
-            context.Reader.TakeSignificant();
-            if (DescriptionParser.TryParse(context, line, ref description, $"Projection '{name}'", directiveLocations)) continue;
-            if (FileReferenceParser.IsDirective(line))
-            {
-                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
-                continue;
-            }
-
-            switch (FirstWord(line.Content))
-            {
-                case "sequence":
-                    sequence = line.Content["sequence".Length..].Trim();
-                    sequenceLocation = line.Location;
-                    break;
-                case "automap":
-                    RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Enabled, line.Location);
-                    break;
-                case "no" when line.Content == "no automap":
-                    RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Disabled, line.Location);
-                    break;
-                case "key":
-                    context.Warning(DiagnosticCodes.UnusedProjectionKey, "A projection-level key does not route events - declare the key on each 'from' (or its events)", line.Location);
-                    if (key is not null)
-                    {
-                        context.Error(DiagnosticCodes.DuplicateProjectionKey, "Duplicate key directive - a projection can only declare one key", line.Location);
-                    }
-
-                    key = ParseKey(context, line);
-                    break;
-                case "variant":
-                    blocks.Add(ParseProjectionVariant(context, line));
-                    break;
-                default:
-                    if (ParseBlock(context, line, nestedScope: false) is { } block)
-                    {
-                        blocks.Add(block);
-                    }
-
-                    break;
-            }
-        }
-
-        foreach (var duplicate in blocks.OfType<ProjectionVariantSyntax>()
-            .GroupBy(variant => variant.Name, StringComparer.Ordinal)
-            .Where(group => group.Count() > 1)
-            .SelectMany(group => group.Skip(1)))
-        {
-            context.Error(DiagnosticCodes.DuplicateProjectionVariant, $"Duplicate variant '{duplicate.Name}' - a variant name is declared once", duplicate.Location);
-        }
-
-        var entering = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var entry in blocks.OfType<ProjectionVariantSyntax>().SelectMany(variant => variant.EntersOn))
-        {
-            if (!string.IsNullOrEmpty(entry.Event) && !entering.Add(entry.Event))
-            {
-                context.Error(DiagnosticCodes.DuplicateVariantEnteringEvent, $"Entering event '{entry.Event}' is claimed more than once in projection '{name}'", entry.Location);
-            }
-        }
-
-        ProjectionEventScopeValidator.Validate(context, name, blocks);
-
-        if (blocks.Count == 0)
-        {
-            context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
-        }
-
-        return new(name, readModel, sequence, autoMap, key, blocks, header.Location)
-        {
-            SourceOptions = context.SourceOptions,
-            File = file,
-            DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation),
-            ParsedAutoMapMode = autoMap,
-            Description = description
-        };
+        return new ProjectionBody(context, name, readModel).Parse(header);
     }
 
     static void RecordAutoMap(ParserContext context, Dictionary<string, SourceLocation> locations, ref AutoMapMode mode, AutoMapMode next, SourceLocation location)
@@ -382,25 +298,7 @@ internal static partial class ProjectionParser
             context.Reader.TakeSignificant();
             if (orderings is not null && IsOrderingLine(child.Content))
             {
-                if (ParseOrdering(context, child) is not { } ordering)
-                {
-                    continue;
-                }
-
-                if (orderings.Count > 0)
-                {
-                    var first = orderings[0];
-                    var conflict = first.Placement != ordering.Placement || first.SortBy != ordering.SortBy || first.Direction != ordering.Direction;
-                    context.Error(
-                        DiagnosticCodes.DuplicateChildrenOrdering,
-                        conflict
-                            ? $"Children '{line.Content}' declares conflicting orderings - a children block takes one 'insert first', 'insert last' or 'sort by' line"
-                            : $"Children '{line.Content}' declares its ordering twice - a children block takes one 'insert first', 'insert last' or 'sort by' line",
-                        child.Location);
-                    continue;
-                }
-
-                orderings.Add(ordering);
+                ReadChildrenOrdering(context, line, child, orderings);
             }
             else if (child.Content == "automap")
             {
@@ -417,6 +315,25 @@ internal static partial class ProjectionParser
         }
 
         return blocks;
+    }
+
+    static void ReadChildrenOrdering(ParserContext context, SourceLine line, SourceLine child, List<ChildrenOrderingSyntax> orderings)
+    {
+        if (ParseOrdering(context, child) is not { } ordering) return;
+        if (orderings.Count == 0)
+        {
+            orderings.Add(ordering);
+            return;
+        }
+
+        var first = orderings[0];
+        var conflict = first.Placement != ordering.Placement || first.SortBy != ordering.SortBy || first.Direction != ordering.Direction;
+        context.Error(
+            DiagnosticCodes.DuplicateChildrenOrdering,
+            conflict
+                ? $"Children '{line.Content}' declares conflicting orderings - a children block takes one 'insert first', 'insert last' or 'sort by' line"
+                : $"Children '{line.Content}' declares its ordering twice - a children block takes one 'insert first', 'insert last' or 'sort by' line",
+            child.Location);
     }
 
     static ChildrenOrderingSyntax? ParseOrdering(ParserContext context, SourceLine line)
@@ -593,57 +510,67 @@ internal static partial class ProjectionParser
     static KeySyntax ParseKey(ParserContext context, SourceLine line)
     {
         var text = line.Content["key".Length..].Trim();
-        if (context.TryPeekChild(line.Indent, out _))
+        if (!context.TryPeekChild(line.Indent, out _))
         {
-            var type = text.TrimEnd('{').Trim();
-            if (text.EndsWith('{'))
-            {
-                context.Add(new(
-                    DiagnosticSeverity.Information,
-                    DiagnosticCodes.RedundantCompositeKeyBraces,
-                    "Write the composite key without braces; the indented parts already belong to the key.",
-                    line.Location));
-            }
-
-            var parts = new List<KeyPartSyntax>();
-            while (context.TryPeekChild(line.Indent, out var child))
-            {
-                context.Reader.TakeSignificant();
-                if (child.Content == "}")
-                {
-                    continue;
-                }
-
-                var partMatch = AssignmentRegex().Match(child.Content);
-                if (!partMatch.Success)
-                {
-                    context.Error(DiagnosticCodes.InvalidCompositeKeyPart, $"Invalid composite key part '{child.Content}' - expected '<property> = <expression>'", child.Location);
-                    continue;
-                }
-
-                var expression = ExpressionParser.ParseProjectionExpression(context, partMatch.Groups[2].Value, child.Location);
-                if (type.Length > 0 && expression is TemplateExpressionSyntax)
-                {
-                    context.Error(DiagnosticCodes.TemplateInCompositeKey, "Template expressions are not allowed in composite keys", child.Location);
-                }
-
-                parts.Add(new(Unescape(partMatch.Groups[1].Value), expression, child.Location));
-            }
-
-            if (context.Reader.PeekSignificant() is { } closing && closing.Indent == line.Indent && closing.Content == "}")
-            {
-                context.Reader.TakeSignificant();
-            }
-
-            if (parts.Count == 0)
-            {
-                context.Error(DiagnosticCodes.EmptyCompositeKey, "Composite keys must contain at least one part", line.Location);
-            }
-
-            return new CompositeKeySyntax(type, parts, line.Location);
+            return new ExpressionKeySyntax(ExpressionParser.ParseProjectionExpression(context, text, line.Location), line.Location);
         }
 
-        return new ExpressionKeySyntax(ExpressionParser.ParseProjectionExpression(context, text, line.Location), line.Location);
+        var type = text.TrimEnd('{').Trim();
+        if (text.EndsWith('{'))
+        {
+            context.Add(new(
+                DiagnosticSeverity.Information,
+                DiagnosticCodes.RedundantCompositeKeyBraces,
+                "Write the composite key without braces; the indented parts already belong to the key.",
+                line.Location));
+        }
+
+        var parts = ParseKeyParts(context, line, type);
+        if (context.Reader.PeekSignificant() is { } closing && closing.Indent == line.Indent && closing.Content == "}")
+        {
+            context.Reader.TakeSignificant();
+        }
+
+        if (parts.Count == 0)
+        {
+            context.Error(DiagnosticCodes.EmptyCompositeKey, "Composite keys must contain at least one part", line.Location);
+        }
+
+        return new CompositeKeySyntax(type, parts, line.Location);
+    }
+
+    static List<KeyPartSyntax> ParseKeyParts(ParserContext context, SourceLine line, string type)
+    {
+        var parts = new List<KeyPartSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (child.Content == "}") continue;
+            if (ParseKeyPart(context, child, type) is { } part)
+            {
+                parts.Add(part);
+            }
+        }
+
+        return parts;
+    }
+
+    static KeyPartSyntax? ParseKeyPart(ParserContext context, SourceLine line, string type)
+    {
+        var match = AssignmentRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidCompositeKeyPart, $"Invalid composite key part '{line.Content}' - expected '<property> = <expression>'", line.Location);
+            return null;
+        }
+
+        var expression = ExpressionParser.ParseProjectionExpression(context, match.Groups[2].Value, line.Location);
+        if (type.Length > 0 && expression is TemplateExpressionSyntax)
+        {
+            context.Error(DiagnosticCodes.TemplateInCompositeKey, "Template expressions are not allowed in composite keys", line.Location);
+        }
+
+        return new(Unescape(match.Groups[1].Value), expression, line.Location);
     }
 
     static List<MappingSyntax> ParseMappingBlock(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Dictionary<string, SourceLocation> directiveLocations, Func<SourceLine, bool> extras)
@@ -701,7 +628,7 @@ internal static partial class ProjectionParser
     {
         // 'remove with' and 'remove via join' are block directives of the projection body; inside a handler they would
         // otherwise read as an invalid mapping with no hint about where they belong.
-        if (RemoveWithRegex().IsMatch(line.Content) || RemoveViaJoinRegex().IsMatch(line.Content))
+        if (IsRemovalDirective(line.Content))
         {
             context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - '{string.Join(' ', line.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2))}' is a block directive of the projection or children body, not a mapping line", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
             return null;
@@ -710,39 +637,13 @@ internal static partial class ProjectionParser
         var keyword = KeywordMappingRegex().Match(line.Content);
         if (keyword.Success)
         {
-            var target = keyword.Groups[2].Value;
-
-            // 'clear with' in a mapping position is a block directive someone stopped typing, not a property named
-            // 'with' - reading it as a clear would quietly do something other than what was meant. The escape gets
-            // the property back, so the guard costs nothing. 'remove with' and 'remove via' are guarded the same way.
-            if ((keyword.Groups[1].Value == "clear" && target == "with") ||
-                (keyword.Groups[1].Value == "remove" && ReservedWords.RemoveKeyMapping.Contains(target)))
-            {
-                var verb = keyword.Groups[1].Value;
-                context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - '{verb} {target}' is a block directive and needs an event type; to {verb} a property named '{target}', write '{verb} @{target}'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
-                return null;
-            }
-
-            var property = Unescape(target);
-            return keyword.Groups[1].Value switch
-            {
-                "increment" => new IncrementMappingSyntax(property, line.Location),
-                "decrement" => new DecrementMappingSyntax(property, line.Location),
-                "clear" => new ClearMappingSyntax(property, line.Location),
-                "remove" => new RemoveKeyMappingSyntax(property, line.Location),
-                _ => new CountMappingSyntax(property, line.Location)
-            };
+            return ParseKeywordMapping(context, line, keyword);
         }
 
         var arithmetic = ArithmeticRegex().Match(line.Content);
         if (arithmetic.Success)
         {
-            var property = Unescape(arithmetic.Groups[2].Value);
-            var value = ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[3], line);
-            var factor = arithmetic.Groups[4].Success ? ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[4], line) : null;
-            return arithmetic.Groups[1].Value == "add"
-                ? new AddMappingSyntax(property, value, line.Location) { Factor = factor }
-                : new SubtractMappingSyntax(property, value, line.Location) { Factor = factor };
+            return ParseArithmeticMapping(context, line, arithmetic);
         }
 
         var setOnce = SetOnceRegex().Match(line.Content);
@@ -752,14 +653,7 @@ internal static partial class ProjectionParser
             return new SetOnceMappingSyntax(Unescape(setOnce.Groups[1].Value), source, line.Location);
         }
 
-        var set = SetRegex().Match(line.Content);
-        if (set.Success)
-        {
-            var source = ExpressionParser.ParseProjectionMappingSource(context, set.Groups[2], line);
-            return new SetMappingSyntax(Unescape(set.Groups[1].Value), source, line.Location);
-        }
-
-        var assignment = AssignmentRegex().Match(line.Content);
+        var assignment = MatchSetMapping(line.Content);
         if (assignment.Success)
         {
             var source = ExpressionParser.ParseProjectionMappingSource(context, assignment.Groups[2], line);
@@ -776,6 +670,52 @@ internal static partial class ProjectionParser
         return null;
     }
 
+    static bool IsRemovalDirective(string content) => RemoveWithRegex().IsMatch(content) || RemoveViaJoinRegex().IsMatch(content);
+
+    static MappingSyntax? ParseKeywordMapping(ParserContext context, SourceLine line, Match keyword)
+    {
+        var verb = keyword.Groups[1].Value;
+        var target = keyword.Groups[2].Value;
+
+        // 'clear with' in a mapping position is a block directive someone stopped typing, not a property named
+        // 'with' - reading it as a clear would quietly do something other than what was meant. The escape gets
+        // the property back, so the guard costs nothing. 'remove with' and 'remove via' are guarded the same way.
+        if (IsReservedMappingTarget(verb, target))
+        {
+            context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - '{verb} {target}' is a block directive and needs an event type; to {verb} a property named '{target}', write '{verb} @{target}'", line.Location, DiagnosticArguments.Empty.With("text", DiagnosticArgument.Text(line.Content)));
+            return null;
+        }
+
+        var property = Unescape(target);
+        return verb switch
+        {
+            "increment" => new IncrementMappingSyntax(property, line.Location),
+            "decrement" => new DecrementMappingSyntax(property, line.Location),
+            "clear" => new ClearMappingSyntax(property, line.Location),
+            "remove" => new RemoveKeyMappingSyntax(property, line.Location),
+            _ => new CountMappingSyntax(property, line.Location)
+        };
+    }
+
+    static bool IsReservedMappingTarget(string verb, string target) =>
+        (verb == "clear" && target == "with") || (verb == "remove" && ReservedWords.RemoveKeyMapping.Contains(target));
+
+    static MappingSyntax ParseArithmeticMapping(ParserContext context, SourceLine line, Match arithmetic)
+    {
+        var property = Unescape(arithmetic.Groups[2].Value);
+        var value = ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[3], line);
+        var factor = arithmetic.Groups[4].Success ? ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[4], line) : null;
+        return arithmetic.Groups[1].Value == "add"
+            ? new AddMappingSyntax(property, value, line.Location) { Factor = factor }
+            : new SubtractMappingSyntax(property, value, line.Location) { Factor = factor };
+    }
+
+    static Match MatchSetMapping(string content)
+    {
+        var set = SetRegex().Match(content);
+        return set.Success ? set : AssignmentRegex().Match(content);
+    }
+
     static string FirstWord(string content) => LineText.FirstWord(content);
 
     static bool IsOrderingLine(string content)
@@ -787,6 +727,121 @@ internal static partial class ProjectionParser
     static string Unescape(string identifier) => LineText.Unescape(identifier);
 
     static IEnumerable<string> SplitTopLevel(string text, char separator) => LineText.SplitTopLevel(text, separator);
+
+    sealed class ProjectionBody(ParserContext context, string name, string? readModel)
+    {
+        readonly Dictionary<string, SourceLocation> _directiveLocations = [];
+        readonly List<ProjectionBlockSyntax> _blocks = [];
+        string? _sequence;
+        string? _description;
+        SourceLocation? _sequenceLocation;
+        AutoMapMode _autoMap = AutoMapMode.Inherit;
+        KeySyntax? _key;
+        FileReferenceSyntax? _file;
+
+        public ProjectionSyntax Parse(SourceLine header)
+        {
+            while (context.TryPeekChild(header.Indent, out var line))
+            {
+                context.Reader.TakeSignificant();
+                ParseLine(line);
+            }
+
+            ValidateVariantNames();
+            ValidateEnteringEvents();
+            ProjectionEventScopeValidator.Validate(context, name, _blocks);
+
+            if (_blocks.Count == 0)
+            {
+                context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
+            }
+
+            return new(name, readModel, _sequence, _autoMap, _key, _blocks, header.Location)
+            {
+                SourceOptions = context.SourceOptions,
+                File = _file,
+                DirectiveLocations = AddSequenceLocation(_directiveLocations, _sequenceLocation),
+                ParsedAutoMapMode = _autoMap,
+                Description = _description
+            };
+        }
+
+        void ParseLine(SourceLine line)
+        {
+            if (DescriptionParser.TryParse(context, line, ref _description, $"Projection '{name}'", _directiveLocations)) return;
+            if (FileReferenceParser.IsDirective(line))
+            {
+                _file = FileReferenceParser.ParseReplacing(context, line, _file, _directiveLocations);
+                return;
+            }
+
+            ParseDirective(line);
+        }
+
+        void ParseDirective(SourceLine line)
+        {
+            switch (FirstWord(line.Content))
+            {
+                case "sequence":
+                    _sequence = line.Content["sequence".Length..].Trim();
+                    _sequenceLocation = line.Location;
+                    break;
+                case "automap":
+                    RecordAutoMap(context, _directiveLocations, ref _autoMap, AutoMapMode.Enabled, line.Location);
+                    break;
+                case "no" when line.Content == "no automap":
+                    RecordAutoMap(context, _directiveLocations, ref _autoMap, AutoMapMode.Disabled, line.Location);
+                    break;
+                case "key":
+                    ReadKey(line);
+                    break;
+                case "variant":
+                    _blocks.Add(ParseProjectionVariant(context, line));
+                    break;
+                default:
+                    if (ParseBlock(context, line, nestedScope: false) is { } block)
+                    {
+                        _blocks.Add(block);
+                    }
+
+                    break;
+            }
+        }
+
+        void ReadKey(SourceLine line)
+        {
+            context.Warning(DiagnosticCodes.UnusedProjectionKey, "A projection-level key does not route events - declare the key on each 'from' (or its events)", line.Location);
+            if (_key is not null)
+            {
+                context.Error(DiagnosticCodes.DuplicateProjectionKey, "Duplicate key directive - a projection can only declare one key", line.Location);
+            }
+
+            _key = ParseKey(context, line);
+        }
+
+        void ValidateVariantNames()
+        {
+            foreach (var duplicate in _blocks.OfType<ProjectionVariantSyntax>()
+                .GroupBy(variant => variant.Name, StringComparer.Ordinal)
+                .Where(group => group.Count() > 1)
+                .SelectMany(group => group.Skip(1)))
+            {
+                context.Error(DiagnosticCodes.DuplicateProjectionVariant, $"Duplicate variant '{duplicate.Name}' - a variant name is declared once", duplicate.Location);
+            }
+        }
+
+        void ValidateEnteringEvents()
+        {
+            var entering = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var entry in _blocks.OfType<ProjectionVariantSyntax>().SelectMany(variant => variant.EntersOn))
+            {
+                if (!string.IsNullOrEmpty(entry.Event) && !entering.Add(entry.Event))
+                {
+                    context.Error(DiagnosticCodes.DuplicateVariantEnteringEvent, $"Entering event '{entry.Event}' is claimed more than once in projection '{name}'", entry.Location);
+                }
+            }
+        }
+    }
 
     [GeneratedRegex(@"^projection\s+(@?[\w.]+)\s*(?:=>\s*([\w.]+))?$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
