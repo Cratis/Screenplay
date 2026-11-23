@@ -90980,6 +90980,7 @@
               "typed-contexts",
               "dropped-comments",
               "semantic-diff",
+              "agent-exposure-diff",
               "notes",
               "release-baseline",
               "production-destinations",
@@ -91424,6 +91425,7 @@
         "before",
         "beforeWorkspaceJson",
         "expectedSourceRevision",
+        "includeAgentExposure",
         "limit",
         "offset"
       ],
@@ -91524,6 +91526,10 @@
           "expectedSourceRevision": {
             "type": "string",
             "description": "Echo the ordered-pair sourceRevision on continuation. Both source revisions are pinned, including catalogs and exact source; sources reload on each page and a change refuses continuation as stale."
+          },
+          "includeAgentExposure": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [],
