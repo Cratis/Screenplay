@@ -4704,4 +4704,13 @@ public static class DiagnosticCodes
     /// </summary>
     [DiagnosticArgumentDefinitions("count:text;The number of distinct resolved exposed operations, in decimal.", "recommendedMaximum:text;The recommended maximum number of exposed operations, in decimal.")]
     public const string AgentToolCountExceedsRecommendation = "PLAY1167";
+
+    /// <summary>Navigation names no executable screen in the exact target feature.</summary>
+    public const string UnknownNavigationScreen = "PLAY1168";
+
+    /// <summary>Navigation names competing executable screens in the exact target feature.</summary>
+    public const string AmbiguousNavigationScreen = "PLAY1169";
+
+    /// <summary>Navigation selects a screen that cannot fit a page.</summary>
+    public const string NonPageNavigationScreen = "PLAY1170";
 }

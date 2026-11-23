@@ -729,4 +729,7 @@ export const DiagnosticCodes = {
     DesignOnlyScreen: 'PLAY1164',
     InvalidInvocationMapping: 'PLAY1165',
     AgentToolCountExceedsRecommendation: 'PLAY1167',
+    UnknownNavigationScreen: 'PLAY1168',
+    AmbiguousNavigationScreen: 'PLAY1169',
+    NonPageNavigationScreen: 'PLAY1170',
 } as const;

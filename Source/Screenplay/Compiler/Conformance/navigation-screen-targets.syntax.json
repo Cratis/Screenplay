@@ -1,0 +1,109 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Projects",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Listing",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [],
+                  "fits": [
+                    "Page"
+                  ],
+                  "name": "CreateProject"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [],
+                  "fits": [
+                    "Page"
+                  ],
+                  "name": "Projects"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Shop",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "projects",
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Projects",
+                "module": "Shop",
+                "screen": "Projects"
+              },
+              "title": "Projects"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "create",
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Projects",
+                "module": "Shop",
+                "screen": "CreateProject"
+              },
+              "title": "Create"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "legacy",
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Projects",
+                "module": "Shop"
+              },
+              "title": "Default"
+            }
+          ],
+          "mode": "Extend",
+          "name": "sidebar"
+        }
+      ]
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

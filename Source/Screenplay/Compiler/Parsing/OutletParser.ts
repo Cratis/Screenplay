@@ -21,7 +21,7 @@ import { locationOf, SourceLine } from './SourceLine';
 
 const overrideExpected = 'outlet <name> inherits|extends|overrides';
 const itemsExpected = 'button, group, filter <id> title "<text>" sets <Query>.<param>, tab <id> title "<text>" shows <Screen>, stat <id> title "<text>" value from <Query>.<field> or item <id> title "<text>" target <Module>[.<Feature>]';
-const navigationItemExpected = 'item <id> title "<text>" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]';
+const navigationItemExpected = 'item <id> title "<text>" [icon <name>] [target <Module>[.<Feature>] [screen <Screen>]] [slot <name>]';
 const localized = '\\$strings\\.\\w+(?:\\.\\w+)*';
 
 const declarationStart = pattern('^outlet\\s+\\S+\\s+of\\b');
@@ -35,7 +35,7 @@ const sets = pattern('^sets\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
 const shows = pattern('^shows\\s+([A-Za-z_]\\w*)$');
 const valueFrom = pattern('^value\\s+from\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
 const navigationItem = pattern(`^item\\s+(?:"(${stringBodyPattern})"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$`);
-const navigationPart = new RegExp(pattern(`\\s*(title|icon|slot|target)\\s+(?:"(${stringBodyPattern})"|(${localized})|([A-Za-z_][\\w.-]*))(?=\\s|$)`).source, 'uy');
+const navigationPart = new RegExp(pattern(`\\s*(title|icon|slot|target|screen)\\s+(?:"(${stringBodyPattern})"|(${localized})|([A-Za-z_][\\w.-]*))(?=\\s|$)`).source, 'uy');
 const identifier = pattern('^[A-Za-z_]\\w*$');
 const navigationTarget = pattern('^[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*$');
 const region = pattern('^navigation\\s+(topbar|sidebar)(?:\\s+(inherits|extends|overrides))?$');
@@ -222,6 +222,7 @@ function parseNavigationItem(context: ParserContext, line: SourceLine, allowPosi
     let icon: string | undefined;
     let slot: string | undefined;
     let target: NavigationTargetSyntax | undefined;
+    let screen: string | undefined;
     const rest = head[3] ?? '';
     let at = 0;
     let valid = true;
@@ -238,7 +239,7 @@ function parseNavigationItem(context: ParserContext, line: SourceLine, allowPosi
         const quoted = part[2] !== undefined;
         const isLocalized = part[3] !== undefined;
         const value = quoted ? unescapeString(part[2]) : isLocalized ? part[3] : part[4];
-        const duplicate = key === 'title' ? itemTitle !== undefined : key === 'icon' ? icon !== undefined : key === 'slot' ? slot !== undefined : target !== undefined;
+        const duplicate = key === 'title' ? itemTitle !== undefined : key === 'icon' ? icon !== undefined : key === 'slot' ? slot !== undefined : key === 'screen' ? screen !== undefined : target !== undefined;
         if (duplicate) {
             context.error(DiagnosticCodes.InvalidNavigationItem, `Navigation item '${id}' states '${key}' more than once`, locationOf(line));
             continue;
@@ -250,6 +251,11 @@ function parseNavigationItem(context: ParserContext, line: SourceLine, allowPosi
             } else itemTitle = value;
         } else if (key === 'icon') {
             icon = value;
+        } else if (key === 'screen') {
+            if (quoted || isLocalized || !identifier.test(value)) {
+                context.error(DiagnosticCodes.InvalidNavigationItem, `Invalid screen '${value}' on navigation item '${id}' - expected a screen name`, locationOf(line));
+                valid = false;
+            } else screen = value;
         } else if (key === 'slot') {
             if (quoted || isLocalized || !identifier.test(value)) {
                 context.error(DiagnosticCodes.InvalidNavigationItem, `Invalid slot '${value}' on navigation item '${id}' - expected a slot name`, locationOf(line));
@@ -265,6 +271,10 @@ function parseNavigationItem(context: ParserContext, line: SourceLine, allowPosi
     }
     if (itemTitle === undefined && valid) {
         context.error(DiagnosticCodes.InvalidNavigationItem, `Navigation item '${id}' has no title - expected 'item ${id} title "<text>"'`, locationOf(line));
+    }
+    if (screen !== undefined) {
+        if (target?.feature == null) context.error(DiagnosticCodes.InvalidNavigationItem, `Navigation item '${id}' selects screen '${screen}' without an explicit feature - add 'target <Module>.<Feature>'`, locationOf(line));
+        else target = { ...target, screen };
     }
     const children: NavigationItemSyntax[] = [];
     let placement: OutletPositionSyntax | undefined;
