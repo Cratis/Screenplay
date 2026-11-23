@@ -1,0 +1,14 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module Shop
+  outlet sidebar extends
+    item projects title "Projects" target Shop.Projects screen Projects
+    item create title "Create" screen CreateProject target Shop.Projects
+    item legacy title "Default" target Shop.Projects
+  feature Projects
+    slice StateView Listing
+      screen CreateProject
+        fits page
+      screen Projects
+        fits page

@@ -21,7 +21,7 @@ internal static partial class NavigationParser
     /// <summary>
     /// What a navigation item line holds, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "item <id> title \"<text>\" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]";
+    public const string Expected = "item <id> title \"<text>\" [icon <name>] [target <Module>[.<Feature>] [screen <Screen>]] [slot <name>]";
 
     /// <summary>
     /// Determines whether a line inside a layout or module is a Screenplay 5 navigation region rather than a slot named <c>navigation</c>.
@@ -133,6 +133,7 @@ internal static partial class NavigationParser
         string? title = null;
         string? icon = null;
         string? slot = null;
+        string? screen = null;
         NavigationTargetSyntax? target = null;
         var rest = head.Groups[3].Value;
         var position = 0;
@@ -153,7 +154,7 @@ internal static partial class NavigationParser
             var isQuoted = part.Groups[2].Success;
             var isLocalized = part.Groups[3].Success;
             var value = Text(part, 2, 3, 4);
-            var duplicate = key switch { "title" => title is not null, "icon" => icon is not null, "slot" => slot is not null, _ => target is not null };
+            var duplicate = key switch { "title" => title is not null, "icon" => icon is not null, "slot" => slot is not null, "screen" => screen is not null, _ => target is not null };
             if (duplicate)
             {
                 context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' states '{key}' more than once", line.Location);
@@ -176,6 +177,18 @@ internal static partial class NavigationParser
                     break;
                 case "icon":
                     icon = value;
+                    break;
+                case "screen":
+                    if (isQuoted || isLocalized || !IdentifierRegex().IsMatch(value))
+                    {
+                        context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid screen '{value}' on navigation item '{id}' - expected a screen name", line.Location);
+                        valid = false;
+                    }
+                    else
+                    {
+                        screen = value;
+                    }
+
                     break;
                 case "slot":
                     if (isQuoted || isLocalized || !IdentifierRegex().IsMatch(value))
@@ -208,6 +221,18 @@ internal static partial class NavigationParser
         if (title is null && valid)
         {
             context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' has no title - expected 'item {id} title \"<text>\"'", line.Location);
+        }
+
+        if (screen is not null)
+        {
+            if (target?.Feature is null)
+            {
+                context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' selects screen '{screen}' without an explicit feature - add 'target <Module>.<Feature>'", line.Location);
+            }
+            else
+            {
+                target = target with { Screen = screen };
+            }
         }
 
         var children = new List<NavigationItemSyntax>();
@@ -264,7 +289,7 @@ internal static partial class NavigationParser
     [GeneratedRegex("^item\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|([A-Za-z_][\\w-]*))(?:\\s+(.*))?$", RegexOptions.NonBacktracking)]
     private static partial Regex ItemRegex();
 
-    [GeneratedRegex("\\s*(title|icon|slot|target)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?<end>\\s|$)", RegexOptions.NonBacktracking)]
+    [GeneratedRegex("\\s*(title|icon|slot|target|screen)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.-]*))(?<end>\\s|$)", RegexOptions.NonBacktracking)]
     private static partial Regex PartRegex();
 
     [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.NonBacktracking)]

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateNavigationScreenTargets } from './Parsing/NavigationScreenTargetValidator';
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { validateProvides } from './Parsing/ProvideValidator';
 import { validateAvailability, validateAvailabilityInvocations } from './Parsing/AvailabilityValidator';
@@ -93,45 +94,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     let value = parseApplication(context, lines, placement);
     recordStructuralInteractions(value, context);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
-    if (validateResponseContracts) {
-        validateApplicationHandlers(value, context);
-        validateIdentity(value, context);
-        validateProvides(value, context);
-        validateAvailability(value, context);
-        validateAvailabilityInvocations(value, context);
-        validateDesignSystem(value, context);
-        validatePurposes(value, context);
-        validateSlicePlacements(value, context);
-        validateInlineEvents(value, context);
-        validateConstraintProperties(value, context);
-        validateOperations(value, context);
-        validateInvocations(value, context);
-        validateInvocationMappings(value, context);
-        validateSystemConfiguration(value, context);
-        validatePublicEventUsage(value, context);
-        validateSpecificationCases(value, context);
-        validateSpecificationExampleTypes(value, context, true);
-        const effective = expandSpecificationExamples(value);
-        validateResponses(effective, context);
-        validateEventSources(value, context);
-        validateProjectionTargets(value, context);
-        validateIdentifierCompliance(effective, context);
-        validateEventSubjects(value, context);
-        validateSecretProjections(value, context);
-        validateReadModelKeys(value, context);
-        validateReadModelMemberTypes(value, context);
-        validateGraphs(value, context);
-        validateSinks(value, context);
-        validateReactionRefusals(value, context);
-        validateSpecificationRedelivery(value, context);
-        validateGuardedActions(value, context);
-        validatePersonaCallers(value, context);
-        validateAgents(value, context, true);
-        value = validateDependencyDeclarations(value, context);
-        DeclaredDependencies.validate(value, context);
-        for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
-        for (const diagnostic of timelineOrderDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
-    }
+    if (validateResponseContracts) value = validateApplicationContracts(value, context);
     return {
         value,
         diagnostics: context.diagnostics,
@@ -143,6 +106,48 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         interactionUses: context.interactionUses,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
+}
+
+function validateApplicationContracts(value: ApplicationSyntax, context: ParserContext): ApplicationSyntax {
+    validateApplicationHandlers(value, context);
+    validateIdentity(value, context);
+    validateNavigationScreenTargets(value, context);
+    validateProvides(value, context);
+    validateAvailability(value, context);
+    validateAvailabilityInvocations(value, context);
+    validateDesignSystem(value, context);
+    validatePurposes(value, context);
+    validateSlicePlacements(value, context);
+    validateInlineEvents(value, context);
+    validateConstraintProperties(value, context);
+    validateOperations(value, context);
+    validateInvocations(value, context);
+    validateInvocationMappings(value, context);
+    validateSystemConfiguration(value, context);
+    validatePublicEventUsage(value, context);
+    validateSpecificationCases(value, context);
+    validateSpecificationExampleTypes(value, context, true);
+    const effective = expandSpecificationExamples(value);
+    validateResponses(effective, context);
+    validateEventSources(value, context);
+    validateProjectionTargets(value, context);
+    validateIdentifierCompliance(effective, context);
+    validateEventSubjects(value, context);
+    validateSecretProjections(value, context);
+    validateReadModelKeys(value, context);
+    validateReadModelMemberTypes(value, context);
+    validateGraphs(value, context);
+    validateSinks(value, context);
+    validateReactionRefusals(value, context);
+    validateSpecificationRedelivery(value, context);
+    validateGuardedActions(value, context);
+    validatePersonaCallers(value, context);
+    validateAgents(value, context, true);
+    value = validateDependencyDeclarations(value, context);
+    DeclaredDependencies.validate(value, context);
+    for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
+    for (const diagnostic of timelineOrderDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
+    return value;
 }
 
 /** Checks public boundaries on programmatically authored or decoded assembled syntax. */

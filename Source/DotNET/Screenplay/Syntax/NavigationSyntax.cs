@@ -40,7 +40,13 @@ public record NavigationItemSyntax(string Id, string Title, SourceLocation Locat
 /// <param name="Module">The name of the module.</param>
 /// <param name="Feature">The dotted feature path inside the module, or <c>null</c> to go to the module's first feature.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record NavigationTargetSyntax(string Module, string? Feature, SourceLocation Location) : SyntaxNode(Location);
+public record NavigationTargetSyntax(string Module, string? Feature, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the selected page-capable screen in the exact feature, or <c>null</c> for the consumer's default landing screen.
+    /// </summary>
+    public string? Screen { get; init; }
+}
 
 /// <summary>
 /// Represents the <c>logo image "..." title "..."</c> line of the application's navigation.

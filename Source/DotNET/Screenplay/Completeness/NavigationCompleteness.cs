@@ -47,6 +47,7 @@ static class NavigationCompleteness
         readonly (FormSyntax Form, DeclarationScope Scope)[] _forms = [.. application.Modules.SelectMany(module => (module.Forms ?? []).Select(form => (form, new DeclarationScope([module.Name]))))];
         readonly (DialogTemplateSyntax Template, Declaration Declaration)[] _dialogs = [.. application.Modules.SelectMany(module => (module.DialogTemplates ?? []).Select(template => (template, new Declaration(template.Name, new([module.Name])))))];
         readonly (ScreenTemplateSyntax Template, Declaration Declaration)[] _templates = [.. application.Modules.SelectMany(module => module.ScreenTemplates.Select(template => (template, new Declaration(template.Name, new([module.Name])))))];
+        readonly NavigationScreenTargets _navigationTargets = new(application);
         readonly HashSet<FormSyntax> _activeForms = new(ReferenceEqualityComparer.Instance);
         DeclarationScope _scope = new([]);
         ScreenSyntax? _screen;
@@ -156,6 +157,13 @@ static class NavigationCompleteness
         public override void VisitScreenNavigate(ScreenNavigateSyntax syntax) => Navigate(syntax.Screen, _scope);
 
         /// <inheritdoc/>
+        public override void VisitNavigationTarget(NavigationTargetSyntax syntax)
+        {
+            if (SelectedPage(syntax) is { } screen) Roots.Add(screen);
+            base.VisitNavigationTarget(syntax);
+        }
+
+        /// <inheritdoc/>
         public override void VisitBehavior(BehaviorSyntax syntax)
         {
             // A reusable declaration is not attached to anything until a 'uses' site instantiates it.
@@ -219,6 +227,13 @@ static class NavigationCompleteness
             }
 
             return reached;
+        }
+
+        ScreenSyntax? SelectedPage(NavigationTargetSyntax syntax)
+        {
+            if (syntax.Screen is null) return null;
+            if (_navigationTargets.Resolve(syntax) is not [var screen]) return null;
+            return NavigationScreenTargets.IsPage(screen) ? screen : null;
         }
 
         void DiscoverForms(string name, DeclarationScope commandScope)

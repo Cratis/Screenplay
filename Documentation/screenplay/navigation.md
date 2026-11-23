@@ -7,7 +7,7 @@ description: "Declare topbar and sidebar destinations as navigation outlets on a
 
 Screenplay navigation is an [outlet](outlets.md) of kind `navigation`: a named list of destinations the layout offers. Declare the application-wide items once on the `layout`, then let each module, feature or screen inherit them, add its own destinations or replace the list. This keeps application-wide navigation separate from the screens users reach through it.
 
-Use navigation outlets to guide users to modules and features. For a link to a particular screen or record, use [screen navigation](screens.md#navigation-metadata) or an [interaction](interactions.md).
+Use navigation outlets to guide users to modules, features or a selected screen within a feature. For a link carrying record parameters, use [screen navigation](screens.md#navigation-metadata) or an [interaction](interactions.md).
 
 ## At application level
 
@@ -42,7 +42,7 @@ The `logo image` is a URL the browser loads, and the compiler does not check it.
 - A path under `/assets/`, as above, with the file in an `assets` folder beside the `.play` files (`assets/acme.svg`). [Stage](https://github.com/Cratis/Stage) serves that folder read-only in the sandbox from 5.2.0. A host that does not serve it shows a broken image, and the compiler cannot tell you.
 - An inline `data:image/svg+xml;base64,...` URI, which needs no file and works in every host. [The Acme walkthrough](acme-commerce-walkthrough.md#navigation-and-the-logo) uses it.
 
-A navigation item is `<id> title "…" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]` - after `default` on a layout, after `item` below it:
+A navigation item is `<id> title "…" [icon <name>] [target <Module>[.<Feature>] [screen <Screen>]] [slot <name>]` - after `default` on a layout, after `item` below it:
 
 | Part | Meaning |
 | --- | --- |
@@ -50,9 +50,39 @@ A navigation item is `<id> title "…" [icon <name>] [target <Module>[.<Feature>
 | `title` | A quoted string or a `$strings.<key>` token. |
 | `icon` | Optional icon name. |
 | `target` | A module, or a module and a feature path - `Sales.Orders.Returns` for a nested feature. An item without a target must have sub-items. |
+| `screen` | Optional page-capable executable screen in the exact target feature. Requires `target Module.Feature`; nested feature paths work. |
 | `slot` | The layout slot the target renders into. Without it, the target renders into the layout's primary slot. |
 
 Any item nests sub-items as `item` lines under it.
+
+## Choose a feature's landing screen
+
+Without `screen`, the consumer keeps its existing fallback: the first page-capable screen at or beneath the resolved feature (or module). Declaration order matters; this is not a form/list heuristic. Reordering command forms to influence a sidebar link changes the fallback for other links too.
+
+Select a destination on the item instead:
+
+```screenplay
+layout AppShell
+  category Shell
+  content page routed primary
+  outlet sidebar of navigation
+module Shop
+  outlet sidebar extends
+    item projects title "Projects" target Shop.Projects screen Projects
+    item create title "Create project" target Shop.Projects screen CreateProject
+  feature Projects
+    slice StateView Views
+      screen CreateProject
+        fits page
+      screen Projects
+        fits page
+```
+
+The first item selects `Projects` even though `CreateProject` occurs first. Two items may select different screens of the same feature. `screen Projects target Shop.Projects` is equivalent; the printer writes `target` before `screen`. Layout defaults, nested items and navigation contributions use the same item form.
+
+The name must identify one executable screen **in that exact feature**, not a descendant. A free screen is eligible only where its first adopting slice owns it; adopting it again does not move its identity. A screen with no `fits` is page-capable, as is one explicitly including `page`; dialog-only, drawer-only and pane-only screens are not navigation destinations. Missing, competing and non-page screens are errors, never reasons to choose a different screen. A module-only target or grouping item without a target cannot carry `screen`.
+
+This is item-local selection, not a feature-wide `default screen` declaration. It does not define the application's initial `/` route or logo destination. Scene conversion and Stage rendering must be updated to carry and honor `screen`; this producer change alone does not add that consumer support. Until then, a renderer may retain its old fallback. Stage's existing exclusion of dialog-only screens remains separate from selecting a list instead of an earlier page-capable command form.
 
 ## At module level
 
@@ -97,7 +127,7 @@ Use a navigation outlet when you need a destination tree with hierarchy, target 
 
 Use the C# compiler to validate navigation against the document's modules, features and layout slots. It reports [`PLAY0741`, `PLAY0743`, `PLAY0744` and `PLAY0748`-`PLAY0752`](diagnostics.md#navigation-outlets) and the [outlet checks](diagnostics.md#outlets), matching Scene's `navTargetMissing`, `navSlotUnknown`, `navDuplicateId`, `navTargetOutOfScope` and `navModuleWithoutFeatures` findings.
 
-Layouts stay opaque to the TypeScript compiler. It reads a module's, feature's or screen's outlets and reports their form, but not the reference checks. Outlets are authoring syntax, not part of the executable model. Stage plans them from the syntax tree.
+Layouts stay opaque to the TypeScript compiler: it does not validate explicit screen destinations in layout or template defaults. It reads a module's, feature's or screen's outlets (including free screens), reports their form, and validates explicit screen destinations after full-document or application assembly. Like the C# compiler, it skips screen resolution when an item's target is outside its declaring module; C# reports `PLAY0750` for that out-of-scope target. The remaining native layout, slot and reference checks are not all ported. Outlets are authoring syntax, not part of the executable model. Stage plans them from the syntax tree.
 
 Parser, printer and parser again keep every item, id, icon, slot, target, mode, hidden item and position. The syntax tree carries `OutletSyntax` (on `LayoutSyntax`, `ScreenTemplateSyntax`, `DialogTemplateSyntax`, `ModuleSyntax`, `FeatureSyntax` and `ScreenSyntax`), `NavigationItemSyntax`, `NavigationTargetSyntax` and `NavigationLogoSyntax`; see [AST compatibility](ast-compatibility.md).
 

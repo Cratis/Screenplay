@@ -92,6 +92,8 @@ export interface NavigationTargetSyntax extends SyntaxNode {
     readonly kind: 'NavigationTargetSyntax';
     readonly module: string;
     readonly feature: string | null;
+    /** The selected page-capable screen in the exact feature; absent means consumer default. */
+    readonly screen?: string | null;
 }
 
 export type OutletItemSyntax = ToolbarButtonSyntax | OutletGroupSyntax | OutletFilterSyntax | OutletTabSyntax | OutletStatSyntax | NavigationItemSyntax;

@@ -28,10 +28,12 @@ internal sealed class OutletValidator
     readonly Dictionary<string, List<OutletItemSyntax>> _contributed = new(StringComparer.Ordinal);
     readonly List<(string[] Path, SliceSyntax Slice)> _slices;
     readonly bool _usesBlueprints;
+    readonly NavigationScreenTargets _navigationScreens;
 
     OutletValidator(ApplicationSyntax application, ParserContext context)
     {
         _application = application;
+        _navigationScreens = new(application);
         _context = context;
         _slices = ToolbarButtonValidator.AllSlices(application);
         foreach (var layout in application.Layouts ?? [])
@@ -132,10 +134,12 @@ internal sealed class OutletValidator
     void Validate()
     {
         ValidateDeclarations();
+        ValidateScreens(_application.Screens, null, new(StringComparer.Ordinal));
         foreach (var module in _application.Modules)
         {
             var inherited = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
             ValidateLevel(module.Outlets, module.Name, $"module '{module.Name}'", inherited);
+            ValidateScreens(module.Screens, module.Name, inherited);
             ValidateFeatures(module.Features, module.Name, inherited);
             foreach (var contribution in Contributions(module))
             {
@@ -171,22 +175,27 @@ internal sealed class OutletValidator
         }
     }
 
+    void ValidateScreens(IEnumerable<ScreenSyntax> screens, string? module, Dictionary<string, HashSet<string>> inherited)
+    {
+        foreach (var screen in screens)
+        {
+            ValidateLevel(screen.Outlets, module, $"screen '{screen.Name}'", Copy(inherited));
+        }
+    }
+
     void ValidateFeatures(IEnumerable<FeatureSyntax> features, string module, Dictionary<string, HashSet<string>> inherited)
     {
         foreach (var feature in features)
         {
             var own = Copy(inherited);
             ValidateLevel(feature.Outlets, module, $"feature '{feature.Name}'", own);
-            foreach (var screen in feature.Slices.SelectMany(slice => slice.Screens))
-            {
-                ValidateLevel(screen.Outlets, module, $"screen '{screen.Name}'", Copy(own));
-            }
-
+            ValidateScreens(feature.Screens, module, own);
+            ValidateScreens(feature.Slices.SelectMany(slice => slice.Screens), module, own);
             ValidateFeatures(feature.Features, module, own);
         }
     }
 
-    void ValidateLevel(IEnumerable<OutletSyntax> outlets, string module, string level, Dictionary<string, HashSet<string>> inherited)
+    void ValidateLevel(IEnumerable<OutletSyntax> outlets, string? module, string level, Dictionary<string, HashSet<string>> inherited)
     {
         foreach (var outlet in outlets)
         {
@@ -355,6 +364,10 @@ internal sealed class OutletValidator
             {
                 _context.Error(DiagnosticCodes.NavTargetMissing, $"Navigation item '{item.Id}' in the {owner} targets feature '{target.Module}.{target.Feature}', which does not exist", target.Location);
             }
+            else
+            {
+                _navigationScreens.Validate(target, _context);
+            }
 
             return;
         }
@@ -380,7 +393,7 @@ internal sealed class OutletValidator
         }
     }
 
-    OutletSyntax? Resolve(string name, string module) =>
+    OutletSyntax? Resolve(string name, string? module) =>
         _declarations.Find(declaration => declaration.Module == module && declaration.Outlet.Name == name).Outlet ??
         _declarations.Find(declaration => declaration.Module is not null && declaration.Outlet.Name == name).Outlet ??
         _declarations.Find(declaration => declaration.Outlet.Name == name).Outlet;

@@ -49,8 +49,8 @@ const scopes: Record<string, [string, string[]]> = {
     'a nested sample row': ['sample data P\n  shape S\n    row\n      lines\n        row\n          ', ['collection', 'field']],
     'a recursive sample collection header': ['sample data P\n  shape S\n    row\n      lines\n        row\n          children\n            ', ['row']],
     'a ui profile sample data block': ['ui profile P\n  sample data\n    ', ['active', 'bind', 'shape maps to']],
-    'an outlet declaration': ['layout L\n  outlet sidebar of navigation\n    ', ['default button', 'default filter', 'default item', 'default stat', 'default tab', 'logo']],
-    'an outlet change': ['module M\n  outlet sidebar extends\n    ', ['button', 'button (opens)', 'button (runs)', 'filter', 'group', 'hide', 'item', 'stat', 'tab']],
+    'an outlet declaration': ['layout L\n  outlet sidebar of navigation\n    ', ['default button', 'default filter', 'default item', 'default item (with screen)', 'default stat', 'default tab', 'logo']],
+    'an outlet change': ['module M\n  outlet sidebar extends\n    ', ['button', 'button (opens)', 'button (runs)', 'filter', 'group', 'hide', 'item', 'item (with screen)', 'stat', 'tab']],
     'a toolbar': ['module M\n  feature F\n    slice StateView S\n      screen Sc\n        toolbar t\n          ', ['button', 'button (opens)', 'button (runs)', 'button (with emphasis)', 'item action', 'item navigate']],
     'a layout': ['layout L\n  ', ['arrangement', 'outlet', 'outlet of navigation', 'slot']],
 };
