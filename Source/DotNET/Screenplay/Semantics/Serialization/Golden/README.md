@@ -23,6 +23,35 @@ other specs, not regeneration of older full goldens.
 and hashes the source files without JSON normalization. It checks v1–v37 at v38; even a
 one-byte edit fails. Restore changed frozen bytes rather than updating their hashes.
 
+## Runnable lifecycle replacements
+
+Published full vectors remain frozen, including stale lifecycle expectations. The package additionally embeds
+`lifecycle-esm-v36-r2.json` and `lifecycle-esm-v57-r2.json` (ESM 36.0 and 57.0), exposed as
+`EsmGoldenVectors.LifecycleV36R2` and `LifecycleV57R2`; they are not integer or minor version allocations.
+The former corrects only three `Collect` completion expectations to `waits Final`; the latter fills only
+the two missing `OrderPacked.parcelId` values from the existing parcel event-source identities.
+Each replacement has its own recomputed semantic revision. The original `Get(36)` and `Get(51)`–`Get(57)`
+bytes, hashes and revisions are unchanged.
+
+`EsmGoldenVectors.LifecycleDispositions` records all seventeen superseded execution outcomes, with exact
+original identity, version, revision, SHA-256, owner kind/name, specification, ordered failures, reason
+and replacement identity. It is not an admission, normalization or serialization waiver. Consumers must
+match every field and reject duplicate, missing or unused dispositions, changed failures and unexpectedly
+passing originals. All other outcomes, including both replacements, must pass the reference runner.
+
+The revision specs create replacements from the strict original readers and the production serializer.
+Opt in with `SCREENPLAY_REGENERATE_LIFECYCLE_V36_R2=1` or `SCREENPLAY_REGENERATE_LIFECYCLE_V57_R2=1`.
+Regeneration writes only the corresponding replacement and deliberately fails. Review the semantic delta,
+update the replacement's pinned hash/revision, rebuild, and rerun without either variable.
+After rebuilding `Screenplay.CanonicalVectors.Specs` in Debug, run each replacement's specs with the native launcher:
+
+```sh
+bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Debug -class Cratis.Screenplay.CanonicalVectors.Specs.for_EsmGoldenVectors.when_reading_the_revised_v36_lifecycle_vector
+bash .github/scripts/run-specifications.sh Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj Debug -class Cratis.Screenplay.CanonicalVectors.Specs.for_EsmGoldenVectors.when_reading_the_revised_v57_lifecycle_vector
+```
+
+Never regenerate frozen originals. See [decision 0168](https://github.com/Cratis/Screenplay/blob/main/decisions/0168-dispose-stale-lifecycle-vectors-with-runnable-replacements.md).
+
 These source models originally produced the full vectors:
 
 | File | Source model |

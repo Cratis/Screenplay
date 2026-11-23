@@ -336,6 +336,29 @@ A model that declares a `query ... graph <Graph>` or a `given clock` in a graph 
 
 A model that declares a `graph`, a `projection ... => graph` or a `given graph` or `then graph` step selects language/semantic `38.0` and `schemaVersion: 38`. A model without one keeps its version and bytes. The version number is provisional until it is admitted by consumers; see [decision 0138](https://github.com/Cratis/Screenplay/blob/main/decisions/0138-graphs-and-graph-projections-esm-v38.md).
 
+### Runnable lifecycle corpus
+
+Consumers of `Cratis.Screenplay.CanonicalCorpus` can use `EsmGoldenVectors.LifecycleV36R2` and
+`LifecycleV57R2` as runnable acceptance vectors. These are named replacements at ESM 36.0 and 57.0,
+not new semantic versions. Integer/minor lookups and every published original byte sequence remain frozen.
+V36R2 changes three `Collect` expectations to `waits Final`; V57R2 supplies the required `OrderPacked.parcelId`
+in two lifecycle facts and serves as the replacement for V51–V57. Both recompute their semantic revisions.
+
+`EsmGoldenVectors.LifecycleDispositions` provides seventeen exact, immutable per-specification dispositions:
+three for V36 and two each for V51–V57. Entries carry original vector ID, version, revision, byte SHA-256,
+lifecycle owner kind/name, specification, complete ordered failure messages, rationale and replacement ID.
+IDs use public API names such as `EsmGoldenVectors.V36` and `EsmGoldenVectors.LifecycleV36R2`.
+
+For acceptance, discover all exported vector entries (preserving aliases), including collections, integer
+and minor goldens, and named replacements. Strictly deserialize and retain canonical byte/revision checks
+for every entry. Run every declared lifecycle specification and require an exact result count and owner/name
+match. An original result may fail only when every disposition field and failure message matches exactly;
+all undisposed and replacement results must pass. Fail for new or changed failures, unexpectedly passing
+originals, missing or duplicate results, duplicate/unused dispositions, missing replacements or cycles.
+A disposition never waives admission, normalization, hashing or serialization checks.
+
+See [decision 0168](https://github.com/Cratis/Screenplay/blob/main/decisions/0168-dispose-stale-lifecycle-vectors-with-runnable-replacements.md).
+
 ### Clock schedule boundary vectors
 
 Clock schedule fixture version **1** is published at
