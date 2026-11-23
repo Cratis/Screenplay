@@ -592,7 +592,7 @@ layout AppShell
     default invoicing title "Invoicing" icon receipt target Invoicing
   outlet sidebar of navigation
     default invoicing title "Invoicing" icon receipt target Invoicing
-      item invoices title "Invoices" target Invoicing.InvoiceManagement
+      item invoices title "Invoices" target Invoicing.InvoiceManagement screen InvoiceList
       item payments title "Payments" target Invoicing.Payments
       item portal title "Customer portal" target Invoicing.CustomerPortal slot content
 
