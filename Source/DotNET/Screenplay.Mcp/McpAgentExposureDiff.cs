@@ -47,5 +47,6 @@ static class McpAgentExposureDiff
         description = operation.Description
     };
 
-    static string Name<T>(T value) where T : Enum => JsonNamingPolicy.CamelCase.ConvertName(value.ToString());
+    static string Name<T>(T value)
+        where T : Enum => JsonNamingPolicy.CamelCase.ConvertName(value.ToString());
 }

@@ -94,7 +94,7 @@ internal sealed partial class McpWorkspaces
     internal object ReadProposal(JsonElement arguments)
     {
         var view = McpJson.OptionalString(arguments, "view") ?? "changes";
-        var comparison = view is "semantic-diff" or "agent-exposure-diff";
+        var comparison = string.Equals(view, "semantic-diff", StringComparison.Ordinal) || string.Equals(view, "agent-exposure-diff", StringComparison.Ordinal);
         if (comparison)
         {
             // Report a pending recovery here or in an overlapping root before reading the proposal from disk.
