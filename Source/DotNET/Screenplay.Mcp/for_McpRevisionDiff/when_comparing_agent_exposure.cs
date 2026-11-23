@@ -13,6 +13,7 @@ public class when_comparing_agent_exposure : given.two_snapshots
     JsonElement _next;
     JsonElement _changedBefore;
     JsonElement _changedAfter;
+    JsonElement _incompatible;
 
     void Because()
     {
@@ -28,9 +29,14 @@ public class when_comparing_agent_exposure : given.two_snapshots
         BeforeJson = baseline;
         AfterJson = BeforeJson;
         _changedAfter = Exposure(1, revision);
+        var other = ScreenplayWorkspace.Create("Other", Proposal.Workspace.Documents, SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Other")));
+        AfterJson = Export(other);
+        _incompatible = Exposure();
     }
 
-    JsonElement Exposure(int offset = 0, string? revision = null) => Call(new { beforeWorkspaceJson = BeforeJson, afterWorkspaceJson = AfterJson, includeAgentExposure = true, offset, limit = 1, expectedSourceRevision = revision });
+    JsonElement Exposure(int offset = 0, string? revision = null) => revision is null
+        ? Call(new { beforeWorkspaceJson = BeforeJson, afterWorkspaceJson = AfterJson, includeAgentExposure = true, offset, limit = 1 })
+        : Call(new { beforeWorkspaceJson = BeforeJson, afterWorkspaceJson = AfterJson, includeAgentExposure = true, offset, limit = 1, expectedSourceRevision = revision });
 
     [Fact] void should_name_the_versioned_view() => _first.GetProperty("schema").GetString().ShouldEqual("agent-exposure-diff/1");
     [Fact] void should_pin_the_pair() => _next.GetProperty("sourceRevision").GetString().ShouldEqual(_first.GetProperty("sourceRevision").GetString());
@@ -38,11 +44,5 @@ public class when_comparing_agent_exposure : given.two_snapshots
     [Fact] void should_refuse_a_changed_baseline() => _changedBefore.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("StaleRevision");
     [Fact] void should_refuse_a_changed_candidate() => _changedAfter.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("StaleRevision");
 
-    [Fact]
-    void should_refuse_identity_matching_across_applications()
-    {
-        var other = ScreenplayWorkspace.Create("Other", Proposal.Workspace.Documents, SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Other")));
-        AfterJson = Export(other);
-        Exposure().GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("IncompatibleRevisions");
-    }
+    [Fact] void should_refuse_identity_matching_across_applications() => _incompatible.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("IncompatibleRevisions");
 }

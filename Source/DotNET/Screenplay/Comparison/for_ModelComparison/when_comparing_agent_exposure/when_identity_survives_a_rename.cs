@@ -7,16 +7,10 @@ namespace Cratis.Screenplay.Comparison.for_ModelComparison.when_comparing_agent_
 
 public class when_identity_survives_a_rename : given.agent_models
 {
-    static readonly string Model = Source.Replace("      query All => Projects optional\n        by projectId Uuid", "      query All => Projects optional", StringComparison.Ordinal);
-
     void Establish()
     {
-        _before = Create(Model + Agents(Query));
-        var catalog = SemanticIdentityCatalog.Create(_before.IdentityCatalog.Application, _before.IdentityCatalog.Documents,
-            [.. _before.IdentityCatalog.Semantics.Select(assignment => assignment.Address.Kind == SemanticKind.Query && assignment.Address.Name == "All"
-                ? assignment with { Address = SemanticAddress.ForQuery(SemanticAddress.ForSlice(_before.IdentityCatalog.Application, "Projects", "Registration", "List"), "Current"), Origin = SemanticIdentityOrigin.Persisted } : assignment)],
-            _before.IdentityCatalog.EventContracts);
-        _after = Create((Model + Agents(Query)).Replace("All", "Current", StringComparison.Ordinal), catalog);
+        _before = Create(Source + Agents(Query));
+        _after = Create((Source + Agents(Query)).Replace("All", "Current", StringComparison.Ordinal), CatalogFor("List", "Current"));
         Assert.True(_after.Compilation.Success, string.Join("; ", _after.Compilation.Diagnostics.Select(diagnostic => diagnostic.Message)));
     }
 
@@ -29,13 +23,9 @@ public class when_identity_survives_a_rename : given.agent_models
     [Fact]
     void should_retain_membership_across_an_owner_move()
     {
-        var catalog = SemanticIdentityCatalog.Create(_before.IdentityCatalog.Application, _before.IdentityCatalog.Documents,
-            [.. _before.IdentityCatalog.Semantics.Select(assignment => assignment.Address.Kind == SemanticKind.Query && assignment.Address.Name == "All"
-                ? assignment with { Address = SemanticAddress.ForQuery(SemanticAddress.ForSlice(_before.IdentityCatalog.Application, "Projects", "Registration", "Obsolete"), "All"), Origin = SemanticIdentityOrigin.Persisted } : assignment)],
-            _before.IdentityCatalog.EventContracts);
-        var moved = Model.Replace("      query All => Projects optional\n", string.Empty, StringComparison.Ordinal)
-            + "\n      query All => Projects optional" + Agents(Query.Replace("List.All", "Obsolete.All", StringComparison.Ordinal));
-        var candidate = Create(moved, catalog);
+        var moved = Source.Replace("      query All => Projects optional\n        by projectId Uuid\n", string.Empty, StringComparison.Ordinal)
+            + "\n      query All => Projects optional\n        by projectId Uuid" + Agents(Query.Replace("List.All", "Obsolete.All", StringComparison.Ordinal));
+        var candidate = Create(moved, CatalogFor("Obsolete", "All"));
         Assert.True(candidate.Compilation.Success, string.Join("; ", candidate.Compilation.Diagnostics.Select(diagnostic => diagnostic.Message)));
         var exposure = ModelComparison.Compare(ComparedModel.WithIdentities(_before), ComparedModel.WithIdentities(candidate)).AgentExposure;
         exposure.Complete.ShouldBeTrue();
@@ -48,5 +38,18 @@ public class when_identity_survives_a_rename : given.agent_models
         var exposure = ModelComparison.Compare(ComparedModel.WithoutIdentities(_before), ComparedModel.WithoutIdentities(_after)).AgentExposure;
         exposure.Changes.Select(change => change.Change).ShouldContainOnly(AgentExposureChangeKind.Added, AgentExposureChangeKind.Removed);
         exposure.Changes.All(change => (change.Before ?? change.After)!.Id is null).ShouldBeTrue();
+    }
+
+    SemanticIdentityCatalog CatalogFor(string slice, string name)
+    {
+        var original = SemanticAddress.ForQuery(SemanticAddress.ForSlice(_before.IdentityCatalog.Application, "Projects", "Registration", "List"), "All");
+        var target = SemanticAddress.ForQuery(SemanticAddress.ForSlice(_before.IdentityCatalog.Application, "Projects", "Registration", slice), name);
+        return SemanticIdentityCatalog.Create(_before.IdentityCatalog.Application, _before.IdentityCatalog.Documents,
+            [.. _before.IdentityCatalog.Semantics.Select(assignment => assignment with { Address = Relocate(assignment.Address), Origin = SemanticIdentityOrigin.Persisted })],
+            _before.IdentityCatalog.EventContracts);
+
+        SemanticAddress Relocate(SemanticAddress address) => address.Equals(original) ? target
+            : address.Kind == SemanticKind.QueryArgument && address.Scope == original.Key ? SemanticAddress.ForQueryArgument(target, address.Name)
+            : address;
     }
 }

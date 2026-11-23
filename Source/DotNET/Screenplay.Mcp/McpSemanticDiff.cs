@@ -17,13 +17,13 @@ static class McpSemanticDiff
     internal static object ReadAgentExposure(IMcpProposal proposal, JsonElement arguments) => Read(proposal.Before, proposal.Workspace, arguments, proposal.Workspace.Revision.ToString(), false, agentExposure: true);
 
     internal static object Compare(ScreenplayWorkspace before, ScreenplayWorkspace after, JsonElement arguments, bool matchByAddress = false) =>
-        Read(before, after, arguments, $"comparison:{Hash($"{before.Revision}:{after.Revision}")}", true, matchByAddress);
+        Read(before, after, arguments, $"comparison:{Hash($"{before.Revision}:{after.Revision}")}", true, matchByAddress, McpJson.Boolean(arguments, "includeAgentExposure"));
 
     static object Read(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, JsonElement arguments, string revision, bool revisions, bool matchByAddress = false, bool agentExposure = false)
     {
         RequireRevision(arguments, revision, revisions);
 
-        if (agentExposure || McpJson.Boolean(arguments, "includeAgentExposure")) return McpAgentExposureDiff.Read(baseline, candidate, arguments, revision, matchByAddress);
+        if (agentExposure) return McpAgentExposureDiff.Read(baseline, candidate, arguments, revision, matchByAddress);
 
         var before = McpWorkspaceAnalysis.For(baseline);
         var after = McpWorkspaceAnalysis.For(candidate);
