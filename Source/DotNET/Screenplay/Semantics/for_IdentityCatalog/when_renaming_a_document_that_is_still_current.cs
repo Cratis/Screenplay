@@ -24,6 +24,6 @@ public class when_renaming_a_document_that_is_still_current : Specification
         [],
         []));
 
-    [Fact] void should_preserve_the_document_rename_error() => _exception.Message.ShouldEqual("Document rename 'original' to 'renamed' is stale or invalid.");
+    [Fact] void should_preserve_the_document_rename_error() => _exception.Message.ShouldEqual("An identity rename is stale, guessed, or does not map one removed assignment to one new address.");
     [Fact] void should_report_an_invalid_semantic_contract() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
 }

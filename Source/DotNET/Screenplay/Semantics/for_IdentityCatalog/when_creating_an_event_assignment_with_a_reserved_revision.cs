@@ -21,6 +21,6 @@ public class when_creating_an_event_assignment_with_a_reserved_revision : Specif
         [],
         [new(_event, EventContractId.CreateLegacy(_application, _event.Name), new(uint.MaxValue), (SemanticIdentityOrigin)99)]));
 
-    [Fact] void should_reject_the_revision_before_the_unknown_origin() => _exception.Message.ShouldEqual($"Event assignment '{_event}' has an invalid revision.");
+    [Fact] void should_reject_the_revision_before_the_unknown_origin() => _exception.Message.ShouldEqual("An event contract identity assignment is malformed or belongs to another application.");
     [Fact] void should_report_an_invalid_semantic_contract() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
 }

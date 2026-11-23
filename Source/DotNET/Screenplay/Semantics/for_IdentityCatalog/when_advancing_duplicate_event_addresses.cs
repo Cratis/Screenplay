@@ -24,6 +24,6 @@ public class when_advancing_duplicate_event_addresses : Specification
         [_event],
         [new(_event, new(0)), new(_event, new(2))]));
 
-    [Fact] void should_reject_the_duplicate_before_the_invalid_revision() => _exception.Message.ShouldEqual("An event revision advancement contains duplicate event addresses.");
+    [Fact] void should_reject_the_duplicate_before_the_invalid_revision() => _exception.Message.ShouldEqual($"Duplicate event advancement address '{_event}' is ambiguous.");
     [Fact] void should_report_an_invalid_semantic_contract() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
 }

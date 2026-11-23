@@ -24,6 +24,6 @@ public class when_a_document_assignment_disappears_without_a_migration : Specifi
         [],
         []));
 
-    [Fact] void should_preserve_the_document_continuity_error() => _exception.Message.ShouldEqual("A previous identity assignment disappeared without an explicit rename or retirement; continuity is never guessed.");
+    [Fact] void should_preserve_the_document_continuity_error() => _exception.Message.ShouldEqual("A base catalog assignment is stale and has no explicit one-to-one rename or retirement.");
     [Fact] void should_not_report_typed_address_issues() => _exception.IdentityMigrationIssues.ShouldBeEmpty();
 }

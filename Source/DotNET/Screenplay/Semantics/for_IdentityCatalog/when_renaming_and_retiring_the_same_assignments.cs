@@ -40,5 +40,5 @@ public class when_renaming_and_retiring_the_same_assignments : Specification
     [Fact] void should_report_the_semantic_retirement_first() => _exception.IdentityMigrationIssues[0].Arguments.ShouldContainOnly("retiredSemanticAddresses");
     [Fact] void should_report_the_event_retirement_second() => _exception.IdentityMigrationIssues[1].Arguments.ShouldContainOnly("retiredEventAddresses");
     [Fact] void should_keep_the_original_address_on_each_issue() => _exception.IdentityMigrationIssues.All(issue => issue.Address.Equals(_original)).ShouldBeTrue();
-    [Fact] void should_preserve_the_retirement_error_message() => _exception.Message.ShouldContain("An explicit identity retirement is stale, still current, or also renamed. Identity migration issues: ");
+    [Fact] void should_preserve_the_retirement_error_message() => _exception.Message.ShouldContain("An identity retirement is stale, still current, duplicated by a rename, or was never assigned. Identity migration issues: ");
 }

@@ -21,6 +21,6 @@ public class when_creating_an_event_assignment_with_an_unknown_origin : Specific
         [],
         [new(_event, EventContractId.CreateLegacy(_application, "DifferentIdentity"), new(1), (SemanticIdentityOrigin)99)]));
 
-    [Fact] void should_reject_the_unknown_origin() => _exception.Message.ShouldEqual($"Event assignment '{_event}' has an unknown origin.");
+    [Fact] void should_reject_the_unknown_origin() => _exception.Message.ShouldEqual("Semantic identity origin '99' is unknown.");
     [Fact] void should_report_an_invalid_semantic_contract() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
 }
