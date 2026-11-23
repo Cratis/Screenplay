@@ -23,8 +23,8 @@ public class when_identity_survives_a_rename : given.agent_models
     [Fact]
     void should_retain_membership_across_an_owner_move()
     {
-        var moved = Source.Replace("      query All => Projects optional\n        by projectId Uuid\n", string.Empty, StringComparison.Ordinal)
-            + "\n      query All => Projects optional\n        by projectId Uuid" + Agents(Query.Replace("List.All", "Obsolete.All", StringComparison.Ordinal));
+        var moved = Source.Replace("      query All => Projects optional", "      query Other => Projects optional", StringComparison.Ordinal)
+            + "\n      query All => Archive optional\n        by projectId Uuid" + Agents(Query.Replace("List.All", "Obsolete.All", StringComparison.Ordinal));
         var candidate = Create(moved, CatalogFor("Obsolete", "All"));
         Assert.True(candidate.Compilation.Success, string.Join("; ", candidate.Compilation.Diagnostics.Select(diagnostic => diagnostic.Message)));
         var exposure = ModelComparison.Compare(ComparedModel.WithIdentities(_before), ComparedModel.WithIdentities(candidate)).AgentExposure;
