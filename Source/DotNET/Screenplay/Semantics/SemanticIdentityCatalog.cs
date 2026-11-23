@@ -405,7 +405,7 @@ public sealed partial class SemanticIdentityCatalog
     }
 
     static bool IsCurrentEventAdvancement(EventContractRevisionAdvancement advancement, ImmutableArray<SemanticAddress> eventAddresses) =>
-        advancement is not null && advancement.Address is not null && advancement.Address.Kind == SemanticKind.EventContract &&
+        advancement?.Address is not null && advancement.Address.Kind == SemanticKind.EventContract &&
         eventAddresses.Contains(advancement.Address) && advancement.Revision.IsValid && advancement.Revision.Value != uint.MaxValue;
 
     static ImmutableArray<SemanticIdentityRename> GenerationOnePropertyRenames(
@@ -692,7 +692,7 @@ public sealed partial class SemanticIdentityCatalog
     }
 
     static bool HasEventAssignmentAddress(ApplicationIdentity application, EventContractIdentityAssignment assignment) =>
-        assignment is not null && assignment.Address is not null && assignment.Address.Application == application &&
+        assignment?.Address is not null && assignment.Address.Application == application &&
         assignment.Address.Kind == SemanticKind.EventContract && assignment.Id.IsSet;
 
     static void ValidateEventBootstrap(ApplicationIdentity application, EventContractIdentityAssignment assignment)
