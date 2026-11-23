@@ -49,7 +49,7 @@ public class when_identity_survives_a_rename : given.agent_models
             _before.IdentityCatalog.EventContracts);
 
         SemanticAddress Relocate(SemanticAddress address) => address.Equals(original) ? target
-            : address.Kind == SemanticKind.QueryArgument && address.Scope == original.Key ? SemanticAddress.ForQueryArgument(target, address.Name)
+            : address.Kind == SemanticKind.QueryArgument && address.Equals(SemanticAddress.ForQueryArgument(original, address.Name)) ? SemanticAddress.ForQueryArgument(target, address.Name)
             : address;
     }
 }
