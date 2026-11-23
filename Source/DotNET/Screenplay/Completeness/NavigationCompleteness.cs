@@ -159,7 +159,7 @@ static class NavigationCompleteness
         /// <inheritdoc/>
         public override void VisitNavigationTarget(NavigationTargetSyntax syntax)
         {
-            if (SelectedPage(syntax) is { } screen) Roots.Add(screen);
+            if (SelectedPage(syntax) is { } screen) Reach(screen);
             base.VisitNavigationTarget(syntax);
         }
 
