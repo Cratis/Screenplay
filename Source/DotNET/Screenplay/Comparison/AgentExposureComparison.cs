@@ -16,11 +16,17 @@ static class AgentExposureComparison
         var complete = beforeAvailability == AgentExposureAvailability.Available && afterAvailability == AgentExposureAvailability.Available;
         var changes = complete ? Changes(Operations(before, matching), Operations(after, matching)).OrderBy(change => (change.After ?? change.Before)!.QualifiedName, StringComparer.Ordinal)
             .ThenBy(change => (change.After ?? change.Before)!.Kind).ThenBy(change => change.Change).ToImmutableArray() : [];
-        return new(matching, complete, complete ? changes.Length > 0 : null, beforeAvailability, afterAvailability, changes,
-        [
-            "Explicit allowlist membership, required scope and description only; not effective authorization, transitive dependencies, handlers or runtime equivalence.",
-            matching == DeclarationMatching.Address ? "Address matching does not establish identity continuity across renames or moves." : "Identity matching uses the supplied authoritative catalogs within one application."
-        ]);
+        return new(
+            matching,
+            complete,
+            complete ? changes.Length > 0 : null,
+            beforeAvailability,
+            afterAvailability,
+            changes,
+            [
+                "Explicit allowlist membership, required scope and description only; not effective authorization, transitive dependencies, handlers or runtime equivalence.",
+                matching == DeclarationMatching.Address ? "Address matching does not establish identity continuity across renames or moves." : "Identity matching uses the supplied authoritative catalogs within one application."
+            ]);
     }
 
     static AgentExposureAvailability Availability(ScreenplayWorkspace workspace) => workspace.Compilation.Success && workspace.Compilation.Value is not null
@@ -52,12 +58,25 @@ static class AgentExposureComparison
 
     static IEnumerable<AgentExposureChange> EntryChanges(AgentExposureOperation? before, AgentExposureOperation? after)
     {
-        if (before is null) yield return new(AgentExposureChangeKind.Added, null, after);
-        else if (after is null) yield return new(AgentExposureChangeKind.Removed, before, null);
+        if (before is null)
+        {
+            yield return new(AgentExposureChangeKind.Added, null, after);
+        }
+        else if (after is null)
+        {
+            yield return new(AgentExposureChangeKind.Removed, before, null);
+        }
         else
         {
-            if (before.Scope != after.Scope) yield return new(AgentExposureChangeKind.ScopeChanged, before, after,
-                after.Scope == SemanticAgentScope.Read ? AgentExposureScopeChange.Widened : AgentExposureScopeChange.Narrowed);
+            if (before.Scope != after.Scope)
+            {
+                yield return new(
+                    AgentExposureChangeKind.ScopeChanged,
+                    before,
+                    after,
+                    after.Scope == SemanticAgentScope.Read ? AgentExposureScopeChange.Widened : AgentExposureScopeChange.Narrowed);
+            }
+
             if (before.Description != after.Description) yield return new(AgentExposureChangeKind.DescriptionChanged, before, after);
         }
     }
