@@ -728,6 +728,57 @@ internal static partial class ProjectionParser
 
     static IEnumerable<string> SplitTopLevel(string text, char separator) => LineText.SplitTopLevel(text, separator);
 
+    [GeneratedRegex(@"^projection\s+(@?[\w.]+)\s*(?:=>\s*([\w.]+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex HeaderRegex();
+
+    [GeneratedRegex(@"^(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex EventSpecRegex();
+
+    [GeneratedRegex(@"^join\s+(@?[\w.]+)\s+on\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex JoinRegex();
+
+    [GeneratedRegex(@"^with\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex WithRegex();
+
+    [GeneratedRegex(@"^children\s+(@?[\w.]+)\s+identified\s+by\s+(.+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ChildrenRegex();
+
+    [GeneratedRegex(@"^nested\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex NestedRegex();
+
+    [GeneratedRegex(@"^remove\s+with\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex RemoveWithRegex();
+
+    [GeneratedRegex(@"^remove\s+via\s+join\s+on\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex RemoveViaJoinRegex();
+
+    [GeneratedRegex(@"^clear\s+with\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ClearWithRegex();
+
+    [GeneratedRegex(@"^variant\s+(@?[\w.]+)\s*$", RegexOptions.NonBacktracking)]
+    private static partial Regex VariantHeaderRegex();
+
+    [GeneratedRegex(@"^enters\s+on\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex EntersOnRegex();
+
+    [GeneratedRegex(@"^(?:insert\s+(first|last)|sort\s+by\s+(@?[\w.]+)(?:\s+(ascending|descending))?)$", RegexOptions.NonBacktracking)]
+    private static partial Regex ChildrenOrderingRegex();
+
+    [GeneratedRegex(@"^set\s+once\s+(@?[$\w.]+)\s+(?:=|to)\s+(.+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex SetOnceRegex();
+
+    [GeneratedRegex(@"^(increment|decrement|count|clear|remove)\s+(@?[$\w.]+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex KeywordMappingRegex();
+
+    [GeneratedRegex(@"^(add|subtract)\s+(@?[$\w.]+)\s+by\s+(.+?)(?:\s+\*\s+(.+))?$", RegexOptions.NonBacktracking)]
+    private static partial Regex ArithmeticRegex();
+
+    [GeneratedRegex(@"^set\s+(@?[$\w.]+)\s+(?:=|to)\s+(.+)$", RegexOptions.NonBacktracking)]
+    private static partial Regex SetRegex();
+
+    [GeneratedRegex(@"^(@?[$\w.@]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
+    private static partial Regex AssignmentRegex();
+
     sealed class ProjectionBody(ParserContext context, string name, string? readModel)
     {
         readonly Dictionary<string, SourceLocation> _directiveLocations = [];
@@ -842,55 +893,4 @@ internal static partial class ProjectionParser
             }
         }
     }
-
-    [GeneratedRegex(@"^projection\s+(@?[\w.]+)\s*(?:=>\s*([\w.]+))?$", RegexOptions.NonBacktracking)]
-    private static partial Regex HeaderRegex();
-
-    [GeneratedRegex(@"^(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
-    private static partial Regex EventSpecRegex();
-
-    [GeneratedRegex(@"^join\s+(@?[\w.]+)\s+on\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex JoinRegex();
-
-    [GeneratedRegex(@"^with\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex WithRegex();
-
-    [GeneratedRegex(@"^children\s+(@?[\w.]+)\s+identified\s+by\s+(.+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex ChildrenRegex();
-
-    [GeneratedRegex(@"^nested\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex NestedRegex();
-
-    [GeneratedRegex(@"^remove\s+with\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
-    private static partial Regex RemoveWithRegex();
-
-    [GeneratedRegex(@"^remove\s+via\s+join\s+on\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
-    private static partial Regex RemoveViaJoinRegex();
-
-    [GeneratedRegex(@"^clear\s+with\s+(@?[\w.]+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex ClearWithRegex();
-
-    [GeneratedRegex(@"^variant\s+(@?[\w.]+)\s*$", RegexOptions.NonBacktracking)]
-    private static partial Regex VariantHeaderRegex();
-
-    [GeneratedRegex(@"^enters\s+on\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.NonBacktracking)]
-    private static partial Regex EntersOnRegex();
-
-    [GeneratedRegex(@"^(?:insert\s+(first|last)|sort\s+by\s+(@?[\w.]+)(?:\s+(ascending|descending))?)$", RegexOptions.NonBacktracking)]
-    private static partial Regex ChildrenOrderingRegex();
-
-    [GeneratedRegex(@"^set\s+once\s+(@?[$\w.]+)\s+(?:=|to)\s+(.+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex SetOnceRegex();
-
-    [GeneratedRegex(@"^(increment|decrement|count|clear|remove)\s+(@?[$\w.]+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex KeywordMappingRegex();
-
-    [GeneratedRegex(@"^(add|subtract)\s+(@?[$\w.]+)\s+by\s+(.+?)(?:\s+\*\s+(.+))?$", RegexOptions.NonBacktracking)]
-    private static partial Regex ArithmeticRegex();
-
-    [GeneratedRegex(@"^set\s+(@?[$\w.]+)\s+(?:=|to)\s+(.+)$", RegexOptions.NonBacktracking)]
-    private static partial Regex SetRegex();
-
-    [GeneratedRegex(@"^(@?[$\w.@]+)\s*=(?:\s+(?<2>.+)|(?<2>[^=>\n].*))$", RegexOptions.NonBacktracking)]
-    private static partial Regex AssignmentRegex();
 }
