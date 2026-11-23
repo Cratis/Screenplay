@@ -23,6 +23,7 @@ static class DiffText
         Section(output, "Slices", difference.Slices.Slices, Slice);
         Section(output, "Model-wide", difference.Slices.ModelWide, Name);
         Section(output, "Affected slices", difference.Slices.AffectedSlices, slice => slice);
+        Exposure(output, difference.AgentExposure);
         foreach (var section in difference.Sections.Where(section => !section.Complete))
         {
             foreach (var gap in section.Gaps) output.WriteLine($"Incomplete {section.Section}: {gap.Statement}");
@@ -35,6 +36,23 @@ static class DiffText
             false => "Semantic change: none.",
             null => "Semantic change: unknown; the comparison is incomplete."
         });
+    }
+
+    static void Exposure(TextWriter output, AgentExposureDifference exposure)
+    {
+        Section(output, "Agent exposure", exposure.Changes, change =>
+        {
+            var operation = (change.After ?? change.Before)!;
+            var direction = change.ScopeChange == AgentExposureScopeChange.None ? string.Empty : $" ({change.ScopeChange})";
+            return $"{change.Change} {operation.Kind} {operation.QualifiedName}{direction}";
+        });
+        output.WriteLine(exposure.HasExposureChange switch
+        {
+            true => "Agent exposure change: yes.",
+            false => "Agent exposure change: none.",
+            null => $"Agent exposure change: unknown; before {exposure.BeforeAvailability}, after {exposure.AfterAvailability}."
+        });
+        foreach (var item in exposure.NotCompared) output.WriteLine($"Agent exposure not compared: {item}");
     }
 
     static void Section<T>(TextWriter output, string title, IReadOnlyList<T> changes, Func<T, string> line)

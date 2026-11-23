@@ -178,6 +178,7 @@ internal sealed partial class McpWorkspaces
         "production-destinations" => DestinationReport(proposal, arguments, false),
         "production-destination-identities" => DestinationReport(proposal, arguments, true),
         "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
+        "agent-exposure-diff" => McpSemanticDiff.ReadAgentExposure(proposal, arguments),
         "changes" => McpPaging.Page(proposal.WritePlan.Entries, DescribeChangeSummary, arguments, proposal.Workspace.Revision.ToString()),
         "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
         "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),

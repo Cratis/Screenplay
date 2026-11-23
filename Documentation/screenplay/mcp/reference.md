@@ -295,7 +295,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `ui-profiles` | Optional profile `name` | Each ui profile's root template, shell options, appearance, selected theme and the theme and mode it resolves to, new screens default and shell diagnostics (PLAY0790-PLAY0799), the own templates applicable as root or new screens default, and the accepted appearance values; also the application's [design system](../design-system.md), every theme with its values and its resolved tokens and components per mode, and the design diagnostics (PLAY0916-PLAY0930) |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
-| `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison without rebinding the workspace |
+| `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional offset/limit/expectedSourceRevision/includeAgentExposure | Paged authoring-structure comparison (or opt-in agent-exposure-diff/1) without rebinding the workspace |
 
 Names and kinds are case-sensitive. Logical address example:
 `Projects.Registration.RegisterProject.RegisterProject`, kind `Command`.
@@ -775,7 +775,7 @@ arguments or failed requests, never successful partial batches.
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `propose-inline-event` | `expectedRevision`, `expectedCatalogRevision`, standalone event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; refuses unless meaning is provably preserved |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items; `release-baseline` for mutability and violations), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision, expectedReleaseBaselineRevision |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`agent-exposure-diff` for explicit allowlist findings; `semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items; `release-baseline` for mutability and violations), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision, expectedReleaseBaselineRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `list-release-baseline` | None | offset, limit, expectedReleaseBaselineRevision |
@@ -1333,6 +1333,43 @@ duplication; other explicitly canonicalized edits may disclose dropped comments.
 Untouched bytes and BOM policy are retained. Printer omissions reject the proposal.
 
 See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
+
+## Agent exposure comparison
+
+Default `read-proposal` `view: "semantic-diff"` and the `semantic-diff` tool
+retain their structural response contracts. To select the separate versioned
+explicit allowlist view:
+
+- Read a retained proposal with `view: "agent-exposure-diff"`.
+- Compare revision sources with `semantic-diff` and `includeAgentExposure: true`.
+  This selects the exposure response **instead of** the structural response;
+  omit it or pass `false` for the unchanged default.
+
+Both return `schema: "agent-exposure-diff/1"`, `comparisonLevel:
+"explicit-agent-allowlist"`, the matching mode, before/after revisions,
+`complete`, nullable `hasExposureChange`, per-side `beforeAvailability` and
+`afterAvailability`, `notCompared` limits and a bounded `page` of individual
+findings. Each row has `change` (`added`, `removed`, `scopeChanged` or
+`descriptionChanged`), nullable `before`/`after` operation entries and
+`scopeChange` (`none`, `widened` or `narrowed`). Entries carry kind, canonical
+qualified name, required scope, description and an ID only in identity mode.
+Only `added` means newly exposed; write-to-read widening changes the token
+requirement, not allowlist membership or effective authorization.
+
+Successful whole-model semantic compilation is required on both sides.
+Successful absence or an empty block is known empty. Failed compilation means
+`compilationFailed` availability, `complete: false`, `hasExposureChange: null`
+and no guessed rows. Structural completeness and verdict are independent.
+Authorization, transitive dependencies, handlers and runtime equivalence are
+not compared. Descriptions are untrusted authored data, never instructions.
+
+The same proposal/disk-baseline and revision-source recovery checks apply.
+Continuation requires `expectedSourceRevision`; revision comparisons pin the
+ordered pair and reload both sources. Count pages (`limit` 1–200) also obey the
+existing 192 KiB source-page byte budget. A single oversized finding is refused
+without truncation. Repeated inputs are deterministic. Default MCP JSON goldens,
+PLAY diagnostics, capability manifests and executable-model bytes are unchanged.
+See [model comparison](../model-comparison.md#compare-explicit-agent-exposure).
 
 ## Semantic proposal difference
 
