@@ -68,69 +68,17 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
     {
         foreach (var entry in index.Entries)
         {
-            _originals.Add((entry, Resolve(entry.Handle)));
-            _expectedOrigins.TryAdd(entry.Node, entry);
-            _sourceLocations[Resolve(entry.Handle)] = entry.Location;
-            if (entry.Node is ValidationRuleSyntax)
-            {
-                _ruleOrigins[Resolve(entry.Handle)] = entry;
-            }
-            var isComposition = entry.Node is ApplicationSyntax or ModuleSyntax or FeatureSyntax or FileImportSyntax;
-            _sourceComments[Resolve(entry.Handle)] = relocatesCompositionComments && isComposition ? [] : entry.Node.SourceComments;
-            _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
-            if (entry.Node.ParsedAutoMapMode is { } mode)
-            {
-                _parsedAutoMapModes[Resolve(entry.Handle)] = mode;
-            }
+            CaptureOriginal(entry);
         }
 
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
         {
-            // The original removal handle is validated, but its ancestor replacement supplies final source.
-            // Do not mutate the captured original subtree: other correspondence still uses original paths.
-            if (IsPendingRuleRemoval(edit) && _edits.Exists(other => other.Value is not null && other.Destination is null && other.Target is not null && Contains(other.Target.Handle, edit.Target!.Handle)))
-            {
-                continue;
-            }
-
-            var replacement = edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null;
-            Replace(edit.Target!, edit.Original!, replacement, edit.Value);
-            if (replacement is not null)
-            {
-                _replaced.Add((edit.Target!, edit.Original!, replacement));
-            }
+            ApplyTarget(edit);
         }
 
         foreach (var edit in _edits.Where(edit => edit.Destination is not null))
         {
-            var inserted = ToJson(edit.Value!);
-            if (edit.Target is not null)
-            {
-                if (JsonNode.DeepEquals(edit.Original, inserted))
-                {
-                    CarryExactCorrespondence(edit.Original!, inserted);
-                }
-                else
-                {
-                    CarryRuleLineage(edit.Original!, inserted, ruleLineage: true);
-                }
-
-                CarrySourceLocations(edit.Original!, inserted);
-
-                if (edit.Target.Handle.Document != edit.Destination!.Parent.Handle.Document || !LocationAgreesWithInsertion(edit.Destination, inserted))
-                {
-                    // Keep subtree order and comment/directive anchors, but do not let the old root
-                    // position override the requested order among the destination's same-kind siblings.
-                    _sourceLocations.Remove(inserted);
-                }
-            }
-
-            // An add is a new occurrence, even when its value is an existing node or a with-copy.
-            Insert(edit.Destination!, inserted);
-            if (edit.Target is not null)
-            {
-                _moved.Add((edit.Target, edit.Original!, inserted));
-            }
+            ApplyInsertion(edit);
         }
 
         return Touched.ToDictionary(
@@ -155,37 +103,10 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
             Walk(_roots[document], document, string.Empty, positions);
         }
 
-        foreach (var (entry, node) in _originals.Where(original => Touched.Contains(original.Entry.Handle.Document)))
-        {
-            if (positions.TryGetValue(node, out var position))
-            {
-                provenance.Map(position, (entry.Handle.Document, entry.Handle.Path));
-            }
-        }
-
-        foreach (var (target, original, inserted) in _moved)
-        {
-            if (positions.TryGetValue(inserted, out var position))
-            {
-                provenance.Identical(original, (target.Handle.Document, target.Handle.Path), inserted, position);
-            }
-        }
-
-        foreach (var (target, original, replacement) in _replaced)
-        {
-            if (positions.TryGetValue(replacement, out var position))
-            {
-                provenance.Replacement(original, (target.Handle.Document, target.Handle.Path), replacement, position);
-            }
-        }
-
-        foreach (var (target, _, replacement) in _replaced)
-        {
-            if (positions.TryGetValue(replacement, out var position))
-            {
-                provenance.Region(index, (target.Handle.Document, target.Handle.Path), after, position);
-            }
-        }
+        RecordOriginals(provenance, positions);
+        RecordMoves(provenance, positions);
+        RecordReplacements(provenance, positions);
+        RecordReplacementRegions(provenance, after, positions);
     }
 
     // Source/comment correspondence is stricter than assuming every final collection index is an
@@ -286,7 +207,174 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
         array.Insert(destination.Anchor is null ? array.Count : array.IndexOf(destination.Anchor), node);
     }
 
+    static bool LocationAgreesWithSibling(JsonNode? sibling, Dictionary<JsonNode, SourceLocation> positions, SourceLocation location, bool beforeBoundary)
+    {
+        if (sibling is null || !positions.TryGetValue(sibling, out var other))
+        {
+            // The printer inserts unlocated features and slices before their next located sibling;
+            // other collections still go after the last located member of their kind.
+            return !beforeBoundary;
+        }
+
+        var order = location.Line.CompareTo(other.Line);
+        if (order == 0) order = location.Column.CompareTo(other.Column);
+        return location.Path == other.Path && (beforeBoundary ? order >= 0 : order <= 0);
+    }
+
+    static void ValidateTargetOverlap(Edit first, Edit second)
+    {
+        if (!Contains(first.Target!.Handle, second.Target!.Handle) && !Contains(second.Target!.Handle, first.Target!.Handle))
+        {
+            return;
+        }
+
+        // An explicit pending-rule removal may precede replacement of a strict ancestor.
+        // Every other overlap keeps its existing refusal, including reversing this order.
+        if (ReplacesPendingRuleAncestor(first, second))
+        {
+            return;
+        }
+
+        throw new InvalidWorkspaceAuthoring("AST edits overlap an original node or its descendants.");
+    }
+
+    static bool ReplacesPendingRuleAncestor(Edit first, Edit second) =>
+        IsPendingRuleRemoval(first) && second is { Value: not null, Destination: null } &&
+        first.Target!.Handle != second.Target!.Handle && Contains(second.Target!.Handle, first.Target!.Handle);
+
+    static void ReplaceArrayMember(JsonArray array, JsonNode original, JsonNode? replacement)
+    {
+        var position = array.IndexOf(original);
+        if (replacement is null)
+        {
+            array.RemoveAt(position);
+        }
+        else
+        {
+            array[position] = replacement;
+        }
+    }
+
     static JsonNode ToJson(SyntaxNode node) => JsonNode.Parse(SyntaxJson.Serialize(node).GetRawText(), documentOptions: new JsonDocumentOptions { MaxDepth = 256 })!;
+
+    void CaptureOriginal(WorkspaceSyntaxEntry entry)
+    {
+        _originals.Add((entry, Resolve(entry.Handle)));
+        _expectedOrigins.TryAdd(entry.Node, entry);
+        _sourceLocations[Resolve(entry.Handle)] = entry.Location;
+        if (entry.Node is ValidationRuleSyntax)
+        {
+            _ruleOrigins[Resolve(entry.Handle)] = entry;
+        }
+        var isComposition = entry.Node is ApplicationSyntax or ModuleSyntax or FeatureSyntax or FileImportSyntax;
+        _sourceComments[Resolve(entry.Handle)] = relocatesCompositionComments && isComposition ? [] : entry.Node.SourceComments;
+        _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
+        if (entry.Node.ParsedAutoMapMode is { } mode)
+        {
+            _parsedAutoMapModes[Resolve(entry.Handle)] = mode;
+        }
+    }
+
+    void ApplyTarget(Edit edit)
+    {
+        // The original removal handle is validated, but its ancestor replacement supplies final source.
+        // Do not mutate the captured original subtree: other correspondence still uses original paths.
+        if (IsPendingRuleRemoval(edit) && HasAncestorReplacement(edit))
+        {
+            return;
+        }
+
+        var replacement = edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null;
+        Replace(edit.Target!, edit.Original!, replacement, edit.Value);
+        if (replacement is not null)
+        {
+            _replaced.Add((edit.Target!, edit.Original!, replacement));
+        }
+    }
+
+    bool HasAncestorReplacement(Edit edit) => _edits.Exists(other =>
+        other.Value is not null && other.Destination is null && other.Target is not null && Contains(other.Target.Handle, edit.Target!.Handle));
+
+    void ApplyInsertion(Edit edit)
+    {
+        var inserted = ToJson(edit.Value!);
+        if (edit.Target is not null)
+        {
+            CarryMovedMetadata(edit, inserted);
+        }
+
+        // An add is a new occurrence, even when its value is an existing node or a with-copy.
+        Insert(edit.Destination!, inserted);
+        if (edit.Target is not null)
+        {
+            _moved.Add((edit.Target, edit.Original!, inserted));
+        }
+    }
+
+    void CarryMovedMetadata(Edit edit, JsonNode inserted)
+    {
+        if (JsonNode.DeepEquals(edit.Original, inserted))
+        {
+            CarryExactCorrespondence(edit.Original!, inserted);
+        }
+        else
+        {
+            CarryRuleLineage(edit.Original!, inserted, ruleLineage: true);
+        }
+
+        CarrySourceLocations(edit.Original!, inserted);
+
+        if (edit.Target!.Handle.Document != edit.Destination!.Parent.Handle.Document || !LocationAgreesWithInsertion(edit.Destination, inserted))
+        {
+            // Keep subtree order and comment/directive anchors, but do not let the old root
+            // position override the requested order among the destination's same-kind siblings.
+            _sourceLocations.Remove(inserted);
+        }
+    }
+
+    void RecordOriginals(WorkspaceEditProvenance provenance, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
+    {
+        foreach (var (entry, node) in _originals.Where(original => Touched.Contains(original.Entry.Handle.Document)))
+        {
+            if (positions.TryGetValue(node, out var position))
+            {
+                provenance.Map(position, (entry.Handle.Document, entry.Handle.Path));
+            }
+        }
+    }
+
+    void RecordMoves(WorkspaceEditProvenance provenance, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
+    {
+        foreach (var (target, original, inserted) in _moved)
+        {
+            if (positions.TryGetValue(inserted, out var position))
+            {
+                provenance.Identical(original, (target.Handle.Document, target.Handle.Path), inserted, position);
+            }
+        }
+    }
+
+    void RecordReplacements(WorkspaceEditProvenance provenance, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
+    {
+        foreach (var (target, original, replacement) in _replaced)
+        {
+            if (positions.TryGetValue(replacement, out var position))
+            {
+                provenance.Replacement(original, (target.Handle.Document, target.Handle.Path), replacement, position);
+            }
+        }
+    }
+
+    void RecordReplacementRegions(WorkspaceEditProvenance provenance, WorkspaceSyntaxIndex after, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
+    {
+        foreach (var (target, _, replacement) in _replaced)
+        {
+            if (positions.TryGetValue(replacement, out var position))
+            {
+                provenance.Region(index, (target.Handle.Document, target.Handle.Path), after, position);
+            }
+        }
+    }
 
     bool LocationAgreesWithInsertion(Insertion destination, JsonNode node)
     {
@@ -295,14 +383,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
             return true;
         }
 
-        // Decide which locations are fixed exactly as the printer does: from every member of the owner.
-        var members = destination.Owner.Select(pair => pair.Value).OfType<JsonArray>()
-            .SelectMany(array => array.OfType<JsonObject>()).Cast<JsonNode>().Where(member => !ReferenceEquals(member, node)).Prepend(node).ToList();
-        var resolved = AuthoredPositions.Resolve(
-            _sourceLocations.GetValueOrDefault(destination.Owner) ?? SourceLocation.Start,
-            [.. members.Select(member => (_sourceLocations.GetValueOrDefault(member) ?? SourceLocation.Start, (SourceLocation?)null))]);
-        var positions = members.Zip(resolved).Where(pair => pair.Second is not null)
-            .ToDictionary(pair => pair.First, pair => pair.Second!, (IEqualityComparer<JsonNode>)ReferenceEqualityComparer.Instance);
+        var positions = ResolveInsertionPositions(destination, node);
         if (!positions.TryGetValue(node, out var location))
         {
             return false;
@@ -311,23 +392,25 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
         var boundary = destination.Anchor is null ? siblings.Count : siblings.IndexOf(destination.Anchor);
         for (var position = 0; position < siblings.Count; position++)
         {
-            if (siblings[position] is not { } sibling || !positions.TryGetValue(sibling, out var other))
-            {
-                // The printer inserts unlocated features and slices before their next located sibling;
-                // other collections still go after the last located member of their kind.
-                if (position < boundary) return false;
-                continue;
-            }
-
-            var order = location.Line.CompareTo(other.Line);
-            if (order == 0) order = location.Column.CompareTo(other.Column);
-            if (location.Path != other.Path || (position < boundary ? order < 0 : order > 0))
+            if (!LocationAgreesWithSibling(siblings[position], positions, location, position < boundary))
             {
                 return false;
             }
         }
 
         return true;
+    }
+
+    Dictionary<JsonNode, SourceLocation> ResolveInsertionPositions(Insertion destination, JsonNode node)
+    {
+        // Decide which locations are fixed exactly as the printer does: from every member of the owner.
+        var members = destination.Owner.Select(pair => pair.Value).OfType<JsonArray>()
+            .SelectMany(array => array.OfType<JsonObject>()).Cast<JsonNode>().Where(member => !ReferenceEquals(member, node)).Prepend(node).ToList();
+        var resolved = AuthoredPositions.Resolve(
+            _sourceLocations.GetValueOrDefault(destination.Owner) ?? SourceLocation.Start,
+            [.. members.Select(member => (_sourceLocations.GetValueOrDefault(member) ?? SourceLocation.Start, (SourceLocation?)null))]);
+        return members.Zip(resolved).Where(pair => pair.Second is not null)
+            .ToDictionary(pair => pair.First, pair => pair.Second!, (IEqualityComparer<JsonNode>)ReferenceEqualityComparer.Instance);
     }
 
     Edit Replacement(ReplaceWorkspaceNode operation)
@@ -467,38 +550,32 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
         {
             for (var second = first + 1; second < targets.Length; second++)
             {
-                if (Contains(targets[first].Target!.Handle, targets[second].Target!.Handle) || Contains(targets[second].Target!.Handle, targets[first].Target!.Handle))
-                {
-                    // An explicit pending-rule removal may precede replacement of a strict ancestor.
-                    // Every other overlap keeps its existing refusal, including reversing this order.
-                    if (IsPendingRuleRemoval(targets[first]) && targets[second] is { Value: not null, Destination: null } &&
-                        targets[first].Target!.Handle != targets[second].Target!.Handle && Contains(targets[second].Target!.Handle, targets[first].Target!.Handle))
-                    {
-                        continue;
-                    }
-
-                    throw new InvalidWorkspaceAuthoring("AST edits overlap an original node or its descendants.");
-                }
+                ValidateTargetOverlap(targets[first], targets[second]);
             }
         }
 
         var destinations = _edits.Where(edit => edit.Destination is not null).Select(edit => edit.Destination!).ToArray();
         foreach (var destination in destinations)
         {
-            if (targets.Any(target => Contains(target.Target!.Handle, destination.Parent.Handle)))
-            {
-                throw new InvalidWorkspaceAuthoring("An insertion parent is removed, replaced, or moved, including a move into itself.");
-            }
-
-            if (destination.Anchor is not null && _edits.Exists(edit => ReferenceEquals(edit.Original, destination.Anchor)))
-            {
-                throw new InvalidWorkspaceAuthoring("An original insertion anchor is also removed, replaced, or moved.");
-            }
+            ValidateDestinationOverlap(destination, targets);
         }
 
         if (destinations.GroupBy(destination => (destination.Parent.Handle, destination.Member, destination.Boundary)).Any(group => group.Count() > 1))
         {
             throw new InvalidWorkspaceAuthoring("Multiple insertions claim the same original member and insertion boundary.");
+        }
+    }
+
+    void ValidateDestinationOverlap(Insertion destination, Edit[] targets)
+    {
+        if (targets.Any(target => Contains(target.Target!.Handle, destination.Parent.Handle)))
+        {
+            throw new InvalidWorkspaceAuthoring("An insertion parent is removed, replaced, or moved, including a move into itself.");
+        }
+
+        if (destination.Anchor is not null && _edits.Exists(edit => ReferenceEquals(edit.Original, destination.Anchor)))
+        {
+            throw new InvalidWorkspaceAuthoring("An original insertion anchor is also removed, replaced, or moved.");
         }
     }
 
@@ -531,31 +608,31 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
         }
         else if (original.Parent is JsonArray array)
         {
-            var position = array.IndexOf(original);
-            if (replacement is null)
-            {
-                array.RemoveAt(position);
-            }
-            else
-            {
-                array[position] = replacement;
-            }
+            ReplaceArrayMember(array, original, replacement);
         }
         else
         {
-            if (replacement is null && target.Node is ImplementationSyntax && target.Parent is { } parent && index.Find(parent)?.Node is ValidationRuleSyntax)
-            {
-                // Unwrapping removes the guidance nodes, not their source comments. Keep them on the
-                // surviving rule; final-source validation decides whether the atomic transition is valid.
-                var owner = original.Parent!;
-                _sourceComments[owner] = [.. _sourceComments.GetValueOrDefault(owner, []), .. _originals
-                    .Where(item => Contains(target.Handle, item.Entry.Handle))
-                    .SelectMany(item => item.Entry.Node.SourceComments)];
-            }
-
-            original.Parent![target.Member!] = replacement;
+            ReplaceSingularMember(target, original, replacement);
         }
     }
+
+    void ReplaceSingularMember(WorkspaceSyntaxEntry target, JsonNode original, JsonNode? replacement)
+    {
+        if (IsUnwrappingRule(target, replacement))
+        {
+            // Unwrapping removes the guidance nodes, not their source comments. Keep them on the
+            // surviving rule; final-source validation decides whether the atomic transition is valid.
+            var owner = original.Parent!;
+            _sourceComments[owner] = [.. _sourceComments.GetValueOrDefault(owner, []), .. _originals
+                .Where(item => Contains(target.Handle, item.Entry.Handle))
+                .SelectMany(item => item.Entry.Node.SourceComments)];
+        }
+
+        original.Parent![target.Member!] = replacement;
+    }
+
+    bool IsUnwrappingRule(WorkspaceSyntaxEntry target, JsonNode? replacement) =>
+        replacement is null && target.Node is ImplementationSyntax && target.Parent is { } parent && index.Find(parent)?.Node is ValidationRuleSyntax;
 
     sealed record Edit(WorkspaceSyntaxEntry? Target, JsonNode? Original, Insertion? Destination, SyntaxNode? Value);
     sealed record Insertion(WorkspaceSyntaxEntry Parent, JsonObject Owner, string Member, int? Boundary, JsonNode? Anchor, bool Collection);
