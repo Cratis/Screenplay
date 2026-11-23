@@ -201,7 +201,7 @@ internal sealed partial class SemanticCommandExecution(
         {
             if (!SemanticConditionEvaluator.Evaluate(requirement.Condition, new(_commandValues, _dateTypes, _reads, _clock)))
             {
-                failures.Add(new(requirement.Message ?? "Command requirement was not met.", requirement.Severity));
+                failures.Add(new(requirement.Message ?? SemanticRequirement.DefaultMessage, requirement.Severity));
             }
         }
     }
