@@ -28,6 +28,20 @@ Exposing more than 20 distinct operations produces Warning `PLAY1167` on the `ag
 
 An operation with no effective authorization produces Warning `PLAY0980`: any token holder can call it. Add an appropriate `authorize` gate to protect it; adding an allowlist entry is not a substitute for that gate.
 
+## Review exposure changes
+
+[Model comparison](model-comparison.md#compare-explicit-agent-exposure) reports
+operations newly entering or leaving the explicit allowlist. Scope widening or
+narrowing and description edits are separate findings, not new membership.
+Both complete semantic compilations must succeed; a failed side is **unknown**,
+not an empty allowlist. Declaring a new query or command without allowlisting
+it is not new exposure. The result does not establish effective authorization,
+transitive capability impact or runtime equivalence.
+
+Use CLI `diff` text or `difference.agentExposure` in its JSON output. MCP keeps
+its default structural views unchanged; opt into
+[`agent-exposure-diff/1`](mcp/reference.md#agent-exposure-comparison).
+
 ## Query limitations
 
 Global queries cannot be exposed. Performed queries (queries with a `performer`) and graph queries (`query ... graph ...`) produce Error `PLAY0982`, naming the query and its unsupported kind. They do not yet have portable operation identities that an agent allowlist can reference. This refusal applies in both compilers; it is not an empty or partially valid capability surface.

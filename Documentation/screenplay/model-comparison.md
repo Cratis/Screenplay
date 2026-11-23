@@ -192,6 +192,45 @@ rebuilds everything when `ModelWide` is not empty. Dependencies are direct,
 not transitive: a slice that reads a view built from a changed event is not
 listed unless it also references the changed slice.
 
+## Compare explicit agent exposure
+
+`difference.AgentExposure` compares the bound explicit allowlist independently of
+structural comparison. Declaring an operation does not expose it. `Added` means
+an operation newly enters the allowlist; `Removed` means it leaves. Retained
+operations can report separate `ScopeChanged` and `DescriptionChanged` rows.
+Changing a query's requirement from `write` to `read` is `Widened`; the reverse
+is `Narrowed`. Neither direction establishes effective authorization.
+
+Both whole-model semantic compilations must succeed. Successful absence of an
+`agents` block and an empty block are known empty surfaces. Errors anywhere in
+either compilation produce `Complete = false`, `HasExposureChange = null`,
+no guessed change rows and per-side `CompilationFailed` availability. Do not
+interpret an empty list without checking this verdict. Structural `Complete`
+and `HasSemanticChange` are unchanged and do not incorporate agent exposure.
+
+Identity mode matches kind and bound operation identity within the same
+application; identity-preserving renames and moves do not expose a new target.
+Address mode matches kind and canonical qualified name, omits operation IDs and
+reports a rename as removal/addition, without claiming identity continuity.
+Short and qualified references to the same bound target compare equally;
+entry order does not matter. Findings sort by qualified name, kind and change.
+
+CLI text prints an **Agent exposure** section and its separate verdict. CLI JSON
+adds `difference.agentExposure` without replacing existing structural fields.
+For example, adding an explicit query entry produces:
+
+```text
+Agent exposure (1):
+  Added Query Projects.Registration.List.All
+Agent exposure change: yes.
+```
+
+This is a comparison finding, not a single-model PLAY diagnostic. It does not
+compare authorization, transitive dependencies, handler bodies, external
+implementations or runtime equivalence. Descriptions remain untrusted text.
+The opt-in MCP transport is described in
+[agent exposure comparison](mcp/reference.md#agent-exposure-comparison).
+
 ## Coverage and limits
 
 Inspect every `ComparisonSection` in `Sections`, not only the change lists.

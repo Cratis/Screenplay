@@ -33,6 +33,10 @@ public static class ModelComparison
             WorkspaceAuthoringAnalysis.For(after.Workspace).Source,
             change => ModelDifferenceProjection.Declaration(change, matching));
 
-        return ModelDifferenceProjection.Project(difference, matching, before.Workspace.Compilation.Success, after.Workspace.Compilation.Success) with { Slices = slices };
+        return ModelDifferenceProjection.Project(difference, matching, before.Workspace.Compilation.Success, after.Workspace.Compilation.Success) with
+        {
+            Slices = slices,
+            AgentExposure = AgentExposureComparison.Compare(before.Workspace, after.Workspace, matching)
+        };
     }
 }

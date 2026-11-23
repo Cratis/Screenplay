@@ -94,15 +94,15 @@ internal sealed partial class McpWorkspaces
     internal object ReadProposal(JsonElement arguments)
     {
         var view = McpJson.OptionalString(arguments, "view") ?? "changes";
-        var semanticDiff = view == "semantic-diff";
-        if (semanticDiff)
+        var comparison = string.Equals(view, "semantic-diff", StringComparison.Ordinal) || string.Equals(view, "agent-exposure-diff", StringComparison.Ordinal);
+        if (comparison)
         {
             // Report a pending recovery here or in an overlapping root before reading the proposal from disk.
             RefusePendingWorkspace();
         }
 
         var proposal = Proposal(arguments);
-        if (semanticDiff)
+        if (comparison)
         {
             VerifyProposalBaseline(proposal);
         }
@@ -177,7 +177,6 @@ internal sealed partial class McpWorkspaces
     {
         "production-destinations" => DestinationReport(proposal, arguments, false),
         "production-destination-identities" => DestinationReport(proposal, arguments, true),
-        "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
         "changes" => McpPaging.Page(proposal.WritePlan.Entries, DescribeChangeSummary, arguments, proposal.Workspace.Revision.ToString()),
         "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
         "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),
@@ -185,6 +184,13 @@ internal sealed partial class McpWorkspaces
         "typed-contexts" => ProposalContexts(proposal, arguments),
         "dropped-comments" => McpPaging.Page(WorkspaceDroppedComments.In(proposal.WritePlan), DescribeDroppedComment, arguments, proposal.Workspace.Revision.ToString()),
         "before" or "after" => ProposalBytes(proposal, arguments, view),
+        _ => ReadComparisonView(proposal, arguments, view)
+    };
+
+    static object ReadComparisonView(IMcpProposal proposal, JsonElement arguments, string view) => view switch
+    {
+        "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
+        "agent-exposure-diff" => McpSemanticDiff.ReadAgentExposure(proposal, arguments),
         _ => throw new McpFailure("Unknown proposal view.", -32602)
     };
 

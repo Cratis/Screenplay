@@ -47,4 +47,7 @@ public sealed record ModelDifference(
     /// Gets the changes grouped by the slice that owns them, with the slices that depend on each changed slice.
     /// </summary>
     public SliceChangeSummary Slices { get; init; } = SliceChangeSummary.Empty;
+
+    /// <summary>Gets explicit agent allowlist findings with their own completeness and change verdict.</summary>
+    public AgentExposureDifference AgentExposure { get; init; } = AgentExposureDifference.Unavailable;
 }

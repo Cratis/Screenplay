@@ -139,7 +139,7 @@ static class McpToolSchemas
     static JsonObject StandardArgument(string tool, string property) => property switch
     {
         "before" or "after" when tool == "semantic-diff" => RevisionSource(),
-        "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" or "screens" => new() { ["type"] = "boolean", ["default"] = false },
+        "includeAgentExposure" or "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" or "screens" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "destinationIntent" when tool == "propose-repair" => McpDestinationIntent.Schema(),
         "line" when tool == "propose-repair" => new() { ["type"] = "integer", ["minimum"] = 1 },
@@ -172,7 +172,7 @@ static class McpToolSchemas
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "cases", "streams", "route", "dependencies", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
         "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "named-rule-intents", "named-rule-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics", "typed-contexts", "source-map", "repairs", "repair-intents", "executable-model", "api-description", "ui-contract", "capability-manifest"),
-        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff", "notes", "release-baseline", "production-destinations", "production-destination-identities"),
+        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff", "agent-exposure-diff", "notes", "release-baseline", "production-destinations", "production-destination-identities"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };
