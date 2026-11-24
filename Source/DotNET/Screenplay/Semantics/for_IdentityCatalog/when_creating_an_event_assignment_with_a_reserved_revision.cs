@@ -1,0 +1,26 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace Cratis.Screenplay.Semantics.for_IdentityCatalog;
+
+public class when_creating_an_event_assignment_with_a_reserved_revision : Specification
+{
+    ApplicationIdentity _application;
+    SemanticAddress _event;
+    Exception _exception;
+
+    void Establish()
+    {
+        _application = ApplicationIdentity.Create("Projects");
+        _event = SemanticAddress.ForEventContract(SemanticAddress.ForSlice(_application, "Projects", "Registration", "RegisterProject"), "ProjectRegistered");
+    }
+
+    void Because() => _exception = Catch.Exception(() => SemanticIdentityCatalog.Create(
+        _application,
+        [],
+        [],
+        [new(_event, EventContractId.CreateLegacy(_application, _event.Name), new(uint.MaxValue), (SemanticIdentityOrigin)99)]));
+
+    [Fact] void should_reject_the_revision_before_the_unknown_origin() => _exception.Message.ShouldEqual("An event contract identity assignment is malformed or belongs to another application.");
+    [Fact] void should_report_an_invalid_semantic_contract() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
+}

@@ -90,7 +90,7 @@ public sealed record SemanticIdentityCatalogMigrationPlan(CatalogRevision BaseRe
 /// <summary>
 /// Represents the immutable authoritative identity assignments for one application.
 /// </summary>
-public sealed class SemanticIdentityCatalog
+public sealed partial class SemanticIdentityCatalog
 {
     SemanticIdentityCatalog(
         ApplicationIdentity application,
@@ -223,41 +223,8 @@ public sealed class SemanticIdentityCatalog
             throw new InvalidSemanticContract("The event revision advancement base catalog revision is stale.");
         }
 
-        RejectDefault(advancements, nameof(advancements));
-        if (advancements.Any(value => value is null || value.Address is null))
-        {
-            throw new InvalidSemanticContract("An event revision advancement cannot be null.");
-        }
-
-        RejectDuplicates(advancements.Select(value => value.Address), EqualityComparer<SemanticAddress>.Default, "event advancement address");
-        foreach (var advancement in advancements)
-        {
-            if (advancement is null || advancement.Address is null || advancement.Address.Kind != SemanticKind.EventContract ||
-                !eventAddresses.Contains(advancement.Address) || !advancement.Revision.IsValid || advancement.Revision.Value == uint.MaxValue)
-            {
-                throw new InvalidSemanticContract("An event revision advancement must identify a current event and valid revision.");
-            }
-
-            var previousRevision = previous.ResolveEventContract(advancement.Address).Revision;
-            if (previous.EventContracts.Any(value => value.Address.Equals(advancement.Address)) && advancement.Revision.Value <= previousRevision.Value)
-            {
-                throw new InvalidSemanticContract($"Event '{advancement.Address.Name}' must advance beyond persisted revision {previousRevision.Value}.");
-            }
-        }
-
-        var renames = previous.Semantics.Where(assignment => assignment.Address.Kind == SemanticKind.Property &&
-                assignment.Address.OwnerKind == SemanticKind.EventContract &&
-                assignment.Address.Parts[^3].Kind != SemanticAddressPartKind.Generation &&
-                advancements.Any(advancement => assignment.Address.Parts[..^2].SequenceEqual(advancement.Address.Parts)))
-            .Select(assignment =>
-            {
-                var address = assignment.Address;
-                var owner = SemanticAddress.FromCanonical(SemanticKind.EventContract, address.Parts[..^2]);
-                var target = SemanticAddress.ForEventProperty(owner, EventContractRevision.Initial, address.Name);
-                return new SemanticIdentityRename(address, target);
-            })
-            .Where(rename => !semanticAddresses.Contains(rename.PreviousAddress) && semanticAddresses.Contains(rename.CurrentAddress))
-            .ToImmutableArray();
+        ValidateEventAdvancements(previous, eventAddresses, advancements);
+        var renames = GenerationOnePropertyRenames(previous.Semantics, semanticAddresses, advancements);
         var plan = PlanMigration(
             previous,
             expectedRevision,
@@ -267,16 +234,7 @@ public sealed class SemanticIdentityCatalog
             [],
             renames,
             []);
-        var events = plan.Catalog.EventContracts.Select(assignment =>
-        {
-            var advancement = advancements.FirstOrDefault(value => value.Address.Equals(assignment.Address));
-            return advancement is null ? assignment : assignment with
-            {
-                Revision = advancement.Revision,
-                Origin = previous.EventContracts.Any(value => value.Address.Equals(assignment.Address))
-                    ? SemanticIdentityOrigin.Persisted : assignment.Origin
-            };
-        }).ToImmutableArray();
+        var events = plan.Catalog.EventContracts.Select(assignment => AdvanceEventAssignment(previous, assignment, advancements)).ToImmutableArray();
         return new(expectedRevision, Create(previous.Application, plan.Catalog.Documents, plan.Catalog.Semantics, events));
     }
 
@@ -392,7 +350,7 @@ public sealed class SemanticIdentityCatalog
         var normalizedRetiredKeys = retiredDocumentKeys.Select(NormalizeKey).ToImmutableArray();
         ValidateCurrent(previous.Application, normalizedKeys, semanticAddresses, eventAddresses);
         var normalizedDocumentRenames = documentRenames.Select(Normalize).ToImmutableArray();
-        ValidateContinuity(
+        new ContinuityValidation(
             previous,
             normalizedKeys,
             semanticAddresses,
@@ -402,13 +360,86 @@ public sealed class SemanticIdentityCatalog
             eventRenames,
             normalizedRetiredKeys,
             retiredSemanticAddresses,
-            retiredEventAddresses);
+            retiredEventAddresses).Validate();
 
         var documents = PlanDocuments(previous, normalizedKeys, normalizedDocumentRenames);
         var semantics = PlanSemantics(previous, semanticAddresses, semanticRenames);
         var events = PlanEvents(previous, eventAddresses, eventRenames);
         var catalog = Create(previous.Application, documents, semantics, events);
         return new(baseRevision, catalog);
+    }
+
+    static void ValidateEventAdvancements(
+        SemanticIdentityCatalog previous,
+        ImmutableArray<SemanticAddress> eventAddresses,
+        ImmutableArray<EventContractRevisionAdvancement> advancements)
+    {
+        RejectDefault(advancements, nameof(advancements));
+        if (advancements.Any(value => value is null || value.Address is null))
+        {
+            throw new InvalidSemanticContract("An event revision advancement cannot be null.");
+        }
+
+        RejectDuplicates(advancements.Select(value => value.Address), EqualityComparer<SemanticAddress>.Default, "event advancement address");
+        foreach (var advancement in advancements)
+        {
+            ValidateEventAdvancement(previous, eventAddresses, advancement);
+        }
+    }
+
+    static void ValidateEventAdvancement(
+        SemanticIdentityCatalog previous,
+        ImmutableArray<SemanticAddress> eventAddresses,
+        EventContractRevisionAdvancement advancement)
+    {
+        if (!IsCurrentEventAdvancement(advancement, eventAddresses))
+        {
+            throw new InvalidSemanticContract("An event revision advancement must identify a current event and valid revision.");
+        }
+
+        var previousRevision = previous.ResolveEventContract(advancement.Address).Revision;
+        if (previous.EventContracts.Any(value => value.Address.Equals(advancement.Address)) && advancement.Revision.Value <= previousRevision.Value)
+        {
+            throw new InvalidSemanticContract($"Event '{advancement.Address.Name}' must advance beyond persisted revision {previousRevision.Value}.");
+        }
+    }
+
+    static bool IsCurrentEventAdvancement(EventContractRevisionAdvancement advancement, ImmutableArray<SemanticAddress> eventAddresses) =>
+        advancement?.Address is not null && advancement.Address.Kind == SemanticKind.EventContract &&
+        eventAddresses.Contains(advancement.Address) && advancement.Revision.IsValid && advancement.Revision.Value != uint.MaxValue;
+
+    static ImmutableArray<SemanticIdentityRename> GenerationOnePropertyRenames(
+        ImmutableArray<SemanticIdentityAssignment> previousSemantics,
+        ImmutableArray<SemanticAddress> semanticAddresses,
+        ImmutableArray<EventContractRevisionAdvancement> advancements) =>
+        previousSemantics.Where(assignment => IsUngeneratedEventProperty(assignment.Address) &&
+                advancements.Any(advancement => assignment.Address.Parts[..^2].SequenceEqual(advancement.Address.Parts)))
+            .Select(assignment =>
+            {
+                var address = assignment.Address;
+                var owner = SemanticAddress.FromCanonical(SemanticKind.EventContract, address.Parts[..^2]);
+                var target = SemanticAddress.ForEventProperty(owner, EventContractRevision.Initial, address.Name);
+                return new SemanticIdentityRename(address, target);
+            })
+            .Where(rename => !semanticAddresses.Contains(rename.PreviousAddress) && semanticAddresses.Contains(rename.CurrentAddress))
+            .ToImmutableArray();
+
+    static bool IsUngeneratedEventProperty(SemanticAddress address) =>
+        address.Kind == SemanticKind.Property && address.OwnerKind == SemanticKind.EventContract &&
+        address.Parts[^3].Kind != SemanticAddressPartKind.Generation;
+
+    static EventContractIdentityAssignment AdvanceEventAssignment(
+        SemanticIdentityCatalog previous,
+        EventContractIdentityAssignment assignment,
+        ImmutableArray<EventContractRevisionAdvancement> advancements)
+    {
+        var advancement = advancements.FirstOrDefault(value => value.Address.Equals(assignment.Address));
+        return advancement is null ? assignment : assignment with
+        {
+            Revision = advancement.Revision,
+            Origin = previous.EventContracts.Any(value => value.Address.Equals(assignment.Address))
+                ? SemanticIdentityOrigin.Persisted : assignment.Origin
+        };
     }
 
     static ImmutableArray<DocumentIdentityAssignment> PlanDocuments(
@@ -510,72 +541,6 @@ public sealed class SemanticIdentityCatalog
         RejectDuplicates(documentKeys, StringComparer.Ordinal, "current document key");
         RejectDuplicates(semanticAddresses, EqualityComparer<SemanticAddress>.Default, "current semantic address");
         RejectDuplicates(eventAddresses, EqualityComparer<SemanticAddress>.Default, "current event address");
-    }
-
-    static void ValidateContinuity(
-        SemanticIdentityCatalog previous,
-        ImmutableArray<string> currentKeys,
-        ImmutableArray<SemanticAddress> currentSemantics,
-        ImmutableArray<SemanticAddress> currentEvents,
-        ImmutableArray<DocumentIdentityRename> documentRenames,
-        ImmutableArray<SemanticIdentityRename> semanticRenames,
-        ImmutableArray<EventContractIdentityRename> eventRenames,
-        ImmutableArray<string> retiredDocumentKeys,
-        ImmutableArray<SemanticAddress> retiredSemanticAddresses,
-        ImmutableArray<SemanticAddress> retiredEventAddresses)
-    {
-        ValidateSemanticRenameEndpoints(semanticRenames);
-        ValidateEventRenameEndpoints(eventRenames);
-        ValidateOneToOne(documentRenames, _ => _.PreviousKey, _ => _.CurrentKey, StringComparer.Ordinal, "document rename");
-        RejectMigrationDuplicates(semanticRenames.Select(_ => _.PreviousAddress), nameof(semanticRenames));
-        RejectMigrationDuplicates(semanticRenames.Select(_ => _.CurrentAddress), nameof(semanticRenames));
-        RejectMigrationDuplicates(eventRenames.Select(_ => _.PreviousAddress), nameof(eventRenames));
-        RejectMigrationDuplicates(eventRenames.Select(_ => _.CurrentAddress), nameof(eventRenames));
-        RejectDuplicates(retiredDocumentKeys, StringComparer.Ordinal, "retired document key");
-        RejectMigrationDuplicates(retiredSemanticAddresses, nameof(retiredSemanticAddresses));
-        RejectMigrationDuplicates(retiredEventAddresses, nameof(retiredEventAddresses));
-
-        IdentityMigrationIssue.Reject(
-            "An identity rename is stale, guessed, or does not map one removed assignment to one new address.",
-            semanticRenames.Where(_ => _.PreviousAddress.Equals(_.CurrentAddress) || !previous.Semantics.Any(a => a.Address.Equals(_.PreviousAddress)) ||
-                previous.Semantics.Any(a => a.Address.Equals(_.CurrentAddress)) || !currentSemantics.Contains(_.CurrentAddress) || currentSemantics.Contains(_.PreviousAddress))
-                .SelectMany(_ => RenameIssues(nameof(semanticRenames), _.PreviousAddress, _.CurrentAddress))
-                .Concat(eventRenames.Where(_ => _.PreviousAddress.Equals(_.CurrentAddress) || !previous.EventContracts.Any(a => a.Address.Equals(_.PreviousAddress)) ||
-                    previous.EventContracts.Any(a => a.Address.Equals(_.CurrentAddress)) || !currentEvents.Contains(_.CurrentAddress) || currentEvents.Contains(_.PreviousAddress))
-                    .SelectMany(_ => RenameIssues(nameof(eventRenames), _.PreviousAddress, _.CurrentAddress))));
-        if (documentRenames.Any(_ => _.PreviousKey == _.CurrentKey || !previous.Documents.Any(a => a.Key == _.PreviousKey) ||
-                                    previous.Documents.Any(a => a.Key == _.CurrentKey) || !currentKeys.Contains(_.CurrentKey) || currentKeys.Contains(_.PreviousKey)))
-        {
-            throw new InvalidSemanticContract("An identity rename is stale, guessed, or does not map one removed assignment to one new address.");
-        }
-
-        var renamedDocumentSources = documentRenames.Select(_ => _.PreviousKey).ToHashSet(StringComparer.Ordinal);
-        var renamedSemanticSources = semanticRenames.Select(_ => _.PreviousAddress).ToHashSet();
-        var renamedEventSources = eventRenames.Select(_ => _.PreviousAddress).ToHashSet();
-        IdentityMigrationIssue.Reject(
-            "An identity retirement is stale, still current, duplicated by a rename, or was never assigned.",
-            retiredSemanticAddresses.Where(address => !previous.Semantics.Any(_ => _.Address.Equals(address)) || currentSemantics.Contains(address) || renamedSemanticSources.Contains(address))
-                .Select(address => new IdentityMigrationIssue([nameof(retiredSemanticAddresses)], address))
-                .Concat(retiredEventAddresses.Where(address => !previous.EventContracts.Any(_ => _.Address.Equals(address)) || currentEvents.Contains(address) || renamedEventSources.Contains(address))
-                    .Select(address => new IdentityMigrationIssue([nameof(retiredEventAddresses)], address))));
-        if (retiredDocumentKeys.Any(key => !previous.Documents.Any(_ => _.Key == key) || currentKeys.Contains(key) || renamedDocumentSources.Contains(key)))
-        {
-            throw new InvalidSemanticContract("An identity retirement is stale, still current, duplicated by a rename, or was never assigned.");
-        }
-
-        var retiredDocuments = retiredDocumentKeys.ToHashSet(StringComparer.Ordinal);
-        var retiredSemantics = retiredSemanticAddresses.ToHashSet();
-        var retiredEvents = retiredEventAddresses.ToHashSet();
-        IdentityMigrationIssue.Reject(
-            "A base catalog assignment is stale and has no explicit one-to-one rename or retirement. Choose a rename to preserve identity or a retirement for a removed declaration.",
-            previous.Semantics.Where(_ => !currentSemantics.Contains(_.Address) && !renamedSemanticSources.Contains(_.Address) && !retiredSemantics.Contains(_.Address))
-                .Select(_ => new IdentityMigrationIssue([nameof(semanticRenames), nameof(retiredSemanticAddresses)], _.Address))
-                .Concat(previous.EventContracts.Where(_ => !currentEvents.Contains(_.Address) && !renamedEventSources.Contains(_.Address) && !retiredEvents.Contains(_.Address))
-                    .Select(_ => new IdentityMigrationIssue([nameof(eventRenames), nameof(retiredEventAddresses)], _.Address))));
-        if (previous.Documents.Any(_ => !currentKeys.Contains(_.Key) && !renamedDocumentSources.Contains(_.Key) && !retiredDocuments.Contains(_.Key)))
-        {
-            throw new InvalidSemanticContract("A base catalog assignment is stale and has no explicit one-to-one rename or retirement.");
-        }
     }
 
     static void ValidateSemanticRenameEndpoints(ImmutableArray<SemanticIdentityRename> renames)
@@ -699,22 +664,44 @@ public sealed class SemanticIdentityCatalog
     {
         foreach (var assignment in assignments)
         {
-            if (assignment is null || assignment.Address is null || assignment.Address.Application != application ||
-                assignment.Address.Kind != SemanticKind.EventContract || !assignment.Id.IsSet || !assignment.Revision.IsValid || assignment.Revision.Value == uint.MaxValue)
-            {
-                throw new InvalidSemanticContract("An event contract identity assignment is malformed or belongs to another application.");
-            }
-
-            ValidateOrigin(assignment.Origin);
-            if (assignment.Origin == SemanticIdentityOrigin.LegacyBootstrap &&
-                assignment.Id != EventContractId.CreateLegacy(application, assignment.Address.Name))
-            {
-                throw new InvalidSemanticContract($"Event contract assignment '{assignment.Id}' does not match its deterministic legacy bootstrap identity.");
-            }
+            ValidateEventAssignment(application, assignment);
         }
 
         RejectDuplicates(assignments.Select(_ => _.Address), EqualityComparer<SemanticAddress>.Default, "event assignment address");
         ValidateEffectiveEventContracts(assignments);
+    }
+
+    static void ValidateEventAssignment(ApplicationIdentity application, EventContractIdentityAssignment assignment)
+    {
+        RequireEventAssignmentAddress(application, assignment);
+        if (!assignment.Revision.IsValid || assignment.Revision.Value == uint.MaxValue)
+        {
+            throw new InvalidSemanticContract("An event contract identity assignment is malformed or belongs to another application.");
+        }
+
+        ValidateOrigin(assignment.Origin);
+        ValidateEventBootstrap(application, assignment);
+    }
+
+    static void RequireEventAssignmentAddress(ApplicationIdentity application, EventContractIdentityAssignment assignment)
+    {
+        if (!HasEventAssignmentAddress(application, assignment))
+        {
+            throw new InvalidSemanticContract("An event contract identity assignment is malformed or belongs to another application.");
+        }
+    }
+
+    static bool HasEventAssignmentAddress(ApplicationIdentity application, EventContractIdentityAssignment assignment) =>
+        assignment?.Address is not null && assignment.Address.Application == application &&
+        assignment.Address.Kind == SemanticKind.EventContract && assignment.Id.IsSet;
+
+    static void ValidateEventBootstrap(ApplicationIdentity application, EventContractIdentityAssignment assignment)
+    {
+        if (assignment.Origin == SemanticIdentityOrigin.LegacyBootstrap &&
+            assignment.Id != EventContractId.CreateLegacy(application, assignment.Address.Name))
+        {
+            throw new InvalidSemanticContract($"Event contract assignment '{assignment.Id}' does not match its deterministic legacy bootstrap identity.");
+        }
     }
 
     static void ValidateEffectiveEventContracts(IEnumerable<EventContractIdentityAssignment> assignments)
