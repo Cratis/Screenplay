@@ -58,8 +58,13 @@ public static class ProtectedReadReplacements
         [.. ProtectedCommandReadsCorpus.V25.SpecificationExpectations
             .Where(expectation => expectation.RejectionMessage?.StartsWith("Current '", StringComparison.Ordinal) == true)
             .Select(expectation => new ProtectedReadVectorDisposition(
-                "ProtectedCommandReadsCorpus.V25", ProtectedCommandReadsCorpus.V25.SemanticRevision, OriginalV25Sha256,
-                "ProtectedReadReplacements.V25R2", expectation.Name, expectation.RejectionMessage!, "Current does not exist."))];
+                "ProtectedCommandReadsCorpus.V25",
+                ProtectedCommandReadsCorpus.V25.SemanticRevision,
+                OriginalV25Sha256,
+                "ProtectedReadReplacements.V25R2",
+                expectation.Name,
+                expectation.RejectionMessage!,
+                "Current does not exist."))];
 
     /// <summary>
     /// Gets the exact superseded commit in each frozen race fixture.
@@ -71,8 +76,14 @@ public static class ProtectedReadReplacements
     ];
 
     static ProtectedReadVectorDisposition RaceDisposition(string vectorId, string sha256) => new(
-        vectorId, ProtectedCommandReadRaceVectors.Model.SemanticRevision, sha256, "ProtectedReadReplacements.RacesV1R3",
-        "rejected-decision", "View 'read' does not exist.", "View does not exist.", 0);
+        vectorId,
+        ProtectedCommandReadRaceVectors.Model.SemanticRevision,
+        sha256,
+        "ProtectedReadReplacements.RacesV1R3",
+        "rejected-decision",
+        "View 'read' does not exist.",
+        "View does not exist.",
+        0);
 
     static CanonicalCorpusSpecificationExpectation ReplaceExpectation(CanonicalCorpusSpecificationExpectation expectation) =>
         expectation.RejectionMessage?.StartsWith("Current '", StringComparison.Ordinal) == true
