@@ -4,9 +4,9 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness;
+namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness.when_checking;
 
-public class when_an_authorization_policy_is_anonymous : Specification
+public class with_an_anonymous_authorization_policy : Specification
 {
     ApplicationSyntax _application;
     Diagnostic[] _findings;

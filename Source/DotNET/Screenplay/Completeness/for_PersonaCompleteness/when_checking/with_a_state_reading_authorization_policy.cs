@@ -4,9 +4,9 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness;
+namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness.when_checking;
 
-public class when_a_screen_has_one_reachable_persona : Specification
+public class with_a_state_reading_authorization_policy : Specification
 {
     ApplicationSyntax _application;
     Diagnostic[] _findings;
@@ -16,19 +16,21 @@ public class when_a_screen_has_one_reachable_persona : Specification
         var parsed = new ScreenplayCompiler().Parse("""
             policy Member
               require role "A"
-            policy Restricted
-              require role "Other"
+            policy Enabled
+              reads Plan as plan by assetId
+              require plan.enabled == true
             persona Person
               policy Member
-            persona Other
-              policy Restricted
             module M
               feature F
                 slice StateChange S
                   command C
-                    authorize Restricted
-                  screen View
-                    action C
+                    assetId String identifier
+                    authorize Enabled
+                slice StateView Plans
+                  readmodel Plan
+                    assetId String key
+                    enabled Bool
             """);
         parsed.Success.ShouldBeTrue();
         _application = parsed.Value!;
@@ -36,5 +38,5 @@ public class when_a_screen_has_one_reachable_persona : Specification
 
     void Because() => _findings = [.. PersonaCompleteness.Check(_application)];
 
-    [Fact] void should_not_report_the_screen_or_its_binding_as_denied_to_everyone() => _findings.Select(finding => finding.Code).ShouldEqual([DiagnosticCodes.PersonaWithoutGate]);
+    [Fact] void should_leave_the_state_dependent_gate_unknown() => _findings.Select(finding => finding.Code).ShouldEqual([DiagnosticCodes.PersonaWithoutGate]);
 }

@@ -4,9 +4,9 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness;
+namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness.when_checking;
 
-public class when_multiple_personas_precede_denied_gates_and_screens : Specification
+public class with_multiple_personas_and_denied_gates_and_screens : Specification
 {
     ApplicationSyntax _application;
     Diagnostic[] _findings;

@@ -4,9 +4,9 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness;
+namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness.when_checking;
 
-public class when_a_screen_has_an_unsynthesizable_persona : Specification
+public class with_an_unsynthesizable_screen_persona : Specification
 {
     ApplicationSyntax _application;
     Diagnostic[] _findings;

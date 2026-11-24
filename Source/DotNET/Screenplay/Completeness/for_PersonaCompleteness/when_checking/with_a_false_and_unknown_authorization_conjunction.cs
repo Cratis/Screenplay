@@ -4,9 +4,9 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness;
+namespace Cratis.Screenplay.Completeness.for_PersonaCompleteness.when_checking;
 
-public class when_an_authorization_conjunction_is_false_and_unknown : Specification
+public class with_a_false_and_unknown_authorization_conjunction : Specification
 {
     ApplicationSyntax _application;
     Diagnostic[] _findings;
