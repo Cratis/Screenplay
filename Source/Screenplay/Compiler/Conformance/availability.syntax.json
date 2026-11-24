@@ -10,6 +10,11 @@
       "kind": "AudienceSyntax",
       "description": "Tenants taking part in the preview",
       "name": "Preview"
+    },
+    {
+      "kind": "AudienceSyntax",
+      "description": "Tenants with an open incident",
+      "name": "Incident"
     }
   ],
   "availabilities": [
@@ -20,7 +25,8 @@
       "requirements": [
         {
           "kind": "AudienceAvailabilityRequirementSyntax",
-          "audience": "Plus"
+          "audience": "Plus",
+          "negated": false
         },
         {
           "kind": "ConditionAvailabilityRequirementSyntax",
@@ -45,12 +51,35 @@
           "kind": "LogicalAvailabilityRequirementSyntax",
           "left": {
             "kind": "AudienceAvailabilityRequirementSyntax",
-            "audience": "Plus"
+            "audience": "Plus",
+            "negated": false
           },
           "operator": "Or",
           "right": {
             "kind": "AudienceAvailabilityRequirementSyntax",
-            "audience": "Preview"
+            "audience": "Preview",
+            "negated": false
+          }
+        }
+      ]
+    },
+    {
+      "kind": "AvailabilitySyntax",
+      "description": "Plus customers while no incident is open",
+      "name": "Calm",
+      "requirements": [
+        {
+          "kind": "LogicalAvailabilityRequirementSyntax",
+          "left": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "Plus",
+            "negated": false
+          },
+          "operator": "And",
+          "right": {
+            "kind": "AudienceAvailabilityRequirementSyntax",
+            "audience": "Incident",
+            "negated": true
           }
         }
       ]
@@ -86,6 +115,14 @@
                 "kind": "AvailabilityReferenceSyntax",
                 "availability": "DataQuality"
               }
+            },
+            {
+              "kind": "AvailableSyntax",
+              "requirement": {
+                "kind": "AudienceAvailabilityRequirementSyntax",
+                "audience": "Incident",
+                "negated": true
+              }
             }
           ],
           "description": null,
@@ -103,19 +140,22 @@
                     "kind": "LogicalAvailabilityRequirementSyntax",
                     "left": {
                       "kind": "AudienceAvailabilityRequirementSyntax",
-                      "audience": "Plus"
+                      "audience": "Plus",
+                      "negated": false
                     },
                     "operator": "And",
                     "right": {
                       "kind": "LogicalAvailabilityRequirementSyntax",
                       "left": {
                         "kind": "AudienceAvailabilityRequirementSyntax",
-                        "audience": "Preview"
+                        "audience": "Preview",
+                        "negated": false
                       },
                       "operator": "Or",
                       "right": {
                         "kind": "AudienceAvailabilityRequirementSyntax",
-                        "audience": "Plus"
+                        "audience": "Plus",
+                        "negated": false
                       }
                     }
                   }
@@ -242,8 +282,18 @@
                     {
                       "kind": "AvailableSyntax",
                       "requirement": {
-                        "kind": "AudienceAvailabilityRequirementSyntax",
-                        "audience": "Plus"
+                        "kind": "LogicalAvailabilityRequirementSyntax",
+                        "left": {
+                          "kind": "AudienceAvailabilityRequirementSyntax",
+                          "audience": "Plus",
+                          "negated": false
+                        },
+                        "operator": "And",
+                        "right": {
+                          "kind": "AudienceAvailabilityRequirementSyntax",
+                          "audience": "Incident",
+                          "negated": true
+                        }
                       }
                     }
                   ],
@@ -331,7 +381,8 @@
                       "kind": "AvailableSyntax",
                       "requirement": {
                         "kind": "AudienceAvailabilityRequirementSyntax",
-                        "audience": "Plus"
+                        "audience": "Plus",
+                        "negated": false
                       }
                     }
                   ],
@@ -400,7 +451,8 @@
                       "kind": "AvailableSyntax",
                       "requirement": {
                         "kind": "AudienceAvailabilityRequirementSyntax",
-                        "audience": "Preview"
+                        "audience": "Preview",
+                        "negated": false
                       }
                     }
                   ],

@@ -31,6 +31,7 @@ const document = [
     '    available with StaffOnly',
     '    slice StateChange S',
     '      available when $context.tenant == "a"',
+    '      available for Staff and not Customers',
 ];
 
 describe('when highlighting availability', () => {
@@ -62,6 +63,12 @@ describe('when highlighting availability', () => {
         isKeyword(6, 'or').should.be.true;
         isKeyword(8, 'with').should.be.true;
         isKeyword(10, 'when').should.be.true;
+    });
+
+    it('should highlight a negated audience as a keyword and its name as a name', () => {
+        isKeyword(11, 'not').should.be.true;
+        isKeyword(11, 'and').should.be.true;
+        isKeyword(11, 'Customers').should.be.false;
     });
 
     it('should not highlight the names as keywords', () => {

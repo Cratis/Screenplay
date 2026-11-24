@@ -57,7 +57,7 @@ internal static class SemanticAvailabilityBinder
 
     static SemanticAvailabilityRequirement Requirement(AvailabilityRequirementSyntax requirement) => requirement switch
     {
-        AudienceAvailabilityRequirementSyntax audience => new SemanticAudienceRequirement(audience.Audience),
+        AudienceAvailabilityRequirementSyntax audience => new SemanticAudienceRequirement(audience.Audience, audience.Negated),
         AvailabilityReferenceSyntax reference => new SemanticAvailabilityReference(reference.Availability),
         ConditionAvailabilityRequirementSyntax condition => new SemanticConditionRequirement(Condition(condition.Condition)),
         LogicalAvailabilityRequirementSyntax logical => new SemanticLogicalAvailability(Requirement(logical.Left), Operator(logical.Operator), Requirement(logical.Right)),

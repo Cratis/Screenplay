@@ -62,7 +62,7 @@ An incident or preview group can be modelled with grants alone. An operator can 
 
 Open:
 
-- The ESM version numbers for `not` and for element gates, allocated at admission.
+- The ESM version number for element gates, allocated at admission. `not` was admitted as ESM v58 (Cratis/Screenplay#1378): `"negated":true` on an `audience` requirement, written only when true; a misplaced `not` is `PLAY1171`; a gate containing `not` is opaque to `PLAY1139`.
 - The renderer rule for an unauthorized element, per renderer.
 - A coded reason apart from availability in Arc for Elixir, once it has the hook.
 

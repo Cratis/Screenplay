@@ -13,7 +13,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
-const gateExpected = 'available for <Audience> [and|or <Audience> ...] | available when <condition> | available with <Availability> [and|or <Availability> ...]';
+const gateExpected = 'available for [not] <Audience> [and|or [not] <Audience> ...] | available when <condition> | available with <Availability> [and|or <Availability> ...]';
 const gateKinds = new Set(['for', 'when', 'with']);
 
 const audienceHeaderPattern = pattern('^audience\\s+([A-Za-z_]\\w*)$');
@@ -168,13 +168,26 @@ class RequirementParser {
             this.context.error(DiagnosticCodes.InvalidAvailableGate, `Expected ${expected}`, this.location);
             return null;
         }
+        let negated = false;
+        if (this.tokens[this.#position] === 'not') {
+            if (!this.audiences) {
+                this.context.error(DiagnosticCodes.MisplacedNotInAvailable, '\'not\' applies to an audience name in \'available for\' - it cannot negate an availability in \'available with\'', this.location);
+                return null;
+            }
+            negated = true;
+            this.#position++;
+            if (this.#position >= this.tokens.length || this.tokens[this.#position] === '(' || this.tokens[this.#position] === 'not') {
+                this.context.error(DiagnosticCodes.MisplacedNotInAvailable, '\'not\' applies to one audience name - write \'not <Audience>\', not \'not\' on a group or on another \'not\'', this.location);
+                return null;
+            }
+        }
         const token = this.tokens[this.#position++];
         if (!namePattern.test(token)) {
             this.context.error(DiagnosticCodes.InvalidAvailableGate, `Invalid name '${token}' - expected ${expected} written as a PascalCase identifier`, this.location);
             return null;
         }
         return this.audiences
-            ? { kind: 'AudienceAvailabilityRequirementSyntax', audience: token, location: this.location }
+            ? { kind: 'AudienceAvailabilityRequirementSyntax', audience: token, negated, location: this.location }
             : { kind: 'AvailabilityReferenceSyntax', availability: token, location: this.location };
     }
 }

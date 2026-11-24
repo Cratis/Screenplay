@@ -75,11 +75,18 @@ public abstract record AvailabilityRequirementSyntax(SourceLocation Location) : 
 }
 
 /// <summary>
-/// Represents <c>for &lt;Audience&gt;</c> - holds when the caller's tenant, user or system holds the audience.
+/// Represents <c>for &lt;Audience&gt;</c> - holds when the caller's tenant, user or system holds the audience -
+/// or <c>for not &lt;Audience&gt;</c>, which holds when the audience is known and not held, and stays unknown (closed) when it is unknown.
 /// </summary>
 /// <param name="Audience">The name of the audience.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record AudienceAvailabilityRequirementSyntax(string Audience, SourceLocation Location) : AvailabilityRequirementSyntax(Location);
+public record AudienceAvailabilityRequirementSyntax(string Audience, SourceLocation Location) : AvailabilityRequirementSyntax(Location)
+{
+    /// <summary>
+    /// Gets a value indicating whether the audience is written <c>not &lt;Audience&gt;</c>.
+    /// </summary>
+    public bool Negated { get; init; }
+}
 
 /// <summary>
 /// Represents <c>with &lt;Availability&gt;</c> - holds when the named, reusable availability holds.

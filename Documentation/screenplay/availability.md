@@ -41,17 +41,18 @@ module Fleet
 
 | Form | Holds when |
 | --- | --- |
-| `available for <audiences>` | the caller's tenant, user or system holds the audience or audiences |
+| `available for <audiences>` | the caller's tenant, user or system holds the audience or audiences; `not <Audience>` holds when the audience is known and not held |
 | `available when <condition>` | the condition over `$context` is true |
 | `available with <Availability>` | the named availability holds |
 
-`for` and `with` combine names with `and`, `or` and parentheses, the way `authorize` combines policies. A `when` line is one condition and keeps its own `and` and `or`. A line holds one form; to mix forms, name them in an `availability` block and use `with`. Several `available` lines on one construct all have to hold.
+`for` and `with` combine names with `and`, `or`, `not` and parentheses, the way `authorize` combines policies. `not` binds tighter than `and`, which binds tighter than `or`, and applies to one audience name in a `for` line: `available for Plus and not Incident` and `available for not Incident` are valid; `not (Plus)`, `not not Plus` and `with not Open` are errors (`PLAY1171`). A `when` line is one condition and keeps its own `and` and `or`. A line holds one form; to mix forms, name them in an `availability` block and use `with`. Several `available` lines on one construct all have to hold.
 
 A gate is allowed on a module, feature, slice, command, query and screen. Gates AND down the path from module to construct, and availability is decided **before** `authorize`: a part that is not available is refused as not available, which clients can tell apart from not allowed.
 
 ## Rules the language holds
 
-- **Unknown never opens a gate.** A missing audience, a missing value or an unresolved condition leaves the part unavailable, as with policies.
+- **Unknown never opens a gate.** A missing audience, a missing value or an unresolved condition leaves the part unavailable, as with policies. `not` is three-valued: `not` of an unknown audience is unknown, so the part stays closed. A part is closed for a *granted* audience by granting it, for example an `Incident` audience; withdrawing the grant reopens the part. The union rule is unchanged.
+- **A negated audience needs ESM v58.** The executable model carries it as `"negated": true` on the audience requirement, so a model that uses no `not` keeps its earlier version.
 - **Events and observers are unaffected.** A reaction that produces into an unavailable slice is fine, and projections keep running, so switching a part on again needs no replay.
 - **Specifications always run with everything available.** They verify behavior, not entitlement, so there is no `given availability` form, and the reference evaluator treats every gate as available.
 - **Personas carry audiences for authoring only.** `audience Plus` under a `persona` tells the board, Studio and documentation which audiences the persona is in. It changes nothing at runtime and is not part of the executable model.
@@ -63,7 +64,7 @@ An `available when` condition reads `$context`. Values come from the built-in me
 
 ## Calling a command that may be unavailable
 
-A screen action, a form or a reaction that `invokes` a command whose audiences can be off while the invoker's are on can be refused as not available. The compiler warns (`PLAY1139`), comparing audience sets. `when` conditions are opaque and are skipped, never guessed. A reaction is never gated, and it runs with the tenant's and the system's audiences, never a user's.
+A screen action, a form or a reaction that `invokes` a command whose audiences can be off while the invoker's are on can be refused as not available. The compiler warns (`PLAY1139`), comparing audience sets. `when` conditions are opaque and are skipped, never guessed; so is any gate that contains `not`, because whether it differs depends on grants the model cannot see. A reaction is never gated, and it runs with the tenant's and the system's audiences, never a user's.
 
 ## Diagnostics
 

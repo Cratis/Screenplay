@@ -33,6 +33,11 @@
       "kind": "AudienceSyntax",
       "description": "Tenants taking part in the preview",
       "name": "Preview"
+    },
+    {
+      "kind": "AudienceSyntax",
+      "description": "Tenants with an open incident",
+      "name": "Incident"
     }
   ],
   "availabilities": [
@@ -45,12 +50,14 @@
           "kind": "LogicalAvailabilityRequirementSyntax",
           "left": {
             "kind": "AudienceAvailabilityRequirementSyntax",
-            "audience": "AuditTrail"
+            "audience": "AuditTrail",
+            "negated": false
           },
           "operator": "Or",
           "right": {
             "kind": "AudienceAvailabilityRequirementSyntax",
-            "audience": "Preview"
+            "audience": "Preview",
+            "negated": false
           }
         },
         {
@@ -17349,13 +17356,23 @@
                         "kind": "LogicalAvailabilityRequirementSyntax",
                         "left": {
                           "kind": "AudienceAvailabilityRequirementSyntax",
-                          "audience": "AuditTrail"
+                          "audience": "AuditTrail",
+                          "negated": false
                         },
                         "operator": "Or",
                         "right": {
                           "kind": "AudienceAvailabilityRequirementSyntax",
-                          "audience": "Preview"
+                          "audience": "Preview",
+                          "negated": false
                         }
+                      }
+                    },
+                    {
+                      "kind": "AvailableSyntax",
+                      "requirement": {
+                        "kind": "AudienceAvailabilityRequirementSyntax",
+                        "audience": "Incident",
+                        "negated": true
                       }
                     }
                   ],

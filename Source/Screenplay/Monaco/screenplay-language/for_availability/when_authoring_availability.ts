@@ -47,6 +47,21 @@ describe('when authoring availability', () => {
         expect(plan(12, '    available for Staff or ').kind).toBe('audiences');
     });
 
+    it('should complete audiences after a not', () => {
+        expect(plan(12, '    available for Staff and not ').kind).toBe('audiences');
+        expect(plan(6, '    for not ').kind).toBe('audiences');
+    });
+
+    it('should not flag a negated audience in a gate', () => {
+        const negated = [...source];
+        negated[12] = '    available for Staff and not Customers';
+        expect(validateLines(negated).filter(issue => issue.line === 12)).toEqual([]);
+    });
+
+    it('should document the negated audience', () => {
+        expect(keywordDocs.available).toContain('not <Audience>');
+    });
+
     it('should complete availabilities after available with', () => {
         expect(plan(14, '        available with ').kind).toBe('availabilities');
     });

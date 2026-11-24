@@ -35,6 +35,30 @@ internal static partial class SemanticModelValidator
         application.Modules.Any(module => HasCodeProvide(module.Provides) || module.Features.Any(UsesCodeProvides)) ||
         SlicesOf(application).Any(slice => HasCodeProvide(slice.Provides));
 
+    // ESM v58 constructs: a negated audience (not <Audience>) in an availability gate or a reusable availability.
+    internal static bool UsesNegatedAudiences(SemanticApplication application) =>
+        (!application.Availabilities.IsDefaultOrEmpty && application.Availabilities.Any(availability => HasNegatedAudience(availability.Requirements))) ||
+        application.Screens.Any(screen => HasNegatedAudience(screen.Available)) ||
+        application.Modules.Any(module => HasNegatedAudience(module.Available) || module.Features.Any(UsesNegatedAudiences)) ||
+        SlicesOf(application).Any(slice =>
+            HasNegatedAudience(slice.Available) ||
+            slice.Commands.Any(command => HasNegatedAudience(command.Available)) ||
+            slice.Queries.Any(query => HasNegatedAudience(query.Available)) ||
+            slice.Screens.Any(screen => HasNegatedAudience(screen.Available)));
+
+    static bool UsesNegatedAudiences(SemanticFeature feature) =>
+        HasNegatedAudience(feature.Available) || feature.Features.Any(UsesNegatedAudiences);
+
+    static bool HasNegatedAudience(ImmutableArray<SemanticAvailabilityRequirement> gates) =>
+        !gates.IsDefaultOrEmpty && gates.Any(HasNegatedAudience);
+
+    static bool HasNegatedAudience(SemanticAvailabilityRequirement requirement) => requirement switch
+    {
+        SemanticAudienceRequirement audience => audience.Negated,
+        SemanticLogicalAvailability logical => HasNegatedAudience(logical.Left) || HasNegatedAudience(logical.Right),
+        _ => false
+    };
+
     static void ValidateExpectedTagsVersion(SemanticApplication application, SemanticVersion version) =>
         ValidateFeatureVersion(
             UsesExpectedTags(application),
@@ -54,6 +78,12 @@ internal static partial class SemanticModelValidator
 
     static void ValidateAvailabilityVersion(SemanticApplication application, SemanticVersion version)
     {
+        ValidateFeatureVersion(
+            UsesNegatedAudiences(application),
+            version,
+            SemanticVersion.V58,
+            "An ESM v58 model must declare a negated audience.",
+            "A negated audience requires ESM v58.");
         ValidateFeatureVersion(
             UsesCodeProvides(application),
             version,

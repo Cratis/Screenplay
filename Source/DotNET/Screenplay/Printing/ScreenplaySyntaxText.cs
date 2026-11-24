@@ -405,7 +405,7 @@ internal static partial class ScreenplaySyntaxText
     /// </remarks>
     static string AvailabilityNames(AvailabilityRequirementSyntax requirement) => requirement switch
     {
-        AudienceAvailabilityRequirementSyntax audience => audience.Audience,
+        AudienceAvailabilityRequirementSyntax audience => audience.Negated ? $"not {audience.Audience}" : audience.Audience,
         AvailabilityReferenceSyntax reference => reference.Availability,
         LogicalAvailabilityRequirementSyntax logical => Combined(
             AvailabilityNames(logical.Left),

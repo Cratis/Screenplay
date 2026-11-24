@@ -5,6 +5,9 @@ audience Plus
 audience Preview
   description "Tenants taking part in the preview"
 
+audience Incident
+  description "Tenants with an open incident"
+
 availability DataQuality
   description "Sold with the Plus package, once the vessel has reported"
   for Plus
@@ -13,6 +16,10 @@ availability DataQuality
 availability Everything
   description "Anything sold or being previewed"
   for Plus or Preview
+
+availability Calm
+  description "Plus customers while no incident is open"
+  for Plus and not Incident
 
 persona FleetManager
   audience Plus
@@ -24,6 +31,7 @@ module Fleet
 
   feature DataQuality
     available with DataQuality
+    available for not Incident
 
     slice StateChange ReportVessel
       available for Plus and (Preview or Plus)
@@ -40,7 +48,7 @@ module Fleet
           note = note
 
       screen ReportScreen
-        available for Plus
+        available for Plus and not Incident
         action ReportVessel for screen
 
     slice StateView Vessels
