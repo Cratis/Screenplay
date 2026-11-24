@@ -29,7 +29,7 @@ public class when_admitting_reserved_minor_vectors : Specification
     [Fact] void should_keep_reserved_pairs_out_of_the_registered_version_sets() => (EsmSchemaV57Support.LanguageVersions.All(version => version.Minor != EsmConformanceVectors.ReservedMinor) && EsmSchemaV57Support.SemanticVersions.All(version => version.Minor != EsmConformanceVectors.ReservedMinor)).ShouldBeTrue();
     [Fact] void should_preserve_the_full_wire_revision() => _document.Revision.ShouldEqual(SemanticRevision.Parse("rev1:589acd95a27ca88df3a491b5e4306192a1a902680d989fdfc1a4a33b4ecbc090"));
     [Fact] void should_distinguish_ordinary_additions_from_known_identity_mapping_positions() => (_document.Unknowns.Count(member => member.IsSecurityRelevant) == 1 && _document.Unknowns.Length == 3).ShouldBeTrue();
-    [Fact] void should_not_add_reserved_pairs_to_the_real_golden_versions() => EsmGoldenVectors.Versions.SequenceEqual(Enumerable.Range(1, 38).Append(40).Append(41).Append(42).Append(43).Append(44).Append(45).Append(46).Append(47).Append(48).Append(49).Append(50).Append(51).Append(52).Append(53).Append(54).Append(55).Append(56).Append(57)).ShouldBeTrue();
+    [Fact] void should_not_add_reserved_pairs_to_the_real_golden_versions() => EsmGoldenVectors.Versions.SequenceEqual(Enumerable.Range(1, 38).Append(40).Append(41).Append(42).Append(43).Append(44).Append(45).Append(46).Append(47).Append(48).Append(49).Append(50).Append(51).Append(52).Append(53).Append(54).Append(55).Append(56).Append(57).Append(58)).ShouldBeTrue();
     [Fact]
     void should_freeze_all_conformance_fixture_bytes_on_first_publication() => _vectors.Select(vector => Convert.ToHexStringLower(SHA256.HashData(vector.Bytes.AsSpan()))).ShouldEqual(
     [

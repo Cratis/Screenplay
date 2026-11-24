@@ -20,6 +20,9 @@ public class graph_projection_models : compiled_models
                     personId = $eventSourceId
             slice StateView Details
               readmodel PersonDetails
+                personId Uuid
                 name String
+              query ById => PersonDetails optional
+                by personId Uuid
         """;
 }

@@ -14,7 +14,7 @@ public static partial class canonical_serialization_golden_vectors
     /// <summary>
     /// Gets the source of the v58 golden.
     /// </summary>
-    public static string GraphProjectionScopeSource => CodeProvidedValueSource + """
+    public static string GraphProjectionScopeSource => WithCompleteParcelLifecycleFacts(CodeProvidedValueSource) + """
 
 
         module Ownership
@@ -54,6 +54,13 @@ public static partial class canonical_serialization_golden_vectors
         {
             ExtensionContractResolver.Current = previous;
         }
+    }
+
+    static string WithCompleteParcelLifecycleFacts(string source)
+    {
+        const string identity = "\"9c858901-8a57-4791-81fe-4c455b099bc9\"";
+        var fact = $"\n    when append OrderPacked\n      for {identity}";
+        return source.Replace(fact, $"{fact}\n      parcelId = {identity}", StringComparison.Ordinal);
     }
 }
 #endif
