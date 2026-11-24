@@ -275,6 +275,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets language v58, with the negated audience of an availability gate.</summary>
     public static readonly LanguageVersion V58 = new(58, 0);
 
+    /// <summary>Gets language v59, with availability gates on screen actions and data.</summary>
+    public static readonly LanguageVersion V59 = new(59, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -572,6 +575,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>Gets semantic v58, with the negated audience of an availability gate.</summary>
     public static readonly SemanticVersion V58 = new(58, 0);
+
+    /// <summary>Gets semantic v59, with availability gates on screen actions and data.</summary>
+    public static readonly SemanticVersion V59 = new(59, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1392,7 +1398,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV58Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV59Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1405,7 +1411,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV58Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV59Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

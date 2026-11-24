@@ -49,7 +49,13 @@ public sealed record SemanticElementAvailability(
     string? Label,
     SemanticAvailability Availability,
     ImmutableArray<string> Policies,
-    string? Reason);
+    string? Reason)
+{
+    /// <summary>
+    /// Gets why the element is not offered: the caller may not use it, the part is not in the caller's offer, or an operator suspended it.
+    /// </summary>
+    public SemanticUnavailableCause Cause { get; init; }
+}
 
 /// <summary>
 /// Derives which elements of a screen a caller is offered from the authorization of the commands and queries the elements use.
@@ -68,30 +74,61 @@ public static class SemanticScreenAvailability
     /// <param name="context">Values of the data the screen is showing, by command or query property name, such as the asset's identifier.</param>
     /// <param name="readModels">The recorded read-model instances policies decide from.</param>
     /// <param name="screen">The screen to report, or null for all.</param>
+    /// <param name="availability">The audiences the caller is in and the parts an operator suspended, or null to report everything available, as specifications run.</param>
     /// <returns>The elements and whether the caller is offered each.</returns>
     public static ImmutableArray<SemanticElementAvailability> Evaluate(
         SemanticExecutionPlan plan,
         SemanticCaller caller,
         IReadOnlyDictionary<string, SemanticValue>? context = null,
         ImmutableArray<SemanticReadModelInstance> readModels = default,
-        string? screen = null)
+        string? screen = null,
+        SemanticAvailabilityState? availability = null)
     {
+        var paths = availability is null ? null : new SemanticAvailabilityPaths(plan.Model.Application);
         context ??= new Dictionary<string, SemanticValue>(StringComparer.Ordinal);
         var result = ImmutableArray.CreateBuilder<SemanticElementAvailability>();
         foreach (var candidate in ScreensOf(plan).Where(candidate => screen is null || candidate.Name == screen))
         {
             foreach (var data in candidate.Data)
             {
-                result.Add(Data(plan, candidate, data, caller, context, readModels));
+                result.Add(Gated(paths, availability, Data(plan, candidate, data, caller, context, readModels), data.Query, data.Available));
             }
 
             foreach (var action in candidate.Actions)
             {
-                result.Add(Action(plan, candidate, action, caller, context, readModels));
+                result.Add(Gated(paths, availability, Action(plan, candidate, action, caller, context, readModels), action.Command, action.Available));
             }
         }
 
         return result.ToImmutable();
+    }
+
+    // Availability comes first: a part that is suspended or not in the caller's offer is not shown, whatever the caller may do with it.
+    static SemanticElementAvailability Gated(SemanticAvailabilityPaths? paths, SemanticAvailabilityState? state, SemanticElementAvailability element, SemanticId part, ImmutableArray<SemanticAvailabilityRequirement> own)
+    {
+        var kind = element.Kind == SemanticElementKind.Action ? "command" : "query";
+        var verdict = paths is null || state is null ? SemanticAvailabilityPaths.Verdict.Open : paths.Decide(part, own, state);
+        return verdict switch
+        {
+            SemanticAvailabilityPaths.Verdict.Suspended => element with
+            {
+                Availability = SemanticAvailability.Unavailable,
+                Cause = SemanticUnavailableCause.Suspended,
+                Reason = $"The {kind} '{element.Artifact}' is suspended, or a module, feature or slice above it is."
+            },
+            SemanticAvailabilityPaths.Verdict.Closed => element with
+            {
+                Availability = SemanticAvailability.Unavailable,
+                Cause = SemanticUnavailableCause.NotAvailable,
+                Reason = $"The {kind} '{element.Artifact}' is not available to the caller."
+            },
+            SemanticAvailabilityPaths.Verdict.Unknown when element.Availability == SemanticAvailability.Available => element with
+            {
+                Availability = SemanticAvailability.Undecided,
+                Reason = $"The availability of the {kind} '{element.Artifact}' depends on a condition the model cannot decide."
+            },
+            _ => element.Availability == SemanticAvailability.Unavailable ? element with { Cause = SemanticUnavailableCause.NotAuthorized } : element
+        };
     }
 
     static IEnumerable<SemanticScreen> ScreensOf(SemanticExecutionPlan plan) =>

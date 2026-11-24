@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.Ui;
 
 /// <summary>
@@ -92,6 +94,11 @@ public sealed record UiData(string Query, string ReadModel, bool Many, IReadOnly
     /// Gets whether the query is observable, so the screen updates when the data changes.
     /// </summary>
     public bool Live { get; init; }
+
+    /// <summary>
+    /// Gets the explicit <c>available</c> gates of the element as authored; they carry into the executable model and are not part of the serialized contract.
+    /// </summary>
+    internal IReadOnlyList<AvailableSyntax> Available { get; init; } = [];
 }
 
 /// <summary>

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
@@ -74,9 +75,9 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "title", screen.Title);
         if (screen.Description is { } description) CanonicalJson.WriteString(writer, "description", description);
         if (screen.Scope is { } scope) CanonicalJson.WriteString(writer, "scope", scope);
-        WriteArray(writer, "data", screen.Data, WriteScreenData);
+        WriteArray(writer, "data", screen.Data, (output, data) => WriteScreenData(output, data, version));
         if (!screen.Needs.IsDefaultOrEmpty) WriteArray(writer, "needs", screen.Needs, WriteScreenNeed);
-        WriteArray(writer, "actions", screen.Actions, WriteScreenAction);
+        WriteArray(writer, "actions", screen.Actions, (output, action) => WriteScreenAction(output, action, version));
         WriteArray(writer, "navigation", screen.Navigation, WriteScreenNavigation);
         if (!screen.Extensions.IsDefaultOrEmpty) WriteArray(writer, "extensions", screen.Extensions, WriteScreenExtension);
         if (!screen.Components.IsDefaultOrEmpty) WriteArray(writer, "components", screen.Components, WriteScreenComponent);
@@ -116,12 +117,13 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteScreenData(Utf8JsonWriter writer, SemanticScreenData data)
+    static void WriteScreenData(Utf8JsonWriter writer, SemanticScreenData data, SemanticVersion version)
     {
         writer.WriteStartObject();
         writer.WriteString("query", data.Query.ToString());
         if (data.By is { } by) CanonicalJson.WriteString(writer, "by", by);
         WriteArray(writer, "fields", data.Fields, WriteScreenField);
+        WriteElementAvailable(writer, data.Available, version);
         writer.WriteEndObject();
     }
 
@@ -133,7 +135,14 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteScreenAction(Utf8JsonWriter writer, SemanticScreenAction action)
+    static void WriteElementAvailable(Utf8JsonWriter writer, ImmutableArray<SemanticAvailabilityRequirement> gates, SemanticVersion version)
+    {
+        if (gates.IsDefaultOrEmpty) return;
+        if (version.Major < 59) throw new InvalidSemanticContract("Availability gates on screen elements require ESM v59 or later.");
+        WriteArray(writer, "available", gates, WriteAvailabilityRequirement);
+    }
+
+    static void WriteScreenAction(Utf8JsonWriter writer, SemanticScreenAction action, SemanticVersion version)
     {
         writer.WriteStartObject();
         writer.WriteString("command", action.Command.ToString());
@@ -142,6 +151,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "inputs", action.Inputs, WriteScreenInput);
         if (action.When is { } when) CanonicalJson.WriteString(writer, "when", when);
         if (action.Then is { } then) writer.WriteString("then", then.ToString());
+        WriteElementAvailable(writer, action.Available, version);
         writer.WriteEndObject();
     }
 
