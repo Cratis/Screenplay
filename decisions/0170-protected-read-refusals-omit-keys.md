@@ -70,14 +70,41 @@ human confirmation and human merge requirement.
   hosts and published corpus disagree.
 - **Change only refused-key messages.** Rejected: missing-instance refusals would still expose keys and differ from Arc.
 
+## Default if unanswered
+
+Without this supersession, 0091 continues to require keyed refusals while Arc answers keylessly. Do not publish a
+corpus-only correction that disagrees with the reference evaluator. The release intent remains minor unless the
+L0 decider explicitly changes the ruling above.
+
+## Timeline and scope
+
+Deliver the evaluator, focused specs, refreshed corpus resources and documentation together in Cratis/Screenplay#1384,
+before publishing the corrected vectors. No separate language or ESM version allocation is required.
+
+In scope: the protected-read refusal text, the artifacts listed in the decision, and the scoped re-pin of V1 and V1R2.
+Out of scope: other validation messages, unprotected reads, public API surface changes, historical full ESM goldens,
+and further host changes in Arc or other repositories.
+
 ## Verification
 
-- Evaluator specs assert the keyless message for every refused shape, with and without stored state, and for missing
-  explicit and implicit lookups. Existing assertions preserve the world and show that no command facts were appended.
-- CanonicalVectors.Specs compiles every V25 source form, executes its specifications, and checks canonical bytes and
-  semantic revisions. Its race specs execute every vector through public decide/commit calls and check both exact-byte
-  SHA-256 pins, fixture formatting and V1R2's preserved V1 prefix.
+**Done when:**
+
+- Every refused protected-read shape and missing explicit or implicit lookup rejects with `Validation` and the exact
+  keyless `<View> does not exist.` message, including when the world holds a refused-key instance.
+- Authorization and property-rule ordering, world preservation, no-fact behavior and unprotected reads remain unchanged.
+- V25 source specifications, public expectations, canonical ESM bytes and semantic revision agree; both race fixtures
+  and their exact-byte SHA-256 pins agree, and V1R2 preserves the corrected V1 prefix.
 - Documentation names the same message for both refusal paths. No unrelated full goldens, diagnostics or messages change.
+
+**Verify by:**
+
+- `Source/DotNET/Screenplay.Specs/Screenplay.Specs.csproj` in Debug: run the inline evaluator specs for refused shapes,
+  stored refused keys, missing state, validation-failure text, ordering, preserved worlds and unprotected use.
+- `Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj` in Release: compile every
+  V25 source form, execute its specifications, and check canonical bytes and semantic revisions; execute every race
+  vector through public decide/commit calls and check both exact-byte hashes, fixture formatting and V1R2's V1 prefix.
+- Review the command and interoperability documentation against the exact refusal contract, and inspect the change set
+  for unrelated messages or historical full-golden changes.
 
 ## Consequences
 
