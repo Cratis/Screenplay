@@ -55,12 +55,12 @@ public class when_multiple_personas_precede_denied_gates_and_screens : Specifica
 
     [Fact]
     void should_keep_authored_persona_and_declaration_order() => _findings.Select(finding => finding.Message).ShouldEqual([
-        "Persona 'First' has no policy referenced by an authorization gate",
-        "Persona 'First' policy 'Member' has unchosen alternative role \"B\"; pin a required policy or use an explicit caller",
-        "Persona 'Second' has no policy referenced by an authorization gate",
-        "Persona 'Second' policy 'Visitor' has unchosen alternative role \"D\"; pin a required policy or use an explicit caller",
-        "Authorization on command 'Save' denies every declared persona",
-        "Authorization on query 'Read' denies every declared persona",
-        "Screen 'Locked' has no bound query or action usable by any declared persona"
+        "Persona 'First' has no policy used by a command, query, or inherited screen gate.",
+        "Persona 'First' policy 'Member' has an unchosen buildable alternative 'role \"B\"'; add a policy that pins it.",
+        "Persona 'Second' has no policy used by a command, query, or inherited screen gate.",
+        "Persona 'Second' policy 'Visitor' has an unchosen buildable alternative 'role \"D\"'; add a policy that pins it.",
+        "Command 'Save' is definitely denied to every declared persona's synthesized caller.",
+        "Query 'Read' is definitely denied to every declared persona's synthesized caller.",
+        "Screen 'Locked' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller."
     ]);
 }
