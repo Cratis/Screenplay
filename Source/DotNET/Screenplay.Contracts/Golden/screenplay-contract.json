@@ -33122,6 +33122,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 58,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -33519,6 +33525,12 @@
           "condition": [
             1
           ]
+        },
+        {
+          "esmVersion": 58,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 58,
@@ -86763,6 +86775,17 @@
         "error"
       ],
       "title": "Navigation selects a screen that cannot fit a page.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1171",
+      "name": "MisplacedNotInAvailable",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A not in an available line negates something other than one audience name: a group, another not, nothing, or an availability in available with.",
       "reserved": false,
       "retired": false
     }

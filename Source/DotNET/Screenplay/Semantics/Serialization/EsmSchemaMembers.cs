@@ -187,7 +187,7 @@ internal static class EsmSchemaMembers
         ["ScreenSignalHandler"] = "signal:s commands:s[]",
         ["Audience"] = "name:s",
         ["Availability"] = "name:s requirements:[]",
-        ["AvailabilityRequirement"] = "kind:s audience:s availability:s condition:1 operator:s left:1 right:1",
+        ["AvailabilityRequirement"] = "kind:s audience:s negated:b availability:s condition:1 operator:s left:1 right:1",
         ["AvailabilityCondition"] = "kind:s path:s operator:s operand:1 left:1 right:1",
         ["ContextOperand"] = "path:s value:1",
         ["Provide"] = "name:s type:1 readModel:s optional:b collection:b source:1",

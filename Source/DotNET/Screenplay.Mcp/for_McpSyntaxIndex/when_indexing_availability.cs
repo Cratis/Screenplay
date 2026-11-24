@@ -18,6 +18,7 @@ public class when_indexing_availability : Specification
               audience Staff
             module Shop
               available for Staff or Customers
+              available for Staff and not Customers
               feature Counter
                 available with StaffOnly
                 slice StateChange Refund
@@ -31,7 +32,8 @@ public class when_indexing_availability : Specification
     }
 
     [Fact] void should_list_each_audience_as_a_declaration() => _index.Declarations.Count(declaration => declaration.Kind == "Audience").ShouldEqual(2);
+    [Fact] void should_resolve_the_audience_a_gate_negates() => _index.References.Count(reference => reference.Role == "availableFor").ShouldEqual(5);
     [Fact] void should_list_the_availability_as_a_declaration() => _index.Declarations.Count(declaration => declaration.Kind == "Availability").ShouldEqual(1);
-    [Fact] void should_resolve_every_audience_a_gate_names() => _index.References.Where(reference => reference.Role == "availableFor").Select(reference => _index.Resolve(reference).Single().Name).Order().ShouldEqual(["Customers", "Staff", "Staff"]);
+    [Fact] void should_resolve_every_audience_a_gate_names() => _index.References.Where(reference => reference.Role == "availableFor").Select(reference => _index.Resolve(reference).Single().Name).Order().ShouldEqual(["Customers", "Customers", "Staff", "Staff", "Staff"]);
     [Fact] void should_resolve_the_availability_a_gate_names() => _index.Resolve(_index.References.Single(reference => reference.Role == "availableWith")).Single().Name.ShouldEqual("StaffOnly");
 }

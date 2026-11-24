@@ -427,6 +427,9 @@
         "audience": {
           "type": "string"
         },
+        "negated": {
+          "type": "boolean"
+        },
         "availability": {
           "type": "string"
         },
@@ -1693,9 +1696,6 @@
           "items": {
             "$ref": "#/$defs/GraphElementHandlers"
           }
-        },
-        "declaringSlice": {
-          "type": "string"
         }
       }
     },

@@ -70,6 +70,7 @@ public static partial class SemanticModelCanonicalJson
             case SemanticAudienceRequirement audience:
                 writer.WriteString("kind", "audience");
                 CanonicalJson.WriteString(writer, "audience", audience.Audience);
+                if (audience.Negated) writer.WriteBoolean("negated", true);
                 break;
             case SemanticAvailabilityReference reference:
                 writer.WriteString("kind", "availability");

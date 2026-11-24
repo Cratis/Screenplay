@@ -7,28 +7,26 @@ using Cratis.Screenplay.Extensions;
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 /// <summary>
-/// Supplies the ESM v58 golden: the v57 source plus a graph projection with its declaring slice.
+/// Supplies the ESM v58 golden: the v57 model with a negated audience in an availability gate.
 /// </summary>
 public static partial class canonical_serialization_golden_vectors
 {
     /// <summary>
-    /// Gets the source of the v58 golden.
+    /// The v57 source with the audience of one gate negated and the lifecycle specifications' OrderPacked payloads complete
+    /// (the frozen originals omit the required parcelId; Screenplay#1367).
     /// </summary>
-    public static string GraphProjectionScopeSource => WithCompleteParcelLifecycleFacts(CodeProvidedValueSource) + """
+    public static string NegatedAudienceSource => Require(
+        Require(
+            Require(CodeProvidedValueSource, "available for Plus and Preview", "available for Plus and not Preview"),
+            "    when append OrderPacked\n      for \"9c858901-8a57-4791-81fe-4c455b099bc9\"\n    then is Packed",
+            "    when append OrderPacked\n      for \"9c858901-8a57-4791-81fe-4c455b099bc9\"\n      parcelId = \"9c858901-8a57-4791-81fe-4c455b099bc9\"\n    then is Packed"),
+        "      for \"9c858901-8a57-4791-81fe-4c455b099bc9\"\n    then invokes Carrier.BookPickup\n    then invokes Carrier.CancelPickup",
+        "      for \"9c858901-8a57-4791-81fe-4c455b099bc9\"\n      parcelId = \"9c858901-8a57-4791-81fe-4c455b099bc9\"\n    then invokes Carrier.BookPickup\n    then invokes Carrier.CancelPickup");
 
-
-        module Ownership
-          feature Chart
-            slice StateView OwnerChart
-              event OwnerAdded
-              graph Owners
-                node Owner
-                  ownerId Uuid key
-              projection OwnerChart => graph Owners
-                node Owner
-                  from OwnerAdded key $eventSourceId
-                    ownerId = $eventSourceId
-        """;
+    static string Require(string source, string text, string replacement) =>
+        source.Contains(text, StringComparison.Ordinal)
+            ? source.Replace(text, replacement, StringComparison.Ordinal)
+            : throw new InvalidSemanticContract($"The v58 golden source no longer contains '{text}'.");
 
     /// <summary>
     /// Gets the canonical bytes of the v58 golden.
@@ -46,21 +44,14 @@ public static partial class canonical_serialization_golden_vectors
         ExtensionContractResolver.Current = fixture.Resolver();
         try
         {
-            var result = property_order_binding.AdmitScreens(GraphProjectionScopeSource);
+            var result = property_order_binding.AdmitScreens(NegatedAudienceSource);
             if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Refusals));
-            return result.Compilation!.Model;
+            return WithoutGraphProjectionDeclaringSlices(result.Compilation!.Model, LanguageVersion.V58, SemanticVersion.V58);
         }
         finally
         {
             ExtensionContractResolver.Current = previous;
         }
-    }
-
-    static string WithCompleteParcelLifecycleFacts(string source)
-    {
-        const string identity = "\"9c858901-8a57-4791-81fe-4c455b099bc9\"";
-        var fact = $"\n    when append OrderPacked\n      for {identity}";
-        return source.Replace(fact, $"{fact}\n      parcelId = {identity}", StringComparison.Ordinal);
     }
 }
 #endif

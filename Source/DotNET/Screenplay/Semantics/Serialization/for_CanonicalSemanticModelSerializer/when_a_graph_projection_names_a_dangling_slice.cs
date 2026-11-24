@@ -17,7 +17,7 @@ public class when_a_graph_projection_names_a_dangling_slice : for_SemanticModelB
         };
     }
 
-    void Because() => _error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V58, SemanticVersion.V58, _application));
+    void Because() => _error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V60, SemanticVersion.V60, _application));
 
     [Fact] void should_refuse_a_dangling_slice_reference() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
 }

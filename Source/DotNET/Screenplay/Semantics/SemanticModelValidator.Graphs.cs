@@ -31,9 +31,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesGraphProjectionDeclaringSlices(application),
             version,
-            SemanticVersion.V58,
-            "An ESM v58 model must declare a graph projection declaring slice.",
-            "Graph projection declaring slices require ESM v58.");
+            SemanticVersion.V60,
+            "An ESM v60 model must declare a graph projection declaring slice.",
+            "Graph projection declaring slices require ESM v60.");
         var slices = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Select(slice => slice.Id).ToHashSet();
         foreach (var projection in application.GraphProjections)
         {

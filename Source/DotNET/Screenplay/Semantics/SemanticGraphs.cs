@@ -117,7 +117,7 @@ public sealed record SemanticGraphElementHandlers(string Name, ImmutableArray<Se
 public sealed record SemanticGraphProjection(string Name, string Graph, ImmutableArray<SemanticGraphElementHandlers> Nodes, ImmutableArray<SemanticGraphElementHandlers> Edges)
 {
     /// <summary>
-    /// Gets the identity of the slice that declares this projection; absent on models before ESM v58.
+    /// Gets the identity of the slice that declares this projection; absent on models before ESM v60.
     /// </summary>
     public SemanticId? DeclaringSlice { get; init; }
 }

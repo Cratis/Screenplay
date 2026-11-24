@@ -5,7 +5,7 @@ import type { CompletionEntry } from './completion-items';
 
 /** The gate every module, feature, slice, command, query and screen accepts. Decided before authorization. */
 export const availableItems: CompletionEntry[] = [
-    { label: 'available for', insertText: 'available for ${1:Audience}', documentation: 'Offers this only to the named audiences. Combine audiences with `and` / `or` and parentheses. Decided before `authorize`; an unknown audience never opens the gate.' },
+    { label: 'available for', insertText: 'available for ${1:Audience}', documentation: 'Offers this only to the named audiences. Combine audiences with `and` / `or` and parentheses; write `not <Audience>` to close this for an audience. `not` of an unknown audience stays unknown, so the gate stays closed. Decided before `authorize`; an unknown audience never opens the gate.' },
     { label: 'available when', insertText: 'available when ${1:\\$context.name} ${2|==,!=,>,>=,<,<=|} ${3:value}', documentation: 'Offers this only while a condition over `$context` holds, such as a value a `provide` declares.' },
     { label: 'available with', insertText: 'available with ${1:Availability}', documentation: 'Offers this only while the named availabilities hold.' },
 ];

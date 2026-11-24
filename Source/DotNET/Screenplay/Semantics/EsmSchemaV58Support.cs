@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Declares the language and semantic version pairs of ESM schema v58, which adds graph projection declaring slice identities.
+/// Declares the language and semantic version pairs of ESM schema v58, which adds the negated audience of an availability gate (<c>not &lt;Audience&gt;</c>).
 /// </summary>
 public static class EsmSchemaV58Support
 {
@@ -38,15 +38,5 @@ public static class EsmSchemaV58Support
     public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
     {
         if (!Supports(languageVersion, semanticVersion)) throw new InvalidSemanticContract($"The ESM schema-v58 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
-    }
-
-    internal static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application)
-    {
-        if (SemanticModelValidator.UsesGraphProjectionDeclaringSlices(application)) return (LanguageVersion.V58, SemanticVersion.V58);
-        if (SemanticModelValidator.UsesCodeProvides(application)) return (LanguageVersion.V57, SemanticVersion.V57);
-        if (SemanticModelValidator.UsesFreeScreens(application)) return (LanguageVersion.V56, SemanticVersion.V56);
-        if (SemanticModelValidator.UsesExpectedTags(application)) return (LanguageVersion.V55, SemanticVersion.V55);
-        if (SemanticModelValidator.UsesGraphCollects(application)) return (LanguageVersion.V54, SemanticVersion.V54);
-        return SemanticModelValidator.UsesAvailability(application) ? (LanguageVersion.V53, SemanticVersion.V53) : null;
     }
 }

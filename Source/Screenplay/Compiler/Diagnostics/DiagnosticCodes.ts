@@ -704,6 +704,7 @@ export const DiagnosticCodes = {
     AvailabilityHidesInvokedCommand: 'PLAY1139',
     UnexpectedTokenInAvailable: 'PLAY1140',
     UnclosedAvailableGroup: 'PLAY1141',
+    MisplacedNotInAvailable: 'PLAY1171',
     SecretConceptProjected: 'PLAY1142',
     ScreenWithoutPersona: 'PLAY1143',
     InvalidGraphCollect: 'PLAY1144',

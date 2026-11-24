@@ -406,6 +406,10 @@ audience AuditTrail
 audience Preview
   description "Tenants taking part in the preview"
 
+// An audience closes a part for the tenants that hold it: grant Incident to switch the part off, withdraw it to switch it back on.
+audience Incident
+  description "Tenants with an open incident"
+
 availability AuditTrailEnabled
   description "Sold with the audit trail, in the preview region"
   for AuditTrail or Preview
@@ -3947,6 +3951,7 @@ module Invoicing
         description "Cancelled invoices, kept for audit"
         authorize IsAuditor
         available for AuditTrail or Preview
+        available for not Incident
 
       // AutoMap is on by default and copies every matching property.
       projection CancelledInvoices => CancelledInvoiceReadModel

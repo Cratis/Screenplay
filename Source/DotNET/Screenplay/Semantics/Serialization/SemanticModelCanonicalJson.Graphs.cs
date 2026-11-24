@@ -38,9 +38,9 @@ public static partial class SemanticModelCanonicalJson
 
     static void ValidateGraphProjectionDeclaringSliceVersion(SemanticApplication application, SemanticVersion version)
     {
-        if (SemanticModelValidator.UsesGraphProjectionDeclaringSlices(application) && version.Major < 58)
+        if (SemanticModelValidator.UsesGraphProjectionDeclaringSlices(application) && version.Major < 60)
         {
-            throw new InvalidSemanticContract("Graph projection declaring slices require ESM v58 or later.");
+            throw new InvalidSemanticContract("Graph projection declaring slices require ESM v60 or later.");
         }
     }
 

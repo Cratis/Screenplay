@@ -14,7 +14,7 @@ public class graph_projections_in_different_slices : given.graph_projection_mode
     {
         _original = Compile(GraphSource);
         var feature = _original.Application.Modules.Single().Features.Single();
-        _moved = ExecutableSemanticModel.Create(LanguageVersion.V58, SemanticVersion.V58, _original.Application with
+        _moved = ExecutableSemanticModel.Create(LanguageVersion.V60, SemanticVersion.V60, _original.Application with
         {
             GraphProjections = [_original.Application.GraphProjections.Single() with { DeclaringSlice = feature.Slices.Single(slice => slice.Name == "Details").Id }]
         });

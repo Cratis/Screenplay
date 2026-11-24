@@ -52,6 +52,12 @@ internal static class AvailabilityInvocationValidator
 
     static bool CanBeOffWhileOn(IReadOnlyList<AvailableSyntax> invoker, IReadOnlyList<AvailableSyntax> target, Dictionary<string, AvailabilitySyntax> blocks)
     {
+        // A gate containing 'not' is opaque, like 'when': whether it can differ depends on audience grants the model cannot see.
+        if (invoker.Concat(target).Any(gate => HasNegation(gate.Requirement, blocks, [])))
+        {
+            return false;
+        }
+
         var audiences = invoker.Concat(target)
             .SelectMany(gate => AudiencesOf(gate.Requirement, blocks, []))
             .Distinct(StringComparer.Ordinal)
@@ -72,6 +78,15 @@ internal static class AvailabilityInvocationValidator
 
         return false;
     }
+
+    static bool HasNegation(AvailabilityRequirementSyntax requirement, Dictionary<string, AvailabilitySyntax> blocks, HashSet<string> expanding) => requirement switch
+    {
+        AudienceAvailabilityRequirementSyntax audience => audience.Negated,
+        LogicalAvailabilityRequirementSyntax logical => HasNegation(logical.Left, blocks, expanding) || HasNegation(logical.Right, blocks, expanding),
+        AvailabilityReferenceSyntax reference when blocks.TryGetValue(reference.Availability, out var block) && expanding.Add(reference.Availability) =>
+            block.Requirements.Any(inner => HasNegation(inner, blocks, expanding)),
+        _ => false
+    };
 
     static IEnumerable<string> AudiencesOf(AvailabilityRequirementSyntax requirement, Dictionary<string, AvailabilitySyntax> blocks, HashSet<string> expanding) => requirement switch
     {

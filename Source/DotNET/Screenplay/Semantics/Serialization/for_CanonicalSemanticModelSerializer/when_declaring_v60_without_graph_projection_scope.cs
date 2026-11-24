@@ -3,7 +3,7 @@
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSerializer;
 
-public class when_declaring_v58_without_graph_projection_scope : for_SemanticModelBinder.given.a_graph_projection_source
+public class when_declaring_v60_without_graph_projection_scope : for_SemanticModelBinder.given.a_graph_projection_source
 {
     SemanticApplication _application;
     Exception _error;
@@ -17,7 +17,7 @@ public class when_declaring_v58_without_graph_projection_scope : for_SemanticMod
         };
     }
 
-    void Because() => _error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V58, SemanticVersion.V58, _application));
+    void Because() => _error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V60, SemanticVersion.V60, _application));
 
     [Fact] void should_refuse_the_empty_version_upgrade() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
 }
