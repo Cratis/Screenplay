@@ -4589,6 +4589,11 @@ public static class DiagnosticCodes
     public const string MisplacedNotInAvailable = "PLAY1171";
 
     /// <summary>
+    /// An <c>available</c> gate on a screen <c>action</c> or <c>data</c> element can be on while the command or query it binds is not available; an element's own gate can only narrow what its bound part allows.
+    /// </summary>
+    public const string ElementGateBroaderThanPart = "PLAY1172";
+
+    /// <summary>
     /// A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked <c>secret</c>
     /// into a read-model property, so the value becomes part of the read model and its query results.
     /// </summary>

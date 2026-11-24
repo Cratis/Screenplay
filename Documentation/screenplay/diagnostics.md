@@ -1903,6 +1903,7 @@ An extension package's `contract.play`, the `extension` line of a system and `sc
 | `PLAY1140` | Error | An `available for` or `available with` line holds a token that is not a name, `and`, `or` or a parenthesis. |
 | `PLAY1141` | Error | A parenthesis in an `available for` or `available with` line is never closed. |
 | `PLAY1171` | Error | A `not` in an `available` line negates something other than one audience name: a parenthesised group, another `not`, nothing, or an availability in `available with`. |
+| `PLAY1172` | Warning | An `available` gate on a screen `action` or `data` element can be on while the command or query it binds is not available. A gate on an element can only narrow what its bound part allows, so the element is still hidden when the part is closed; narrow the gate or remove it. |
 | `PLAY1148` | Error | An event tag expectation is misplaced, repeated, mixed or not a literal: `tag <value>` and `no tags` are written only under a `then` event, `no tags` cannot be repeated or combined with `tag`, the value is an identifier or a string, and the line takes no children. |
 
 ## Screen visuals and slice placements

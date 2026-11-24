@@ -52,6 +52,11 @@ public partial class ScreenplayPrinter
         {
             case ScreenDataSyntax data:
                 writer.Line(WriteScreenData(data));
+                using (writer.Indent())
+                {
+                    WriteAvailable(writer, data.Available);
+                }
+
                 break;
             case ScreenNeedSyntax need:
                 writer.Line(need.Alias is null

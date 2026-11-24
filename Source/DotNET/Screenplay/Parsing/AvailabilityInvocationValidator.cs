@@ -35,8 +35,22 @@ internal static class AvailabilityInvocationValidator
 
         foreach (var invocation in collection.Invocations)
         {
-            if (!collection.Commands.TryGetValue(invocation.Command, out var target) || target.Count == 0)
+            var parts = invocation.Kind == "screen data" ? collection.Queries : collection.Commands;
+            if (!parts.TryGetValue(invocation.Command, out var target) || target.Count == 0)
             {
+                continue;
+            }
+
+            if (invocation.Explicit)
+            {
+                if (CanBeOffWhileOn(invocation.Gates, target, blocks))
+                {
+                    context.Warning(
+                        DiagnosticCodes.ElementGateBroaderThanPart,
+                        $"The available gate on this {invocation.Kind} element is broader than the {(invocation.Kind == "screen data" ? "query" : "command")} '{invocation.Command}' it binds, which can be unavailable while the gate holds - an element gate can only narrow what its bound part allows, so narrow the gate or remove it",
+                        invocation.Location);
+                }
+
                 continue;
             }
 
@@ -109,11 +123,13 @@ internal static class AvailabilityInvocationValidator
         _ => true
     };
 
-    sealed record Invocation(string Kind, string Command, IReadOnlyList<AvailableSyntax> Gates, SourceLocation Location);
+    sealed record Invocation(string Kind, string Command, IReadOnlyList<AvailableSyntax> Gates, SourceLocation Location, bool Explicit = false);
 
     sealed class Collection
     {
         public Dictionary<string, IReadOnlyList<AvailableSyntax>> Commands { get; } = new(StringComparer.Ordinal);
+
+        public Dictionary<string, IReadOnlyList<AvailableSyntax>> Queries { get; } = new(StringComparer.Ordinal);
 
         public List<Invocation> Invocations { get; } = [];
 
@@ -157,6 +173,11 @@ internal static class AvailabilityInvocationValidator
                 Commands.TryAdd(command.Name, [.. gates, .. command.Available]);
             }
 
+            foreach (var query in slice.Queries)
+            {
+                Queries.TryAdd(query.Name, [.. gates, .. query.Available]);
+            }
+
             foreach (var screen in slice.Screens)
             {
                 IReadOnlyList<AvailableSyntax> screenGates = [.. gates, .. screen.Available];
@@ -164,7 +185,13 @@ internal static class AvailabilityInvocationValidator
                 actions.VisitScreen(screen);
                 foreach (var action in actions.Actions)
                 {
-                    Invocations.Add(new("screen action", action.Command, screenGates, action.Location));
+                    var own = action.Available.ToList();
+                    Invocations.Add(new("screen action", action.Command, [.. screenGates, .. own], action.Location, own.Count > 0));
+                }
+
+                foreach (var data in actions.Data.Where(data => data.Available.Any()))
+                {
+                    Invocations.Add(new("screen data", data.Query, [.. screenGates, .. data.Available], data.Location, true));
                 }
             }
 
@@ -178,6 +205,14 @@ internal static class AvailabilityInvocationValidator
     sealed class ActionCollector : ScreenplaySyntaxWalker
     {
         public List<ScreenActionSyntax> Actions { get; } = [];
+
+        public List<ScreenDataSyntax> Data { get; } = [];
+
+        public override void VisitScreenData(ScreenDataSyntax syntax)
+        {
+            Data.Add(syntax);
+            base.VisitScreenData(syntax);
+        }
 
         public override void VisitScreenAction(ScreenActionSyntax syntax)
         {
