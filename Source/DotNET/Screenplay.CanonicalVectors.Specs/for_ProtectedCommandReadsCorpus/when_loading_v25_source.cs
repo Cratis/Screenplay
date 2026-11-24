@@ -155,7 +155,10 @@ public class when_loading_v25_source : Specification
     static void VerifyExecution(SemanticExecutionPlan plan, CanonicalCorpusSpecificationExpectation expectation, ProtectedReadVectorDisposition? disposition)
     {
         var run = new SemanticSpecificationRunner().Run(plan, expectation.Specification);
-        if (disposition is null) Assert.True(run.Passed, $"{expectation.Name}: {string.Join('\n', run.Failures)}");
+        if (disposition is null)
+        {
+            Assert.True(run.Passed, $"{expectation.Name}: {string.Join('\n', run.Failures)}");
+        }
         else
         {
             Assert.False(run.Passed);
