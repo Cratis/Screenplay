@@ -514,8 +514,8 @@ export const actionItems: CompletionEntry[] = [
 
 export function plainActionItemsFor(header: string | undefined): CompletionEntry[] {
     return /^action\s+[\w.]+\s+for\s+item(?:\s+label\b.*)?$/.test(header ?? '')
-        ? [...actionItems, { label: 'presentation placement', insertText: 'presentation placement "${1:row-menu}"', documentation: 'Advisory row-menu grouping for this explicit item action. Omit to keep the flat action bar; it never changes selection, inputs or execution.' }]
-        : actionItems;
+        ? [...actionItems, ...availableItems, { label: 'presentation placement', insertText: 'presentation placement "${1:row-menu}"', documentation: 'Advisory row-menu grouping for this explicit item action. Omit to keep the flat action bar; it never changes selection, inputs or execution.' }]
+        : [...actionItems, ...availableItems];
 }
 
 export const guardedActionItems: CompletionEntry[] = [

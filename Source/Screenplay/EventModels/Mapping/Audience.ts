@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthorizeSyntax, AvailabilityRequirementSyntax, AvailabilitySyntax, AvailableSyntax, PersonaSyntax, PolicyRequirementSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { AuthorizeSyntax, AvailabilityRequirementSyntax, AvailabilitySyntax, AvailableSyntax, PersonaSyntax, PolicyRequirementSyntax, ScreenActionSyntax, ScreenDataSyntax, ScreenplaySyntaxWalker, SliceSyntax, SyntaxNode } from '@cratis/screenplay-compiler';
 import { ActorDocument, ActorType } from '../Document/EventModelDocument';
 import { guidFor } from '../Document/identity';
 import { userActor } from '../Prototypes/toUserExperience';
@@ -48,11 +48,15 @@ export class Audience {
     // A gate no persona satisfies says so, because the slice is then drawn for the generic user.
     gateNoteFor(slice: SliceSyntax): string | null {
         const text = [...this.availabilityGatesOf(slice), ...slice.screens.flatMap(screen => (screen.available ?? []).map(gate => gate.requirement))].map(describe);
-        if (text.length === 0) {
+        // An element's own gate hides that element, never its screen, so it is noted but narrows no persona.
+        const elements = slice.screens.flatMap(elementGatesOf).map(describe);
+        if (text.length === 0 && elements.length === 0) {
             return null;
         }
-        const gated = `Gated: available ${text.join(', ')}`;
-        return this.permitted(slice).length === 0 ? `${gated}. No persona is in it, so the slice is drawn for the generic user.` : gated;
+        const gated = text.length === 0 ? null : `Gated: available ${text.join(', ')}`;
+        const unreachable = gated !== null && this.permitted(slice).length === 0 ? `${gated}. No persona is in it, so the slice is drawn for the generic user.` : gated;
+        const narrowed = elements.length === 0 ? null : `Elements gated: available ${elements.join(', ')}`;
+        return [unreachable, narrowed].filter(note => note !== null).join('. ');
     }
 
     // The actors whose rows show the slice's screens.
@@ -147,6 +151,19 @@ function satisfies(requirement: PolicyRequirementSyntax, policies: ReadonlySet<s
     return requirement.operator === 'And'
         ? satisfies(requirement.left, policies) && satisfies(requirement.right, policies)
         : satisfies(requirement.left, policies) || satisfies(requirement.right, policies);
+}
+
+// The gates authored on the actions and data of a screen, which narrow what the bound command or query allows.
+function elementGatesOf(screen: Parameters<ScreenplaySyntaxWalker['visitScreen']>[0]): AvailabilityRequirementSyntax[] {
+    const gates: AvailabilityRequirementSyntax[] = [];
+    new class extends ScreenplaySyntaxWalker {
+        override visitNode(node: SyntaxNode): void {
+            if (node.kind === 'ScreenActionSyntax' || node.kind === 'ScreenDataSyntax') {
+                (node as unknown as ScreenActionSyntax | ScreenDataSyntax).available?.forEach(gate => gates.push(gate.requirement));
+            }
+        }
+    }().visitScreen(screen);
+    return gates;
 }
 
 function describe(requirement: AvailabilityRequirementSyntax): string {
