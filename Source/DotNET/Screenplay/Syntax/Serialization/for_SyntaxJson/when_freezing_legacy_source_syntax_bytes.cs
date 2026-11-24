@@ -432,9 +432,18 @@ public partial class when_freezing_legacy_source_syntax_bytes
         {
             Available = [],
             Provides = [],
-            Queries = slice.Queries.Select(query => query with { Available = [] })
+            Queries = slice.Queries.Select(query => query with { Available = [] }),
+            Screens = slice.Screens.Select(screen => screen with { Directives = screen.Directives.Select(WithoutElementGates) })
         }),
         Features = feature.Features.Select(WithoutAvailableFeature)
+    };
+
+    // Gates on screen actions and data have their own parser, printer, binder and conformance specs; the frozen bytes predate them.
+    static ScreenDirectiveSyntax WithoutElementGates(ScreenDirectiveSyntax directive) => directive switch
+    {
+        ScreenDataSyntax data => data with { Available = [] },
+        ScreenActionSyntax action => action with { Available = [] },
+        _ => directive
     };
 
     static ApplicationSyntax WithoutSampleGraphs(ApplicationSyntax application) => application with
