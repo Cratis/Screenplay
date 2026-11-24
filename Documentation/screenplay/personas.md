@@ -104,7 +104,7 @@ that plays no persona is authenticated and holds no roles, which is how to test 
 
 ## Audiences
 
-A persona can carry `audience <Name>` lines naming the [audiences](availability.md) it is in. They are for authoring only: the board, Studio and documentation use them to show what the persona sees, and they change nothing at runtime.
+A persona can carry `audience <Name>` lines naming the [audiences](availability.md) it is in. They are for authoring only: the board, Studio and documentation use them to show what the persona sees, and they change nothing at runtime. A persona lists every audience it is in, so on the board a gate `not Incident` is open to a persona that does not list `Incident`.
 
 ## Guidance
 

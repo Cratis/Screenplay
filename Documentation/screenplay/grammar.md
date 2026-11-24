@@ -1298,7 +1298,7 @@ AvailabilityLine = "for", AudienceRequirement, NL
                  | "with", AvailabilityRequirement, NL ;
 AvailableDecl  = "available", AvailabilityLine ;
 AudienceRequirement     = AudienceTerm, { ( "and" | "or" ), AudienceTerm } ;
-AudienceTerm            = Ident | "(", AudienceRequirement, ")" ;
+AudienceTerm            = Ident | "not", Ident | "(", AudienceRequirement, ")" ;
 AvailabilityRequirement = AvailabilityTerm, { ( "and" | "or" ), AvailabilityTerm } ;
 AvailabilityTerm        = Ident | "(", AvailabilityRequirement, ")" ;
 (* Audiences and availabilities decide whether a part of the model is there at all, before 'authorize'
@@ -1306,7 +1306,10 @@ AvailabilityTerm        = Ident | "(", AvailabilityRequirement, ")" ;
    'with' names a reusable availability; several 'available' lines on one construct all have to hold, and
    gates AND down the module, feature, slice and construct. A persona's 'audience' lines are authoring
    metadata only. $context.audiences holds the audiences of the tenant, the user and the system caller,
-   and an unknown value never opens a gate. PLAY1130 to PLAY1141. *)
+   and an unknown value never opens a gate. 'not' binds tighter than 'and', which binds tighter than 'or';
+   it applies to one audience name, never to a group, to another 'not' or to an availability in 'with', and
+   'not' of an unknown audience is unknown, so the part stays closed (ESM v58). PLAY1130 to PLAY1141
+   and PLAY1171. *)
 
 PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
 
