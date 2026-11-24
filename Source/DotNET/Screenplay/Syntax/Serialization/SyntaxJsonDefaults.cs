@@ -15,7 +15,11 @@ internal static class SyntaxJsonDefaults
         OmitTagExpectations(node, member, value);
 
     static bool OmitScreenDefaults(SyntaxNode node, string member, object? value) =>
-        OmitAbsentReference(node, member, value) || OmitInputs(node, member, value) || OmitPresentation(node, member, value);
+        OmitAbsentReference(node, member, value) || OmitInputs(node, member, value) || OmitPresentation(node, member, value) || OmitElementGates(node, member, value);
+
+    // A screen action or data element with no gate of its own writes no member, so every syntax that predates element gates keeps its bytes.
+    static bool OmitElementGates(SyntaxNode node, string member, object? value) =>
+        node is ScreenActionSyntax or ScreenDataSyntax && member == "available" && value is IEnumerable<AvailableSyntax> gates && !gates.Any();
 
     static bool OmitPresentation(SyntaxNode node, string member, object? value) =>
         node is ScreenActionSyntax && member == "presentation" && value is IEnumerable<PresentationValueSyntax> presentation && !presentation.Any();

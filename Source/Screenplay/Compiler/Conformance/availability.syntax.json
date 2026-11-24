@@ -300,6 +300,25 @@
                   "directives": [
                     {
                       "kind": "ScreenActionSyntax",
+                      "available": [
+                        {
+                          "kind": "AvailableSyntax",
+                          "requirement": {
+                            "kind": "LogicalAvailabilityRequirementSyntax",
+                            "left": {
+                              "kind": "AudienceAvailabilityRequirementSyntax",
+                              "audience": "Plus",
+                              "negated": false
+                            },
+                            "operator": "And",
+                            "right": {
+                              "kind": "AudienceAvailabilityRequirementSyntax",
+                              "audience": "Incident",
+                              "negated": true
+                            }
+                          }
+                        }
+                      ],
                       "command": "ReportVessel",
                       "label": null,
                       "navigate": null,
@@ -456,7 +475,29 @@
                       }
                     }
                   ],
-                  "directives": [],
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "available": [
+                        {
+                          "kind": "AvailableSyntax",
+                          "requirement": {
+                            "kind": "AudienceAvailabilityRequirementSyntax",
+                            "audience": "Plus",
+                            "negated": false
+                          }
+                        }
+                      ],
+                      "by": "vesselId",
+                      "query": "VesselByKey",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Vessel"
+                      }
+                    }
+                  ],
                   "name": "VesselScreen"
                 }
               ],

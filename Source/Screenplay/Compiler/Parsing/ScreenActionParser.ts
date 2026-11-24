@@ -6,6 +6,8 @@ import { invalidActionPresentation } from '../Syntax/ScreenActionPresentation';
 import { InteractionArgumentSyntax, PresentationValueSyntax, ScreenActionSubjectKind, ScreenActionSyntax, ScreenNavigateSyntax } from '../Syntax/Screens';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
+import type { AvailableSyntax } from '../Syntax/Availability';
+import { addAvailabilityGate, isAvailabilityGate } from './AvailabilityParser';
 import { parsePlainActionInput } from './ActionSubjectClause';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -38,6 +40,7 @@ class PlainActionBody {
     private target: ScreenNavigateSyntax | null = null;
     private readonly inputs: InteractionArgumentSyntax[] = [];
     private readonly presentation: PresentationValueSyntax[] = [];
+    private readonly available: AvailableSyntax[] = [];
 
     constructor(text: string | null) { this.text = text; }
 
@@ -55,7 +58,8 @@ class PlainActionBody {
         if (reason !== undefined) context.error(DiagnosticCodes.InvalidActionPresentation, reason, locationOf(line));
         return { kind: 'ScreenActionSyntax', command: header.command, label: this.text, navigate: this.target,
             ...(this.inputs.length === 0 ? {} : { inputs: this.inputs }),
-            ...(this.presentation.length === 0 ? {} : { presentation: this.presentation }), location: locationOf(line) };
+            ...(this.presentation.length === 0 ? {} : { presentation: this.presentation }),
+            ...(this.available.length === 0 ? {} : { available: this.available }), location: locationOf(line) };
     }
 
     private readDirective(context: ParserContext, child: SourceLine, parsers: PlainActionParsers): void {
@@ -70,6 +74,13 @@ class PlainActionBody {
             }
             case 'presentation':
                 parsers.presentation(context, child, this.presentation);
+                break;
+            case 'available':
+                if (isAvailabilityGate(child.content)) {
+                    addAvailabilityGate(context, child, this.available);
+                    break;
+                }
+                context.error(DiagnosticCodes.UnknownActionDirective, `Unexpected '${child.content}' in action - expected 'label "..."' or 'navigate to ...'`, locationOf(child));
                 break;
             default:
                 context.error(DiagnosticCodes.UnknownActionDirective, `Unexpected '${child.content}' in action - expected 'label "..."' or 'navigate to ...'`, locationOf(child));

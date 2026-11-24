@@ -245,7 +245,12 @@ function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax |
         context.error(DiagnosticCodes.InvalidDataDirective, `Invalid data directive '${line.content}' - expected 'data <ReadModel> via query <Query> [by <param>]' or, for data a slice provides, 'data <Shape>[] [as <alias>]'`, locationOf(line));
         return undefined;
     }
-    return { kind: 'ScreenDataSyntax', type: parseTypeRef(match[1], locationOf(line)), query: match[2], by: match[3] ?? null, location: locationOf(line) };
+    const available: AvailableSyntax[] = [];
+    for (let child = context.peekChild(line.indent); child !== undefined && firstWord(child.content) === 'available' && isAvailabilityGate(child.content); child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        addAvailabilityGate(context, child, available);
+    }
+    return { kind: 'ScreenDataSyntax', type: parseTypeRef(match[1], locationOf(line)), query: match[2], by: match[3] ?? null, ...(available.length > 0 ? { available } : {}), location: locationOf(line) };
 }
 
 function validateNonActionSubjectClause(context: ParserContext, line: SourceLine): void {
