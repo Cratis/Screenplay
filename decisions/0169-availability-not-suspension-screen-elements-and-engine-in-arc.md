@@ -12,9 +12,7 @@ applies-to:
   - Source/Screenplay/Compiler/**
   - Documentation/screenplay/**
   - Samples/**
-amends:
-  - 0158
-  - 0162
+amends: 0158, 0162
 ---
 
 ## Context
