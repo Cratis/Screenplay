@@ -21,8 +21,8 @@ internal static partial class SemanticModelValidator
         SlicesOf(application).Any(slice => !slice.Available.IsDefaultOrEmpty || !slice.Provides.IsDefaultOrEmpty ||
             slice.Commands.Any(command => !command.Available.IsDefaultOrEmpty) ||
             slice.Queries.Any(query => !query.Available.IsDefaultOrEmpty) ||
-            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty)) ||
-        application.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty);
+            slice.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty || HasElementGates(screen))) ||
+        application.Screens.Any(screen => !screen.Available.IsDefaultOrEmpty || HasElementGates(screen));
 
     // ESM v55 construct: an exact ordered tag expectation on a then event.
     internal static bool UsesExpectedTags(SemanticApplication application) =>
@@ -35,6 +35,11 @@ internal static partial class SemanticModelValidator
         application.Modules.Any(module => HasCodeProvide(module.Provides) || module.Features.Any(UsesCodeProvides)) ||
         SlicesOf(application).Any(slice => HasCodeProvide(slice.Provides));
 
+    // ESM v59 constructs: an explicit availability gate on a screen action or a screen data element.
+    internal static bool UsesElementGates(SemanticApplication application) =>
+        application.Screens.Any(HasElementGates) ||
+        SlicesOf(application).Any(slice => slice.Screens.Any(HasElementGates));
+
     // ESM v58 constructs: a negated audience (not <Audience>) in an availability gate or a reusable availability.
     internal static bool UsesNegatedAudiences(SemanticApplication application) =>
         (!application.Availabilities.IsDefaultOrEmpty && application.Availabilities.Any(availability => HasNegatedAudience(availability.Requirements))) ||
@@ -45,6 +50,10 @@ internal static partial class SemanticModelValidator
             slice.Commands.Any(command => HasNegatedAudience(command.Available)) ||
             slice.Queries.Any(query => HasNegatedAudience(query.Available)) ||
             slice.Screens.Any(screen => HasNegatedAudience(screen.Available)));
+
+    static bool HasElementGates(SemanticScreen screen) =>
+        screen.Data.Any(data => !data.Available.IsDefaultOrEmpty) ||
+        screen.Actions.Any(action => !action.Available.IsDefaultOrEmpty);
 
     static bool UsesNegatedAudiences(SemanticFeature feature) =>
         HasNegatedAudience(feature.Available) || feature.Features.Any(UsesNegatedAudiences);
@@ -79,6 +88,12 @@ internal static partial class SemanticModelValidator
     static void ValidateAvailabilityVersion(SemanticApplication application, SemanticVersion version)
     {
         ValidateFeatureVersion(
+            UsesElementGates(application),
+            version,
+            SemanticVersion.V59,
+            "An ESM v59 model must declare an availability gate on a screen action or data element.",
+            "An availability gate on a screen action or data element requires ESM v59.");
+        ValidateFeatureVersion(
             UsesNegatedAudiences(application),
             version,
             SemanticVersion.V58,
@@ -107,7 +122,7 @@ internal static partial class SemanticModelValidator
         var audiences = application.Audiences.Select(audience => audience.Name).ToHashSet(StringComparer.Ordinal);
         var availabilities = application.Availabilities.ToDictionary(availability => availability.Name, StringComparer.Ordinal);
         var queries = SlicesOf(application).SelectMany(slice => slice.Queries).Select(query => query.Id).ToHashSet();
-        foreach (var screen in application.Screens) ValidateGates(screen.Available, availabilities);
+        foreach (var screen in application.Screens) ValidateScreenGates(screen, availabilities);
 
         foreach (var audience in application.Audiences) RequireName(audience.Name, "audience");
         foreach (var availability in application.Availabilities)
@@ -138,8 +153,15 @@ internal static partial class SemanticModelValidator
             ValidateProvides(slice.Provides, queries, $"slice '{slice.Name}'");
             foreach (var command in slice.Commands) ValidateGates(command.Available, availabilities);
             foreach (var query in slice.Queries) ValidateGates(query.Available, availabilities);
-            foreach (var screen in slice.Screens) ValidateGates(screen.Available, availabilities);
+            foreach (var screen in slice.Screens) ValidateScreenGates(screen, availabilities);
         }
+    }
+
+    static void ValidateScreenGates(SemanticScreen screen, Dictionary<string, SemanticAvailability> availabilities)
+    {
+        ValidateGates(screen.Available, availabilities);
+        foreach (var data in screen.Data) ValidateGates(data.Available, availabilities);
+        foreach (var action in screen.Actions) ValidateGates(action.Available, availabilities);
     }
 
     static void ValidateGates(ImmutableArray<SemanticAvailabilityRequirement> gates, Dictionary<string, SemanticAvailability> availabilities)

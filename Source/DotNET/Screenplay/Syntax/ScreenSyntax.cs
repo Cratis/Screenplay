@@ -88,7 +88,13 @@ public abstract record ScreenDirectiveSyntax(SourceLocation Location) : SyntaxNo
 /// <param name="Query">The name of the query providing the data.</param>
 /// <param name="By">The optional parameter the query is keyed by.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ScreenDataSyntax(TypeRefSyntax Type, string Query, string? By, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+public record ScreenDataSyntax(TypeRefSyntax Type, string Query, string? By, SourceLocation Location) : ScreenDirectiveSyntax(Location)
+{
+    /// <summary>
+    /// Gets the <c>available</c> gates of this element; every one has to hold for it to be offered. They can only narrow what the bound query allows.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
+}
 
 /// <summary>
 /// Represents an <c>action</c> directive exposing a command on the screen.
@@ -113,6 +119,11 @@ public record ScreenActionSyntax(string Command, string? Label, ScreenNavigateSy
     /// Gets advisory presentation values; they do not change the action's subject or execution.
     /// </summary>
     public IEnumerable<PresentationValueSyntax> Presentation { get; init; } = [];
+
+    /// <summary>
+    /// Gets the <c>available</c> gates of this element; every one has to hold for it to be offered. They can only narrow what the bound command allows.
+    /// </summary>
+    public IEnumerable<AvailableSyntax> Available { get; init; } = [];
 }
 
 /// <summary>

@@ -15,6 +15,12 @@ internal sealed partial class UiScreenReader
     {
         _scene.Action(action, _actions.Count);
         var added = Command(action.Command, action.Label ?? action.Command, action.Subject, action.Inputs, null);
+        if (action.Available.Any())
+        {
+            added = added with { Available = [.. action.Available] };
+            _actions[^1] = added;
+        }
+
         if (action.Navigate is { } navigate)
         {
             _actions[^1] = added with { Then = navigate.Screen };

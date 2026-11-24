@@ -3960,7 +3960,9 @@ module Invoicing
 
       screen CancelledInvoices
         title "Cancelled invoices"
+        // The table is offered only while ListCancelledInvoices is available; this gate narrows that further.
         data CancelledInvoiceReadModel[] via query ListCancelledInvoices
+          available for AuditTrail
         table CancelledInvoiceReadModel
           column invoiceId   label "Invoice"
           column reason      label "Reason"

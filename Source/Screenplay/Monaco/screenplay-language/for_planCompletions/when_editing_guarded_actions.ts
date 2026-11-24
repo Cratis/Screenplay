@@ -24,7 +24,7 @@ describe('when editing guarded actions', () => {
         it(`should offer input bindings under ${clause}`, () => labels(['screen V', '  action "Choose"', `    ${clause}`, '      ']).should.deep.equal(['with … from']));
     }
     it('should offer no arguments under hidden', () => labels(['screen V', '  action "Choose"', '    otherwise hidden', '      ']).should.deep.equal([]));
-    it('should preserve plain action completions', () => labels(['screen V', '  action C', '    ']).should.deep.equal(['with … from', 'navigate to', 'label']));
+    it('should preserve plain action completions', () => labels(['screen V', '  action C', '    ']).should.deep.equal(['with … from', 'navigate to', 'label', 'available for', 'available when', 'available with']));
     it('should not treat specification steps as guarded alternatives', () => {
         const plan = planCompletions(['specification S', '  when C', '    '], 2, '    ');
         (plan.kind === 'entries' && plan.entries.some(entry => entry.label === 'with … from')).should.be.false;

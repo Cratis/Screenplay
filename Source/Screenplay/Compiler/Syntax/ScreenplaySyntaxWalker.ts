@@ -994,6 +994,7 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitScreenAction(syntax: ScreenActionSyntax): void {
+        syntax.available?.forEach(node => this.visitAvailable(node));
         syntax.inputs?.forEach(input => this.visitInteractionArgument(input));
         syntax.presentation?.forEach(value => this.visitNode(value));
         if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
@@ -1007,6 +1008,9 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         switch (syntax.kind) {
             case 'ScreenDataSyntax':
+                syntax.available?.forEach(node => this.visitAvailable(node));
+                this.visitTypeRef(syntax.type);
+                break;
             case 'ScreenNeedSyntax':
                 this.visitTypeRef(syntax.type);
                 break;

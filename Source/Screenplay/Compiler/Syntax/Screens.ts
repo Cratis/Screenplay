@@ -74,6 +74,8 @@ export interface ScreenDataSyntax extends SyntaxNode {
     readonly type: TypeRefSyntax;
     readonly query: string;
     readonly by: string | null;
+    /** Explicit availability gates of this element; every one has to hold, and they can only narrow what the bound query allows. */
+    readonly available?: readonly AvailableSyntax[];
 }
 
 // 'data <Shape>[[]] [as <alias>]' - a need: data the screen reads and an adopting slice provides.
@@ -92,6 +94,8 @@ export interface ScreenActionSyntax extends SyntaxNode {
     readonly inputs?: readonly InteractionArgumentSyntax[];
     /** Advisory presentation; it does not change the action's subject or execution. */
     readonly presentation?: readonly PresentationValueSyntax[];
+    /** Explicit availability gates of this element; every one has to hold, and they can only narrow what the bound command allows. */
+    readonly available?: readonly AvailableSyntax[];
     readonly command: string;
     readonly label: string | null;
     readonly navigate: ScreenNavigateSyntax | null;

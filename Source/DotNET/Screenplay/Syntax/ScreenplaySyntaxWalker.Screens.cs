@@ -134,6 +134,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreenData(ScreenDataSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
         VisitTypeRef(syntax.Type);
     }
 
@@ -144,6 +145,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreenAction(ScreenActionSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var gate in syntax.Available) VisitAvailable(gate);
         foreach (var input in syntax.Inputs) VisitInteractionArgument(input);
         foreach (var presentation in syntax.Presentation) VisitNode(presentation);
 

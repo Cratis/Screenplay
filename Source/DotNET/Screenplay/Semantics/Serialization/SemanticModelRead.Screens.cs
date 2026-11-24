@@ -212,6 +212,7 @@ internal static partial class SemanticModelRead
         SemanticId query = default;
         string? by = null;
         ImmutableArray<SemanticScreenField> fields = default;
+        ImmutableArray<SemanticAvailabilityRequirement> available = [];
         while (NextProperty(ref reader, seen, "screen data") is { } property)
         {
             switch (property)
@@ -219,12 +220,13 @@ internal static partial class SemanticModelRead
                 case "query": query = SemanticId.Parse(String(ref reader, property)); break;
                 case "by": by = String(ref reader, property); break;
                 case "fields": fields = Array(ref reader, ScreenField, property); break;
+                case "available": available = Array(ref reader, AvailabilityRequirement, property); break;
                 default: throw Unknown(property, "screen data");
             }
         }
 
         Required(query.IsSet && !fields.IsDefault, "screen data");
-        return new(query, fields) { By = by };
+        return new(query, fields) { By = by, Available = available };
     }
 
     static SemanticScreenField ScreenField(ref Utf8JsonReader reader)
@@ -257,6 +259,7 @@ internal static partial class SemanticModelRead
         string? when = null;
         SemanticId? then = null;
         ImmutableArray<SemanticScreenInput> inputs = default;
+        ImmutableArray<SemanticAvailabilityRequirement> available = [];
         while (NextProperty(ref reader, seen, "screen action") is { } property)
         {
             switch (property)
@@ -267,12 +270,13 @@ internal static partial class SemanticModelRead
                 case "inputs": inputs = Array(ref reader, ScreenInput, property); break;
                 case "when": when = String(ref reader, property); break;
                 case "then": then = SemanticId.Parse(String(ref reader, property)); break;
+                case "available": available = Array(ref reader, AvailabilityRequirement, property); break;
                 default: throw Unknown(property, "screen action");
             }
         }
 
         Required(command.IsSet && label is not null && subject is not null && !inputs.IsDefault, "screen action");
-        return new(command, label!, subject!, inputs) { When = when, Then = then };
+        return new(command, label!, subject!, inputs) { When = when, Then = then, Available = available };
     }
 
     static SemanticScreenInput ScreenInput(ref Utf8JsonReader reader)
