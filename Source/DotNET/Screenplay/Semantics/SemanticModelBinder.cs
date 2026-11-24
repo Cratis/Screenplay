@@ -76,7 +76,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
     {
-        if (SelectAvailabilityVersions(application) is { } availability) return availability;
+        if (EsmSchemaV58Support.SelectBoundVersions(application) is { } availability) return availability;
         if (SemanticModelValidator.UsesAbilityInvocations(application)) return (LanguageVersion.V51, SemanticVersion.V51);
         if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
         if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
@@ -95,15 +95,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
         if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
         return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectAvailabilityVersions(SemanticApplication application)
-    {
-        if (SemanticModelValidator.UsesCodeProvides(application)) return (LanguageVersion.V57, SemanticVersion.V57);
-        if (SemanticModelValidator.UsesFreeScreens(application)) return (LanguageVersion.V56, SemanticVersion.V56);
-        if (SemanticModelValidator.UsesExpectedTags(application)) return (LanguageVersion.V55, SemanticVersion.V55);
-        if (SemanticModelValidator.UsesGraphCollects(application)) return (LanguageVersion.V54, SemanticVersion.V54);
-        return SemanticModelValidator.UsesAvailability(application) ? (LanguageVersion.V53, SemanticVersion.V53) : null;
     }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectVersionsBeforeEventSourceCaptureKeys(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
@@ -292,7 +283,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
-            EsmSchemaV57Support.EnsureSupported(languageVersion, semanticVersion);
+            EsmSchemaV58Support.EnsureSupported(languageVersion, semanticVersion);
             var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
             if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
                 SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)

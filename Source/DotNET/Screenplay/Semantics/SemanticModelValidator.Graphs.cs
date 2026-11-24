@@ -23,6 +23,27 @@ internal static partial class SemanticModelValidator
     internal static bool UsesGraphCollects(SemanticApplication application) =>
         application.GraphQueries.Any(query => !query.Collects.IsDefaultOrEmpty);
 
+    internal static bool UsesGraphProjectionDeclaringSlices(SemanticApplication application) =>
+        application.GraphProjections.Any(projection => projection.DeclaringSlice is not null);
+
+    static void ValidateGraphProjectionDeclaringSlices(SemanticApplication application, SemanticVersion version)
+    {
+        ValidateFeatureVersion(
+            UsesGraphProjectionDeclaringSlices(application),
+            version,
+            SemanticVersion.V58,
+            "An ESM v58 model must declare a graph projection declaring slice.",
+            "Graph projection declaring slices require ESM v58.");
+        var slices = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Select(slice => slice.Id).ToHashSet();
+        foreach (var projection in application.GraphProjections)
+        {
+            if (projection.DeclaringSlice is { } declaringSlice && !slices.Contains(declaringSlice))
+            {
+                throw new InvalidSemanticContract($"Graph projection '{projection.Name}' declaring slice '{declaringSlice}' does not identify a slice.");
+            }
+        }
+    }
+
     static void ValidateGraphForEachVersion(SemanticApplication application, SemanticVersion version)
     {
         ValidateFeatureVersion(

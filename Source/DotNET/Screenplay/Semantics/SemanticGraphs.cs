@@ -114,7 +114,13 @@ public sealed record SemanticGraphElementHandlers(string Name, ImmutableArray<Se
 /// <param name="Graph">The name of the graph the projection builds.</param>
 /// <param name="Nodes">The node handlers by label.</param>
 /// <param name="Edges">The edge handlers by type.</param>
-public sealed record SemanticGraphProjection(string Name, string Graph, ImmutableArray<SemanticGraphElementHandlers> Nodes, ImmutableArray<SemanticGraphElementHandlers> Edges);
+public sealed record SemanticGraphProjection(string Name, string Graph, ImmutableArray<SemanticGraphElementHandlers> Nodes, ImmutableArray<SemanticGraphElementHandlers> Edges)
+{
+    /// <summary>
+    /// Gets the identity of the slice that declares this projection; absent on models before ESM v58.
+    /// </summary>
+    public SemanticId? DeclaringSlice { get; init; }
+}
 
 /// <summary>
 /// Represents a property value a graph specification states.

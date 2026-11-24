@@ -272,6 +272,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets language v57, with provided values computed by a file or a code block.</summary>
     public static readonly LanguageVersion V57 = new(57, 0);
 
+    /// <summary>Gets language v58, with graph projection declaring slice identities.</summary>
+    public static readonly LanguageVersion V58 = new(58, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -566,6 +569,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>Gets semantic v57, with provided values computed by a file or a code block.</summary>
     public static readonly SemanticVersion V57 = new(57, 0);
+
+    /// <summary>Gets semantic v58, with graph projection declaring slice identities.</summary>
+    public static readonly SemanticVersion V58 = new(58, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -1386,7 +1392,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV57Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV58Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -1399,7 +1405,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV57Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV58Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

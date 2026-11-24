@@ -22,7 +22,7 @@ public class when_round_tripping_graphs : for_SemanticModelBinder.given.a_semant
         _read = SemanticModelSerializer.Deserialize(_bytes);
     }
 
-    [Fact] void should_select_v54_for_its_collecting_queries() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V54);
+    [Fact] void should_select_v58_for_its_scoped_projection() => _model.SemanticVersion.ShouldEqual(SemanticVersion.V58);
     [Fact] void should_round_trip_to_the_same_bytes() => SemanticModelSerializer.Serialize(_read).ShouldEqual(_bytes);
     [Fact] void should_keep_the_graph() => _read.Application.Graphs.Single().Edges.Select(edge => edge.Type).ShouldEqual("HAS_ROLE", "MEMBER_OF", "PART_OF");
     [Fact] void should_keep_the_edge_identity() => _read.Application.Graphs.Single().Edges.Single(edge => edge.Type == "HAS_ROLE").IdentifiedBy.ShouldEqual("assignmentId");
@@ -34,5 +34,5 @@ public class when_round_tripping_graphs : for_SemanticModelBinder.given.a_semant
     [Fact] void should_keep_the_collecting_queries() => _read.Application.GraphQueries.Count(query => !query.Collects.IsDefaultOrEmpty).ShouldEqual(4);
     [Fact] void should_refuse_collecting_queries_below_v54() => Catch.Exception(() => SemanticModelCanonicalJson.SerializeWithoutRevision(LanguageVersion.V53, SemanticVersion.V53, _model.Application)).ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_leave_earlier_readers_unextended() => EsmSchemaV37Support.Supports(LanguageVersion.V38, SemanticVersion.V38).ShouldBeFalse();
-    [Fact] void should_read_the_model_through_the_unknown_preserving_reader() => UnknownPreservingSemanticModelReader.Read(_bytes, new EsmAdmissionRange(54, 0, 0)).Model.Application.Graphs.Length.ShouldEqual(1);
+    [Fact] void should_read_the_model_through_the_unknown_preserving_reader() => UnknownPreservingSemanticModelReader.Read(_bytes, new EsmAdmissionRange(58, 0, 0)).Model.Application.Graphs.Length.ShouldEqual(1);
 }

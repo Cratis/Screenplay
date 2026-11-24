@@ -14,6 +14,7 @@ public static partial class SemanticModelCanonicalJson
 {
     static void WriteGraphs(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
     {
+        ValidateGraphProjectionDeclaringSliceVersion(application, version);
         if (SemanticModelValidator.UsesGraphCollects(application) && version.Major < 54)
         {
             throw new InvalidSemanticContract("Graph queries that collect nested rows require ESM v54 or later.");
@@ -33,6 +34,14 @@ public static partial class SemanticModelCanonicalJson
         if (!application.GraphProjections.IsDefaultOrEmpty) WriteArray(writer, "graphProjections", application.GraphProjections.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraphProjection);
         if (!application.GraphQueries.IsDefaultOrEmpty) WriteArray(writer, "graphQueries", application.GraphQueries.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraphQuery);
         if (!application.GraphSpecifications.IsDefaultOrEmpty) WriteArray(writer, "graphSpecifications", application.GraphSpecifications.OrderBy(_ => _.Owner, StringComparer.Ordinal).ThenBy(_ => _.Name, StringComparer.Ordinal), WriteGraphSpecification);
+    }
+
+    static void ValidateGraphProjectionDeclaringSliceVersion(SemanticApplication application, SemanticVersion version)
+    {
+        if (SemanticModelValidator.UsesGraphProjectionDeclaringSlices(application) && version.Major < 58)
+        {
+            throw new InvalidSemanticContract("Graph projection declaring slices require ESM v58 or later.");
+        }
     }
 
     static void WriteGraphQuery(Utf8JsonWriter writer, SemanticGraphQuery query)
@@ -173,6 +182,7 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "graph", projection.Graph);
         WriteArray(writer, "nodes", projection.Nodes.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraphElementHandlers);
         WriteArray(writer, "edges", projection.Edges.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteGraphElementHandlers);
+        if (projection.DeclaringSlice is { } declaringSlice) writer.WriteString("declaringSlice", declaringSlice.ToString());
         writer.WriteEndObject();
     }
 

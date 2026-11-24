@@ -120,7 +120,7 @@ internal static class EsmSchemaMembers
         ["GraphNode"] = "label:s properties:[]",
         ["GraphEdge"] = "type:s sourceLabel:s targetLabel:s identityProperty:s properties:[]",
         ["GraphProperty"] = "name:s type:1 key:b",
-        ["GraphProjection"] = "name:s graph:s nodes:[] edges:[]",
+        ["GraphProjection"] = "name:s graph:s nodes:[] edges:[] declaringSlice:s",
         ["GraphElementHandlers"] = "name:s handlers:[]",
         ["GraphHandler"] = "event:s key:1 source:1 target:1 identity:1 forEach:s removes:b detach:b mappings:[]",
         ["GraphMapping"] = "name:s operation:s source:1 factor:1",
