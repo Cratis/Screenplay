@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
+import { should } from 'chai';
+import { RepairSourceSnapshot } from '../RepairSourceSnapshot';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
@@ -12,6 +14,7 @@ vi.mock('vscode', () => ({
     env: { get uiKind() { return host.uiKind; } }, UIKind: { Web: 2 },
 }));
 import { checkRepairEnvironment, userRepairConfiguration, repairBuffersSynchronized } from '../RepairCodeActions';
+should();
 let root: string;
 beforeEach(() => {
     root = specFixtureDirectory('repair-environment-');
@@ -83,6 +86,19 @@ for (const scheme of ['file', 'untitled']) for (const file of ['sibling.play', '
     expect(checkRepairEnvironment(launch, true)).toEqual({ [file]: 7 });
     expect(host.documents[0].isDirty).toBe(true);
     expect(repairBuffersSynchronized(root, { token: 'test', title: 'test', code: 'PLAY0478', files: [], authoring: [], executable: [], executableReady: false, droppedComments: [] })).toBe(false);
+});
+it('should refuse changed disk bytes even when a clean saved buffer still shows the reviewed text', () => {
+    const before = Buffer.from('reviewed');
+    const getText = vi.fn(() => before.toString('utf8'));
+    host.documents = [{ uri: { scheme: 'file', fsPath: path.join(root, 'application.play'), toString: () => 'source' }, version: 7, isDirty: false, getText }];
+    const launch = userRepairConfiguration();
+    const snapshot = new RepairSourceSnapshot([{ beforePath: 'application.play', afterPath: 'application.play', before, after: Buffer.from('candidate') }]);
+    fs.writeFileSync(path.join(root, 'application.play'), before);
+    snapshot.check(root);
+    fs.writeFileSync(path.join(root, 'application.play'), 'external');
+    checkRepairEnvironment(launch).should.deep.equal({ source: 7 });
+    (() => snapshot.check(root)).should.throw().with.property('kind', 'StaleSource');
+    getText.mock.calls.should.have.length(0);
 });
 it('normalizes an associated untitled destination using file-scheme filesystem semantics', () => {
     const launch = userRepairConfiguration();

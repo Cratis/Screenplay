@@ -3,12 +3,17 @@
 
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { should } from 'chai';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 import { createHash } from 'node:crypto';
 import { RepairClient } from '../RepairClient';
 import { RepairSession } from '../RepairSession';
 
 const base = { revision: 'base', catalogRevision: 'catalog', executableReady: false };
 const candidate = { ...base, revision: 'candidate' };
+should();
+let root: string;
 const before = Buffer.from('command Before\n'), after = Buffer.from('command After\n');
 const identity = Buffer.from('{"stable":true}');
 const identityRevision = createHash('sha256').update(identity).digest('hex');
@@ -30,15 +35,18 @@ function bytes(value: Buffer, args: Record<string, unknown>, revision: string) {
     return { revision, totalBytes: value.length, offset, byteCount: chunk.length, bytesBase64: chunk.toString('base64'), nextOffset: offset + chunk.length < value.length ? offset + chunk.length : null };
 }
 async function open(): Promise<void> {
-    session = new RepairSession({ executable: process.execPath, arguments: [path.resolve('tests/rpcFixture.mjs')], root: process.cwd() }, { check: () => ({ source: 1 }), checkRead() {} });
+    session = new RepairSession({ executable: process.execPath, arguments: [path.resolve('tests/rpcFixture.mjs')], root }, { check: () => ({ source: 1 }), checkRead() {} });
     await session.initialize();
 }
 beforeEach(() => {
+    root = specFixtureDirectory('repair-identifier-');
+    fs.writeFileSync(path.join(root, 'application.play'), before);
     advertised = ['PLAY0166', 'PLAY0469', 'PLAY0478'];
     item = descriptor;
     proposed = undefined;
     vi.spyOn(RepairClient.prototype, 'initialize').mockImplementation(async function (this: RepairClient) { this.advertised = new Set(advertised); });
-    vi.spyOn(RepairClient.prototype, 'tool').mockImplementation(async (name, args) => {
+    vi.spyOn(RepairClient.prototype, 'tool').mockImplementation(async (name, args, _signal, guard, writeAttempt) => {
+        guard?.(); writeAttempt?.();
         const binding = { before: base, after: candidate };
         if (name === 'open-workspace') return base;
         if (name === 'discard-proposal') return { discarded: true };
@@ -65,11 +73,21 @@ beforeEach(() => {
             if (args.view === 'before') return { exists: false, content: null };
             return { exists: true, content: bytes(identity, args, identityRevision) };
         }
+        if (name === 'apply') return { success: true, validation: 'Authoring', workspace: candidate, plannedChanges: 1, installedDocuments: 1 };
         throw new Error(`Unexpected ${name}`);
     });
 });
-afterEach(() => { session.dispose(); vi.restoreAllMocks(); });
+afterEach(() => { session?.dispose(); vi.restoreAllMocks(); removeSpecFixtureDirectory(root); });
 
+it('should dispatch an unchanged unpinned PLAY0469 review exactly once', async () => {
+    await open();
+    const preview = await session.preview((await session.discover()).choices[0].token);
+    await session.apply(preview.token);
+    const applies = vi.mocked(RepairClient.prototype.tool).mock.calls.filter(call => call[0] === 'apply');
+    applies.should.have.length(1);
+    applies[0][1].should.not.have.property('expectedRepairEvidenceRevision');
+    session.recoveryRequired.should.equal(false);
+});
 it('offers PLAY0469 only when the server advertised it', async () => {
     advertised = ['PLAY0166', 'PLAY0478'];
     await open();

@@ -125,6 +125,11 @@ public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue
 /// </remarks>
 public sealed record SemanticRequirement(SemanticCondition Condition, string? Message)
 {
+    /// <summary>
+    /// The rejection message used when no message is authored.
+    /// </summary>
+    public const string DefaultMessage = "Command requirement was not met.";
+
     /// <summary>Gets the presentation severity; failures still reject at every level.</summary>
     public SemanticValidationSeverity Severity { get; init; } = SemanticValidationSeverity.Error;
 }

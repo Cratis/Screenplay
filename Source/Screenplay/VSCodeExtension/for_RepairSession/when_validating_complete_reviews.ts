@@ -3,10 +3,15 @@
 
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
 import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { should } from 'chai';
+import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specFixtureDirectory';
 import { createHash } from 'node:crypto';
 import { RepairClient, RepairFailure } from '../RepairClient';
 import { RepairSession } from '../RepairSession';
 
+should();
+let root: string;
 const base = { revision: 'base', catalogRevision: 'catalog', executableReady: false };
 const candidate = { ...base, revision: 'candidate' };
 const pin = 're1:' + 'a'.repeat(64), nextPin = 're1:' + 'b'.repeat(64);
@@ -22,6 +27,7 @@ let version: number;
 let dirty: boolean;
 let applied: boolean;
 let calls: string[];
+let sources: string[];
 let dispatchedArgs: Record<string, unknown> | undefined;
 
 function page(items: unknown[], args: Record<string, unknown>, revision: string) {
@@ -33,7 +39,9 @@ function bytes(value: Buffer, args: Record<string, unknown>, revision: string) {
     return { revision, totalBytes: value.length, offset, byteCount: chunk.length, bytesBase64: chunk.toString('base64'), nextOffset: offset + chunk.length < value.length ? offset + chunk.length : null };
 }
 beforeEach(async () => {
-    malformed = ''; version = 1; dirty = false; applied = false; calls = []; dispatchedArgs = undefined;
+    root = specFixtureDirectory('repair-review-');
+    fs.writeFileSync(path.join(root, 'application.play'), before);
+    malformed = ''; version = 1; dirty = false; applied = false; calls = []; sources = ['application.play']; dispatchedArgs = undefined;
     vi.spyOn(RepairClient.prototype, 'initialize').mockImplementation(async function (this: RepairClient) {
         this.advertised = new Set(['PLAY0166', 'PLAY0478', 'PLAY0516', 'PLAY0661', 'PLAY0664']);
     });
@@ -43,11 +51,11 @@ beforeEach(async () => {
         if (name === 'open-workspace') return base;
         if (name === 'discard-proposal') return { discarded: true };
         if (name === 'read-workspace') {
-            const items = args.view === 'documents' ? [{ documentId: 'document', path: 'application.play' }] : args.view === 'diagnostics' ? [issue] : [descriptor];
+            const items = args.view === 'documents' ? sources.map((source, index) => ({ documentId: index === 0 ? 'document' : 'other', path: source })) : args.view === 'diagnostics' ? [issue] : [descriptor];
             if (malformed === 'lateEpoch') { malformed = ''; session.invalidate(); }
             return { workspace: base, repairEvidenceRevision: pin, page: page(items, args, 'base') };
         }
-        if (name === 'propose-repair') return { ...binding, success: true, validation: 'Authoring', proposalId: 'retained', changeCount: 1, authoringDiagnosticCount: 0, droppedCommentCount: 0, stateChange: { path: '.screenplay/identities.json', beforeExists: false, beforeBytes: 0, afterBytes: identity.length, beforeRevision: 'absent', afterRevision: identityRevision } };
+        if (name === 'propose-repair') return { ...binding, success: true, validation: 'Authoring', proposalId: 'retained', changeCount: sources.length, authoringDiagnosticCount: 0, droppedCommentCount: 0, stateChange: { path: '.screenplay/identities.json', beforeExists: false, beforeBytes: 0, afterBytes: identity.length, beforeRevision: 'absent', afterRevision: identityRevision } };
         if (name === 'read-proposal') {
             let result: unknown;
             if (args.view === 'before' || args.view === 'after') {
@@ -56,9 +64,9 @@ beforeEach(async () => {
                 if (malformed === 'truncated') content.nextOffset = null;
                 if (malformed === 'nonprogress') content.nextOffset = args.offset as number;
                 if (malformed === 'wrongByteRevision') content.revision = 'other';
-                result = { exists: true, path: 'application.play', content };
+                result = { exists: true, path: sources[args.documentId === 'document' ? 0 : 1], content };
             } else {
-                const items = args.view === 'changes' ? [{ documentId: 'document', beforePath: 'application.play', afterPath: 'application.play', beforeBytes: malformed === 'oversize' ? 16 * 1024 * 1024 + 1 : before.length, afterBytes: after.length }] : malformed === 'oversizeMetadata' && args.view === 'diagnostics' ? [{ ...issue, message: 'x'.repeat(16 * 1024 * 1024) }] : [];
+                const items = args.view === 'changes' ? sources.map((source, index) => ({ documentId: index === 0 ? 'document' : 'other', beforePath: source, afterPath: source, beforeBytes: malformed === 'oversize' ? 16 * 1024 * 1024 + 1 : before.length, afterBytes: after.length })) : malformed === 'oversizeMetadata' && args.view === 'diagnostics' ? [{ ...issue, message: 'x'.repeat(16 * 1024 * 1024) }] : [];
                 result = page(items, args, 'candidate');
             }
             return { ...binding, result };
@@ -75,17 +83,115 @@ beforeEach(async () => {
             if (malformed === 'dirtyAfterDispatch') dirty = true;
             if (malformed === 'ownRename') session.invalidate();
             applied = true;
-            return { success: true, validation: 'Authoring', workspace: candidate, plannedChanges: 1, installedDocuments: 1, status: 'human-readable, not a discriminator' };
+            return { success: true, validation: 'Authoring', workspace: candidate, plannedChanges: sources.length, installedDocuments: sources.length, status: 'human-readable, not a discriminator' };
         }
         throw new Error(`Unexpected ${name}`);
     });
-    session = new RepairSession({ executable: process.execPath, arguments: [path.resolve('tests/rpcFixture.mjs')], root: process.cwd() }, { check: () => {
+    session = new RepairSession({ executable: process.execPath, arguments: [path.resolve('tests/rpcFixture.mjs')], root }, { check: () => {
         if (dirty) throw new RepairFailure('DirtyBuffer', 'dirty');
         return { source: version };
     }, checkRead() {} });
     await session.initialize();
 });
-afterEach(() => { session.dispose(); vi.restoreAllMocks(); });
+afterEach(() => { session.dispose(); vi.restoreAllMocks(); removeSpecFixtureDirectory(root); });
+
+it('should check every affected source, not only the selected first document, and preserve disk on refusal', async () => {
+    sources.push('second.play');
+    const second = path.join(root, 'second.play');
+    fs.writeFileSync(second, before);
+    const preview = await session.preview((await session.discover()).choices[0].token);
+    const changed = Buffer.alloc(before.length, 32);
+    fs.writeFileSync(second, changed);
+    await session.apply(preview.token).then(() => { throw new Error('Second stale source accepted.'); }, (error: RepairFailure) => error.kind.should.equal('StaleSource'));
+    fs.readFileSync(second).equals(changed).should.equal(true);
+    fs.readFileSync(path.join(root, 'application.play')).equals(before).should.equal(true);
+    fs.existsSync(path.join(root, '.screenplay')).should.equal(false);
+    calls.filter(name => name === 'apply').should.have.length(0);
+});
+it('should preserve unsaved buffer text and disk when the fresh dirty-buffer guard refuses Apply', async () => {
+    const preview = await session.preview((await session.discover()).choices[0].token);
+    const buffer = { text: before.toString('utf8'), isDirty: false };
+    buffer.text = 'unsaved typing'; buffer.isDirty = dirty = true;
+    await session.apply(preview.token).then(() => { throw new Error('Unsaved buffer accepted.'); }, (error: RepairFailure) => error.kind.should.equal('DirtyBuffer'));
+    buffer.text.should.equal('unsaved typing');
+    buffer.isDirty.should.equal(true);
+    fs.readFileSync(path.join(root, 'application.play')).equals(before).should.equal(true);
+    calls.filter(name => name === 'apply').should.have.length(0);
+});
+for (const drift of ['modified', 'deleted', 'renamed']) it(`should refuse an unnotified ${drift} source and revoke the old discovery and token`, async () => {
+    const choice = (await session.discover()).choices[0];
+    const preview = await session.preview(choice.token);
+    const source = path.join(root, 'application.play');
+    if (drift === 'modified') fs.writeFileSync(source, Buffer.alloc(before.length, 32));
+    else if (drift === 'deleted') fs.unlinkSync(source);
+    else fs.renameSync(source, path.join(root, 'renamed.play'));
+    let failure: unknown;
+    try { await session.apply(preview.token); } catch (error) { failure = error; }
+    (failure as RepairFailure).kind.should.equal('StaleSource');
+    (failure as RepairFailure).message.should.contain('Nothing was applied').and.contain('Discover Saved-File C# Repairs');
+    calls.filter(name => name === 'apply').should.have.length(0);
+    session.recoveryRequired.should.equal(false);
+    await session.apply(preview.token).then(() => { throw new Error('Old token accepted.'); }, (error: RepairFailure) => error.kind.should.equal('UnauthorizedApply'));
+    await session.preview(choice.token).then(() => { throw new Error('Old discovery accepted.'); }, (error: RepairFailure) => error.kind.should.equal('StaleSelection'));
+    // Simulate reopening a freshly saved source; a local refusal must not create a reconnect barrier.
+    fs.writeFileSync(source, before);
+    const fresh = await session.discover();
+    fresh.choices[0].token.should.not.equal(choice.token);
+    const refreshed = await session.preview(fresh.choices[0].token);
+    await session.apply(refreshed.token);
+    calls.filter(name => name === 'apply').should.have.length(1);
+});
+it('should refuse a source that changed after Discover but before Preview without blessing live disk', async () => {
+    const choice = (await session.discover()).choices[0];
+    fs.writeFileSync(path.join(root, 'application.play'), Buffer.alloc(before.length, 32));
+    const preview = await session.preview(choice.token);
+    preview.files[0].before!.equals(before).should.equal(true);
+    await session.apply(preview.token).then(() => { throw new Error('Stale source accepted.'); }, (error: RepairFailure) => error.kind.should.equal('StaleSource'));
+    calls.filter(name => name === 'apply').should.have.length(0);
+});
+it('should check queued Apply at actual authorization before writeAttempt', async () => {
+    const preview = await session.preview((await session.discover()).choices[0].token);
+    const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
+    let release!: () => void;
+    let entered!: () => void;
+    const queued = new Promise<void>(resolve => { entered = resolve; });
+    const blocked = new Promise<void>(resolve => { release = resolve; });
+    let attempts = 0;
+    vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
+        if (args[0] === 'apply') {
+            entered(); await blocked;
+            const attempt = args[4]; args[4] = () => { attempts++; attempt?.(); };
+        }
+        return original(...args);
+    });
+    const applying = session.apply(preview.token);
+    await queued;
+    fs.writeFileSync(path.join(root, 'application.play'), Buffer.alloc(before.length, 32));
+    release();
+    await applying.then(() => { throw new Error('Queued stale source accepted.'); }, (error: RepairFailure) => error.kind.should.equal('StaleSource'));
+    attempts.should.equal(0);
+    calls.filter(name => name === 'apply').should.have.length(0);
+    session.recoveryRequired.should.equal(false);
+});
+it('should not take apply authority from a mutated public preview buffer', async () => {
+    const preview = await session.preview((await session.discover()).choices[0].token);
+    preview.files[0].before!.fill(32);
+    fs.writeFileSync(path.join(root, 'application.play'), preview.files[0].before!);
+    await session.apply(preview.token).then(() => { throw new Error('Mutated authority accepted.'); }, (error: RepairFailure) => error.kind.should.equal('StaleSource'));
+    calls.filter(name => name === 'apply').should.have.length(0);
+});
+it('should preserve uncertainty if a server StaleSource arrives after dispatch', async () => {
+    const preview = await session.preview((await session.discover()).choices[0].token);
+    const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
+    vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
+        const result = await original(...args);
+        if (args[0] === 'apply') throw new RepairFailure('StaleSource', 'late refusal');
+        return result;
+    });
+    await session.apply(preview.token).then(() => { throw new Error('Expected uncertainty.'); }, (error: RepairFailure) => error.kind.should.equal('ApplyOutcomeUnknown'));
+    session.recoveryRequired.should.equal(true);
+    calls.filter(name => name === 'apply').should.have.length(1);
+});
 
 it('keeps PLAY0470 as diagnostics only even if a server returns it among no-input recipes', async () => {
     const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;

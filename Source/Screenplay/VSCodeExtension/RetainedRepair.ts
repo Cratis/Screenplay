@@ -3,10 +3,12 @@
 
 import { RepairPreview } from './RepairPreview';
 import { RepairSnapshot } from './RepairSnapshot';
+import { RepairSourceSnapshot } from './RepairSourceSnapshot';
 
 export interface RetainedRepair {
     preview: RepairPreview;
     snapshot: RepairSnapshot;
+    sources: RepairSourceSnapshot;
     proposalId: string;
     beforeEvidence: string;
     candidateEvidence: string;
