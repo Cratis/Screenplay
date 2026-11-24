@@ -145,6 +145,7 @@ internal sealed partial class UiScreenReader(UiModelIndex index, string slice, U
         _data.Add(new(data.Query, readModel, found?.Query.ReturnType.IsCollection ?? data.Type.IsCollection, [])
         {
             By = data.By,
+            Available = [.. data.Available],
             QueryId = operation?.Id.ToString(),
             Route = operation?.Route,
             Live = operation?.Live ?? false

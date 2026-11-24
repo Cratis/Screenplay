@@ -275,6 +275,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>Gets language v58, with the negated audience of an availability gate.</summary>
     public static readonly LanguageVersion V58 = new(58, 0);
 
+    /// <summary>Gets language v59, with availability gates on screen actions and data.</summary>
+    public static readonly LanguageVersion V59 = new(59, 0);
+
     /// <summary>Gets language v60, with graph projection declaring slice identities.</summary>
     public static readonly LanguageVersion V60 = new(60, 0);
 
@@ -575,6 +578,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>Gets semantic v58, with the negated audience of an availability gate.</summary>
     public static readonly SemanticVersion V58 = new(58, 0);
+
+    /// <summary>Gets semantic v59, with availability gates on screen actions and data.</summary>
+    public static readonly SemanticVersion V59 = new(59, 0);
 
     /// <summary>Gets semantic v60, with graph projection declaring slice identities.</summary>
     public static readonly SemanticVersion V60 = new(60, 0);

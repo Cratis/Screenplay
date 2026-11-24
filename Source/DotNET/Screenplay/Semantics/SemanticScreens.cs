@@ -134,6 +134,11 @@ public sealed record SemanticScreenData(SemanticId Query, ImmutableArray<Semanti
     /// Gets the value the screen passes to the query, when it passes one.
     /// </summary>
     public string? By { get; init; }
+
+    /// <summary>
+    /// Gets the explicit availability gates of this element; every one has to hold for it to be offered, and they only narrow what the query allows. ESM v59.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
 }
 
 /// <summary>
@@ -156,6 +161,11 @@ public sealed record SemanticScreenAction(SemanticId Command, string Label, stri
     /// Gets the condition under which this alternative of a guarded action is issued, when it has one.
     /// </summary>
     public string? When { get; init; }
+
+    /// <summary>
+    /// Gets the explicit availability gates of this element; every one has to hold for it to be offered, and they only narrow what the command allows. ESM v59.
+    /// </summary>
+    public ImmutableArray<SemanticAvailabilityRequirement> Available { get; init; } = [];
 
     /// <summary>
     /// Gets the screen the action leads to after it succeeds, when it leads to one.

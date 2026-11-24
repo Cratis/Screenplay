@@ -47,7 +47,28 @@ module Fleet
 
 `for` and `with` combine names with `and`, `or`, `not` and parentheses, the way `authorize` combines policies. `not` binds tighter than `and`, which binds tighter than `or`, and applies to one audience name in a `for` line: `available for Plus and not Incident` and `available for not Incident` are valid; `not (Plus)`, `not not Plus` and `with not Open` are errors (`PLAY1171`). A `when` line is one condition and keeps its own `and` and `or`. A line holds one form; to mix forms, name them in an `availability` block and use `with`. Several `available` lines on one construct all have to hold.
 
-A gate is allowed on a module, feature, slice, command, query and screen. Gates AND down the path from module to construct, and availability is decided **before** `authorize`: a part that is not available is refused as not available, which clients can tell apart from not allowed.
+A gate is allowed on a module, feature, slice, command, query, screen and on a screen `action` or `data` element (see [Gate a screen element](#gate-a-screen-element)). Gates AND down the path from module to construct, and availability is decided **before** `authorize`: a part that is not available is refused as not available, which clients can tell apart from not allowed.
+
+## Gate a screen element
+
+An element of a screen that is bound to a command or a query is offered only when the caller may use it **and** the part it binds is available. A button bound to a command and a table bound to a query follow the same path the command or query follows: suspension first, then the gates down the module, the feature, the slice and the construct, and then `authorize`. You write nothing for that; it is derived. A renderer that asks for the availability of an element is told whether it is available, unavailable because the part is not in the caller's offer (`NotAvailable`) or because an operator suspended it (`Suspended`), unavailable because the caller may not use it, or undecided.
+
+You can also gate an element yourself. A gate goes on a screen `action` or `data` element, one form per line as everywhere else:
+
+```screenplay
+screen VesselScreen
+  data Vessel via query VesselByKey by vesselId
+    available for Plus
+  action ReportVessel for screen
+    label "Report"
+    available for Plus and not Incident
+```
+
+- **An element gate can only narrow.** The derived path always applies, so a gate on an element is added to it. A gate that can be on while the bound command or query is not available is broader than the part and is reported (`PLAY1172`); narrow it or remove it.
+- **With no bound command or query a gate would be presentation only.** Nothing can refuse a request there, so a gate on such an element would hide nothing the system enforces. Only the `action` and `data` elements bind a command or a query, and they are the only elements that take a gate today; an element with nothing bound (a section, a table, a summary, a component) takes none, and a renderer decides what it shows from the elements it holds.
+- **Availability is asked with the data the screen shows.** An element is asked with the values of the data on the screen, for example one vessel through `provide vessel ... by arguments.vesselId`, not only with the tenant and the user.
+- **An element gate is part of the executable model from ESM v59.** A model with no gate on a screen element keeps its earlier version, and the member is written only when an element has a gate.
+- **The reference evaluator offers everything.** Unless it is given the audiences of the caller and the parts an operator suspended, it reports every element available, as specifications run. Given them, it reports the path of the bound part and the explicit gate, and leaves a `when` condition undecided because it reads context the model does not evaluate.
 
 ## Rules the language holds
 
@@ -76,6 +97,7 @@ A screen action, a form or a reaction that `invokes` a command whose audiences c
 | `PLAY1137` | Availabilities that build on each other in a cycle |
 | `PLAY1138` | A `when` that reads a value nothing provides |
 | `PLAY1139` | An invocation of a command that can be unavailable |
+| `PLAY1172` | The gate on a screen `action` or `data` element is broader than the command or query it binds |
 | `PLAY1140`, `PLAY1141` | An unexpected token or an unclosed parenthesis in a gate |
 
 ## How a refusal reads

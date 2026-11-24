@@ -154,7 +154,7 @@ sealed class ExecutableScreenResolver(ApplicationSyntax syntax, SemanticCompilat
             id,
             screen.Name,
             screen.Title,
-            [.. screen.Data.Select(data => new SemanticScreenData(Identity(data.QueryId, owner, $"shows query '{data.Query}'"), [.. data.Fields.Select(field => new SemanticScreenField(field.Property, field.Label))]) { By = data.By })],
+            [.. screen.Data.Select(data => new SemanticScreenData(Identity(data.QueryId, owner, $"shows query '{data.Query}'"), [.. data.Fields.Select(field => new SemanticScreenField(field.Property, field.Label))]) { By = data.By, Available = SemanticAvailabilityBinder.Gates(data.Available) })],
             [.. screen.Actions.Select(action => Action(declaring, scope, owner, action))],
             [.. screen.Navigation.Select(navigation => new SemanticScreenNavigation(Target(scope, owner, navigation.Screen), navigation.Trigger) { By = navigation.By, Opens = navigation.Opens })],
             new([.. screen.Layout.Fits], Regions(screen.Layout.Regions)))
@@ -208,6 +208,7 @@ sealed class ExecutableScreenResolver(ApplicationSyntax syntax, SemanticCompilat
         return new(command, action.Label, action.Subject, [.. inputs])
         {
             When = action.When,
+            Available = SemanticAvailabilityBinder.Gates(action.Available),
             Then = action.Then is { } then ? Target(scope, owner, then) : null
         };
     }

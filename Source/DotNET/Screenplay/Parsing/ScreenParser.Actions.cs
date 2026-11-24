@@ -38,6 +38,7 @@ internal static partial class ScreenParser
     {
         readonly List<InteractionArgumentSyntax> _inputs = [];
         readonly List<PresentationValueSyntax> _presentation = [];
+        readonly List<AvailableSyntax> _available = [];
         string? _label = label;
         SourceLocation? _labelLocation = label is null ? null : location;
         ScreenNavigateSyntax? _navigate;
@@ -60,6 +61,7 @@ internal static partial class ScreenParser
             Subject = subject,
             Inputs = _inputs,
             Presentation = _presentation,
+            Available = _available,
             DirectiveLocations = _labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = _labelLocation }
         };
 
@@ -72,6 +74,9 @@ internal static partial class ScreenParser
                     break;
                 case "with":
                     if (ParsePlainActionInput(context, child, _inputs) is { } input) _inputs.Add(input);
+                    break;
+                case "available" when AvailabilityParser.IsGate(child.Content):
+                    AvailabilityParser.AddGate(context, child, _available);
                     break;
                 case "presentation":
                     if (ParsePresentation(context, child) is { } value) _presentation.Add(value);

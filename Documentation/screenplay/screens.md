@@ -58,6 +58,19 @@ issues the command and discovers its command-bound form. An action's `navigate t
 
 Screen `data ... via query ... by value` and `navigate ... by value` remain scalar lookups. They cannot supply a composite read-model key to a single-instance query. The compiler reports `PLAY0661`; no automatic screen repair is offered. Collection queries may filter by a subset. See [Read-model keys](readmodels.md#keys).
 
+## Gating an action or data element
+
+A screen `action` and a screen `data` directive take `available for`, `available when` and `available with` lines, one form per line. The element is already offered only when the part it binds is available and the caller may use it; the gate narrows that further, for example to hide a button from an audience the command is open to. A gate cannot widen what the command or query allows, and the compiler warns when it could (`PLAY1172`). See [Gate a screen element](availability.md#gate-a-screen-element).
+
+```screenplay
+screen VesselScreen
+  data Vessel via query VesselByKey by vesselId
+    available for Plus
+  action ReportVessel for screen
+    label "Report"
+    available for Plus and not Incident
+```
+
 ## Action subjects
 
 Choose whether an action applies to the selected data item (`for item`) or to the screen as a whole (`for screen`). Plain actions, guarded actions and action toolbar items accept that choice after the command or label, before an inline `label`. Plain actions also accept ordered `with <input> from <binding>` children.

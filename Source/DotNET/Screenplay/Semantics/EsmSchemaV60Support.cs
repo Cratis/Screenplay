@@ -13,12 +13,12 @@ public static class EsmSchemaV60Support
     /// <summary>
     /// Gets the language versions the schema declares.
     /// </summary>
-    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV58Support.LanguageVersions, LanguageVersion.V60];
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV59Support.LanguageVersions, LanguageVersion.V60];
 
     /// <summary>
     /// Gets the semantic versions the schema declares.
     /// </summary>
-    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV58Support.SemanticVersions, SemanticVersion.V60];
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV59Support.SemanticVersions, SemanticVersion.V60];
 
     /// <summary>
     /// Gets whether the schema declares a pair of versions.
@@ -27,7 +27,7 @@ public static class EsmSchemaV60Support
     /// <param name="semanticVersion">The semantic version.</param>
     /// <returns><c>true</c> when the pair is declared.</returns>
     public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
-        EsmSchemaV58Support.Supports(languageVersion, semanticVersion) ||
+        EsmSchemaV59Support.Supports(languageVersion, semanticVersion) ||
         (languageVersion == LanguageVersion.V60 && semanticVersion == SemanticVersion.V60);
 
     /// <summary>
@@ -43,6 +43,7 @@ public static class EsmSchemaV60Support
     internal static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application)
     {
         if (SemanticModelValidator.UsesGraphProjectionDeclaringSlices(application)) return (LanguageVersion.V60, SemanticVersion.V60);
+        if (SemanticModelValidator.UsesElementGates(application)) return (LanguageVersion.V59, SemanticVersion.V59);
         if (SemanticModelValidator.UsesNegatedAudiences(application)) return (LanguageVersion.V58, SemanticVersion.V58);
         if (SemanticModelValidator.UsesCodeProvides(application)) return (LanguageVersion.V57, SemanticVersion.V57);
         if (SemanticModelValidator.UsesFreeScreens(application)) return (LanguageVersion.V56, SemanticVersion.V56);

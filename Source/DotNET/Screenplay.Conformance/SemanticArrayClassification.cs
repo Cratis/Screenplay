@@ -47,7 +47,7 @@ internal static class SemanticArrayClassification
     static readonly string[] _ordered =
     [
         "application/provides", "modules/provides", "features/provides", "slices/provides",
-        "modules/available", "features/available", "slices/available", "commands/available", "queries/available", "screens/available",
+        "modules/available", "features/available", "slices/available", "commands/available", "queries/available", "screens/available", "actions/available", "data/available",
         "availabilities/requirements", "source/by",
         "appends/mappings", "appends/tags", "thenEvents/expectedTags",
         "captures/appends", "captures/children", "captures/map", "captures/nested", "captures/sourceEvents",

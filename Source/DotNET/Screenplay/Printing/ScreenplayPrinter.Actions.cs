@@ -15,7 +15,7 @@ public partial class ScreenplayPrinter
     {
         if (action.Label is not null) return true;
         if (action.Navigate is not null) return true;
-        return action.Inputs.Any() || action.Presentation.Any();
+        return action.Inputs.Any() || action.Presentation.Any() || action.Available.Any();
     }
 
     static void WriteActionPresentation(ScreenplayWriter writer, IEnumerable<PresentationValueSyntax> presentation)
@@ -45,6 +45,7 @@ public partial class ScreenplayPrinter
             writer.DirectiveLine($"label {ScreenplaySyntaxText.LocalizableString(action.Label)}", action, "label");
         }
 
+        WriteAvailable(writer, action.Available);
         foreach (var input in action.Inputs) writer.Line($"with {input.Name} from {input.Binding}", input);
         WriteActionPresentation(writer, action.Presentation);
         WriteActionNavigation(writer, action.Navigate);

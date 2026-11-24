@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.Ui;
 
 /// <summary>
@@ -31,6 +33,11 @@ public sealed record UiAction(string Command, string Label, string Subject, IRea
     /// Gets the HTTP route of the command, when the model has an executable model.
     /// </summary>
     public string? Route { get; init; }
+
+    /// <summary>
+    /// Gets the explicit <c>available</c> gates of the element as authored; they carry into the executable model and are not part of the serialized contract.
+    /// </summary>
+    internal IReadOnlyList<AvailableSyntax> Available { get; init; } = [];
 }
 
 /// <summary>

@@ -17470,6 +17470,16 @@
                     },
                     {
                       "kind": "ScreenDataSyntax",
+                      "available": [
+                        {
+                          "kind": "AvailableSyntax",
+                          "requirement": {
+                            "kind": "AudienceAvailabilityRequirementSyntax",
+                            "audience": "AuditTrail",
+                            "negated": false
+                          }
+                        }
+                      ],
                       "by": null,
                       "query": "ListCancelledInvoices",
                       "type": {

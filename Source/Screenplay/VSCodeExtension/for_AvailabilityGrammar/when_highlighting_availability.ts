@@ -32,6 +32,11 @@ const document = [
     '    slice StateChange S',
     '      available when $context.tenant == "a"',
     '      available for Staff and not Customers',
+    '      screen S',
+    '        action Record',
+    '          available for Staff and not Customers',
+    '        data R[] via query Q',
+    '          available with StaffOnly',
 ];
 
 describe('when highlighting availability', () => {
@@ -69,6 +74,14 @@ describe('when highlighting availability', () => {
         isKeyword(11, 'not').should.be.true;
         isKeyword(11, 'and').should.be.true;
         isKeyword(11, 'Customers').should.be.false;
+    });
+
+    it('should highlight the gate on a screen action and on screen data', () => {
+        isKeyword(14, 'available').should.be.true;
+        isKeyword(14, 'not').should.be.true;
+        isKeyword(14, 'Customers').should.be.false;
+        isKeyword(16, 'available').should.be.true;
+        isKeyword(16, 'with').should.be.true;
     });
 
     it('should not highlight the names as keywords', () => {

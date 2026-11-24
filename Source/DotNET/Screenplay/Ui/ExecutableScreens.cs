@@ -71,6 +71,7 @@ public static class ExecutableScreens
     // A screen that places an extension component is an ESM v52 screen; every other screen stays at the model's own version, or v42.
     static (LanguageVersion Language, SemanticVersion Semantic) BoundVersions(ExecutableSemanticModel model, IReadOnlyDictionary<SemanticId, ImmutableArray<SemanticScreen>> screens, ImmutableArray<SemanticScreen> free)
     {
+        if (screens.Values.SelectMany(found => found).Concat(free).Any(screen => screen.Data.Any(data => !data.Available.IsDefaultOrEmpty) || screen.Actions.Any(action => !action.Available.IsDefaultOrEmpty)) && !model.SemanticVersion.IsAtLeast(SemanticVersion.V59)) return (LanguageVersion.V59, SemanticVersion.V59);
         if (!free.IsEmpty && !model.SemanticVersion.IsAtLeast(SemanticVersion.V56)) return (LanguageVersion.V56, SemanticVersion.V56);
         if (screens.Values.SelectMany(found => found).Any(screen => !screen.Available.IsDefaultOrEmpty) && !model.SemanticVersion.IsAtLeast(SemanticVersion.V53)) return (LanguageVersion.V53, SemanticVersion.V53);
         if (screens.Values.SelectMany(found => found).Any(screen => !screen.Components.IsDefaultOrEmpty) && !model.SemanticVersion.IsAtLeast(SemanticVersion.V52)) return (LanguageVersion.V52, SemanticVersion.V52);

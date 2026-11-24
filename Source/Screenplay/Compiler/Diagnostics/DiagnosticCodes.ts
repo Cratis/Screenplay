@@ -705,6 +705,7 @@ export const DiagnosticCodes = {
     UnexpectedTokenInAvailable: 'PLAY1140',
     UnclosedAvailableGroup: 'PLAY1141',
     MisplacedNotInAvailable: 'PLAY1171',
+    ElementGateBroaderThanPart: 'PLAY1172',
     SecretConceptProjected: 'PLAY1142',
     ScreenWithoutPersona: 'PLAY1143',
     InvalidGraphCollect: 'PLAY1144',

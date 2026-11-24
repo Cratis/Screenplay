@@ -1308,8 +1308,9 @@ AvailabilityTerm        = Ident | "(", AvailabilityRequirement, ")" ;
    metadata only. $context.audiences holds the audiences of the tenant, the user and the system caller,
    and an unknown value never opens a gate. 'not' binds tighter than 'and', which binds tighter than 'or';
    it applies to one audience name, never to a group, to another 'not' or to an availability in 'with', and
-   'not' of an unknown audience is unknown, so the part stays closed (ESM v58). PLAY1130 to PLAY1141
-   and PLAY1171. *)
+   'not' of an unknown audience is unknown, so the part stays closed (ESM v58). A gate is also allowed on
+   a screen 'action' and a screen 'data' element, where it can only narrow what the bound command or
+   query allows (ESM v59). PLAY1130 to PLAY1141, PLAY1171 and PLAY1172. *)
 
 PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
 
@@ -2063,8 +2064,12 @@ ToolbarButton  = "button", ( Ident | String ), "title", LocalizableString,
 ToolbarConfirm = "confirm", LocalizableString, NL ;   (* asked before the command runs or the dialog opens *)
 
 DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
-                 [ "by", Ident ], NL
+                 [ "by", Ident ], NL,
+                 [ INDENT, { AvailableDecl }, DEDENT ]
                | NeedDecl ;
+
+(* An available gate on a data element, as on an action element below, can only narrow what the bound
+   query allows (ESM v59). PLAY1172 warns when it can be on while the query is not available.          *)
 
 (* A need: data a free screen reads and an adopting slice provides. The type is a shape name, a list
    when it ends in "[]"; "as" tells two needs of one shape apart, and the alias names the need in the
@@ -2105,6 +2110,7 @@ ActionOtherwise   = "otherwise", "hidden", NL
 
 ActionOption   = NavigateDecl
                | InteractionArgument
+               | AvailableDecl                       (* a plain command action only, ESM v59 *)
                | "label", LocalizableString, NL
                | "presentation", Ident, LocalizableString, NL ;
 (* Action presentation requires an explicit "for item" on a plain command action.

@@ -296,7 +296,14 @@ internal static partial class ScreenParser
         }
 
         var type = PropertyLineParser.ParseTypeRef(match.Groups[1].Value, line.Location);
-        return new ScreenDataSyntax(type, match.Groups[2].Value, match.Groups[3].Success ? match.Groups[3].Value : null, line.Location);
+        var available = new List<AvailableSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child) && LineText.FirstWord(child.Content) == "available" && AvailabilityParser.IsGate(child.Content))
+        {
+            context.Reader.TakeSignificant();
+            AvailabilityParser.AddGate(context, child, available);
+        }
+
+        return new ScreenDataSyntax(type, match.Groups[2].Value, match.Groups[3].Success ? match.Groups[3].Value : null, line.Location) { Available = available };
     }
 
     static ScreenDirectiveSyntax? ParseAction(ParserContext context, SourceLine line)

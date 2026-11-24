@@ -24,6 +24,8 @@ public class when_round_tripping_the_v60_golden : Specification
     [Fact] void should_select_language_v60() => _model.LanguageVersion.ShouldEqual(LanguageVersion.V60);
     [Fact] void should_name_the_declaring_slice() => Encoding.UTF8.GetString(_bytes).ShouldContain("\"declaringSlice\":");
     [Fact] void should_keep_the_negated_audience() => Encoding.UTF8.GetString(_bytes).ShouldContain("\"kind\":\"audience\",\"audience\":\"Preview\",\"negated\":true");
+    [Fact] void should_keep_screen_element_gates() => SemanticModelValidator.UsesElementGates(_model.Application).ShouldBeTrue();
     [Fact] void should_keep_graph_collects() => _model.Application.GraphQueries.Single(query => query.Name == "EmployeesInTeam").Collects.Length.ShouldEqual(2);
     [Fact] void should_leave_v58_unextended() => EsmSchemaV58Support.Supports(LanguageVersion.V60, SemanticVersion.V60).ShouldBeFalse();
+    [Fact] void should_leave_v59_unextended() => EsmSchemaV59Support.Supports(LanguageVersion.V60, SemanticVersion.V60).ShouldBeFalse();
 }

@@ -50,6 +50,7 @@ module Fleet
       screen ReportScreen
         available for Plus and not Incident
         action ReportVessel for screen
+          available for Plus and not Incident
 
     slice StateView Vessels
       query VesselByKey => Vessel optional
@@ -69,3 +70,5 @@ module Fleet
 
       screen VesselScreen
         available for Preview
+        data Vessel via query VesselByKey by vesselId
+          available for Plus

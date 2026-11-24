@@ -7,14 +7,14 @@ using Cratis.Screenplay.Extensions;
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 /// <summary>
-/// Supplies the ESM v60 golden: the v58 source plus a graph projection with its declaring slice.
+/// Supplies the ESM v60 golden: the v59 source plus a graph projection with its declaring slice.
 /// </summary>
 public static partial class canonical_serialization_golden_vectors
 {
     /// <summary>
-    /// Gets the source of the v60 golden, including the complete parcel lifecycle facts from v58.
+    /// Gets the source of the v60 golden, including the complete parcel lifecycle facts and screen-element gates from v59.
     /// </summary>
-    public static string GraphProjectionScopeSource => NegatedAudienceSource + """
+    public static string GraphProjectionScopeSource => ElementGateSource + """
 
 
         module Ownership

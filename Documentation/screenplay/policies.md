@@ -244,6 +244,8 @@ The screen elements a caller is offered follow from the policies, so nothing is 
 
 `SemanticScreenAvailability.Evaluate` reports each element as available, unavailable or undecided, with the policies that gate it and why. A missing instance denies, and an opaque predicate is undecided rather than available. The report presents the fact; the command or query still decides when it runs, so hiding an element is never a substitute for enforcement.
 
+An element is also unavailable when the part it binds is not: given the audiences of the caller and the parts an operator suspended, the report adds the availability path of the command or query (suspension, then the gates down module, feature, slice and construct) and any `available` gate on the element, before it asks about the policies. `Cause` says whether the caller is not authorized, the part is not available or the part is suspended. See [Gate a screen element](availability.md#gate-a-screen-element).
+
 ## Availability comes first
 
 `authorize` says who may do something. An `available` gate says whether it is there at all for the caller's tenant, user or system, and is decided first; a part that is not available is refused as not available, never as not allowed. See [audiences and availability](availability.md).

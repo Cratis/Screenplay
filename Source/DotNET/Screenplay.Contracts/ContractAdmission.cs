@@ -276,6 +276,7 @@ static class ContractAdmission
         new("availability", "audience Plus\navailability Sold\n  for Plus\n", Baseline: "audience Plus\n"),
         new("available", "audience Plus\nmodule M\n  available for Plus\n", Baseline: "audience Plus\nmodule M\n"),
         new("negated audience", "audience Plus\naudience Incident\nmodule M\n  available for Plus and not Incident\n", Baseline: "audience Plus\naudience Incident\nmodule M\n  available for Plus\n"),
+        new("element gate", "audience Plus\n" + Slice + Event + Command + "      screen Input\n        action Record\n          available for Plus\n", Baseline: "audience Plus\n" + Slice + Event + Command + "      screen Input\n        action Record\n"),
         new("persona", "persona Person\n"),
         new("user", "persona Person\nuser ada \"Ada\" as Person\n", Baseline: "persona Person\n"),
         new("storyline", "module M\nstoryline Journey \"A journey\"\n  module M \"Start here\"\n", Baseline: "module M\n"),

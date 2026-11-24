@@ -5,6 +5,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AvailabilityRequirementSyntax, AvailabilitySyntax, AvailableSyntax, availabilityLeaves } from '../Syntax/Availability';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
+import type { ScreenActionSyntax, ScreenDataSyntax } from '../Syntax/Screens';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '../Syntax/Structure';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
 import { audienceLocationKey } from './AvailabilityParser';
@@ -111,8 +112,17 @@ export function validateAvailabilityInvocations(application: ApplicationSyntax, 
     const collection = new Collection();
     for (const module of application.modules) collection.module(module);
     for (const invocation of collection.invocations) {
-        const target = collection.commands.get(invocation.command);
+        const target = (invocation.kind === 'screen data' ? collection.queries : collection.commands).get(invocation.command);
         if (target === undefined || target.length === 0) continue;
+        if (invocation.explicit === true) {
+            if (canBeOffWhileOn(invocation.gates, target, blocks)) {
+                context.warning(
+                    DiagnosticCodes.ElementGateBroaderThanPart,
+                    `The available gate on this ${invocation.kind} element is broader than the ${invocation.kind === 'screen data' ? 'query' : 'command'} '${invocation.command}' it binds, which can be unavailable while the gate holds - an element gate can only narrow what its bound part allows, so narrow the gate or remove it`,
+                    invocation.location);
+            }
+            continue;
+        }
         if (canBeOffWhileOn(invocation.gates, target, blocks)) {
             context.warning(
                 DiagnosticCodes.AvailabilityHidesInvokedCommand,
@@ -193,10 +203,12 @@ interface Invocation {
     readonly command: string;
     readonly gates: readonly AvailableSyntax[];
     readonly location: SourceLocation;
+    readonly explicit?: boolean;
 }
 
 class Collection {
     readonly commands = new Map<string, readonly AvailableSyntax[]>();
+    readonly queries = new Map<string, readonly AvailableSyntax[]>();
     readonly invocations: Invocation[] = [];
 
     module(module: ModuleSyntax): void {
@@ -215,13 +227,21 @@ class Collection {
         for (const command of slice.commands) {
             if (!this.commands.has(command.name)) this.commands.set(command.name, [...gates, ...(command.available ?? [])]);
         }
+        for (const query of slice.queries) {
+            if (!this.queries.has(query.name)) this.queries.set(query.name, [...gates, ...(query.available ?? [])]);
+        }
         for (const screen of slice.screens) {
             const screenGates = [...gates, ...(screen.available ?? [])];
             const invocations = this.invocations;
             new class extends ScreenplaySyntaxWalker {
                 override visitNode(node: SyntaxNode): void {
                     if (node.kind === 'ScreenActionSyntax') {
-                        invocations.push({ kind: 'screen action', command: (node as unknown as { readonly command: string }).command, gates: screenGates, location: node.location });
+                        const action = node as unknown as ScreenActionSyntax;
+                        const own = action.available ?? [];
+                        invocations.push({ kind: 'screen action', command: action.command, gates: [...screenGates, ...own], location: node.location, explicit: own.length > 0 });
+                    } else if (node.kind === 'ScreenDataSyntax' && ((node as unknown as ScreenDataSyntax).available ?? []).length > 0) {
+                        const data = node as unknown as ScreenDataSyntax;
+                        invocations.push({ kind: 'screen data', command: data.query, gates: [...screenGates, ...(data.available ?? [])], location: node.location, explicit: true });
                     }
                 }
             }().visitScreen(screen);
