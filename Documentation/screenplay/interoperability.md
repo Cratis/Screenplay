@@ -387,7 +387,7 @@ the variable. The specs execute every vector and check that the published bytes 
 
 ### Protected reads of refused keys
 
-A host that renders [protected command reads](commands.md#keys-the-event-store-refuses) must answer a key the event store refuses (empty, whitespace-only, `*`, containing `#`, or padded with whitespace) with the missing-view `Validation` outcome, not an error from its store client, even when the world holds an instance at that key. `ProtectedCommandReadsCorpus.V25` carries the vectors `RefusedEmptyKey`, `RefusedWhitespaceKey`, `RefusedStarKey`, `RefusedHashKey`, `RefusedPaddedKey` and `RefusedStarKeyWithStoredInstance`. See [decision 0091](https://github.com/Cratis/Screenplay/blob/main/decisions/0091-protected-reads-treat-keys-the-event-store-refuses-as-missing.md).
+A host that renders [protected command reads](commands.md#keys-the-event-store-refuses) must answer a key the event store refuses (empty, whitespace-only, `*`, containing `#`, or padded with whitespace) with the missing-view `Validation` outcome and exact message `<ReadModel> does not exist.`, not an error from its store client, even when the world holds an instance at that key. Missing instances use the same keyless message. Neither refusal includes runtime keys or event details; refused-key shapes, validation ordering and world preservation are unchanged. `ProtectedCommandReadsCorpus.V25` carries the vectors `RefusedEmptyKey`, `RefusedWhitespaceKey`, `RefusedStarKey`, `RefusedHashKey`, `RefusedPaddedKey` and `RefusedStarKeyWithStoredInstance`. See [decision 0170](https://github.com/Cratis/Screenplay/blob/main/decisions/0170-protected-read-refusals-omit-keys.md), which supersedes 0091.
 
 ### Protected command read race vectors
 
@@ -398,7 +398,7 @@ Race vector fixture version **1** proves the [protected command read](commands.m
 (which declares `command reads protected`), its identity catalog, canonical ESM bytes and semantic revision. The files live in
 `Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/races-v1/`. Verify the SHA-256 of the exact bytes; do not reserialize first.
 
-The original bytes, `Version` and `Sha256` remain frozen. The additive **V1R2** revision exposes `BytesV1R2`, `VersionV1R2`,
+[Decision 0170](https://github.com/Cratis/Screenplay/blob/main/decisions/0170-protected-read-refusals-omit-keys.md) re-pins both fixtures for the keyless missing-view message, a scoped correction to their frozen bytes. Take the updated bytes and hashes together; fixture versions, vector order and the model are unchanged. Apart from that correction, the original bytes, `Version` and `Sha256` remain frozen. The additive **V1R2** revision exposes `BytesV1R2`, `VersionV1R2`,
 `Sha256V1R2` and `ModelV1R2`. Its `races.v1r2.json` lives in the sibling `races-v1r2/` directory and keeps fixture contract version **1**,
 all sixteen V1 vectors unchanged and in order, and the same source, identity catalog, ESM v25 bytes and semantic revision.
 It adds `read-race-and-late-uniqueness-claim`: a later fact changes the protected state while another claims the value captured by the
