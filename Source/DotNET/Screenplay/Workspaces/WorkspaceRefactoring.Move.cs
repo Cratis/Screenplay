@@ -235,6 +235,9 @@ internal sealed partial class WorkspaceRefactoring
         }
     }
 
+    static bool SelectsMovedSlice(NavigationTargetSyntax navigation, NavigationScreenTargets? screens, SemanticAddress target) =>
+        screens is not null && target.Kind == SemanticKind.Slice && screens.SelectsSlice(navigation, string.Join('.', target.Parts.Skip(1).Select(part => part.Key)));
+
     WorkspaceAuthoringResult MoveCore(WorkspaceMoveRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
@@ -259,8 +262,9 @@ internal sealed partial class WorkspaceRefactoring
         if (collision is not null) throw new InvalidWorkspaceAuthoring($"Destination collision with '{MoveAddress(collision.Address)}' at '{Position(workspace.Documents, collision)}'.");
 
         var movedNames = request.Target.Parts.Skip(1).Select(part => part.Key).ToArray();
+        var navigationScreens = NavigationScreens(index);
         var navigationTarget = index.Entries.FirstOrDefault(entry => entry.Node is NavigationTargetSyntax navigation &&
-            NavigationNames(navigation).Take(movedNames.Length).SequenceEqual(movedNames));
+            (NavigationNames(navigation).Take(movedNames.Length).SequenceEqual(movedNames) || SelectsMovedSlice(navigation, navigationScreens, request.Target)));
         if (navigationTarget is not null)
         {
             throw new InvalidWorkspaceAuthoring($"'{MoveAddress(request.Target)}' is the target of a navigation item at '{Position(workspace.Documents, navigationTarget)}'. Move it and the navigation 'target' with explicit coordinated typed edits; moving does not rewrite navigation targets.");

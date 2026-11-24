@@ -41,6 +41,13 @@ public sealed partial class ScreenplayPrinter
         _ => "navigation"
     };
 
+    static string NavigationTargetText(NavigationTargetSyntax target)
+    {
+        var feature = target.Feature is null ? string.Empty : "." + target.Feature;
+        var screen = target.Screen is null ? string.Empty : $" screen {target.Screen}";
+        return $" target {target.Module}{feature}{screen}";
+    }
+
     void WriteOutlets(ScreenplayWriter writer, IEnumerable<OutletSyntax> outlets)
     {
         foreach (var outlet in outlets)
@@ -125,13 +132,18 @@ public sealed partial class ScreenplayPrinter
         }
     }
 
-    void WriteNavigationItemNode(ScreenplayWriter writer, NavigationItemSyntax item)
+    string NavigationItemLine(NavigationItemSyntax item)
     {
         var line = $"item {WriteItemId(item.Id)} title {ScreenplaySyntaxText.LocalizableString(item.Title)}";
         if (item.Icon is not null) line += $" icon {WriteItemValue(item.Icon)}";
-        if (item.Target is { } target) line += $" target {target.Module}{(target.Feature is null ? string.Empty : "." + target.Feature)}";
+        if (item.Target is { } target) line += NavigationTargetText(target);
         if (item.Slot is not null) line += $" slot {item.Slot}";
-        writer.Line(ItemHead(item, line), item);
+        return line;
+    }
+
+    void WriteNavigationItemNode(ScreenplayWriter writer, NavigationItemSyntax item)
+    {
+        writer.Line(ItemHead(item, NavigationItemLine(item)), item);
         using (writer.Indent())
         {
             foreach (var child in item.Children)

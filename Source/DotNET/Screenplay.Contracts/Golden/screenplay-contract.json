@@ -85414,6 +85414,39 @@
           "meaning": "The recommended maximum number of exposed operations, in decimal."
         }
       ]
+    },
+    {
+      "code": "PLAY1168",
+      "name": "UnknownNavigationScreen",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Navigation names no executable screen in the exact target feature.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1169",
+      "name": "AmbiguousNavigationScreen",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Navigation names competing executable screens in the exact target feature.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY1170",
+      "name": "NonPageNavigationScreen",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Navigation selects a screen that cannot fit a page.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

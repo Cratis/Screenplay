@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { beforeEach, afterEach, describe, it, expect } from 'vitest';
+import { should } from 'chai';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairSession } from '../RepairSession';
@@ -10,6 +11,7 @@ import { removeSpecFixtureDirectory, specFixtureDirectory } from '../tests/specF
 import { privateMetadataDirectory, privateMetadataDirectoryTimeout } from '../tests/privateMetadataDirectory';
 import { serverExecutable, serverAvailable, repairSource, missingEventSource, refusedEventSource } from '../tests/repairFixture';
 
+should();
 // The JS-only CI lane has no C# tool. The explicit process gate requires its native artifact.
 describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub)', () => {
     let root: string;
@@ -106,11 +108,25 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         session.invalidate();
         await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'UnauthorizedApply' });
     });
-    // Safety does not depend on any file-watcher notification: no watcher is attached here, so the
-    // pinned server-side Apply validation alone must refuse every external change after review.
+    for (const drift of ['bytes', 'deleted', 'renamed']) it(`should refuse unnotified source ${drift} before dispatch without recovery`, async () => {
+        const preview = await session.preview((await session.discover()).choices[0].token);
+        const source = path.join(root, 'application.play');
+        if (drift === 'bytes') fs.writeFileSync(source, Buffer.alloc(fs.statSync(source).size, 32));
+        else if (drift === 'deleted') fs.unlinkSync(source);
+        else fs.renameSync(source, path.join(root, 'renamed.play'));
+        const snapshot = new Map(fs.readdirSync(root).map(file => [file, fs.readFileSync(path.join(root, file))]));
+        const failure = await session.apply(preview.token).then(() => undefined, (error: unknown) => error);
+        (failure as { kind: string }).kind.should.equal('StaleSource');
+        session.recoveryRequired.should.equal(false);
+        fs.readdirSync(root).should.deep.equal([...snapshot.keys()]);
+        for (const [file, bytes] of snapshot) fs.readFileSync(path.join(root, file)).equals(bytes).should.equal(true);
+        fs.existsSync(path.join(root, '.screenplay')).should.equal(false);
+        await session.apply(preview.token).then(() => { throw new Error('Old token accepted.'); }, (error: { kind: string }) => error.kind.should.equal('UnauthorizedApply'));
+    });
+    // No watcher is attached. Evidence, untouched source-set and identity drift remain the server's
+    // authority and therefore retain the conservative post-dispatch recovery behavior.
     const unnotifiedDrift: { name: string; kind: string; change: () => void }[] = [
         { name: 'attachment evidence', kind: 'RepairEvidenceDrift', change: () => fs.writeFileSync(path.join(root, 'Handler.cs'), 'changed') },
-        { name: 'source bytes', kind: 'DiskDrift', change: () => fs.appendFileSync(path.join(root, 'application.play'), '// externally edited\n') },
         { name: 'source set', kind: 'DiskDrift', change: () => fs.writeFileSync(path.join(root, 'sibling.play'), 'concept Additional : String\n') },
         { name: 'identity state', kind: 'IdentityStateDrift', change: () => { privateMetadataDirectory(path.join(root, '.screenplay')); fs.writeFileSync(path.join(root, '.screenplay', 'identities.json'), 'external-state'); } }
     ];

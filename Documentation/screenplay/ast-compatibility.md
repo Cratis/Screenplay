@@ -101,6 +101,12 @@ ESM v25 writes the distinct optional final application member `commandReadMode: 
 
 ESM v21 generation has only authored pattern/checksum, exact Int64 min/max, or implementation requirement id members, according to strategy. No current year, support counts, proof status or body bytes serialize. A ValueGeneration requirement and its Now/Tenant typed-context descriptor belong to the same compilation and attachment manifest; an ESM-only reader cannot invent them. Consumers explicitly admit v21 or reject it. Earlier ESM and corpus bytes are frozen.
 
+## Navigation screen targets
+
+`NavigationTargetSyntax` adds optional init-only `Screen` (JSON/TypeScript `screen`), a selected page-capable executable screen in the exact `Module.Feature` path. The existing C# three-argument constructor and three-output `Deconstruct` remain unchanged. Old JSON without `screen` still reads and serializes without the member; the schema does not require it. Omitting it preserves the consumer's landing fallback. Missing or invalid explicit destinations do not fall back during compiler validation.
+
+The member survives syntax printing, JSON and walking; hierarchy refactorings keep it, while renaming a selected screen or moving its owning slice requires coordinated typed edits. Scene conversion and Stage need consumer updates to preserve and honor the destination. No executable UI-contract version or global startup policy changes here.
+
 ## Outlets
 
 Screenplay 6 replaced `LayoutSyntax.Navigation`, `ModuleSyntax.Navigation`, `ModuleSyntax.Toolbars`, `FeatureSyntax.Toolbars` and `SlotSyntax.Contributes` with outlets: a layout, screen template, dialog template, module, feature and screen carry an init-only `Outlets` collection of `OutletSyntax` (`Name`, a nullable `Kind`, `Mode`, `Items`, and optional `Subject`, `Slot`, `Hides` and `Logo`). The JSON omits `outlets` when empty. `OutletKind` (`Actions`, `Filters`, `Tabs`, `Stats`, `Navigation`), `OutletMode` (`Unspecified`, `Inherit`, `Extend`, `Override`) and `OutletPlacement` (`Before`, `After`) are append-only enums: a declaration carries a kind and no mode, a lower level a mode and no kind. Items derive from `OutletItemSyntax` (`Id`, `Title`, `IsDefault`, `Position`): `ToolbarButtonSyntax`, `OutletGroupSyntax`, `OutletFilterSyntax`, `OutletTabSyntax`, `OutletStatSyntax` and `NavigationItemSyntax`, which nests sub-items in `Children` and holds its target in `NavigationTargetSyntax`. `ContributionSyntax.Items` holds the items a contribution adds. See [Outlets](outlets.md).

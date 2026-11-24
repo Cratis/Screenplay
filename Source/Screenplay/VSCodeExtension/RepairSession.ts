@@ -15,6 +15,7 @@ import { RepairSnapshot } from './RepairSnapshot';
 import { PreviewFile } from './PreviewFile';
 import { RepairPreview } from './RepairPreview';
 import { RetainedRepair } from './RetainedRepair';
+import { RepairSourceSnapshot } from './RepairSourceSnapshot';
 export type { SavedVersions } from './SavedVersions';
 export type { ServerDiagnostic } from './ServerDiagnostic';
 export type { RepairPreview } from './RepairPreview';
@@ -236,6 +237,7 @@ export class RepairSession {
             if (changes.length !== integer(proposal.changeCount) || changes.length > 64) throw new RepairFailure('PreviewTooLarge', 'Incomplete or oversized change plan; Apply is disabled.');
             let bytes = 0;
             const files: PreviewFile[] = [];
+            const sourceEntries: { beforePath: unknown; afterPath: unknown; before: Buffer | null; after: Buffer | null }[] = [];
             for (const value of changes) {
                 const change = object(value);
                 const documentId = text(change.documentId);
@@ -254,7 +256,9 @@ export class RepairSession {
                     }, side === 'before' ? before.revision : after.revision, expectedBytes === null ? null : integer(expectedBytes));
                 }
                 files.push(file);
+                sourceEntries.push({ beforePath: change.beforePath, afterPath: change.afterPath, before: file.before, after: file.after });
             }
+            const sources = new RepairSourceSnapshot(sourceEntries);
             const state = object(proposal.stateChange);
             if (relativeFile(state.path) !== '.screenplay/identities.json') throw new RepairFailure('MalformedContract', 'Unexpected identity-state path.');
             const identity: PreviewFile = { path: '.screenplay/identities.json', before: null, after: null };
@@ -275,7 +279,7 @@ export class RepairSession {
             this.#check(snapshot.epoch, snapshot.versions);
             const preview: RepairPreview = { token: randomUUID(), binding: { root: this.launch.root, proposalId, beforeRevision: before.revision, afterRevision: after.revision, beforeEvidence, candidateEvidence }, title: choice.title, code: choice.code, files, authoring, executable, executableReady: after.executableReady, droppedComments, ...(choice.retiredAddresses ? { retiredAddresses: choice.retiredAddresses } : {}) };
             // Only a FULLY collected source AND state review obtains an apply token.
-            this.#retained = { preview, snapshot, proposalId, beforeEvidence, candidateEvidence, afterRevision: after.revision, afterCatalog: after.catalog, changeCount: changes.length, dispatched: false };
+            this.#retained = { preview, snapshot, sources, proposalId, beforeEvidence, candidateEvidence, afterRevision: after.revision, afterCatalog: after.catalog, changeCount: changes.length, dispatched: false };
             this.#phase = 'review'; this.trace('preview:retained');
             return preview;
         } catch (error) {
@@ -295,7 +299,10 @@ export class RepairSession {
             const result = await this.#client.tool('apply', {
                 proposalId: retained.proposalId, expectedRevision: snapshot.revision, expectedCatalogRevision: snapshot.catalog,
                 ...(retained.beforeEvidence ? { expectedRepairEvidenceRevision: retained.beforeEvidence } : {}),
-            }, undefined, () => this.#check(snapshot.epoch, snapshot.versions), () => {
+            }, undefined, () => {
+                this.#check(snapshot.epoch, snapshot.versions);
+                retained.sources.check(this.launch.root);
+            }, () => {
                 retained.dispatched = true; // Write attempt: no cancellation or retry after this boundary.
                 this.#reconnectRequired = true; // Barrier starts at dispatch, not an incidental rename.
                 this.invalidate('apply-dispatch'); // Retain the dispatched record, but expire all old review authority.
@@ -309,6 +316,7 @@ export class RepairSession {
                 this.#uncertain = true;
                 throw new RepairFailure('ApplyOutcomeUnknown', 'Apply was dispatched. Changes may exist. Do not retry; inspect workspace-state and review recovery separately.', error);
             }
+            if (error instanceof RepairFailure && error.kind === 'StaleSource') this.invalidate('stale-source');
             throw error;
         } finally { this.#busy = false; this.#applying = false; }
     }

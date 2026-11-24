@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateNavigationScreenTargets } from '../Parsing/NavigationScreenTargetValidator';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateSpecificationCases } from '../Parsing/SpecificationCaseValidator';
 import { expandSpecificationExamples, validateSpecificationExampleTypes } from '../Parsing/SpecificationCommandExamples';
@@ -98,6 +99,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     context.interactionUses.push(...effectiveStructuralInteractions(merged.value).filter(site => 'behavior' in site),
         ...parsed.flatMap(document => document.interactionUses).filter(site => site.ancestors.some(ancestor => ancestor.keyword === 'screen')));
     context.continuationValues.push(...parsed.flatMap(document => document.continuationValues));
+    validateNavigationScreenTargets(merged.value, context);
     validateSpecificationCases(merged.value, context);
     validateSpecificationExampleTypes(merged.value, context, deferImportedExampleTypes);
     const effective = expandSpecificationExamples(merged.value);

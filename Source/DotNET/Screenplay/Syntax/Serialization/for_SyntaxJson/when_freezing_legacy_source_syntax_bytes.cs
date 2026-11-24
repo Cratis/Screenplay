@@ -94,6 +94,7 @@ public partial class when_freezing_legacy_source_syntax_bytes
         "lifecycles",
         "extension-references",
         "extension-components",
+        "navigation-screen-targets",
     ];
 
     [Fact]

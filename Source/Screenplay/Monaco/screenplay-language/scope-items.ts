@@ -233,7 +233,14 @@ export const toolbarItems: CompletionEntry[] = [
     { label: 'button (opens)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} opens ${4|dialog,drawer,in slot detail|}', documentation: 'A hook that opens its slice\'s screen in a dialog, a drawer or a named slot.' },
 ];
 
+const navigationScreenItem: CompletionEntry = {
+    label: 'item (with screen)',
+    insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature} screen ${4:Screen}',
+    documentation: 'Selects one page-capable executable screen in the exact feature, instead of its default landing screen. Requires an updated renderer.',
+};
+
 export const navigationItems: CompletionEntry[] = [
+    navigationScreenItem,
     { label: 'logo', insertText: 'logo image "${1:/logo.svg}" title "${2:Application}"', documentation: 'The application logo. Declared once, in a layout.' },
     { label: 'item', insertText: 'item ${1:id} title "${2:Title}" target ${3:Module.Feature}', documentation: 'A navigation item with a title, an optional `icon`, a `target` module or feature and an optional rendering `slot`. Sidebar items may nest `item` lines.' },
     { label: 'item (with slot)', insertText: 'item ${1:id} title "${2:Title}" icon ${3:icon} target ${4:Module.Feature} slot ${5:content}', documentation: 'A navigation item that renders its target into a named layout slot.' },
@@ -241,6 +248,7 @@ export const navigationItems: CompletionEntry[] = [
 
 // Under 'outlet <name> of <kind>' on a layout or template: the items it shows by default.
 export const outletDeclarationItems: CompletionEntry[] = [
+    { ...navigationScreenItem, label: 'default item (with screen)', insertText: navigationScreenItem.insertText.replace(/^item /, 'default ') },
     { label: 'default button', insertText: 'default ${1:id} title "${2:Title}" ${3|runs close,runs submit,runs refresh,slice Module.Feature.Slice|}', documentation: 'A default action. `runs` names a built-in; a placeholder without a slice is filled by a lower level.' },
     { label: 'default item', insertText: 'default ${1:id} title "${2:Title}" target ${3:Module}', documentation: 'A default navigation item.' },
     { label: 'default filter', insertText: 'default ${1:id} title "${2:Title}" sets ${3:Query}.${4:param}', documentation: 'A default filter bound to a query parameter.' },
@@ -251,6 +259,7 @@ export const outletDeclarationItems: CompletionEntry[] = [
 
 // Under 'outlet <name> inherits|extends|overrides' on a module, feature or screen.
 export const outletChangeItems: CompletionEntry[] = [
+    navigationScreenItem,
     { label: 'hide', insertText: 'hide ${1:id}', documentation: 'Drops an inherited item.' },
     { label: 'button (runs)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} for item\n    runs\n    enabled when item.${4:status} == "${5:open}"', documentation: 'A hook that issues its slice\'s command directly, without a form, when every input resolves from the item.' },
     { label: 'button (opens)', insertText: 'button ${1:id} title "${2:Title}" slice ${3:Module.Feature.Slice} opens ${4|dialog,drawer,in slot detail|}', documentation: 'A hook that opens its slice\'s screen in a dialog, a drawer or a named slot.' },

@@ -1685,11 +1685,21 @@ Both compilers check these forms. Repairs require individual review (`CanFixAll:
 
 ## Navigation outlets
 
+An item's optional `screen` requires an explicit feature-qualified `target`, even on a grouping parent. Repeated, missing, quoted or dotted screen operands are `PLAY0741`.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY1168` | Error | The exact target feature has no executable screen with the selected name. Free screens must have been adopted there by their owning slice; descendant-feature screens do not qualify. |
+| `PLAY1169` | Error | More than one executable screen in the exact target feature has the selected name. |
+| `PLAY1170` | Error | The selected screen declares `fits` without `page`. A screen with no `fits`, or including `page` among several placements, is page-capable. |
+
+Explicit destinations never silently select a different screen. Omitting `screen` retains the consumer's fallback; see [Navigation](navigation.md#choose-a-features-landing-screen). Both compilers validate screen destinations in module, feature and screen outlets, including free screens. The TypeScript compiler does not validate layout or template defaults, whose bodies remain opaque. Both skip screen resolution for a target outside the declaring module; C# reports `PLAY0750` instead.
+
 The items of a navigation outlet - `outlet <name> of navigation` on a layout or template, and `outlet <name> inherits|extends|overrides` on a module, feature or screen. See [Navigation](navigation.md). The reference checks run in the C# compiler; the TypeScript compiler parses a module's, feature's or screen's items and reports their form. The canonical corpus pins `PLAY0744`, `PLAY0748`, `PLAY0749` and `PLAY0905` as rejection vectors beside the `screen-shell-navigation-positive` shell, and a stale or breaking MCP edit meets the same codes (see [Author the application shell](mcp/authoring-tools.md#author-the-application-shell)).
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0741` | Error | A navigation item is not a well formed `item <id> title "…" [icon X] [target Module[.Feature]] [slot name]`: no or an unquoted title, an unknown or repeated part, or text under an item that is not a sub-item. |
+| `PLAY0741` | Error | A navigation item is not a well formed `item <id> title "…" [icon X] [target Module[.Feature] [screen Screen]] [slot name]`: no or an unquoted title, an unknown or repeated part, or text under an item that is not a sub-item. |
 | `PLAY0743` | Error | A `logo` line is not `logo image "…" title "…"`. |
 | `PLAY0744` | Error | A `logo` is declared below the layout - in a template, module, feature or screen outlet - or a layout declares a second logo. The logo belongs to the application. |
 | `PLAY0748` | Error | An item has neither a target nor sub-items, or targets a module or feature the document does not declare. Mirrors Scene `navTargetMissing`. |
