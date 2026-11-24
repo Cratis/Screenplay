@@ -412,7 +412,7 @@ internal static partial class InteractionParser
         _ => ReportUnknownAction(context, line)
     };
 
-    static InteractionActionSyntax? ParseExecuteAction(ParserContext context, SourceLine line)
+    static ExecuteCommandActionSyntax? ParseExecuteAction(ParserContext context, SourceLine line)
     {
         var match = ExecuteRegex().Match(line.Content);
         if (!match.Success)
@@ -441,7 +441,7 @@ internal static partial class InteractionParser
         return new NavigateActionSyntax(match.Groups[1].Value, line.Location);
     }
 
-    static InteractionActionSyntax? ParseOpenDialogAction(ParserContext context, SourceLine line)
+    static OpenDialogActionSyntax? ParseOpenDialogAction(ParserContext context, SourceLine line)
     {
         var match = OpenDialogRegex().Match(line.Content);
         if (!match.Success)
@@ -453,7 +453,7 @@ internal static partial class InteractionParser
         return new OpenDialogActionSyntax(match.Groups[1].Value, line.Location);
     }
 
-    static InteractionActionSyntax? ParseCloseDialogAction(ParserContext context, SourceLine line)
+    static CloseDialogActionSyntax? ParseCloseDialogAction(ParserContext context, SourceLine line)
     {
         if (!CloseDialogRegex().IsMatch(line.Content))
         {
@@ -464,7 +464,7 @@ internal static partial class InteractionParser
         return new CloseDialogActionSyntax(line.Location);
     }
 
-    static InteractionActionSyntax? ParseRefreshAction(ParserContext context, SourceLine line)
+    static RefreshQueryActionSyntax? ParseRefreshAction(ParserContext context, SourceLine line)
     {
         var match = RefreshRegex().Match(line.Content);
         if (!match.Success)
@@ -476,7 +476,7 @@ internal static partial class InteractionParser
         return new RefreshQueryActionSyntax(match.Groups[1].Value, line.Location);
     }
 
-    static InteractionActionSyntax? ParseSetAction(ParserContext context, SourceLine line)
+    static SetStateActionSyntax? ParseSetAction(ParserContext context, SourceLine line)
     {
         var match = SetRegex().Match(line.Content);
         if (!match.Success)
@@ -488,7 +488,7 @@ internal static partial class InteractionParser
         return new SetStateActionSyntax(match.Groups[1].Value, match.Groups[2].Value.Trim(), line.Location);
     }
 
-    static InteractionActionSyntax? ParseNotifyAction(ParserContext context, SourceLine line)
+    static NotifyActionSyntax? ParseNotifyAction(ParserContext context, SourceLine line)
     {
         var match = NotifyRegex().Match(line.Content);
         if (!match.Success)
@@ -507,7 +507,7 @@ internal static partial class InteractionParser
         return new NotifyActionSyntax(level, MessageText(match, 2), line.Location) { MessageIsLiteral = match.Groups[2].Success };
     }
 
-    static InteractionActionSyntax? ParseConfirmAction(ParserContext context, SourceLine line)
+    static ConfirmActionSyntax? ParseConfirmAction(ParserContext context, SourceLine line)
     {
         var match = ConfirmRegex().Match(line.Content);
         if (!match.Success)
@@ -519,7 +519,7 @@ internal static partial class InteractionParser
         return new ConfirmActionSyntax(MessageText(match, 1), line.Location) { MessageIsLiteral = match.Groups[1].Success };
     }
 
-    static InteractionActionSyntax? ParseRaiseAction(ParserContext context, SourceLine line)
+    static RaiseTriggerActionSyntax? ParseRaiseAction(ParserContext context, SourceLine line)
     {
         var match = RaiseRegex().Match(line.Content);
         if (!match.Success)
