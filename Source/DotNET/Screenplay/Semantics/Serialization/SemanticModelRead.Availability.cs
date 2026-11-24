@@ -54,6 +54,7 @@ internal static partial class SemanticModelRead
         Object(ref reader, "availability requirement");
         var seen = NewSeen();
         string? kind = null, audience = null, availability = null, op = null;
+        var negated = false;
         SemanticAvailabilityCondition? condition = null;
         SemanticAvailabilityRequirement? left = null, right = null;
         while (NextProperty(ref reader, seen, "availability requirement") is { } property)
@@ -62,6 +63,7 @@ internal static partial class SemanticModelRead
             {
                 case "kind": kind = String(ref reader, property); break;
                 case "audience": audience = String(ref reader, property); break;
+                case "negated": negated = Boolean(ref reader, property); if (!negated) throw Malformed("availability requirement", "a negated audience written as true, or no negated member"); break;
                 case "availability": availability = String(ref reader, property); break;
                 case "operator": op = String(ref reader, property); break;
                 case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = AvailabilityCondition(ref reader); break;
@@ -73,10 +75,10 @@ internal static partial class SemanticModelRead
 
         return kind switch
         {
-            "audience" when !string.IsNullOrEmpty(audience) && availability is null && op is null && condition is null && left is null && right is null => new SemanticAudienceRequirement(audience),
-            "availability" when !string.IsNullOrEmpty(availability) && audience is null && op is null && condition is null && left is null && right is null => new SemanticAvailabilityReference(availability),
-            "condition" when condition is not null && audience is null && availability is null && op is null && left is null && right is null => new SemanticConditionRequirement(condition),
-            "logical" when (op == "and" || op == "or") && left is not null && right is not null && audience is null && availability is null && condition is null =>
+            "audience" when !string.IsNullOrEmpty(audience) && availability is null && op is null && condition is null && left is null && right is null => new SemanticAudienceRequirement(audience, negated),
+            "availability" when !negated && !string.IsNullOrEmpty(availability) && audience is null && op is null && condition is null && left is null && right is null => new SemanticAvailabilityReference(availability),
+            "condition" when !negated && condition is not null && audience is null && availability is null && op is null && left is null && right is null => new SemanticConditionRequirement(condition),
+            "logical" when !negated && (op == "and" || op == "or") && left is not null && right is not null && audience is null && availability is null && condition is null =>
                 new SemanticLogicalAvailability(left, op == "and" ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, right),
             _ => throw Malformed("availability requirement", "an audience, an availability, a condition or a logical requirement")
         };

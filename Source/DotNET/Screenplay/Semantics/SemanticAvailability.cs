@@ -27,10 +27,12 @@ public sealed record SemanticAvailability(string Name, ImmutableArray<SemanticAv
 public abstract record SemanticAvailabilityRequirement;
 
 /// <summary>
-/// Holds when the caller's tenant, user or system holds the audience.
+/// Holds when the caller's tenant, user or system holds the audience, or - when negated - when the audience is known and not held.
+/// A negated audience that is unknown stays unknown, so it never opens a gate.
 /// </summary>
 /// <param name="Audience">The audience name.</param>
-public sealed record SemanticAudienceRequirement(string Audience) : SemanticAvailabilityRequirement;
+/// <param name="Negated">Whether the requirement is <c>not &lt;Audience&gt;</c>.</param>
+public sealed record SemanticAudienceRequirement(string Audience, bool Negated = false) : SemanticAvailabilityRequirement;
 
 /// <summary>
 /// Holds when the named, reusable availability holds.
