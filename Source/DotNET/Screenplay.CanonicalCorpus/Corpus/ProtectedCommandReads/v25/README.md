@@ -21,6 +21,10 @@ identity; semantic declaration identities are deterministic from their addresses
 `expected/esm-v25.json` and `expected/semantic-revision.txt` pin the executable
 contract; `expected/legacy-diagnostics.json` pins the refusal control.
 
+Missing instances and refused protected-read keys both reject with the keyless
+`<View> does not exist.` validation message (decision 0170). Runtime keys are not
+included; refused-key shapes, lookup ordering and world preservation are unchanged.
+
 Regenerate only this corpus with
 `SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25=1` while running
 `for_ProtectedCommandReadsCorpus.when_loading_v25_source.should_select_v25_only_with_the_mode`.

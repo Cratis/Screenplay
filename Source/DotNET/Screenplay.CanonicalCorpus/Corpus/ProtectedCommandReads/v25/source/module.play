@@ -55,7 +55,7 @@ module Storage
         when Consume
           id = "target"
           sourceId = "missing"
-        then error "Current 'missing' does not exist."
+        then error "Current does not exist."
       specification MissingFromNonEmpty
         given Stored
           for "other"
@@ -63,7 +63,7 @@ module Storage
         when Consume
           id = "target"
           sourceId = "missing"
-        then error "Current 'missing' does not exist."
+        then error "Current does not exist."
       specification MissingAfterRemoval
         given Stored
           for "reference"
@@ -73,7 +73,7 @@ module Storage
         when Consume
           id = "target"
           sourceId = "reference"
-        then error "Current 'reference' does not exist."
+        then error "Current does not exist."
       specification MissingAfterOtherRecreation
         given Stored
           for "reference"
@@ -86,7 +86,7 @@ module Storage
         when Consume
           id = "target"
           sourceId = "reference"
-        then error "Current 'reference' does not exist."
+        then error "Current does not exist."
       specification ReadRecreatedState
         given Stored
           for "reference"
@@ -110,7 +110,7 @@ module Storage
           id = "target"
           sourceId = "missing"
           approved = false
-        then error "Current 'missing' does not exist."
+        then error "Current does not exist."
       specification RequirementAfterPresence
         given Stored
           for "reference"
@@ -124,7 +124,7 @@ module Storage
         when AllocateReceipt
           id = "target"
           sourceId = "missing"
-        then error "Current 'missing' does not exist."
+        then error "Current does not exist."
       specification GenerationAfterPresence
         given Stored
           for "reference"
@@ -159,27 +159,27 @@ module Storage
         when Consume
           id = "target"
           sourceId = ""
-        then error "Current '' does not exist."
+        then error "Current does not exist."
       specification RefusedWhitespaceKey
         when Consume
           id = "target"
           sourceId = "   "
-        then error "Current '   ' does not exist."
+        then error "Current does not exist."
       specification RefusedStarKey
         when Consume
           id = "target"
           sourceId = "*"
-        then error "Current '*' does not exist."
+        then error "Current does not exist."
       specification RefusedHashKey
         when Consume
           id = "target"
           sourceId = "a#b"
-        then error "Current 'a#b' does not exist."
+        then error "Current does not exist."
       specification RefusedPaddedKey
         when Consume
           id = "target"
           sourceId = " padded "
-        then error "Current ' padded ' does not exist."
+        then error "Current does not exist."
       specification RefusedStarKeyWithStoredInstance
         given Stored
           for "*"
@@ -187,7 +187,7 @@ module Storage
         when Consume
           id = "target"
           sourceId = "*"
-        then error "Current '*' does not exist."
+        then error "Current does not exist."
     slice StateView State
       readmodel Current
         id String key
@@ -221,4 +221,4 @@ module Storage
           for "request"
           destination = "target"
           sourceId = "missing"
-        then error "Current 'missing' does not exist."
+        then error "Current does not exist."

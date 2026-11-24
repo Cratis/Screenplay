@@ -103,25 +103,25 @@ public static class ProtectedCommandReadsCorpus
         var workflow = SemanticAddress.ForSlice(application, "Storage", "Decisions", "Workflow");
         (string Name, string? Error, int Count)[] cases =
         [
-            ("MissingFromEmpty", "Current 'missing' does not exist.", 0),
-            ("MissingFromNonEmpty", "Current 'missing' does not exist.", 1),
-            ("MissingAfterRemoval", "Current 'reference' does not exist.", 2),
-            ("MissingAfterOtherRecreation", "Current 'reference' does not exist.", 3),
+            ("MissingFromEmpty", "Current does not exist.", 0),
+            ("MissingFromNonEmpty", "Current does not exist.", 1),
+            ("MissingAfterRemoval", "Current does not exist.", 2),
+            ("MissingAfterOtherRecreation", "Current does not exist.", 3),
             ("ReadRecreatedState", null, 4),
-            ("AbsenceBeforeRequirement", "Current 'missing' does not exist.", 0),
+            ("AbsenceBeforeRequirement", "Current does not exist.", 0),
             ("RequirementAfterPresence", "Approval required.", 1),
-            ("AbsenceBeforeGeneration", "Current 'missing' does not exist.", 0),
+            ("AbsenceBeforeGeneration", "Current does not exist.", 0),
             ("GenerationAfterPresence", null, 1),
             ("ReadPathRequirementRejectsEmpty", "The stored value must not be empty.", 1),
             ("ReadPathMappingAcrossSources", null, 2),
-            ("RefusedEmptyKey", "Current '' does not exist.", 0),
-            ("RefusedWhitespaceKey", "Current '   ' does not exist.", 0),
-            ("RefusedStarKey", "Current '*' does not exist.", 0),
-            ("RefusedHashKey", "Current 'a#b' does not exist.", 0),
-            ("RefusedPaddedKey", "Current ' padded ' does not exist.", 0),
-            ("RefusedStarKeyWithStoredInstance", "Current '*' does not exist.", 1),
+            ("RefusedEmptyKey", "Current does not exist.", 0),
+            ("RefusedWhitespaceKey", "Current does not exist.", 0),
+            ("RefusedStarKey", "Current does not exist.", 0),
+            ("RefusedHashKey", "Current does not exist.", 0),
+            ("RefusedPaddedKey", "Current does not exist.", 0),
+            ("RefusedStarKeyWithStoredInstance", "Current does not exist.", 1),
             ("ReactionInvokesProtectedRead", null, 2),
-            ("ReactionInvokesProtectedReadOfMissing", "Current 'missing' does not exist.", 1)
+            ("ReactionInvokesProtectedReadOfMissing", "Current does not exist.", 1)
         ];
         return [.. cases.Select(value => new CanonicalCorpusSpecificationExpectation
         {

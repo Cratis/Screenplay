@@ -19,7 +19,8 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 /// is a key value plus a set of event contracts, and a conflict is a fact after the boundary whose event contract is in the set and
 /// whose destination equals the key, compared ordinally. A constraint rejection from settlement takes precedence over a conflict.
 /// The additive V1R2 fixture pins that precedence while preserving the original fixture. The window between settlement and the guarded write is a host obligation
-/// and is not covered by these vectors.
+/// and is not covered by these vectors. Both fixture revisions use keyless protected-read refusals; decision 0170
+/// re-pins their bytes for that message correction without changing the fixture shape, vector order or model.
 /// </remarks>
 public static class ProtectedCommandReadRaceVectors
 {
@@ -31,7 +32,7 @@ public static class ProtectedCommandReadRaceVectors
     /// <summary>
     /// The lowercase SHA-256 of the exact UTF-8 fixture bytes, including the trailing newline.
     /// </summary>
-    public const string Sha256 = "c964b1529ea7fb11659926aea3acbdb055d969aa5737d4c7c07fb93d193c59f7";
+    public const string Sha256 = "499a34f60da62466d1b1c7af79773b2e7783f72367fc7bbd1157c65f4575528e";
 
     /// <summary>
     /// The fixture contract version used by the additive V1R2 revision; its shape is unchanged from V1.
@@ -41,7 +42,7 @@ public static class ProtectedCommandReadRaceVectors
     /// <summary>
     /// The lowercase SHA-256 of the exact UTF-8 V1R2 fixture bytes, including the trailing newline.
     /// </summary>
-    public const string Sha256V1R2 = "8912d53a4772c39b1396ba3407e242c4c14e692f24cfa02e0de463565d774728";
+    public const string Sha256V1R2 = "fd1c9972411f9b5fe2745e1108ede1911f5071c4e836a9b5481dc9b59943d0fb";
 
     const string ApplicationName = "ProtectedCommandReadRaces";
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.ProtectedCommandReads.races_v1";

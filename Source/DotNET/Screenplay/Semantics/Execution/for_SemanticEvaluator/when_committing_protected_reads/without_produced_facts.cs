@@ -26,6 +26,6 @@ public class without_produced_facts : given.a_protected_command
     [Fact]
     void should_still_reject_absence()
     {
-        ((SemanticRejected)_evaluator.Execute(_plan, SemanticWorld.Empty, Request("NoFacts"))).Details.ShouldEqual("View 'read' does not exist.");
+        ((SemanticRejected)_evaluator.Execute(_plan, SemanticWorld.Empty, Request("NoFacts"))).Details.ShouldEqual("View does not exist.");
     }
 }
