@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Dependencies;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -77,6 +78,14 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
             yield return current;
             current = current.Parent is { } ancestor ? index.Find(ancestor) : null;
         }
+    }
+
+    static NavigationScreenTargets? NavigationScreens(WorkspaceSyntaxIndex index)
+    {
+        if (!index.Entries.Any(entry => entry.Node is NavigationTargetSyntax { Screen: not null })) return null;
+        return new(PlayFolderMerge.Merge(
+            index.Entries.Select(entry => entry.Node).OfType<ApplicationSyntax>()
+                .Select(application => new CompilationResult<ApplicationSyntax>(application, [])).ToArray()).Value!);
     }
 
     static void RejectOpaque(ImmutableArray<WorkspaceDocument> documents, WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry target, WorkspaceRenameRequest request)
@@ -229,10 +238,22 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         Conflicts = [new WorkspaceConflict { Kind = kind, Message = message }]
     };
 
+    static void RejectSelectedScreenRename(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry? target)
+    {
+        if (target?.Node is not ScreenSyntax screen) return;
+        var destinations = NavigationScreens(index);
+        if (destinations is null) return;
+        if (index.Entries.Select(entry => entry.Node).OfType<NavigationTargetSyntax>().Any(navigation => destinations.Resolve(navigation).Contains(screen)))
+        {
+            throw new InvalidWorkspaceAuthoring("A navigation item selects this screen. Rename it and the navigation 'screen' with explicit coordinated typed edits; renaming does not rewrite navigation screen targets.");
+        }
+    }
+
     WorkspaceAuthoringResult RenameCore(WorkspaceRenameRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
+        RejectSelectedScreenRename(index, target);
         var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
         if (target?.Node is ConstraintSyntax)
         {

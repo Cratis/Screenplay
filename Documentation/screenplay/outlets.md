@@ -50,7 +50,7 @@ A layout, screen template and dialog template declare outlets; a component does 
 | `filters` | `filter` | `filter <id> title "…" [sets <Query>.<param>]` - a control that sets a parameter of the query the screen shows. |
 | `tabs` | `tab` | `tab <id> title "…" [shows <Screen>]` - a screen shown in the slot the outlet is `in`. |
 | `stats` | `stat` | `stat <id> title "…" [value from <Query>.<field>]` - a figure read from a single-result query. |
-| `navigation` | `item` | `item <id> title "…" [icon <name>] [target <Module>[.<Feature>]] [slot <name>]`, nesting sub-items. See [Navigation](navigation.md). |
+| `navigation` | `item` | `item <id> title "…" [icon <name>] [target <Module>[.<Feature>] [screen <Screen>]] [slot <name>]`, nesting sub-items. See [Navigation](navigation.md). |
 
 An item of the wrong kind for its outlet is `PLAY0900`. The checks follow what each item names:
 
@@ -58,6 +58,8 @@ An item of the wrong kind for its outlet is `PLAY0900`. The checks follow what e
 - A filter's parameter must be a `by` or `filter` parameter of the query (`PLAY0901`).
 - A stat's query must return a single result, not a list (`PLAY0902`).
 - A tab's screen must exist (`PLAY0197`).
+
+A navigation item's optional `screen` selects a page-capable executable screen in the exact target feature; it requires a feature-qualified `target`. Omit it to keep the consumer's existing fallback. This is an item-local destination, not a global startup or logo policy, and needs updated Scene/Stage support. See [the landing-screen rules](navigation.md#choose-a-features-landing-screen).
 
 A navigation outlet on a layout also carries the application's one `logo image "…" title "…"`.
 

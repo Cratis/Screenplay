@@ -3,6 +3,8 @@ title: UI contract
 description: Export every screen of a Screenplay model as a stack-neutral JSON contract of its data, actions, navigation and layout, so any UI stack can build from it.
 ---
 
+Navigation outlets remain source syntax, not a new executable UI-contract field. Their optional `target Module.Feature screen Screen` destination is carried by `NavigationTargetSyntax.screen`; Scene conversion and Stage rendering need updates to honor it. This does not change the UI-contract version, initial `/` route or logo policy. See [navigation landing screens](navigation.md#choose-a-features-landing-screen).
+
 ## Build a UI on any stack from the model
 
 [Screens](screens.md) are written with Scene vocabulary. A builder for React

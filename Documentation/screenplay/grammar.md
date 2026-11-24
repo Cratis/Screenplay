@@ -869,7 +869,10 @@ ContributionDirective = NavigateDecl
    "hide" drops an inherited item; "before"/"after" under an item places it
    next to an inherited one. The logo is the application's and is declared
    once, in a layout's navigation outlet. "target" names a module, or a module
-   and a feature path; "slot" names a layout slot. See outlets.md.            *)
+   and a feature path; optional "screen" selects one page-capable executable
+    screen of that exact feature, requiring a feature-qualified target.
+    Without it, the consumer keeps its existing landing fallback. "slot"
+    names a layout slot. The clauses may occur in any order. See outlets.md.            *)
 
 OutletDecl     = "outlet", Ident, "of", OutletKind, [ "for", ( "item" | "screen" ) ], [ "in", Ident ], NL,
                  [ INDENT, { NavigationLogoDecl | "default", OutletItemBody }, DEDENT ] ;
@@ -894,7 +897,7 @@ OutletPosition = ( "before" | "after" ), Ident, NL ;
 NavigationLogoDecl = "logo", "image", String, "title", LocalizableString, NL ;
 
 NavigationItemDecl = "item", ( Ident | String ), "title", LocalizableString,
-                 [ "icon", ( Ident | String ) ], [ "target", QualifiedName ], [ "slot", Ident ], NL,
+                 [ "icon", ( Ident | String ) ], [ "target", QualifiedName ], [ "screen", Ident ], [ "slot", Ident ], NL,
                  [ INDENT, { NavigationItemDecl | OutletPosition }, DEDENT ] ;
 
 (* Screenplay 5 navigation regions. Since Screenplay 6 the form is an error
