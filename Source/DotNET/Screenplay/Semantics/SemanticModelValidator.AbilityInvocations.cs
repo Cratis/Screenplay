@@ -25,6 +25,12 @@ internal static partial class SemanticModelValidator
 
         SemanticAbilityAnswerValidator AbilityAnswerValidator => new((value, type, owner) => ValidateValue(value, type, owner, false));
 
+        static bool CarriesCommandInvocationData(SemanticInvocation invocation) =>
+            invocation.Command.IsSet || !invocation.Mappings.IsDefaultOrEmpty || !invocation.OnRefused.IsDefaultOrEmpty;
+
+        static bool NamesUndeclaredOutcome(SemanticInvocationBranch branch, SemanticAbility ability) =>
+            InvocationBranchScope.IsOutcome(branch.Selector) && !ability.Outcomes.Contains(branch.Selector);
+
         void ValidateAbilityInvocation(
             SemanticReaction reaction,
             SemanticReactionTrigger trigger,
@@ -45,9 +51,6 @@ internal static partial class SemanticModelValidator
             ValidateAbilityInputs(scope, invocation, system, ability);
             ValidateAbilityBranches(scope, invocation, system, ability);
         }
-
-        static bool CarriesCommandInvocationData(SemanticInvocation invocation) =>
-            invocation.Command.IsSet || !invocation.Mappings.IsDefaultOrEmpty || !invocation.OnRefused.IsDefaultOrEmpty;
 
         void ValidateAbilityInputs(
             AbilityInvocationScope scope,
@@ -99,9 +102,6 @@ internal static partial class SemanticModelValidator
                 }
             }
         }
-
-        static bool NamesUndeclaredOutcome(SemanticInvocationBranch branch, SemanticAbility ability) =>
-            InvocationBranchScope.IsOutcome(branch.Selector) && !ability.Outcomes.Contains(branch.Selector);
 
         SemanticAbility ResolveAbility(SemanticId system, string? name, string owner)
         {
