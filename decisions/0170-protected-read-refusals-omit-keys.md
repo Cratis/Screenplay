@@ -49,6 +49,26 @@ This is a **contract change** superseding 0091, not a behavior-preserving corpus
 7. No language or ESM version is allocated. Grammar, admission and serialization rules are unchanged. These are named
    corpus revisions; historical full ESM goldens remain untouched. Regeneration targets replacements, never originals.
 
+## Touches
+
+- `Source/DotNET/Screenplay/Semantics/Execution/SemanticCommandExecution.Reads.cs` and the four inline protected-read
+  spec files (`with_absent_state`, `with_refused_keys`, `with_ordered_validation`, `without_produced_facts`): keyless execution.
+- `Source/DotNET/Screenplay.CanonicalCorpus/ProtectedCommandReadsCorpus.cs`, `ProtectedCommandReadRaceVectors.cs`
+  and all existing `Corpus/ProtectedCommandReads/v25`, `races-v1`, `races-v1r2` resources: restoration only, byte-identical
+  to `9451970dc`, with dispositions kept outside these frozen artifacts.
+- `Source/DotNET/Screenplay.CanonicalCorpus/ProtectedReadReplacements.cs` and `ProtectedReadVectorDisposition.cs`:
+  named runnable definitions, replacement hashes and exact original dispositions.
+- `Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/v25-r2/**` and `races-v1r3/**`:
+  separately named replacement sources, expected bytes, revisions, fixtures and regeneration instructions.
+- `Source/DotNET/Screenplay.CanonicalVectors.Specs/for_ProtectedCommandReadsCorpus/when_loading_v25_source.cs`
+  and `when_loading_v25_replacement.cs`: strict original admission/serialization, exact disposed failures and normal
+  replacement passes across every source form.
+- `Source/DotNET/Screenplay.CanonicalVectors.Specs/for_ProtectedCommandReadRaceVectors/`: existing original execution
+  specs, `given/RaceVectorExecution.cs`, new `given/FrozenRaceVerification.cs` and `when_loading_the_v1r3_replacement.cs`:
+  original failure coverage, strict replacement outcomes and replacement-only regeneration.
+- `Documentation/screenplay/commands.md` and `interoperability.md`: keyless host mapping, frozen originals,
+  replacement names, dispositions and major release intent.
+
 ## Release intent
 
 **Major**, decided by L0 under Cratis/Strategy DEC-0045. The refusal text is a promised portable observable contract;
