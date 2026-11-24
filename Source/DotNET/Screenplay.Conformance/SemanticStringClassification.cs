@@ -31,7 +31,7 @@ internal static class SemanticStringClassification
     {
         "reads/key", "route/source", "from/source", "triggers/source", "response/source", "fields/source",
         "targets/properties", "mappings/target", "workflows/subject", "nodes/items", "navigation/screen", "actions/then", "handles/commands",
-        "ordering/sortBy", "operations/operation", "collects/row", "adoptions/screen",
+        "ordering/sortBy", "operations/operation", "collects/row", "adoptions/screen", "graphProjections/declaringSlice",
     };
 
     // Scoped literals whose property name is an identity name elsewhere.
