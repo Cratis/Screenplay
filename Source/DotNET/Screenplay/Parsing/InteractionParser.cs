@@ -120,80 +120,7 @@ internal static partial class InteractionParser
         }
 
         var name = match.Success ? match.Groups[1].Value : string.Empty;
-        var parameters = new List<BehaviorParameterSyntax>();
-        var bindings = new List<InteractionBindingSyntax>();
-        string? description = null;
-        int? order = null;
-        FileReferenceSyntax? file = null;
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-
-        while (context.TryPeekChild(header.Indent, out var line))
-        {
-            context.Reader.TakeSignificant();
-
-            if (FileReferenceParser.IsDirective(line))
-            {
-                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
-                continue;
-            }
-
-            switch (LineText.FirstWord(line.Content))
-            {
-                case "description":
-                    var previousDescription = description;
-                    description = DescriptionParser.Parse(context, line, description, $"behavior '{name}'");
-                    if (previousDescription is null && description is not null)
-                    {
-                        directiveLocations["description"] = line.Location;
-                    }
-
-                    break;
-                case "parameter":
-                    ParseParameter(context, line, parameters);
-                    break;
-                case "order":
-                    if (ParseOrder(context, line) is { } parsedOrder)
-                    {
-                        order = parsedOrder;
-                        if (directiveLocations.TryGetValue("order", out var previousOrder))
-                        {
-                            directiveLocations[$"omitted:order:{previousOrder.Line}"] = previousOrder;
-                        }
-
-                        directiveLocations["order"] = line.Location;
-                    }
-
-                    break;
-                case "on":
-                    if (ParseBinding(context, line) is { } binding)
-                    {
-                        bindings.Add(binding);
-                    }
-
-                    break;
-                default:
-                    context.Error(
-                        DiagnosticCodes.UnknownBehaviorDirective,
-                        $"Unexpected '{line.Content}' in behavior body - expected description, parameter, order or 'on <trigger>'",
-                        line.Location);
-                    context.SkipBlock(line.Indent);
-                    break;
-            }
-        }
-
-        if (bindings.Count == 0)
-        {
-            context.Warning(
-                DiagnosticCodes.BehaviorWithoutBindings,
-                $"Behavior '{name}' declares no bindings - nothing it is attached to will ever run anything",
-                header.Location);
-        }
-
-        return new(name, parameters, bindings, header.Location, description, order)
-        {
-            File = file,
-            DirectiveLocations = directiveLocations
-        };
+        return new BehaviorBody(context, header, name).Parse();
     }
 
     /// <summary>
@@ -288,98 +215,7 @@ internal static partial class InteractionParser
             return null;
         }
 
-        string? condition = null;
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-        var actions = new List<InteractionActionSyntax>();
-        var alternatives = new List<InteractionAlternativeSyntax>();
-        InteractionOtherwiseSyntax? otherwise = null;
-        var sawOtherwise = false;
-        var sawAlternative = false;
-
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "when")
-            {
-                sawAlternative = true;
-                if (sawOtherwise)
-                {
-                    context.Error(DiagnosticCodes.MisplacedActionOtherwise, "A 'when' alternative must precede 'otherwise'", child.Location);
-                }
-
-                if (ParseAlternative(context, child) is { } alternative) alternatives.Add(alternative);
-                continue;
-            }
-
-            if (LineText.FirstWord(child.Content) == "otherwise")
-            {
-                if (sawOtherwise || child.Content != "otherwise")
-                {
-                    context.Error(DiagnosticCodes.MisplacedActionOtherwise, "An interaction permits one final block-form 'otherwise'", child.Location);
-                }
-
-                sawOtherwise = true;
-                otherwise = new(ParseAlternativeActions(context, child), child.Location);
-                continue;
-            }
-
-            var where = WhereRegex().Match(child.Content);
-            if (where.Success)
-            {
-                if (condition is not null)
-                {
-                    context.Error(DiagnosticCodes.RepeatedInteractionCondition, "The binding already declares a 'where' guard - a binding has at most one", child.Location);
-                    continue;
-                }
-
-                condition = where.Groups[1].Value.Trim();
-                directiveLocations["where"] = child.Location;
-                continue;
-            }
-
-            if (ParseAction(context, child, 1) is { } action)
-            {
-                actions.Add(action);
-            }
-        }
-
-        if (sawAlternative || sawOtherwise)
-        {
-            if (!SupportsAlternatives(trigger))
-            {
-                context.Error(DiagnosticCodes.UnsupportedInteractionAlternatives, "Interaction alternatives are only supported on click, double click, select and change", line.Location);
-            }
-
-            if (actions.Count > 0 || condition is not null)
-            {
-                context.Error(DiagnosticCodes.MixedInteractionAlternatives, "Interaction alternatives cannot mix with plain actions or 'where'", line.Location);
-            }
-
-            if (!sawAlternative)
-            {
-                context.Error(DiagnosticCodes.GuardedActionWithoutAlternatives, "A guarded interaction requires at least one 'when' alternative", line.Location);
-            }
-        }
-        else if (actions.Count == 0)
-        {
-            context.Error(DiagnosticCodes.InteractionBindingWithoutActions, $"'{line.Content}' declares no actions - a trigger with nothing to do is never what was meant", line.Location);
-        }
-
-        if (condition is not null && DeprecatesWhere(trigger))
-        {
-            var location = directiveLocations["where"];
-            const string message = "Opaque 'where' on click, double click and select is deprecated; use block-form 'when' item conditions";
-            if (ParseStrictItemCondition(condition, location, context.SourceOptions) is not null)
-            {
-                context.Warning(DiagnosticCodes.LegacyInteractionWhere, message, location);
-            }
-            else
-            {
-                context.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.LegacyInteractionWhere, message, location));
-            }
-        }
-
-        return new(trigger, condition, actions, line.Location) { DirectiveLocations = directiveLocations, Alternatives = alternatives, Otherwise = otherwise };
+        return new BindingBody(context, line, trigger).Parse();
     }
 
     static InteractionTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
@@ -562,135 +398,146 @@ internal static partial class InteractionParser
         return true;
     }
 
-    static InteractionActionSyntax? ParseActionHeader(ParserContext context, SourceLine line)
+    static InteractionActionSyntax? ParseActionHeader(ParserContext context, SourceLine line) => LineText.FirstWord(line.Content) switch
     {
-        var content = line.Content;
-        switch (LineText.FirstWord(content))
+        "execute" => ParseExecuteAction(context, line),
+        "navigate" => ParseNavigateAction(context, line),
+        "open" => ParseOpenDialogAction(context, line),
+        "close" => ParseCloseDialogAction(context, line),
+        "refresh" => ParseRefreshAction(context, line),
+        "set" => ParseSetAction(context, line),
+        "notify" => ParseNotifyAction(context, line),
+        "confirm" => ParseConfirmAction(context, line),
+        "raise" => ParseRaiseAction(context, line),
+        _ => ReportUnknownAction(context, line)
+    };
+
+    static ExecuteCommandActionSyntax? ParseExecuteAction(ParserContext context, SourceLine line)
+    {
+        var match = ExecuteRegex().Match(line.Content);
+        if (!match.Success)
         {
-            case "execute":
-                {
-                    var match = ExecuteRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidExecuteAction, $"Invalid execute action '{content}' - expected 'execute <Command>'", line.Location);
-                        return null;
-                    }
-
-                    return new ExecuteCommandActionSyntax(match.Groups[1].Value, line.Location);
-                }
-
-            case "navigate":
-                {
-                    if (NavigateBackRegex().IsMatch(content))
-                    {
-                        return new NavigateBackActionSyntax(line.Location);
-                    }
-
-                    var match = NavigateToRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidNavigateAction, $"Invalid navigate action '{content}' - expected 'navigate to <Screen>' or 'navigate back'", line.Location);
-                        return null;
-                    }
-
-                    return new NavigateActionSyntax(match.Groups[1].Value, line.Location);
-                }
-
-            case "open":
-                {
-                    var match = OpenDialogRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidOpenDialogAction, $"Invalid open dialog action '{content}' - expected 'open dialog <DialogTemplate>'", line.Location);
-                        return null;
-                    }
-
-                    return new OpenDialogActionSyntax(match.Groups[1].Value, line.Location);
-                }
-
-            case "close":
-                if (!CloseDialogRegex().IsMatch(content))
-                {
-                    context.Error(DiagnosticCodes.InvalidOpenDialogAction, $"Invalid close action '{content}' - expected 'close dialog'", line.Location);
-                    return null;
-                }
-
-                return new CloseDialogActionSyntax(line.Location);
-
-            case "refresh":
-                {
-                    var match = RefreshRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidRefreshAction, $"Invalid refresh action '{content}' - expected 'refresh <Query>'", line.Location);
-                        return null;
-                    }
-
-                    return new RefreshQueryActionSyntax(match.Groups[1].Value, line.Location);
-                }
-
-            case "set":
-                {
-                    var match = SetRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidSetAction, $"Invalid set action '{content}' - expected 'set <target> to <value>'", line.Location);
-                        return null;
-                    }
-
-                    return new SetStateActionSyntax(match.Groups[1].Value, match.Groups[2].Value.Trim(), line.Location);
-                }
-
-            case "notify":
-                {
-                    var match = NotifyRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidNotifyAction, $"Invalid notify action '{content}' - expected 'notify <info|warning|error> \"<text>\"'", line.Location);
-                        return null;
-                    }
-
-                    var level = match.Groups[1].Value switch
-                    {
-                        "info" => NotificationLevel.Info,
-                        "warning" => NotificationLevel.Warning,
-                        _ => NotificationLevel.Error
-                    };
-
-                    return new NotifyActionSyntax(level, MessageText(match, 2), line.Location) { MessageIsLiteral = match.Groups[2].Success };
-                }
-
-            case "confirm":
-                {
-                    var match = ConfirmRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidConfirmAction, $"Invalid confirm action '{content}' - expected 'confirm \"<text>\"'", line.Location);
-                        return null;
-                    }
-
-                    return new ConfirmActionSyntax(MessageText(match, 1), line.Location) { MessageIsLiteral = match.Groups[1].Success };
-                }
-
-            case "raise":
-                {
-                    var match = RaiseRegex().Match(content);
-                    if (!match.Success)
-                    {
-                        context.Error(DiagnosticCodes.InvalidRaiseAction, $"Invalid raise action '{content}' - expected 'raise <ApplicationTrigger>'", line.Location);
-                        return null;
-                    }
-
-                    return new RaiseTriggerActionSyntax(match.Groups[1].Value, line.Location);
-                }
-
-            default:
-                context.Error(
-                    DiagnosticCodes.UnknownInteractionAction,
-                    $"Unexpected '{content}' where an action was expected - expected execute, navigate, open dialog, close dialog, refresh, set, notify, confirm or raise",
-                    line.Location);
-                return null;
+            context.Error(DiagnosticCodes.InvalidExecuteAction, $"Invalid execute action '{line.Content}' - expected 'execute <Command>'", line.Location);
+            return null;
         }
+
+        return new ExecuteCommandActionSyntax(match.Groups[1].Value, line.Location);
+    }
+
+    static InteractionActionSyntax? ParseNavigateAction(ParserContext context, SourceLine line)
+    {
+        if (NavigateBackRegex().IsMatch(line.Content))
+        {
+            return new NavigateBackActionSyntax(line.Location);
+        }
+
+        var match = NavigateToRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidNavigateAction, $"Invalid navigate action '{line.Content}' - expected 'navigate to <Screen>' or 'navigate back'", line.Location);
+            return null;
+        }
+
+        return new NavigateActionSyntax(match.Groups[1].Value, line.Location);
+    }
+
+    static OpenDialogActionSyntax? ParseOpenDialogAction(ParserContext context, SourceLine line)
+    {
+        var match = OpenDialogRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidOpenDialogAction, $"Invalid open dialog action '{line.Content}' - expected 'open dialog <DialogTemplate>'", line.Location);
+            return null;
+        }
+
+        return new OpenDialogActionSyntax(match.Groups[1].Value, line.Location);
+    }
+
+    static CloseDialogActionSyntax? ParseCloseDialogAction(ParserContext context, SourceLine line)
+    {
+        if (!CloseDialogRegex().IsMatch(line.Content))
+        {
+            context.Error(DiagnosticCodes.InvalidOpenDialogAction, $"Invalid close action '{line.Content}' - expected 'close dialog'", line.Location);
+            return null;
+        }
+
+        return new CloseDialogActionSyntax(line.Location);
+    }
+
+    static RefreshQueryActionSyntax? ParseRefreshAction(ParserContext context, SourceLine line)
+    {
+        var match = RefreshRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidRefreshAction, $"Invalid refresh action '{line.Content}' - expected 'refresh <Query>'", line.Location);
+            return null;
+        }
+
+        return new RefreshQueryActionSyntax(match.Groups[1].Value, line.Location);
+    }
+
+    static SetStateActionSyntax? ParseSetAction(ParserContext context, SourceLine line)
+    {
+        var match = SetRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSetAction, $"Invalid set action '{line.Content}' - expected 'set <target> to <value>'", line.Location);
+            return null;
+        }
+
+        return new SetStateActionSyntax(match.Groups[1].Value, match.Groups[2].Value.Trim(), line.Location);
+    }
+
+    static NotifyActionSyntax? ParseNotifyAction(ParserContext context, SourceLine line)
+    {
+        var match = NotifyRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidNotifyAction, $"Invalid notify action '{line.Content}' - expected 'notify <info|warning|error> \"<text>\"'", line.Location);
+            return null;
+        }
+
+        var level = match.Groups[1].Value switch
+        {
+            "info" => NotificationLevel.Info,
+            "warning" => NotificationLevel.Warning,
+            _ => NotificationLevel.Error
+        };
+
+        return new NotifyActionSyntax(level, MessageText(match, 2), line.Location) { MessageIsLiteral = match.Groups[2].Success };
+    }
+
+    static ConfirmActionSyntax? ParseConfirmAction(ParserContext context, SourceLine line)
+    {
+        var match = ConfirmRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidConfirmAction, $"Invalid confirm action '{line.Content}' - expected 'confirm \"<text>\"'", line.Location);
+            return null;
+        }
+
+        return new ConfirmActionSyntax(MessageText(match, 1), line.Location) { MessageIsLiteral = match.Groups[1].Success };
+    }
+
+    static RaiseTriggerActionSyntax? ParseRaiseAction(ParserContext context, SourceLine line)
+    {
+        var match = RaiseRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidRaiseAction, $"Invalid raise action '{line.Content}' - expected 'raise <ApplicationTrigger>'", line.Location);
+            return null;
+        }
+
+        return new RaiseTriggerActionSyntax(match.Groups[1].Value, line.Location);
+    }
+
+    static InteractionActionSyntax? ReportUnknownAction(ParserContext context, SourceLine line)
+    {
+        context.Error(
+            DiagnosticCodes.UnknownInteractionAction,
+            $"Unexpected '{line.Content}' where an action was expected - expected execute, navigate, open dialog, close dialog, refresh, set, notify, confirm or raise",
+            line.Location);
+        return null;
     }
 
     /// <summary>
