@@ -80,7 +80,7 @@ public static class ProtectedReadReplacements
         ProtectedCommandReadRaceVectors.Model.SemanticRevision,
         sha256,
         "ProtectedReadReplacements.RacesV1R3",
-        "rejected-decision",
+        "absent-then-created",
         "View 'read' does not exist.",
         "View does not exist.",
         0);

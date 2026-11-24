@@ -407,7 +407,7 @@ command's decision. Commit returns the `Constraint` rejection (`UniqueValue`), n
 Under [decision 0170](https://github.com/Cratis/Screenplay/blob/main/decisions/0170-protected-read-refusals-omit-keys.md),
 `ProtectedReadReplacements.RacesV1R3` is the runnable keyless replacement. Its `RacesV1R3Sha256` pins the exact bytes in
 `races-v1r3/races.v1r3.json`; `RaceModelV1R3` shares the frozen model. It preserves all seventeen V1R2 cases and fixture
-contract version **1**, changing only `rejected-decision`'s message to `View does not exist.`. This is a named corpus
+contract version **1**, changing only `absent-then-created`'s first commit message to `View does not exist.`. This is a named corpus
 revision, not an in-place re-pin or a new ESM version. The portable contract change requires a **major** release.
 
 Following [decision 0168](https://github.com/Cratis/Screenplay/blob/main/decisions/0168-dispose-stale-lifecycle-vectors-with-runnable-replacements.md),

@@ -37,7 +37,8 @@ public class when_loading_the_v1r3_replacement : Specification
     void should_differ_from_the_frozen_v1r2_only_at_the_disposed_message()
     {
         var original = JsonNode.Parse(ProtectedCommandReadRaceVectors.BytesV1R2.AsSpan())!;
-        var correction = original["vectors"]!.AsArray().Single(vector => vector!["name"]!.GetValue<string>() == "rejected-decision")!;
+        JsonNode.DeepEquals(original, _replacement).ShouldBeFalse();
+        var correction = original["vectors"]!.AsArray().Single(vector => vector!["name"]!.GetValue<string>() == "absent-then-created")!;
         correction["commits"]![0]!["expect"]!["message"]!.GetValue<string>().ShouldEqual("View 'read' does not exist.");
         correction["commits"]![0]!["expect"]!["message"] = "View does not exist.";
         JsonNode.DeepEquals(original, _replacement).ShouldBeTrue();
@@ -67,7 +68,7 @@ public class when_loading_the_v1r3_replacement : Specification
             disposition.Sha256.ShouldEqual(Hash(bytes.ToArray()));
             disposition.SemanticRevision.ShouldEqual(ProtectedCommandReadRaceVectors.Model.SemanticRevision);
             disposition.ReplacementVectorId.ShouldEqual("ProtectedReadReplacements.RacesV1R3");
-            disposition.CaseName.ShouldEqual("rejected-decision");
+            disposition.CaseName.ShouldEqual("absent-then-created");
             disposition.CommitIndex.ShouldEqual(0);
             disposition.OriginalMessage.ShouldEqual("View 'read' does not exist.");
             disposition.ReplacementMessage.ShouldEqual("View does not exist.");

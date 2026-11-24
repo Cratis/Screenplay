@@ -1,7 +1,7 @@
 # Protected-read races — runnable V1R3 replacement
 
 `ProtectedReadReplacements.RacesV1R3` contains all seventeen V1R2 cases with only
-`rejected-decision`'s refusal message changed to `View does not exist.`. Fixture
+`absent-then-created`'s first commit refusal message changed to `View does not exist.`. Fixture
 contract version 1, vector order and every other expectation remain unchanged.
 `RaceModelV1R3` shares V1's frozen source, identity catalog, ESM v25 bytes and revision.
 
