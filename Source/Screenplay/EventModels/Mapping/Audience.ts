@@ -100,7 +100,8 @@ export class Audience {
     private passes(requirement: AvailabilityRequirementSyntax, persona: PersonaActor, visiting: ReadonlySet<string>): boolean {
         switch (requirement.kind) {
             case 'AudienceAvailabilityRequirementSyntax':
-                return persona.audiences.has(requirement.audience);
+                // A persona's audiences are declared in full, so an audience it does not hold is known to be off and 'not' of it holds.
+                return requirement.negated ? !persona.audiences.has(requirement.audience) : persona.audiences.has(requirement.audience);
             case 'ConditionAvailabilityRequirementSyntax':
                 return true;
             case 'AvailabilityReferenceSyntax': {
@@ -151,7 +152,7 @@ function satisfies(requirement: PolicyRequirementSyntax, policies: ReadonlySet<s
 function describe(requirement: AvailabilityRequirementSyntax): string {
     switch (requirement.kind) {
         case 'AudienceAvailabilityRequirementSyntax':
-            return `for ${requirement.audience}`;
+            return requirement.negated ? `for not ${requirement.audience}` : `for ${requirement.audience}`;
         case 'AvailabilityReferenceSyntax':
             return `with ${requirement.availability}`;
         case 'ConditionAvailabilityRequirementSyntax':

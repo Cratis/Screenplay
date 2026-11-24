@@ -122,7 +122,26 @@ export function validateAvailabilityInvocations(application: ApplicationSyntax, 
     }
 }
 
+function hasNegation(requirement: AvailabilityRequirementSyntax, blocks: Blocks, expanding: Set<string>): boolean {
+    switch (requirement.kind) {
+        case 'AudienceAvailabilityRequirementSyntax':
+            return requirement.negated;
+        case 'LogicalAvailabilityRequirementSyntax':
+            return hasNegation(requirement.left, blocks, expanding) || hasNegation(requirement.right, blocks, expanding);
+        case 'AvailabilityReferenceSyntax': {
+            const block = blocks.get(requirement.availability);
+            if (block === undefined || expanding.has(requirement.availability)) return false;
+            expanding.add(requirement.availability);
+            return block.requirements.some(inner => hasNegation(inner, blocks, expanding));
+        }
+        default:
+            return false;
+    }
+}
+
 function canBeOffWhileOn(invoker: readonly AvailableSyntax[], target: readonly AvailableSyntax[], blocks: Blocks): boolean {
+    // A gate containing 'not' is opaque, like 'when': whether it can differ depends on audience grants the model cannot see.
+    if ([...invoker, ...target].some(gate => hasNegation(gate.requirement, blocks, new Set()))) return false;
     const audiences = [...new Set([...invoker, ...target].flatMap(gate => audiencesOf(gate.requirement, blocks, new Set())))];
     if (audiences.length === 0 || audiences.length > maximumAudiences) return false;
     for (let mask = 0; mask < 1 << audiences.length; mask++) {

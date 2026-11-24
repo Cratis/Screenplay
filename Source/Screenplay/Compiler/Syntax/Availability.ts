@@ -26,10 +26,11 @@ export interface AvailableSyntax extends SyntaxNode {
     readonly requirement: AvailabilityRequirementSyntax;
 }
 
-// An audience named by an 'available for'.
+// An audience named by an 'available for', or negated with 'not'.
 export interface AudienceAvailabilityRequirementSyntax extends SyntaxNode {
     readonly kind: 'AudienceAvailabilityRequirementSyntax';
     readonly audience: string;
+    readonly negated: boolean;
 }
 
 // An availability named by an 'available with'.
