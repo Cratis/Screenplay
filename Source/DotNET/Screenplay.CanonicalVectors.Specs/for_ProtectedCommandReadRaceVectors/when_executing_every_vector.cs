@@ -45,6 +45,6 @@ public class when_executing_every_vector : Specification
     [Fact]
     void should_match_every_outcome_through_the_public_calls()
     {
-        foreach (var vector in _vectors) RaceVectorExecution.Verify(_plan, vector!);
+        FrozenRaceVerification.Verify(_plan, _vectors, "ProtectedCommandReadRaceVectors.Bytes");
     }
 }

@@ -520,7 +520,7 @@
           "expect": {
             "outcome": "rejected",
             "category": "Validation",
-            "message": "View does not exist.",
+            "message": "View 'read' does not exist.",
             "world": [
               "Recorded"
             ]

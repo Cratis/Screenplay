@@ -18,12 +18,15 @@ internal static class RaceVectorExecution
 {
     internal const string RegenerationVariable = "SCREENPLAY_REGENERATE_PROTECTED_READ_RACES";
     internal const string RegenerationVariableV1R2 = "SCREENPLAY_REGENERATE_PROTECTED_READ_RACES_V1R2";
+    internal const string RegenerationVariableV1R3 = "SCREENPLAY_REGENERATE_PROTECTED_READ_RACES_V1R3";
     internal const string ApplicationName = "ProtectedCommandReadRaces";
     static readonly JsonSerializerOptions Options = new() { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     internal static string ResourcePath(string name, [CallerFilePath] string path = "") => FixturePath("races-v1", name, path);
 
     internal static string ResourcePathV1R2(string name, [CallerFilePath] string path = "") => FixturePath("races-v1r2", name, path);
+
+    internal static string ResourcePathV1R3(string name, [CallerFilePath] string path = "") => FixturePath("races-v1r3", name, path);
 
     static string FixturePath(string revision, string name, string path)
     {
@@ -51,53 +54,25 @@ internal static class RaceVectorExecution
         return compilation.Plan!;
     }
 
-    // Regenerates the model files first, then the vectors from the authoring table, then fails so the result is reviewed.
-    internal static void Regenerate()
-    {
-        var catalogBytes = SemanticIdentityCatalogSerializer.Serialize(SemanticIdentityCatalog.Empty(ApplicationIdentity.Create(ApplicationName))).ToImmutableArray();
-        var source = File.ReadAllText(ResourcePath("races.play"));
-        var compiled = Compile(source, catalogBytes);
-        Assert.True(compiled.Success, string.Join('\n', compiled.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        var model = compiled.Value!.Model;
-        File.WriteAllBytes(ResourcePath("identity-catalog.json"), [.. catalogBytes]);
-        File.WriteAllBytes(ResourcePath("esm-v25.json"), SemanticModelSerializer.Serialize(model));
-        File.WriteAllText(ResourcePath("semantic-revision.txt"), $"{model.Revision}\n", new UTF8Encoding(false));
+    internal static void Regenerate() => Assert.Fail($"V1 is frozen; use {RegenerationVariableV1R3} instead.");
 
-        var plan = Plan(model);
-        var vectors = new JsonArray();
-        foreach (var raceCase in RaceVectorCases.All) vectors.Add(Author(plan, raceCase));
-        var document = new JsonObject
-        {
-            ["version"] = 1,
-            ["model"] = new JsonObject { ["application"] = ApplicationName, ["esm"] = 25, ["source"] = "races.play" },
-            ["vectors"] = vectors
-        };
-        File.WriteAllText(ResourcePath("races.v1.json"), Format(document), new UTF8Encoding(false));
-        Assert.Fail($"Protected command read race vectors regenerated; review the diff, update ProtectedCommandReadRaceVectors.Sha256 deliberately, rebuild and rerun without {RegenerationVariable}.");
-    }
+    internal static void RegenerateV1R2() => Assert.Fail($"V1R2 is frozen; use {RegenerationVariableV1R3} instead.");
 
-    // Shares the frozen source/model with V1 and never writes any V1 resources.
-    internal static void RegenerateV1R2()
+    // Regenerates only the named replacement, sharing the frozen source/model and authoring table.
+    internal static void RegenerateV1R3()
     {
-        var original = JsonNode.Parse(File.ReadAllText(ResourcePath("races.v1.json")))!;
+        var original = JsonNode.Parse(File.ReadAllText(ResourcePathV1R2("races.v1r2.json")))!;
         var model = SemanticModelSerializer.Deserialize(File.ReadAllBytes(ResourcePath("esm-v25.json")));
         var plan = Plan(model);
         var vectors = new JsonArray();
         foreach (var raceCase in RaceVectorCases.AllV1R2) vectors.Add(Author(plan, raceCase));
-        var previous = original["vectors"]!.AsArray();
-        Assert.Equal(16, previous.Count);
-        Assert.Equal(previous.Count + 1, vectors.Count);
-        for (var index = 0; index < previous.Count; index++)
-        {
-            Assert.True(JsonNode.DeepEquals(previous[index], vectors[index]), $"V1 vector {index} changed; the additive revision must preserve it.");
-        }
-
+        Assert.Equal(17, vectors.Count);
         var document = original.DeepClone();
         document["vectors"] = vectors;
-        var destination = ResourcePathV1R2("races.v1r2.json");
+        var destination = ResourcePathV1R3("races.v1r3.json");
         Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
         File.WriteAllText(destination, Format(document), new UTF8Encoding(false));
-        Assert.Fail($"Protected command read race V1R2 vectors regenerated; review the diff, pin ProtectedCommandReadRaceVectors.Sha256V1R2, rebuild and rerun without {RegenerationVariableV1R2}.");
+        Assert.Fail($"V1R3 regenerated; review the diff and pin ProtectedReadReplacements.RacesV1R3Sha256, rebuild and rerun without {RegenerationVariableV1R3}. Originals were not written.");
     }
 
     internal static JsonObject Author(SemanticExecutionPlan plan, RaceCase raceCase)
@@ -148,7 +123,7 @@ internal static class RaceVectorExecution
         }
     }
 
-    static (JsonArray Dependencies, JsonArray Commits) Run(SemanticExecutionPlan plan, JsonNode vector)
+    internal static (JsonArray Dependencies, JsonArray Commits) Run(SemanticExecutionPlan plan, JsonNode vector)
     {
         var name = vector["name"]!.GetValue<string>();
         var evaluator = new SemanticEvaluator();

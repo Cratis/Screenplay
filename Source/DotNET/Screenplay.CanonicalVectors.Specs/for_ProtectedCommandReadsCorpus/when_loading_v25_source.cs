@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Runtime.CompilerServices;
+using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.CanonicalCorpus;
 using Cratis.Screenplay.Diagnostics;
@@ -13,6 +13,25 @@ namespace Cratis.Screenplay.CanonicalVectors.Specs.for_ProtectedCommandReadsCorp
 
 public class when_loading_v25_source : Specification
 {
+    static readonly Dictionary<string, (string Key, string Value)[]> RejectedStates = new(StringComparer.Ordinal)
+    {
+        ["MissingFromEmpty"] = [],
+        ["MissingAfterRemoval"] = [],
+        ["AbsenceBeforeRequirement"] = [],
+        ["AbsenceBeforeGeneration"] = [],
+        ["ReactionInvokesProtectedReadOfMissing"] = [],
+        ["RefusedEmptyKey"] = [],
+        ["RefusedWhitespaceKey"] = [],
+        ["RefusedStarKey"] = [],
+        ["RefusedHashKey"] = [],
+        ["RefusedPaddedKey"] = [],
+        ["RefusedStarKeyWithStoredInstance"] = [("*", "present")],
+        ["MissingFromNonEmpty"] = [("other", "unrelated")],
+        ["MissingAfterOtherRecreation"] = [("other", "recreated elsewhere")],
+        ["RequirementAfterPresence"] = [("reference", "present")],
+        ["ReadPathRequirementRejectsEmpty"] = [("reference", string.Empty)]
+    };
+
     SemanticCompilation[] _protected;
     CompilationResult<SemanticCompilation>[] _legacy;
 
@@ -26,18 +45,9 @@ public class when_loading_v25_source : Specification
             return result.Value!;
         })];
         _legacy = [.. ProtectedCommandReadsCorpus.LegacySourceForms.Select(Compile)];
-        VerifySpecifications(_protected[0].Model);
+        VerifySpecifications(_protected[0].Model, ProtectedCommandReadsCorpus.V25);
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25") == "1")
-        {
-            var root = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ProtectedCommandReads/v25");
-            Directory.CreateDirectory(Path.Combine(root, "expected"));
-            Directory.CreateDirectory(Path.Combine(root, "identity"));
-            File.WriteAllBytes(Path.Combine(root, "expected/esm-v25.json"), SemanticModelSerializer.Serialize(_protected[0].Model));
-            File.WriteAllText(Path.Combine(root, "expected/semantic-revision.txt"), $"{_protected[0].Model.Revision}\n");
-            File.WriteAllBytes(Path.Combine(root, "expected/legacy-diagnostics.json"), Diagnostics(_legacy[0]));
-            File.WriteAllBytes(Path.Combine(root, "identity/catalog-v1.json"), [.. ProtectedCommandReadsCorpus.SourceForms[0].IdentityCatalogBytes]);
-            Assert.Fail("Protected command reads corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25.");
-        }
+            Assert.Fail("V25 is frozen; use SCREENPLAY_REGENERATE_PROTECTED_COMMAND_READS_CORPUS_V25R2 instead.");
     }
 
     [Fact]
@@ -106,40 +116,14 @@ public class when_loading_v25_source : Specification
     {
         var vector = ProtectedCommandReadsCorpus.V25;
         vector.SpecificationExpectations.Length.ShouldEqual(19);
-        foreach (var form in _protected)
-        {
-            var compilation = SemanticExecutionPlan.Compile(form.Model);
-            Assert.True(compilation.Success, string.Join('\n', compilation.Issues.Select(issue => issue.Details)));
-            var plan = compilation.Plan!;
-            plan.Specifications.Count.ShouldEqual(vector.SpecificationExpectations.Length);
-            foreach (var expectation in vector.SpecificationExpectations)
-            {
-                var run = new SemanticSpecificationRunner().Run(plan, expectation.Specification);
-                Assert.True(run.Passed, $"{expectation.Name}: {string.Join('\n', run.Failures)}");
-                run.Execution.Kind.ShouldEqual(expectation.Outcome);
-                run.Execution.World.Facts.Length.ShouldEqual(expectation.WorldFactCount!.Value);
-                if (run.Execution is SemanticRejected rejected)
-                {
-                    rejected.Category.ShouldEqual(expectation.RejectionCategory!.Value);
-                    rejected.Details.ShouldEqual(expectation.RejectionMessage);
-                    VerifyRejectedState(plan, expectation.Name, rejected.World);
-                }
-            }
-        }
+        foreach (var form in _protected) VerifySpecifications(form.Model, vector);
     }
 
     static void VerifyRejectedState(SemanticExecutionPlan plan, string name, SemanticWorld world)
     {
-        (string Key, string Value)[] expected = name switch
-        {
-            "MissingFromEmpty" or "MissingAfterRemoval" or "AbsenceBeforeRequirement" or "AbsenceBeforeGeneration" or "ReactionInvokesProtectedReadOfMissing" or "RefusedEmptyKey" or "RefusedWhitespaceKey" or "RefusedStarKey" or "RefusedHashKey" or "RefusedPaddedKey" => [],
-            "RefusedStarKeyWithStoredInstance" => [("*", "present")],
-            "MissingFromNonEmpty" => [("other", "unrelated")],
-            "MissingAfterOtherRecreation" => [("other", "recreated elsewhere")],
-            "RequirementAfterPresence" => [("reference", "present")],
-            "ReadPathRequirementRejectsEmpty" => [("reference", string.Empty)],
-            _ => throw new InvalidSemanticContract($"No rejected-world expectation exists for '{name}'.")
-        };
+        var expected = RejectedStates.TryGetValue(name, out var states)
+            ? states
+            : throw new InvalidSemanticContract($"No rejected-world expectation exists for '{name}'.");
         world.ReadModels.Length.ShouldEqual(expected.Length);
         var view = plan.ReadModels.Values.Single();
         var valueProperty = view.Properties.Single(property => property.Name == "value").Id;
@@ -150,32 +134,49 @@ public class when_loading_v25_source : Specification
         }
     }
 
-    static void VerifySpecifications(ExecutableSemanticModel model)
+    internal static void VerifySpecifications(ExecutableSemanticModel model, CanonicalCorpusVector vector)
     {
         var compilation = SemanticExecutionPlan.Compile(model);
         Assert.True(compilation.Success, string.Join('\n', compilation.Issues.Select(issue => issue.Details)));
         var plan = compilation.Plan!;
-        plan.Specifications.Count.ShouldEqual(19);
-        foreach (var specification in plan.Specifications.Values)
+        plan.Specifications.Count.ShouldEqual(vector.SpecificationExpectations.Length);
+        var dispositions = vector.Name == ProtectedCommandReadsCorpus.V25.Name
+            ? ProtectedReadReplacements.SpecificationDispositions
+            : ImmutableArray<ProtectedReadVectorDisposition>.Empty;
+        var pending = dispositions.ToDictionary(disposition => disposition.CaseName, StringComparer.Ordinal);
+        foreach (var expectation in vector.SpecificationExpectations)
         {
-            var run = new SemanticSpecificationRunner().Run(plan, specification.Id);
-            Assert.True(run.Passed, $"{specification.Name}: {string.Join('\n', run.Failures)}");
+            pending.Remove(expectation.Name, out var disposition);
+            VerifyExecution(plan, expectation, disposition);
+        }
+        pending.ShouldBeEmpty();
+    }
+
+    static void VerifyExecution(SemanticExecutionPlan plan, CanonicalCorpusSpecificationExpectation expectation, ProtectedReadVectorDisposition? disposition)
+    {
+        var run = new SemanticSpecificationRunner().Run(plan, expectation.Specification);
+        if (disposition is null) Assert.True(run.Passed, $"{expectation.Name}: {string.Join('\n', run.Failures)}");
+        else
+        {
+            Assert.False(run.Passed);
+            Assert.Equal(disposition.ExpectedFailures.ToArray(), run.Failures.ToArray());
+        }
+        run.Execution.Kind.ShouldEqual(expectation.Outcome);
+        run.Execution.World.Facts.Length.ShouldEqual(expectation.WorldFactCount!.Value);
+        if (run.Execution is SemanticRejected rejected)
+        {
+            rejected.Category.ShouldEqual(expectation.RejectionCategory!.Value);
+            rejected.Details.ShouldEqual(disposition?.ReplacementMessage ?? expectation.RejectionMessage);
+            VerifyRejectedState(plan, expectation.Name, rejected.World);
         }
     }
 
     static byte[] Diagnostics(CompilationResult<SemanticCompilation> result) => JsonSerializer.SerializeToUtf8Bytes(result.Diagnostics.Select(diagnostic => new { code = diagnostic.Code, message = diagnostic.Message }));
 
-    static CompilationResult<SemanticCompilation> Compile(CanonicalCorpusSourceForm form)
+    internal static CompilationResult<SemanticCompilation> Compile(CanonicalCorpusSourceForm form)
     {
         var catalog = SemanticIdentityCatalogSerializer.Deserialize(form.IdentityCatalogBytes.AsSpan());
         var documents = form.Documents.Select(document => SemanticSourceDocument.Create(catalog.ResolveDocument(document.StableKey), document.StableKey, document.DisplayPath, document.Text));
         return new SemanticModelCompiler().Compile("ProtectedCommandReads", SemanticDocumentSet.Create([.. documents], catalog));
-    }
-
-    static string Root([CallerFilePath] string path = "")
-    {
-        var directory = Directory.GetParent(path);
-        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "Documentation"))) directory = directory.Parent;
-        return directory!.FullName;
     }
 }
