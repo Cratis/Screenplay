@@ -12,7 +12,7 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class AvailabilityParser
 {
-    const string GateExpected = "available for <Audience> [and|or <Audience> ...] | available when <condition> | available with <Availability> [and|or <Availability> ...]";
+    const string GateExpected = "available for [not] <Audience> [and|or [not] <Audience> ...] | available when <condition> | available with <Availability> [and|or <Availability> ...]";
 
     static readonly HashSet<string> _gateKinds = new(StringComparer.Ordinal) { "for", "when", "with" };
 
@@ -165,16 +165,33 @@ internal static partial class AvailabilityParser
 
     static AvailabilityRequirementSyntax? ParseAudienceOperand(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
+        var negated = position < tokens.Count && tokens[position] == "not";
+        if (negated)
+        {
+            position++;
+            if (position >= tokens.Count || tokens[position] == "(" || tokens[position] == "not")
+            {
+                context.Error(DiagnosticCodes.MisplacedNotInAvailable, "'not' applies to one audience name - write 'not <Audience>', not 'not' on a group or on another 'not'", location);
+                return null;
+            }
+        }
+
         if (!TakeName(context, tokens, ref position, location, "an audience name", out var name))
         {
             return null;
         }
 
-        return new AudienceAvailabilityRequirementSyntax(name, location);
+        return new AudienceAvailabilityRequirementSyntax(name, location) { Negated = negated };
     }
 
     static AvailabilityRequirementSyntax? ParseReference(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
+        if (position < tokens.Count && tokens[position] == "not")
+        {
+            context.Error(DiagnosticCodes.MisplacedNotInAvailable, "'not' applies to an audience name in 'available for' - it cannot negate an availability in 'available with'", location);
+            return null;
+        }
+
         if (!TakeName(context, tokens, ref position, location, "an availability name", out var name))
         {
             return null;

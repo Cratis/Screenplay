@@ -4584,6 +4584,11 @@ public static class DiagnosticCodes
     public const string UnclosedAvailableGroup = "PLAY1141";
 
     /// <summary>
+    /// A <c>not</c> in an <c>available</c> line negates something other than one audience name: a group, another <c>not</c>, nothing, or an availability in <c>available with</c>.
+    /// </summary>
+    public const string MisplacedNotInAvailable = "PLAY1171";
+
+    /// <summary>
     /// A projection mapping, an auto-mapped property or a reducer copies a value whose concept is marked <c>secret</c>
     /// into a read-model property, so the value becomes part of the read model and its query results.
     /// </summary>
