@@ -40,6 +40,8 @@ const cases: [string, string[], string][] = [
     ['a template with a malformed description', ['module M', '  screen template T', '    description Name'], DiagnosticCodes.UnknownLayoutDirective],
     ['a template with a malformed content', ['module M', '  screen template T', '    content', '      title "A"'], DiagnosticCodes.UnknownLayoutDirective],
     ['a template providing content for a slot it does not declare', ['module M', '  screen template T', '    content body', '      title "A"'], DiagnosticCodes.UnknownTemplateContentSlot],
+    ['a template with a content slot that is not lower case', ['module M', '  screen template T', '    content Body'], DiagnosticCodes.UnknownLayoutDirective],
+    ['a template with a scope that has an unknown slice kind', ['module M', '  screen template T', '    scopes slice bogus'], DiagnosticCodes.UnknownLayoutDirective],
     ['a contribution with a malformed header', ['module M', '  contribute sidebar'], DiagnosticCodes.InvalidContributionDeclaration],
     ['a contribution with a repeated navigate', ['module M', '  contribute to a', '    navigate to X', '    navigate to Y'], DiagnosticCodes.DuplicateContributionNavigate],
     ['a contribution with a repeated label', ['module M', '  contribute to a', '    label "A"', '    label "B"'], DiagnosticCodes.DuplicateContributionLabel],
