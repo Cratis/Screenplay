@@ -359,7 +359,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var value in values)
         {
-            writer.Assignment(value.Property, value.Source, value);
+            writer.Assignment(ReservedWords.Escape(value.Property, ReservedWords.EventBody), value.Source, value);
         }
     }
 }
