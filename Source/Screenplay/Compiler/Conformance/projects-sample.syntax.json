@@ -104,6 +104,295 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "columns": null,
+              "gap": null,
+              "grow": null,
+              "rows": null,
+              "span": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "subject": null,
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "projects",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Projects"
+              },
+              "title": "Projects"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/projects.svg",
+            "title": "Projects"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "folder",
+              "id": "projects",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Projects",
+                "module": "Projects"
+              },
+              "title": "Projects"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "check",
+              "id": "mytasks",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "MyTasks",
+                "module": "Projects"
+              },
+              "title": "My tasks"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "children": [
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "by-status",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "Board",
+                    "module": "Projects"
+                  },
+                  "title": "By status"
+                },
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "by-person",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "Board.ByPerson",
+                    "module": "Projects"
+                  },
+                  "title": "By person"
+                }
+              ],
+              "icon": "columns",
+              "id": "board",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Board",
+                "module": "Projects"
+              },
+              "title": "Board"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "chart",
+              "id": "timeline",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Timeline",
+                "module": "Projects"
+              },
+              "title": "Timeline"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",

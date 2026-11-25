@@ -808,6 +808,343 @@
       "instance": "CollectionsBoard"
     }
   ],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "columns": null,
+              "gap": null,
+              "grow": null,
+              "rows": null,
+              "span": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "subject": null,
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "receipt",
+              "id": "invoicing",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Invoicing"
+              },
+              "title": "Invoicing"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/billing-hub.svg",
+            "title": "Billing Hub"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "children": [
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "invoices",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "InvoiceManagement",
+                    "module": "Invoicing",
+                    "screen": "InvoiceList"
+                  },
+                  "title": "Invoices"
+                },
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "payments",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "Payments",
+                    "module": "Invoicing"
+                  },
+                  "title": "Payments"
+                },
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "portal",
+                  "slot": "content",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "CustomerPortal",
+                    "module": "Invoicing"
+                  },
+                  "title": "Customer portal"
+                }
+              ],
+              "icon": "receipt",
+              "id": "invoicing",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Invoicing"
+              },
+              "title": "Invoicing"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "optional": false,
+          "primary": true,
+          "role": "Page",
+          "routed": true,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null
+    },
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 72,
+                  "name": "header",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": true,
+                  "growFactor": null,
+                  "height": null,
+                  "name": "content",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "columns": null,
+              "gap": 8,
+              "grow": null,
+              "rows": null,
+              "span": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "PortalShell",
+      "recursiveSlots": [],
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "header",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",
@@ -818,7 +1155,102 @@
           "name": "IsPerson"
         }
       },
+      "contributions": [
+        {
+          "kind": "ContributionSyntax",
+          "contributionPoint": "Navigation",
+          "destination": {
+            "kind": "ContributionDestinationSyntax",
+            "syntaxKind": "Slot",
+            "target": "detail"
+          },
+          "group": "Billing",
+          "icon": "receipt",
+          "id": "nav:invoices",
+          "items": [],
+          "label": "$strings.navigation.invoices",
+          "navigate": {
+            "kind": "ScreenNavigateSyntax",
+            "by": null,
+            "parameters": [],
+            "route": null,
+            "screen": "InvoiceList"
+          },
+          "order": 10,
+          "presentation": "primary"
+        }
+      ],
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle, payment tracking and collection of invoices,\nplus the self-service portal customers use to see and pay them.",
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "arrangement": null,
+          "behaviors": [
+            {
+              "kind": "ScreenBehaviorSyntax"
+            }
+          ],
+          "category": "Dialog",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "name": "CommandDialog",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "cancel",
+                  "isDefault": true,
+                  "runs": "close",
+                  "title": "Cancel"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "emphasis": "Primary",
+                  "id": "confirm",
+                  "isDefault": true,
+                  "runs": "submit",
+                  "title": "Confirm"
+                }
+              ],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "actions",
+              "slot": "actions",
+              "subject": null,
+              "syntaxKind": "Actions"
+            }
+          ],
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "actions",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        }
+      ],
       "documentation": "Invoicing owns billing decisions. Payment-provider facts enter through translation slices.",
       "features": [
         {
@@ -842,6 +1274,23 @@
                   "name": "IsFinanceDepartment"
                 }
               },
+              "contributions": [
+                {
+                  "kind": "ContributionSyntax",
+                  "contributionPoint": "BoardActions",
+                  "destination": null,
+                  "items": [],
+                  "label": "Write off",
+                  "navigate": {
+                    "kind": "ScreenNavigateSyntax",
+                    "by": null,
+                    "parameters": [],
+                    "route": null,
+                    "screen": "WriteOffInvoiceScreen"
+                  },
+                  "order": 20
+                }
+              ],
               "description": "Discounts and write-offs applied to issued invoices",
               "features": [],
               "fileImports": [],
@@ -11477,6 +11926,39 @@
               "name": "IsInvoicingStaff"
             }
           },
+          "contributions": [
+            {
+              "kind": "ContributionSyntax",
+              "contributionPoint": "Navigation",
+              "destination": null,
+              "items": [],
+              "label": "$strings.navigation.collections",
+              "navigate": {
+                "kind": "ScreenNavigateSyntax",
+                "by": null,
+                "parameters": [],
+                "route": null,
+                "screen": "CollectionsBoard"
+              },
+              "order": 20
+            },
+            {
+              "kind": "ContributionSyntax",
+              "contributionPoint": "views",
+              "destination": null,
+              "items": [
+                {
+                  "kind": "OutletTabSyntax",
+                  "id": "collections",
+                  "shows": "CollectionsBoard",
+                  "title": "Collections"
+                }
+              ],
+              "label": null,
+              "navigate": null,
+              "order": null
+            }
+          ],
           "dependsOn": [
             {
               "kind": "DependsOnSyntax",
@@ -16129,6 +16611,23 @@
               "name": "IsCustomer"
             }
           },
+          "contributions": [
+            {
+              "kind": "ContributionSyntax",
+              "contributionPoint": "Navigation",
+              "destination": null,
+              "items": [],
+              "label": "$strings.navigation.myInvoices",
+              "navigate": {
+                "kind": "ScreenNavigateSyntax",
+                "by": null,
+                "parameters": [],
+                "route": null,
+                "screen": "MyInvoices"
+              },
+              "order": 5
+            }
+          ],
           "description": "Where customers see and pay their own invoices",
           "features": [],
           "fileImports": [],
@@ -17259,6 +17758,28 @@
                 "kind": "AvailabilityReferenceSyntax",
                 "availability": "AuditTrailEnabled"
               }
+            }
+          ],
+          "contributions": [
+            {
+              "kind": "ContributionSyntax",
+              "contributionPoint": "Navigation",
+              "destination": {
+                "kind": "ContributionDestinationSyntax",
+                "syntaxKind": "Dialog",
+                "target": "CommandDialog"
+              },
+              "group": "Billing",
+              "items": [],
+              "label": "Audit",
+              "navigate": {
+                "kind": "ScreenNavigateSyntax",
+                "by": null,
+                "parameters": [],
+                "route": null,
+                "screen": "CancelledInvoices"
+              },
+              "order": 90
             }
           ],
           "description": "What auditors look at - nothing here changes anything",
@@ -19463,6 +19984,28 @@
               "name": "IsInvoicingStaff"
             }
           },
+          "contributions": [
+            {
+              "kind": "ContributionSyntax",
+              "contributionPoint": "Navigation",
+              "destination": {
+                "kind": "ContributionDestinationSyntax",
+                "syntaxKind": "Dialog",
+                "target": "CommandDialog"
+              },
+              "group": "Billing",
+              "items": [],
+              "label": "Reserve an invoice number",
+              "navigate": {
+                "kind": "ScreenNavigateSyntax",
+                "by": null,
+                "parameters": [],
+                "route": null,
+                "screen": "ReserveInvoiceNumberScreen"
+              },
+              "order": 20
+            }
+          ],
           "description": null,
           "features": [],
           "fileImports": [],
@@ -19895,6 +20438,556 @@
         {
           "kind": "PurposeReferenceSyntax",
           "name": "Billing"
+        }
+      ],
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": {
+            "kind": "ArrangementSyntax",
+            "mode": "Flow",
+            "overrides": [
+              {
+                "kind": "ArrangementOverrideSyntax",
+                "height": null,
+                "root": {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementContainerSyntax",
+                      "children": [
+                        {
+                          "kind": "ArrangementSlotSyntax",
+                          "grow": false,
+                          "growFactor": null,
+                          "height": null,
+                          "name": "main",
+                          "span": null,
+                          "width": null
+                        },
+                        {
+                          "kind": "ArrangementSlotSyntax",
+                          "grow": false,
+                          "growFactor": null,
+                          "height": null,
+                          "name": "sidebar",
+                          "span": null,
+                          "width": null
+                        }
+                      ],
+                      "columns": null,
+                      "gap": null,
+                      "grow": null,
+                      "rows": null,
+                      "span": null,
+                      "syntaxKind": "Column"
+                    }
+                  ],
+                  "syntaxKind": "Flat"
+                },
+                "width": "compact"
+              }
+            ],
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "sidebar",
+                      "span": null,
+                      "width": 320
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "main",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": 16,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Row"
+                }
+              ],
+              "syntaxKind": "Flat"
+            }
+          },
+          "category": "Workspace",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "MasterDetail",
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "sidebar",
+              "optional": true,
+              "primary": false,
+              "role": "Pane",
+              "routed": true,
+              "routedBy": "invoiceId"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "main",
+              "optional": false,
+              "primary": false,
+              "role": "Panel",
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        },
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": {
+            "kind": "ArrangementSyntax",
+            "mode": "Freeform",
+            "variants": [
+              {
+                "kind": "VariantSyntax",
+                "height": "regular",
+                "places": [
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "96",
+                    "sizeWidth": "fill",
+                    "slotName": "header",
+                    "x": 0,
+                    "y": 0
+                  },
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "fill",
+                    "sizeWidth": "640",
+                    "slotName": "left",
+                    "x": 0,
+                    "y": 96
+                  },
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "fill",
+                    "sizeWidth": "fill",
+                    "slotName": "right",
+                    "x": 640,
+                    "y": 96
+                  },
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "64",
+                    "sizeWidth": "fill",
+                    "slotName": "footer",
+                    "x": 0,
+                    "y": 900
+                  }
+                ],
+                "width": "regular"
+              },
+              {
+                "kind": "VariantSyntax",
+                "height": "regular",
+                "places": [
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "64",
+                    "sizeWidth": "fill",
+                    "slotName": "header",
+                    "x": 0,
+                    "y": 0
+                  },
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "fill",
+                    "sizeWidth": "fill",
+                    "slotName": "left",
+                    "x": 0,
+                    "y": 64
+                  },
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": true,
+                    "sizeHeight": null,
+                    "sizeWidth": null,
+                    "slotName": "right",
+                    "x": null,
+                    "y": null
+                  },
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": true,
+                    "sizeHeight": null,
+                    "sizeWidth": null,
+                    "slotName": "footer",
+                    "x": null,
+                    "y": null
+                  }
+                ],
+                "width": "compact"
+              }
+            ]
+          },
+          "category": "Workspace",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "Dashboard",
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "header",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "left",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "right",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "footer",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        },
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": {
+            "kind": "ArrangementSyntax",
+            "mode": "Flow",
+            "overrides": [],
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 48,
+                      "name": "toolbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementContainerSyntax",
+                      "children": [
+                        {
+                          "kind": "ArrangementSlotSyntax",
+                          "grow": false,
+                          "growFactor": null,
+                          "height": null,
+                          "name": "due",
+                          "span": 1,
+                          "width": null
+                        },
+                        {
+                          "kind": "ArrangementSlotSyntax",
+                          "grow": true,
+                          "growFactor": 2,
+                          "height": null,
+                          "name": "overdue",
+                          "span": 1,
+                          "width": null
+                        },
+                        {
+                          "kind": "ArrangementSlotSyntax",
+                          "grow": false,
+                          "growFactor": null,
+                          "height": null,
+                          "name": "settled",
+                          "span": 1,
+                          "width": null
+                        }
+                      ],
+                      "columns": 3,
+                      "gap": 16,
+                      "grow": 1,
+                      "rows": 1,
+                      "span": null,
+                      "syntaxKind": "Grid"
+                    }
+                  ],
+                  "columns": null,
+                  "gap": 8,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            }
+          },
+          "category": "Workspace",
+          "content": [
+            {
+              "kind": "TemplateSlotContentSyntax",
+              "directives": [
+                {
+                  "kind": "ScreenComponentSyntax",
+                  "component": "Cratis.Components.Toolbar",
+                  "context": null,
+                  "exposes": [],
+                  "icon": null,
+                  "name": "boardToolbar",
+                  "presentation": [],
+                  "properties": [
+                    {
+                      "kind": "ComponentPropertySyntax",
+                      "binding": null,
+                      "property": "dense",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": true
+                      }
+                    }
+                  ],
+                  "slots": [],
+                  "stableId": "board:toolbar"
+                }
+              ],
+              "slot": "toolbar"
+            }
+          ],
+          "description": "Invoices grouped into columns by payment state",
+          "displayName": "Board",
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "Board",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "BoardActions",
+              "slot": "toolbar",
+              "subject": null,
+              "syntaxKind": "Navigation"
+            }
+          ],
+          "recursiveSlots": [],
+          "restrictsScopes": true,
+          "scopes": [
+            "slice"
+          ],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "toolbar",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "due",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "overdue",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "settled",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        },
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "Workspace",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "List",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "icon": "refresh",
+                  "id": "refresh",
+                  "isDefault": true,
+                  "runs": "refresh",
+                  "title": "Refresh"
+                },
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "icon": "download",
+                  "id": "export",
+                  "isDefault": true,
+                  "title": "Export"
+                }
+              ],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "actions",
+              "slot": "toolbar",
+              "subject": null,
+              "syntaxKind": "Actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "filters",
+              "slot": "toolbar",
+              "subject": null,
+              "syntaxKind": "Filters"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "stats",
+              "slot": "toolbar",
+              "subject": null,
+              "syntaxKind": "Stats"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "rowActions",
+              "slot": "items",
+              "subject": "Item",
+              "syntaxKind": "Actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "views",
+              "slot": "items",
+              "subject": null,
+              "syntaxKind": "Tabs"
+            }
+          ],
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "toolbar",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "items",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "detail",
+              "optional": true,
+              "primary": false,
+              "role": "Pane",
+              "routed": true,
+              "routedBy": "invoiceId"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "activity",
+              "optional": true,
+              "primary": false,
+              "role": "Panel",
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
         }
       ],
       "screens": [

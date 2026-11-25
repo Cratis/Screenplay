@@ -91,5 +91,5 @@ function parseDestination(context: ParserContext, line: SourceLine): Contributio
         return null;
     }
     if (match[1] === 'outlet') context.error(DiagnosticCodes.RemovedDestinationOutlet, renamedForSlotsAndOutlets(`'destination outlet ${match[2]}'`, `destination slot ${match[2]}`), locationOf(line));
-    return { kind: 'ContributionDestinationSyntax', destinationKind: match[1] === undefined ? 'External' : match[1] === 'dialog' ? 'Dialog' : 'Slot', target: match[2] ?? unescapeString(match[3]), location: locationOf(line) };
+    return { kind: 'ContributionDestinationSyntax', syntaxKind: match[1] === undefined ? 'External' : match[1] === 'dialog' ? 'Dialog' : 'Slot', target: match[2] ?? unescapeString(match[3]), location: locationOf(line) };
 }

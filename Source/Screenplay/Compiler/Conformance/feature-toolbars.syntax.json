@@ -5,6 +5,64 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": null,
+      "category": "Test",
+      "exposes": [],
+      "name": "Shell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "home",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Shop"
+              },
+              "title": "Home"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "slot": "side",
+          "subject": null,
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "optional": false,
+          "primary": true,
+          "role": "Page",
+          "routed": true,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "side",
+          "optional": false,
+          "primary": false,
+          "role": "Panel",
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",
@@ -431,6 +489,113 @@
           ],
           "mode": "Extend",
           "name": "shell"
+        }
+      ],
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "Test",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "Page",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "shell",
+              "slot": "header",
+              "subject": null,
+              "syntaxKind": "Actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "export",
+                  "isDefault": true,
+                  "runs": "refresh",
+                  "title": "Export"
+                }
+              ],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "actions",
+              "slot": "header",
+              "subject": null,
+              "syntaxKind": "Actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "filters",
+              "slot": "header",
+              "subject": null,
+              "syntaxKind": "Filters"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "stats",
+              "slot": "header",
+              "subject": null,
+              "syntaxKind": "Stats"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "tabs",
+              "slot": "detail",
+              "subject": null,
+              "syntaxKind": "Tabs"
+            }
+          ],
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "header",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "main",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "detail",
+              "optional": true,
+              "primary": false,
+              "role": "Pane",
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
         }
       ]
     }

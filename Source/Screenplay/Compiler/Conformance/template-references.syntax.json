@@ -5,11 +5,77 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": null,
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "recursiveSlots": [],
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",
       "authorize": null,
       "description": null,
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "arrangement": null,
+          "category": "Dialog",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "name": "ConfirmOrder",
+          "recursiveSlots": [],
+          "restrictsScopes": true,
+          "scopes": [
+            "slice"
+          ],
+          "sliceKinds": [
+            "StateChange"
+          ],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "actions",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        }
+      ],
       "features": [
         {
           "kind": "FeatureSyntax",
@@ -108,7 +174,67 @@
       ],
       "fileImports": [],
       "isPlacement": false,
-      "name": "Sales"
+      "name": "Sales",
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "Workspace",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "Workspace",
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        },
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "List",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "fitsSlot": "body",
+          "name": "OrderList",
+          "recursiveSlots": [],
+          "restrictsScopes": true,
+          "scopes": [
+            "slice"
+          ],
+          "sliceKinds": [
+            "StateView"
+          ],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        }
+      ]
     }
   ],
   "personas": [],

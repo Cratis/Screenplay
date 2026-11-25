@@ -73,6 +73,43 @@
       "kind": "ModuleSyntax",
       "authorize": null,
       "description": "Books, the members who borrow them, and the loans between them",
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "arrangement": null,
+          "category": "Dialog",
+          "content": [],
+          "description": null,
+          "displayName": null,
+          "exposes": [],
+          "name": "Dialog",
+          "recursiveSlots": [],
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "actions",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        }
+      ],
       "features": [
         {
           "kind": "FeatureSyntax",

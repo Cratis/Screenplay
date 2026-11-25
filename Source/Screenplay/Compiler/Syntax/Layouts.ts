@@ -87,7 +87,7 @@ export interface ContributionSyntax extends SyntaxNode {
 
 export interface ContributionDestinationSyntax extends SyntaxNode {
     readonly kind: 'ContributionDestinationSyntax';
-    readonly destinationKind: 'Slot' | 'Dialog' | 'External';
+    readonly syntaxKind: 'Slot' | 'Dialog' | 'External';
     readonly target: string;
 }
 
@@ -142,6 +142,6 @@ export interface PlaceSyntax extends SyntaxNode {
     readonly hidden?: boolean;
     readonly x?: number | null;
     readonly y?: number | null;
-    readonly width?: string | null;
-    readonly height?: string | null;
+    readonly sizeWidth?: string | null;
+    readonly sizeHeight?: string | null;
 }

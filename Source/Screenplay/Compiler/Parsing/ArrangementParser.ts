@@ -160,5 +160,5 @@ function parsePlace(context: ParserContext, line: SourceLine): PlaceSyntax | und
         context.error(DiagnosticCodes.InvalidPlaceDeclaration, `Invalid place declaration '${line.content}' - expected 'place <Slot> hidden' or 'place <Slot> at <x>,<y> size <w>,<h>'`, locationOf(line));
         return undefined;
     }
-    return { kind: 'PlaceSyntax', slotName: match[1], hidden: match[2] !== undefined, x: numberOrNull(match[3]), y: numberOrNull(match[4]), width: match[5] ?? null, height: match[6] ?? null, location: locationOf(line) };
+    return { kind: 'PlaceSyntax', slotName: match[1], hidden: match[2] !== undefined, x: numberOrNull(match[3]), y: numberOrNull(match[4]), sizeWidth: match[5] ?? null, sizeHeight: match[6] ?? null, location: locationOf(line) };
 }

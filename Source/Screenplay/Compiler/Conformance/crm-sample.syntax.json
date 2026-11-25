@@ -189,6 +189,319 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "columns": null,
+              "gap": null,
+              "grow": null,
+              "rows": null,
+              "span": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "subject": null,
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "crm",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Crm"
+              },
+              "title": "CRM"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/crm.svg",
+            "title": "CRM"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "home",
+              "id": "dashboard",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Dashboard",
+                "module": "Crm"
+              },
+              "title": "Dashboard"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "user-plus",
+              "id": "leads",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Leads",
+                "module": "Crm"
+              },
+              "title": "Leads"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "users",
+              "id": "contacts",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Contacts",
+                "module": "Crm"
+              },
+              "title": "Contacts"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "building",
+              "id": "companies",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Companies",
+                "module": "Crm"
+              },
+              "title": "Companies"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "children": [
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "pipeline",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "Deals",
+                    "module": "Crm"
+                  },
+                  "title": "Pipeline"
+                },
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "list",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "Deals.DealList",
+                    "module": "Crm"
+                  },
+                  "title": "List"
+                }
+              ],
+              "icon": "dollar",
+              "id": "deals",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Deals",
+                "module": "Crm"
+              },
+              "title": "Deals"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "calendar",
+              "id": "activities",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Activities",
+                "module": "Crm"
+              },
+              "title": "Activities"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",

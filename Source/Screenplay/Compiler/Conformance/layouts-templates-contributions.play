@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+numbers exact
+concept RecordId : Uuid
 layout Shell
     navigation panel optional
     main page routed by record primary
@@ -75,6 +77,15 @@ module Work
         group main
         destination slot detail
     feature Tasks
+        slice StateView Listing
+            readmodel Row
+                id RecordId key
+                name String
+            readmodel Counts
+                count Int
+            query Records => Row[]
+                filter name String
+            query Summary => Counts
         contribute to actions
             button inspect title "Inspect"
         screen Overview

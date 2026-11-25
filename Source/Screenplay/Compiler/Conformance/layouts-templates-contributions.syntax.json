@@ -1,0 +1,721 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "RecordId",
+      "type": "Uuid",
+      "validations": [],
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "main",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": null,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": null,
+                  "name": "navigation",
+                  "span": null,
+                  "width": 240
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": true,
+                  "growFactor": 2,
+                  "height": null,
+                  "name": "main",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "growFactor": null,
+                  "height": null,
+                  "name": "aside",
+                  "span": 2,
+                  "width": null
+                }
+              ],
+              "columns": null,
+              "gap": 12,
+              "grow": null,
+              "rows": null,
+              "span": null,
+              "syntaxKind": "Row"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "application",
+      "exposes": [
+        {
+          "kind": "TemplateExposedValueSyntax",
+          "name": "selected",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "RecordId"
+          }
+        }
+      ],
+      "name": "Shell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "ToolbarButtonSyntax",
+              "icon": "check",
+              "id": "save",
+              "isDefault": true,
+              "title": "Save"
+            },
+            {
+              "kind": "ToolbarButtonSyntax",
+              "id": "more",
+              "isDefault": true,
+              "title": "More"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "actions",
+          "slot": "main",
+          "subject": "Item",
+          "syntaxKind": "Actions"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "OutletFilterSyntax",
+              "id": "search",
+              "isDefault": true,
+              "parameter": "name",
+              "query": "Records",
+              "title": "Search"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "filters",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Filters"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "OutletTabSyntax",
+              "id": "overview",
+              "isDefault": true,
+              "shows": "Overview",
+              "title": "Overview"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "tabs",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Tabs"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "OutletStatSyntax",
+              "field": "count",
+              "id": "total",
+              "isDefault": true,
+              "query": "Summary",
+              "title": "Total"
+            }
+          ],
+          "logo": null,
+          "mode": "Unspecified",
+          "name": "stats",
+          "slot": null,
+          "subject": null,
+          "syntaxKind": "Stats"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "children": [
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "tasks",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "Tasks",
+                    "module": "Work"
+                  },
+                  "title": "Tasks"
+                }
+              ],
+              "id": "work",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Tasks",
+                "module": "Work"
+              },
+              "title": "Work"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/logo.svg",
+            "title": "Workshop"
+          },
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "slot": "navigation",
+          "subject": null,
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [
+        {
+          "kind": "TemplateSlotSyntax",
+          "name": "nested"
+        }
+      ],
+      "restrictsScopes": true,
+      "scopes": [
+        "application"
+      ],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation",
+          "optional": true,
+          "primary": false,
+          "role": "Panel",
+          "routed": false,
+          "routedBy": null
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "main",
+          "optional": false,
+          "primary": true,
+          "role": "Page",
+          "routed": true,
+          "routedBy": "record"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "aside",
+          "optional": false,
+          "primary": false,
+          "role": "Pane",
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": "shell"
+    }
+  ],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "contributions": [
+        {
+          "kind": "ContributionSyntax",
+          "contributionPoint": "sidebar",
+          "destination": null,
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "records",
+              "position": {
+                "kind": "OutletPositionSyntax",
+                "id": "work",
+                "placement": "Before"
+              },
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Tasks",
+                "module": "Work"
+              },
+              "title": "Records"
+            }
+          ],
+          "label": null,
+          "navigate": null,
+          "order": null
+        },
+        {
+          "kind": "ContributionSyntax",
+          "contributionPoint": "actions",
+          "destination": {
+            "kind": "ContributionDestinationSyntax",
+            "syntaxKind": "Slot",
+            "target": "detail"
+          },
+          "group": "main",
+          "icon": "eye",
+          "id": "overview",
+          "items": [],
+          "label": "Overview",
+          "navigate": {
+            "kind": "ScreenNavigateSyntax",
+            "by": null,
+            "parameters": [],
+            "route": null,
+            "screen": "Overview"
+          },
+          "order": 2,
+          "presentation": "button"
+        }
+      ],
+      "description": null,
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "arrangement": {
+            "kind": "ArrangementSyntax",
+            "mode": "Freeform",
+            "variants": [
+              {
+                "kind": "VariantSyntax",
+                "height": "regular",
+                "places": [
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": false,
+                    "sizeHeight": "600",
+                    "sizeWidth": "fill",
+                    "slotName": "form",
+                    "x": 0,
+                    "y": 0
+                  }
+                ],
+                "width": "regular"
+              },
+              {
+                "kind": "VariantSyntax",
+                "height": "compact",
+                "places": [
+                  {
+                    "kind": "PlaceSyntax",
+                    "hidden": true,
+                    "sizeHeight": null,
+                    "sizeWidth": null,
+                    "slotName": "form",
+                    "x": null,
+                    "y": null
+                  }
+                ],
+                "width": "compact"
+              }
+            ]
+          },
+          "category": null,
+          "content": [],
+          "description": "A reusable editor",
+          "displayName": "Edit record",
+          "exposes": [],
+          "name": "Editor",
+          "recursiveSlots": [],
+          "restrictsScopes": true,
+          "scopes": [
+            "slice"
+          ],
+          "sliceKinds": [
+            "StateChange"
+          ],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "form",
+              "optional": false,
+              "primary": false,
+              "role": "Pane",
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null
+        }
+      ],
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "contributions": [
+            {
+              "kind": "ContributionSyntax",
+              "contributionPoint": "actions",
+              "destination": null,
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "inspect",
+                  "title": "Inspect"
+                }
+              ],
+              "label": null,
+              "navigate": null,
+              "order": null
+            }
+          ],
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Tasks",
+          "screens": [
+            {
+              "kind": "ScreenSyntax",
+              "directives": [
+                {
+                  "kind": "ScreenTemplateReferenceSyntax",
+                  "name": "List",
+                  "slots": [
+                    {
+                      "kind": "ScreenSlotSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Overview"
+                        }
+                      ],
+                      "name": "body"
+                    }
+                  ]
+                }
+              ],
+              "name": "Overview"
+            }
+          ],
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Listing",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "name",
+                      "source": null,
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "isObservable": false,
+                  "name": "Records",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Row"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "Summary",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "Counts"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Row",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "id",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "RecordId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Counts",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "count",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Work",
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": {
+            "kind": "ArrangementSyntax",
+            "mode": "Flow",
+            "overrides": [],
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "growFactor": null,
+                      "height": null,
+                      "name": "body",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "growFactor": null,
+                      "height": 200,
+                      "name": "detail",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "columns": null,
+                  "gap": 8,
+                  "grow": null,
+                  "rows": null,
+                  "span": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            }
+          },
+          "category": "lists",
+          "content": [
+            {
+              "kind": "TemplateSlotContentSyntax",
+              "directives": [
+                {
+                  "kind": "ScreenTitleSyntax",
+                  "text": "Records"
+                }
+              ],
+              "slot": "body"
+            }
+          ],
+          "description": "A reusable list",
+          "displayName": "Record list",
+          "exposes": [
+            {
+              "kind": "TemplateExposedValueSyntax",
+              "name": "selected",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "RecordId"
+              }
+            }
+          ],
+          "fitsSlot": "main",
+          "name": "List",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "inspect",
+                  "isDefault": true,
+                  "title": "Inspect"
+                }
+              ],
+              "logo": null,
+              "mode": "Unspecified",
+              "name": "actions",
+              "slot": null,
+              "subject": "Screen",
+              "syntaxKind": "Actions"
+            }
+          ],
+          "recursiveSlots": [
+            {
+              "kind": "TemplateSlotSyntax",
+              "name": "recursive"
+            }
+          ],
+          "restrictsScopes": true,
+          "scopes": [
+            "module",
+            "feature",
+            "slice"
+          ],
+          "sliceKinds": [
+            "StateView"
+          ],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body",
+              "optional": false,
+              "primary": true,
+              "role": "Page",
+              "routed": false,
+              "routedBy": null
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "detail",
+              "optional": true,
+              "primary": false,
+              "role": "Pane",
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": "catalogue"
+        }
+      ]
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}
