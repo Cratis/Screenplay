@@ -45,6 +45,8 @@ const cases: [string, string[], string][] = [
     ['a button in a group invoking nothing known', model('  contribute to actions', '    group g title "G"', '      button b title "B" slice Nothing'), DiagnosticCodes.ToolbarButtonSliceNotFound],
     ['a filter of a query that does not exist', model('  contribute to filters', '    filter f title "F" sets Nothing.name'), DiagnosticCodes.UnknownQuery],
     ['a filter of a parameter the query does not have', model('  contribute to filters', '    filter f title "F" sets Records.price'), DiagnosticCodes.OutletFilterParameterUnknown],
+    ['a filter that sets nothing', model('  contribute to filters', '    filter f title "F"'), ''],
+    ['a stat that shows nothing', model('  contribute to stats', '    stat s title "S"'), ''],
     ['a stat of a query that does not exist', model('  contribute to stats', '    stat s title "S" value from Nothing.total'), DiagnosticCodes.UnknownQuery],
     ['a stat of a list query', model('  contribute to stats', '    stat s title "S" value from Records.name'), DiagnosticCodes.OutletStatFromListQuery],
     ['a tab showing a screen that does not exist', model('  contribute to tabs', '    tab t title "T" shows Nothing'), DiagnosticCodes.UnknownScreen],
@@ -71,6 +73,10 @@ const cases: [string, string[], string][] = [
 
 describe('when validating outlets, hooks and contributions that are wrong', () => {
     for (const [description, lines, code] of cases) {
-        it(`should report ${code} for ${description}`, () => codesOf(lines).should.include(code));
+        it(code === '' ? `should accept ${description}` : `should report ${code} for ${description}`, () => {
+            const codes = codesOf(lines);
+            if (code === '') codes.should.deep.equal([]);
+            else codes.should.include(code);
+        });
     }
 });
