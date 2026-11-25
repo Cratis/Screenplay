@@ -827,7 +827,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": 48,
                       "name": "topbar",
                       "span": null,
@@ -836,7 +835,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "content",
                       "span": null,
@@ -845,18 +843,13 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": 64,
                       "name": "navigation",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": null,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Column"
                 }
               ],
@@ -874,7 +867,6 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 56,
                   "name": "topbar",
                   "span": null,
@@ -886,7 +878,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": null,
                       "name": "navigation",
                       "span": null,
@@ -895,35 +886,25 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "content",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": null,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Row"
                 },
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 32,
                   "name": "footer",
                   "span": null,
                   "width": null
                 }
               ],
-              "columns": null,
               "gap": null,
-              "grow": null,
-              "rows": null,
-              "span": null,
               "syntaxKind": "Column"
             }
           ],
@@ -937,11 +918,9 @@
         {
           "kind": "OutletSyntax",
           "items": [],
-          "logo": null,
           "mode": "Unspecified",
           "name": "Navigation",
           "slot": "navigation",
-          "subject": null,
           "syntaxKind": "Navigation"
         },
         {
@@ -967,8 +946,6 @@
           },
           "mode": "Unspecified",
           "name": "topbar",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Navigation"
         },
         {
@@ -1021,54 +998,31 @@
               "title": "Invoicing"
             }
           ],
-          "logo": null,
           "mode": "Unspecified",
           "name": "sidebar",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Navigation"
         }
       ],
       "recursiveSlots": [],
-      "restrictsScopes": false,
-      "scopes": [],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
-          "name": "topbar",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "topbar"
         },
         {
           "kind": "SlotSyntax",
-          "name": "navigation",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "navigation"
         },
         {
           "kind": "SlotSyntax",
           "name": "content",
-          "optional": false,
           "primary": true,
           "role": "Page",
-          "routed": true,
-          "routedBy": null
+          "routed": true
         },
         {
           "kind": "SlotSyntax",
-          "name": "footer",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "footer"
         }
       ],
       "templateType": null
@@ -1088,7 +1042,6 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 72,
                   "name": "header",
                   "span": null,
@@ -1097,18 +1050,13 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": true,
-                  "growFactor": null,
                   "height": null,
                   "name": "content",
                   "span": null,
                   "width": null
                 }
               ],
-              "columns": null,
               "gap": 8,
-              "grow": null,
-              "rows": null,
-              "span": null,
               "syntaxKind": "Column"
             }
           ],
@@ -1119,27 +1067,14 @@
       "exposes": [],
       "name": "PortalShell",
       "recursiveSlots": [],
-      "restrictsScopes": false,
-      "scopes": [],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
-          "name": "header",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "header"
         },
         {
           "kind": "SlotSyntax",
-          "name": "content",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "content"
         }
       ],
       "templateType": null
@@ -1167,7 +1102,6 @@
           "group": "Billing",
           "icon": "receipt",
           "id": "nav:invoices",
-          "items": [],
           "label": "$strings.navigation.invoices",
           "navigate": {
             "kind": "ScreenNavigateSyntax",
@@ -1191,9 +1125,6 @@
             }
           ],
           "category": "Dialog",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "name": "CommandDialog",
           "outlets": [
@@ -1216,36 +1147,21 @@
                   "title": "Confirm"
                 }
               ],
-              "logo": null,
               "mode": "Unspecified",
               "name": "actions",
               "slot": "actions",
-              "subject": null,
               "syntaxKind": "Actions"
             }
           ],
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "body",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "body"
             },
             {
               "kind": "SlotSyntax",
-              "name": "actions",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "actions"
             }
           ],
           "templateType": null
@@ -1278,8 +1194,6 @@
                 {
                   "kind": "ContributionSyntax",
                   "contributionPoint": "BoardActions",
-                  "destination": null,
-                  "items": [],
                   "label": "Write off",
                   "navigate": {
                     "kind": "ScreenNavigateSyntax",
@@ -11930,8 +11844,6 @@
             {
               "kind": "ContributionSyntax",
               "contributionPoint": "Navigation",
-              "destination": null,
-              "items": [],
               "label": "$strings.navigation.collections",
               "navigate": {
                 "kind": "ScreenNavigateSyntax",
@@ -11945,7 +11857,6 @@
             {
               "kind": "ContributionSyntax",
               "contributionPoint": "views",
-              "destination": null,
               "items": [
                 {
                   "kind": "OutletTabSyntax",
@@ -16615,8 +16526,6 @@
             {
               "kind": "ContributionSyntax",
               "contributionPoint": "Navigation",
-              "destination": null,
-              "items": [],
               "label": "$strings.navigation.myInvoices",
               "navigate": {
                 "kind": "ScreenNavigateSyntax",
@@ -17770,7 +17679,6 @@
                 "target": "CommandDialog"
               },
               "group": "Billing",
-              "items": [],
               "label": "Audit",
               "navigate": {
                 "kind": "ScreenNavigateSyntax",
@@ -19994,7 +19902,6 @@
                 "target": "CommandDialog"
               },
               "group": "Billing",
-              "items": [],
               "label": "Reserve an invoice number",
               "navigate": {
                 "kind": "ScreenNavigateSyntax",
@@ -20459,7 +20366,6 @@
                         {
                           "kind": "ArrangementSlotSyntax",
                           "grow": false,
-                          "growFactor": null,
                           "height": null,
                           "name": "main",
                           "span": null,
@@ -20468,18 +20374,13 @@
                         {
                           "kind": "ArrangementSlotSyntax",
                           "grow": false,
-                          "growFactor": null,
                           "height": null,
                           "name": "sidebar",
                           "span": null,
                           "width": null
                         }
                       ],
-                      "columns": null,
                       "gap": null,
-                      "grow": null,
-                      "rows": null,
-                      "span": null,
                       "syntaxKind": "Column"
                     }
                   ],
@@ -20497,7 +20398,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": null,
                       "name": "sidebar",
                       "span": null,
@@ -20506,18 +20406,13 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "main",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": 16,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Row"
                 }
               ],
@@ -20525,22 +20420,15 @@
             }
           },
           "category": "Workspace",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "content",
           "name": "MasterDetail",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
               "name": "sidebar",
               "optional": true,
-              "primary": false,
               "role": "Pane",
               "routed": true,
               "routedBy": "invoiceId"
@@ -20548,11 +20436,7 @@
             {
               "kind": "SlotSyntax",
               "name": "main",
-              "optional": false,
-              "primary": false,
-              "role": "Panel",
-              "routed": false,
-              "routedBy": null
+              "role": "Panel"
             }
           ],
           "templateType": null
@@ -20652,52 +20536,26 @@
             ]
           },
           "category": "Workspace",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "content",
           "name": "Dashboard",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "header",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "header"
             },
             {
               "kind": "SlotSyntax",
-              "name": "left",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "left"
             },
             {
               "kind": "SlotSyntax",
-              "name": "right",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "right"
             },
             {
               "kind": "SlotSyntax",
-              "name": "footer",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "footer"
             }
           ],
           "templateType": null
@@ -20717,7 +20575,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": 48,
                       "name": "toolbar",
                       "span": null,
@@ -20729,7 +20586,6 @@
                         {
                           "kind": "ArrangementSlotSyntax",
                           "grow": false,
-                          "growFactor": null,
                           "height": null,
                           "name": "due",
                           "span": 1,
@@ -20747,7 +20603,6 @@
                         {
                           "kind": "ArrangementSlotSyntax",
                           "grow": false,
-                          "growFactor": null,
                           "height": null,
                           "name": "settled",
                           "span": 1,
@@ -20758,15 +20613,10 @@
                       "gap": 16,
                       "grow": 1,
                       "rows": 1,
-                      "span": null,
                       "syntaxKind": "Grid"
                     }
                   ],
-                  "columns": null,
                   "gap": 8,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Column"
                 }
               ],
@@ -20813,11 +20663,9 @@
             {
               "kind": "OutletSyntax",
               "items": [],
-              "logo": null,
               "mode": "Unspecified",
               "name": "BoardActions",
               "slot": "toolbar",
-              "subject": null,
               "syntaxKind": "Navigation"
             }
           ],
@@ -20826,43 +20674,22 @@
           "scopes": [
             "slice"
           ],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "toolbar",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "toolbar"
             },
             {
               "kind": "SlotSyntax",
-              "name": "due",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "due"
             },
             {
               "kind": "SlotSyntax",
-              "name": "overdue",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "overdue"
             },
             {
               "kind": "SlotSyntax",
-              "name": "settled",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "settled"
             }
           ],
           "templateType": null
@@ -20871,9 +20698,6 @@
           "kind": "ScreenTemplateSyntax",
           "arrangement": null,
           "category": "Workspace",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "content",
           "name": "List",
@@ -20897,37 +20721,30 @@
                   "title": "Export"
                 }
               ],
-              "logo": null,
               "mode": "Unspecified",
               "name": "actions",
               "slot": "toolbar",
-              "subject": null,
               "syntaxKind": "Actions"
             },
             {
               "kind": "OutletSyntax",
               "items": [],
-              "logo": null,
               "mode": "Unspecified",
               "name": "filters",
               "slot": "toolbar",
-              "subject": null,
               "syntaxKind": "Filters"
             },
             {
               "kind": "OutletSyntax",
               "items": [],
-              "logo": null,
               "mode": "Unspecified",
               "name": "stats",
               "slot": "toolbar",
-              "subject": null,
               "syntaxKind": "Stats"
             },
             {
               "kind": "OutletSyntax",
               "items": [],
-              "logo": null,
               "mode": "Unspecified",
               "name": "rowActions",
               "slot": "items",
@@ -20937,42 +20754,26 @@
             {
               "kind": "OutletSyntax",
               "items": [],
-              "logo": null,
               "mode": "Unspecified",
               "name": "views",
               "slot": "items",
-              "subject": null,
               "syntaxKind": "Tabs"
             }
           ],
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "toolbar",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "toolbar"
             },
             {
               "kind": "SlotSyntax",
-              "name": "items",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "items"
             },
             {
               "kind": "SlotSyntax",
               "name": "detail",
               "optional": true,
-              "primary": false,
               "role": "Pane",
               "routed": true,
               "routedBy": "invoiceId"
@@ -20981,10 +20782,7 @@
               "kind": "SlotSyntax",
               "name": "activity",
               "optional": true,
-              "primary": false,
-              "role": "Panel",
-              "routed": false,
-              "routedBy": null
+              "role": "Panel"
             }
           ],
           "templateType": null

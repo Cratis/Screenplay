@@ -30,7 +30,7 @@ describe('when parsing navigation regions', () => {
     });
 
     it('should report each module region as removed', () => {
-        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal([`${DiagnosticCodes.InvalidLayoutSlotName}@3`, `${DiagnosticCodes.RemovedNavigationRegion}@7`, `${DiagnosticCodes.RemovedNavigationRegion}@9`]);
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal([`${DiagnosticCodes.InvalidLayoutSlotName}@3`, `${DiagnosticCodes.RemovedNavigationRegion}@7`, `${DiagnosticCodes.RemovedNavigationRegion}@9`, `${DiagnosticCodes.TemplateCategoryMissing}@1`]);
     });
 
     it('should name the outlet that replaces the region', () => {

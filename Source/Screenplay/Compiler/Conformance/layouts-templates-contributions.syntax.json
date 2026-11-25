@@ -33,7 +33,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": null,
                       "name": "main",
                       "span": null,
@@ -42,18 +41,13 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": null,
                       "name": "navigation",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": null,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Column"
                 }
               ],
@@ -71,7 +65,6 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": null,
                   "name": "navigation",
                   "span": null,
@@ -89,18 +82,13 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": null,
                   "name": "aside",
                   "span": 2,
                   "width": null
                 }
               ],
-              "columns": null,
               "gap": 12,
-              "grow": null,
-              "rows": null,
-              "span": null,
               "syntaxKind": "Row"
             }
           ],
@@ -139,7 +127,6 @@
               "title": "More"
             }
           ],
-          "logo": null,
           "mode": "Unspecified",
           "name": "actions",
           "slot": "main",
@@ -158,11 +145,8 @@
               "title": "Search"
             }
           ],
-          "logo": null,
           "mode": "Unspecified",
           "name": "filters",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Filters"
         },
         {
@@ -176,11 +160,8 @@
               "title": "Overview"
             }
           ],
-          "logo": null,
           "mode": "Unspecified",
           "name": "tabs",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Tabs"
         },
         {
@@ -195,11 +176,8 @@
               "title": "Total"
             }
           ],
-          "logo": null,
           "mode": "Unspecified",
           "name": "stats",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Stats"
         },
         {
@@ -237,7 +215,6 @@
           "mode": "Unspecified",
           "name": "sidebar",
           "slot": "navigation",
-          "subject": null,
           "syntaxKind": "Navigation"
         }
       ],
@@ -251,21 +228,16 @@
       "scopes": [
         "application"
       ],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
           "name": "navigation",
           "optional": true,
-          "primary": false,
-          "role": "Panel",
-          "routed": false,
-          "routedBy": null
+          "role": "Panel"
         },
         {
           "kind": "SlotSyntax",
           "name": "main",
-          "optional": false,
           "primary": true,
           "role": "Page",
           "routed": true,
@@ -274,11 +246,7 @@
         {
           "kind": "SlotSyntax",
           "name": "aside",
-          "optional": false,
-          "primary": false,
-          "role": "Pane",
-          "routed": false,
-          "routedBy": null
+          "role": "Pane"
         }
       ],
       "templateType": "shell"
@@ -292,7 +260,6 @@
         {
           "kind": "ContributionSyntax",
           "contributionPoint": "sidebar",
-          "destination": null,
           "items": [
             {
               "kind": "NavigationItemSyntax",
@@ -320,7 +287,6 @@
           "group": "main",
           "icon": "eye",
           "id": "overview",
-          "items": [],
           "label": "Overview",
           "navigate": {
             "kind": "ScreenNavigateSyntax",
@@ -376,7 +342,6 @@
             ]
           },
           "category": null,
-          "content": [],
           "description": "A reusable editor",
           "displayName": "Edit record",
           "exposes": [],
@@ -393,11 +358,7 @@
             {
               "kind": "SlotSyntax",
               "name": "form",
-              "optional": false,
-              "primary": false,
-              "role": "Pane",
-              "routed": false,
-              "routedBy": null
+              "role": "Pane"
             }
           ],
           "templateType": null
@@ -411,7 +372,6 @@
             {
               "kind": "ContributionSyntax",
               "contributionPoint": "actions",
-              "destination": null,
               "items": [
                 {
                   "kind": "ToolbarButtonSyntax",
@@ -590,7 +550,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "body",
                       "span": null,
@@ -599,18 +558,13 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": 200,
                       "name": "detail",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": 8,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Column"
                 }
               ],
@@ -657,10 +611,8 @@
                   "title": "Inspect"
                 }
               ],
-              "logo": null,
               "mode": "Unspecified",
               "name": "actions",
-              "slot": null,
               "subject": "Screen",
               "syntaxKind": "Actions"
             }
@@ -684,20 +636,14 @@
             {
               "kind": "SlotSyntax",
               "name": "body",
-              "optional": false,
               "primary": true,
-              "role": "Page",
-              "routed": false,
-              "routedBy": null
+              "role": "Page"
             },
             {
               "kind": "SlotSyntax",
               "name": "detail",
               "optional": true,
-              "primary": false,
-              "role": "Pane",
-              "routed": false,
-              "routedBy": null
+              "role": "Pane"
             }
           ],
           "templateType": "catalogue"

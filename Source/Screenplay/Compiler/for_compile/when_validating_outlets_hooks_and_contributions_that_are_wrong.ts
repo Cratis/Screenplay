@@ -7,6 +7,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 
 const layout = [
     'layout Shell',
+    '  category application',
     '  main page routed primary',
     '  detail pane',
     '  outlet actions of actions for item in main',

@@ -13,18 +13,10 @@
       "exposes": [],
       "name": "AppShell",
       "recursiveSlots": [],
-      "restrictsScopes": false,
-      "scopes": [],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
-          "name": "content",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "content"
         }
       ],
       "templateType": null
@@ -40,9 +32,6 @@
           "kind": "DialogTemplateSyntax",
           "arrangement": null,
           "category": "Dialog",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "name": "ConfirmOrder",
           "recursiveSlots": [],
@@ -56,21 +45,11 @@
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "body",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "body"
             },
             {
               "kind": "SlotSyntax",
-              "name": "actions",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "actions"
             }
           ],
           "templateType": null
@@ -180,25 +159,14 @@
           "kind": "ScreenTemplateSyntax",
           "arrangement": null,
           "category": "Workspace",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "content",
           "name": "Workspace",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "body",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "body"
             }
           ],
           "templateType": null
@@ -207,9 +175,6 @@
           "kind": "ScreenTemplateSyntax",
           "arrangement": null,
           "category": "List",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "body",
           "name": "OrderList",
@@ -224,12 +189,7 @@
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "body",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "body"
             }
           ],
           "templateType": null

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { validateOutletPresentation } from './Parsing/OutletPresentationValidator';
+import { validateTemplateCategories } from './Parsing/TemplateCategoryValidator';
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { validateProvides } from './Parsing/ProvideValidator';
 import { validateAvailability, validateAvailabilityInvocations } from './Parsing/AvailabilityValidator';
@@ -112,6 +113,7 @@ function validateApplicationContracts(value: ApplicationSyntax, context: ParserC
     validateApplicationHandlers(value, context);
     validateIdentity(value, context);
     validateOutletPresentation(value, context);
+    validateTemplateCategories(value, context);
     validateProvides(value, context);
     validateAvailability(value, context);
     validateAvailabilityInvocations(value, context);

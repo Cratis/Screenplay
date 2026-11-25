@@ -70,7 +70,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": 48,
                       "name": "topbar",
                       "span": null,
@@ -79,7 +78,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "content",
                       "span": null,
@@ -88,18 +86,13 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": 64,
                       "name": "navigation",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": null,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Column"
                 }
               ],
@@ -117,7 +110,6 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 56,
                   "name": "topbar",
                   "span": null,
@@ -129,7 +121,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": null,
                       "name": "navigation",
                       "span": null,
@@ -138,35 +129,25 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "content",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": null,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Row"
                 },
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 32,
                   "name": "footer",
                   "span": null,
                   "width": null
                 }
               ],
-              "columns": null,
               "gap": null,
-              "grow": null,
-              "rows": null,
-              "span": null,
               "syntaxKind": "Column"
             }
           ],
@@ -180,11 +161,9 @@
         {
           "kind": "OutletSyntax",
           "items": [],
-          "logo": null,
           "mode": "Unspecified",
           "name": "Navigation",
           "slot": "navigation",
-          "subject": null,
           "syntaxKind": "Navigation"
         },
         {
@@ -209,8 +188,6 @@
           },
           "mode": "Unspecified",
           "name": "topbar",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Navigation"
         },
         {
@@ -265,54 +242,28 @@
               "title": "Due dates"
             }
           ],
-          "logo": null,
           "mode": "Unspecified",
           "name": "sidebar",
-          "slot": null,
-          "subject": null,
           "syntaxKind": "Navigation"
         }
       ],
       "recursiveSlots": [],
-      "restrictsScopes": false,
-      "scopes": [],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
-          "name": "topbar",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "topbar"
         },
         {
           "kind": "SlotSyntax",
-          "name": "navigation",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "navigation"
         },
         {
           "kind": "SlotSyntax",
-          "name": "content",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "content"
         },
         {
           "kind": "SlotSyntax",
-          "name": "footer",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "footer"
         }
       ],
       "templateType": null

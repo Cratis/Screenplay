@@ -78,33 +78,17 @@
           "kind": "DialogTemplateSyntax",
           "arrangement": null,
           "category": "Dialog",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "name": "Dialog",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "body",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "body"
             },
             {
               "kind": "SlotSyntax",
-              "name": "actions",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "actions"
             }
           ],
           "templateType": null

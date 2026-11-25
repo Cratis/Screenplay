@@ -173,7 +173,6 @@
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 56,
                   "name": "topbar",
                   "span": null,
@@ -185,7 +184,6 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": false,
-                      "growFactor": null,
                       "height": null,
                       "name": "navigation",
                       "span": null,
@@ -194,35 +192,25 @@
                     {
                       "kind": "ArrangementSlotSyntax",
                       "grow": true,
-                      "growFactor": null,
                       "height": null,
                       "name": "content",
                       "span": null,
                       "width": null
                     }
                   ],
-                  "columns": null,
                   "gap": null,
-                  "grow": null,
-                  "rows": null,
-                  "span": null,
                   "syntaxKind": "Row"
                 },
                 {
                   "kind": "ArrangementSlotSyntax",
                   "grow": false,
-                  "growFactor": null,
                   "height": 32,
                   "name": "footer",
                   "span": null,
                   "width": null
                 }
               ],
-              "columns": null,
               "gap": null,
-              "grow": null,
-              "rows": null,
-              "span": null,
               "syntaxKind": "Column"
             }
           ],
@@ -236,54 +224,29 @@
         {
           "kind": "OutletSyntax",
           "items": [],
-          "logo": null,
           "mode": "Unspecified",
           "name": "Navigation",
           "slot": "navigation",
-          "subject": null,
           "syntaxKind": "Navigation"
         }
       ],
       "recursiveSlots": [],
-      "restrictsScopes": false,
-      "scopes": [],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
-          "name": "topbar",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "topbar"
         },
         {
           "kind": "SlotSyntax",
-          "name": "navigation",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "navigation"
         },
         {
           "kind": "SlotSyntax",
-          "name": "content",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "content"
         },
         {
           "kind": "SlotSyntax",
-          "name": "footer",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "footer"
         }
       ],
       "templateType": null
@@ -299,33 +262,17 @@
           "kind": "DialogTemplateSyntax",
           "arrangement": null,
           "category": "Dialog",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "name": "RegisterInvoiceDialog",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "body",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "body"
             },
             {
               "kind": "SlotSyntax",
-              "name": "actions",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "actions"
             }
           ],
           "templateType": null
@@ -5783,34 +5730,18 @@
           "kind": "ScreenTemplateSyntax",
           "arrangement": null,
           "category": "Workspace",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "content",
           "name": "MasterDetail",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "sidebar",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "sidebar"
             },
             {
               "kind": "SlotSyntax",
-              "name": "main",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "main"
             }
           ],
           "templateType": null
@@ -5819,52 +5750,26 @@
           "kind": "ScreenTemplateSyntax",
           "arrangement": null,
           "category": "Workspace",
-          "content": [],
-          "description": null,
-          "displayName": null,
           "exposes": [],
           "fitsSlot": "content",
           "name": "Dashboard",
           "recursiveSlots": [],
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "header",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "header"
             },
             {
               "kind": "SlotSyntax",
-              "name": "left",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "left"
             },
             {
               "kind": "SlotSyntax",
-              "name": "right",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "right"
             },
             {
               "kind": "SlotSyntax",
-              "name": "footer",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "footer"
             }
           ],
           "templateType": null

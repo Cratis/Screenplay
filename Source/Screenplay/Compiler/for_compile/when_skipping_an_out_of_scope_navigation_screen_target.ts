@@ -11,6 +11,7 @@ describe('when skipping an out of scope navigation screen target', () => {
         ['non-page', 'Dialog', '    slice StateView Dialog\n      screen Dialog\n        fits dialog'],
     ])('should not resolve a %s screen in another module', (_case, screen, extra) => {
         const result = parse(`layout Shell
+  category application
   outlet sidebar of navigation
 module Shop
   outlet sidebar extends
