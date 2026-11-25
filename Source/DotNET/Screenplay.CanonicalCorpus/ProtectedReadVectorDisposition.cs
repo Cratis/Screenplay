@@ -38,5 +38,5 @@ public sealed record ProtectedReadVectorDisposition(
     /// <summary>
     /// Gets the correction's rationale and owning decision and issue.
     /// </summary>
-    public string Reason => "Decision 0170 / Screenplay#1384 removes runtime keys from protected-read refusals; frozen originals remain unchanged.";
+    public string Reason => "Decision 0171 / Screenplay#1384 removes runtime keys from protected-read refusals; frozen originals remain unchanged.";
 }

@@ -5,7 +5,7 @@
 contract version 1, vector order and every other expectation remain unchanged.
 `RaceModelV1R3` shares V1's frozen source, identity catalog, ESM v25 bytes and revision.
 
-Decision 0170 follows 0168: the original `races-v1` and `races-v1r2` files and public
+Decision 0171 follows 0168: the original `races-v1` and `races-v1r2` files and public
 pins remain frozen. `ProtectedReadReplacements.RaceDispositions` records each
 original's exact incompatible commit and points to this runnable replacement.
 Originals must produce precisely that mismatch and no other; this replacement

@@ -62,6 +62,25 @@ enforces. A document that validates is well-formed; only the Screenplay reader
 admits it. Canonical documents omit members that have no value, so the schema does
 not require members inside the application.
 
+## Graph projection ownership in v60
+
+ESM v60 adds an optional `declaringSlice` identity to each graph projection,
+after `edges` in canonical JSON. The compiler assigns the identity of the slice
+that declares the projection, including a slice in a nested feature or the
+default module. The slice's ordinary ancestry identifies its feature and module;
+no names or separate scope fields are needed.
+
+Newly compiled graph projections select v60. The identity must reference an
+existing slice: dangling identities and references to other declarations are
+refused. A v60 model contains at least one scoped graph projection. Earlier
+models omit the member, read it as absent and round-trip without inventing an
+owner. A scoped projection cannot be serialized as v59 or earlier.
+
+Identity-aware comparison normalizes `declaringSlice` as a reference, not a
+literal string. Reassigning catalog identities preserves equivalence, while
+moving a projection to another slice changes its meaning. An unmapped reference
+is refused rather than guessed.
+
 ## How the schemas are kept correct
 
 The schemas are generated from the frozen ESM vocabulary the strict reader uses, so

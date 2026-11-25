@@ -1,6 +1,6 @@
 # Protected command reads — runnable V25R2 replacement
 
-`ProtectedReadReplacements.V25R2` is the keyless replacement under decision 0170.
+`ProtectedReadReplacements.V25R2` is the keyless replacement under decision 0171.
 The published `v25/` original remains byte-for-byte frozen. Its thirteen keyed-message
 mismatches are recorded in `ProtectedReadReplacements.SpecificationDispositions`,
 following decision 0168; this replacement must pass normally without dispositions.
@@ -27,7 +27,7 @@ identity; semantic declaration identities are deterministic from their addresses
 contract; `expected/legacy-diagnostics.json` pins the refusal control.
 
 Missing instances and refused protected-read keys both reject with the keyless
-`<View> does not exist.` validation message (decision 0170). Runtime keys are not
+`<View> does not exist.` validation message (decision 0171). Runtime keys are not
 included; refused-key shapes, lookup ordering and world preservation are unchanged.
 
 Regenerate only this corpus with

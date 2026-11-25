@@ -2,7 +2,7 @@
 id: 0091
 title: Protected reads treat keys the event store refuses as missing
 status: superseded
-superseded-by: 0170
+superseded-by: 0171
 stage: none
 decided: 2026-10-17
 decider: Sindre Wilting (delegated to the L0 coordinator)

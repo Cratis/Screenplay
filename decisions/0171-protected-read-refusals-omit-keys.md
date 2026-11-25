@@ -1,5 +1,5 @@
 ---
-id: 0170
+id: 0171
 title: Protected-read refusals omit keys
 status: accepted
 stage: none
@@ -73,7 +73,7 @@ This is a **contract change** superseding 0091, not a behavior-preserving corpus
 
 **Major**, decided by L0 under Cratis/Strategy DEC-0045. The refusal text is a promised portable observable contract;
 changing it breaks consumers matching that message. There is no repo-local exception to the standard major-release
-rule, and 0170 grants none. The earlier minor rationale is withdrawn. Arc's patch classification does not determine
+rule, and 0171 grants none. The earlier minor rationale is withdrawn. Arc's patch classification does not determine
 Screenplay's release intent. The human confirmation and human merge requirements for a major release still apply.
 
 ## Options considered

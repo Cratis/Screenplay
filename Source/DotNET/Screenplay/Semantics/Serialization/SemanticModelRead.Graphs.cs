@@ -105,6 +105,7 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         string? name = null;
         string? graph = null;
+        SemanticId? declaringSlice = null;
         ImmutableArray<SemanticGraphElementHandlers> nodes = default;
         ImmutableArray<SemanticGraphElementHandlers> edges = default;
         while (NextProperty(ref reader, seen, "graph projection") is { } property)
@@ -115,12 +116,13 @@ internal static partial class SemanticModelRead
                 case "graph": graph = String(ref reader, property); break;
                 case "nodes": nodes = Array(ref reader, GraphElementHandlers, property); break;
                 case "edges": edges = Array(ref reader, GraphElementHandlers, property); break;
+                case "declaringSlice": declaringSlice = SemanticId.Parse(String(ref reader, property)); break;
                 default: throw Unknown(property, "graph projection");
             }
         }
 
         Required(name is not null && graph is not null && !nodes.IsDefault && !edges.IsDefault, "graph projection");
-        return new(name!, graph!, nodes, edges);
+        return new(name!, graph!, nodes, edges) { DeclaringSlice = declaringSlice };
     }
 
     static SemanticGraphElementHandlers GraphElementHandlers(ref Utf8JsonReader reader)

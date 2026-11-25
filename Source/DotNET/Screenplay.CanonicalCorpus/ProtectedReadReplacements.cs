@@ -8,7 +8,7 @@ using Cratis.Screenplay.Semantics;
 namespace Cratis.Screenplay.CanonicalCorpus;
 
 /// <summary>
-/// Provides runnable keyless replacements and exact dispositions for the frozen protected-read vectors (decision 0170).
+/// Provides runnable keyless replacements and exact dispositions for the frozen protected-read vectors (decision 0171).
 /// Originals retain their published bytes, identities, revisions and expectations, as in decision 0168.
 /// </summary>
 public static class ProtectedReadReplacements
