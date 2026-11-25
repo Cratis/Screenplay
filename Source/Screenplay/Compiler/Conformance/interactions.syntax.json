@@ -1,0 +1,740 @@
+{
+  "kind": "ApplicationSyntax",
+  "behaviors": [
+    {
+      "kind": "BehaviorSyntax",
+      "bindings": [
+        {
+          "kind": "InteractionBindingSyntax",
+          "actions": [
+            {
+              "kind": "ConfirmActionSyntax",
+              "arguments": [],
+              "message": "message",
+              "messageIsLiteral": false,
+              "onFailure": [
+                {
+                  "kind": "NotifyActionSyntax",
+                  "arguments": [],
+                  "level": "Warning",
+                  "message": "$strings.cancelled",
+                  "messageIsLiteral": false,
+                  "onFailure": [],
+                  "onResult": [],
+                  "onSuccess": []
+                }
+              ],
+              "onResult": [],
+              "onSuccess": [
+                {
+                  "kind": "ExecuteCommandActionSyntax",
+                  "arguments": [
+                    {
+                      "kind": "InteractionArgumentSyntax",
+                      "binding": "item.id",
+                      "name": "id"
+                    }
+                  ],
+                  "command": "Save",
+                  "onFailure": [
+                    {
+                      "kind": "NotifyActionSyntax",
+                      "arguments": [],
+                      "level": "Error",
+                      "message": "Save failed",
+                      "messageIsLiteral": true,
+                      "onFailure": [],
+                      "onResult": [],
+                      "onSuccess": []
+                    }
+                  ],
+                  "onResult": [],
+                  "onSuccess": []
+                }
+              ]
+            }
+          ],
+          "alternatives": [],
+          "condition": null,
+          "otherwise": null,
+          "trigger": {
+            "kind": "BuiltInInteractionTriggerSyntax",
+            "syntaxKind": "Click"
+          }
+        },
+        {
+          "kind": "InteractionBindingSyntax",
+          "actions": [],
+          "alternatives": [
+            {
+              "kind": "InteractionAlternativeSyntax",
+              "actions": [
+                {
+                  "kind": "ExecuteCommandActionSyntax",
+                  "arguments": [],
+                  "command": "Save",
+                  "onFailure": [],
+                  "onResult": [],
+                  "onSuccess": []
+                },
+                {
+                  "kind": "NavigateActionSyntax",
+                  "arguments": [
+                    {
+                      "kind": "InteractionArgumentSyntax",
+                      "binding": "item.id",
+                      "name": "id"
+                    }
+                  ],
+                  "onFailure": [],
+                  "onResult": [],
+                  "onSuccess": [],
+                  "screen": "Details"
+                }
+              ],
+              "condition": {
+                "kind": "ComparisonConditionSyntax",
+                "left": "item.status",
+                "operator": "Equal",
+                "right": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "ready"
+                }
+              }
+            },
+            {
+              "kind": "InteractionAlternativeSyntax",
+              "actions": [
+                {
+                  "kind": "OpenDialogActionSyntax",
+                  "arguments": [
+                    {
+                      "kind": "InteractionArgumentSyntax",
+                      "binding": "item.id",
+                      "name": "id"
+                    }
+                  ],
+                  "dialogTemplate": "Editor",
+                  "onFailure": [],
+                  "onResult": [
+                    {
+                      "kind": "SetStateActionSyntax",
+                      "arguments": [],
+                      "onFailure": [],
+                      "onResult": [],
+                      "onSuccess": [],
+                      "target": "selected",
+                      "value": "$result.id"
+                    },
+                    {
+                      "kind": "CloseDialogActionSyntax",
+                      "arguments": [],
+                      "onFailure": [],
+                      "onResult": [],
+                      "onSuccess": []
+                    }
+                  ],
+                  "onSuccess": []
+                }
+              ],
+              "condition": {
+                "kind": "ComparisonConditionSyntax",
+                "left": "item.status",
+                "operator": "Equal",
+                "right": {
+                  "kind": "LiteralExpressionSyntax",
+                  "value": "new"
+                }
+              }
+            }
+          ],
+          "condition": null,
+          "otherwise": {
+            "kind": "InteractionOtherwiseSyntax",
+            "actions": [
+              {
+                "kind": "NotifyActionSyntax",
+                "arguments": [],
+                "level": "Info",
+                "message": "Not ready",
+                "messageIsLiteral": true,
+                "onFailure": [],
+                "onResult": [],
+                "onSuccess": []
+              },
+              {
+                "kind": "NavigateBackActionSyntax",
+                "arguments": [],
+                "onFailure": [],
+                "onResult": [],
+                "onSuccess": []
+              }
+            ]
+          },
+          "trigger": {
+            "kind": "BuiltInInteractionTriggerSyntax",
+            "syntaxKind": "DoubleClick"
+          }
+        },
+        {
+          "kind": "InteractionBindingSyntax",
+          "actions": [
+            {
+              "kind": "RefreshQueryActionSyntax",
+              "arguments": [],
+              "onFailure": [],
+              "onResult": [],
+              "onSuccess": [],
+              "query": "Items"
+            }
+          ],
+          "alternatives": [],
+          "condition": null,
+          "otherwise": null,
+          "trigger": {
+            "kind": "EventInteractionTriggerSyntax",
+            "eventName": "Changed"
+          }
+        },
+        {
+          "kind": "InteractionBindingSyntax",
+          "actions": [
+            {
+              "kind": "RaiseTriggerActionSyntax",
+              "arguments": [],
+              "onFailure": [],
+              "onResult": [],
+              "onSuccess": [],
+              "trigger": "Tick"
+            }
+          ],
+          "alternatives": [],
+          "condition": null,
+          "otherwise": null,
+          "trigger": {
+            "kind": "IntervalInteractionTriggerSyntax",
+            "amount": 5,
+            "unit": "Minutes"
+          }
+        },
+        {
+          "kind": "InteractionBindingSyntax",
+          "actions": [
+            {
+              "kind": "SetStateActionSyntax",
+              "arguments": [],
+              "onFailure": [],
+              "onResult": [],
+              "onSuccess": [],
+              "target": "selected",
+              "value": "item.id"
+            }
+          ],
+          "alternatives": [],
+          "condition": null,
+          "otherwise": null,
+          "trigger": {
+            "kind": "ApplicationTriggerInteractionTriggerSyntax",
+            "triggerName": "Tick"
+          }
+        }
+      ],
+      "description": "Confirm changes",
+      "file": {
+        "kind": "FileReferenceSyntax",
+        "path": "behaviors/confirm.ts"
+      },
+      "name": "ConfirmChanges",
+      "order": -2,
+      "parameters": [
+        {
+          "kind": "BehaviorParameterSyntax",
+          "name": "message",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        },
+        {
+          "kind": "BehaviorParameterSyntax",
+          "name": "target",
+          "type": null
+        }
+      ]
+    }
+  ],
+  "concepts": [],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Interactions"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "behaviors": [
+        {
+          "kind": "BehaviorSyntax",
+          "bindings": [
+            {
+              "kind": "InteractionBindingSyntax",
+              "actions": [
+                {
+                  "kind": "RefreshQueryActionSyntax",
+                  "arguments": [],
+                  "onFailure": [],
+                  "onResult": [],
+                  "onSuccess": [],
+                  "query": "Items"
+                }
+              ],
+              "alternatives": [],
+              "condition": null,
+              "otherwise": null,
+              "trigger": {
+                "kind": "BuiltInInteractionTriggerSyntax",
+                "syntaxKind": "Enter"
+              }
+            }
+          ],
+          "description": null,
+          "file": null,
+          "name": null,
+          "order": null,
+          "parameters": []
+        }
+      ],
+      "category": "Test",
+      "name": "Shell",
+      "restrictsScopes": false,
+      "scopes": [],
+      "sliceKinds": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "main",
+          "optional": false,
+          "primary": false,
+          "role": null,
+          "routed": false,
+          "routedBy": null
+        }
+      ],
+      "templateType": null,
+      "usedBehaviors": [
+        {
+          "kind": "UsesBehaviorSyntax",
+          "arguments": [
+            {
+              "kind": "BehaviorArgumentSyntax",
+              "name": "message",
+              "value": "\"Proceed?\""
+            },
+            {
+              "kind": "BehaviorArgumentSyntax",
+              "name": "target",
+              "value": "item.id"
+            }
+          ],
+          "behavior": "ConfirmChanges"
+        }
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "behaviors": [
+            {
+              "kind": "BehaviorSyntax",
+              "bindings": [
+                {
+                  "kind": "InteractionBindingSyntax",
+                  "actions": [
+                    {
+                      "kind": "RefreshQueryActionSyntax",
+                      "arguments": [],
+                      "onFailure": [],
+                      "onResult": [],
+                      "onSuccess": [],
+                      "query": "Items"
+                    }
+                  ],
+                  "alternatives": [],
+                  "condition": null,
+                  "otherwise": null,
+                  "trigger": {
+                    "kind": "BuiltInInteractionTriggerSyntax",
+                    "syntaxKind": "Unload"
+                  }
+                }
+              ],
+              "description": null,
+              "file": null,
+              "name": null,
+              "order": null,
+              "parameters": []
+            }
+          ],
+          "category": "Test",
+          "description": null,
+          "displayName": null,
+          "name": "Editor",
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "content",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null,
+          "usedBehaviors": [
+            {
+              "kind": "UsesBehaviorSyntax",
+              "arguments": [
+                {
+                  "kind": "BehaviorArgumentSyntax",
+                  "name": "message",
+                  "value": "\"Editor\""
+                },
+                {
+                  "kind": "BehaviorArgumentSyntax",
+                  "name": "target",
+                  "value": "item.id"
+                }
+              ],
+              "behavior": "ConfirmChanges"
+            }
+          ]
+        }
+      ],
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Items",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Details",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenBehaviorSyntax",
+                      "behavior": {
+                        "kind": "BehaviorSyntax",
+                        "bindings": [
+                          {
+                            "kind": "InteractionBindingSyntax",
+                            "actions": [
+                              {
+                                "kind": "RefreshQueryActionSyntax",
+                                "arguments": [],
+                                "onFailure": [],
+                                "onResult": [],
+                                "onSuccess": [],
+                                "query": "Items"
+                              }
+                            ],
+                            "alternatives": [],
+                            "condition": null,
+                            "otherwise": null,
+                            "trigger": {
+                              "kind": "BuiltInInteractionTriggerSyntax",
+                              "syntaxKind": "Enter"
+                            }
+                          }
+                        ],
+                        "description": null,
+                        "file": null,
+                        "name": null,
+                        "order": null,
+                        "parameters": []
+                      }
+                    },
+                    {
+                      "kind": "ScreenUsesBehaviorSyntax",
+                      "uses": {
+                        "kind": "UsesBehaviorSyntax",
+                        "arguments": [
+                          {
+                            "kind": "BehaviorArgumentSyntax",
+                            "name": "message",
+                            "value": "\"Screen\""
+                          },
+                          {
+                            "kind": "BehaviorArgumentSyntax",
+                            "name": "target",
+                            "value": "item.id"
+                          }
+                        ],
+                        "behavior": "ConfirmChanges"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTableSyntax",
+                      "behaviors": [
+                        {
+                          "kind": "BehaviorSyntax",
+                          "bindings": [
+                            {
+                              "kind": "InteractionBindingSyntax",
+                              "actions": [
+                                {
+                                  "kind": "ExecuteCommandActionSyntax",
+                                  "arguments": [
+                                    {
+                                      "kind": "InteractionArgumentSyntax",
+                                      "binding": "item.id",
+                                      "name": "id"
+                                    }
+                                  ],
+                                  "command": "Save",
+                                  "onFailure": [],
+                                  "onResult": [],
+                                  "onSuccess": []
+                                }
+                              ],
+                              "alternatives": [],
+                              "condition": "item.enabled",
+                              "otherwise": null,
+                              "trigger": {
+                                "kind": "BuiltInInteractionTriggerSyntax",
+                                "syntaxKind": "Select"
+                              }
+                            }
+                          ],
+                          "description": null,
+                          "file": null,
+                          "name": null,
+                          "order": null,
+                          "parameters": []
+                        }
+                      ],
+                      "columns": [
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": null,
+                          "property": "id"
+                        }
+                      ],
+                      "rowClick": null,
+                      "target": "Item",
+                      "usedBehaviors": [
+                        {
+                          "kind": "UsesBehaviorSyntax",
+                          "arguments": [
+                            {
+                              "kind": "BehaviorArgumentSyntax",
+                              "name": "message",
+                              "value": "\"Table\""
+                            },
+                            {
+                              "kind": "BehaviorArgumentSyntax",
+                              "name": "target",
+                              "value": "item.id"
+                            }
+                          ],
+                          "behavior": "ConfirmChanges"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "ScreenComponentSyntax",
+                      "behaviors": [
+                        {
+                          "kind": "BehaviorSyntax",
+                          "bindings": [
+                            {
+                              "kind": "InteractionBindingSyntax",
+                              "actions": [
+                                {
+                                  "kind": "ExecuteCommandActionSyntax",
+                                  "arguments": [],
+                                  "command": "Save",
+                                  "onFailure": [],
+                                  "onResult": [],
+                                  "onSuccess": []
+                                }
+                              ],
+                              "alternatives": [],
+                              "condition": null,
+                              "otherwise": null,
+                              "trigger": {
+                                "kind": "BuiltInInteractionTriggerSyntax",
+                                "syntaxKind": "Change"
+                              }
+                            }
+                          ],
+                          "description": null,
+                          "file": null,
+                          "name": null,
+                          "order": null,
+                          "parameters": []
+                        }
+                      ],
+                      "component": "Controls.Picker",
+                      "context": null,
+                      "exposes": [],
+                      "icon": null,
+                      "name": "picker",
+                      "presentation": [],
+                      "properties": [],
+                      "slots": [],
+                      "stableId": null,
+                      "usedBehaviors": [
+                        {
+                          "kind": "UsesBehaviorSyntax",
+                          "arguments": [
+                            {
+                              "kind": "BehaviorArgumentSyntax",
+                              "name": "message",
+                              "value": "\"Component\""
+                            },
+                            {
+                              "kind": "BehaviorArgumentSyntax",
+                              "name": "target",
+                              "value": "item.id"
+                            }
+                          ],
+                          "behavior": "ConfirmChanges"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "Sibling"
+                    }
+                  ],
+                  "name": "Details"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Work",
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "behaviors": [
+            {
+              "kind": "BehaviorSyntax",
+              "bindings": [
+                {
+                  "kind": "InteractionBindingSyntax",
+                  "actions": [
+                    {
+                      "kind": "NotifyActionSyntax",
+                      "arguments": [],
+                      "level": "Info",
+                      "message": "$strings.loaded",
+                      "messageIsLiteral": false,
+                      "onFailure": [],
+                      "onResult": [],
+                      "onSuccess": []
+                    }
+                  ],
+                  "alternatives": [],
+                  "condition": null,
+                  "otherwise": null,
+                  "trigger": {
+                    "kind": "BuiltInInteractionTriggerSyntax",
+                    "syntaxKind": "Load"
+                  }
+                }
+              ],
+              "description": null,
+              "file": null,
+              "name": null,
+              "order": null,
+              "parameters": []
+            }
+          ],
+          "category": "Test",
+          "description": null,
+          "displayName": null,
+          "fitsSlot": "main",
+          "name": "Workspace",
+          "restrictsScopes": false,
+          "scopes": [],
+          "sliceKinds": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "content",
+              "optional": false,
+              "primary": false,
+              "role": null,
+              "routed": false,
+              "routedBy": null
+            }
+          ],
+          "templateType": null,
+          "usedBehaviors": [
+            {
+              "kind": "UsesBehaviorSyntax",
+              "arguments": [
+                {
+                  "kind": "BehaviorArgumentSyntax",
+                  "name": "message",
+                  "value": "\"Workspace\""
+                },
+                {
+                  "kind": "BehaviorArgumentSyntax",
+                  "name": "target",
+                  "value": "item.id"
+                }
+              ],
+              "behavior": "ConfirmChanges"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}
