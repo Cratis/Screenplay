@@ -5,7 +5,8 @@ import { beforeAll, describe, it } from 'vitest';
 import { DiagnosticCodes } from '../../Diagnostics/DiagnosticCodes';
 import { parse, parseForAuthoring } from '../../ScreenplayCompiler';
 import { BehaviorSyntax } from '../../Syntax/Interactions';
-import { toSyntaxJson } from '../../Syntax/SyntaxJson';
+import { SyntaxJsonValue, toSyntaxJson } from '../../Syntax/SyntaxJson';
+import { assertExactSyntaxRoundTrip } from './given/assert_exact_syntax_round_trip';
 import { decodeExactSyntaxJson } from '../../Syntax/StrictSyntaxJson';
 
 const source = `numbers exact
@@ -41,7 +42,15 @@ describe('when retaining interaction values', () => {
     });
 
     it('should refuse an unknown trigger enum member in Exact JSON', () => {
-        (() => decodeExactSyntaxJson(json.replace('"syntaxKind":"Click"', '"syntaxKind":"Unknown"'))).should.throw();
+        const invalid = json.replace('"syntaxKind":"Click"', '"syntaxKind":"NotATrigger"');
+        invalid.should.not.equal(json);
+        (() => decodeExactSyntaxJson(invalid)).should.throw();
+    });
+
+    it('should preserve the native Unknown trigger sentinel in Exact JSON', () => {
+        const unknown = json.replace('"syntaxKind":"Click"', '"syntaxKind":"Unknown"');
+        unknown.should.not.equal(json);
+        assertExactSyntaxRoundTrip(JSON.parse(unknown) as SyntaxJsonValue);
     });
 
     it('should refuse unknown action members in Exact JSON', () => {

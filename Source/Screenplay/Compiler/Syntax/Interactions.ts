@@ -6,7 +6,7 @@ import { TypeRefSyntax } from './Declarations';
 import { FileReferenceSyntax } from './Implementations';
 import { SyntaxNode } from './SyntaxNode';
 
-export type InteractionTriggerKind = 'Click' | 'DoubleClick' | 'Select' | 'Submit' | 'Change' | 'Load' | 'Unload' | 'Enter' | 'Leave';
+export type InteractionTriggerKind = 'Click' | 'DoubleClick' | 'Select' | 'Submit' | 'Change' | 'Load' | 'Unload' | 'Enter' | 'Leave' | 'Unknown';
 export type NotificationLevel = 'Info' | 'Warning' | 'Error';
 
 export interface BehaviorSyntax extends SyntaxNode {

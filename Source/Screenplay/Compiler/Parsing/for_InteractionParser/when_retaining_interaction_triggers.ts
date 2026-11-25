@@ -3,9 +3,17 @@
 
 import { beforeAll, describe, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
-import { InteractionTriggerSyntax } from '../../Syntax/Interactions';
+import { InteractionActionSyntax, InteractionTriggerSyntax } from '../../Syntax/Interactions';
+import { sourceLocation } from '../../Diagnostics/SourceLocation';
+import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
+import { SyntaxNode } from '../../Syntax/SyntaxNode';
 import { toSyntaxJson } from '../../Syntax/SyntaxJson';
-import { decodeExactSyntaxJson } from '../../Syntax/StrictSyntaxJson';
+import { assertExactSyntaxRoundTrip } from './given/assert_exact_syntax_round_trip';
+
+class RecordingWalker extends ScreenplaySyntaxWalker {
+    readonly nodes: SyntaxNode[] = [];
+    override visitNode(node: SyntaxNode): void { this.nodes.push(node); }
+}
 
 const triggers = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave', 'event Work.Changed', 'interval 2 seconds', 'interval 3 minutes', 'interval 4 hours', 'interval 5 days', 'Work.Tick', 'chosen'];
 const source = `numbers exact\nbehavior Triggers\n${triggers.map(trigger => `  on ${trigger}\n    navigate back`).join('\n')}`;
@@ -33,8 +41,24 @@ describe('when retaining interaction triggers', () => {
         parsed.slice(14).map(trigger => trigger.kind === 'ApplicationTriggerInteractionTriggerSyntax' ? trigger.triggerName : null).should.deep.equal(['Work.Tick', 'chosen']);
     });
 
+    it('should keep the native visitor fallback for a future trigger subtype', () => {
+        // The native walker visits unknown derived nodes even though the wire protocol is closed.
+        const trigger = { kind: 'FutureInteractionTriggerSyntax', location: sourceLocation(1, 1) } as unknown as InteractionTriggerSyntax;
+        const walker = new RecordingWalker();
+        walker.visitInteractionTrigger(trigger);
+        walker.nodes.should.deep.equal([trigger]);
+    });
+
+    it('should visit a future action subtype once and still traverse its continuation', () => {
+        const child: InteractionActionSyntax = { kind: 'NavigateBackActionSyntax', arguments: [], onSuccess: [], onFailure: [], onResult: [], location: sourceLocation(2, 1) };
+        const action = { kind: 'FutureInteractionActionSyntax', arguments: [], onSuccess: [child], onFailure: [], onResult: [], location: sourceLocation(1, 1) } as unknown as InteractionActionSyntax;
+        const walker = new RecordingWalker();
+        walker.visitInteractionAction(action);
+        walker.nodes.should.deep.equal([action, child]);
+    });
+
     it('should round trip every trigger subtype through Exact JSON', () => {
         const json = toSyntaxJson(parse(source).value);
-        toSyntaxJson(decodeExactSyntaxJson(JSON.stringify(json)))!.should.deep.equal(json);
+        assertExactSyntaxRoundTrip(json);
     });
 });

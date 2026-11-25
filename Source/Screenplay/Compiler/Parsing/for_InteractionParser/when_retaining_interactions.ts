@@ -7,7 +7,7 @@ import { beforeAll, describe, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../../Syntax/Structure';
 import { toCompleteSyntaxJson, toSyntaxJson } from '../../Syntax/SyntaxJson';
-import { decodeExactSyntaxJson } from '../../Syntax/StrictSyntaxJson';
+import { assertExactSyntaxRoundTrip } from './given/assert_exact_syntax_round_trip';
 import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../../Syntax/SyntaxNode';
 
@@ -100,9 +100,8 @@ describe('when retaining interactions', () => {
 
     it('should round trip the complete interaction tree through Exact JSON', () => {
         const json = toSyntaxJson(application);
-        const restored = decodeExactSyntaxJson(JSON.stringify(json));
-        toSyntaxJson(restored)!.should.deep.equal(json);
-        toCompleteSyntaxJson(application)!.should.deep.equal(json);
+        assertExactSyntaxRoundTrip(json);
+        JSON.stringify(toCompleteSyntaxJson(application)).should.equal(JSON.stringify(json));
     });
 
     it('should leave the legacy projection unchanged while retaining the complete tree', () => {
@@ -122,8 +121,8 @@ describe('when retaining interactions', () => {
         // The Exact decoder intentionally rejects Legacy source options. Its complete transport still
         // round trips through ordinary JSON, preserving the Legacy options and the whole typed graph.
         const restored = JSON.parse(JSON.stringify(complete)) as ApplicationSyntax;
-        toCompleteSyntaxJson(restored)!.should.deep.equal(complete);
-        toSyntaxJson(restored)!.should.deep.equal(toSyntaxJson(legacy));
+        JSON.stringify(toCompleteSyntaxJson(restored)).should.equal(JSON.stringify(complete));
+        JSON.stringify(toSyntaxJson(restored)).should.equal(JSON.stringify(toSyntaxJson(legacy)));
         const walker = new RecordingWalker();
         walker.visitApplication(restored);
         walker.nodes.filter(node => node.kind === 'InteractionBindingSyntax').should.have.lengthOf(11);

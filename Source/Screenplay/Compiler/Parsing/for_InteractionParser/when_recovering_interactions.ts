@@ -61,20 +61,20 @@ describe('when recovering interactions', () => {
     });
 
     it('should retain unsupported alternatives while reporting their existing diagnostic once', () => {
-        const body = '  on load\n    when item.enabled\n      navigate back';
+        const body = '  on load\n    when item.enabled == true\n      navigate back';
         named(body).value.behaviors![0].bindings[0].alternatives.should.have.lengthOf(1);
         diagnostics(body, DiagnosticCodes.UnsupportedInteractionAlternatives).should.equal(1);
     });
 
     it('should preserve mixed flat actions and alternatives and report the conflict once', () => {
-        const body = '  on click\n    navigate back\n    when item.enabled\n      refresh Items';
+        const body = '  on click\n    navigate back\n    when item.enabled == true\n      refresh Items';
         actions(body).should.have.lengthOf(1);
         named(body).value.behaviors![0].bindings[0].alternatives.should.have.lengthOf(1);
         diagnostics(body, DiagnosticCodes.MixedInteractionAlternatives).should.equal(1);
     });
 
     it('should retain empty alternatives without swallowing the fallback and following bindings', () => {
-        const body = '  on click\n    when item.enabled\n    otherwise\n      navigate back';
+        const body = '  on click\n    when item.enabled == true\n    otherwise\n      navigate back';
         const binding = named(body).value.behaviors![0].bindings[0];
         binding.alternatives[0].actions.should.deep.equal([]);
         binding.otherwise!.actions[0].kind.should.equal('NavigateBackActionSyntax');
@@ -82,15 +82,23 @@ describe('when recovering interactions', () => {
     });
 
     it('should recover misplaced and duplicate fallbacks with single-counted diagnostics', () => {
-        const body = '  on click\n    otherwise\n      navigate back\n    when item.enabled\n      refresh Items\n    otherwise\n      close dialog';
+        const body = '  on click\n    otherwise\n      navigate back\n    when item.enabled == true\n      refresh Items\n    otherwise\n      close dialog';
         const binding = named(body).value.behaviors![0].bindings[0];
         binding.alternatives.should.have.lengthOf(1);
         binding.otherwise!.actions[0].kind.should.equal('CloseDialogActionSyntax');
         diagnostics(body, DiagnosticCodes.MisplacedActionOtherwise).should.equal(2);
     });
 
+    it('should reject a bare operand once and retain the following binding', () => {
+        const body = '  on click\n    when item.enabled\n      navigate back';
+        const behavior = named(body).value.behaviors![0];
+        behavior.bindings[0].alternatives.should.deep.equal([]);
+        behavior.bindings[1].actions[0].kind.should.equal('NavigateBackActionSyntax');
+        diagnostics(body, DiagnosticCodes.ExpectedComparisonOperator).should.equal(1);
+    });
+
     it('should reject inline alternative shorthand once without consuming the next binding', () => {
-        const body = '  on click\n    when item.enabled execute Save';
+        const body = '  on click\n    when item.enabled == true execute Save';
         named(body).value.behaviors![0].bindings.should.have.lengthOf(2);
         diagnostics(body, DiagnosticCodes.InlineInteractionAlternative).should.equal(1);
     });
