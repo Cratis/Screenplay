@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { parseContribution } from './ContributionParser';
+import type { ContributionSyntax } from '../Syntax/Layouts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
@@ -33,7 +35,7 @@ import { locationOf, SourceLine } from './SourceLine';
 const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 
 // Feature members the C# compiler knows that this compiler does not model. They are skipped whole, not reported.
-const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute', 'template']);
+const opaqueFeatureMembers = new Set(['on', 'uses', 'template']);
 
 // What a feature body may hold, as it reads in a diagnostic.
 export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, feature, slice, screen, contribute, outlet, example, \'on <trigger>\' or \'uses <Behavior>\'';
@@ -42,6 +44,7 @@ export const featureBodyExpected = 'description, documentation, depends on <Name
 // into the feature. The port of the C# FeatureBody.
 export class FeatureBody {
     readonly #features: FeatureSyntax[] = [];
+    readonly #contributions: ContributionSyntax[] = [];
     readonly #slices: SliceSyntax[] = [];
     readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
@@ -114,6 +117,9 @@ export class FeatureBody {
             case 'example':
                 this.#examples.push(parseExample(context, line));
                 return true;
+            case 'contribute':
+                this.#contributions.push(parseContribution(context, line));
+                return true;
             case 'slice':
                 this.#slices.push(parseSlice(context, line));
                 return true;
@@ -144,6 +150,7 @@ export class FeatureBody {
             ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             ...(this.#screens.length > 0 ? { screens: this.#screens } : {}),
+            ...(this.#contributions.length > 0 ? { contributions: this.#contributions } : {}),
             features: this.#features,
             slices: this.#slices,
             examples: this.#examples,

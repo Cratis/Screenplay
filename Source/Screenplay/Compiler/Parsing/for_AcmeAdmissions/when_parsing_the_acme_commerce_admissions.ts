@@ -27,6 +27,7 @@ module Shop
       event LineAdded
         unitPrice Money
         quantity Int
+      screen PutInBasketScreen
     slice StateView BasketLookup
       readmodel Basket
         basketId Uuid key

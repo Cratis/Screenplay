@@ -21,6 +21,9 @@ import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
 import { parseApplicationContext } from './ApplicationContextParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
+import type { LayoutSyntax } from '../Syntax/Layouts';
+import { parseLayout } from './LayoutParser';
+import { recordBlueprintOutletFacts } from './BlueprintOutletFacts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
@@ -106,7 +109,9 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
         context.reader.takeSignificant();
         dispatchRoot(context, line, state);
     }
-    return buildApplication(context, state);
+    const application = buildApplication(context, state);
+    recordBlueprintOutletFacts(application, lines);
+    return application;
 }
 
 // What the root loop gathers while it reads the lines of a document.
@@ -154,6 +159,7 @@ interface RootState {
     readonly exposures: ExposureSyntax[];
     readonly instanceContributions: InstanceContributionsSyntax[];
     readonly themes: ThemeSyntax[];
+    readonly layouts: LayoutSyntax[];
     readonly designSystems: DesignSystemSyntax[];
     readonly designProfiles: DesignProfileFacts[];
 }
@@ -172,7 +178,7 @@ function createRootState(placement: PlayPlacement): RootState {
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
         imports: [], fileImports: [], concepts: [], types: [], systems: [], secrets: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
         personas: [], users: [], storylines: [], shapes: [], screens: [], agents: null, sinks: [], stickyNotes: [], policies: [], purposes: [], provides: [], audiences: [], availabilities: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
-        themes: [], designSystems: [], designProfiles: []
+        themes: [], designSystems: [], designProfiles: [], layouts: []
     };
 }
 
@@ -233,6 +239,11 @@ const bodyRules: readonly RootRule[] = [
     { matches: isKeyword('instance'), parse: (context, line, state) => { state.instanceContributions.push(parseInstance(context, line)); } },
     { matches: isKeyword('trigger'), parse: parseRootTrigger },
     { matches: isKeyword('design'), parse: (context, line, state) => { addDesignSystem(context, parseDesignSystem(context, line), state.designSystems); } },
+    { matches: isKeyword('layout'), parse: (context, line, state) => {
+        const layout = parseLayout(context, line, 'layout') as LayoutSyntax;
+        if (state.layouts.some(existing => existing.name === layout.name)) context.error(DiagnosticCodes.DuplicateLayout, `A layout named '${layout.name}' is already declared - layout names must be unique`, layout.location);
+        else state.layouts.push(layout);
+    } },
     { matches: isKeyword('theme'), parse: (context, line, state) => { addTheme(context, parseTheme(context, line), state.themes); } },
     { matches: keyword => opaqueTopLevel.has(keyword), parse: parseRootOpaque }
 ];
@@ -387,7 +398,7 @@ function buildApplication(context: ParserContext, state: RootState): Application
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
     const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, storylines, shapes, screens, sinks, policies, purposes, provides, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions, themes, designSystems, designProfiles } = state;
-    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('agents', state.agents), ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, ...nonEmptyOnly('provides', provides), ...nonEmptyOnly('audiences', state.audiences), ...nonEmptyOnly('availabilities', state.availabilities), seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('shapes', shapes), ...nonEmptyOnly('screens', screens), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('secrets', state.secrets), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
+    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('agents', state.agents), ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, ...nonEmptyOnly('provides', provides), ...nonEmptyOnly('audiences', state.audiences), ...nonEmptyOnly('availabilities', state.availabilities), seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('shapes', shapes), ...nonEmptyOnly('screens', screens), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('secrets', state.secrets), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('layouts', state.layouts), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

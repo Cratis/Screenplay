@@ -14,6 +14,10 @@ type ScopedScreen = { screen: ScreenSyntax; scope: readonly string[] };
 
 // Item destinations name executable ownership, not a global screen-name search.
 export function validateNavigationScreenTargets(application: ApplicationSyntax, context: ParserContext): void {
+    createNavigationScreenTargetValidator(application, context).visitApplication(application);
+}
+
+export function createNavigationScreenTargetValidator(application: ApplicationSyntax, context: ParserContext): NavigationTargets {
     const screens: ScopedScreen[] = [];
     const features = new Set<string>();
     const free: ScopedScreen[] = (application.screens ?? []).map(screen => ({ screen, scope: [] }));
@@ -41,7 +45,7 @@ export function validateNavigationScreenTargets(application: ApplicationSyntax, 
             screens.push({ screen: resolved.screen, scope });
         }
     }
-    new NavigationTargets(screens, features, context).visitApplication(application);
+    return new NavigationTargets(screens, features, context);
 }
 
 function resolve(reference: string, scope: readonly string[], declarations: readonly ScopedScreen[]): ScopedScreen | undefined {
@@ -61,6 +65,12 @@ function single(entries: readonly ScopedScreen[]): ScopedScreen | undefined {
 }
 
 class NavigationTargets extends ScreenplaySyntaxWalker {
+    validateItem(target: NavigationTargetSyntax, module: string | null): void {
+        const previous = this.module;
+        this.module = module ?? undefined;
+        this.visitNode(target);
+        this.module = previous;
+    }
     private module: string | undefined;
 
     constructor(private readonly screens: readonly ScopedScreen[], private readonly features: ReadonlySet<string>, private readonly context: ParserContext) { super(); }

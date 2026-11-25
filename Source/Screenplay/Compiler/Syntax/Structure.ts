@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { ContributionSyntax, DialogTemplateSyntax, LayoutSyntax, ScreenTemplateSyntax } from './Layouts';
 import { StorylineSyntax } from './Storylines';
 import type { AgentsSyntax } from './Agents';
 import type { AudienceSyntax, AvailabilitySyntax, AvailableSyntax } from './Availability';
@@ -95,6 +96,7 @@ export interface DependsOnSyntax extends SyntaxNode {
 }
 
 export interface FeatureSyntax extends SyntaxNode {
+    readonly contributions?: readonly ContributionSyntax[];
     readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
@@ -119,6 +121,9 @@ export interface FeatureSyntax extends SyntaxNode {
 }
 
 export interface ModuleSyntax extends SyntaxNode {
+    readonly screenTemplates?: readonly ScreenTemplateSyntax[];
+    readonly dialogTemplates?: readonly DialogTemplateSyntax[];
+    readonly contributions?: readonly ContributionSyntax[];
     readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
@@ -153,6 +158,7 @@ export interface ContextMemberSyntax extends SyntaxNode {
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
+    readonly layouts?: readonly LayoutSyntax[];
     readonly agents?: AgentsSyntax | null;
     // The 'audience' and 'availability' declarations, written only when present.
     readonly audiences?: readonly AudienceSyntax[];

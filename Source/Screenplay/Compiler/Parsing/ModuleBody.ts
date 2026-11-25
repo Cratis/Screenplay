@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { parseContribution } from './ContributionParser';
+import { parseLayout } from './LayoutParser';
+import type { ContributionSyntax, DialogTemplateSyntax, ScreenTemplateSyntax } from '../Syntax/Layouts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
@@ -33,7 +36,7 @@ import { locationOf, SourceLine } from './SourceLine';
 export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 
 // Module members the C# compiler knows that this compiler does not model. They are skipped whole, not reported.
-const opaqueModuleMembers = new Set(['on', 'uses', 'dialog', 'form', 'contribute', 'navigation', 'template']);
+const opaqueModuleMembers = new Set(['on', 'uses', 'form', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
 export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, screen, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
@@ -42,6 +45,9 @@ export const moduleBodyExpected = 'description, documentation, depends on <Name>
 // into the module. The port of the C# ModuleBody.
 export class ModuleBody {
     readonly #features: FeatureSyntax[] = [];
+    readonly #screenTemplates: ScreenTemplateSyntax[] = [];
+    readonly #dialogTemplates: DialogTemplateSyntax[] = [];
+    readonly #contributions: ContributionSyntax[] = [];
     readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
@@ -113,9 +119,15 @@ export class ModuleBody {
             case 'feature':
                 this.#features.push(parseFeature(context, line));
                 return true;
+            case 'contribute':
+                this.#contributions.push(parseContribution(context, line));
+                return true;
+            case 'dialog':
+                this.#dialogTemplates.push(parseLayout(context, line, 'dialog template') as DialogTemplateSyntax);
+                return true;
             case 'screen':
                 if (isScreenTemplateHeader(line.content)) {
-                    collectInputUses(context, line);
+                    this.#screenTemplates.push(parseLayout(context, line, 'screen template') as ScreenTemplateSyntax);
                 } else {
                     this.#screens.push(parseScreen(context, line));
                 }
@@ -158,6 +170,9 @@ export class ModuleBody {
             ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             ...(this.#screens.length > 0 ? { screens: this.#screens } : {}),
+            ...(this.#screenTemplates.length > 0 ? { screenTemplates: this.#screenTemplates } : {}),
+            ...(this.#dialogTemplates.length > 0 ? { dialogTemplates: this.#dialogTemplates } : {}),
+            ...(this.#contributions.length > 0 ? { contributions: this.#contributions } : {}),
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

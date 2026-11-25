@@ -191,7 +191,7 @@ function parseDirectives(context: ParserContext, parent: SourceLine): ScreenDire
     return directives;
 }
 
-function parseDirective(context: ParserContext, line: SourceLine): ScreenDirectiveSyntax | undefined {
+export function parseDirective(context: ParserContext, line: SourceLine): ScreenDirectiveSyntax | undefined {
     validateNonActionSubjectClause(context, line);
     switch (firstWord(line.content)) {
         case 'data':
@@ -278,7 +278,7 @@ function parseActionHeader(context: ParserContext, line: SourceLine, parsed: Ret
     return parsePlainScreenAction(context, line, { ...parsed, command: match[1] }, { navigate: parseNavigate, presentation: parsePresentationValue });
 }
 
-function parseNavigate(context: ParserContext, text: string, line: SourceLine): ScreenNavigateSyntax | undefined {
+export function parseNavigate(context: ParserContext, text: string, line: SourceLine): ScreenNavigateSyntax | undefined {
     const match = navigate.exec(text);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidNavigation, `Invalid navigation '${text}' - expected 'navigate to <Screen> [by <param>]'`, locationOf(line));
@@ -397,6 +397,9 @@ function parseSummary(context: ParserContext, line: SourceLine): ScreenSummarySy
 }
 
 
+const componentsWithInteractions = new WeakSet<ScreenComponentSyntax>();
+export const hasComponentInteractions = (component: ScreenComponentSyntax): boolean => componentsWithInteractions.has(component);
+
 function parseComponent(context: ParserContext, line: SourceLine): ScreenComponentSyntax | undefined {
     const match = component.exec(line.content);
     if (match === null) {
@@ -413,6 +416,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
     const presentationValues: PresentationValueSyntax[] = [];
     const slots: ComponentSlotSyntax[] = [];
     const signalUses: ComponentSignalUse[] = [];
+    let hasInteractions = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
@@ -444,9 +448,11 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
                 break;
             }
             case 'on':
+                hasInteractions = true;
                 signalUses.push(signalUseOf(collectInputUses(context, child)));
                 break;
             case 'uses':
+                hasInteractions = true;
                 collectInputUses(context, child);
                 break;
             default:
@@ -458,6 +464,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
 
     const placed: ScreenComponentSyntax = { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, slots, location: locationOf(line) };
     if (signalUses.length > 0) componentSignalUses.set(placed, signalUses);
+    if (hasInteractions) componentsWithInteractions.add(placed);
     return placed;
 }
 
