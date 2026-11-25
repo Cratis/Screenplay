@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { validateOutletPresentation } from '../Parsing/OutletPresentationValidator';
+import { validateTemplateCategories } from '../Parsing/TemplateCategoryValidator';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateSpecificationCases } from '../Parsing/SpecificationCaseValidator';
 import { expandSpecificationExamples, validateSpecificationExampleTypes } from '../Parsing/SpecificationCommandExamples';
@@ -100,6 +101,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
         ...parsed.flatMap(document => document.interactionUses).filter(site => site.ancestors.some(ancestor => ancestor.keyword === 'screen')));
     context.continuationValues.push(...parsed.flatMap(document => document.continuationValues));
     validateOutletPresentation(merged.value, context);
+    validateTemplateCategories(merged.value, context);
     validateSpecificationCases(merged.value, context);
     validateSpecificationExampleTypes(merged.value, context, deferImportedExampleTypes);
     const effective = expandSpecificationExamples(merged.value);

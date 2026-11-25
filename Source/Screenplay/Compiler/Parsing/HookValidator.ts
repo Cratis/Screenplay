@@ -63,7 +63,7 @@ export class HookValidator {
         const matches = this.inventory.matchingSlices(button.slice);
         if (matches.length !== 1 || matches[0].slice.type !== 'StateChange') return;
         const slice = matches[0].slice;
-        const unresolved = slice.commands[0]?.properties.find(property => !property.isGenerated && !(property.isIdentifier && subject != null));
+        const unresolved = slice.commands.flatMap(command => command.properties).find(property => !property.isGenerated && !(property.isIdentifier && subject != null));
         if (button.opens === 'Runs') {
             if (unresolved !== undefined) this.context.error(DiagnosticCodes.RunsHookNeedsForm, `${hook(button)} runs slice '${button.slice}' directly, but nothing supplies its input '${unresolved.name}' without a form - remove 'runs' so the slice's screen asks for it`, button.location);
             return;

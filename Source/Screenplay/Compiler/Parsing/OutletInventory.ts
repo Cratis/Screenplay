@@ -69,7 +69,7 @@ export class OutletInventory extends ScreenplaySyntaxWalker {
     }
 
     private offer(structure: LayoutMembers, module: string | null): void {
-        for (const slot of structure.slots) this.slots.add(slot.name);
+        if (module === null) for (const slot of structure.slots) this.slots.add(slot.name);
         for (const outlet of structure.outlets ?? []) this.offers.push({ module, structure, outlet });
     }
 

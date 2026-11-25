@@ -21,6 +21,7 @@ const composition = [
     '',
     'module Sales',
     '  screen template Shell',
+    '    category application',
     '    display "Sales shell"',
     '    scopes slice',
     '    header pane',
