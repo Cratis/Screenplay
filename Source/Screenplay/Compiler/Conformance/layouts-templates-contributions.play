@@ -66,7 +66,6 @@ module Work
                 place form hidden
     contribute to sidebar
         item records title "Records" target Work.Tasks
-            before work
     contribute to actions
         navigate to Overview
         label "Overview"

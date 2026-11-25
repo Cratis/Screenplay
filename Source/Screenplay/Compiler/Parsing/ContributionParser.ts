@@ -33,7 +33,7 @@ export function parseContribution(context: ParserContext, line: SourceLine): Con
     let destination: ContributionDestinationSyntax | null = null;
     for (const child of childrenOf(context, line)) {
         if (isOutletItem(child.content)) {
-            const item = parseOutletItem(context, child, true);
+            const item = parseOutletItem(context, child, false);
             if (item !== undefined) items.push(item);
             continue;
         }

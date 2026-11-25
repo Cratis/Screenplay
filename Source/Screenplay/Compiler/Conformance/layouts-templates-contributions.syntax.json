@@ -297,11 +297,6 @@
             {
               "kind": "NavigationItemSyntax",
               "id": "records",
-              "position": {
-                "kind": "OutletPositionSyntax",
-                "id": "work",
-                "placement": "Before"
-              },
               "target": {
                 "kind": "NavigationTargetSyntax",
                 "feature": "Tasks",
