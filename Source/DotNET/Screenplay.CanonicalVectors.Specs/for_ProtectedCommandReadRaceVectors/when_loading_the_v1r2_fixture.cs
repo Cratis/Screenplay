@@ -60,6 +60,6 @@ public class when_loading_the_v1r2_fixture : Specification
     void should_match_every_outcome_through_the_public_calls()
     {
         var plan = RaceVectorExecution.Plan(SemanticModelSerializer.Deserialize(ProtectedCommandReadRaceVectors.ModelV1R2.EsmBytes.AsSpan()));
-        foreach (var vector in _document["vectors"]!.AsArray()) RaceVectorExecution.Verify(plan, vector!);
+        FrozenRaceVerification.Verify(plan, _document["vectors"]!.AsArray(), "ProtectedCommandReadRaceVectors.BytesV1R2");
     }
 }

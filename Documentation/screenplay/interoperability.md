@@ -388,7 +388,7 @@ the variable. The specs execute every vector and check that the published bytes 
 
 ### Protected reads of refused keys
 
-A host that renders [protected command reads](commands.md#keys-the-event-store-refuses) must answer a key the event store refuses (empty, whitespace-only, `*`, containing `#`, or padded with whitespace) with the missing-view `Validation` outcome, not an error from its store client, even when the world holds an instance at that key. `ProtectedCommandReadsCorpus.V25` carries the vectors `RefusedEmptyKey`, `RefusedWhitespaceKey`, `RefusedStarKey`, `RefusedHashKey`, `RefusedPaddedKey` and `RefusedStarKeyWithStoredInstance`. See [decision 0091](https://github.com/Cratis/Screenplay/blob/main/decisions/0091-protected-reads-treat-keys-the-event-store-refuses-as-missing.md).
+A host that renders [protected command reads](commands.md#keys-the-event-store-refuses) must answer a key the event store refuses (empty, whitespace-only, `*`, containing `#`, or padded with whitespace) with the missing-view `Validation` outcome and exact message `<ReadModel> does not exist.`, not an error from its store client, even when the world holds an instance at that key. Missing instances use the same keyless message. Neither refusal includes runtime keys or event details; refused-key shapes, validation ordering and world preservation are unchanged. `ProtectedReadReplacements.V25R2` is the runnable keyless replacement for the frozen `ProtectedCommandReadsCorpus.V25`; it carries the vectors `RefusedEmptyKey`, `RefusedWhitespaceKey`, `RefusedStarKey`, `RefusedHashKey`, `RefusedPaddedKey` and `RefusedStarKeyWithStoredInstance`. See [decision 0171](https://github.com/Cratis/Screenplay/blob/main/decisions/0171-protected-read-refusals-omit-keys.md), which supersedes 0091.
 
 ### Protected command read race vectors
 
@@ -404,6 +404,19 @@ The original bytes, `Version` and `Sha256` remain frozen. The additive **V1R2** 
 all sixteen V1 vectors unchanged and in order, and the same source, identity catalog, ESM v25 bytes and semantic revision.
 It adds `read-race-and-late-uniqueness-claim`: a later fact changes the protected state while another claims the value captured by the
 command's decision. Commit returns the `Constraint` rejection (`UniqueValue`), not a read conflict, and appends no command facts.
+
+Under [decision 0171](https://github.com/Cratis/Screenplay/blob/main/decisions/0171-protected-read-refusals-omit-keys.md),
+`ProtectedReadReplacements.RacesV1R3` is the runnable keyless replacement. Its `RacesV1R3Sha256` pins the exact bytes in
+`races-v1r3/races.v1r3.json`; `RaceModelV1R3` shares the frozen model. It preserves all seventeen V1R2 cases and fixture
+contract version **1**, changing only `absent-then-created`'s first commit message to `View does not exist.`. This is a named corpus
+revision, not an in-place re-pin or a new ESM version. The portable contract change requires a **major** release.
+
+Following [decision 0168](https://github.com/Cratis/Screenplay/blob/main/decisions/0168-dispose-stale-lifecycle-vectors-with-runnable-replacements.md),
+`ProtectedReadReplacements.SpecificationDispositions` and `RaceDispositions` pin the original identity, revision, byte
+hash, exact mismatch, replacement and reason for each incompatible expectation. Run originals and require precisely
+those mismatches; all unaffected expectations remain mandatory. Reject missing, duplicate, unused or drifting
+dispositions. All replacement cases must pass normally, without a disposition. Original source-form, serializer and
+hash checks remain strict. Regeneration targets V25R2 and V1R3 only and never writes the frozen originals.
 
 Each vector gives `decided` facts, a `request`, the expected `dependencies`, and `commits`. A commit extends the decided world with `later`
 facts, or replaces it with a `history`, and states the `expect`ed outcome: `accepted` with the command's facts, `conflict` with its category, or
@@ -426,12 +439,13 @@ repeated-commit cases (accepted then conflicting, accepted then constraint-rejec
 and a commit world that is shorter than or rewrites the decided history. Non-canonical UUID key casing is not a vector: the public path refuses it.
 The vectors do not cover the guarded write after settlement; that window is a [host obligation](reactions.md#append-a-settled-command-in-a-live-host).
 
-To regenerate V1R2 from the reference evaluator without writing any frozen V1 resources, set
-`SCREENPLAY_REGENERATE_PROTECTED_READ_RACES_V1R2=1` and run the
-`for_ProtectedCommandReadRaceVectors.when_loading_the_v1r2_fixture` spec in `Screenplay.CanonicalVectors.Specs`. Each case states the
-outcome it is meant to show, so a regeneration that observes anything else fails. The generator also checks that all sixteen V1 vectors
-remain unchanged. Regeneration intentionally fails at the end: review the additive fixture, deliberately pin `Sha256V1R2`, rebuild and
-rerun without the variable. Keep the original fixture and its hash unchanged.
+To regenerate V1R3 without writing either frozen original, set
+`SCREENPLAY_REGENERATE_PROTECTED_READ_RACES_V1R3=1` and run the
+`for_ProtectedCommandReadRaceVectors.when_loading_the_v1r3_replacement` spec in `Screenplay.CanonicalVectors.Specs`.
+Each case states the outcome it is meant to show, so unexpected execution fails. Regeneration intentionally fails at the end:
+review the replacement fixture, deliberately pin `ProtectedReadReplacements.RacesV1R3Sha256`, rebuild and rerun without
+the variable. The specs compare the replacement with V1R2, permitting only the disposed message change. The old V1/V1R2
+regeneration switches refuse to write originals.
 
 ### Canonical conformance corpus
 

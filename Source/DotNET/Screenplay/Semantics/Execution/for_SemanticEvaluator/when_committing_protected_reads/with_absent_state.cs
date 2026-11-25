@@ -13,7 +13,7 @@ public class with_absent_state : given.a_protected_command
         var world = history ? _world : SemanticWorld.Empty;
         var result = (SemanticRejected)_evaluator.Execute(_plan, world, Request(lookup: "missing"));
         result.Category.ShouldEqual(SemanticRejectionCategory.Validation);
-        result.Details.ShouldEqual("View 'missing' does not exist.");
+        result.Details.ShouldEqual("View does not exist.");
         result.World.ShouldBeSame(world);
     }
 
@@ -24,7 +24,7 @@ public class with_absent_state : given.a_protected_command
         decision.Dependencies.Entries.ShouldBeEmpty();
         var latest = Append(SemanticWorld.Empty, Fact("Recorded", "read", "now present"));
         var result = (SemanticRejected)decision.Commit(latest);
-        result.Details.ShouldEqual("View 'read' does not exist.");
+        result.Details.ShouldEqual("View does not exist.");
         result.World.ShouldBeSame(latest);
     }
 
@@ -32,7 +32,7 @@ public class with_absent_state : given.a_protected_command
     void should_reject_after_removal_without_confusing_another_keys_recreation()
     {
         var world = World(Fact("Recorded", "read", "old"), Fact("Removed", "read"), Fact("Recorded", "other", "new"));
-        ((SemanticRejected)_evaluator.Execute(_plan, world, Request())).Details.ShouldEqual("View 'read' does not exist.");
+        ((SemanticRejected)_evaluator.Execute(_plan, world, Request())).Details.ShouldEqual("View does not exist.");
     }
 
     [Fact]
