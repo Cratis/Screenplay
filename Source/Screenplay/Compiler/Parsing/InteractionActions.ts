@@ -5,7 +5,7 @@ import { InteractionActionSyntax, InteractionArgumentSyntax } from '../Syntax/In
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { SourceLine, locationOf } from './SourceLine';
-import { stringBody, stringLiteralText } from './StringLiteral';
+import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 
 interface ActionBody {
     readonly arguments: InteractionArgumentSyntax[];
@@ -27,8 +27,8 @@ type ActionHead =
     | { kind: 'RaiseTriggerActionSyntax'; trigger: string };
 
 const target = '([A-Za-z_]\\w*(?:\\.\\w+)*)';
-const notification = new RegExp(`^notify\\s+(info|warning|error)\\s+(?:"(${stringBody})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$`);
-const confirmation = new RegExp(`^confirm\\s+(?:"(${stringBody})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$`);
+const notification = new RegExp(`^notify\\s+(info|warning|error)\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$`);
+const confirmation = new RegExp(`^confirm\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*)|([A-Za-z_][\\w.]*))$`);
 const levels = { info: 'Info', warning: 'Warning', error: 'Error' } as const;
 const continuationMembers = { success: 'onSuccess', failure: 'onFailure', result: 'onResult' } as const;
 interface TargetAction { readonly pattern: RegExp; readonly build: (value: string) => ActionHead }
@@ -117,5 +117,5 @@ function confirmAction(text: string): ActionHead | null {
 }
 
 function message(match: RegExpExecArray, literal: number): string {
-    return match[literal] === undefined ? match[literal + 1] ?? match[literal + 2] : stringLiteralText(match[literal]);
+    return match[literal] === undefined ? match[literal + 1] ?? match[literal + 2] : unescapeString(match[literal]);
 }

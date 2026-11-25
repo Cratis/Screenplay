@@ -8,7 +8,7 @@ import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { SourceLine, locationOf } from './SourceLine';
-import { stringBody, stringLiteralText } from './StringLiteral';
+import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 
 interface OwnerBody extends Omit<InteractionOwner, 'kind'> {
     readonly fitsSlot: string | null;
@@ -17,7 +17,7 @@ interface OwnerBody extends Omit<InteractionOwner, 'kind'> {
 }
 
 const slotPattern = /^([A-Za-z_]\w*)(?:\s+(page|pane|panel))?(?:\s+(routed)(?:\s+by\s+([A-Za-z_]\w*))?)?(?:\s+(primary))?(?:\s+(optional))?$/;
-const literal = new RegExp(`^"(${stringBody})"$`);
+const literal = new RegExp(`^"(${stringBodyPattern})"$`);
 const roles = { page: 'Page', pane: 'Pane', panel: 'Panel' } as const;
 
 export function parseLayout(context: ParserContext, header: SourceLine): LayoutSyntax {
@@ -66,7 +66,7 @@ function readOwnerMember(context: ParserContext, line: SourceLine, slots: SlotSy
 function operand(line: SourceLine, keyword: string): string {
     const text = line.content.substring(keyword.length).trim();
     const quoted = literal.exec(text);
-    return quoted === null ? text : stringLiteralText(quoted[1]);
+    return quoted === null ? text : unescapeString(quoted[1]);
 }
 
 function readScopes(line: SourceLine, metadata: { restrictsScopes: boolean; scopes: string[]; sliceKinds: string[] }): void {

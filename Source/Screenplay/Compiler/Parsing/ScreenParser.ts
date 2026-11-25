@@ -26,7 +26,6 @@ import { parseGuardedAction, validateCondition } from './GuardedActionParser';
 import { parseCondition } from './ConditionParser';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { ComponentSignalUse, componentSignalUses } from './ComponentSignalUses';
-import { collectInputUses } from './InputUses';
 import { BehaviorSyntax, UsesBehaviorSyntax } from '../Syntax/Interactions';
 import { interactionAttachments, parseInlineBehavior, parseUsesBehavior, prepareInteractionBody, readInlineBehavior } from './InteractionParser';
 import { firstWord } from './LineText';

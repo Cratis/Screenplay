@@ -101,8 +101,8 @@ describe('when retaining interactions', () => {
     it('should round trip the complete interaction tree through Exact JSON', () => {
         const json = toSyntaxJson(application);
         const restored = decodeExactSyntaxJson(JSON.stringify(json));
-        toSyntaxJson(restored).should.deep.equal(json);
-        toCompleteSyntaxJson(application).should.deep.equal(json);
+        toSyntaxJson(restored)!.should.deep.equal(json);
+        toCompleteSyntaxJson(application)!.should.deep.equal(json);
     });
 
     it('should leave the legacy projection unchanged while retaining the complete tree', () => {
@@ -122,8 +122,8 @@ describe('when retaining interactions', () => {
         // The Exact decoder intentionally rejects Legacy source options. Its complete transport still
         // round trips through ordinary JSON, preserving the Legacy options and the whole typed graph.
         const restored = JSON.parse(JSON.stringify(complete)) as ApplicationSyntax;
-        toCompleteSyntaxJson(restored).should.deep.equal(complete);
-        toSyntaxJson(restored).should.deep.equal(toSyntaxJson(legacy));
+        toCompleteSyntaxJson(restored)!.should.deep.equal(complete);
+        toSyntaxJson(restored)!.should.deep.equal(toSyntaxJson(legacy));
         const walker = new RecordingWalker();
         walker.visitApplication(restored);
         walker.nodes.filter(node => node.kind === 'InteractionBindingSyntax').should.have.lengthOf(11);

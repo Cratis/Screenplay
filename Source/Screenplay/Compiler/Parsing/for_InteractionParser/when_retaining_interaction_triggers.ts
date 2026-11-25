@@ -35,6 +35,6 @@ describe('when retaining interaction triggers', () => {
 
     it('should round trip every trigger subtype through Exact JSON', () => {
         const json = toSyntaxJson(parse(source).value);
-        toSyntaxJson(decodeExactSyntaxJson(JSON.stringify(json))).should.deep.equal(json);
+        toSyntaxJson(decodeExactSyntaxJson(JSON.stringify(json)))!.should.deep.equal(json);
     });
 });
