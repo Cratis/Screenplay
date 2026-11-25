@@ -47,7 +47,7 @@ export function parseLayout(context: ParserContext, line: SourceLine, keyword: '
     if (match === null) context.error(codes[keyword], `Invalid ${keyword} declaration '${line.content}' - expected '${keyword} <Name>'`, locationOf(line));
     const name = match?.[1] ?? (keyword === 'layout' ? firstWord(line.content.slice(keyword.length).trim()) : '');
     const body = new Body();
-    for (const child of childrenOf(context, line)) readMember(context, child, keyword, name, body);
+    for (const child of childrenOf(context, line)) readMember(context, child, { owner: keyword, name }, body);
     validateContent(context, keyword, name, body);
     const shared = { name, slots: body.slots, arrangement: body.arrangement, category: body.category, templateType: body.templateType,
         exposes: body.exposes, recursiveSlots: body.recursiveSlots, restrictsScopes: body.scopes !== null, scopes: body.scopes ?? [], sliceKinds: body.sliceKinds,
@@ -62,32 +62,37 @@ export function parseLayout(context: ParserContext, line: SourceLine, keyword: '
         : { kind: 'DialogTemplateSyntax', ...shared, ...metadata };
 }
 
-function readMember(context: ParserContext, line: SourceLine, owner: string, name: string, body: Body): void {
+type Declaration = { readonly owner: string; readonly name: string };
+
+function readMember(context: ParserContext, line: SourceLine, { owner, name }: Declaration, body: Body): void {
     const word = firstWord(line.content);
     if (['scopes', 'display', 'description', 'content'].includes(word) && !slotPattern.test(line.content)) {
         parseTemplateMetadata(context, line, owner, body);
         return;
     }
     switch (word) {
-        case 'arrangement':
-            if (body.arrangement !== null) {
-                context.error(DiagnosticCodes.DuplicateArrangement, `This ${owner} already declares 'arrangement' - a ${owner} can have at most one`, locationOf(line));
-                context.skipBlock(line.indent);
-            } else body.arrangement = parseArrangement(context, line, owner, body.slots);
-            break;
+        case 'arrangement': readArrangement(context, line, owner, body); break;
         case 'fits': readFits(context, line, owner, body); break;
         case 'category': body.category = line.content.slice(word.length).trim(); body.directiveLocations.category = locationOf(line); break;
         case 'type': body.templateType = line.content.slice(word.length).trim(); break;
         case 'exposes': readExposed(context, line, body); break;
         case 'slot': body.recursiveSlots.push({ kind: 'TemplateSlotSyntax', name: line.content.slice(word.length).trim(), location: locationOf(line) }); break;
-        case 'outlet': readOutlet(context, line, owner, name, body); break;
-        case 'on': case 'uses': {
-            const directive = parseDirective(context, line);
-            if (directive !== undefined) (word === 'on' ? body.behaviors : body.usedBehaviors).push(directive);
-            break;
-        }
+        case 'outlet': readOutlet(context, line, { owner, name }, body); break;
+        case 'on': case 'uses': readBehavior(context, line, word === 'on' ? body.behaviors : body.usedBehaviors); break;
         default: readSlot(context, line, body); break;
     }
+}
+
+function readArrangement(context: ParserContext, line: SourceLine, owner: string, body: Body): void {
+    if (body.arrangement !== null) {
+        context.error(DiagnosticCodes.DuplicateArrangement, `This ${owner} already declares 'arrangement' - a ${owner} can have at most one`, locationOf(line));
+        context.skipBlock(line.indent);
+    } else body.arrangement = parseArrangement(context, line, owner, body.slots);
+}
+
+function readBehavior(context: ParserContext, line: SourceLine, into: SyntaxNode[]): void {
+    const directive = parseDirective(context, line);
+    if (directive !== undefined) into.push(directive);
 }
 
 function readFits(context: ParserContext, line: SourceLine, owner: string, body: Body): void {
@@ -107,7 +112,7 @@ function readExposed(context: ParserContext, line: SourceLine, body: Body): void
     else body.exposes.push({ kind: 'TemplateExposedValueSyntax', name: match[1], type: match[2] === undefined ? null : parseTypeRef(match[2], locationOf(line)), location: locationOf(line) });
 }
 
-function readOutlet(context: ParserContext, line: SourceLine, owner: string, name: string, body: Body): void {
+function readOutlet(context: ParserContext, line: SourceLine, { owner, name }: Declaration, body: Body): void {
     if (!isOutletDeclaration(line.content)) {
         const renamed = line.content.slice('outlet'.length).trim();
         context.error(DiagnosticCodes.RemovedTemplateOutlet, renamedForSlotsAndOutlets(`'outlet ${renamed}' in a ${owner}`, `slot ${renamed}`), locationOf(line));

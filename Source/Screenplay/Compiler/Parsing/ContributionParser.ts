@@ -24,36 +24,50 @@ const itemExpected = 'button, group, filter <id> title "<text>" sets <Query>.<pa
 export function parseContribution(context: ParserContext, line: SourceLine): ContributionSyntax {
     const match = headerPattern.exec(line.content);
     if (match === null) context.error(DiagnosticCodes.InvalidContributionDeclaration, `Invalid contribution declaration '${line.content}' - expected 'contribute to <outlet>'`, locationOf(line));
-    const items: OutletItemSyntax[] = [];
-    const values: Record<string, string | null> = {};
-    const seen = new Set<string>();
-    let navigate: ScreenNavigateSyntax | null = null;
-    let label: string | null = null;
-    let order: number | null = null;
-    let destination: ContributionDestinationSyntax | null = null;
-    for (const child of childrenOf(context, line)) {
-        if (isOutletItem(child.content)) {
-            const item = parseOutletItem(context, child, false);
-            if (item !== undefined) items.push(item);
-            continue;
-        }
-        const word = firstWord(child.content);
-        if (['navigate', 'label', 'order'].includes(word)) {
-            if (!markOnce(context, child, word, seen)) continue;
-            if (word === 'navigate') navigate = parseNavigate(context, child.content, child) ?? null;
-            else if (word === 'label') label = parseLabel(context, child);
-            else order = parseOrder(context, child);
-        } else if (['id', 'icon', 'presentation', 'group', 'destination'].includes(word)) {
-            if (!markOnce(context, child, word, seen)) { context.skipBlock(child.indent); continue; }
-            context.skipBlock(child.indent);
-            if (word === 'destination') destination = parseDestination(context, child);
-            else values[word] = parseValue(context, child, word);
-        } else {
-            context.error(DiagnosticCodes.UnknownContributionDirective, `Unexpected '${word}' in contribution body - expected navigate, label, order, id, icon, presentation, group, destination or an outlet item (${itemExpected})`, locationOf(child));
-            context.skipBlock(child.indent);
-        }
-    }
+    const body: Body = { items: [], values: {}, seen: new Set<string>(), navigate: null, label: null, order: null, destination: null };
+    for (const child of childrenOf(context, line)) readDirective(context, child, body);
+    const { navigate, label, order, values, destination, items } = body;
     return { kind: 'ContributionSyntax', contributionPoint: match?.[1] ?? '', navigate, label, order, ...values, destination, items, location: locationOf(line) };
+}
+
+interface Body {
+    readonly items: OutletItemSyntax[];
+    readonly values: Record<string, string | null>;
+    readonly seen: Set<string>;
+    navigate: ScreenNavigateSyntax | null;
+    label: string | null;
+    order: number | null;
+    destination: ContributionDestinationSyntax | null;
+}
+
+function readDirective(context: ParserContext, child: SourceLine, body: Body): void {
+    if (isOutletItem(child.content)) {
+        const item = parseOutletItem(context, child, false);
+        if (item !== undefined) body.items.push(item);
+        return;
+    }
+    const word = firstWord(child.content);
+    if (['navigate', 'label', 'order'].includes(word)) readHeaderDirective(context, child, word, body);
+    else if (['id', 'icon', 'presentation', 'group', 'destination'].includes(word)) readValueDirective(context, child, word, body);
+    else {
+        context.error(DiagnosticCodes.UnknownContributionDirective, `Unexpected '${word}' in contribution body - expected navigate, label, order, id, icon, presentation, group, destination or an outlet item (${itemExpected})`, locationOf(child));
+        context.skipBlock(child.indent);
+    }
+}
+
+function readHeaderDirective(context: ParserContext, child: SourceLine, word: string, body: Body): void {
+    if (!markOnce(context, child, word, body.seen)) return;
+    if (word === 'navigate') body.navigate = parseNavigate(context, child.content, child) ?? null;
+    else if (word === 'label') body.label = parseLabel(context, child);
+    else body.order = parseOrder(context, child);
+}
+
+function readValueDirective(context: ParserContext, child: SourceLine, word: string, body: Body): void {
+    const first = markOnce(context, child, word, body.seen);
+    context.skipBlock(child.indent);
+    if (!first) return;
+    if (word === 'destination') body.destination = parseDestination(context, child);
+    else body.values[word] = parseValue(context, child, word);
 }
 
 function markOnce(context: ParserContext, line: SourceLine, word: string, seen: Set<string>): boolean {

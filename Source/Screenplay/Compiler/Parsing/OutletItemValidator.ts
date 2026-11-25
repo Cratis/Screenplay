@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import type { NavigationItemSyntax, OutletItemSyntax, OutletKind } from '../Syntax/Outlets';
+import type { NavigationItemSyntax, NavigationTargetSyntax, OutletItemSyntax, OutletKind } from '../Syntax/Outlets';
 import type { ToolbarButtonSyntax } from '../Syntax/Screens';
 import { createNavigationScreenTargetValidator } from './NavigationScreenTargetValidator';
 import { OutletInventory } from './OutletInventory';
@@ -27,11 +27,13 @@ export class OutletItemValidator {
             case 'OutletGroupSyntax': item.buttons.forEach(button => this.validateButton(button, `group '${item.id}' of the ${owner}`)); break;
             case 'OutletFilterSyntax': this.validateFilter(item, owner); break;
             case 'OutletStatSyntax': this.validateStat(item, owner); break;
-            case 'OutletTabSyntax':
-                if (item.shows != null && !this.inventory.screens.some(screen => screen.name === item.shows)) this.context.error(DiagnosticCodes.UnknownScreen, `Tab '${item.id}' of the ${owner} shows screen '${item.shows}', which the document does not declare`, item.location);
-                break;
+            case 'OutletTabSyntax': this.validateTab(item, owner); break;
             case 'NavigationItemSyntax': this.validateNavigation(item, owner, module); break;
         }
+    }
+
+    private validateTab(item: Extract<OutletItemSyntax, { kind: 'OutletTabSyntax' }>, owner: string): void {
+        if (item.shows != null && !this.inventory.screens.some(screen => screen.name === item.shows)) this.context.error(DiagnosticCodes.UnknownScreen, `Tab '${item.id}' of the ${owner} shows screen '${item.shows}', which the document does not declare`, item.location);
     }
 
     validateButton(button: ToolbarButtonSyntax, owner: string): void {
@@ -60,9 +62,13 @@ export class OutletItemValidator {
     }
 
     private validateNavigation(item: NavigationItemSyntax, owner: string, module: string | null): void {
-        if (item.slot != null && this.inventory.slots.size > 0 && !this.inventory.slots.has(item.slot)) this.context.error(DiagnosticCodes.NavSlotUnknown, `Navigation item '${item.id}' in the ${owner} renders into slot '${item.slot}', which no layout declares`, item.location);
+        if (this.rendersIntoUnknownSlot(item)) this.context.error(DiagnosticCodes.NavSlotUnknown, `Navigation item '${item.id}' in the ${owner} renders into slot '${item.slot}', which no layout declares`, item.location);
         this.validateTarget(item, owner, module);
         item.children?.forEach(child => this.validateNavigation(child, owner, module));
+    }
+
+    private rendersIntoUnknownSlot(item: NavigationItemSyntax): boolean {
+        return item.slot != null && this.inventory.slots.size > 0 && !this.inventory.slots.has(item.slot);
     }
 
     private validateTarget(item: NavigationItemSyntax, owner: string, module: string | null): void {
@@ -72,12 +78,16 @@ export class OutletItemValidator {
             return;
         }
         const features = this.inventory.modules.get(target.module);
+        if (!this.targetIsReachable(item, target, features, owner, module)) return;
+        if (target.feature == null && features!.size === 0) this.context.warning(DiagnosticCodes.NavModuleWithoutFeatures, `Navigation item '${item.id}' in the ${owner} targets module '${target.module}', which has no feature to go to`, target.location);
+        this.navigation.validateItem(target, module);
+    }
+
+    private targetIsReachable(item: NavigationItemSyntax, target: NavigationTargetSyntax, features: ReadonlySet<string> | undefined, owner: string, module: string | null): boolean {
         if (features === undefined) this.context.error(DiagnosticCodes.NavTargetMissing, `Navigation item '${item.id}' in the ${owner} targets module '${target.module}', which does not exist`, target.location);
         else if (module !== null && module !== target.module) this.context.error(DiagnosticCodes.NavTargetOutOfScope, `Navigation item '${item.id}' of module '${module}' targets module '${target.module}'; a module's own items may only target that module`, target.location);
         else if (target.feature != null && !features.has(target.feature)) this.context.error(DiagnosticCodes.NavTargetMissing, `Navigation item '${item.id}' in the ${owner} targets feature '${target.module}.${target.feature}', which does not exist`, target.location);
-        else {
-            if (target.feature == null && features.size === 0) this.context.warning(DiagnosticCodes.NavModuleWithoutFeatures, `Navigation item '${item.id}' in the ${owner} targets module '${target.module}', which has no feature to go to`, target.location);
-            this.navigation.validateItem(target, module);
-        }
+        else return true;
+        return false;
     }
 }

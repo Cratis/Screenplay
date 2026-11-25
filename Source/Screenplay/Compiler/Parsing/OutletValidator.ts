@@ -66,29 +66,36 @@ export class OutletValidator {
     }
 
     private validateLevel(outlets: readonly OutletSyntax[], module: string | null, level: string, inherited: Inheritance): void {
-        for (const outlet of outlets) {
-            const owner = `outlet '${outlet.name}' of ${level}`;
-            const declaration = this.inventory.resolve(outlet.name, module);
-            if (declaration === undefined && !usesBlueprintOutlets(this.inventory.application)) this.context.error(DiagnosticCodes.UnknownOutlet, `The ${level} changes outlet '${outlet.name}', which no layout or template declares - declare it with 'outlet ${outlet.name} of <kind>'`, outlet.location);
-            let available = inherited.get(outlet.name);
-            if (available === undefined) {
-                available = new Set([...(declaration?.items ?? []), ...this.inventory.contributed.get(outlet.name) ?? []].flatMap(ids));
-                inherited.set(outlet.name, available);
-            }
-            const known = declaration !== undefined || available.size > 0;
-            this.checkHides(outlet, known, available, owner);
-            if (outlet.mode === 'Override' && outlet.items.length === 0) this.context.warning(DiagnosticCodes.NavOverrideWithoutItems, `The ${owner} overrides the inherited items without items of its own, so the outlet is empty there`, outlet.location);
-            const seen = new Set<string>();
-            for (const item of outlet.items) {
-                this.addIds(item, seen, outlet.mode === 'Extend' ? available : new Set(), owner);
-                this.items.validate(item, declaration?.syntaxKind, owner, module);
-            }
-            this.checkPositions(outlet, known, available, seen, owner);
-            const after = outlet.mode === 'Override' ? new Set<string>() : new Set(available);
-            outlet.hides?.forEach(hide => after.delete(hide.id));
-            seen.forEach(id => after.add(id));
-            inherited.set(outlet.name, after);
+        for (const outlet of outlets) this.validateChange(outlet, module, level, inherited);
+    }
+
+    private validateChange(outlet: OutletSyntax, module: string | null, level: string, inherited: Inheritance): void {
+        const owner = `outlet '${outlet.name}' of ${level}`;
+        const declaration = this.inventory.resolve(outlet.name, module);
+        if (declaration === undefined && !usesBlueprintOutlets(this.inventory.application)) this.context.error(DiagnosticCodes.UnknownOutlet, `The ${level} changes outlet '${outlet.name}', which no layout or template declares - declare it with 'outlet ${outlet.name} of <kind>'`, outlet.location);
+        const available = this.availableFor(outlet.name, declaration?.items ?? [], inherited);
+        const known = declaration !== undefined || available.size > 0;
+        this.checkHides(outlet, known, available, owner);
+        if (outlet.mode === 'Override' && outlet.items.length === 0) this.context.warning(DiagnosticCodes.NavOverrideWithoutItems, `The ${owner} overrides the inherited items without items of its own, so the outlet is empty there`, outlet.location);
+        const seen = new Set<string>();
+        for (const item of outlet.items) {
+            this.addIds(item, seen, outlet.mode === 'Extend' ? available : new Set(), owner);
+            this.items.validate(item, declaration?.syntaxKind, owner, module);
         }
+        this.checkPositions(outlet, known, id => available.has(id) || seen.has(id), owner);
+        const after = outlet.mode === 'Override' ? new Set<string>() : new Set(available);
+        outlet.hides?.forEach(hide => after.delete(hide.id));
+        seen.forEach(id => after.add(id));
+        inherited.set(outlet.name, after);
+    }
+
+    private availableFor(name: string, declared: readonly OutletItemSyntax[], inherited: Inheritance): Set<string> {
+        let available = inherited.get(name);
+        if (available === undefined) {
+            available = new Set([...declared, ...this.inventory.contributed.get(name) ?? []].flatMap(ids));
+            inherited.set(name, available);
+        }
+        return available;
     }
 
     private checkHides(outlet: OutletSyntax, known: boolean, available: ReadonlySet<string>, owner: string): void {
@@ -97,10 +104,10 @@ export class OutletValidator {
         }
     }
 
-    private checkPositions(outlet: OutletSyntax, known: boolean, available: ReadonlySet<string>, seen: ReadonlySet<string>, owner: string): void {
+    private checkPositions(outlet: OutletSyntax, known: boolean, stands: (id: string) => boolean, owner: string): void {
         for (const item of outlet.items) {
             const position = item.position;
-            if (position != null && known && !available.has(position.id) && !seen.has(position.id)) this.context.error(DiagnosticCodes.OutletItemNotInherited, `Item '${item.id}' of the ${owner} stands ${position.placement.toLowerCase()} '${position.id}', which the outlet does not have`, position.location);
+            if (position != null && known && !stands(position.id)) this.context.error(DiagnosticCodes.OutletItemNotInherited, `Item '${item.id}' of the ${owner} stands ${position.placement.toLowerCase()} '${position.id}', which the outlet does not have`, position.location);
         }
     }
 

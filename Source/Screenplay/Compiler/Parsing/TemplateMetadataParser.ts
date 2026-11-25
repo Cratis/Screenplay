@@ -32,6 +32,9 @@ export function parseTemplateMetadata(context: ParserContext, line: SourceLine, 
     else parseContent(context, line, metadata);
 }
 
+const isScopeWords = (words: readonly string[]): boolean =>
+    ['application', 'module', 'feature', 'subfeature', 'slice'].includes(words[0]) && (words.length === 1 || words[0] === 'slice');
+
 function parseScopes(context: ParserContext, line: SourceLine, metadata: Metadata): void {
     const text = line.content.slice('scopes'.length).trim();
     if (text === 'none') { metadata.scopes = []; metadata.sliceKinds = []; return; }
@@ -40,7 +43,7 @@ function parseScopes(context: ParserContext, line: SourceLine, metadata: Metadat
     let valid = text.length > 0;
     for (const item of text.split(',')) {
         const words = item.trim().split(/[ |]+/).filter(Boolean);
-        if (!['application', 'module', 'feature', 'subfeature', 'slice'].includes(words[0]) || (words.length > 1 && words[0] !== 'slice')) { valid = false; continue; }
+        if (!isScopeWords(words)) { valid = false; continue; }
         scopes.push(words[0]);
         for (const word of words.slice(1)) {
             const kind = ['StateChange', 'StateView'].find(candidate => candidate.toLowerCase() === word.toLowerCase());

@@ -7,19 +7,27 @@ import { OutletInventory, screenDirectives } from './OutletInventory';
 import { ParserContext } from './ParserContext';
 import { hasComponentInteractions } from './ScreenParser';
 
+const dataKinds = ['ScreenDataSyntax', 'ScreenTableSyntax', 'ScreenSummarySyntax'];
+
 export function validateScreenBindings(inventory: OutletInventory, context: ParserContext): void {
     const screens = inventory.slices.flatMap(entry => entry.slice.screens);
     for (const { slice } of inventory.slices) {
         for (const screen of slice.screens) {
             const elements = [...screenDirectives(screen.directives)];
             const shows = elements.filter(element => element.kind === 'ScreenShowSyntax');
-            shows.forEach(show => checkShow(show, screen, elements, screens, context));
-            if (slice.type !== 'StateView' && !elements.some(element => ['ScreenDataSyntax', 'ScreenTableSyntax', 'ScreenSummarySyntax'].includes(element.kind))) continue;
-            const selections = new Set(shows.map(show => show.element));
-            for (const element of elements) {
-                if (element.kind === 'ScreenComponentSyntax' && isUnbound(element) && !selections.has(element.name)) context.warning(DiagnosticCodes.UnboundScreenText, `Component '${element.name}' on screen '${screen.name}' shows data but is bound to nothing and given no value, so it can only show sample text - bind it with 'context' or 'property <path> from <binding>', or give it static text with 'property <path> = "..."'`, element.location);
-            }
+            shows.forEach(show => checkShow(show, { screen, elements, screens }, context));
+            if (showsData(slice.type, elements)) warnAboutUnboundComponents(screen, elements, new Set(shows.map(show => show.element)), context);
         }
+    }
+}
+
+function showsData(sliceType: string, elements: readonly ScreenDirectiveSyntax[]): boolean {
+    return sliceType === 'StateView' || elements.some(element => dataKinds.includes(element.kind));
+}
+
+function warnAboutUnboundComponents(screen: ScreenSyntax, elements: readonly ScreenDirectiveSyntax[], selections: ReadonlySet<string>, context: ParserContext): void {
+    for (const element of elements) {
+        if (element.kind === 'ScreenComponentSyntax' && isUnbound(element) && !selections.has(element.name)) context.warning(DiagnosticCodes.UnboundScreenText, `Component '${element.name}' on screen '${screen.name}' shows data but is bound to nothing and given no value, so it can only show sample text - bind it with 'context' or 'property <path> from <binding>', or give it static text with 'property <path> = "..."'`, element.location);
     }
 }
 
@@ -27,8 +35,13 @@ function isUnbound(component: ScreenComponentSyntax): boolean {
     return component.context === null && component.properties.length === 0 && component.exposes.length === 0 && component.slots.length === 0 && !hasComponentInteractions(component);
 }
 
-function checkShow(show: ScreenShowSyntax, screen: ScreenSyntax, elements: readonly ScreenDirectiveSyntax[], screens: readonly ScreenSyntax[], context: ParserContext): void {
-    if (!screen.directives.some(directive => directive.kind === 'ScreenTemplateReferenceSyntax' && directive.slots.some(slot => slot.directives.includes(show)))) {
+type ShowScope = { readonly screen: ScreenSyntax; readonly elements: readonly ScreenDirectiveSyntax[]; readonly screens: readonly ScreenSyntax[] };
+
+const standsInSlot = (screen: ScreenSyntax, show: ScreenShowSyntax): boolean =>
+    screen.directives.some(directive => directive.kind === 'ScreenTemplateReferenceSyntax' && directive.slots.some(slot => slot.directives.includes(show)));
+
+function checkShow(show: ScreenShowSyntax, { screen, elements, screens }: ShowScope, context: ParserContext): void {
+    if (!standsInSlot(screen, show)) {
         context.error(DiagnosticCodes.InvalidScreenShow, `'show ${show.screen}' on screen '${screen.name}' stands outside a template slot - a slot shows another screen`, show.location);
         return;
     }
