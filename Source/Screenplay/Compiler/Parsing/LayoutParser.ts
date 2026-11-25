@@ -90,9 +90,12 @@ function readArrangement(context: ParserContext, line: SourceLine, owner: string
     } else body.arrangement = parseArrangement(context, line, owner, body.slots);
 }
 
+// A template holds behaviors under the names the C# syntax gives them; the body is the same placeholder a screen reads.
+const behaviorKinds: Record<string, string> = { ScreenBehaviorSyntax: 'BehaviorSyntax', ScreenUsesBehaviorSyntax: 'UsesBehaviorSyntax' };
+
 function readBehavior(context: ParserContext, line: SourceLine, into: SyntaxNode[]): void {
     const directive = parseDirective(context, line);
-    if (directive !== undefined) into.push(directive);
+    if (directive !== undefined) into.push({ ...directive, kind: behaviorKinds[directive.kind] ?? directive.kind } as SyntaxNode);
 }
 
 function readFits(context: ParserContext, line: SourceLine, owner: string, body: Body): void {

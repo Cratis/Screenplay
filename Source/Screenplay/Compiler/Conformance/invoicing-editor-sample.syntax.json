@@ -1120,7 +1120,7 @@
           "arrangement": null,
           "behaviors": [
             {
-              "kind": "ScreenBehaviorSyntax"
+              "kind": "BehaviorSyntax"
             }
           ],
           "category": "Dialog",
