@@ -115,4 +115,19 @@ describe('when retaining interactions', () => {
         const complete = toCompleteSyntaxJson(legacy) as Record<string, unknown>;
         (complete.behaviors as unknown[]).should.have.lengthOf(1);
     });
+
+    it('should deserialize and re-encode complete transport from a Legacy-source tree without losing interactions', () => {
+        const legacy = parse(source.replace('numbers exact\n', '')).value;
+        const complete = toCompleteSyntaxJson(legacy);
+        // The Exact decoder intentionally rejects Legacy source options. Its complete transport still
+        // round trips through ordinary JSON, preserving the Legacy options and the whole typed graph.
+        const restored = JSON.parse(JSON.stringify(complete)) as ApplicationSyntax;
+        toCompleteSyntaxJson(restored).should.deep.equal(complete);
+        toSyntaxJson(restored).should.deep.equal(toSyntaxJson(legacy));
+        const walker = new RecordingWalker();
+        walker.visitApplication(restored);
+        walker.nodes.filter(node => node.kind === 'InteractionBindingSyntax').should.have.lengthOf(11);
+        walker.nodes.filter(node => node.kind === 'BehaviorArgumentSyntax').should.have.lengthOf(12);
+        restored.behaviors![0].bindings[0].actions[0].onSuccess[0].arguments[0].binding.should.equal('item.id');
+    });
 });
