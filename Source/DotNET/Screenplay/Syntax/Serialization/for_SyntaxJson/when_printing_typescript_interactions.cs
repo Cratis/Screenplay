@@ -15,7 +15,9 @@ public class when_printing_typescript_interactions : Specification
         ["ModuleSyntax"] = ["screenTemplates", "dialogTemplates"],
         ["BehaviorSyntax"] = ["name", "parameters", "bindings", "description", "order", "file"],
         ["BehaviorParameterSyntax"] = ["name", "type"],
-        ["InteractionBindingSyntax"] = ["trigger", "condition", "actions", "alternatives", "otherwise"],
+        // Empty alternatives and null otherwise are canonically omitted by SyntaxJsonWriter.
+        // The fixture's non-default alternatives/fallback are required explicitly below.
+        ["InteractionBindingSyntax"] = ["trigger", "condition", "actions"],
         ["InteractionAlternativeSyntax"] = ["condition", "actions"],
         ["InteractionOtherwiseSyntax"] = ["actions"],
         ["UsesBehaviorSyntax"] = ["behavior", "arguments"],
@@ -52,6 +54,10 @@ public class when_printing_typescript_interactions : Specification
     }
 
     [Fact] void should_not_omit_required_interaction_members_from_the_typescript_vector() => MissingMembers(_wire).ShouldBeEmpty();
+    [Fact] void should_require_the_nonempty_alternatives_from_the_typescript_vector() => ConditionalBinding.GetProperty("alternatives").GetArrayLength().ShouldEqual(2);
+    [Fact] void should_require_the_nonempty_fallback_from_the_typescript_vector() => ConditionalBinding.GetProperty("otherwise").GetProperty("actions").GetArrayLength().ShouldEqual(2);
+    [Fact] void should_restore_omitted_empty_alternatives() => _typescript.Behaviors.Single().Bindings.First().Alternatives.ShouldBeEmpty();
+    [Fact] void should_restore_omitted_null_fallback() => _typescript.Behaviors.Single().Bindings.First().Otherwise.ShouldBeNull();
     [Fact] void should_restore_the_same_tree_as_the_native_parser() => SyntaxJson.StructurallyEqual(_typescript, _native).ShouldBeTrue();
     [Fact] void should_preserve_the_tree_after_printing_typescript_originated_json() => SyntaxJson.StructurallyEqual(_typescript, _reparsed).ShouldBeTrue();
     [Fact] void should_print_stably_on_a_second_pass() => new ScreenplayPrinter().Print(_reparsed).ShouldEqual(_printed);
@@ -62,6 +68,8 @@ public class when_printing_typescript_interactions : Specification
     [Fact] void should_retain_the_table_attachment() => Screen.Directives.OfType<ScreenTableSyntax>().Single().Behaviors.Single().Bindings.Single().Condition.ShouldEqual("item.enabled");
     [Fact] void should_retain_the_component_attachment() => Screen.Directives.OfType<ScreenComponentSyntax>().Single().UsedBehaviors.Single().Behavior.ShouldEqual("ConfirmChanges");
     [Fact] void should_keep_action_bindings_distinct_from_behavior_values() => _reparsed.Behaviors.Single().Bindings.First().Actions.OfType<ConfirmActionSyntax>().Single().OnSuccess.Single().Arguments.Single().Binding.ShouldEqual("item.id");
+
+    JsonElement ConditionalBinding => _wire.GetProperty("behaviors")[0].GetProperty("bindings")[1];
 
     ScreenSyntax Screen => _reparsed.Modules.Single().Features.Single().Slices.Single().Screens.Single();
 

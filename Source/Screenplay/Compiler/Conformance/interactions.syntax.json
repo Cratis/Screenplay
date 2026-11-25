@@ -54,9 +54,7 @@
               ]
             }
           ],
-          "alternatives": [],
           "condition": null,
-          "otherwise": null,
           "trigger": {
             "kind": "BuiltInInteractionTriggerSyntax",
             "syntaxKind": "Click"
@@ -188,9 +186,7 @@
               "query": "Items"
             }
           ],
-          "alternatives": [],
           "condition": null,
-          "otherwise": null,
           "trigger": {
             "kind": "EventInteractionTriggerSyntax",
             "eventName": "Changed"
@@ -208,9 +204,7 @@
               "trigger": "Tick"
             }
           ],
-          "alternatives": [],
           "condition": null,
-          "otherwise": null,
           "trigger": {
             "kind": "IntervalInteractionTriggerSyntax",
             "amount": 5,
@@ -230,9 +224,7 @@
               "value": "item.id"
             }
           ],
-          "alternatives": [],
           "condition": null,
-          "otherwise": null,
           "trigger": {
             "kind": "ApplicationTriggerInteractionTriggerSyntax",
             "triggerName": "Tick"
@@ -292,9 +284,7 @@
                   "query": "Items"
                 }
               ],
-              "alternatives": [],
               "condition": null,
-              "otherwise": null,
               "trigger": {
                 "kind": "BuiltInInteractionTriggerSyntax",
                 "syntaxKind": "Enter"
@@ -310,18 +300,10 @@
       ],
       "category": "Test",
       "name": "Shell",
-      "restrictsScopes": false,
-      "scopes": [],
-      "sliceKinds": [],
       "slots": [
         {
           "kind": "SlotSyntax",
-          "name": "main",
-          "optional": false,
-          "primary": false,
-          "role": null,
-          "routed": false,
-          "routedBy": null
+          "name": "main"
         }
       ],
       "templateType": null,
@@ -369,9 +351,7 @@
                       "query": "Items"
                     }
                   ],
-                  "alternatives": [],
                   "condition": null,
-                  "otherwise": null,
                   "trigger": {
                     "kind": "BuiltInInteractionTriggerSyntax",
                     "syntaxKind": "Unload"
@@ -386,21 +366,11 @@
             }
           ],
           "category": "Test",
-          "description": null,
-          "displayName": null,
           "name": "Editor",
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "content",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "content"
             }
           ],
           "templateType": null,
@@ -468,9 +438,7 @@
                                 "query": "Items"
                               }
                             ],
-                            "alternatives": [],
                             "condition": null,
-                            "otherwise": null,
                             "trigger": {
                               "kind": "BuiltInInteractionTriggerSyntax",
                               "syntaxKind": "Enter"
@@ -527,9 +495,7 @@
                                   "onSuccess": []
                                 }
                               ],
-                              "alternatives": [],
                               "condition": "item.enabled",
-                              "otherwise": null,
                               "trigger": {
                                 "kind": "BuiltInInteractionTriggerSyntax",
                                 "syntaxKind": "Select"
@@ -589,9 +555,7 @@
                                   "onSuccess": []
                                 }
                               ],
-                              "alternatives": [],
                               "condition": null,
-                              "otherwise": null,
                               "trigger": {
                                 "kind": "BuiltInInteractionTriggerSyntax",
                                 "syntaxKind": "Change"
@@ -671,9 +635,7 @@
                       "onSuccess": []
                     }
                   ],
-                  "alternatives": [],
                   "condition": null,
-                  "otherwise": null,
                   "trigger": {
                     "kind": "BuiltInInteractionTriggerSyntax",
                     "syntaxKind": "Load"
@@ -688,22 +650,12 @@
             }
           ],
           "category": "Test",
-          "description": null,
-          "displayName": null,
           "fitsSlot": "main",
           "name": "Workspace",
-          "restrictsScopes": false,
-          "scopes": [],
-          "sliceKinds": [],
           "slots": [
             {
               "kind": "SlotSyntax",
-              "name": "content",
-              "optional": false,
-              "primary": false,
-              "role": null,
-              "routed": false,
-              "routedBy": null
+              "name": "content"
             }
           ],
           "templateType": null,

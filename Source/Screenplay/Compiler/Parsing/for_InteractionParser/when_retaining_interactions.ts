@@ -7,7 +7,7 @@ import { beforeAll, describe, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../../Syntax/Structure';
 import { toCompleteSyntaxJson, toSyntaxJson } from '../../Syntax/SyntaxJson';
-import { assertExactSyntaxRoundTrip } from './given/assert_exact_syntax_round_trip';
+import { assertExactSyntaxRoundTrip, restoreCanonicalInteractionDefaults } from './given/assert_exact_syntax_round_trip';
 import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../../Syntax/SyntaxNode';
 
@@ -118,9 +118,9 @@ describe('when retaining interactions', () => {
     it('should deserialize and re-encode complete transport from a Legacy-source tree without losing interactions', () => {
         const legacy = parse(source.replace('numbers exact\n', '')).value;
         const complete = toCompleteSyntaxJson(legacy);
-        // The Exact decoder intentionally rejects Legacy source options. Its complete transport still
-        // round trips through ordinary JSON, preserving the Legacy options and the whole typed graph.
-        const restored = JSON.parse(JSON.stringify(complete)) as ApplicationSyntax;
+        // The Exact decoder intentionally rejects Legacy source options. Ordinary JSON is sparse:
+        // restore native defaults before treating it as a typed tree, without replacing authored values.
+        const restored = restoreCanonicalInteractionDefaults(JSON.parse(JSON.stringify(complete))) as ApplicationSyntax;
         JSON.stringify(toCompleteSyntaxJson(restored)).should.equal(JSON.stringify(complete));
         JSON.stringify(toSyntaxJson(restored)).should.equal(JSON.stringify(toSyntaxJson(legacy)));
         const walker = new RecordingWalker();
