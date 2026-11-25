@@ -65,3 +65,23 @@ describe('when parsing layouts templates and contributions', () => {
         new Set(nodes).size.should.equal(nodes.length);
     });
 });
+
+// Interaction bodies of templates keep their existing placeholder handling (#1388 tracks the full grammar):
+// the facts are kept and validated, but their behavior is not claimed to round-trip.
+describe('when parsing a template with interaction bodies', () => {
+    const result = parseForAuthoring([
+        'module Shop',
+        '  screen template Listing',
+        '    category Test',
+        '    main',
+        '    on load',
+        '      refresh AllItems',
+        '    uses Confirming'
+    ].join('\n'), 'template.play', undefined, false);
+    const template = result.value.modules[0].screenTemplates![0];
+
+    it('reports no diagnostics', () => result.diagnostics.should.deep.equal([]));
+    it('keeps the on behavior as a placeholder', () => template.behaviors!.length.should.equal(1));
+    it('keeps the uses behavior as a placeholder', () => template.usedBehaviors!.length.should.equal(1));
+    it('keeps the slot declared beside them', () => template.slots.map(slot => slot.name).should.deep.equal(['main']));
+});
