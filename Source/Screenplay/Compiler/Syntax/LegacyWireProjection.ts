@@ -9,7 +9,9 @@ import { SyntaxNode } from './SyntaxNode';
 // document, but an unmarked (Legacy) document writes the wire form it always had, so these are left out of it.
 // Exact documents write the complete expanded form.
 const additions: Readonly<Record<string, ReadonlySet<string>>> = Object.fromEntries(
-    ('ApplicationSyntax:policies,seeds;ConceptSyntax:validations;DeclarativeValidateSyntax:requirements;CodeValidateSyntax:code;' +
+    ('ApplicationSyntax:policies,seeds,behaviors,layouts;ModuleSyntax:screenTemplates,dialogTemplates;' +
+    'ScreenBehaviorSyntax:behavior;ScreenUsesBehaviorSyntax:uses;ScreenTableSyntax:behaviors,usedBehaviors;ScreenComponentSyntax:behaviors,usedBehaviors;' +
+    'ConceptSyntax:validations;DeclarativeValidateSyntax:requirements;CodeValidateSyntax:code;' +
     'CaptureAppendSyntax:when,mappings,tags;CaptureChildrenSyntax:map;CaptureNestedSyntax:map;CaptureSyntax:map;EventSpecSyntax:key;' +
     'FromSyntax:key,parentKey;ChildrenSyntax:identifiedBy;RemoveWithSyntax:key,parentKey;RemoveViaJoinSyntax:key;ProjectionEntersOnSyntax:key;' +
     'ProjectionSyntax:key;QueryParameterSyntax:source;ProducesSyntax:when;InvokesSyntax:mappings;ReactionSyntax:where;' +

@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { DialogTemplateSyntax, ScreenTemplateSyntax } from '../Syntax/InteractionOwners';
+import { parseDialogTemplate, parseScreenTemplate } from './InteractionOwners';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { AvailableSyntax } from '../Syntax/Availability';
@@ -48,6 +50,8 @@ export class ModuleBody {
     readonly #purposes: PurposeReferenceSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
     readonly #screens: ScreenSyntax[] = [];
+    readonly #screenTemplates: ScreenTemplateSyntax[] = [];
+    readonly #dialogTemplates: DialogTemplateSyntax[] = [];
     readonly #provides: ProvideSyntax[] = [];
     readonly #available: AvailableSyntax[] = [];
     #description: string | null = null;
@@ -115,10 +119,13 @@ export class ModuleBody {
                 return true;
             case 'screen':
                 if (isScreenTemplateHeader(line.content)) {
-                    collectInputUses(context, line);
+                    this.#screenTemplates.push(parseScreenTemplate(context, line));
                 } else {
                     this.#screens.push(parseScreen(context, line));
                 }
+                return true;
+            case 'dialog':
+                this.#parseDialog(context, line);
                 return true;
             case 'navigation':
                 if (isNavigationRegion(line.content)) reportNavigationRegion(context, line);
@@ -131,6 +138,18 @@ export class ModuleBody {
                 }
                 return false;
         }
+    }
+
+    #parseDialog(context: ParserContext, line: SourceLine): void {
+        if (/^dialog\s+template(?:\s|$)/.test(line.content)) this.#dialogTemplates.push(parseDialogTemplate(context, line));
+        else collectInputUses(context, line);
+    }
+
+    #templates(): Pick<ModuleSyntax, 'screenTemplates' | 'dialogTemplates'> {
+        return {
+            ...(this.#screenTemplates.length > 0 ? { screenTemplates: this.#screenTemplates } : {}),
+            ...(this.#dialogTemplates.length > 0 ? { dialogTemplates: this.#dialogTemplates } : {}),
+        };
     }
 
     // Parses the children of a header line into this body, reporting what does not belong in a module.
@@ -158,6 +177,7 @@ export class ModuleBody {
             ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             ...(this.#screens.length > 0 ? { screens: this.#screens } : {}),
+            ...this.#templates(),
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

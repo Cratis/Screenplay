@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { StorylineSyntax } from '../Syntax/Storylines';
+import { BehaviorSyntax } from '../Syntax/Interactions';
+import { LayoutSyntax } from '../Syntax/InteractionOwners';
+import { parseBehavior } from './InteractionParser';
+import { parseLayout } from './InteractionOwners';
 import type { AgentsSyntax } from '../Syntax/Agents';
 import type { AudienceSyntax, AvailabilitySyntax } from '../Syntax/Availability';
 import { audienceLocationKey, parseAudienceDeclaration, parseAvailabilityDeclaration } from './AvailabilityParser';
@@ -42,7 +46,6 @@ import { parseDescription } from './DescriptionParser';
 import { FeatureBody, featureBodyExpected } from './FeatureBody';
 import { isFileImport, parseFileImport } from './FileImportParser';
 import { isFileDirective } from './FileReferences';
-import { collectInputUses } from './InputUses';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './ModuleBody';
 import { ParserContext } from './ParserContext';
@@ -156,6 +159,8 @@ interface RootState {
     readonly themes: ThemeSyntax[];
     readonly designSystems: DesignSystemSyntax[];
     readonly designProfiles: DesignProfileFacts[];
+    readonly behaviors: BehaviorSyntax[];
+    readonly layouts: LayoutSyntax[];
 }
 
 interface RootRule {
@@ -172,7 +177,7 @@ function createRootState(placement: PlayPlacement): RootState {
         timeZone: null, sawTimeZone: false, sawCommandReads: false, domain: null, sawOtherConstruct: false,
         imports: [], fileImports: [], concepts: [], types: [], systems: [], secrets: [], stateMachines: [], workflows: [], eventSources: [], modules: [],
         personas: [], users: [], storylines: [], shapes: [], screens: [], agents: null, sinks: [], stickyNotes: [], policies: [], purposes: [], provides: [], audiences: [], availabilities: [], seeds: [], examples: [], declaredTriggers: [], exposures: [], instanceContributions: [],
-        themes: [], designSystems: [], designProfiles: []
+        themes: [], designSystems: [], designProfiles: [], behaviors: [], layouts: []
     };
 }
 
@@ -361,7 +366,8 @@ function parseRootTrigger(context: ParserContext, line: SourceLine, state: RootS
 
 function parseRootOpaque(context: ParserContext, line: SourceLine, state: RootState): void {
     const keyword = firstWord(line.content);
-    if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
+    if (keyword === 'behavior') state.behaviors.push(parseBehavior(context, line));
+    else if (keyword === 'layout') state.layouts.push(parseLayout(context, line));
     else if (keyword === 'ui') {
         const profile = parseUiProfile(context, line);
         if (profile !== undefined) state.designProfiles.push(profile);
@@ -387,7 +393,7 @@ function buildApplication(context: ParserContext, state: RootState): Application
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
     const { commandReadMode, timeZone, applicationContext, reactionProductionMode, identity, domain, imports, concepts, types, systems, stateMachines, workflows, eventSources, examples, personas, users, storylines, shapes, screens, sinks, policies, purposes, provides, seeds, declaredTriggers, fileImports, exposures, stickyNotes, instanceContributions, themes, designSystems, designProfiles } = state;
-    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('agents', state.agents), ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, ...nonEmptyOnly('provides', provides), ...nonEmptyOnly('audiences', state.audiences), ...nonEmptyOnly('availabilities', state.availabilities), seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('shapes', shapes), ...nonEmptyOnly('screens', screens), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('secrets', state.secrets), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
+    const root: ApplicationSyntax = resolveSinks({ kind: 'ApplicationSyntax', ...presentOnly('agents', state.agents), ...presentOnly('commandReadMode', commandReadMode), ...presentOnly('timeZone', timeZone), ...presentOnly('context', applicationContext), ...presentOnly('reactionProductionMode', reactionProductionMode), ...presentOnly('identity', identity), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, ...nonEmptyOnly('stateMachines', stateMachines), ...nonEmptyOnly('workflows', workflows), eventSources, examples, modules, personas, policies, purposes, ...nonEmptyOnly('provides', provides), ...nonEmptyOnly('audiences', state.audiences), ...nonEmptyOnly('availabilities', state.availabilities), seeds, declaredTriggers, fileImports, ...nonEmptyOnly('exposures', exposures), ...nonEmptyOnly('users', users), ...nonEmptyOnly('storylines', storylines), ...nonEmptyOnly('shapes', shapes), ...nonEmptyOnly('screens', screens), ...nonEmptyOnly('behaviors', state.behaviors), ...nonEmptyOnly('layouts', state.layouts), ...nonEmptyOnly('sinks', sinks), ...nonEmptyOnly('secrets', state.secrets), ...nonEmptyOnly('stickyNotes', stickyNotes), ...nonEmptyOnly('instanceContributions', instanceContributions), ...nonEmptyOnly('themes', themes), ...nonEmptyOnly('designSystems', designSystems), ...nonEmptyOnly('designProfiles', designProfiles), location: context.start }, context);
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
