@@ -21,7 +21,7 @@ public class when_running_the_organization_graph_specifications : Semantics.for_
     }
 
     [Fact] void should_bind_without_errors() => _result.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeEmpty();
-    [Fact] void should_select_the_collecting_graph_query_version() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V54);
+    [Fact] void should_select_the_scoped_graph_projection_version() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V60);
     [Fact] void should_bind_the_graph() => _result.Value!.Model.Application.Graphs.Single().Nodes.Select(node => node.Label).ShouldEqual("Person", "Group");
     [Fact] void should_run_every_specification() => _results.Count.ShouldEqual(12);
     [Fact] void should_pass_every_specification() => _results.Where(result => !result.Passed).Select(result => $"{result.Name}: {string.Join("; ", result.Failures)}").ShouldBeEmpty();
