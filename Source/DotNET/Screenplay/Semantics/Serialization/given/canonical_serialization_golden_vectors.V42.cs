@@ -74,7 +74,7 @@ public static partial class canonical_serialization_golden_vectors
     {
         var result = property_order_binding.AdmitScreens(ScreensSource);
         if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Refusals));
-        return result.Compilation!.Model;
+        return WithoutGraphProjectionDeclaringSlices(result.Compilation!.Model, LanguageVersion.V42, SemanticVersion.V42);
     }
 }
 #endif

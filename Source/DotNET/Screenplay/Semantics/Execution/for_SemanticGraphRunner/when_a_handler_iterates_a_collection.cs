@@ -50,14 +50,14 @@ public class when_a_handler_iterates_a_collection : for_SemanticModelBinder.give
     [Fact] void should_remove_only_the_edges_of_the_items_listed() => Run($"{Defined(("fuel", First), ("speed", Second))}        when append Retired\n          for \"{Owner}\"\n{Items(("fuel", First))}        then graph G\n{NoEdge(First, "fuel")}{Edge(Second, "speed")}").Single().Passed.ShouldBeTrue();
 
     [Fact]
-    void should_select_esm_v41()
+    void should_select_esm_v60_for_its_scoped_projection()
     {
         var result = Bind($"{Source}      specification S\n{Defined(("fuel", First))}        then graph G\n{Edge(First, "fuel")}");
-        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V41);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V60);
     }
 
     [Fact]
-    void should_keep_an_earlier_version_for_a_model_that_does_not_iterate()
+    void should_select_v60_for_a_scoped_projection_that_does_not_iterate()
     {
         var plain =
             "command reads protected\nconcept SeriesId : Uuid\n" +
@@ -67,7 +67,7 @@ public class when_a_handler_iterates_a_collection : for_SemanticModelBinder.give
             "      projection P => graph G\n        node Series\n          from Defined key series\n";
         var result = Bind(plain);
         result.Value.ShouldNotBeNull();
-        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V38);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V60);
     }
 
     [Fact]

@@ -25,6 +25,12 @@ internal static partial class SemanticModelValidator
 
         SemanticAbilityAnswerValidator AbilityAnswerValidator => new((value, type, owner) => ValidateValue(value, type, owner, false));
 
+        static bool CarriesCommandInvocationData(SemanticInvocation invocation) =>
+            invocation.Command.IsSet || !invocation.Mappings.IsDefaultOrEmpty || !invocation.OnRefused.IsDefaultOrEmpty;
+
+        static bool NamesUndeclaredOutcome(SemanticInvocationBranch branch, SemanticAbility ability) =>
+            InvocationBranchScope.IsOutcome(branch.Selector) && !ability.Outcomes.Contains(branch.Selector);
+
         void ValidateAbilityInvocation(
             SemanticReaction reaction,
             SemanticReactionTrigger trigger,
@@ -33,7 +39,7 @@ internal static partial class SemanticModelValidator
             Dictionary<SemanticId, SemanticProperty> values)
         {
             if (!_semanticVersion.IsAtLeast(SemanticVersion.V51)) throw new InvalidSemanticContract("Ability invocations require ESM v51 or later.");
-            if (invocation.Command.IsSet || !invocation.Mappings.IsDefaultOrEmpty || !invocation.OnRefused.IsDefaultOrEmpty)
+            if (CarriesCommandInvocationData(invocation))
                 throw new InvalidSemanticContract($"Reaction '{reaction.Name}' invokes an ability, which carries no command, command mappings or refusal branches.");
             RequireObjects(invocation.Inputs, nameof(invocation.Inputs), "ability input");
             RequireObjects(invocation.Branches, nameof(invocation.Branches), "invocation branch");
@@ -41,15 +47,14 @@ internal static partial class SemanticModelValidator
                 ?? throw new InvalidSemanticContract($"Reaction '{reaction.Name}' invokes an unresolved system.");
             var ability = system.Abilities.FirstOrDefault(candidate => candidate.Name == invocation.Ability)
                 ?? throw new InvalidSemanticContract($"Reaction '{reaction.Name}' invokes an unresolved ability.");
-            ValidateAbilityInputs(reaction, invocation, root, values, system, ability);
-            ValidateAbilityBranches(reaction, trigger, invocation, root, values, system, ability);
+            var scope = new AbilityInvocationScope(reaction, trigger, root, values);
+            ValidateAbilityInputs(scope, invocation, system, ability);
+            ValidateAbilityBranches(scope, invocation, system, ability);
         }
 
         void ValidateAbilityInputs(
-            SemanticReaction reaction,
+            AbilityInvocationScope scope,
             SemanticInvocation invocation,
-            SemanticExpressionRootKind root,
-            Dictionary<SemanticId, SemanticProperty> values,
             SemanticSystem system,
             SemanticAbility ability)
         {
@@ -57,41 +62,38 @@ internal static partial class SemanticModelValidator
             var mapped = new HashSet<string>(StringComparer.Ordinal);
             foreach (var input in invocation.Inputs)
             {
-                if (!declared.TryGetValue(input.Input, out var field)) throw new InvalidSemanticContract($"Reaction '{reaction.Name}' gives '{system.Name}.{ability.Name}' an input it does not declare.");
-                if (!mapped.Add(input.Input)) throw new InvalidSemanticContract($"Reaction '{reaction.Name}' gives '{system.Name}.{ability.Name}' input '{input.Input}' more than once.");
+                if (!declared.TryGetValue(input.Input, out var field)) throw new InvalidSemanticContract($"Reaction '{scope.Reaction.Name}' gives '{system.Name}.{ability.Name}' an input it does not declare.");
+                if (!mapped.Add(input.Input)) throw new InvalidSemanticContract($"Reaction '{scope.Reaction.Name}' gives '{system.Name}.{ability.Name}' input '{input.Input}' more than once.");
                 if (input.Source is SemanticValueExpression { Kind: SemanticExpressionKind.Value } value)
                 {
                     ValidateValue(value.Value, field.Type, "ability input", false);
                     continue;
                 }
 
-                RequireCompatible(ResolveExpression(input.Source, root, values), field.Type, "ability input");
+                RequireCompatible(ResolveExpression(input.Source, scope.Root, scope.Values), field.Type, "ability input");
             }
 
             if (ability.Inputs.Any(input => !input.Type.IsOptional && !mapped.Contains(input.Name)))
-                throw new InvalidSemanticContract($"Reaction '{reaction.Name}' must give '{system.Name}.{ability.Name}' every required input.");
+                throw new InvalidSemanticContract($"Reaction '{scope.Reaction.Name}' must give '{system.Name}.{ability.Name}' every required input.");
         }
 
         void ValidateAbilityBranches(
-            SemanticReaction reaction,
-            SemanticReactionTrigger trigger,
+            AbilityInvocationScope scope,
             SemanticInvocation invocation,
-            SemanticExpressionRootKind root,
-            Dictionary<SemanticId, SemanticProperty> values,
             SemanticSystem system,
             SemanticAbility ability)
         {
             var selectors = new HashSet<string>(StringComparer.Ordinal);
             foreach (var branch in invocation.Branches)
             {
-                if (!selectors.Add(branch.Selector) || (InvocationBranchScope.IsOutcome(branch.Selector) && !ability.Outcomes.Contains(branch.Selector)))
-                    throw new InvalidSemanticContract($"Reaction '{reaction.Name}' handles '{branch.Selector}' of '{system.Name}.{ability.Name}' more than once or not at all declared.");
+                if (!selectors.Add(branch.Selector) || NamesUndeclaredOutcome(branch, ability))
+                    throw new InvalidSemanticContract($"Reaction '{scope.Reaction.Name}' handles '{branch.Selector}' of '{system.Name}.{ability.Name}' more than once or not at all declared.");
                 RequireObjects(branch.Produces, nameof(branch.Produces), "produced event");
                 _invocationBranch = branch.Selector;
                 _invocationAbility = ability;
                 try
                 {
-                    foreach (var produced in branch.Produces) ValidateReactionProduces(reaction, trigger, produced, root, values);
+                    foreach (var produced in branch.Produces) ValidateReactionProduces(scope.Reaction, scope.Trigger, produced, scope.Root, scope.Values);
                 }
                 finally
                 {
@@ -140,13 +142,34 @@ internal static partial class SemanticModelValidator
             ValidateTypeReference(value.Type);
             var type = value.Source switch
             {
-                "outcome" when value.Member.Length == 0 && InvocationBranchScope.IsOutcome(_invocationBranch) => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text),
-                "failure" when InvocationBranchScope.IsFailureMember(value.Member) && InvocationBranchScope.Is(_invocationBranch, "failed") => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text),
-                "result" when InvocationBranchScope.Is(_invocationBranch, "returned") => _invocationAbility?.Returns.FirstOrDefault(field => field.Name == value.Member)?.Type,
+                "outcome" => ResolveOutcomeValue(value.Member),
+                "failure" => ResolveFailureValue(value.Member),
+                "result" => ResolveReturnedValue(value.Member),
                 _ => null
             };
             if (type is null || type != value.Type) throw new InvalidSemanticContract($"'${value.Source}' is not available here or has a type its source does not declare.");
             return type;
         }
+
+        SemanticTypeReference? ResolveOutcomeValue(string member) =>
+            member.Length == 0 && InvocationBranchScope.IsOutcome(_invocationBranch)
+                ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
+                : null;
+
+        SemanticTypeReference? ResolveFailureValue(string member) =>
+            InvocationBranchScope.IsFailureMember(member) && InvocationBranchScope.Is(_invocationBranch, "failed")
+                ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text)
+                : null;
+
+        SemanticTypeReference? ResolveReturnedValue(string member) =>
+            InvocationBranchScope.Is(_invocationBranch, "returned")
+                ? _invocationAbility?.Returns.FirstOrDefault(field => field.Name == member)?.Type
+                : null;
+
+        sealed record AbilityInvocationScope(
+            SemanticReaction Reaction,
+            SemanticReactionTrigger Trigger,
+            SemanticExpressionRootKind Root,
+            Dictionary<SemanticId, SemanticProperty> Values);
     }
 }

@@ -25,7 +25,12 @@ public sealed partial class SemanticModelBinder
             if (!slices.Exists(slice => slice.Graphs.Any() || slice.GraphProjections.Any() || slice.GraphQueries.Any() || slice.Specifications.Any(HasGraphStep))) return ([], [], [], []);
             var graphs = slices.SelectMany(slice => slice.Graphs).Select(BindGraph).OfType<SemanticGraph>().ToImmutableArray();
             var byName = graphs.GroupBy(graph => graph.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
-            var projections = slices.SelectMany(slice => slice.GraphProjections).Select(projection => BindGraphProjection(projection, byName)).OfType<SemanticGraphProjection>().ToImmutableArray();
+            var projections = AllSlices()
+                .SelectMany(entry => entry.Slice.GraphProjections.Select(projection => BindGraphProjection(
+                    projection,
+                    documents.IdentityCatalog.ResolveSemanticAssignment(SemanticAddress.ForSlice(_applicationIdentity, entry.Module, entry.FeaturePath, entry.Slice.Name)).Id,
+                    byName)))
+                .OfType<SemanticGraphProjection>().ToImmutableArray();
             var commands = modules.SelectMany(module => module.Features).SelectMany(AllBoundSlices).SelectMany(slice => slice.Commands)
                 .GroupBy(command => command.Name, StringComparer.Ordinal)
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
@@ -165,7 +170,7 @@ public sealed partial class SemanticModelBinder
         bool IsPrimitiveOrConcept(string name) =>
             Array.Exists(["Uuid", "String", "Int", "Decimal", "Bool", "Date", "DateTime"], primitive => primitive == name) || _concepts.ContainsKey(name);
 
-        SemanticGraphProjection? BindGraphProjection(GraphProjectionSyntax projection, Dictionary<string, SemanticGraph> graphs)
+        SemanticGraphProjection? BindGraphProjection(GraphProjectionSyntax projection, SemanticId declaringSlice, Dictionary<string, SemanticGraph> graphs)
         {
             if (projection.File is not null)
             {
@@ -197,7 +202,7 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before ? null : new(projection.Name, graph.Name, nodes.ToImmutable(), edges.ToImmutable());
+            return _diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) > before ? null : new(projection.Name, graph.Name, nodes.ToImmutable(), edges.ToImmutable()) { DeclaringSlice = declaringSlice };
         }
 
         ImmutableArray<SemanticGraphHandler> BindGraphHandlers(IEnumerable<ProjectionBlockSyntax> blocks, ImmutableArray<SemanticGraphProperty> properties)

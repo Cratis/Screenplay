@@ -75,7 +75,7 @@ public static partial class canonical_serialization_golden_vectors
     {
         var result = property_order_binding.BindDefault(GraphSource);
         if (!result.Success) throw new InvalidSemanticContract(string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        return result.Value!.Model;
+        return WithoutGraphProjectionDeclaringSlices(result.Value!.Model, LanguageVersion.V38, SemanticVersion.V38);
     }
 }
 #endif
