@@ -310,8 +310,7 @@ export const rootDirectiveCases: readonly Case[] = [
         name: 'layout',
         scope: [],
         source: 'layout Shell',
-        // Root layouts are retained owners now, rather than discarded opaque bodies.
-        expected: 'commandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:1,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+        expected: 'warning PLAY0720 1:1 The layout \'Shell\' declares no \'category\' - every template needs one so a template picker can group it; a blueprint package build rejects a missing category\ncommandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:1,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
     },
     {
         name: 'template',

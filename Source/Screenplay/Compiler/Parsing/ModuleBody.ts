@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { parseContribution } from './ContributionParser';
+import { parseLayout } from './LayoutParser';
+import type { ContributionSyntax, DialogTemplateSyntax, ScreenTemplateSyntax } from '../Syntax/Layouts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { ModuleInteractionBody } from './ModuleInteractionBody';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { AvailableSyntax } from '../Syntax/Availability';
@@ -20,7 +22,7 @@ import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
 import { parseProvide } from './ProvideParser';
 import { ProvideSyntax } from '../Syntax/ProvideSyntax';
-import { parseScreen, reportFeatureToolbar } from './ScreenParser';
+import { isScreenTemplateHeader, parseScreen, reportFeatureToolbar } from './ScreenParser';
 import type { ScreenSyntax } from '../Syntax/Screens';
 import { addOutletOverride, isNavigationRegion, reportNavigationRegion } from './OutletParser';
 import type { OutletSyntax } from '../Syntax/Outlets';
@@ -34,7 +36,7 @@ import { locationOf, SourceLine } from './SourceLine';
 export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 
 // Module members the C# compiler knows that this compiler does not model. They are skipped whole, not reported.
-const opaqueModuleMembers = new Set(['on', 'uses', 'dialog', 'form', 'contribute', 'navigation', 'template']);
+const opaqueModuleMembers = new Set(['on', 'uses', 'form', 'navigation', 'template']);
 
 // What a module body may hold, as it reads in a diagnostic.
 export const moduleBodyExpected = 'description, documentation, depends on <Name>, authorize, available, provide, import, screen, screen template, dialog template, form, contribute, outlet, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
@@ -43,13 +45,15 @@ export const moduleBodyExpected = 'description, documentation, depends on <Name>
 // into the module. The port of the C# ModuleBody.
 export class ModuleBody {
     readonly #features: FeatureSyntax[] = [];
+    readonly #screenTemplates: ScreenTemplateSyntax[] = [];
+    readonly #dialogTemplates: DialogTemplateSyntax[] = [];
+    readonly #contributions: ContributionSyntax[] = [];
     readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
     readonly #purposes: PurposeReferenceSyntax[] = [];
     readonly #outlets: OutletSyntax[] = [];
     readonly #screens: ScreenSyntax[] = [];
-    readonly #interactions = new ModuleInteractionBody();
     readonly #provides: ProvideSyntax[] = [];
     readonly #available: AvailableSyntax[] = [];
     #description: string | null = null;
@@ -62,7 +66,6 @@ export class ModuleBody {
     // Parses one already consumed line of the body; false when the line does not belong to a module body,
     // and nothing was reported.
     tryParse(context: ParserContext, line: SourceLine): boolean {
-        if (this.#interactions.tryParse(context, line)) return true;
         const keyword = firstWord(line.content);
         switch (keyword) {
             case 'runs':
@@ -116,8 +119,18 @@ export class ModuleBody {
             case 'feature':
                 this.#features.push(parseFeature(context, line));
                 return true;
+            case 'contribute':
+                this.#contributions.push(parseContribution(context, line));
+                return true;
+            case 'dialog':
+                this.#dialogTemplates.push(parseLayout(context, line, 'dialog template') as DialogTemplateSyntax);
+                return true;
             case 'screen':
-                this.#screens.push(parseScreen(context, line));
+                if (isScreenTemplateHeader(line.content)) {
+                    this.#screenTemplates.push(parseLayout(context, line, 'screen template') as ScreenTemplateSyntax);
+                } else {
+                    this.#screens.push(parseScreen(context, line));
+                }
                 return true;
             case 'navigation':
                 if (isNavigationRegion(line.content)) reportNavigationRegion(context, line);
@@ -157,7 +170,9 @@ export class ModuleBody {
             ...(this.#available.length > 0 ? { available: this.#available } : {}),
             ...(this.#outlets.length > 0 ? { outlets: this.#outlets } : {}),
             ...(this.#screens.length > 0 ? { screens: this.#screens } : {}),
-            ...this.#interactions.members(),
+            ...(this.#screenTemplates.length > 0 ? { screenTemplates: this.#screenTemplates } : {}),
+            ...(this.#dialogTemplates.length > 0 ? { dialogTemplates: this.#dialogTemplates } : {}),
+            ...(this.#contributions.length > 0 ? { contributions: this.#contributions } : {}),
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

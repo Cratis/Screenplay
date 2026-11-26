@@ -68,6 +68,11 @@ describe('when parsing the repository samples', () => {
             `${join(eventRoutes, 'specifications/source/module.play')}:50 PLAY0549 Stream 'Account.Notes' is NotFound; routing requires one physical source and stream.`,
             `${join(corpus, 'GeneratedConceptRules/v20/source/declarations.play')}:8 PLAY0699 Match pattern: lookaround at offset 1. ${portableMatchSuggestions.lookaround}`,
             `${generatedInputSource}:10 PLAY0485 Generated property 'projectId' cannot be supplied as request or form input.`,
+            // Isolated fragments of the ScreenComposition folder; its layout declaring the outlet lives in a sibling file.
+            `${join(corpus, 'ScreenComposition/v1/source/folder/Workspaces/Tracking/Tracking.play')}:3 PLAY0903 Contribution to unknown outlet 'Navigation' - no layout or template declares 'outlet Navigation of <kind>'`,
+            `${join(corpus, 'ScreenComposition/v1/source/folder/Workspaces/Workspaces.play')}:46 PLAY0903 Contribution to unknown outlet 'Navigation' - no layout or template declares 'outlet Navigation of <kind>'`,
+            // Incomplete conformance documents: hooks open slices whose form is not declared, or an outlet's layout is not declared.
+            `${join(repository, 'Source/Screenplay/Compiler/Conformance/acme-admissions.play')}:43 PLAY0908 Hook 'put' opens slice 'Shop.Basket.PutInBasket', which has no screen to open and cannot run - give the slice a screen - its input 'basketId' needs a form`,
             // Action-subject packs include deliberate parser recovery and malformed clause/input cases.
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:40 PLAY0036 Command 'TwoIdentifiers' already marks 'itemId' as identifier - only one property can be the identifier`,
             ...[142, 144, 147].map(line => `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:${line} PLAY0817 Invalid action subject clause - expected one 'for item' or 'for screen' before the label on an action`),
@@ -75,8 +80,11 @@ describe('when parsing the repository samples', () => {
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/action-subjects/source.play')}:152 PLAY0319 Duplicate argument 'name' - supply each input only once`,
             // This frozen authoring fixture preserves the legacy duplicate for recovery-tree coverage.
             `${join(repository, 'Source/Screenplay/Compiler/Conformance/described-handler.play')}:36 PLAY0168 A command cannot declare more than one handler.`,
+            ...[[24, 'help', 'Shop.Orders.PlaceOrder'], [28, 'cancel', 'CancelOrder'], [32, 'archive', 'CancelOrder'], [33, 'place', 'Shop.Orders.PlaceOrder']].map(([line, hook, slice]) => `${join(repository, 'Source/Screenplay/Compiler/Conformance/feature-toolbars.play')}:${line} PLAY0908 Hook '${hook}' opens slice '${slice}', which has no screen to open and cannot run - give the slice a screen - its input 'orderId' needs a form`),
+            `${join(repository, 'Source/Screenplay/Compiler/Conformance/navigation-screen-targets.play')}:5 PLAY0903 The module 'Shop' changes outlet 'sidebar', which no layout or template declares - declare it with 'outlet sidebar of <kind>'`,
             // The metadata-only fixture deliberately declares no operational public output.
-            `${join(repository, 'Source/Screenplay/Compiler/Conformance/public-events.play')}:6 PLAY0609 Outbound Translate slice 'PublishInvoice' must produce exactly one local public event type; found 0.`
+            `${join(repository, 'Source/Screenplay/Compiler/Conformance/public-events.play')}:6 PLAY0609 Outbound Translate slice 'PublishInvoice' must produce exactly one local public event type; found 0.`,
+            ...[[18, 'place', 'Shop.Orders.PlaceOrder'], [19, 'nav:later', 'Orders.PlaceOrder'], [20, 'secondary', 'PlaceOrder']].map(([line, hook, slice]) => `${join(repository, 'Source/Screenplay/Compiler/Conformance/toolbar-buttons.play')}:${line} PLAY0908 Hook '${hook}' opens slice '${slice}', which has no screen to open and cannot run - give the slice a screen - its input 'orderId' needs a form`),
         ]);
     });
 });

@@ -268,6 +268,7 @@
   "layouts": [
     {
       "kind": "LayoutSyntax",
+      "arrangement": null,
       "behaviors": [
         {
           "kind": "BehaviorSyntax",
@@ -299,7 +300,9 @@
         }
       ],
       "category": "Test",
+      "exposes": [],
       "name": "Shell",
+      "recursiveSlots": [],
       "slots": [
         {
           "kind": "SlotSyntax",
@@ -335,6 +338,7 @@
       "dialogTemplates": [
         {
           "kind": "DialogTemplateSyntax",
+          "arrangement": null,
           "behaviors": [
             {
               "kind": "BehaviorSyntax",
@@ -366,7 +370,9 @@
             }
           ],
           "category": "Test",
+          "exposes": [],
           "name": "Editor",
+          "recursiveSlots": [],
           "slots": [
             {
               "kind": "SlotSyntax",
@@ -617,6 +623,7 @@
       "screenTemplates": [
         {
           "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
           "behaviors": [
             {
               "kind": "BehaviorSyntax",
@@ -650,8 +657,10 @@
             }
           ],
           "category": "Test",
+          "exposes": [],
           "fitsSlot": "main",
           "name": "Workspace",
+          "recursiveSlots": [],
           "slots": [
             {
               "kind": "SlotSyntax",

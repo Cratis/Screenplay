@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CompilationResult, parse } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 
-const document = (clause: string, screens = 'screen Projects\n  fits page', extra = '') => `module Shop
+const document = (clause: string, screens = 'screen Projects\n  fits page', extra = '') => `layout Shell
+  outlet sidebar of navigation
+module Shop
   outlet sidebar extends
     item projects title "Projects" ${clause}
   feature Projects
@@ -13,7 +15,9 @@ const document = (clause: string, screens = 'screen Projects\n  fits page', extr
 ${screens.split('\n').map(line => `      ${line}`).join('\n')}
 ${extra}`;
 
-export const navigationScreenDocument = `module Shop
+export const navigationScreenDocument = `layout Shell
+  outlet sidebar of navigation
+module Shop
   outlet sidebar extends
     item projects title "Projects" target Shop.Projects screen Projects
     item create title "Create" screen CreateProject target Shop.Projects

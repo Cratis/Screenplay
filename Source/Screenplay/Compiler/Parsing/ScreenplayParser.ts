@@ -3,9 +3,7 @@
 
 import { StorylineSyntax } from '../Syntax/Storylines';
 import { BehaviorSyntax } from '../Syntax/Interactions';
-import { LayoutSyntax } from '../Syntax/InteractionOwners';
 import { parseBehavior } from './InteractionParser';
-import { parseLayout } from './InteractionOwners';
 import type { AgentsSyntax } from '../Syntax/Agents';
 import type { AudienceSyntax, AvailabilitySyntax } from '../Syntax/Availability';
 import { audienceLocationKey, parseAudienceDeclaration, parseAvailabilityDeclaration } from './AvailabilityParser';
@@ -25,6 +23,9 @@ import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
 import { parseApplicationContext } from './ApplicationContextParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
+import type { LayoutSyntax } from '../Syntax/Layouts';
+import { parseLayout } from './LayoutParser';
+import { recordBlueprintOutletFacts } from './BlueprintOutletFacts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
@@ -109,7 +110,9 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
         context.reader.takeSignificant();
         dispatchRoot(context, line, state);
     }
-    return buildApplication(context, state);
+    const application = buildApplication(context, state);
+    recordBlueprintOutletFacts(application, lines);
+    return application;
 }
 
 // What the root loop gathers while it reads the lines of a document.
@@ -157,10 +160,10 @@ interface RootState {
     readonly exposures: ExposureSyntax[];
     readonly instanceContributions: InstanceContributionsSyntax[];
     readonly themes: ThemeSyntax[];
+    readonly layouts: LayoutSyntax[];
     readonly designSystems: DesignSystemSyntax[];
     readonly designProfiles: DesignProfileFacts[];
     readonly behaviors: BehaviorSyntax[];
-    readonly layouts: LayoutSyntax[];
 }
 
 interface RootRule {
@@ -238,6 +241,11 @@ const bodyRules: readonly RootRule[] = [
     { matches: isKeyword('instance'), parse: (context, line, state) => { state.instanceContributions.push(parseInstance(context, line)); } },
     { matches: isKeyword('trigger'), parse: parseRootTrigger },
     { matches: isKeyword('design'), parse: (context, line, state) => { addDesignSystem(context, parseDesignSystem(context, line), state.designSystems); } },
+    { matches: isKeyword('layout'), parse: (context, line, state) => {
+        const layout = parseLayout(context, line, 'layout') as LayoutSyntax;
+        if (state.layouts.some(existing => existing.name === layout.name)) context.error(DiagnosticCodes.DuplicateLayout, `A layout named '${layout.name}' is already declared - layout names must be unique`, layout.location);
+        else state.layouts.push(layout);
+    } },
     { matches: isKeyword('theme'), parse: (context, line, state) => { addTheme(context, parseTheme(context, line), state.themes); } },
     { matches: keyword => opaqueTopLevel.has(keyword), parse: parseRootOpaque }
 ];
@@ -367,7 +375,6 @@ function parseRootTrigger(context: ParserContext, line: SourceLine, state: RootS
 function parseRootOpaque(context: ParserContext, line: SourceLine, state: RootState): void {
     const keyword = firstWord(line.content);
     if (keyword === 'behavior') state.behaviors.push(parseBehavior(context, line));
-    else if (keyword === 'layout') state.layouts.push(parseLayout(context, line));
     else if (keyword === 'ui') {
         const profile = parseUiProfile(context, line);
         if (profile !== undefined) state.designProfiles.push(profile);

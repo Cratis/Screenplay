@@ -108,7 +108,8 @@ describe('when retaining interactions', () => {
         const legacy = parse(source.replace('numbers exact\n', '')).value;
         const wire = toSyntaxJson(legacy) as Record<string, unknown>;
         Object.hasOwn(wire, 'behaviors').should.be.false;
-        Object.hasOwn(wire, 'layouts').should.be.false;
+        // Layouts are part of the legacy wire (#1181); their interaction trees are not.
+        (wire.layouts as Record<string, unknown>[]).every(layout => !Object.hasOwn(layout, 'behaviors') && !Object.hasOwn(layout, 'usedBehaviors')).should.be.true;
         JSON.stringify(wire).includes('InteractionBindingSyntax').should.be.false;
         JSON.stringify(wire).includes('"kind":"UsesBehaviorSyntax"').should.be.false;
         const complete = toCompleteSyntaxJson(legacy) as Record<string, unknown>;

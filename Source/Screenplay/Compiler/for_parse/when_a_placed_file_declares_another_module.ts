@@ -32,7 +32,7 @@ describe('when a placed file declares another module', () => {
 
     it('should report what the restated module cannot hold, then the other module', () => {
         result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`)
-            .should.deep.equal([`${DiagnosticCodes.UnknownModuleDirective}@3`, `${DiagnosticCodes.ModuleInPlacedFile}@4`]);
+            .should.deep.equal([`${DiagnosticCodes.UnknownModuleDirective}@3`, `${DiagnosticCodes.ModuleInPlacedFile}@4`, `${DiagnosticCodes.TemplateCategoryMissing}@6`, `${DiagnosticCodes.TemplateCategoryMissing}@8`]);
     });
 
     it('should say where the file is imported', () => {

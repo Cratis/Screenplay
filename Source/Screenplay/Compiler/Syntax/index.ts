@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 export * from './SyntaxNode';
+export * from './Layouts';
 export * from './Agents';
 export * from './IdentitySyntax';
 export * from './IdentityDetailSyntax';
@@ -61,7 +62,6 @@ export * from './EffectiveSpecification';
 export * from './Responses';
 export * from './Screens';
 export * from './Interactions';
-export * from './InteractionOwners';
 export * from './CompositionSyntax';
 export * from './Structure';
 export * from './DesignSystemSyntax';

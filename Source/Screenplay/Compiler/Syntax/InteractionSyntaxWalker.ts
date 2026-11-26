@@ -5,8 +5,8 @@ import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { FileReferenceSyntax } from './Implementations';
 import * as Interaction from './Interactions';
-import { DialogTemplateSyntax, InteractionOwner, LayoutSyntax, ScreenTemplateSyntax, SlotSyntax } from './InteractionOwners';
 import { InteractionArgumentSyntax, ScreenBehaviorSyntax, ScreenComponentSyntax, ScreenDirectiveSyntax, ScreenTableSyntax, ScreenUsesBehaviorSyntax } from './Screens';
+import { DialogTemplateSyntax, LayoutSyntax, ScreenTemplateSyntax } from './Layouts';
 import { ApplicationSyntax, ModuleSyntax } from './Structure';
 import { SyntaxNode } from './SyntaxNode';
 
@@ -19,6 +19,10 @@ export abstract class InteractionSyntaxWalker {
     abstract visitInteractionArgument(syntax: InteractionArgumentSyntax): void;
     abstract visitScreenDirective(syntax: ScreenDirectiveSyntax): void;
     protected abstract visitScreenComponentChildren(syntax: ScreenComponentSyntax): void;
+
+    abstract visitLayout(syntax: LayoutSyntax): void;
+    abstract visitScreenTemplate(syntax: ScreenTemplateSyntax): void;
+    abstract visitDialogTemplate(syntax: DialogTemplateSyntax): void;
 
     protected visitApplicationInteractions(syntax: ApplicationSyntax): void {
         syntax.behaviors?.forEach(node => this.visitBehavior(node));
@@ -127,18 +131,6 @@ export abstract class InteractionSyntaxWalker {
     visitAttachments(behaviors: readonly Interaction.BehaviorSyntax[], usedBehaviors: readonly Interaction.UsesBehaviorSyntax[]): void {
         behaviors.forEach(behavior => this.visitBehavior(behavior));
         usedBehaviors.forEach(uses => this.visitUsesBehavior(uses));
-    }
-
-    visitLayout(syntax: LayoutSyntax): void { this.visitInteractionOwner(syntax); }
-    visitScreenTemplate(syntax: ScreenTemplateSyntax): void { this.visitInteractionOwner(syntax); }
-    visitDialogTemplate(syntax: DialogTemplateSyntax): void { this.visitInteractionOwner(syntax); }
-    visitSlot(syntax: SlotSyntax): void { this.visitNode(syntax); }
-
-    private visitInteractionOwner(syntax: InteractionOwner): void {
-        this.visitNode(syntax);
-        syntax.slots?.forEach(slot => this.visitSlot(slot));
-        if (syntax.arrangement !== undefined && syntax.arrangement !== null) this.visitNode(syntax.arrangement);
-        this.visitAttachments(syntax.behaviors, syntax.usedBehaviors);
     }
 
     visitScreenBehavior(syntax: ScreenBehaviorSyntax): void {

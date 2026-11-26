@@ -16,7 +16,7 @@ export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 const isObject = (value: unknown): value is object => typeof value === 'object' && value !== null;
-const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped', 'declaredTriggers', 'designProfiles', 'directiveLocations']);
+const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped', 'declaredTriggers', 'designProfiles', 'directiveLocations', 'fitsSlotLocation']);
 const skippedNumberMembers = new Set(['location', 'targetLocation', 'usesLocation']);
 const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
 
@@ -157,9 +157,9 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     ApplicationSyntax: ['sinks'],
     SystemSyntax: ['abilities'],
     InteractionBindingSyntax: ['alternatives'],
-    LayoutSyntax: ['scopes', 'sliceKinds', 'outlets'],
-    ScreenTemplateSyntax: ['scopes', 'sliceKinds', 'content', 'outlets'],
-    DialogTemplateSyntax: ['scopes', 'sliceKinds', 'content', 'outlets']
+    LayoutSyntax: ['scopes', 'sliceKinds', 'outlets', 'behaviors', 'usedBehaviors'],
+    ScreenTemplateSyntax: ['scopes', 'sliceKinds', 'content', 'outlets', 'behaviors', 'usedBehaviors'],
+    DialogTemplateSyntax: ['scopes', 'sliceKinds', 'content', 'outlets', 'behaviors', 'usedBehaviors']
 };
 
 // Members omitted when they hold their default value, by node kind.
@@ -175,6 +175,43 @@ const omittedWhenDefault: Record<string, Record<string, unknown>> = {
     DialogTemplateSyntax: { restrictsScopes: false },
     SlotSyntax: { routed: false, primary: false, optional: false }
 };
+
+// The composition members the C# writer leaves out while they hold their default (CompositionDefaults.cs).
+type Absent = 'null' | 'false' | 'empty';
+const outletItemMembers: Record<string, Absent> = { isDefault: 'false', position: 'null' };
+const templateMembers: Record<string, Absent> = { restrictsScopes: 'false', scopes: 'empty', sliceKinds: 'empty', content: 'empty', displayName: 'null', description: 'null', outlets: 'empty' };
+const omittedWhenAbsent: Record<string, Record<string, Absent>> = {
+    ScreenSyntax: { contributions: 'empty', outlets: 'empty', fits: 'empty', visuals: 'empty' },
+    ScreenNavigateSyntax: { slot: 'null' },
+    SlotSyntax: { role: 'null', routed: 'false', routedBy: 'null', primary: 'false', optional: 'false' },
+    ContributionSyntax: { id: 'null', icon: 'null', presentation: 'null', group: 'null', items: 'empty', destination: 'null' },
+    LayoutSyntax: { restrictsScopes: 'false', scopes: 'empty', sliceKinds: 'empty', outlets: 'empty' },
+    TemplateAssignmentSyntax: { blueprint: 'null', version: 'null' },
+    ScreenTemplateReferenceSyntax: { blueprint: 'null', version: 'null' },
+    ModuleSyntax: { outlets: 'empty', screens: 'empty' },
+    FeatureSyntax: { outlets: 'empty', screens: 'empty' },
+    ToolbarItemSyntax: { confirm: 'null', enabledWhen: 'null' },
+    ScreenToolbarSyntax: { buttons: 'empty' },
+    ToolbarButtonSyntax: { ...outletItemMembers, slice: 'null', emphasis: 'null', icon: 'null', authorize: 'null', confirm: 'null', runs: 'null', subject: 'null', opens: 'null', opensSlot: 'null', enabledWhen: 'null' },
+    OutletSyntax: { subject: 'null', slot: 'null', hides: 'empty', logo: 'null' },
+    OutletGroupSyntax: { ...outletItemMembers, icon: 'null' },
+    OutletFilterSyntax: { ...outletItemMembers, query: 'null', parameter: 'null' },
+    OutletTabSyntax: { ...outletItemMembers, shows: 'null' },
+    OutletStatSyntax: { ...outletItemMembers, query: 'null', field: 'null' },
+    NavigationItemSyntax: { ...outletItemMembers, icon: 'null', target: 'null', slot: 'null', children: 'empty' },
+    ScreenTemplateSyntax: templateMembers,
+    DialogTemplateSyntax: templateMembers,
+    ArrangementContainerSyntax: { columns: 'null', rows: 'null', grow: 'null', span: 'null' },
+    ArrangementSlotSyntax: { growFactor: 'null' }
+};
+
+function isAbsentOmitted(kind: string, member: string, value: unknown): boolean {
+    const absent = ownEntry(omittedWhenAbsent, kind);
+    const when = absent !== undefined && Object.hasOwn(absent, member) ? absent[member] : undefined;
+    if (when === undefined) return false;
+    if (when === 'false') return value === false;
+    return value == null || (when === 'empty' && isEmptyArray(value));
+}
 
 const ownEntry = <T>(table: Record<string, T>, kind: string): T | undefined => Object.hasOwn(table, kind) ? table[kind] : undefined;
 const isEmptyArray = (value: unknown): boolean => Array.isArray(value) && value.length === 0;
@@ -198,7 +235,7 @@ function isDefaultOmitted(kind: string, member: string, value: unknown): boolean
 }
 
 function isOmittedByDefault(kind: string, member: string, value: unknown): boolean {
-    return isNullOmitted(kind, member, value) || isEmptyOmitted(kind, member, value) || isDefaultOmitted(kind, member, value);
+    return isNullOmitted(kind, member, value) || isEmptyOmitted(kind, member, value) || isDefaultOmitted(kind, member, value) || isAbsentOmitted(kind, member, value);
 }
 
 function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJsonValue {

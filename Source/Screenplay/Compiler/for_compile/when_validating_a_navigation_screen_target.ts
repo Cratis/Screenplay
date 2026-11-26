@@ -4,7 +4,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 
-const source = `module Shop
+const source = `layout Shell
+  outlet sidebar of navigation
+module Shop
   outlet sidebar extends
     item projects title "Projects" target Shop.Projects screen Projects
   feature Projects

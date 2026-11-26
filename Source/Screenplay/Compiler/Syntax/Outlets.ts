@@ -21,6 +21,15 @@ export interface OutletSyntax extends SyntaxNode {
     readonly mode: OutletMode;
     readonly items: readonly OutletItemSyntax[];
     readonly hides?: readonly OutletHideSyntax[];
+    readonly subject?: 'Item' | 'Screen' | null;
+    readonly slot?: string | null;
+    readonly logo?: NavigationLogoSyntax | null;
+}
+
+export interface NavigationLogoSyntax extends SyntaxNode {
+    readonly kind: 'NavigationLogoSyntax';
+    readonly image: string;
+    readonly title: string;
 }
 
 // 'hide <id>'.
