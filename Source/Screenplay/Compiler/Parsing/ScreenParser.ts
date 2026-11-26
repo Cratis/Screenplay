@@ -26,7 +26,8 @@ import { parseGuardedAction, validateCondition } from './GuardedActionParser';
 import { parseCondition } from './ConditionParser';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { ComponentSignalUse, componentSignalUses } from './ComponentSignalUses';
-import { collectInputUses } from './InputUses';
+import { BehaviorSyntax, UsesBehaviorSyntax } from '../Syntax/Interactions';
+import { interactionAttachments, parseInlineBehavior, parseUsesBehavior, prepareInteractionBody, readInlineBehavior } from './InteractionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { isValidTemplateVersionRange, parseBlueprintReference, startsBlueprintReference } from './TemplateReferenceText';
@@ -217,11 +218,9 @@ export function parseDirective(context: ParserContext, line: SourceLine): Screen
         case 'show':
             return parseShow(context, line);
         case 'on':
-            collectInputUses(context, line);
-            return { kind: 'ScreenBehaviorSyntax', location: locationOf(line) };
+            return { kind: 'ScreenBehaviorSyntax', behavior: parseInlineBehavior(context, line), location: locationOf(line) };
         case 'uses':
-            collectInputUses(context, line);
-            return { kind: 'ScreenUsesBehaviorSyntax', location: locationOf(line) };
+            return { kind: 'ScreenUsesBehaviorSyntax', uses: parseUsesBehavior(context, line), location: locationOf(line) };
         default:
             if (isCodeLine(context, line)) {
                 return parseCode(context, line);
@@ -360,6 +359,8 @@ function parseTitle(context: ParserContext, line: SourceLine): ScreenTitleSyntax
 function parseTable(context: ParserContext, line: SourceLine): ScreenTableSyntax {
     const target = line.content.substring('table'.length).trim();
     const columns: ScreenColumnSyntax[] = [];
+    const behaviors: BehaviorSyntax[] = [];
+    const usedBehaviors: UsesBehaviorSyntax[] = [];
     let click: ScreenNavigateSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -371,14 +372,14 @@ function parseTable(context: ParserContext, line: SourceLine): ScreenTableSyntax
         } else if (clickMatch !== null) {
             click = parseNavigate(context, clickMatch[1], child) ?? null;
         } else if (firstWord(child.content) === 'on') {
-            collectInputUses(context, child);
+            behaviors.push(parseInlineBehavior(context, child));
         } else if (isInteraction(child)) {
-            collectInputUses(context, child);
+            usedBehaviors.push(parseUsesBehavior(context, child));
         } else {
             context.error(DiagnosticCodes.UnknownTableDirective, `Unexpected '${child.content}' in table - expected 'column ...', 'on row-click navigate to ...', 'on <trigger>' or 'uses <Behavior>'`, locationOf(child));
         }
     }
-    return { kind: 'ScreenTableSyntax', target, columns, rowClick: click, location: locationOf(line) };
+    return { kind: 'ScreenTableSyntax', target, columns, rowClick: click, ...interactionAttachments(behaviors, usedBehaviors), location: locationOf(line) };
 }
 
 function parseSummary(context: ParserContext, line: SourceLine): ScreenSummarySyntax {
@@ -417,6 +418,8 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
     const slots: ComponentSlotSyntax[] = [];
     const signalUses: ComponentSignalUse[] = [];
     let hasInteractions = false;
+    const behaviors: BehaviorSyntax[] = [];
+    const usedBehaviors: UsesBehaviorSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
@@ -447,13 +450,16 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
                 slots.push({ kind: 'ComponentSlotSyntax', name: renamed, directives: parseDirectives(context, child), location: locationOf(child) });
                 break;
             }
-            case 'on':
+            case 'on': {
                 hasInteractions = true;
-                signalUses.push(signalUseOf(collectInputUses(context, child)));
+                const { body, lines } = prepareInteractionBody(context, child);
+                signalUses.push(signalUseOf(lines));
+                behaviors.push(readInlineBehavior(body, child));
                 break;
+            }
             case 'uses':
                 hasInteractions = true;
-                collectInputUses(context, child);
+                usedBehaviors.push(parseUsesBehavior(context, child));
                 break;
             default:
                 context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${child.content}' in component - expected context, id, property, icon, presentation, exposes, slot, on or uses`, locationOf(child));
@@ -462,7 +468,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
         }
     }
 
-    const placed: ScreenComponentSyntax = { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, slots, location: locationOf(line) };
+    const placed: ScreenComponentSyntax = { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, slots, ...interactionAttachments(behaviors, usedBehaviors), location: locationOf(line) };
     if (signalUses.length > 0) componentSignalUses.set(placed, signalUses);
     if (hasInteractions) componentsWithInteractions.add(placed);
     return placed;

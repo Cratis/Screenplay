@@ -1118,11 +1118,6 @@
         {
           "kind": "DialogTemplateSyntax",
           "arrangement": null,
-          "behaviors": [
-            {
-              "kind": "BehaviorSyntax"
-            }
-          ],
           "category": "Dialog",
           "exposes": [],
           "name": "CommandDialog",

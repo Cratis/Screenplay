@@ -3,6 +3,7 @@
 
 import type { SourceLocation } from '../Diagnostics/SourceLocation';
 import type { TypeRefSyntax } from './Declarations';
+import type { BehaviorSyntax, UsesBehaviorSyntax } from './Interactions';
 import type { OutletItemSyntax, OutletSyntax } from './Outlets';
 import type { ScreenDirectiveSyntax, ScreenNavigateSyntax } from './Screens';
 import type { SyntaxNode } from './SyntaxNode';
@@ -42,13 +43,13 @@ export interface LayoutMembers extends SyntaxNode {
     readonly templateType?: string | null;
     readonly exposes?: readonly TemplateExposedValueSyntax[];
     readonly recursiveSlots?: readonly TemplateSlotSyntax[];
-    readonly restrictsScopes?: boolean;
-    readonly scopes?: readonly string[];
-    readonly sliceKinds?: readonly string[];
+    readonly restrictsScopes: boolean;
+    readonly scopes: readonly string[];
+    readonly sliceKinds: readonly string[];
     readonly outlets?: readonly OutletSyntax[];
-    // Interaction bodies have the same location-only representation as screens (#1388).
-    readonly behaviors?: readonly SyntaxNode[];
-    readonly usedBehaviors?: readonly SyntaxNode[];
+    // Complete interaction trees (#1388); the native serializer omits them when empty.
+    readonly behaviors: readonly BehaviorSyntax[];
+    readonly usedBehaviors: readonly UsesBehaviorSyntax[];
 }
 
 export interface LayoutSyntax extends LayoutMembers {

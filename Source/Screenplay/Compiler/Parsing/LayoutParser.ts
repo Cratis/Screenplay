@@ -5,7 +5,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import type { SourceLocation } from '../Diagnostics/SourceLocation';
 import type { ArrangementSyntax, DialogTemplateSyntax, LayoutSyntax, ScreenTemplateSyntax, SlotSyntax, TemplateExposedValueSyntax, TemplateSlotContentSyntax, TemplateSlotSyntax } from '../Syntax/Layouts';
 import type { OutletSyntax } from '../Syntax/Outlets';
-import type { SyntaxNode } from '../Syntax/SyntaxNode';
+import type { BehaviorSyntax, UsesBehaviorSyntax } from '../Syntax/Interactions';
 import { parseTemplateMetadata } from './TemplateMetadataParser';
 import { pattern } from '../Text/patterns';
 import { addSlot, childrenOf, parseArrangement } from './ArrangementParser';
@@ -13,7 +13,7 @@ import { firstWord } from './LineText';
 import { isOutletDeclaration, parseOutletDeclaration } from './OutletDeclarationParser';
 import { ParserContext } from './ParserContext';
 import { parseTypeRef } from './PropertyLineParser';
-import { parseDirective } from './ScreenParser';
+import { parseInlineBehavior, parseUsesBehavior } from './InteractionParser';
 import { renamedForSlotsAndOutlets, replacedForSlotsAndOutlets } from './SlotsAndOutletsMigration';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -26,8 +26,8 @@ class Body {
     readonly outlets: OutletSyntax[] = [];
     readonly exposes: TemplateExposedValueSyntax[] = [];
     readonly recursiveSlots: TemplateSlotSyntax[] = [];
-    readonly behaviors: SyntaxNode[] = [];
-    readonly usedBehaviors: SyntaxNode[] = [];
+    readonly behaviors: BehaviorSyntax[] = [];
+    readonly usedBehaviors: UsesBehaviorSyntax[] = [];
     readonly content: TemplateSlotContentSyntax[] = [];
     readonly directiveLocations: Record<string, SourceLocation> = {};
     arrangement: ArrangementSyntax | null = null;
@@ -52,9 +52,7 @@ export function parseLayout(context: ParserContext, line: SourceLine, keyword: '
     const shared = { name, slots: body.slots, arrangement: body.arrangement, category: body.category, templateType: body.templateType,
         exposes: body.exposes, recursiveSlots: body.recursiveSlots, restrictsScopes: body.scopes !== null, scopes: body.scopes ?? [], sliceKinds: body.sliceKinds,
         ...(body.outlets.length === 0 ? {} : { outlets: body.outlets }),
-        ...(body.behaviors.length === 0 ? {} : { behaviors: body.behaviors }),
-        ...(body.usedBehaviors.length === 0 ? {} : { usedBehaviors: body.usedBehaviors }), location: locationOf(line) };
-    // #1388: interactions retain authoring facts, but are not serialized as a full behavior AST.
+        behaviors: body.behaviors, usedBehaviors: body.usedBehaviors, location: locationOf(line) };
     if (keyword === 'layout') return { kind: 'LayoutSyntax', ...shared };
     const metadata = { displayName: body.displayName, description: body.description, content: body.content };
     return keyword === 'screen template'
@@ -78,7 +76,8 @@ function readMember(context: ParserContext, line: SourceLine, { owner, name }: D
         case 'exposes': readExposed(context, line, body); break;
         case 'slot': body.recursiveSlots.push({ kind: 'TemplateSlotSyntax', name: line.content.slice(word.length).trim(), location: locationOf(line) }); break;
         case 'outlet': readOutlet(context, line, { owner, name }, body); break;
-        case 'on': case 'uses': readBehavior(context, line, word === 'on' ? body.behaviors : body.usedBehaviors); break;
+        case 'on': body.behaviors.push(parseInlineBehavior(context, line)); break;
+        case 'uses': body.usedBehaviors.push(parseUsesBehavior(context, line)); break;
         default: readSlot(context, line, body); break;
     }
 }
@@ -88,14 +87,6 @@ function readArrangement(context: ParserContext, line: SourceLine, owner: string
         context.error(DiagnosticCodes.DuplicateArrangement, `This ${owner} already declares 'arrangement' - a ${owner} can have at most one`, locationOf(line));
         context.skipBlock(line.indent);
     } else body.arrangement = parseArrangement(context, line, owner, body.slots);
-}
-
-// A template holds behaviors under the names the C# syntax gives them; the body is the same placeholder a screen reads.
-const behaviorKinds: Record<string, string> = { ScreenBehaviorSyntax: 'BehaviorSyntax', ScreenUsesBehaviorSyntax: 'UsesBehaviorSyntax' };
-
-function readBehavior(context: ParserContext, line: SourceLine, into: SyntaxNode[]): void {
-    const directive = parseDirective(context, line);
-    if (directive !== undefined) into.push({ ...directive, kind: behaviorKinds[directive.kind] ?? directive.kind } as SyntaxNode);
 }
 
 function readFits(context: ParserContext, line: SourceLine, owner: string, body: Body): void {

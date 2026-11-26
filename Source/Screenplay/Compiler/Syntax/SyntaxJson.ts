@@ -131,7 +131,13 @@ const omittedWhenNull: Record<string, readonly string[]> = {
     SpecificationExampleSyntax: ['stream', 'noStream'],
     SpecificationRedeliverySyntax: ['stream', 'noStream'],
     WorkflowNodeSyntax: ['file', 'code', 'via'],
-    StateEntrySyntax: ['file', 'code']
+    StateEntrySyntax: ['file', 'code'],
+    // Native SyntaxJsonWriter and CompositionDefaults omit these additive defaults in every mode.
+    InteractionBindingSyntax: ['otherwise'],
+    LayoutSyntax: ['scopes', 'sliceKinds', 'outlets'],
+    ScreenTemplateSyntax: ['displayName', 'description', 'scopes', 'sliceKinds', 'content', 'outlets'],
+    DialogTemplateSyntax: ['displayName', 'description', 'scopes', 'sliceKinds', 'content', 'outlets'],
+    SlotSyntax: ['role', 'routedBy']
 };
 
 // Members omitted from the wire form when empty arrays, by node kind.
@@ -149,7 +155,11 @@ const omittedWhenEmpty: Record<string, readonly string[]> = {
     WorkflowNodeSyntax: ['mappings', 'returns'],
     StateEntrySyntax: ['mappings'],
     ApplicationSyntax: ['sinks'],
-    SystemSyntax: ['abilities']
+    SystemSyntax: ['abilities'],
+    InteractionBindingSyntax: ['alternatives'],
+    LayoutSyntax: ['scopes', 'sliceKinds', 'outlets', 'behaviors', 'usedBehaviors'],
+    ScreenTemplateSyntax: ['scopes', 'sliceKinds', 'content', 'outlets', 'behaviors', 'usedBehaviors'],
+    DialogTemplateSyntax: ['scopes', 'sliceKinds', 'content', 'outlets', 'behaviors', 'usedBehaviors']
 };
 
 // Members omitted when they hold their default value, by node kind.
@@ -159,7 +169,11 @@ const omittedWhenDefault: Record<string, Record<string, unknown>> = {
     ConceptAttributeSyntax: { criminal: false },
     PropertySyntax: { isSubject: false },
     ReadModelSyntax: { isPassive: false },
-    SpecificationSyntax: { thenNoEvents: false }
+    SpecificationSyntax: { thenNoEvents: false },
+    LayoutSyntax: { restrictsScopes: false },
+    ScreenTemplateSyntax: { restrictsScopes: false },
+    DialogTemplateSyntax: { restrictsScopes: false },
+    SlotSyntax: { routed: false, primary: false, optional: false }
 };
 
 // The composition members the C# writer leaves out while they hold their default (CompositionDefaults.cs).

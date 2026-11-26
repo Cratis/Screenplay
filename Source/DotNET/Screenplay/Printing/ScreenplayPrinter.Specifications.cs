@@ -359,7 +359,10 @@ public partial class ScreenplayPrinter
     {
         foreach (var value in values)
         {
-            writer.Assignment(value.Property, value.Source, value);
+            var property = ScreenplaySyntaxText.IsStructured(value.Source)
+                ? ReservedWords.Escape(value.Property, ReservedWords.EventBody)
+                : value.Property;
+            writer.Assignment(property, value.Source, value);
         }
     }
 }

@@ -10,7 +10,7 @@ import { ParserContext } from './ParserContext';
 import { parseDescription } from './DescriptionParser';
 import { locationOf, SourceLine } from './SourceLine';
 
-// Typed authoring facts from bodies the TS syntax tree does not yet model. Never serialized as ESM.
+// Typed authoring facts shared by modeled interactions and still-opaque bodies. Never serialized as ESM.
 export interface InputUse {
     readonly command: string;
     readonly property: string;
@@ -28,8 +28,16 @@ const mapping = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*.+$');
 const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)(?:\\s+([\\w.]+(?:\\[\\])?))?$');
 const actionBoundaries = new Set(['refresh', 'navigate', 'open', 'close', 'set', 'notify', 'confirm', 'raise', 'on', 'when', 'otherwise']);
 
-// A single forward walk, tracking owners by indentation and skipping fences as opaque text.
+// Still-opaque surfaces retain their existing structural validation and fact collection.
 export function collectInputUses(context: ParserContext, header: SourceLine): readonly SourceLine[] {
+    const lines = collectInputUseFacts(context, header);
+    validateInteractionBodies(context, lines);
+    return lines;
+}
+
+// A single forward walk, tracking owners by indentation and skipping fences as opaque text.
+// Interaction parsing can run this on a fork without giving a fact collector ownership of its reader.
+export function collectInputUseFacts(context: ParserContext, header: SourceLine): readonly SourceLine[] {
     const owners: InputOwner[] = [];
     const parameters = new Set<string>();
     const inputs: InputUse[] = [];
@@ -64,7 +72,6 @@ export function collectInputUses(context: ParserContext, header: SourceLine): re
             recognize(child);
         }
     }
-    validateInteractionBodies(context, lines);
     context.continuationValues.push(...collectContinuationValues(lines, context.scope));
     // Parameters may be declared after their bindings; commit facts once their scope is complete.
     for (const input of inputs) context.inputUses.push(parameters.has(input.command) ? { ...input, isParameter: true } : input);

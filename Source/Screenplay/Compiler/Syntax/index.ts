@@ -61,6 +61,7 @@ export * from './Specifications';
 export * from './EffectiveSpecification';
 export * from './Responses';
 export * from './Screens';
+export * from './Interactions';
 export * from './CompositionSyntax';
 export * from './Structure';
 export * from './DesignSystemSyntax';

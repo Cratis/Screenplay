@@ -322,7 +322,8 @@ export const rootDirectiveCases: readonly Case[] = [
         name: 'behavior',
         scope: [],
         source: 'behavior Confirm',
-        expected: 'commandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:0,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
+        // Named behaviors are retained in the application while the Marker sibling still parses.
+        expected: 'commandReadMode=none timeZone=none reaction=none domain=none imports=[] fileImports=[] concepts=[Marker] types=[] personas=[] modules=[] counts={policies:0,purposes:0,stickyNotes:0,examples:0,seeds:0,uiProfiles:0,sampleDataPacks:0,themes:0,triggers:0,layouts:0,templates:0,behaviors:1,exposures:0,instanceContributions:0,declaredTriggers:0,systems:0,stateMachines:0,workflows:0,eventSources:0} present={authentication:false,onboarding:false,identity:false,context:false}'
     },
     {
         name: 'exposure',
