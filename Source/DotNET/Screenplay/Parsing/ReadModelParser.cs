@@ -20,12 +20,7 @@ internal static partial class ReadModelParser
     /// <returns>The parsed <see cref="ReadModelSyntax"/>.</returns>
     public static ReadModelSyntax Parse(ParserContext context, SourceLine header)
     {
-        var name = HeaderRegex().Match(header.Content);
-        if (!name.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidReadModelDeclaration, $"Invalid read model declaration '{header.Content}' - expected 'readmodel <Name>'", header.Location);
-        }
-
+        var name = ParseName(context, header);
         var properties = new List<PropertySyntax>();
         string? description = null;
         string? documentation = null;
@@ -37,65 +32,50 @@ internal static partial class ReadModelParser
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            bodyIndent ??= line.Indent;
-            if (LineText.FirstWord(line.Content) == "description" && PropertyLineParser.TryParse(line) is null)
+            var propertyIndent = bodyIndent ??= line.Indent;
+            if (IsMetadataDirective(line, "description"))
             {
                 var previousDescription = description;
-                description = DescriptionParser.Parse(context, line, description, $"Read model '{name.Groups[1].Value}'");
-                if (previousDescription is null && description is not null)
-                {
-                    directiveLocations["description"] = line.Location;
-                }
+                description = DescriptionParser.Parse(context, line, description, $"Read model '{name}'");
+                RecordDescriptionLocation(line, previousDescription, description, directiveLocations);
             }
-            else if (LineText.FirstWord(line.Content) == "documentation" && PropertyLineParser.TryParse(line) is null)
+            else if (IsMetadataDirective(line, "documentation"))
             {
-                documentation = DocumentationParser.Parse(context, line, documentation, $"Read model '{name.Groups[1].Value}'", directiveLocations);
+                documentation = DocumentationParser.Parse(context, line, documentation, $"Read model '{name}'", directiveLocations);
             }
-            else if (line.Content == "passive")
+            else if (IsPassiveDirective(line))
             {
-                if (passive)
-                {
-                    context.Warning(DiagnosticCodes.RepeatedPassiveDirective, "A read model repeats 'passive'; the directive is idempotent.", line.Location);
-                }
-                else
-                {
-                    passive = true;
-                    directiveLocations["passive"] = line.Location;
-                }
-            }
-            else if (LineText.FirstWord(line.Content) == "passive" && IsBooleanLiteral(line.Content["passive".Length..].Trim()))
-            {
-                context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
+                passive = ParsePassiveDirective(context, line, passive, directiveLocations);
             }
             else if (FileReferenceParser.IsDirectiveAmongProperties(line))
             {
                 file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
             }
-            else if (PropertyLineParser.Parse(context, line) is { } property)
+            else if (ParseProperty(context, line, name, propertyIndent) is { } property)
             {
-                if (line.Indent > bodyIndent) property = PropertyLineParser.WithoutKey(context, property);
-                if (property.IsIdentifier)
-                {
-                    context.Error(
-                        DiagnosticCodes.IdentifierOutsideCommand,
-                        $"Property '{property.Name}' of read model '{name.Groups[1].Value}' cannot be marked identifier - only a command property can be",
-                        line.Location);
-                    property = property with { IsIdentifier = false };
-                }
-
                 properties.Add(property);
-            }
-            else
-            {
-                context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description) { Documentation = documentation, File = file, IsPassive = passive, DirectiveLocations = directiveLocations };
+        return new(name, properties, header.Location, description)
+        {
+            Documentation = documentation,
+            File = file,
+            IsPassive = passive,
+            DirectiveLocations = directiveLocations
+        };
     }
 
-    static bool IsBooleanLiteral(string value) =>
-        string.Equals(value, "true", StringComparison.Ordinal) || string.Equals(value, "false", StringComparison.Ordinal);
+    static string ParseName(ParserContext context, SourceLine header)
+    {
+        var name = HeaderRegex().Match(header.Content);
+        if (!name.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidReadModelDeclaration, $"Invalid read model declaration '{header.Content}' - expected 'readmodel <Name>'", header.Location);
+        }
+
+        return name.Groups[1].Value;
+    }
 
     [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.NonBacktracking)]
     private static partial Regex HeaderRegex();
