@@ -81,16 +81,21 @@ internal static partial class NavigationParser
 
                 position = match.Groups["end"].Index;
                 var part = new ItemPart(match.Groups[1].Value, Text(match, 2, 3, 4), match.Groups[2].Success, match.Groups[3].Success);
-                if (HasPart(part))
-                {
-                    context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' states '{part.Key}' more than once", line.Location);
-                    continue;
-                }
-
-                valid = ReadPart(part) && valid;
+                valid = ReadUniquePart(part) && valid;
             }
 
             return valid;
+        }
+
+        bool ReadUniquePart(ItemPart part)
+        {
+            if (HasPart(part))
+            {
+                context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' states '{part.Key}' more than once", line.Location);
+                return true;
+            }
+
+            return ReadPart(part);
         }
 
         bool HasPart(ItemPart part) => part.Key switch
