@@ -10,6 +10,8 @@ import { ExpressionSyntax } from './Expressions';
 import type { ScreenContributionSyntax } from './CompositionSyntax';
 import type { OutletPositionSyntax, OutletSyntax } from './Outlets';
 import { SyntaxNode } from './SyntaxNode';
+import { BehaviorSyntax, InteractionArgumentSyntax, UsesBehaviorSyntax } from './Interactions';
+export type { InteractionArgumentSyntax } from './Interactions';
 
 export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty' | 'Literal';
 export type UiBindingMode = 'OneWay' | 'TwoWay';
@@ -127,12 +129,6 @@ export interface ScreenActionOtherwiseSyntax extends SyntaxNode {
     readonly arguments: readonly InteractionArgumentSyntax[];
 }
 
-export interface InteractionArgumentSyntax extends SyntaxNode {
-    readonly kind: 'InteractionArgumentSyntax';
-    readonly name: string;
-    readonly binding: string;
-}
-
 // 'navigate to <Screen> [by <param>]'.
 export interface ScreenNavigateSyntax extends SyntaxNode {
     readonly kind: 'ScreenNavigateSyntax';
@@ -180,13 +176,14 @@ export interface ScreenTitleSyntax extends SyntaxNode {
     readonly text: string;
 }
 
-// 'table <target>' with its columns and an optional 'on row-click navigate to ...'. Behaviors attached to
-// the table are recognized but not modeled.
+// 'table <target>' with columns, optional row navigation and interaction attachments.
 export interface ScreenTableSyntax extends SyntaxNode {
     readonly kind: 'ScreenTableSyntax';
     readonly target: string;
     readonly columns: readonly ScreenColumnSyntax[];
     readonly rowClick: ScreenNavigateSyntax | null;
+    readonly behaviors?: readonly BehaviorSyntax[];
+    readonly usedBehaviors?: readonly UsesBehaviorSyntax[];
 }
 
 export interface ScreenColumnSyntax extends SyntaxNode {
@@ -245,6 +242,8 @@ export interface ScreenComponentSyntax extends SyntaxNode {
     readonly presentation: readonly PresentationValueSyntax[];
     readonly icon: string | null;
     readonly slots: readonly ComponentSlotSyntax[];
+    readonly behaviors?: readonly BehaviorSyntax[];
+    readonly usedBehaviors?: readonly UsesBehaviorSyntax[];
 }
 
 export type ToolbarItemKind = 'Unknown' | 'Action' | 'Navigate' | 'Dialog';
@@ -303,14 +302,15 @@ export interface CodeBlockSyntax extends SyntaxNode {
     readonly code: string;
 }
 
-// An 'on <trigger>' binding and a 'uses <Behavior>' attachment. This compiler does not model interaction,
-// so it keeps only that one is there - which keeps a screen's directives in the order they were written.
+// Wrappers keep the screen's directive ordering; both forms carry the shared interaction model.
 export interface ScreenBehaviorSyntax extends SyntaxNode {
     readonly kind: 'ScreenBehaviorSyntax';
+    readonly behavior: BehaviorSyntax;
 }
 
 export interface ScreenUsesBehaviorSyntax extends SyntaxNode {
     readonly kind: 'ScreenUsesBehaviorSyntax';
+    readonly uses: UsesBehaviorSyntax;
 }
 
 export type ScreenDirectiveSyntax =
