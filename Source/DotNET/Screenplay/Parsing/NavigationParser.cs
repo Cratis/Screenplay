@@ -57,17 +57,7 @@ internal static partial class NavigationParser
             switch (LineText.FirstWord(child.Content))
             {
                 case "logo":
-                    // A malformed or second logo is not one the region can hold; it is left for review like any other line.
-                    var parsed = ParseLogo(quiet, child);
-                    if (parsed is not null && logo is null)
-                    {
-                        logo = parsed;
-                    }
-                    else
-                    {
-                        unrecognized.Add(child.Location);
-                    }
-
+                    logo = ReadRegionLogo(quiet, child, logo, unrecognized);
                     break;
                 case "item" when ParseItem(quiet, child) is { } item:
                     items.Add(item);
@@ -82,15 +72,7 @@ internal static partial class NavigationParser
             }
         }
 
-        OutletMode? mode = match.Success && match.Groups[2].Success
-            ? match.Groups[2].Value switch
-            {
-                "inherits" => OutletMode.Inherit,
-                "overrides" => OutletMode.Override,
-                _ => OutletMode.Extend
-            }
-            : null;
-        return new(region, mode, logo, items, unrecognized, header.Location);
+        return new(region, ReadRegionMode(match), logo, items, unrecognized, header.Location);
     }
 
     /// <summary>
@@ -130,134 +112,28 @@ internal static partial class NavigationParser
         }
 
         var id = head.Groups[1].Success ? StringLiteral.Unescape(head.Groups[1].Value) : head.Groups[2].Value;
-        string? title = null;
-        string? icon = null;
-        string? slot = null;
-        string? screen = null;
-        NavigationTargetSyntax? target = null;
-        var rest = head.Groups[3].Value;
-        var position = 0;
-        var valid = true;
+        var parts = new ItemParts(context, line, id);
+        parts.Read(head.Groups[3].Value);
+        var target = parts.ResolveTarget();
+        var (children, placement) = ReadItemChildren(context, line, id, allowPosition);
+        return new(id, parts.Title ?? string.Empty, line.Location) { Icon = parts.Icon, Target = target, Slot = parts.Slot, Children = children, Position = placement };
+    }
 
-        while (position < rest.Length)
-        {
-            var part = PartRegex().Match(rest, position);
-            if (!part.Success || part.Index != position)
-            {
-                context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid navigation item '{line.Content}' - unexpected '{rest[position..].Trim()}'; expected {Expected}", line.Location);
-                valid = false;
-                break;
-            }
-
-            position = part.Groups["end"].Index;
-            var key = part.Groups[1].Value;
-            var isQuoted = part.Groups[2].Success;
-            var isLocalized = part.Groups[3].Success;
-            var value = Text(part, 2, 3, 4);
-            var duplicate = key switch { "title" => title is not null, "icon" => icon is not null, "slot" => slot is not null, "screen" => screen is not null, _ => target is not null };
-            if (duplicate)
-            {
-                context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' states '{key}' more than once", line.Location);
-                continue;
-            }
-
-            switch (key)
-            {
-                case "title":
-                    if (!isQuoted && !isLocalized)
-                    {
-                        context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid title '{value}' on navigation item '{id}' - expected a quoted string or a $strings.<key> token", line.Location);
-                        valid = false;
-                    }
-                    else
-                    {
-                        title = value;
-                    }
-
-                    break;
-                case "icon":
-                    icon = value;
-                    break;
-                case "screen":
-                    if (isQuoted || isLocalized || !IdentifierRegex().IsMatch(value))
-                    {
-                        context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid screen '{value}' on navigation item '{id}' - expected a screen name", line.Location);
-                        valid = false;
-                    }
-                    else
-                    {
-                        screen = value;
-                    }
-
-                    break;
-                case "slot":
-                    if (isQuoted || isLocalized || !IdentifierRegex().IsMatch(value))
-                    {
-                        context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid slot '{value}' on navigation item '{id}' - expected a slot name", line.Location);
-                        valid = false;
-                    }
-                    else
-                    {
-                        slot = value;
-                    }
-
-                    break;
-                default:
-                    if (isQuoted || isLocalized || !TargetRegex().IsMatch(value))
-                    {
-                        context.Error(DiagnosticCodes.InvalidNavigationItem, $"Invalid target '{value}' on navigation item '{id}' - expected <Module> or <Module>.<Feature>", line.Location);
-                        valid = false;
-                    }
-                    else
-                    {
-                        var dot = value.IndexOf('.', StringComparison.Ordinal);
-                        target = new(dot < 0 ? value : value[..dot], dot < 0 ? null : value[(dot + 1)..], line.Location);
-                    }
-
-                    break;
-            }
-        }
-
-        if (title is null && valid)
-        {
-            context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' has no title - expected 'item {id} title \"<text>\"'", line.Location);
-        }
-
-        if (screen is not null)
-        {
-            if (target?.Feature is null)
-            {
-                context.Error(DiagnosticCodes.InvalidNavigationItem, $"Navigation item '{id}' selects screen '{screen}' without an explicit feature - add 'target <Module>.<Feature>'", line.Location);
-            }
-            else
-            {
-                target = target with { Screen = screen };
-            }
-        }
-
+    static (List<NavigationItemSyntax> Children, OutletPositionSyntax? Position) ReadItemChildren(ParserContext context, SourceLine line, string id, bool allowPosition)
+    {
         var children = new List<NavigationItemSyntax>();
         OutletPositionSyntax? placement = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "item")
+            if (string.Equals(LineText.FirstWord(child.Content), "item", StringComparison.Ordinal))
             {
-                if (ParseItem(context, child) is { } nested)
-                {
-                    children.Add(nested);
-                }
-
+                ReadNestedItem(context, child, children);
                 continue;
             }
 
-            if (allowPosition && OutletParser.TryParsePosition(child, out var parsed))
+            if (allowPosition && TryReadItemPosition(context, child, id, ref placement))
             {
-                if (placement is not null)
-                {
-                    OutletParser.ReportRepeatedPosition(context, child, id);
-                }
-
-                placement ??= parsed;
                 continue;
             }
 
@@ -265,7 +141,53 @@ internal static partial class NavigationParser
             context.SkipBlock(child.Indent);
         }
 
-        return new(id, title ?? string.Empty, line.Location) { Icon = icon, Target = target, Slot = slot, Children = children, Position = placement };
+        return (children, placement);
+    }
+
+    static void ReadNestedItem(ParserContext context, SourceLine line, List<NavigationItemSyntax> children)
+    {
+        if (ParseItem(context, line) is { } nested)
+        {
+            children.Add(nested);
+        }
+    }
+
+    static bool TryReadItemPosition(ParserContext context, SourceLine line, string id, ref OutletPositionSyntax? placement)
+    {
+        if (!OutletParser.TryParsePosition(line, out var parsed))
+        {
+            return false;
+        }
+
+        if (placement is not null)
+        {
+            OutletParser.ReportRepeatedPosition(context, line, id);
+        }
+
+        placement ??= parsed;
+        return true;
+    }
+
+    static OutletMode? ReadRegionMode(Match match) => match.Success && match.Groups[2].Success
+        ? match.Groups[2].Value switch
+        {
+            "inherits" => OutletMode.Inherit,
+            "overrides" => OutletMode.Override,
+            _ => OutletMode.Extend
+        }
+        : null;
+
+    static NavigationLogoSyntax? ReadRegionLogo(ParserContext context, SourceLine line, NavigationLogoSyntax? logo, List<SourceLocation> unrecognized)
+    {
+        // A malformed or second logo is not one the region can hold; it is left for review like any other line.
+        var parsed = ParseLogo(context, line);
+        if (parsed is not null && logo is null)
+        {
+            return parsed;
+        }
+
+        unrecognized.Add(line.Location);
+        return logo;
     }
 
     static string Text(Match match, int quotedGroup) => Text(match, quotedGroup, quotedGroup + 1, quotedGroup + 1);
