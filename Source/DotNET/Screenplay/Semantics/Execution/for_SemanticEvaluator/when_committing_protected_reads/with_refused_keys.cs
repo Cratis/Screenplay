@@ -13,12 +13,13 @@ public class with_refused_keys : given.a_protected_command
     [InlineData("padded ")]
     [InlineData(" padded ")]
     [InlineData("\tpadded")]
-    void should_reject_the_key_as_a_missing_view_even_when_the_world_holds_it(string key)
+    void should_reject_without_disclosing_the_key_even_when_the_world_holds_it(string key)
     {
         var world = World(Fact("Recorded", key, "stored"));
         var result = (SemanticRejected)_evaluator.Execute(_plan, world, Request(lookup: key));
         result.Category.ShouldEqual(SemanticRejectionCategory.Validation);
-        result.Details.ShouldEqual($"View '{key}' does not exist.");
+        result.Details.ShouldEqual("View does not exist.");
+        result.ValidationFailures.Single().Message.ShouldEqual(result.Details);
         result.World.ShouldBeSame(world);
     }
 
@@ -29,10 +30,14 @@ public class with_refused_keys : given.a_protected_command
     [InlineData("a#b")]
     [InlineData(" padded")]
     [InlineData("padded ")]
-    void should_reject_the_key_in_an_empty_world(string key)
+    [InlineData(" padded ")]
+    void should_reject_without_disclosing_the_key_in_an_empty_world(string key)
     {
         var result = (SemanticRejected)_evaluator.Execute(_plan, SemanticWorld.Empty, Request(lookup: key));
-        result.Details.ShouldEqual($"View '{key}' does not exist.");
+        result.Category.ShouldEqual(SemanticRejectionCategory.Validation);
+        result.Details.ShouldEqual("View does not exist.");
+        result.ValidationFailures.Single().Message.ShouldEqual(result.Details);
+        result.World.ShouldBeSame(SemanticWorld.Empty);
     }
 
     [Theory]

@@ -5,8 +5,6 @@ namespace Cratis.Screenplay.Semantics.Execution;
 
 internal sealed partial class SemanticCommandExecution
 {
-    static string KeyText(SemanticValue key) => key is SemanticTextValue text ? text.Value : string.Empty;
-
     SemanticExecutionResult? ReadRequired()
     {
         foreach (var read in command.Reads)
@@ -17,10 +15,10 @@ internal sealed partial class SemanticCommandExecution
             }
 
             var key = _commandValues[read.Key];
-            if (RefusedReadKeys.IsRefused(key)) return MissingRead(read, key);
+            if (RefusedReadKeys.IsRefused(key)) return MissingRead(read);
 
             var instance = world.ReadModels.FirstOrDefault(instance => instance.ReadModel == read.ReadModel && SemanticValueRules.AreEqual(instance.Key, key));
-            if (instance is null) return MissingRead(read, key);
+            if (instance is null) return MissingRead(read);
 
             _reads.Add(read.Name, instance.Values.ToDictionary(value => value.TargetProperty, value => value.Value));
         }
@@ -28,9 +26,9 @@ internal sealed partial class SemanticCommandExecution
         return null;
     }
 
-    SemanticRejected MissingRead(SemanticDecisionRead read, SemanticValue key)
+    SemanticRejected MissingRead(SemanticDecisionRead read)
     {
-        var message = $"{plan.ReadModels[read.ReadModel].Name} '{KeyText(key)}' does not exist.";
+        var message = $"{plan.ReadModels[read.ReadModel].Name} does not exist.";
         return SemanticEvaluator.RejectWithMessage(world, SemanticRejectionCategory.Validation, null, message) with
         {
             ValidationFailures = [new(message, SemanticValidationSeverity.Error)]

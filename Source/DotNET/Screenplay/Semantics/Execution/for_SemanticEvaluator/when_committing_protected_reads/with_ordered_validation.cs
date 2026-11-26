@@ -11,7 +11,7 @@ public class with_ordered_validation : given.a_protected_command
         Compile("concept Receipt : Uuid\n" + Source.Replace("command Update\n", "command Update\n        receipt Receipt generated\n", StringComparison.Ordinal));
         var request = Request() with { GeneratedValues = [null!] };
         var result = (SemanticRejected)_evaluator.Execute(_plan, SemanticWorld.Empty, request);
-        result.Details.ShouldEqual("View 'read' does not exist.");
+        result.Details.ShouldEqual("View does not exist.");
         result.ValidationFailures.Single().Message.ShouldEqual(result.Details);
     }
 
