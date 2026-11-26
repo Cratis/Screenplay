@@ -40,7 +40,7 @@ public class with_malformed_and_repeated_children : Specification
     [Fact] void should_keep_the_item_type() => _region.Items.First().ShouldBeOfExactType<NavigationItemSyntax>();
     [Fact] void should_keep_an_item_with_invalid_parts_for_migration() => _region.Items.First().Title.ShouldEqual(string.Empty);
     [Fact] void should_keep_the_button_type() => _region.Items.Last().ShouldBeOfExactType<ToolbarButtonSyntax>();
-    [Fact] void should_keep_unrecognized_lines_in_order() => _region.Unrecognized.ShouldEqual([new SourceLocation(3, 3, "navigation.play"), new SourceLocation(5, 3, "navigation.play"), new SourceLocation(6, 3, "navigation.play"), new SourceLocation(8, 3, "navigation.play"), new SourceLocation(10, 3, "navigation.play")]);
+    [Fact] void should_keep_unrecognized_lines_in_order() => _region.Unrecognized.ShouldEqual(new SourceLocation(3, 3, "navigation.play"), new SourceLocation(5, 3, "navigation.play"), new SourceLocation(6, 3, "navigation.play"), new SourceLocation(8, 3, "navigation.play"), new SourceLocation(10, 3, "navigation.play"));
     [Fact] void should_not_leak_quiet_child_diagnostics() => _context.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.RemovedNavigationRegion);
     [Fact] void should_keep_the_retirement_message() => _context.Diagnostics.Single().Message.ShouldEqual("'navigation sidebar overrides' in a module is written 'outlet sidebar overrides' since Screenplay 6 - an item list a template offers is an outlet; run 'screenplay migrate --from 5 --to 6' (the slots-and-outlets step) to rewrite the model");
     [Fact] void should_locate_the_retirement_on_the_header() => _context.Diagnostics.Single().Location.ShouldEqual(new SourceLocation(1, 1, "navigation.play"));
