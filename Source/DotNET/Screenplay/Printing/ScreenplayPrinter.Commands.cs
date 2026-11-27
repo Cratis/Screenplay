@@ -8,61 +8,146 @@ using Cratis.Screenplay.Text;
 namespace Cratis.Screenplay.Printing;
 
 /// <summary>
-/// Printing of the host-language slice constructs - commands, events, queries, constraints and reactions.
+/// Printing of commands, queries, constraints and their supporting declarations.
 /// </summary>
 public partial class ScreenplayPrinter
 {
+    static void WriteConcurrencyDimensions(ScreenplayWriter writer, ConcurrencySyntax concurrency)
+    {
+        if (concurrency.EventSource)
+        {
+            writer.DirectiveLine("eventSource", concurrency, "eventSource");
+        }
+
+        if (concurrency.EventSourceType is not null)
+        {
+            writer.DirectiveLine($"sourceType {concurrency.EventSourceType}", concurrency, "sourceType");
+        }
+
+        if (concurrency.EventStreamType is not null)
+        {
+            writer.DirectiveLine($"streamType {concurrency.EventStreamType}", concurrency, "streamType");
+        }
+
+        if (concurrency.EventStreamId is not null)
+        {
+            writer.DirectiveLine($"streamId {concurrency.EventStreamId}", concurrency, "streamId");
+        }
+    }
+
+    static void WriteQueryKeys(ScreenplayWriter writer, QuerySyntax query)
+    {
+        if (query.By is not null)
+        {
+            writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}", query.By);
+        }
+
+        if (!query.ByParts.Any())
+        {
+            return;
+        }
+
+        writer.DirectiveLine("by", query, "by");
+        using var indent = writer.Indent();
+        foreach (var part in query.ByParts)
+        {
+            writer.Line(ScreenplaySyntaxText.QueryParameter(part), part);
+        }
+    }
+
+    static void WriteConstraintRule(ScreenplayWriter writer, ConstraintSyntax rule)
+    {
+        switch (rule)
+        {
+            case UniquePropertyConstraintSyntax unique:
+                writer.DirectiveLine($"unique {string.Join(", ", new[] { unique.Property }.Concat(unique.AdditionalProperties))} on {unique.Event}", rule, "rule");
+                break;
+            case UniqueEventConstraintSyntax uniqueEvent:
+                writer.DirectiveLine($"unique event {uniqueEvent.Event}", rule, "rule");
+                break;
+            case FileConstraintSyntax file:
+                writer.DirectiveLine($"file {file.File.Path}", file, "file");
+                break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("constraint", rule.GetType().Name);
+        }
+    }
+
+    static void WriteConstraintReleases(ScreenplayWriter writer, ConstraintSyntax constraint)
+    {
+        var releases = constraint.ReleasedBy.ToList();
+        for (var index = 0; index < releases.Count; index++)
+        {
+            writer.DirectiveLine($"released by {releases[index]}", constraint, DirectiveLocationKeys.ForValue("released by", releases, index));
+        }
+    }
+
+    static void WriteHandlerHints(ScreenplayWriter writer, ImplementationSyntax implementation)
+    {
+        foreach (var hint in implementation.Hints)
+        {
+            if (hint is null)
+            {
+                throw new InvalidSyntaxJson("Implementation hints cannot contain null.");
+            }
+
+            ImplementationInvariants.Validate(hint);
+            writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
+        }
+    }
+
     void WriteCommand(ScreenplayWriter writer, CommandSyntax command)
     {
         EventSourceInvariants.Validate(command);
-        if (command.StreamCandidates.Any()) throw new InvalidSyntaxJson("Ambiguous or duplicate command stream headers cannot be exported as .play text; repair the draft or retain syntax JSON.");
+        if (command.StreamCandidates.Any())
+        {
+            throw new InvalidSyntaxJson("Ambiguous or duplicate command stream headers cannot be exported as .play text; repair the draft or retain syntax JSON.");
+        }
+
         using var anchor = writer.Anchor(command);
         writer.Line($"command {command.Name}");
-        using (writer.Indent())
+        using var indent = writer.Indent();
+        WriteDescription(writer, command.Description, command);
+        WriteDocumentation(writer, command.Documentation, command);
+        WriteCommandProperties(writer, command);
+        WriteCommandPrerequisites(writer, command);
+        WriteCommandEffects(writer, command);
+        WriteCommandResponse(writer, command);
+    }
+
+    void WriteCommandPrerequisites(ScreenplayWriter writer, CommandSyntax command)
+    {
+        // What the command reads comes before the mappings and rules that reference it.
+        WriteStateReads(writer, command.Reads);
+        WriteAvailable(writer, command.Available);
+        if (command.Authorize is not null)
         {
-            WriteDescription(writer, command.Description, command);
-            WriteDocumentation(writer, command.Documentation, command);
-            WriteCommandProperties(writer, command);
+            WriteAuthorize(writer, command.Authorize);
+        }
 
-            // What the command reads comes before what references it - a mapping fed from state and a rule
-            // stated against state both read as though the read model were already in scope, because it is.
-            foreach (var reads in command.Reads ?? [])
-            {
-                WriteReads(writer, reads);
-            }
+        foreach (var validation in command.Validations)
+        {
+            WriteValidate(writer, validation);
+        }
+    }
 
-            WriteAvailable(writer, command.Available);
+    void WriteCommandEffects(ScreenplayWriter writer, CommandSyntax command)
+    {
+        if (command.Stream is not null)
+        {
+            WriteCommandStream(writer, command.Stream);
+        }
 
-            if (command.Authorize is not null)
-            {
-                WriteAuthorize(writer, command.Authorize);
-            }
+        WriteCalendar(writer, command.Calendar);
+        WriteProductions(writer, command.Produces);
+        if (command.Handler is not null)
+        {
+            WriteHandler(writer, command.Handler);
+        }
 
-            foreach (var validation in command.Validations)
-            {
-                WriteValidate(writer, validation);
-            }
-
-            if (command.Stream is not null) WriteCommandStream(writer, command.Stream);
-
-            WriteCalendar(writer, command.Calendar);
-
-            foreach (var produces in command.Produces)
-            {
-                WriteProduces(writer, produces);
-            }
-
-            if (command.Handler is not null)
-            {
-                WriteHandler(writer, command.Handler);
-            }
-
-            if (command.Concurrency is not null)
-            {
-                WriteConcurrency(writer, command.Concurrency);
-            }
-
-            WriteCommandResponse(writer, command);
+        if (command.Concurrency is not null)
+        {
+            WriteConcurrency(writer, command.Concurrency);
         }
     }
 
@@ -70,50 +155,12 @@ public partial class ScreenplayPrinter
     {
         using var anchor = writer.Anchor(concurrency);
         writer.Line("concurrency");
-        using (writer.Indent())
+        using var indent = writer.Indent();
+        WriteConcurrencyDimensions(writer, concurrency);
+        var events = concurrency.EventTypes.ToList();
+        if (events.Count > 0)
         {
-            if (concurrency.EventSource)
-            {
-                writer.DirectiveLine("eventSource", concurrency, "eventSource");
-            }
-
-            if (concurrency.EventSourceType is not null)
-            {
-                writer.DirectiveLine($"sourceType {concurrency.EventSourceType}", concurrency, "sourceType");
-            }
-
-            if (concurrency.EventStreamType is not null)
-            {
-                writer.DirectiveLine($"streamType {concurrency.EventStreamType}", concurrency, "streamType");
-            }
-
-            if (concurrency.EventStreamId is not null)
-            {
-                writer.DirectiveLine($"streamId {concurrency.EventStreamId}", concurrency, "streamId");
-            }
-
-            var events = concurrency.EventTypes.ToList();
-            if (events.Count > 0)
-            {
-                writer.DirectiveLine($"events {string.Join(", ", events)}", concurrency, "events");
-            }
-        }
-    }
-
-    void WriteEvent(ScreenplayWriter writer, EventSyntax @event)
-    {
-        ImplementationInvariants.Validate(@event);
-        using var anchor = writer.Anchor(@event);
-        var visibility = @event.Visibility == EventVisibility.Public ? "public " : string.Empty;
-        var generation = @event.HasGenerationMarker || @event.Generation != 1 ? $" generation {@event.Generation}" : string.Empty;
-        var origin = @event.Origin is null ? string.Empty : $" from {StringLiteral.Quote(@event.Origin)}";
-        writer.Line($"{visibility}event {@event.Name}{generation}{origin}");
-        using (writer.Indent())
-        {
-            WriteEventMetadata(writer, @event);
-            WriteFile(writer, @event.File);
-            WriteTags(writer, @event.Tags);
-            WriteProperties(writer, @event.Properties, ReservedWords.EventBody);
+            writer.DirectiveLine($"events {string.Join(", ", events)}", concurrency, "events");
         }
     }
 
@@ -121,55 +168,42 @@ public partial class ScreenplayPrinter
     {
         using var anchor = writer.Anchor(query);
         writer.Line($"query {query.Name} => {ScreenplaySyntaxText.QueryReturnType(query)}");
-        using (writer.Indent())
+        using var indent = writer.Indent();
+        WriteDescription(writer, query.Description, query);
+        WriteQueryKeys(writer, query);
+        WriteQueryFiltersAndScope(writer, query);
+        WriteQueryAccess(writer, query);
+        if (query.Performer is not null)
         {
-            WriteDescription(writer, query.Description, query);
+            WritePerformer(writer, query.Performer);
+        }
+    }
 
-            if (query.By is not null)
-            {
-                writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}", query.By);
-            }
+    void WriteQueryFiltersAndScope(ScreenplayWriter writer, QuerySyntax query)
+    {
+        foreach (var filter in query.Filters)
+        {
+            writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}", filter);
+        }
 
-            if (query.ByParts.Any())
-            {
-                writer.DirectiveLine("by", query, "by");
-                using (writer.Indent())
-                {
-                    foreach (var part in query.ByParts)
-                    {
-                        writer.Line(ScreenplaySyntaxText.QueryParameter(part), part);
-                    }
-                }
-            }
+        // The shape of the answer comes before who may ask for it.
+        if (query.Scope is not null)
+        {
+            writer.DirectiveLine($"scoped to {query.Scope}", query, "scoped to");
+        }
+    }
 
-            foreach (var filter in query.Filters)
-            {
-                writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}", filter);
-            }
+    void WriteQueryAccess(ScreenplayWriter writer, QuerySyntax query)
+    {
+        WriteAvailable(writer, query.Available);
+        if (query.Authorize is not null)
+        {
+            WriteAuthorize(writer, query.Authorize);
+        }
 
-            // What the results are narrowed to comes before who may ask for them - the shape of the answer
-            // before the right to it.
-            if (query.Scope is not null)
-            {
-                writer.DirectiveLine($"scoped to {query.Scope}", query, "scoped to");
-            }
-
-            WriteAvailable(writer, query.Available);
-
-            if (query.Authorize is not null)
-            {
-                WriteAuthorize(writer, query.Authorize);
-            }
-
-            if (query.Narrow is not null)
-            {
-                writer.Line($"narrow {query.Narrow.Policy}", query.Narrow);
-            }
-
-            if (query.Performer is not null)
-            {
-                WritePerformer(writer, query.Performer);
-            }
+        if (query.Narrow is not null)
+        {
+            writer.Line($"narrow {query.Narrow.Policy}", query.Narrow);
         }
     }
 
@@ -177,172 +211,38 @@ public partial class ScreenplayPrinter
     {
         using var anchor = writer.Anchor(performer);
         writer.Line("performer");
-        using (writer.Indent())
-        {
-            if (performer.File is null)
-            {
-                if (performer.Code is not null)
-                {
-                    WriteCodeBlock(writer, performer.Code);
-                }
-
-                return;
-            }
-
-            writer.Line($"file {performer.File.Path}", performer.File);
-            if (performer.Code is not null)
-            {
-                WriteOmittedCode(writer, performer.Code, ReadsOneImplementation("a performer"));
-            }
-        }
+        using var indent = writer.Indent();
+        WriteSingleImplementation(writer, performer.File, performer.Code, "a performer");
     }
 
     void WriteConstraint(ScreenplayWriter writer, ConstraintSyntax constraint)
     {
         using var anchor = writer.Anchor(constraint);
         writer.DirectiveLine($"constraint {constraint.Name}", constraint, "header");
-        using (writer.Indent())
+        using var indent = writer.Indent();
+        WriteDescription(writer, constraint.Description, constraint);
+        foreach (var rule in new[] { constraint }.Concat(constraint.AdditionalRules))
         {
-            WriteDescription(writer, constraint.Description, constraint);
-            foreach (var rule in new[] { constraint }.Concat(constraint.AdditionalRules))
-            {
-                switch (rule)
-                {
-                    case UniquePropertyConstraintSyntax unique:
-                        writer.DirectiveLine($"unique {string.Join(", ", new[] { unique.Property }.Concat(unique.AdditionalProperties))} on {unique.Event}", rule, "rule");
-                        break;
-                    case UniqueEventConstraintSyntax uniqueEvent:
-                        writer.DirectiveLine($"unique event {uniqueEvent.Event}", rule, "rule");
-                        break;
-                    case FileConstraintSyntax file:
-                        writer.DirectiveLine($"file {file.File.Path}", file, "file");
-                        break;
-                    default:
-                        throw new UnsupportedSyntaxForPrinting("constraint", rule.GetType().Name);
-                }
-            }
+            WriteConstraintRule(writer, rule);
+        }
 
-            var releases = constraint.ReleasedBy.ToList();
-            for (var index = 0; index < releases.Count; index++)
-            {
-                writer.DirectiveLine($"released by {releases[index]}", constraint, DirectiveLocationKeys.ForValue("released by", releases, index));
-            }
+        WriteConstraintReleases(writer, constraint);
+        if (constraint.IgnoreCasing)
+        {
+            writer.DirectiveLine("ignore casing", constraint, "ignore casing");
+        }
 
-            if (constraint.IgnoreCasing)
-            {
-                writer.DirectiveLine("ignore casing", constraint, "ignore casing");
-            }
-
-            if (constraint.Message is not null)
-            {
-                writer.DirectiveLine($"message {StringLiteral.Quote(constraint.Message)}", constraint, "message");
-            }
+        if (constraint.Message is not null)
+        {
+            writer.DirectiveLine($"message {StringLiteral.Quote(constraint.Message)}", constraint, "message");
         }
     }
 
-    void WriteReaction(ScreenplayWriter writer, ReactionSyntax reaction)
+    void WriteStateReads(ScreenplayWriter writer, IEnumerable<ReadsSyntax>? reads)
     {
-        using var anchor = writer.Anchor(reaction);
-        writer.Line($"reaction {reaction.Name}");
-        using (writer.Indent())
+        foreach (var read in reads ?? [])
         {
-            WriteDescription(writer, reaction.Description, reaction);
-            WriteDocumentation(writer, reaction.Documentation, reaction);
-            if (reaction.From is not null) WriteObserverFilter(writer, reaction.From);
-            if (reaction.RunsAs is { } identity)
-            {
-                var roles = identity.Roles.Select(role => $"role {StringLiteral.Quote(role)}");
-                writer.Line($"runs as {identity.Kind}{(identity.Roles.Any() ? $" {string.Join(" and ", roles)}" : string.Empty)}", identity);
-            }
-
-            foreach (var trigger in reaction.Triggers)
-            {
-                WriteReactionTrigger(writer, trigger);
-            }
-
-            if (reaction.Where is not null)
-            {
-                writer.Line($"where {ScreenplaySyntaxText.Condition(reaction.Where)}", reaction.Where);
-            }
-        }
-    }
-
-    void WriteReactionTrigger(ScreenplayWriter writer, ReactionTriggerSyntax trigger)
-    {
-        using var anchor = writer.Anchor(trigger);
-        writer.Line(ScreenplaySyntaxText.TriggerSource(trigger.Source), trigger);
-
-        // A trigger with nothing but what sets it off is complete on its own, so it prints as a single line
-        // rather than an empty indented block.
-        if (trigger is { Description: null, File: null, Code: null } &&
-            !trigger.Data.Any() && !(trigger.Reads ?? []).Any() && !(trigger.Produces ?? []).Any() && !(trigger.Invokes ?? []).Any())
-        {
-            return;
-        }
-
-        using (writer.Indent())
-        {
-            WriteDescription(writer, trigger.Description, trigger);
-
-            foreach (var datum in trigger.Data)
-            {
-                var name = ReservedWords.Escape(datum.Name, ReservedWords.TriggerBody);
-                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}", datum);
-            }
-
-            foreach (var reads in trigger.Reads ?? [])
-            {
-                WriteReads(writer, reads);
-            }
-
-            foreach (var produces in trigger.Produces ?? [])
-            {
-                WriteProduces(writer, produces);
-            }
-
-            foreach (var invokes in trigger.Invokes ?? [])
-            {
-                WriteInvocation(writer, invokes);
-            }
-
-            if (trigger.File is not null)
-            {
-                writer.Line($"file {trigger.File.Path}", trigger.File);
-            }
-
-            if (trigger.Code is not null)
-            {
-                WriteCodeBlock(writer, trigger.Code);
-            }
-        }
-    }
-
-    void WriteInvocation(ScreenplayWriter writer, InvokesSyntax invokes)
-    {
-        writer.Line($"invokes {invokes.Command}", invokes);
-        using (writer.Indent())
-        {
-            WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
-            foreach (var refusal in invokes.OnRefused)
-            {
-                var selector = refusal.Selector == "any" ? string.Empty : $" by {refusal.Selector}";
-                var constraint = refusal.Constraint is null ? string.Empty : $" {refusal.Constraint}";
-                writer.Line($"on refused{selector}{constraint}", refusal);
-                using (writer.Indent())
-                {
-                    if (refusal.Acknowledge) writer.DirectiveLine("acknowledge", refusal, "acknowledge");
-                    foreach (var produced in refusal.Produces) WriteProduces(writer, produced);
-                }
-            }
-
-            foreach (var branch in invokes.Branches)
-            {
-                writer.Line($"on {branch.Selector}", branch);
-                using (writer.Indent())
-                {
-                    foreach (var produced in branch.Produces) WriteProduces(writer, produced);
-                }
-            }
+            WriteReads(writer, read);
         }
     }
 
@@ -351,41 +251,32 @@ public partial class ScreenplayPrinter
         var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
         var by = reads.By is null ? string.Empty : $" by {reads.By}";
         writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
-        if (reads.ByParts.Any())
+        if (!reads.ByParts.Any())
         {
-            using (writer.Indent())
-            {
-                writer.DirectiveLine("by", reads, "by");
-                using (writer.Indent())
-                {
-                    foreach (var part in reads.ByParts)
-                    {
-                        writer.Line($"{part.Property} = {writer.Expression(part.Source)}", part);
-                    }
-                }
-            }
+            return;
+        }
+
+        using var indent = writer.Indent();
+        writer.DirectiveLine("by", reads, "by");
+        using var partsIndent = writer.Indent();
+        foreach (var part in reads.ByParts)
+        {
+            writer.Line($"{part.Property} = {writer.Expression(part.Source)}", part);
         }
     }
 
-    void WriteProperties(ScreenplayWriter writer, IEnumerable<PropertySyntax> properties, IReadOnlySet<string> reserved)
-    {
-        foreach (var property in properties)
-        {
-            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty) + (property.IsSubject ? " subject" : string.Empty) + (property.IsKey ? " key" : string.Empty);
-            writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}", property);
-        }
-    }
-
-    void WriteAuthorize(ScreenplayWriter writer, AuthorizeSyntax authorize) =>
-        WriteAuthorizeWithMappings(writer, authorize);
-
-    void WriteAuthorizeWithMappings(ScreenplayWriter writer, AuthorizeSyntax authorize)
+    void WriteAuthorize(ScreenplayWriter writer, AuthorizeSyntax authorize)
     {
         writer.Line($"authorize {ScreenplaySyntaxText.PolicyRequirement(authorize.Requirement)}", authorize);
-        if (authorize.Mappings is null) return;
-        using (writer.Indent())
+        if (authorize.Mappings is null)
         {
-            foreach (var mapping in authorize.Mappings) writer.Line($"{mapping.Input} = {mapping.Property}", mapping);
+            return;
+        }
+
+        using var indent = writer.Indent();
+        foreach (var mapping in authorize.Mappings)
+        {
+            writer.Line($"{mapping.Input} = {mapping.Property}", mapping);
         }
     }
 
@@ -394,37 +285,45 @@ public partial class ScreenplayPrinter
         switch (validate)
         {
             case DeclarativeValidateSyntax declarative:
+                WriteDeclarativeValidation(writer, declarative, impliedSubject);
+                break;
+            case CodeValidateSyntax or FileValidateSyntax:
             {
-                using var anchor = writer.Anchor(declarative);
-                writer.Line("validate", declarative);
-                using (writer.Indent())
-                {
-                    foreach (var rule in declarative.Rules)
-                    {
-                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule), rule);
-                        if (ImplementationInvariants.NamedRuleError(rule, !impliedSubject) is { } wrapperError) throw new InvalidSyntaxJson(wrapperError);
-                        WriteRuleImplementation(writer, rule);
-                    }
-
-                    foreach (var requirement in declarative.Requirements ?? [])
-                    {
-                        WriteValidationRequirement(writer, requirement);
-                    }
-                }
-
+                writer.Line("validate", validate);
+                using var indent = writer.Indent();
+                WriteValidationImplementation(writer, validate);
                 break;
             }
-            case CodeValidateSyntax or FileValidateSyntax:
-                writer.Line("validate", validate);
-                using (writer.Indent())
-                {
-                    WriteValidationImplementation(writer, validate);
-                }
-
-                break;
             default:
                 throw new UnsupportedSyntaxForPrinting("validation", validate.GetType().Name);
         }
+    }
+
+    void WriteDeclarativeValidation(ScreenplayWriter writer, DeclarativeValidateSyntax validate, bool impliedSubject)
+    {
+        using var anchor = writer.Anchor(validate);
+        writer.Line("validate", validate);
+        using var indent = writer.Indent();
+        foreach (var rule in validate.Rules)
+        {
+            WriteValidationRule(writer, rule, impliedSubject);
+        }
+
+        foreach (var requirement in validate.Requirements ?? [])
+        {
+            WriteValidationRequirement(writer, requirement);
+        }
+    }
+
+    void WriteValidationRule(ScreenplayWriter writer, ValidationRuleSyntax rule, bool impliedSubject)
+    {
+        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule), rule);
+        if (ImplementationInvariants.NamedRuleError(rule, !impliedSubject) is { } wrapperError)
+        {
+            throw new InvalidSyntaxJson(wrapperError);
+        }
+
+        WriteRuleImplementation(writer, rule);
     }
 
     // A rule's implementation is read back only under a 'rule <Name>' predicate, and only one directive of
@@ -436,18 +335,7 @@ public partial class ScreenplayPrinter
         ImplementationInvariants.Validate(rule);
         if (rule.Implementation is { } implementation)
         {
-            using (writer.Indent())
-            {
-                using var anchor = writer.Anchor(implementation);
-                writer.Line("implementation");
-                using (writer.Indent())
-                {
-                    foreach (var hint in implementation.Hints) writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
-                    if (rule.File is not null) writer.Line($"file {rule.File.Path}", rule.File);
-                    if (rule.Code is not null) WriteCodeBlock(writer, rule.Code);
-                }
-            }
-
+            WriteRuleIntent(writer, rule, implementation);
             return;
         }
 
@@ -456,126 +344,42 @@ public partial class ScreenplayPrinter
             return;
         }
 
-        using (writer.Indent())
+        using var indent = writer.Indent();
+        if (rule.Rule != ValidationRuleKind.Rule)
         {
-            if (rule.Rule != ValidationRuleKind.Rule)
-            {
-                if (rule.File is not null)
-                {
-                    WriteOmittedFile(writer, rule.File, OnlyOnANamedPredicate);
-                }
-
-                if (rule.Code is not null)
-                {
-                    WriteOmittedCode(writer, rule.Code, OnlyOnANamedPredicate);
-                }
-
-                return;
-            }
-
-            if (rule.File is null)
-            {
-                WriteCodeBlock(writer, rule.Code!);
-                return;
-            }
-
-            writer.Line($"file {rule.File.Path}", rule.File);
-            if (rule.Code is not null)
-            {
-                WriteOmittedCode(writer, rule.Code, ReadsOneImplementation("a validation rule"));
-            }
-        }
-    }
-
-    void WriteProduces(ScreenplayWriter writer, ProducesSyntax produces)
-    {
-        using var anchor = writer.Anchor(produces);
-        OperationInvariants.Validate(produces);
-        if (produces.InlineOperation is { } operation)
-        {
-            writer.Line($"produces operation {operation.Name}");
-            using (writer.Indent()) WriteOperationBody(writer, operation, produces.Mappings);
+            WriteOmittedRuleImplementation(writer, rule);
             return;
         }
 
-        if (produces.InlineEvent is { } inline)
-        {
-            if (inline.Visibility != EventVisibility.Private || inline.Origin is not null)
-            {
-                throw new UnsupportedSyntaxForPrinting("inline event public visibility or origin", inline.Name);
-            }
-
-            writer.Line($"produces event {inline.Name}");
-            using (writer.Indent())
-            {
-                WriteEventMetadata(writer, inline);
-                WriteProducesTarget(writer, produces.For);
-                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
-                WriteTags(writer, inline.Tags);
-
-                // The parser creates each property and mapping together, including on erroneous trees.
-                foreach (var (property, mapping) in inline.Properties.Zip(produces.Mappings))
-                {
-                    using var propertyAnchor = writer.Anchor(property);
-                    writer.Assignment($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)}{(property.IsSubject ? " subject" : string.Empty)}", mapping.Source, mapping);
-                }
-            }
-
-            return;
-        }
-
-        if (produces.When is null)
-        {
-            writer.Line($"produces {produces.Event}");
-            using (writer.Indent())
-            {
-                WriteProducesTarget(writer, produces.For);
-                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
-                WriteTags(writer, produces.Tags);
-                WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
-            }
-
-            return;
-        }
-
-        writer.Line($"produces when {ScreenplaySyntaxText.Condition(produces.When)}");
-        using (writer.Indent())
-        {
-            writer.DirectiveLine(produces.Event, produces, "event");
-            using (writer.Indent())
-            {
-                WriteProducesTarget(writer, produces.For);
-                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
-                WriteTags(writer, produces.Tags);
-                WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
-            }
-        }
+        WriteSingleImplementation(writer, rule.File, rule.Code, "a validation rule");
     }
 
-    void WriteEventMetadata(ScreenplayWriter writer, EventSyntax declaration)
+    void WriteRuleIntent(ScreenplayWriter writer, ValidationRuleSyntax rule, ImplementationSyntax implementation)
     {
-        if (declaration.Id is not null)
+        using var indent = writer.Indent();
+        using var anchor = writer.Anchor(implementation);
+        writer.Line("implementation");
+        using var bodyIndent = writer.Indent();
+        foreach (var hint in implementation.Hints)
         {
-            writer.DirectiveLine($"id {StringLiteral.Quote(declaration.Id)}", declaration, "id");
+            writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
         }
 
-        WriteDescription(writer, declaration.Description, declaration);
-        WriteDocumentation(writer, declaration.Documentation, declaration);
+        WriteFile(writer, rule.File);
+        WriteOptionalCode(writer, rule.Code);
     }
 
-    // Where the event lands comes before what fills it - the same order the reader asks the questions in.
-    void WriteProducesTarget(ScreenplayWriter writer, ExpressionSyntax? target)
+    void WriteOmittedRuleImplementation(ScreenplayWriter writer, ValidationRuleSyntax rule)
     {
-        if (target is not null)
+        if (rule.File is not null)
         {
-            writer.Line($"for {writer.Expression(target)}", target);
+            WriteOmittedFile(writer, rule.File, OnlyOnANamedPredicate);
         }
-    }
 
-    void WriteHandlerPayload(ScreenplayWriter writer, HandlerSyntax handler)
-    {
-        if (handler.File is not null) writer.Line($"file {handler.File.Path}", handler.File);
-        if (handler.Code is not null) WriteCodeBlock(writer, handler.Code);
+        if (rule.Code is not null)
+        {
+            WriteOmittedCode(writer, rule.Code, OnlyOnANamedPredicate);
+        }
     }
 
     void WriteHandler(ScreenplayWriter writer, HandlerSyntax handler)
@@ -583,52 +387,48 @@ public partial class ScreenplayPrinter
         ImplementationInvariants.Validate(handler);
         using var anchor = writer.Anchor(handler);
         writer.Line("handler");
-        using (writer.Indent())
+        using var indent = writer.Indent();
+        WritePossibleEvents(writer, handler.PossibleEvents);
+        if (handler.Implementation is { } implementation)
         {
-            WritePossibleEvents(writer, handler.PossibleEvents);
+            WriteHandlerIntent(writer, handler, implementation);
+            return;
+        }
 
-            if (handler.Implementation is { } implementation)
-            {
-                ImplementationInvariants.Validate(implementation);
-                using var implementationAnchor = writer.Anchor(implementation);
-                writer.Line("implementation");
-                using (writer.Indent())
-                {
-                    foreach (var hint in implementation.Hints)
-                    {
-                        if (hint is null) throw new InvalidSyntaxJson("Implementation hints cannot contain null.");
-                        ImplementationInvariants.Validate(hint);
-                        writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
-                    }
+        WriteSingleImplementation(writer, handler.File, handler.Code, "a handler");
+    }
 
-                    WriteHandlerPayload(writer, handler);
-                }
-            }
-            else if (handler.File is null)
-            {
-                if (handler.Code is not null) WriteCodeBlock(writer, handler.Code);
-            }
-            else
-            {
-                writer.Line($"file {handler.File.Path}", handler.File);
-                if (handler.Code is not null) WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));
-            }
+    void WriteHandlerIntent(ScreenplayWriter writer, HandlerSyntax handler, ImplementationSyntax implementation)
+    {
+        ImplementationInvariants.Validate(implementation);
+        using var anchor = writer.Anchor(implementation);
+        writer.Line("implementation");
+        using var indent = writer.Indent();
+        WriteHandlerHints(writer, implementation);
+        WriteFile(writer, handler.File);
+        WriteOptionalCode(writer, handler.Code);
+    }
+
+    void WriteSingleImplementation(ScreenplayWriter writer, FileReferenceSyntax? file, CodeBlockSyntax? code, string declaration)
+    {
+        if (file is null)
+        {
+            WriteOptionalCode(writer, code);
+            return;
+        }
+
+        WriteFile(writer, file);
+        if (code is not null)
+        {
+            WriteOmittedCode(writer, code, ReadsOneImplementation(declaration));
         }
     }
 
-    void WriteMappings(ScreenplayWriter writer, IEnumerable<PropertyMappingSyntax> mappings, IReadOnlySet<string> reserved)
+    void WriteOptionalCode(ScreenplayWriter writer, CodeBlockSyntax? code)
     {
-        foreach (var mapping in mappings)
+        if (code is not null)
         {
-            writer.Assignment(ReservedWords.Escape(mapping.Property, reserved), mapping.Source, mapping);
-        }
-    }
-
-    void WriteTags(ScreenplayWriter writer, IEnumerable<TagSyntax>? tags)
-    {
-        foreach (var tag in tags ?? [])
-        {
-            writer.Line($"tag {ScreenplaySyntaxText.Tag(tag)}", tag);
+            WriteCodeBlock(writer, code);
         }
     }
 }

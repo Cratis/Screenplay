@@ -1436,14 +1436,14 @@ static class VersionParser
         }
 
         var separator = value.IndexOf('.');
-        if (separator <= 0 || separator != value.LastIndexOf('.') || separator == value.Length - 1)
+        if (!HasSingleInteriorSeparator(value, separator))
         {
             return false;
         }
 
         var majorText = value.AsSpan(0, separator);
         var minorText = value.AsSpan(separator + 1);
-        if ((majorText.Length > 1 && majorText[0] == '0') || (minorText.Length > 1 && minorText[0] == '0'))
+        if (IsZeroPadded(majorText) || IsZeroPadded(minorText))
         {
             return false;
         }
@@ -1452,4 +1452,9 @@ static class VersionParser
                uint.TryParse(minorText, NumberStyles.None, CultureInfo.InvariantCulture, out minor) &&
                major > 0;
     }
+
+    static bool HasSingleInteriorSeparator(string value, int separator) =>
+        separator > 0 && separator == value.LastIndexOf('.') && separator != value.Length - 1;
+
+    static bool IsZeroPadded(ReadOnlySpan<char> part) => part.Length > 1 && part[0] == '0';
 }
