@@ -10,6 +10,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
 # One source of truth for both the coverage guard and the spec matrix. Most projects
 # carry inline specs in Debug; discovering only *.Specs.csproj would miss them.
 # Split patterns select ordered, disjoint groups of classes plus a final remainder. Each group
