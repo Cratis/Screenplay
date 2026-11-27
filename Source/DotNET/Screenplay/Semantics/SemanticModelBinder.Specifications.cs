@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Globalization;
-using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -36,19 +34,40 @@ public sealed partial class SemanticModelBinder
             };
         }
 
-        [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.NonBacktracking)]
-        private static partial Regex IsoInstant();
-
         static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
         static bool CommandBelongsToSlice(string reference, SemanticAddress slice)
         {
             var qualifiers = reference.Split('.')[..^1];
-            var scope = slice.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key).ToArray();
+            var scope = SpecificationSlicePath(slice).ToArray();
 
             return qualifiers.Length <= scope.Length && qualifiers.SequenceEqual(scope.TakeLast(qualifiers.Length));
         }
+
+        static IEnumerable<string> SpecificationSlicePath(SemanticAddress slice) =>
+            slice.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key);
+
+        static bool IsDeniedSpecificationQuery(SpecificationSyntax specification, bool acted) =>
+            specification.ThenDenied is not null && !acted &&
+            specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
+
+        static bool HasConflictingDenialOutcome(SpecificationSyntax specification, bool deniedQuery) =>
+            specification.ThenErrors.Any() || specification.ThenEvents.Any() ||
+            (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() ||
+            (specification.ThenQueries.Any() && !deniedQuery);
+
+        static SemanticCaller? BindSpecificationCaller(SpecificationCallerSyntax? caller) => caller is null ? null : new(
+            caller.Authenticated,
+            [.. caller.Roles],
+            [.. caller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))])
+        {
+            Id = caller.Id
+        };
+
+        static SemanticTypeReference? UniqueSpecificationSourceType(SemanticTypeReference[] types) => types.Length == 1 ? types[0] : null;
+
+        static bool HasUnroutedEventConflict(SpecificationEventSyntax value, bool expectedFact) => !expectedFact || value.Stream is not null;
 
         SemanticSpecification? BindSpecification(
             SemanticAddress slice,
@@ -79,6 +98,40 @@ public sealed partial class SemanticModelBinder
             Dictionary<string, SemanticCommand> commands,
             EffectiveSpecification? origin)
         {
+            ReportSpecificationMetadata(specification);
+            if (!ValidateClockSpecificationAdmission(specification))
+            {
+                return null;
+            }
+
+            if (NormalisePerformedQuery(specification) is not { } normalised)
+            {
+                return null;
+            }
+
+            if (ReadsOpaqueSpecificationQuery(slice, normalised))
+            {
+                return null;
+            }
+
+            if (!TryResolveSpecificationCommand(slice, normalised, commands, out var command))
+            {
+                return null;
+            }
+
+            ValidateSpecificationCompleteness(slice, normalised, command, origin!);
+            ValidateSpecificationAction(normalised);
+            var queries = normalised.ThenQueries.Select(value => (Syntax: value, Query: ResolveQuery(slice, value)))
+                .Where(value => value.Query is not null).ToArray();
+            ValidateSpecificationCaller(normalised, command, queries);
+
+            var id = Resolve(SemanticAddress.ForSpecification(slice, normalised.Name), normalised.Location);
+            RecordSpecificationOrigin(id, origin);
+            return BindSpecificationSteps((slice, id), normalised, commands, command, queries);
+        }
+
+        void ReportSpecificationMetadata(SpecificationSyntax specification)
+        {
             if (specification.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' description is authoring metadata.", specification.Location);
@@ -88,105 +141,101 @@ public sealed partial class SemanticModelBinder
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
             }
+        }
 
-            if (!ValidateClockSpecificationAdmission(specification)) return null;
-
-            if (NormalisePerformedQuery(specification) is not { } normalised) return null;
-            specification = normalised;
-
+        bool ReadsOpaqueSpecificationQuery(SemanticAddress slice, SpecificationSyntax specification)
+        {
             var opaque = specification.ThenQueries.FirstOrDefault(value => ReachesOpaqueQuery(slice, value));
-            if (opaque is not null)
+            if (opaque is null)
             {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' reads query '{opaque.Query}', which code performs, so it is not an executable specification.", opaque.Location);
-                return null;
+                return false;
             }
 
-            SemanticCommand? command = null;
-            if (specification.When is not null &&
-                (!commands.TryGetValue(ShortName(specification.When.CommandType), out command) ||
-                !CommandBelongsToSlice(specification.When.CommandType, slice)))
+            Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' reads query '{opaque.Query}', which code performs, so it is not an executable specification.", opaque.Location);
+            return true;
+        }
+
+        bool TryResolveSpecificationCommand(
+            SemanticAddress slice,
+            SpecificationSyntax specification,
+            Dictionary<string, SemanticCommand> commands,
+            out SemanticCommand? command)
+        {
+            command = null;
+            if (specification.When is not { } when)
             {
-                var message = specification.When.CommandType.Contains('.', StringComparison.Ordinal)
-                    ? $"Specification '{specification.Name}' command '{specification.When.CommandType}' is unresolved in its slice."
-                    : $"Specification '{specification.Name}' command is unresolved in its slice.";
-                Error(DiagnosticCodes.InvalidSemanticBinding, message, specification.When.Location);
-                return null;
+                return true;
             }
 
-            ValidateSpecificationCompleteness(slice, specification, command, origin!);
+            if (commands.TryGetValue(ShortName(when.CommandType), out command) && CommandBelongsToSlice(when.CommandType, slice))
+            {
+                return true;
+            }
 
+            var message = when.CommandType.Contains('.', StringComparison.Ordinal)
+                ? $"Specification '{specification.Name}' command '{when.CommandType}' is unresolved in its slice."
+                : $"Specification '{specification.Name}' command is unresolved in its slice.";
+            Error(DiagnosticCodes.InvalidSemanticBinding, message, when.Location);
+            return false;
+        }
+
+        void ValidateSpecificationAction(SpecificationSyntax specification)
+        {
             var acted = HasSpecificationAction(specification);
-            var deniedQuery = specification.ThenDenied is not null && !acted &&
-                specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
+            var deniedQuery = IsDeniedSpecificationQuery(specification, acted);
             if (!acted && RequiresSpecificationAction(specification, deniedQuery))
             {
                 Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires 'then readmodel', 'then no readmodel', or 'then query'; denial requires one query with arguments and no results.", specification.Location);
             }
 
-            if (specification.ThenDenied is not null && (specification.ThenErrors.Any() || specification.ThenEvents.Any() ||
-                (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || (specification.ThenQueries.Any() && !deniedQuery)))
+            if (specification.ThenDenied is { } denial && HasConflictingDenialOutcome(specification, deniedQuery))
             {
-                Error(DiagnosticCodes.InvalidSpecificationDenied, "'then denied' cannot be combined with success or error outcomes.", specification.ThenDenied.Location);
+                Error(DiagnosticCodes.InvalidSpecificationDenied, "'then denied' cannot be combined with success or error outcomes.", denial.Location);
             }
+        }
 
-            var queries = specification.ThenQueries.Select(value => (Syntax: value, Query: ResolveQuery(slice, value)))
-                .Where(value => value.Query is not null).ToArray();
-            if ((RequiresCaller(command?.Authorization) || queries.Any(value => RequiresCaller(value.Query!.Authorization))) && specification.GivenCaller is null)
+        void ValidateSpecificationCaller(
+            SpecificationSyntax specification,
+            SemanticCommand? command,
+            (SpecificationQuerySyntax Syntax, SemanticKeyedQuery? Query)[] queries)
+        {
+            var needsCaller = RequiresCaller(command?.Authorization) || queries.Any(value => RequiresCaller(value.Query!.Authorization));
+            if (needsCaller && specification.GivenCaller is null)
             {
                 Error(DiagnosticCodes.MissingSpecificationCaller, "An authorized specification requires an explicit 'given caller' fixture; missing identity context is never assumed.", specification.Location);
             }
+        }
 
-            var address = SemanticAddress.ForSpecification(slice, specification.Name);
-            var id = Resolve(address, specification.Location);
-            if (origin is not null && (origin.Case is not null || origin.Steps.Any(step => step.Example is not null))) _specificationOrigins.TryAdd(id, origin);
-            var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
-            var givenReadModels = (specification.GivenReadModels ?? [])
-                .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
-                .Where(_ => _ is not null)
-                .Select(_ => _!)
-                .ToImmutableArray();
-            var when = specification.When is null ? null : BindRoutedSpecificationCommand(specification.When, command!);
-            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands, expectedFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
-            var thenReadModels = (specification.ThenReadModels ?? [])
-                .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
-                .Where(_ => _ is not null)
-                .Select(_ => _!)
-                .ToImmutableArray();
-            var thenQueries = queries.Select(value => BindSpecificationQuery(value.Syntax, value.Query!)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
-            var thenAbsentReadModels = specification.ThenAbsentReadModels.Select(BindAbsentReadModel).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
-            if (specification.ThenAbsentReadModels.Any()) UsesV5 = true;
-            if (specification.ThenErrors.Count() > 1)
+        void RecordSpecificationOrigin(SemanticId id, EffectiveSpecification? origin)
+        {
+            if (origin is not null && (origin.Case is not null || origin.Steps.Any(step => step.Example is not null)))
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, "A rejection specification must contain exactly one 'then error' and no success outcomes.", specification.Location);
+                _specificationOrigins.TryAdd(id, origin);
             }
+        }
 
-            var thenErrors = specification.ThenErrors.Select(value =>
+        SemanticSpecification BindSpecificationSteps(
+            (SemanticAddress Slice, SemanticId Id) address,
+            SpecificationSyntax specification,
+            Dictionary<string, SemanticCommand> commands,
+            SemanticCommand? command,
+            (SpecificationQuerySyntax Syntax, SemanticKeyedQuery? Query)[] queries)
+        {
+            var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).OfType<SemanticSpecificationEvent>().ToImmutableArray();
+            var givenReadModels = BindSpecificationReadModels(specification.GivenReadModels);
+            var when = specification.When is null ? null : BindRoutedSpecificationCommand(specification.When, command!);
+            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands, expectedFact: true)).OfType<SemanticSpecificationEvent>().ToImmutableArray();
+            var thenReadModels = BindSpecificationReadModels(specification.ThenReadModels);
+            var thenQueries = queries.Select(value => BindSpecificationQuery(value.Syntax, value.Query!)).OfType<SemanticSpecificationQueryResult>().ToImmutableArray();
+            var thenAbsentReadModels = BindAbsentReadModels(specification);
+            var thenErrors = BindSpecificationErrors(specification);
+            return new(address.Id, specification.Name, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors)
             {
-                ValidateStringKey(value.Name, value.Location);
-                return new SemanticSpecificationError(null, value.Name);
-            }).ToImmutableArray();
-            return new(
-                id,
-                specification.Name,
-                givenEvents,
-                givenReadModels,
-                when,
-                thenEvents,
-                thenReadModels,
-                thenQueries,
-                thenErrors)
-            {
-                GivenCaller = specification.GivenCaller is null ? null : new(
-                    specification.GivenCaller.Authenticated,
-                    [.. specification.GivenCaller.Roles],
-                    [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))])
-                {
-                    Id = specification.GivenCaller.Id
-                },
+                GivenCaller = BindSpecificationCaller(specification.GivenCaller),
                 ThenDenied = specification.ThenDenied is not null,
                 ThenReturns = BindThenReturns(specification.ThenReturns, command),
                 WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),
-                WhenRedelivered = BindRedelivery(slice, specification),
+                WhenRedelivered = BindRedelivery(address.Slice, specification),
                 ThenNoEvents = specification.ThenNoEvents,
                 ThenEventsInAnyOrder = specification.ThenEventsInAnyOrder,
                 ThenAbsentReadModels = thenAbsentReadModels,
@@ -202,11 +251,42 @@ public sealed partial class SemanticModelBinder
             };
         }
 
+        ImmutableArray<SemanticSpecificationReadModel> BindSpecificationReadModels(IEnumerable<SpecificationReadModelSyntax>? states) =>
+            (states ?? []).Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly)).OfType<SemanticSpecificationReadModel>().ToImmutableArray();
+
+        ImmutableArray<SemanticSpecificationAbsentReadModel> BindAbsentReadModels(SpecificationSyntax specification)
+        {
+            var absent = specification.ThenAbsentReadModels.Select(BindAbsentReadModel).OfType<SemanticSpecificationAbsentReadModel>().ToImmutableArray();
+            if (specification.ThenAbsentReadModels.Any())
+            {
+                UsesV5 = true;
+            }
+
+            return absent;
+        }
+
+        ImmutableArray<SemanticSpecificationError> BindSpecificationErrors(SpecificationSyntax specification)
+        {
+            if (specification.ThenErrors.Count() > 1)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "A rejection specification must contain exactly one 'then error' and no success outcomes.", specification.Location);
+            }
+
+            return specification.ThenErrors.Select(value =>
+            {
+                ValidateStringKey(value.Name, value.Location);
+                return new SemanticSpecificationError(null, value.Name);
+            }).ToImmutableArray();
+        }
+
         // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
         // same model - its bytes are those of the 'then query' spelling. Returns null once the refusal is reported.
         SpecificationSyntax? NormalisePerformedQuery(SpecificationSyntax specification)
         {
-            if (specification.WhenQuery is not { } performed) return specification;
+            if (specification.WhenQuery is not { } performed)
+            {
+                return specification;
+            }
 
             var results = specification.ThenResults.ToList();
             if (results.Select(result => result.Exactly).Distinct().Count() > 1)
@@ -223,48 +303,81 @@ public sealed partial class SemanticModelBinder
 
         void ValidateSpecificationCompleteness(SemanticAddress slice, SpecificationSyntax specification, SemanticCommand? command, EffectiveSpecification expanded)
         {
-            foreach (var step in specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []))
+            var eventSteps = specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []);
+            foreach (var step in eventSteps)
             {
-                if (_events.TryGetValue(ShortName(step.EventType), out var declaration))
-                {
-                    ValidateCompleteStep(slice, expanded, step, step.EventType, step.Values, declaration.Properties.Values);
-                }
+                ValidateCompleteEvent(slice, expanded, step);
             }
 
             foreach (var step in specification.GivenReadModels ?? [])
             {
-                if (_readModels.TryGetValue(ShortName(step.Name), out var declaration))
-                {
-                    ValidateCompleteStep(slice, expanded, step, step.Name, step.Properties, declaration.Properties.Values);
-                }
+                ValidateCompleteReadModel(slice, expanded, step);
             }
 
             if (specification.When is { } when && command is not null)
             {
-                ValidateCompleteStep(slice, expanded, when, when.CommandType, when.Values, command.Properties.Where(property => !property.IsGenerated));
+                ValidateCompleteStep(slice, expanded, (when, when.CommandType, when.Values), command.Properties.Where(property => !property.IsGenerated));
             }
         }
 
-        void ValidateCompleteStep(SemanticAddress slice, EffectiveSpecification expanded, SyntaxNode step, string type, IEnumerable<PropertyMappingSyntax> values, IEnumerable<SemanticProperty> properties)
+        void ValidateCompleteEvent(SemanticAddress slice, EffectiveSpecification expanded, SpecificationEventSyntax step)
         {
-            var supplied = values.Select(value => value.Property).ToHashSet(StringComparer.Ordinal);
+            if (_events.TryGetValue(ShortName(step.EventType), out var declaration))
+            {
+                ValidateCompleteStep(slice, expanded, (step, step.EventType, step.Values), declaration.Properties.Values);
+            }
+        }
+
+        void ValidateCompleteReadModel(SemanticAddress slice, EffectiveSpecification expanded, SpecificationReadModelSyntax step)
+        {
+            if (_readModels.TryGetValue(ShortName(step.Name), out var declaration))
+            {
+                ValidateCompleteStep(slice, expanded, (step, step.Name, step.Properties), declaration.Properties.Values);
+            }
+        }
+
+        void ValidateCompleteStep(
+            SemanticAddress slice,
+            EffectiveSpecification expanded,
+            (SyntaxNode Node, string Type, IEnumerable<PropertyMappingSyntax> Values) step,
+            IEnumerable<SemanticProperty> properties)
+        {
+            var supplied = step.Values.Select(value => value.Property).ToHashSet(StringComparer.Ordinal);
             var missing = properties.Where(property => !supplied.Contains(property.Name)).ToArray();
-            var origin = steps.GetValueOrDefault(step);
+            var origin = steps.GetValueOrDefault(step.Node);
             var example = origin?.Example is { } declaration ? $" using example '{declaration.Name}'" : string.Empty;
-            if (missing.Length == 0) return;
-            var authored = expanded.Authored;
-            var path = slice.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key).Append(authored.Name);
-            var arguments = new DiagnosticArguments.Builder()
-                .Add("specification", DiagnosticArgument.Declaration("specification", path))
-                .Add("step", DiagnosticArgument.Keyword(origin!.Role))
-                .Add("stepIndex", DiagnosticArgument.Index(SpecificationStepPositions.IndexOf(authored, origin.Authored.Location)))
-                .Add("type", DiagnosticArgument.Text(type)).Build();
-            if (origin.Example is { } used) arguments = arguments.With("example", DiagnosticArgument.Text(used.Name));
-            if (expanded.Case is { } row) arguments = arguments.With("case", DiagnosticArgument.Text(row.Name));
+            if (missing.Length == 0)
+            {
+                return;
+            }
+
+            var arguments = MissingSpecificationPropertyArguments(slice, expanded, origin!, step.Type);
             foreach (var property in missing)
             {
-                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{authored.Name}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location, arguments.With("property", DiagnosticArgument.Text(property.Name)));
+                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{expanded.Authored.Name}'{example} for '{step.Type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Node.Location, arguments.With("property", DiagnosticArgument.Text(property.Name)));
             }
+        }
+
+        DiagnosticArguments MissingSpecificationPropertyArguments(SemanticAddress slice, EffectiveSpecification expanded, EffectiveSpecificationStep origin, string type)
+        {
+            var authored = expanded.Authored;
+            var path = SpecificationSlicePath(slice).Append(authored.Name);
+            var arguments = new DiagnosticArguments.Builder()
+                .Add("specification", DiagnosticArgument.Declaration("specification", path))
+                .Add("step", DiagnosticArgument.Keyword(origin.Role))
+                .Add("stepIndex", DiagnosticArgument.Index(SpecificationStepPositions.IndexOf(authored, origin.Authored.Location)))
+                .Add("type", DiagnosticArgument.Text(type)).Build();
+            if (origin.Example is { } used)
+            {
+                arguments = arguments.With("example", DiagnosticArgument.Text(used.Name));
+            }
+
+            if (expanded.Case is { } row)
+            {
+                arguments = arguments.With("case", DiagnosticArgument.Text(row.Name));
+            }
+
+            return arguments;
         }
 
         SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
@@ -275,70 +388,22 @@ public sealed partial class SemanticModelBinder
 
         SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false, bool expectedFact = false, SemanticTypeReference? subjectKey = null)
         {
-            if (value.NoStream is not null && (!expectedFact || value.Stream is not null))
-            {
-                Error(DiagnosticCodes.InvalidSemanticBinding, "'no stream' is only valid on a then event and cannot accompany a route.", value.NoStream.Location);
-            }
-            if (!expectedFact && value.Stream is not null && value.For is null)
-            {
-                Error(DiagnosticCodes.InvalidSemanticBinding, "A routed given or when append event requires 'for <literal>'.", value.Stream.Location);
-            }
+            ValidateSpecificationEventRoute(value, expectedFact);
             if (!_events.TryGetValue(ShortName(value.EventType), out var @event))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification event '{value.EventType}' is unresolved.", value.Location);
                 return null;
             }
 
-            foreach (var entry in value.Values)
+            if (!ValidateSpecificationEventRevision(value, @event, historicalFact))
             {
-                if (@event.Properties.ContainsKey(entry.Property)) continue;
-                var prior = @event.Contract.PriorRevisions.LastOrDefault(revision => revision.Properties.Any(property => property.Name == entry.Property));
-                if (prior is null) continue;
-                Error(
-                    historicalFact ? DiagnosticCodes.UnsupportedEventGenerationSemantics : DiagnosticCodes.InvalidSemanticBinding,
-                    historicalFact
-                        ? $"Event '{@event.Syntax.Name}' revision {prior.Revision.Value} has property '{entry.Property}', but historical-shape references are unsupported; current revision {@event.Contract.Revision.Value} does not declare it."
-                        : $"Specification event property '{entry.Property}' is unresolved on current revision {@event.Contract.Revision.Value} of '{@event.Syntax.Name}' (last declared in revision {prior.Revision.Value}).",
-                    entry.Location);
                 return null;
             }
 
-            var types = commands.Values.SelectMany(command => command.Produces
-                .Where(produced => produced.EventContract == @event.Contract.Id)
-                .Select(produced => SemanticModelValidator.ProducedEventSourceType(command, produced)))
-                .OfType<SemanticTypeReference>().Distinct().ToArray();
-
-            // A StateView slice may specify an append for an event produced by a command in another slice.
-            // The event-source type is the producer's command identifier, regardless of the specification's slice.
-            var type = types.Length == 1 ? types[0] : null;
-            if (type is null && value.For is not null)
+            if (!TryBindSpecificationSourceType(value, @event, commands, subjectKey, out var type))
             {
-                var producerTypes = CommandEventSourceTypes(ShortName(value.EventType));
-                type = producerTypes.Length == 1 ? producerTypes[0] : null;
+                return null;
             }
-
-            // Since ESM v6 reactions and captures append events too; their event source types count as well.
-            if (type is null && value.For is not null)
-            {
-                var producerTypes = ProducerEventSourceTypes(ShortName(value.EventType), []);
-                type = producerTypes.Length == 1 ? producerTypes[0] : null;
-            }
-
-            // A fact about the subject of a state machine or a workflow is keyed by the subject's key, whoever produces it.
-            if (type is null && subjectKey is not null && value.For is not null) type = subjectKey;
-
-            if (type is null && @event.Contract.Origin is not null && value.For is not null)
-            {
-                type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text);
-                if (BindConcreteValue(value.For, type, "foreign event source", false) is not SemanticTextValue source || string.IsNullOrWhiteSpace(source.Value))
-                {
-                    Error(DiagnosticCodes.InvalidSemanticBinding, "A foreign event source fixture requires non-empty text.", value.For.Location);
-                    return null;
-                }
-            }
-
-            // Producerless history can be typed by the read model keyed on the event's own source identity.
-            type = FixtureEventSourceType(type, value.For, ShortName(value.EventType));
 
             return new(
                 @event.Contract.Id,
@@ -351,9 +416,101 @@ public sealed partial class SemanticModelBinder
             };
         }
 
+        void ValidateSpecificationEventRoute(SpecificationEventSyntax value, bool expectedFact)
+        {
+            if (value.NoStream is { } noStream && HasUnroutedEventConflict(value, expectedFact))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "'no stream' is only valid on a then event and cannot accompany a route.", noStream.Location);
+            }
+
+            if (!expectedFact && value.Stream is { } stream && value.For is null)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "A routed given or when append event requires 'for <literal>'.", stream.Location);
+            }
+        }
+
+        bool ValidateSpecificationEventRevision(SpecificationEventSyntax value, BoundEvent @event, bool historicalFact)
+        {
+            foreach (var entry in value.Values)
+            {
+                if (@event.Properties.ContainsKey(entry.Property))
+                {
+                    continue;
+                }
+
+                var prior = @event.Contract.PriorRevisions.LastOrDefault(revision => revision.Properties.Any(property => property.Name == entry.Property));
+                if (prior is null)
+                {
+                    continue;
+                }
+
+                Error(
+                    historicalFact ? DiagnosticCodes.UnsupportedEventGenerationSemantics : DiagnosticCodes.InvalidSemanticBinding,
+                    historicalFact
+                        ? $"Event '{@event.Syntax.Name}' revision {prior.Revision.Value} has property '{entry.Property}', but historical-shape references are unsupported; current revision {@event.Contract.Revision.Value} does not declare it."
+                        : $"Specification event property '{entry.Property}' is unresolved on current revision {@event.Contract.Revision.Value} of '{@event.Syntax.Name}' (last declared in revision {prior.Revision.Value}).",
+                    entry.Location);
+                return false;
+            }
+
+            return true;
+        }
+
+        bool TryBindSpecificationSourceType(
+            SpecificationEventSyntax value,
+            BoundEvent @event,
+            Dictionary<string, SemanticCommand> commands,
+            SemanticTypeReference? subjectKey,
+            out SemanticTypeReference? type)
+        {
+            var types = commands.Values.SelectMany(command => command.Produces
+                .Where(produced => produced.EventContract == @event.Contract.Id)
+                .Select(produced => SemanticModelValidator.ProducedEventSourceType(command, produced)))
+                .OfType<SemanticTypeReference>().Distinct().ToArray();
+            type = UniqueSpecificationSourceType(types);
+            if (type is null && value.For is not null)
+            {
+                // Lifecycle fixtures can fall back to their subject's key if no producer defines one.
+                type = FindSpecificationProducerType(ShortName(value.EventType)) ?? subjectKey;
+            }
+
+            if (type is null && @event.Contract.Origin is not null && value.For is { } source)
+            {
+                type = BindForeignSpecificationSourceType(source);
+                if (type is null)
+                {
+                    return false;
+                }
+            }
+
+            // Producerless history can be typed by the read model keyed on the event's own source identity.
+            type = FixtureEventSourceType(type, value.For, ShortName(value.EventType));
+            return true;
+        }
+
+        // A producer can live in another slice, and reactions and captures can append events too.
+        SemanticTypeReference? FindSpecificationProducerType(string eventName) =>
+            UniqueSpecificationSourceType(CommandEventSourceTypes(eventName)) ?? UniqueSpecificationSourceType(ProducerEventSourceTypes(eventName, []));
+
+        SemanticTypeReference? BindForeignSpecificationSourceType(ExpressionSyntax expression)
+        {
+            var type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text);
+            if (BindConcreteValue(expression, type, "foreign event source", false) is not SemanticTextValue source || string.IsNullOrWhiteSpace(source.Value))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "A foreign event source fixture requires non-empty text.", expression.Location);
+                return null;
+            }
+
+            return type;
+        }
+
         ImmutableArray<string>? BindExpectedTags(SpecificationEventSyntax value)
         {
-            if (value.NoTags is not null) return [];
+            if (value.NoTags is not null)
+            {
+                return [];
+            }
+
             return value.Tags.Any() ? BindTags(value.Tags) : null;
         }
 
@@ -401,6 +558,7 @@ public sealed partial class SemanticModelBinder
                 var parts = BindReadModelStateKey(readModel, bound, location, inferredKey);
                 return parts is null ? null : new(readModel.Model.Id, parts, bound);
             }
+
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
 
             // A read model without an identifier has already been reported where it, or its keyed query, is declared.
@@ -433,13 +591,37 @@ public sealed partial class SemanticModelBinder
                 var parts = BindAbsentReadModelKey(readModel, value.Key, value.Location);
                 return parts is null ? null : new(readModel.Model.Id, parts);
             }
+
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
-            if (identifier is null) return null; // The declaration has already reported an ambiguous or missing identifier.
+            if (identifier is null)
+            {
+                return null; // The declaration has already reported an ambiguous or missing identifier.
+            }
+
             var key = BindConcreteValue(value.Key, identifier.Type, "specification read model key", false);
             return key is null ? null : new(readModel.Model.Id, key);
         }
 
         SemanticSpecificationQueryResult? BindSpecificationQuery(SpecificationQuerySyntax value, SemanticKeyedQuery query)
+        {
+            if (BindSpecificationQueryArguments(value, query) is not { } arguments)
+            {
+                return null;
+            }
+
+            var key = query.Argument is null ? SemanticValue.Null : arguments[query.Argument.Name];
+            if (!query.KeyParts.IsEmpty)
+            {
+                key = SemanticValue.Composite([.. query.KeyParts.Select(part => new SemanticPropertyValue(part.KeyProperty, arguments[part.Name]))]);
+            }
+
+            var filters = query.Filters.Where(filter => arguments.ContainsKey(filter.Name))
+                .Select(filter => new SemanticQueryFilterValue(filter.Id, arguments[filter.Name])).ToImmutableArray();
+            var results = BindSpecificationQueryResults(value, query, key);
+            return new(query.Id, key, results) { Exactly = value.Exactly, Filters = filters };
+        }
+
+        Dictionary<string, SemanticValue>? BindSpecificationQueryArguments(SpecificationQuerySyntax value, SemanticKeyedQuery query)
         {
             var parameters = query.Filters.Select(filter => new SemanticReadModelQueryArgument(filter.Id, filter.Name, filter.Type))
                 .Concat(query.Argument is null ? [] : new[] { query.Argument })
@@ -453,239 +635,45 @@ public sealed partial class SemanticModelBinder
                     Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' argument '{argument.Property}' is unknown or repeated.", argument.Location, DiagnosticArguments.Empty.With("query", DiagnosticArgument.Text(value.Query)).With("argument", DiagnosticArgument.Text(argument.Property)));
                     return null;
                 }
-                if (BindConcreteValue(argument.Source, parameter.Type, "specification query argument", false) is not { } concrete) return null;
+
+                if (BindConcreteValue(argument.Source, parameter.Type, "specification query argument", false) is not { } concrete)
+                {
+                    return null;
+                }
+
                 arguments.Add(argument.Property, concrete);
             }
 
+            return ValidateRequiredSpecificationArguments(value, query, parameters, arguments) ? arguments : null;
+        }
+
+        bool ValidateRequiredSpecificationArguments(
+            SpecificationQuerySyntax value,
+            SemanticKeyedQuery query,
+            Dictionary<string, SemanticReadModelQueryArgument> parameters,
+            Dictionary<string, SemanticValue> arguments)
+        {
             foreach (var parameter in parameters.Values.Where(parameter => parameter == query.Argument || !parameter.Type.IsOptional))
             {
-                if (!arguments.ContainsKey(parameter.Name))
+                if (arguments.ContainsKey(parameter.Name))
                 {
-                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' required argument '{parameter.Name}' is missing.", value.Location, DiagnosticArguments.Empty.With("query", DiagnosticArgument.Text(value.Query)).With("argument", DiagnosticArgument.Text(parameter.Name)));
-                    return null;
+                    continue;
                 }
+
+                Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' required argument '{parameter.Name}' is missing.", value.Location, DiagnosticArguments.Empty.With("query", DiagnosticArgument.Text(value.Query)).With("argument", DiagnosticArgument.Text(parameter.Name)));
+                return false;
             }
 
-            var key = query.Argument is null ? SemanticValue.Null : arguments[query.Argument.Name];
-            if (!query.KeyParts.IsEmpty)
-            {
-                key = SemanticValue.Composite([.. query.KeyParts.Select(part => new SemanticPropertyValue(part.KeyProperty, arguments[part.Name]))]);
-            }
-            var filters = query.Filters.Where(filter => arguments.ContainsKey(filter.Name))
-                .Select(filter => new SemanticQueryFilterValue(filter.Id, arguments[filter.Name])).ToImmutableArray();
+            return true;
+        }
 
+        ImmutableArray<SemanticSpecificationReadModel> BindSpecificationQueryResults(SpecificationQuerySyntax value, SemanticKeyedQuery query, SemanticValue key)
+        {
             var readModel = _readModels.Values.Single(_ => _.Model.Id == query.ReadModel);
             var identifiers = readModel.Model.Properties.Where(property => property.IsIdentifier).ToArray();
             var inferredResultKey = !query.KeyParts.IsEmpty || (identifiers.Length == 1 && query.KeyProperty == identifiers[0].Id) ? key : null;
-            var results = value.Results
-                .Select(result => BindReadModelState(readModel, result.Properties, result.Location, inferredResultKey))
-                .Where(_ => _ is not null)
-                .Select(_ => _!)
-                .ToImmutableArray();
-            return new(query.Id, key, results) { Exactly = value.Exactly, Filters = filters };
-        }
-
-        ImmutableArray<SemanticPropertyValue> BindPropertyValues(
-            IEnumerable<PropertyMappingSyntax> values,
-            Dictionary<string, SemanticProperty> properties,
-            string description,
-            IReadOnlySet<SemanticId>? routedInputs = null)
-        {
-            var bound = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
-            foreach (var value in values)
-            {
-                if (!properties.TryGetValue(value.Property, out var property))
-                {
-                    Error(DiagnosticCodes.InvalidSemanticBinding, $"The {description} property '{value.Property}' is unresolved.", value.Location);
-                    continue;
-                }
-
-                if (BindConcreteValue(value.Source, property.Type, description, description == "specification read model", routedInputs?.Contains(property.Id) == true) is { } concrete)
-                {
-                    bound.Add(new(property.Id, concrete));
-                }
-            }
-
-            return bound.ToImmutable();
-        }
-
-        SemanticValue? BindConcreteValue(ExpressionSyntax expression, SemanticTypeReference target, string description, bool allowNull, bool routeInput = false)
-        {
-            if (expression is LiteralExpressionSyntax { Value: null })
-            {
-                if (!allowNull && (description == "specification command" || description == "specification event"))
-                {
-                    Error(DiagnosticCodes.NullSpecificationFact, $"A {description} cannot contain null: in Chronicle, an optional fact is a separate event.", expression.Location);
-                    return null;
-                }
-
-                if (!allowNull || !target.IsOptional)
-                {
-                    Error(DiagnosticCodes.InvalidSpecificationNull, $"A null {description} requires an optional read-model property.", expression.Location);
-                    return null;
-                }
-
-                return SemanticValue.Null;
-            }
-
-            if (expression is ListExpressionSyntax list)
-            {
-                if (!target.IsCollection)
-                {
-                    return InvalidShape(expression, description, "a scalar or object");
-                }
-
-                var values = ImmutableArray.CreateBuilder<SemanticValue>();
-                var valid = true;
-                foreach (var item in list.Items)
-                {
-                    var bound = BindConcreteValue(item, target with { IsCollection = false, IsOptional = false }, description, allowNull);
-                    if (bound is null)
-                    {
-                        valid = false;
-                    }
-                    else
-                    {
-                        values.Add(bound);
-                    }
-                }
-
-                return valid ? SemanticValue.Array(values.ToImmutable()) : null;
-            }
-
-            if (expression is ObjectExpressionSyntax obj)
-            {
-                if (target.IsCollection || target.Kind != SemanticTypeReferenceKind.CompositeType)
-                {
-                    return InvalidShape(expression, description, target.IsCollection ? "a list" : "a scalar");
-                }
-
-                return BindStructuredValue(obj, target, description, allowNull);
-            }
-
-            if (target.IsCollection || target.Kind == SemanticTypeReferenceKind.CompositeType)
-            {
-                return InvalidShape(expression, description, target.IsCollection ? "a list" : "an object");
-            }
-
-            if (expression is LiteralExpressionSyntax literal)
-            {
-                if (literal.Value is string text && IsDateTime(target) && IsoInstant().IsMatch(text) &&
-                    DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant))
-                {
-                    return SemanticValue.Text(instant.Offset == TimeSpan.Zero
-                        ? instant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)
-                        : instant.ToString("O", CultureInfo.InvariantCulture));
-                }
-
-                return routeInput ? BindRouteLiteral(literal) : BindLiteral(literal);
-            }
-
-            // An enumeration member may be written bare or qualified by its concept, exactly as the compiler accepts
-            // it - both name the same member as its quoted spelling and bind to the same value.
-            if (expression is PathExpressionSyntax path && EnumerationMember(path.Path, target) is { } member)
-            {
-                return SemanticValue.Text(member);
-            }
-
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} requires a concrete portable value in Program v1.", expression.Location);
-            return null;
-        }
-
-        SemanticValue? BindStructuredValue(ObjectExpressionSyntax expression, SemanticTypeReference target, string description, bool allowNull)
-        {
-            var declaration = (syntax.Types ?? []).SingleOrDefault(type =>
-                _types.TryGetValue(type.Name, out var registered) && registered.Id == target.Target);
-            if (declaration is null)
-            {
-                Error(DiagnosticCodes.UnresolvedStructuredValueType, $"The {description} composite type cannot be resolved.", expression.Location);
-                return null;
-            }
-
-            // A property declared more than once cannot be bound; it is reported where a value names it.
-            var declared = declaration.Properties.GroupBy(property => property.Name, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.Count() == 1 ? group.Single() : null, StringComparer.Ordinal);
-            var assigned = new HashSet<string>(StringComparer.Ordinal);
-            var properties = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
-            var valid = true;
-            foreach (var member in expression.Members)
-            {
-                if (!assigned.Add(member.Name))
-                {
-                    Error(DiagnosticCodes.DuplicateSemanticValueMember, $"Duplicate property '{member.Name}' in {description}.", member.Location);
-                    valid = false;
-                    continue;
-                }
-
-                if (!declared.TryGetValue(member.Name, out var property))
-                {
-                    Error(DiagnosticCodes.UnknownStructuredValueMember, $"Unknown property '{member.Name}' in structured value for '{declaration.Name}'.", member.Location);
-                    valid = false;
-                    continue;
-                }
-
-                if (property is null)
-                {
-                    Error(DiagnosticCodes.UnknownStructuredValueMember, $"Property '{member.Name}' is declared more than once on '{declaration.Name}', so the structured value cannot bind it.", member.Location);
-                    valid = false;
-                    continue;
-                }
-
-                var value = BindConcreteValue(member.Value, BindTypeReference(property.Type), description, allowNull);
-                if (value is null)
-                {
-                    valid = false;
-                    continue;
-                }
-
-                var address = SemanticAddress.ForProperty(_types[declaration.Name].Address, property.Name);
-                var id = documents.IdentityCatalog.ResolveSemanticAssignment(address).Id;
-                properties.Add(new(id, value));
-            }
-
-            foreach (var property in declaration.Properties.Where(property => !property.Type.IsOptional && !assigned.Contains(property.Name)))
-            {
-                Error(DiagnosticCodes.MissingStructuredValueMember, $"The {description} composite '{declaration.Name}' requires property '{property.Name}'.", expression.Location);
-                valid = false;
-            }
-
-            return valid ? SemanticValue.Composite(properties.ToImmutable()) : null;
-        }
-
-        // An instant may be written the way people write one - "2026-10-05T08:00:00Z" - and binds to the same
-        // round-trip value as its fully written form, so the canonical bytes do not depend on the spelling.
-        bool IsDateTime(SemanticTypeReference target) => target.Kind switch
-        {
-            SemanticTypeReferenceKind.Primitive => target.Primitive == SemanticPrimitiveType.DateTime,
-            SemanticTypeReferenceKind.Concept => ConceptShape(target.Target).Primitive == SemanticPrimitiveType.DateTime,
-            _ => false
-        };
-
-        string? EnumerationMember(string path, SemanticTypeReference target)
-        {
-            if (target.Kind != SemanticTypeReferenceKind.Concept)
-            {
-                return null;
-            }
-
-            var concept = syntax.Concepts.First(_ => _concepts[_.Name].Id == target.Target);
-            if (!concept.IsEnum)
-            {
-                return null;
-            }
-
-            var separator = path.LastIndexOf('.');
-            var member = separator < 0 ? path : path[(separator + 1)..];
-            var qualifier = separator < 0 ? null : path[..separator];
-            return (qualifier is null || string.Equals(qualifier, concept.Name, StringComparison.Ordinal)) && concept.Values.Contains(member, StringComparer.Ordinal)
-                ? member
-                : null;
-        }
-
-        SemanticValue? InvalidShape(ExpressionSyntax expression, string description, string expected)
-        {
-            Error(DiagnosticCodes.IncompatibleStructuredValue, $"The {description} value must be {expected} for its declared type.", expression.Location);
-            return null;
+            return value.Results.Select(result => BindReadModelState(readModel, result.Properties, result.Location, inferredResultKey))
+                .OfType<SemanticSpecificationReadModel>().ToImmutableArray();
         }
     }
 }
