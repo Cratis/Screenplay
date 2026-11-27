@@ -22,6 +22,13 @@ internal static partial class ScreenplayParser
         "slice", "feature", "description", "documentation", "authorize", "available", "screen", "dialog", "form", "contribute", "on", "uses"
     ];
 
+    // The fences that open a code block whatever languages are configured.
+    static readonly HashSet<string> _plainFences =
+    [
+        with(StringComparer.Ordinal),
+        "```", "```text", "```markdown"
+    ];
+
     /// <summary>
     /// Parses a document.
     /// </summary>
@@ -138,8 +145,7 @@ internal static partial class ScreenplayParser
         while (context.TryPeekChild(parentIndent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (child.Content.StartsWith("```", StringComparison.Ordinal) &&
-                (child.Content == "```" || child.Content == "```text" || child.Content == "```markdown" || context.Languages.InlineLanguages.Contains(child.Content[3..])))
+            if (OpensFencedBlock(context, child.Content))
             {
                 _ = CodeBlockParser.ParseFencedBody(context, child.Content[3..], child);
             }
@@ -149,6 +155,9 @@ internal static partial class ScreenplayParser
             }
         }
     }
+
+    static bool OpensFencedBlock(ParserContext context, string content) =>
+        content.StartsWith("```", StringComparison.Ordinal) && (_plainFences.Contains(content) || context.Languages.InlineLanguages.Contains(content[3..]));
 
     static IEnumerable<DiscoveredFileImport> ImportsIn(FeatureSyntax feature, IReadOnlyList<string> outer, bool startsAtModule)
     {
@@ -348,98 +357,6 @@ internal static partial class ScreenplayParser
         }
     }
 
-    static ConceptSyntax ParseConcept(ParserContext context, SourceLine line)
-    {
-        var match = ConceptRegex().Match(line.Content);
-        if (!match.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidConceptDeclaration, $"Invalid concept declaration '{line.Content}' - expected 'concept <Name> : <Type>'", line.Location);
-            context.SkipBlock(line.Indent);
-            return new(LineText.FirstWord(line.Content), string.Empty, [], [], line.Location);
-        }
-
-        var name = match.Groups[1].Value;
-        var type = match.Groups[2].Value;
-        var attributes = ConceptComplianceParser.ParseMarkers(context, line, name, match.Groups[3].Value);
-
-        if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
-        {
-            context.Error(DiagnosticCodes.UnknownPrimitiveType, $"Unknown primitive type '{type}' - expected {string.Join(", ", ConceptSyntax.PrimitiveTypes)} or Enum", line.Location);
-        }
-
-        var values = new List<string>();
-        var members = new EnumerationMembers();
-        GenerationSyntax? generation = null;
-        var declaredGeneration = false;
-        string? description = null;
-        var validations = new List<ValidateSyntax>();
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-        FileReferenceSyntax? file = null;
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (type == "Enum" && members.TryNumbered(context, child, out var memberName))
-            {
-                values.Add(memberName);
-                directiveLocations[DirectiveLocationKeys.ForValue("value", values, values.Count - 1)] = child.Location;
-                continue;
-            }
-
-            if (DescriptionParser.TryParse(context, child, ref description, $"Concept '{name}'", directiveLocations, type == "Enum")) continue;
-            if (FileReferenceParser.IsDirective(child))
-            {
-                file = FileReferenceParser.ParseReplacing(context, child, file, directiveLocations);
-            }
-            else if (LineText.FirstWord(child.Content) == "validate")
-            {
-                if (type == "Enum" && child.Content == "validate" && !context.TryPeekChild(child.Indent, out _))
-                {
-                    context.Warning(
-                        DiagnosticCodes.ValidateReadAsEnumerationBlock,
-                        $"'validate' in enumeration concept '{name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value",
-                        child.Location);
-                }
-
-                if (ValidateParser.Parse(context, child, ValidationOwnerKind.Concept) is { } validate)
-                {
-                    validations.Add(validate);
-                }
-            }
-            else if (LineText.FirstWord(child.Content) == "generate" && !(type == "Enum" && child.Content == "generate"))
-            {
-                if (declaredGeneration) context.Error(DiagnosticCodes.DuplicateGeneration, $"Concept '{name}' declares generation more than once.", child.Location);
-                var parsed = GenerationParser.Parse(context, child, type);
-                if (!declaredGeneration)
-                {
-                    generation = parsed;
-                    directiveLocations["generate"] = child.Location;
-                }
-
-                declaredGeneration = true;
-            }
-            else if (ConceptComplianceParser.TryParseDirective(context, child, name, attributes, directiveLocations))
-            {
-                // Compliance directives preserve their original source anchors for trivia and repairs.
-            }
-            else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
-            {
-                values.Add(LineText.Unescape(child.Content));
-                directiveLocations[DirectiveLocationKeys.ForValue("value", values, values.Count - 1)] = child.Location;
-            }
-            else if (type == "Enum")
-            {
-                context.Error(DiagnosticCodes.InvalidEnumerationValue, $"Invalid enum value '{child.Content}' - expected an identifier", child.Location);
-            }
-            else
-            {
-                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason \"<text>\"'{MisplacedRuleHint.ForConcept(child.Content)}", child.Location);
-                context.SkipBlock(child.Indent);
-            }
-        }
-
-        return new(name, type, attributes, values, line.Location, validations) { Generation = generation, Description = description, File = file, ValueNumbers = members.Finish(context, line, values.Count), DirectiveLocations = directiveLocations };
-    }
-
     static UserSyntax ParseUser(ParserContext context, SourceLine line)
     {
         var match = UserRegex().Match(line.Content);
@@ -462,162 +379,6 @@ internal static partial class ScreenplayParser
             ? match.Groups[3].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             : [];
         return new(match.Groups[1].Value, displayName, personas, line.Location);
-    }
-
-    static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
-    {
-        var match = PersonaRegex().Match(line.Content);
-        if (!match.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid persona declaration '{line.Content}' - expected 'persona <Name>'", line.Location);
-        }
-
-        var name = match.Groups[1].Value;
-        string? description = null;
-        var policies = new List<string>();
-        var goals = new List<string>();
-        var audiences = new List<string>();
-        (int X, int Y)? position = null;
-        (int Width, int Height)? size = null;
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(child.Content))
-            {
-                case "goal":
-                    if (PersonaGoalRegex().Match(child.Content) is { Success: true } goal)
-                    {
-                        goals.Add(StringLiteral.Unescape(goal.Groups[1].Value));
-                        directiveLocations[DirectiveLocationKeys.ForValue("goal", goals, goals.Count - 1)] = child.Location;
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid goal '{child.Content}' - expected 'goal \"<text>\"'", child.Location);
-                    }
-
-                    break;
-                case "audience":
-                    if (PersonaAudienceRegex().Match(child.Content) is { Success: true } audience)
-                    {
-                        audiences.Add(audience.Groups[1].Value);
-                        directiveLocations[DirectiveLocationKeys.ForValue("audience", audiences, audiences.Count - 1)] = child.Location;
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.InvalidAudienceDeclaration, $"Invalid audience reference '{child.Content}' - expected 'audience <Name>'", child.Location);
-                    }
-
-                    break;
-                case "position":
-                    position = ParseCanvasPair(context, child, "position", "x", "y", position, allowNegative: true) ?? position;
-                    break;
-                case "size":
-                    size = ParseCanvasPair(context, child, "size", "width", "height", size, allowNegative: false) ?? size;
-                    break;
-                case "description":
-                    var previousDescription = description;
-                    description = DescriptionParser.Parse(context, child, description, $"Persona '{name}'");
-                    if (previousDescription is null && description is not null)
-                    {
-                        directiveLocations["description"] = child.Location;
-                    }
-
-                    break;
-                case "policy":
-                    if (PersonaPolicyRegex().Match(child.Content) is { Success: true } policy)
-                    {
-                        policies.Add(policy.Groups[1].Value);
-                        directiveLocations[DirectiveLocationKeys.ForValue("policy", policies, policies.Count - 1)] = child.Location;
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.InvalidPersonaPolicyReference, $"Invalid policy reference '{child.Content}' - expected 'policy <Name>'", child.Location);
-                    }
-
-                    break;
-                default:
-                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description, goal, policy, audience, position or size", child.Location);
-                    context.SkipBlock(child.Indent);
-                    break;
-            }
-        }
-
-        return new(name, description, policies, line.Location)
-        {
-            DirectiveLocations = directiveLocations,
-            Goals = goals,
-            Audiences = audiences,
-            X = position?.X,
-            Y = position?.Y,
-            Width = size?.Width,
-            Height = size?.Height
-        };
-    }
-
-    // 'sticky note on <canvas>' with the text it carries, an optional colour and where it sits on that canvas.
-    static StickyNoteSyntax? ParseStickyNote(ParserContext context, SourceLine line)
-    {
-        var canvasMatch = StickyNoteRegex().Match(line.Content);
-        if (!canvasMatch.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid sticky note declaration '{line.Content}' - expected 'sticky note on personas', 'sticky note on eventsources', 'sticky note on givencontexts' or 'sticky note on seeddata'", line.Location);
-            context.SkipBlock(line.Indent);
-            return null;
-        }
-
-        string? text = null;
-        string? colour = null;
-        (int X, int Y)? position = null;
-        (int Width, int Height)? size = null;
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(child.Content))
-            {
-                case "description":
-                    var previous = text;
-                    text = DescriptionParser.Parse(context, child, text, "A sticky note");
-                    if (previous is null && text is not null)
-                    {
-                        directiveLocations["description"] = child.Location;
-                    }
-
-                    break;
-                case "colour":
-                    if (StickyNoteColourRegex().Match(child.Content) is { Success: true } colourMatch)
-                    {
-                        colour = colourMatch.Groups[1].Value;
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid colour '{child.Content}' - expected 'colour yellow', 'colour pink', 'colour green' or 'colour blue'", child.Location);
-                    }
-
-                    break;
-                case "position":
-                    position = ParseCanvasPair(context, child, "position", "x", "y", position, allowNegative: true) ?? position;
-                    break;
-                case "size":
-                    size = ParseCanvasPair(context, child, "size", "width", "height", size, allowNegative: false) ?? size;
-                    break;
-                default:
-                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in sticky note body - expected description, colour, position or size", child.Location);
-                    context.SkipBlock(child.Indent);
-                    break;
-            }
-        }
-
-        if (text is null || position is null)
-        {
-            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, "A sticky note needs a description (the text on it) and a position", line.Location);
-            return null;
-        }
-
-        return new(canvasMatch.Groups[1].Value, text, colour, position.Value.X, position.Value.Y, size?.Width, size?.Height, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static ModuleSyntax ParseModule(ParserContext context, SourceLine line)
