@@ -13,6 +13,38 @@ public static partial class SemanticModelCanonicalJson
     public const string Schema = "cratis.screenplay.esm";
     internal const uint SchemaVersion = 1;
 
+    static readonly FrozenDictionary<SemanticPrimitiveType, string> _primitiveNames = new Dictionary<SemanticPrimitiveType, string>
+    {
+        [SemanticPrimitiveType.Uuid] = "uuid",
+        [SemanticPrimitiveType.Text] = "string",
+        [SemanticPrimitiveType.WholeNumber] = "integer",
+        [SemanticPrimitiveType.DecimalNumber] = "decimal",
+        [SemanticPrimitiveType.Boolean] = "boolean",
+        [SemanticPrimitiveType.Date] = "date",
+        [SemanticPrimitiveType.DateTime] = "dateTime"
+    }.ToFrozenDictionary();
+
+    static readonly FrozenDictionary<SemanticExpressionKind, string> _expressionKindNames = new Dictionary<SemanticExpressionKind, string>
+    {
+        [SemanticExpressionKind.Value] = "value",
+        [SemanticExpressionKind.Resolved] = "resolved",
+        [SemanticExpressionKind.EventContext] = "eventContext",
+        [SemanticExpressionKind.Refusal] = "refusal",
+        [SemanticExpressionKind.ReadPath] = "readPath",
+        [SemanticExpressionKind.InvocationValue] = "invocationValue",
+        [SemanticExpressionKind.OneOf] = "oneOf"
+    }.ToFrozenDictionary();
+
+    static readonly FrozenDictionary<SemanticValueKind, string> _valueKindNames = new Dictionary<SemanticValueKind, string>
+    {
+        [SemanticValueKind.Null] = "null",
+        [SemanticValueKind.Text] = "string",
+        [SemanticValueKind.Number] = "number",
+        [SemanticValueKind.Boolean] = "boolean",
+        [SemanticValueKind.Array] = "array",
+        [SemanticValueKind.Composite] = "object"
+    }.ToFrozenDictionary();
+
     static readonly FrozenDictionary<SemanticValidationRuleKind, string> _validationKindNames = new Dictionary<SemanticValidationRuleKind, string>
     {
         [SemanticValidationRuleKind.NotEmpty] = "notEmpty",
@@ -343,15 +375,7 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", command.Name);
         WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, property) => WriteProperty(output, property, version.IsAtLeast(SemanticVersion.V7)));
         WriteArray(writer, "validations", command.Validations, WriteValidation);
-        if (!command.CodeValidations.IsEmpty)
-        {
-            WriteArray(writer, "codeValidations", command.CodeValidations, (output, block) =>
-            {
-                output.WriteStartObject();
-                CanonicalJson.WriteString(output, "requirementId", block.RequirementId);
-                output.WriteEndObject();
-            });
-        }
+        WriteCodeValidations(writer, command.CodeValidations);
         WriteArray(writer, "produces", command.Produces, (output, produced) => WriteProducedEvent(output, produced, version, false));
         if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
         if (command.Authorization is not null)
@@ -360,15 +384,7 @@ public static partial class SemanticModelCanonicalJson
             WriteAuthorization(writer, command.Authorization);
         }
         WriteAvailable(writer, command.Available, version);
-        if (command.Destination is not null)
-        {
-            writer.WritePropertyName("destination");
-            writer.WriteStartObject();
-            writer.WritePropertyName("type");
-            WriteTypeReference(writer, command.Destination.Type);
-            WriteOptionalExpression(writer, "value", command.Destination.Value);
-            writer.WriteEndObject();
-        }
+        WriteCommandDestination(writer, command.Destination);
         if (command.Response is not null)
         {
             writer.WritePropertyName("response");
@@ -382,6 +398,36 @@ public static partial class SemanticModelCanonicalJson
         }
         if (!command.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", command.Reads, WriteDecisionRead);
         WriteCommandCalendar(writer, command.Calendar);
+        writer.WriteEndObject();
+    }
+
+    static void WriteCodeValidations(Utf8JsonWriter writer, ImmutableArray<SemanticCodeValidation> validations)
+    {
+        if (!validations.IsEmpty)
+        {
+            WriteArray(writer, "codeValidations", validations, WriteCodeValidation);
+        }
+    }
+
+    static void WriteCodeValidation(Utf8JsonWriter writer, SemanticCodeValidation validation)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "requirementId", validation.RequirementId);
+        writer.WriteEndObject();
+    }
+
+    static void WriteCommandDestination(Utf8JsonWriter writer, SemanticStateChangeDestination? destination)
+    {
+        if (destination is null)
+        {
+            return;
+        }
+
+        writer.WritePropertyName("destination");
+        writer.WriteStartObject();
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, destination.Type);
+        WriteOptionalExpression(writer, "value", destination.Value);
         writer.WriteEndObject();
     }
 
@@ -400,7 +446,7 @@ public static partial class SemanticModelCanonicalJson
 
     static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced, ProducedEventWriteContext context)
     {
-        if (produced.DestinationType is not null && (!context.Reaction || !context.Version.IsAtLeast(SemanticVersion.V6)))
+        if (produced.DestinationType is not null && !CanWriteProductionDestinationType(context))
         {
             throw new InvalidSemanticContract("A production destination type requires an ESM v6 reaction.");
         }
@@ -424,6 +470,9 @@ public static partial class SemanticModelCanonicalJson
         if (produced.Route is not null) WriteCommandRoute(writer, produced.Route);
         writer.WriteEndObject();
     }
+
+    static bool CanWriteProductionDestinationType(ProducedEventWriteContext context) =>
+        context.Reaction && context.Version.IsAtLeast(SemanticVersion.V6);
 
     static void WriteProductionPayload(Utf8JsonWriter writer, SemanticProducedEvent produced, bool possibleEvent)
     {
@@ -505,10 +554,7 @@ public static partial class SemanticModelCanonicalJson
         {
             writer.WritePropertyName("argument");
             writer.WriteStartObject();
-            WriteId(writer, query.Argument.Id);
-            CanonicalJson.WriteString(writer, "name", query.Argument.Name);
-            writer.WritePropertyName("type");
-            WriteTypeReference(writer, query.Argument.Type);
+            WriteQueryParameter(writer, query.Argument.Id, query.Argument.Name, query.Argument.Type);
             writer.WriteEndObject();
             writer.WriteString("keyProperty", keyProperty.ToString());
         }
@@ -536,10 +582,7 @@ public static partial class SemanticModelCanonicalJson
     static void WriteQueryKeyPart(Utf8JsonWriter writer, SemanticQueryKeyPart part)
     {
         writer.WriteStartObject();
-        WriteId(writer, part.Id);
-        CanonicalJson.WriteString(writer, "name", part.Name);
-        writer.WritePropertyName("type");
-        WriteTypeReference(writer, part.Type);
+        WriteQueryParameter(writer, part.Id, part.Name, part.Type);
         writer.WriteString("keyProperty", part.KeyProperty.ToString());
         writer.WriteEndObject();
     }
@@ -547,12 +590,17 @@ public static partial class SemanticModelCanonicalJson
     static void WriteQueryFilter(Utf8JsonWriter writer, SemanticQueryFilter filter)
     {
         writer.WriteStartObject();
-        WriteId(writer, filter.Id);
-        CanonicalJson.WriteString(writer, "name", filter.Name);
-        writer.WritePropertyName("type");
-        WriteTypeReference(writer, filter.Type);
+        WriteQueryParameter(writer, filter.Id, filter.Name, filter.Type);
         writer.WriteString("property", filter.Property.ToString());
         writer.WriteEndObject();
+    }
+
+    static void WriteQueryParameter(Utf8JsonWriter writer, SemanticId id, string name, SemanticTypeReference type)
+    {
+        WriteId(writer, id);
+        CanonicalJson.WriteString(writer, "name", name);
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, type);
     }
 
     static void WriteQueryFilterValue(Utf8JsonWriter writer, SemanticQueryFilterValue value)
@@ -756,7 +804,7 @@ public static partial class SemanticModelCanonicalJson
                 WriteTypeReference(writer, refusal.Type);
                 break;
             case SemanticInvocationValueExpression invocationValue:
-                writer.WriteString("member", invocationValue.Member.Length == 0 ? invocationValue.Source : $"{invocationValue.Source}.{invocationValue.Member}");
+                writer.WriteString("member", InvocationMember(invocationValue));
                 writer.WritePropertyName("type");
                 WriteTypeReference(writer, invocationValue.Type);
                 break;
@@ -773,6 +821,9 @@ public static partial class SemanticModelCanonicalJson
                 throw new InvalidSemanticContract("A semantic expression variant is malformed or unknown.");
         }
     }
+
+    static string InvocationMember(SemanticInvocationValueExpression expression) =>
+        expression.Member.Length == 0 ? expression.Source : $"{expression.Source}.{expression.Member}";
 
     static void WriteValue(Utf8JsonWriter writer, SemanticValue value)
     {
@@ -816,9 +867,7 @@ public static partial class SemanticModelCanonicalJson
 
     static void WriteCompositeValue(Utf8JsonWriter writer, SemanticCompositeValue objectValue)
     {
-        if (objectValue.Properties.IsDefault ||
-            objectValue.Properties.Any(_ => _ is not { TargetProperty.IsSet: true, Value: not null }) ||
-            objectValue.Properties.Select(_ => _.TargetProperty).Distinct().Count() != objectValue.Properties.Length)
+        if (HasMalformedCompositeProperties(objectValue.Properties) || HasDuplicateCompositeTargets(objectValue.Properties))
         {
             throw new InvalidSemanticContract("A semantic object value is malformed.");
         }
@@ -830,20 +879,20 @@ public static partial class SemanticModelCanonicalJson
             WritePropertyValue);
     }
 
-    static void WriteOptionalExpression(Utf8JsonWriter writer, string name, SemanticExpression? expression)
-    {
-        writer.WritePropertyName(name);
-        if (expression is null)
-        {
-            writer.WriteNullValue();
-        }
-        else
-        {
-            WriteExpression(writer, expression);
-        }
-    }
+    static bool HasMalformedCompositeProperties(ImmutableArray<SemanticPropertyValue> properties) =>
+        properties.IsDefault || properties.Any(property => property is not { TargetProperty.IsSet: true, Value: not null });
 
-    static void WriteOptionalValue(Utf8JsonWriter writer, string name, SemanticValue? value)
+    static bool HasDuplicateCompositeTargets(ImmutableArray<SemanticPropertyValue> properties) =>
+        properties.Select(property => property.TargetProperty).Distinct().Count() != properties.Length;
+
+    static void WriteOptionalExpression(Utf8JsonWriter writer, string name, SemanticExpression? expression) =>
+        WriteOptionalObject(writer, name, expression, static (output, value) => WriteExpression(output, value));
+
+    static void WriteOptionalValue(Utf8JsonWriter writer, string name, SemanticValue? value) =>
+        WriteOptionalObject(writer, name, value, WriteValue);
+
+    static void WriteOptionalObject<T>(Utf8JsonWriter writer, string name, T? value, Action<Utf8JsonWriter, T> write)
+        where T : class
     {
         writer.WritePropertyName(name);
         if (value is null)
@@ -852,7 +901,7 @@ public static partial class SemanticModelCanonicalJson
         }
         else
         {
-            WriteValue(writer, value);
+            write(writer, value);
         }
     }
 
@@ -882,16 +931,16 @@ public static partial class SemanticModelCanonicalJson
         }
     }
 
-    static void WriteStringArray(Utf8JsonWriter writer, string name, ImmutableArray<string> values)
+    static void WriteStringArray(Utf8JsonWriter writer, string name, ImmutableArray<string> values) =>
+        WriteArray(writer, name, EnumerateStrings(values), CanonicalJson.WriteStringValue);
+
+    static IEnumerable<string> EnumerateStrings(ImmutableArray<string> values)
     {
-        writer.WritePropertyName(name);
-        writer.WriteStartArray();
+        // Use the concrete enumerator so a default array fails as before.
         foreach (var value in values)
         {
-            CanonicalJson.WriteStringValue(writer, value);
+            yield return value;
         }
-
-        writer.WriteEndArray();
     }
 
     static void WriteArray<T>(Utf8JsonWriter writer, string name, IEnumerable<T> values, Action<Utf8JsonWriter, T> write)
@@ -915,17 +964,7 @@ public static partial class SemanticModelCanonicalJson
         _ => throw Unknown(nameof(SemanticSliceKind), value)
     };
 
-    static string Primitive(SemanticPrimitiveType value) => value switch
-    {
-        SemanticPrimitiveType.Uuid => "uuid",
-        SemanticPrimitiveType.Text => "string",
-        SemanticPrimitiveType.WholeNumber => "integer",
-        SemanticPrimitiveType.DecimalNumber => "decimal",
-        SemanticPrimitiveType.Boolean => "boolean",
-        SemanticPrimitiveType.Date => "date",
-        SemanticPrimitiveType.DateTime => "dateTime",
-        _ => throw Unknown(nameof(SemanticPrimitiveType), value)
-    };
+    static string Primitive(SemanticPrimitiveType value) => DiscriminatorName(_primitiveNames, value);
 
     static string TypeReferenceKind(SemanticTypeReferenceKind value) => value switch
     {
@@ -946,8 +985,7 @@ public static partial class SemanticModelCanonicalJson
         }
     }
 
-    static string ValidationKind(SemanticValidationRuleKind value) =>
-        _validationKindNames.TryGetValue(value, out var name) ? name : throw Unknown(nameof(SemanticValidationRuleKind), value);
+    static string ValidationKind(SemanticValidationRuleKind value) => DiscriminatorName(_validationKindNames, value);
 
     static string ContextValue(SemanticEventContextValueKind kind) => kind switch
     {
@@ -959,18 +997,7 @@ public static partial class SemanticModelCanonicalJson
         _ => throw Unknown(nameof(SemanticEventContextValueKind), kind)
     };
 
-    static string ExpressionKind(SemanticExpressionKind value) => value == SemanticExpressionKind.OneOf ? "oneOf" : ScalarExpressionKind(value);
-
-    static string ScalarExpressionKind(SemanticExpressionKind value) => value switch
-    {
-        SemanticExpressionKind.Value => "value",
-        SemanticExpressionKind.Resolved => "resolved",
-        SemanticExpressionKind.EventContext => "eventContext",
-        SemanticExpressionKind.Refusal => "refusal",
-        SemanticExpressionKind.ReadPath => "readPath",
-        SemanticExpressionKind.InvocationValue => "invocationValue",
-        _ => throw Unknown(nameof(SemanticExpressionKind), value)
-    };
+    static string ExpressionKind(SemanticExpressionKind value) => DiscriminatorName(_expressionKindNames, value);
 
     static string ExpressionRoot(SemanticExpressionRootKind value) => value switch
     {
@@ -986,16 +1013,7 @@ public static partial class SemanticModelCanonicalJson
         _ => throw Unknown(nameof(SemanticExpressionSourceKind), value)
     };
 
-    static string ValueKind(SemanticValueKind value) => value switch
-    {
-        SemanticValueKind.Null => "null",
-        SemanticValueKind.Text => "string",
-        SemanticValueKind.Number => "number",
-        SemanticValueKind.Boolean => "boolean",
-        SemanticValueKind.Array => "array",
-        SemanticValueKind.Composite => "object",
-        _ => throw Unknown(nameof(SemanticValueKind), value)
-    };
+    static string ValueKind(SemanticValueKind value) => DiscriminatorName(_valueKindNames, value);
 
     static string AffectedCardinality(AffectedInstanceCardinality value) => value switch
     {
@@ -1019,6 +1037,10 @@ public static partial class SemanticModelCanonicalJson
         SemanticQueryDelivery.Live => "live",
         _ => throw Unknown(nameof(SemanticQueryDelivery), value)
     };
+
+    static string DiscriminatorName<T>(FrozenDictionary<T, string> names, T value)
+        where T : struct, Enum =>
+        names.TryGetValue(value, out var name) ? name : throw Unknown(typeof(T).Name, value);
 
     static InvalidSemanticContract Unknown<T>(string name, T value) =>
         new($"Unknown {name} value '{value}'.");
