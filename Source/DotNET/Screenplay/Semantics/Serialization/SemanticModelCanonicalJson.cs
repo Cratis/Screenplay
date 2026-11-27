@@ -554,10 +554,7 @@ public static partial class SemanticModelCanonicalJson
         {
             writer.WritePropertyName("argument");
             writer.WriteStartObject();
-            WriteId(writer, query.Argument.Id);
-            CanonicalJson.WriteString(writer, "name", query.Argument.Name);
-            writer.WritePropertyName("type");
-            WriteTypeReference(writer, query.Argument.Type);
+            WriteQueryParameter(writer, query.Argument.Id, query.Argument.Name, query.Argument.Type);
             writer.WriteEndObject();
             writer.WriteString("keyProperty", keyProperty.ToString());
         }
@@ -585,10 +582,7 @@ public static partial class SemanticModelCanonicalJson
     static void WriteQueryKeyPart(Utf8JsonWriter writer, SemanticQueryKeyPart part)
     {
         writer.WriteStartObject();
-        WriteId(writer, part.Id);
-        CanonicalJson.WriteString(writer, "name", part.Name);
-        writer.WritePropertyName("type");
-        WriteTypeReference(writer, part.Type);
+        WriteQueryParameter(writer, part.Id, part.Name, part.Type);
         writer.WriteString("keyProperty", part.KeyProperty.ToString());
         writer.WriteEndObject();
     }
@@ -596,12 +590,17 @@ public static partial class SemanticModelCanonicalJson
     static void WriteQueryFilter(Utf8JsonWriter writer, SemanticQueryFilter filter)
     {
         writer.WriteStartObject();
-        WriteId(writer, filter.Id);
-        CanonicalJson.WriteString(writer, "name", filter.Name);
-        writer.WritePropertyName("type");
-        WriteTypeReference(writer, filter.Type);
+        WriteQueryParameter(writer, filter.Id, filter.Name, filter.Type);
         writer.WriteString("property", filter.Property.ToString());
         writer.WriteEndObject();
+    }
+
+    static void WriteQueryParameter(Utf8JsonWriter writer, SemanticId id, string name, SemanticTypeReference type)
+    {
+        WriteId(writer, id);
+        CanonicalJson.WriteString(writer, "name", name);
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, type);
     }
 
     static void WriteQueryFilterValue(Utf8JsonWriter writer, SemanticQueryFilterValue value)
