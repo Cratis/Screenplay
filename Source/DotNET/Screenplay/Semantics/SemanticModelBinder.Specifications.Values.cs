@@ -33,9 +33,15 @@ public sealed partial class SemanticModelBinder
             ? instant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)
             : instant.ToString("O", CultureInfo.InvariantCulture));
 
-        static SpecificationNullPolicy NullPolicyFor(string description, bool allowNull) => allowNull
-            ? SpecificationNullPolicy.OptionalProperty
-            : IsFactValue(description) ? SpecificationNullPolicy.Fact : SpecificationNullPolicy.Forbidden;
+        static SpecificationNullPolicy NullPolicyFor(string description, bool allowNull)
+        {
+            if (allowNull)
+            {
+                return SpecificationNullPolicy.OptionalProperty;
+            }
+
+            return IsFactValue(description) ? SpecificationNullPolicy.Fact : SpecificationNullPolicy.Forbidden;
+        }
 
         static bool IsFactValue(string description) =>
             string.Equals(description, "specification command", StringComparison.Ordinal) ||

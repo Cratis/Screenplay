@@ -315,8 +315,7 @@ public sealed partial class SemanticModelBinder
 
         void ValidateSpecificationCompleteness(SemanticAddress slice, SpecificationSyntax specification, SemanticCommand? command, EffectiveSpecification expanded)
         {
-            var eventSteps = specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []);
-            foreach (var step in eventSteps)
+            foreach (var step in specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []))
             {
                 ValidateCompleteEvent(slice, expanded, step);
             }
