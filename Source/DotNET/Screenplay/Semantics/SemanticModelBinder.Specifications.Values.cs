@@ -13,6 +13,13 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        enum SpecificationNullPolicy
+        {
+            Forbidden,
+            Fact,
+            OptionalProperty
+        }
+
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.NonBacktracking)]
         private static partial Regex IsoInstant();
 
@@ -290,13 +297,6 @@ public sealed partial class SemanticModelBinder
         {
             Error(DiagnosticCodes.IncompatibleStructuredValue, $"The {context.Description} value must be {expected} for its declared type.", expression.Location);
             return null;
-        }
-
-        enum SpecificationNullPolicy
-        {
-            Forbidden,
-            Fact,
-            OptionalProperty
         }
 
         readonly record struct SpecificationValueContext(string Description, SpecificationNullPolicy NullPolicy, bool RouteLiteral = false);

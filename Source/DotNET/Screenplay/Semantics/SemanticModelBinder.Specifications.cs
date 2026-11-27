@@ -12,6 +12,13 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        enum SpecificationEventRole
+        {
+            Historical,
+            Append,
+            Expected
+        }
+
         internal CompilationResult<SemanticCompilation> CompleteCompilation(
             SemanticCompilation compilation,
             ImmutableArray<SemanticTypedContextDescriptor> descriptors,
@@ -695,13 +702,6 @@ public sealed partial class SemanticModelBinder
             var inferredResultKey = !query.KeyParts.IsEmpty || (identifiers.Length == 1 && query.KeyProperty == identifiers[0].Id) ? key : null;
             return value.Results.Select(result => BindReadModelState(readModel, result.Properties, result.Location, inferredResultKey))
                 .OfType<SemanticSpecificationReadModel>().ToImmutableArray();
-        }
-
-        enum SpecificationEventRole
-        {
-            Historical,
-            Append,
-            Expected
         }
     }
 }
