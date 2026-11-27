@@ -74,117 +74,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         return compilation.WithRefusedSpecifications([.. compilation.RefusedSpecifications.Select(refusal => refusal with { Diagnostics = [.. refusal.Diagnostics.Select(diagnostic => diagnostics[diagnostic])] })]);
     }
 
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
-    {
-        if (EsmSchemaV60Support.SelectBoundVersions(application) is { } availability) return availability;
-        if (SemanticModelValidator.UsesAbilityInvocations(application)) return (LanguageVersion.V51, SemanticVersion.V51);
-        if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
-        if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
-        if (application.Agents is not null) return (LanguageVersion.V48, SemanticVersion.V48);
-        if (SemanticModelValidator.UsesNarrowing(application)) return (LanguageVersion.V47, SemanticVersion.V47);
-        if (SemanticModelValidator.UsesPolicyInputs(application)) return (LanguageVersion.V46, SemanticVersion.V46);
-        if (SemanticModelValidator.UsesTextOperators(application)) return (LanguageVersion.V45, SemanticVersion.V45);
-        if (SemanticModelValidator.UsesStatePolicies(application)) return (LanguageVersion.V44, SemanticVersion.V44);
-        if (SemanticModelValidator.UsesProjectionParity(application)) return (LanguageVersion.V43, SemanticVersion.V43);
-        if (SemanticModelValidator.UsesGraphForEach(application)) return (LanguageVersion.V41, SemanticVersion.V41);
-        if (SemanticModelValidator.UsesGraphQueries(application)) return (LanguageVersion.V40, SemanticVersion.V40);
-        if (SemanticModelValidator.UsesGraphs(application)) return (LanguageVersion.V38, SemanticVersion.V38);
-        if (SemanticClockUsage.Uses(application)) return (LanguageVersion.V37, SemanticVersion.V37);
-        if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
-        if (SemanticModelValidator.UsesHandlerResultV2(application)) return (LanguageVersion.V35, SemanticVersion.V35);
-        if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
-        if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
-        return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectVersionsBeforeEventSourceCaptureKeys(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
-    {
-        if (SemanticModelValidator.UsesTypedCaptureKeys(application)) return (LanguageVersion.V32, SemanticVersion.V32);
-        if (SemanticModelValidator.UsesAnonymousPolicies(application)) return (LanguageVersion.V31, SemanticVersion.V31);
-        if (SemanticModelValidator.UsesAcmeSecondAdmissions(application)) return (LanguageVersion.V30, SemanticVersion.V30);
-        if (SemanticModelValidator.UsesAcmeAdmissions(application)) return (LanguageVersion.V29, SemanticVersion.V29);
-        if (SemanticModelValidator.UsesUuidComparisons(application)) return (LanguageVersion.V28, SemanticVersion.V28);
-        if (SemanticModelValidator.UsesCompositeReadModelKeys(application)) return (LanguageVersion.V27, SemanticVersion.V27);
-        if (SemanticModelValidator.UsesDateComparisons(application)) return (LanguageVersion.V26, SemanticVersion.V26);
-        if (application.CommandReadMode is not null) return (LanguageVersion.V25, SemanticVersion.V25);
-        if (SemanticModelValidator.UsesTextRules(application)) return (LanguageVersion.V24, SemanticVersion.V24);
-        if (SemanticModelValidator.UsesDescribedHandlers(application)) return (LanguageVersion.V23, SemanticVersion.V23);
-        if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
-        if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
-        if (SemanticModelValidator.UsesGeneratedConceptRules(application))
-        {
-            return (LanguageVersion.V20, SemanticVersion.V20);
-        }
-
-        if (SemanticModelValidator.UsesRefusalBranches(application))
-        {
-            return (LanguageVersion.V19, SemanticVersion.V19);
-        }
-
-        if (SemanticModelValidator.UsesQueryRejections(application))
-        {
-            return (LanguageVersion.V18, SemanticVersion.V18);
-        }
-
-        if (SemanticModelValidator.UsesRecoverySpecifications(application))
-        {
-            return (LanguageVersion.V17, SemanticVersion.V17);
-        }
-
-        return usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
-    {
-        if (SemanticModelValidator.UsesConceptGeneration(application))
-        {
-            return (LanguageVersion.V15, SemanticVersion.V15);
-        }
-
-        if (SemanticModelValidator.UsesQueryFilters(application))
-        {
-            return (LanguageVersion.V14, SemanticVersion.V14);
-        }
-
-        if (SemanticModelValidator.UsesConceptCompliance(application))
-        {
-            return (LanguageVersion.V13, SemanticVersion.V13);
-        }
-
-        if (SemanticModelValidator.UsesEnumMemberNumbers(application))
-        {
-            return (LanguageVersion.V12, SemanticVersion.V12);
-        }
-
-        // Number lowering is pure. Select v11 from the retained graph with the validator's own
-        // value walk, after examples and routed fixtures have reached their final bound shape.
-        if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
-        {
-            return (LanguageVersion.V11, SemanticVersion.V11);
-        }
-
-        return null;
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic) InitialBoundVersions(BindingContext context) => context switch
-    {
-        { UsesV10: true } or { UsesReactionIdentity: true } => (LanguageVersion.V10, SemanticVersion.V10),
-        { UsesPublicEvents: true } => (LanguageVersion.V9, SemanticVersion.V9),
-        { UsesEventRoutes: true } => (LanguageVersion.V8, SemanticVersion.V8),
-        { UsesV7: true } => (LanguageVersion.V7, SemanticVersion.V7),
-        _ => LegacyBoundVersions(context)
-    };
-
-    static (LanguageVersion Language, SemanticVersion Semantic) LegacyBoundVersions(BindingContext context) => context switch
-    {
-        { UsesV6: true } => (LanguageVersion.V6, SemanticVersion.V6),
-        { UsesV5: true } => (LanguageVersion.V5, SemanticVersion.V5),
-        { UsesV4: true } => (LanguageVersion.V4, SemanticVersion.V4),
-        { UsesV3: true } => (LanguageVersion.V3, SemanticVersion.V3),
-        { UsesV2: true } => (LanguageVersion.V2, SemanticVersion.V2),
-        _ => (LanguageVersion.V1, SemanticVersion.V1)
-    };
-
     // Every refusal of a model that no executable model admits, in report order: command productions, agent exposure, read-model
     // member types, identity details, then public-event boundaries. Any diagnostic collected here, of any severity, refuses the model.
     static List<Diagnostic> CollectAdmissionDiagnostics(ApplicationSyntax syntax)
@@ -217,10 +106,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         return admission;
     }
 
-    CompilationResult<SemanticCompilation> BindCore(
-        string applicationName,
-        ApplicationSyntax syntax,
-        SemanticDocumentSet documents)
+    static CompilationResult<SemanticCompilation>? RefuseUnsupportedSyntax(ApplicationSyntax syntax)
     {
         if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
         {
@@ -228,7 +114,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
 
         var numeric = SourceNumericModes.Errors(syntax);
-        if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
+        if (numeric.Count > 0)
+        {
+            return CompilationResult<SemanticCompilation>.Failed(numeric);
+        }
+
         if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
         {
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
@@ -239,9 +129,66 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
 
         var admission = CollectAdmissionDiagnostics(syntax);
-        if (admission.Count > 0)
+        return admission.Count > 0 ? CompilationResult<SemanticCompilation>.Failed(admission) : null;
+    }
+
+    static CompilationResult<SemanticCompilation> CompileBoundApplication(BindingContext context, ApplicationSyntax syntax, SemanticDocumentSet documents)
+    {
+        var application = context.BindApplication();
+        application = application with { Agents = context.BindAgents(application) };
+        var failureDescriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
+        if (context.HasStructuralErrors)
         {
-            return CompilationResult<SemanticCompilation>.Failed(admission);
+            return FailedBinding(context, failureDescriptors);
+        }
+
+        var prepared = ApplyRequiredVersions(context, application, failureDescriptors);
+        var (languageVersion, semanticVersion, failures) = ValidateAtRequiredVersion(prepared.Application, prepared.Language, prepared.Semantic, context.UtcAssessmentYear);
+        if (!failures.IsEmpty)
+        {
+            ReportValidationFailures(context, failures);
+            return FailedBinding(context, prepared.Descriptors);
+        }
+
+        var model = ExecutableSemanticModel.CreateValidated(languageVersion, semanticVersion, prepared.Application);
+        var compilation = AssembleCompilation(context, syntax, documents, model);
+        return context.CompleteCompilation(compilation, prepared.Descriptors, failureDescriptors);
+    }
+
+    static void ReportValidationFailures(BindingContext context, ImmutableArray<SemanticModelValidator.SemanticValidationFailure> failures)
+    {
+        foreach (var failure in failures)
+        {
+            context.Error(DiagnosticCodes.InvalidSemanticBinding, failure.Message, context.FailureLocation(failure));
+        }
+    }
+
+    static CompilationResult<SemanticCompilation> FailedBinding(BindingContext context, ImmutableArray<SemanticTypedContextDescriptor> descriptors) =>
+        CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with
+        {
+            ImplementationRequirements = context.ImplementationRequirements,
+            TypedContextDescriptors = descriptors
+        };
+
+    static SemanticCompilation AssembleCompilation(BindingContext context, ApplicationSyntax syntax, SemanticDocumentSet documents, ExecutableSemanticModel model)
+    {
+        var compiledDocuments = context.UsesV4
+            ? BootstrapEventRevisions(documents, model.Application, context.RefusedSpecifications)
+            : documents;
+        var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
+        return SemanticCompilation.Create(model, compiledDocuments, sourceMap, context.RefusedSpecifications)
+            .WithSpecificationOrigins(context.SpecificationOrigins)
+            .WithEnvironment(EnvironmentRequirements.For(syntax))
+            .WithPassiveReadModels(context.PassiveReadModels)
+            .WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks)
+            .WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
+    }
+
+    CompilationResult<SemanticCompilation> BindCore(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
+    {
+        if (RefuseUnsupportedSyntax(syntax) is { } refusal)
+        {
+            return refusal;
         }
 
         var expansion = SpecificationExamples.Expand(syntax);
@@ -250,69 +197,22 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed(expansion.Diagnostics);
         }
 
-        syntax = expansion.Application;
+        return BindExpandedApplication(applicationName, expansion, documents);
+    }
+
+    CompilationResult<SemanticCompilation> BindExpandedApplication(string applicationName, EffectiveSpecificationApplication expansion, SemanticDocumentSet documents)
+    {
+        var syntax = expansion.Application;
         var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
-        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
+        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps))
+        {
+            steps.TryAdd(step.Effective, step);
+        }
+
         var context = new BindingContext(applicationName, syntax, documents, steps, expansion, _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
         try
         {
-            var application = context.BindApplication();
-            application = application with { Agents = context.BindAgents(application) };
-            var descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
-            var failureDescriptors = descriptors;
-            if (context.HasStructuralErrors)
-            {
-                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
-            }
-
-            var (languageVersion, semanticVersion) = InitialBoundVersions(context);
-
-            if (SelectBoundVersions(application, semanticVersion, context.UsesStoredEventNames) is { } numberVersions)
-            {
-                languageVersion = numberVersions.Language;
-                semanticVersion = numberVersions.Semantic;
-                application = BindingContext.PromoteV2Destinations(application);
-                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
-            }
-
-            if (context.UsesV30 && !semanticVersion.IsAtLeast(SemanticVersion.V30))
-            {
-                languageVersion = LanguageVersion.V30;
-                semanticVersion = SemanticVersion.V30;
-                application = BindingContext.PromoteV2Destinations(application);
-                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
-            }
-
-            EsmSchemaV60Support.EnsureSupported(languageVersion, semanticVersion);
-            var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
-            if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
-                SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
-            {
-                // Only a construct admitted by decision 0098 (a concept converted to another over the same primitive) is refused
-                // below ESM v29 and accepted at it.
-                languageVersion = LanguageVersion.V29;
-                semanticVersion = SemanticVersion.V29;
-                failures = [];
-            }
-
-            if (!failures.IsEmpty)
-            {
-                foreach (var failure in failures)
-                {
-                    context.Error(DiagnosticCodes.InvalidSemanticBinding, failure.Message, context.FailureLocation(failure));
-                }
-
-                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
-            }
-
-            var model = ExecutableSemanticModel.CreateValidated(languageVersion, semanticVersion, application);
-            var compiledDocuments = context.UsesV4
-                ? BootstrapEventRevisions(documents, application, context.RefusedSpecifications)
-                : documents;
-
-            var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap, context.RefusedSpecifications).WithSpecificationOrigins(context.SpecificationOrigins).WithEnvironment(EnvironmentRequirements.For(syntax)).WithPassiveReadModels(context.PassiveReadModels).WithSinks(context.Sinks, context.ReadModelSinks, context.GraphSinks).WithSystemConfigurations(context.SystemConfigurations, context.Secrets);
-            return context.CompleteCompilation(compilation, descriptors, failureDescriptors);
+            return CompileBoundApplication(context, syntax, documents);
         }
         catch (InvalidSemanticContract exception)
         {
@@ -441,9 +341,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal SemanticApplication BindApplication()
         {
-            ReportTopLevelDispositions();
-            foreach (var purpose in syntax.Purposes) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Purpose '{purpose.Name}' is report-only processing metadata and adds no executable behavior.", purpose.Location);
-            foreach (var reference in PurposeReferences(syntax)) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Purpose reference '{reference.Name}' is report-only processing metadata.", reference.Location);
+            ReportAuthoringDispositions();
+            ReportRealizationDispositions();
+            ReportDeferredUiDispositions();
+            ReportDeferredIntegrationDispositions();
+            ReportPurposeDispositions();
             var applicationAddress = SemanticAddress.ForApplication(_applicationIdentity);
             var applicationId = Resolve(applicationAddress, syntax.Location);
 
@@ -452,16 +354,85 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var timeZone = BindApplicationTimeZone();
             BindApplicationContext();
 
+            var triggers = RegisterDeclarations();
+            return FinalizeApplication(BindApplicationBody(applicationId, timeZone, triggers));
+        }
+
+        internal void Error(string code, string message, SourceLocation location, DiagnosticArguments? arguments = null)
+        {
+            var caseValue = expansion.Specifications
+                .Select(specification => specification.Case)
+                .OfType<SpecificationCaseSyntax>()
+                .SelectMany(@case => @case.Values.Select(value => (@case.Name, Value: value)))
+                .FirstOrDefault(value => value.Value.Source.Location.Line > 1 && value.Value.Source.Location == location);
+            if (caseValue.Value is { } parameter)
+            {
+                message = CaseDiagnosticMessage(caseValue.Name, parameter.Property, message);
+                arguments = CaseDiagnosticArguments(caseValue.Name, parameter.Property, code, arguments);
+            }
+
+            _diagnostics.Add(Diagnostic.Error(code, message, location, arguments ?? DiagnosticArguments.Empty));
+        }
+
+        static string CaseDiagnosticMessage(string caseName, string parameter, string message) =>
+            message.StartsWith("Case '", StringComparison.Ordinal) ? message : $"Case '{caseName}' parameter '{parameter}': {message}";
+
+        static DiagnosticArguments? CaseDiagnosticArguments(string caseName, string parameter, string code, DiagnosticArguments? arguments) =>
+            string.Equals(code, DiagnosticCodes.MissingSpecificationProperty, StringComparison.Ordinal) ||
+            string.Equals(code, DiagnosticCodes.InvalidSpecificationCaseValue, StringComparison.Ordinal)
+                ? (arguments ?? DiagnosticArguments.Empty).With("case", DiagnosticArgument.Text(caseName)).With("parameter", DiagnosticArgument.Text(parameter))
+                : arguments;
+
+        static SemanticModule PromoteV2Destinations(SemanticModule module) =>
+            module with { Features = [.. module.Features.Select(PromoteV2Destinations)] };
+
+        static SemanticFeature PromoteV2Destinations(SemanticFeature feature) => feature with
+        {
+            Features = [.. feature.Features.Select(PromoteV2Destinations)],
+            Slices = [.. feature.Slices.Select(slice => slice with { Commands = [.. slice.Commands.Select(PromoteV2Destination)] })]
+        };
+
+        static SemanticCommand PromoteV2Destination(SemanticCommand command)
+        {
+            var source = command.Produces.Where(produced => CanPromoteDestination(command, produced))
+                .Select(produced => produced.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
+            if (command.Destination is not null || source is null || MustKeepGeneratedDestination(command))
+            {
+                return command;
+            }
+
+            var property = command.Properties.Single(value => value.Id == source.Target);
+            return command with { Destination = new(property.Type, source) };
+        }
+
+        static bool CanPromoteDestination(SemanticCommand command, SemanticProducedEvent produced) =>
+            produced.Route is null || (produced.Destination is SemanticResolvedExpression expression &&
+                command.Properties.Any(property => property.Id == expression.Target && property.IsIdentifier));
+
+        static bool MustKeepGeneratedDestination(SemanticCommand command) =>
+            command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && command.Produces.Any(produced => produced.Destination is null);
+
+        ImmutableArray<SemanticApplicationTrigger> RegisterDeclarations()
+        {
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();
             RegisterEventDeclarations();
             RegisterReadModelDeclarations();
             RegisterQueryDeclarations();
+            return triggers;
+        }
+
+        SemanticApplication BindApplicationBody(SemanticId applicationId, SemanticTimeZone? timeZone, ImmutableArray<SemanticApplicationTrigger> triggers)
+        {
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             _boundConcepts = concepts.GroupBy(concept => concept.Id).ToDictionary(group => group.Key, group => group.First());
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
-            if (syntax.CommandReadMode is not null) RegisterDecisionReadProjections(concepts);
+            if (syntax.CommandReadMode is not null)
+            {
+                RegisterDecisionReadProjections(concepts);
+            }
+
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var (stateMachines, workflows) = BindLifecycles(modules);
             var (graphs, graphProjections, graphSpecifications, graphQueries) = BindGraphs(modules);
@@ -469,12 +440,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
             ValidateReactionIdentities(modules, policies);
-            var application = new SemanticApplication(
+            return new SemanticApplication(
                 applicationId,
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || UsesPublicEvents || UsesV10 || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UseVersionedCommandDestinations() || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
                 Audiences = SemanticAvailabilityBinder.Audiences(syntax.Audiences),
@@ -494,6 +465,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 ContextMembers = [.. _contextMembers],
                 CommandReadMode = syntax.CommandReadMode is null ? null : SemanticCommandReadMode.Protected
             };
+        }
+
+        bool UseVersionedCommandDestinations() =>
+            this is { UsesV2: true } or { UsesV3: true } or { UsesV4: true } or { UsesV5: true }
+                or { UsesV6: true } or { UsesV7: true } or { UsesPublicEvents: true } or { UsesV10: true };
+
+        SemanticApplication FinalizeApplication(SemanticApplication application)
+        {
             application = WithoutRefusedSpecifications(application);
             ValidateExampleAdmission(application);
             application = WithEffectiveTimeZone(BindRoutedFixtureSources(WithoutRefusedSpecifications(application)));
@@ -503,40 +482,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             return application;
         }
-
-        internal void Error(string code, string message, SourceLocation location, DiagnosticArguments? arguments = null)
-        {
-            var caseValue = expansion.Specifications.Where(specification => specification.Case is not null).SelectMany(specification => specification.Case!.Values.Select(value => (specification.Case.Name, Value: value))).FirstOrDefault(value => value.Value.Source.Location.Line > 1 && value.Value.Source.Location == location);
-            if (caseValue.Value is not null && !message.StartsWith("Case '", StringComparison.Ordinal)) message = $"Case '{caseValue.Name}' parameter '{caseValue.Value.Property}': {message}";
-            if (caseValue.Value is not null && (code == DiagnosticCodes.MissingSpecificationProperty || code == DiagnosticCodes.InvalidSpecificationCaseValue))
-            {
-                arguments = (arguments ?? DiagnosticArguments.Empty).With("case", DiagnosticArgument.Text(caseValue.Name)).With("parameter", DiagnosticArgument.Text(caseValue.Value.Property));
-            }
-            _diagnostics.Add(Diagnostic.Error(code, message, location, arguments ?? DiagnosticArguments.Empty));
-        }
-
-        static SemanticModule PromoteV2Destinations(SemanticModule module) =>
-            module with { Features = [.. module.Features.Select(PromoteV2Destinations)] };
-
-        static SemanticFeature PromoteV2Destinations(SemanticFeature feature) => feature with
-        {
-            Features = [.. feature.Features.Select(PromoteV2Destinations)],
-            Slices = [.. feature.Slices.Select(slice => slice with
-            {
-                Commands = [.. slice.Commands.Select(command =>
-                {
-                    var source = command.Produces.Where(produced => produced.Route is null || (produced.Destination is SemanticResolvedExpression expression && command.Properties.Any(property => property.Id == expression.Target && property.IsIdentifier))).Select(produced => produced.Destination)
-                        .OfType<SemanticResolvedExpression>().FirstOrDefault();
-                    if (command.Destination is not null || source is null ||
-                        (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && command.Produces.Any(produced => produced.Destination is null)))
-                    {
-                        return command;
-                    }
-                    var property = command.Properties.Single(value => value.Id == source.Target);
-                    return command with { Destination = new(property.Type, source) };
-                })]
-            })]
-        };
 
         void RecordSpecificationErrors(SemanticId id, EffectiveSpecification? origin, int start)
         {
@@ -565,11 +510,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         void Information(string code, string message, SourceLocation location) =>
             _diagnostics.Add(new(DiagnosticSeverity.Information, code, message, location));
 
-        void ReportTopLevelDispositions()
+        void ReportAuthoringDispositions()
         {
-            if (syntax.Domain is not null)
+            if (syntax.Domain is { } domain)
             {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, "A domain declaration is authoring metadata and is not part of ESM v1 behavior.", syntax.Domain.Location);
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, "A domain declaration is authoring metadata and is not part of ESM v1 behavior.", domain.Location);
             }
 
             foreach (var import in syntax.Imports)
@@ -580,74 +525,72 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var knownPolicies = syntax.Policies.Select(policy => policy.Name).ToHashSet(StringComparer.Ordinal);
             foreach (var persona in syntax.Personas ?? [])
             {
-                foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
-                {
-                    Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
-                }
-
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Persona '{persona.Name}' is authoring metadata and is not part of ESM v1 behavior.", persona.Location);
+                ReportPersonaDisposition(persona, knownPolicies);
             }
+        }
 
-            foreach (var sink in syntax.Sinks)
+        void ReportPersonaDisposition(PersonaSyntax persona, HashSet<string> knownPolicies)
+        {
+            foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
             {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Sink '{sink.Name}' is realization metadata and is not part of ESM behavior.", sink.Location);
+                Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
             }
 
-            if (syntax.Authentication is not null)
+            Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Persona '{persona.Name}' is authoring metadata and is not part of ESM v1 behavior.", persona.Location);
+        }
+
+        void ReportRealizationDispositions()
+        {
+            const string Code = DiagnosticCodes.ReportOnlySemanticSyntax;
+            ReportInformation(syntax.Sinks, Code, sink => $"Sink '{sink.Name}' is realization metadata and is not part of ESM behavior.");
+
+            if (syntax.Authentication is { } authentication)
             {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Authentication providers are realization metadata and are not part of ESM v1 behavior.", syntax.Authentication.Location);
+                Information(Code, "Authentication providers are realization metadata and are not part of ESM v1 behavior.", authentication.Location);
             }
 
-            if (syntax.Onboarding is not null)
+            if (syntax.Onboarding is { } onboarding)
             {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Onboarding is realization metadata and is not part of ESM v1 behavior.", syntax.Onboarding.Location);
+                Information(Code, "Onboarding is realization metadata and is not part of ESM v1 behavior.", onboarding.Location);
             }
 
-            foreach (var seed in syntax.Seeds ?? [])
-            {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Event seeding is operational metadata and is not part of ESM v1 behavior.", seed.Location);
-            }
+            ReportInformation(syntax.Seeds ?? [], Code, _ => "Event seeding is operational metadata and is not part of ESM v1 behavior.");
+        }
 
-            foreach (var profile in syntax.UiProfiles ?? [])
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"UI profile '{profile.Name}' is explicitly deferred from the backend ESM v1 profile.", profile.Location);
-            }
-
-            foreach (var pack in syntax.SampleDataPacks)
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Sample data pack '{pack.Name}' is design and preview time only and is explicitly deferred from the backend ESM v1 profile.", pack.Location);
-            }
-
-            foreach (var designSystem in syntax.DesignSystems)
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Design system '{designSystem.Name}' is UI configuration and is explicitly deferred from the backend ESM v1 profile.", designSystem.Location);
-            }
-
-            foreach (var theme in syntax.Themes ?? [])
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Theme '{theme.Name}' is explicitly deferred from the backend ESM v1 profile.", theme.Location);
-            }
-
-            foreach (var layout in syntax.Layouts ?? [])
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Layout '{layout.Name}' is explicitly deferred from the backend ESM v1 profile.", layout.Location);
-            }
+        void ReportDeferredUiDispositions()
+        {
+            const string Code = DiagnosticCodes.DeferredSemanticSyntax;
+            ReportInformation(syntax.UiProfiles ?? [], Code, profile => $"UI profile '{profile.Name}' is explicitly deferred from the backend ESM v1 profile.");
+            ReportInformation(syntax.SampleDataPacks, Code, pack => $"Sample data pack '{pack.Name}' is design and preview time only and is explicitly deferred from the backend ESM v1 profile.");
+            ReportInformation(syntax.DesignSystems, Code, designSystem => $"Design system '{designSystem.Name}' is UI configuration and is explicitly deferred from the backend ESM v1 profile.");
+            ReportInformation(syntax.Themes ?? [], Code, theme => $"Theme '{theme.Name}' is explicitly deferred from the backend ESM v1 profile.");
+            ReportInformation(syntax.Layouts ?? [], Code, layout => $"Layout '{layout.Name}' is explicitly deferred from the backend ESM v1 profile.");
 
             // A behavior is UI behavior: the backend profile does not run it, the way it does not run a screen.
             // Deferred is not dropped - the syntax tree, the printer and the UI consumers carry it in full.
-            foreach (var behavior in syntax.Behaviors)
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Behavior '{behavior.Name}' is explicitly deferred from the backend ESM v1 profile.", behavior.Location);
-            }
+            ReportInformation(syntax.Behaviors, Code, behavior => $"Behavior '{behavior.Name}' is explicitly deferred from the backend ESM v1 profile.");
+        }
 
-            foreach (var exposure in syntax.Exposures)
-            {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Exposure for '{exposure.Owner}' is explicitly deferred from the backend ESM v1 profile.", exposure.Location);
-            }
+        void ReportDeferredIntegrationDispositions()
+        {
+            const string Code = DiagnosticCodes.DeferredSemanticSyntax;
+            ReportInformation(syntax.Exposures, Code, exposure => $"Exposure for '{exposure.Owner}' is explicitly deferred from the backend ESM v1 profile.");
+            ReportInformation(syntax.InstanceContributions, Code, instance => $"Instance contributions for '{instance.Instance}' are explicitly deferred from the backend ESM v1 profile.");
+        }
 
-            foreach (var instance in syntax.InstanceContributions)
+        void ReportPurposeDispositions()
+        {
+            const string Code = DiagnosticCodes.ReportOnlySemanticSyntax;
+            ReportInformation(syntax.Purposes, Code, purpose => $"Purpose '{purpose.Name}' is report-only processing metadata and adds no executable behavior.");
+            ReportInformation(PurposeReferences(syntax), Code, reference => $"Purpose reference '{reference.Name}' is report-only processing metadata.");
+        }
+
+        void ReportInformation<TSyntax>(IEnumerable<TSyntax> declarations, string code, Func<TSyntax, string> message)
+            where TSyntax : SyntaxNode
+        {
+            foreach (var declaration in declarations)
             {
-                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Instance contributions for '{instance.Instance}' are explicitly deferred from the backend ESM v1 profile.", instance.Location);
+                Information(code, message(declaration), declaration.Location);
             }
         }
 
@@ -711,28 +654,29 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
                 foreach (var query in slice.Queries.Where(CanBindPerformedQueryArguments))
                 {
-                    var bound = BindQuery(sliceAddress, query);
-                    if (bound is null)
-                    {
-                        if (query.Performer is not null)
-                        {
-                            AuthorizePerformedQuery(query, module, featurePath);
-                        }
-
-                        continue;
-                    }
-
-                    _queryDeclarations.Add(query, bound with
-                    {
-                        Authorization = EffectiveAuthorization(
-                            query.Authorize,
-                            SemanticQueryArguments.KeyProperties(bound),
-                            module,
-                            featurePath,
-                            queryFilterNames: query.Filters.Select(filter => filter.Name)),
-                        Available = SemanticAvailabilityBinder.Gates(query.Available)
-                    });
+                    RegisterQueryDeclaration(sliceAddress, query, module, featurePath);
                 }
+            }
+        }
+
+        void RegisterQueryDeclaration(SemanticAddress sliceAddress, QuerySyntax query, string module, ImmutableArray<string> featurePath)
+        {
+            if (BindQuery(sliceAddress, query) is { } bound)
+            {
+                _queryDeclarations.Add(query, bound with
+                {
+                    Authorization = EffectiveAuthorization(
+                        query.Authorize,
+                        SemanticQueryArguments.KeyProperties(bound),
+                        module,
+                        featurePath,
+                        queryFilterNames: query.Filters.Select(filter => filter.Name)),
+                    Available = SemanticAvailabilityBinder.Gates(query.Available)
+                });
+            }
+            else if (query.Performer is not null)
+            {
+                AuthorizePerformedQuery(query, module, featurePath);
             }
         }
 
