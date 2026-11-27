@@ -160,6 +160,256 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "gap": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "hr",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Hr"
+              },
+              "title": "HR"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/hr.svg",
+            "title": "HR"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "users",
+              "id": "directory",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Directory",
+                "module": "Hr"
+              },
+              "title": "Directory"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "sitemap",
+              "id": "org",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "OrgChart",
+                "module": "Hr"
+              },
+              "title": "Org chart"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "children": [
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "requests",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "TimeOff",
+                    "module": "Hr"
+                  },
+                  "title": "Requests"
+                },
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "calendar",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "TimeOff.Calendar",
+                    "module": "Hr"
+                  },
+                  "title": "Team calendar"
+                },
+                {
+                  "kind": "NavigationItemSyntax",
+                  "id": "balances",
+                  "target": {
+                    "kind": "NavigationTargetSyntax",
+                    "feature": "TimeOff.Balances",
+                    "module": "Hr"
+                  },
+                  "title": "Balances"
+                }
+              ],
+              "icon": "calendar",
+              "id": "timeoff",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "TimeOff",
+                "module": "Hr"
+              },
+              "title": "Time off"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "check",
+              "id": "onboarding",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Onboarding",
+                "module": "Hr"
+              },
+              "title": "Onboarding"
+            }
+          ],
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer"
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",

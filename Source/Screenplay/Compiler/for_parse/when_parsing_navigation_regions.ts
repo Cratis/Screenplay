@@ -7,7 +7,7 @@ import { ApplicationSyntax } from '../Syntax/Structure';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 
 // Screenplay 6 writes navigation regions as outlets. A module's Screenplay 5 'navigation sidebar|topbar' is an error
-// naming the migration; the layout stays opaque here, so the C# compiler alone reports the layout's region.
+// naming the migration; an invalid legacy layout region is also diagnosed.
 describe('when parsing navigation regions', () => {
     let result: CompilationResult<ApplicationSyntax>;
 
@@ -30,15 +30,15 @@ describe('when parsing navigation regions', () => {
     });
 
     it('should report each module region as removed', () => {
-        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal([`${DiagnosticCodes.RemovedNavigationRegion}@7`, `${DiagnosticCodes.RemovedNavigationRegion}@9`]);
+        result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal([`${DiagnosticCodes.InvalidLayoutSlotName}@3`, `${DiagnosticCodes.RemovedNavigationRegion}@7`, `${DiagnosticCodes.RemovedNavigationRegion}@9`, `${DiagnosticCodes.TemplateCategoryMissing}@1`]);
     });
 
     it('should name the outlet that replaces the region', () => {
-        result.diagnostics[0].message.should.contain("'outlet sidebar extends'");
+        result.diagnostics[1].message.should.contain("'outlet sidebar extends'");
     });
 
     it('should name the migration', () => {
-        result.diagnostics[1].message.should.contain('screenplay migrate --from 5 --to 6');
+        result.diagnostics[2].message.should.contain('screenplay migrate --from 5 --to 6');
     });
 
     it('should keep the module and its features', () => {

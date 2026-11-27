@@ -5,6 +5,53 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": null,
+      "category": "Test",
+      "exposes": [],
+      "name": "Shell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "home",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Shop"
+              },
+              "title": "Home"
+            }
+          ],
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "slot": "side",
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "content",
+          "primary": true,
+          "role": "Page",
+          "routed": true
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "side",
+          "role": "Panel"
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",
@@ -431,6 +478,84 @@
           ],
           "mode": "Extend",
           "name": "shell"
+        }
+      ],
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "Test",
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "Page",
+          "outlets": [
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "mode": "Unspecified",
+              "name": "shell",
+              "slot": "header",
+              "syntaxKind": "Actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [
+                {
+                  "kind": "ToolbarButtonSyntax",
+                  "id": "export",
+                  "isDefault": true,
+                  "runs": "refresh",
+                  "title": "Export"
+                }
+              ],
+              "mode": "Unspecified",
+              "name": "actions",
+              "slot": "header",
+              "syntaxKind": "Actions"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "mode": "Unspecified",
+              "name": "filters",
+              "slot": "header",
+              "syntaxKind": "Filters"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "mode": "Unspecified",
+              "name": "stats",
+              "slot": "header",
+              "syntaxKind": "Stats"
+            },
+            {
+              "kind": "OutletSyntax",
+              "items": [],
+              "mode": "Unspecified",
+              "name": "tabs",
+              "slot": "detail",
+              "syntaxKind": "Tabs"
+            }
+          ],
+          "recursiveSlots": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "header"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "main"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "detail",
+              "optional": true,
+              "role": "Pane"
+            }
+          ],
+          "templateType": null
         }
       ]
     }

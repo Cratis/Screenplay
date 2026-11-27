@@ -157,11 +157,127 @@
       "qualifiedName": "Shipping.InvoiceShippingCleared"
     }
   ],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "gap": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer"
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",
       "authorize": null,
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle and payment tracking of invoices.",
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "arrangement": null,
+          "category": "Dialog",
+          "exposes": [],
+          "name": "RegisterInvoiceDialog",
+          "recursiveSlots": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "actions"
+            }
+          ],
+          "templateType": null
+        }
+      ],
       "features": [
         {
           "kind": "FeatureSyntax",
@@ -5608,7 +5724,57 @@
       ],
       "fileImports": [],
       "isPlacement": false,
-      "name": "Invoicing"
+      "name": "Invoicing",
+      "screenTemplates": [
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "Workspace",
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "MasterDetail",
+          "recursiveSlots": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "sidebar"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "main"
+            }
+          ],
+          "templateType": null
+        },
+        {
+          "kind": "ScreenTemplateSyntax",
+          "arrangement": null,
+          "category": "Workspace",
+          "exposes": [],
+          "fitsSlot": "content",
+          "name": "Dashboard",
+          "recursiveSlots": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "header"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "left"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "right"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "footer"
+            }
+          ],
+          "templateType": null
+        }
+      ]
     }
   ],
   "personas": [

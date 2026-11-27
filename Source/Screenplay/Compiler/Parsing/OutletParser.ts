@@ -15,9 +15,7 @@ import { parseToolbarButton } from './ScreenParser';
 import { replacedForSlotsAndOutlets } from './SlotsAndOutletsMigration';
 import { locationOf, SourceLine } from './SourceLine';
 
-// Mirrors Cratis.Screenplay.Parsing.OutletParser and NavigationParser for what this compiler reads: a module, feature
-// or screen changing an outlet, and its items. Layouts, templates and contributions stay opaque here, so outlet
-// declarations and the checks of what an item names (PLAY0899-PLAY0903) are the C# compiler's.
+// Shared item grammar for outlet overrides, declarations and contributions.
 
 const overrideExpected = 'outlet <name> inherits|extends|overrides';
 const itemsExpected = 'button, group, filter <id> title "<text>" sets <Query>.<param>, tab <id> title "<text>" shows <Screen>, stat <id> title "<text>" value from <Query>.<field> or item <id> title "<text>" target <Module>[.<Feature>]';

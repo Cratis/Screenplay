@@ -16,20 +16,24 @@ static class PersonaCompleteness
     {
         var personas = (application.Personas ?? []).Select(persona => (Persona: persona, Result: PersonaCallers.Synthesize(persona, application))).ToArray();
         if (personas.Length == 0) yield break;
-        var gates = application.Modules.SelectMany(module => Gates(module.Features, module.Authorize is null ? [] : [module.Authorize])).ToArray();
-        var used = gates.SelectMany(gate => gate.Gates.SelectMany(authorize => References(authorize.Requirement))).ToHashSet(StringComparer.Ordinal);
+        var gates = Gates(application).ToArray();
+        var used = ReferencedPolicies(gates);
         var callers = personas.Select(persona => persona.Result.Caller).ToArray();
-        foreach (var (persona, result) in personas)
-        {
-            foreach (var diagnostic in PersonaFindings(persona, result, used)) yield return diagnostic;
-        }
+        foreach (var diagnostic in PersonaFindings(personas, used)) yield return diagnostic;
+        foreach (var diagnostic in GateFindings(gates, callers, application)) yield return diagnostic;
+        foreach (var diagnostic in ScreenFindings(application, gates, callers)) yield return diagnostic;
+    }
+
+    static IEnumerable<Diagnostic> GateFindings(IEnumerable<Gate> gates, IReadOnlyList<SpecificationCallerSyntax?> callers, ApplicationSyntax application)
+    {
         foreach (var gate in gates.Where(gate => gate.Kind != "Screen" && GateDenied(gate, callers, application)))
         {
             yield return Diagnostic.Warning(DiagnosticCodes.GateWithoutPersona, $"{gate.Kind} '{gate.Name}' is definitely denied to every declared persona's synthesized caller.", gate.Node.Location);
         }
-
-        foreach (var diagnostic in ScreenFindings(application, gates, callers)) yield return diagnostic;
     }
+
+    static IEnumerable<Diagnostic> PersonaFindings(IEnumerable<(PersonaSyntax Persona, PersonaCallerResult Result)> personas, IReadOnlySet<string> used) =>
+        personas.SelectMany(persona => PersonaFindings(persona.Persona, persona.Result, used));
 
     static IEnumerable<Diagnostic> PersonaFindings(PersonaSyntax persona, PersonaCallerResult result, IReadOnlySet<string> used)
     {
@@ -59,7 +63,7 @@ static class PersonaCompleteness
             foreach (var screen in slice.Screens)
             {
                 var bindings = Bindings(screen, scope, declarations, byNode);
-                if (bindings.Length > 0 && callers.All(caller => caller is not null && ScreenDenied(bindings, byNode[screen], caller, application)))
+                if (bindings.Length > 0 && ScreenDeniedToAll(bindings, byNode[screen], callers, application))
                 {
                     yield return Diagnostic.Warning(DiagnosticCodes.ScreenWithoutPersona, $"Screen '{screen.Name}' offers nothing to any declared persona: every command and query it binds is definitely denied to every synthesized caller.", screen.Location);
                 }
@@ -80,8 +84,14 @@ static class PersonaCompleteness
         })];
     }
 
+    static bool ScreenDeniedToAll(IEnumerable<IReadOnlyList<AuthorizeSyntax>?> bindings, IReadOnlyList<AuthorizeSyntax> inherited, IReadOnlyList<SpecificationCallerSyntax?> callers, ApplicationSyntax application) =>
+        callers.All(caller => caller is not null && ScreenDenied(bindings, inherited, caller, application));
+
     static bool ScreenDenied(IEnumerable<IReadOnlyList<AuthorizeSyntax>?> bindings, IReadOnlyList<AuthorizeSyntax> inherited, SpecificationCallerSyntax caller, ApplicationSyntax application) =>
         Evaluate(inherited, caller, application) == false || bindings.All(binding => binding is not null && Evaluate([.. inherited, .. binding], caller, application) == false);
+
+    static IEnumerable<Gate> Gates(ApplicationSyntax application) =>
+        application.Modules.SelectMany(module => Gates(module.Features, module.Authorize is null ? [] : [module.Authorize]));
 
     static IEnumerable<Gate> Gates(IEnumerable<FeatureSyntax> features, IReadOnlyList<AuthorizeSyntax> inherited)
     {
@@ -102,6 +112,9 @@ static class PersonaCompleteness
         foreach (var screen in slice.Screens) yield return new("Screen", screen.Name, screen, inherited);
     }
 
+    static HashSet<string> ReferencedPolicies(IEnumerable<Gate> gates) =>
+        gates.SelectMany(gate => gate.Gates.SelectMany(authorize => References(authorize.Requirement))).ToHashSet(StringComparer.Ordinal);
+
     static IEnumerable<string> References(PolicyRequirementSyntax requirement) => requirement switch
     {
         PolicyReferenceSyntax reference => [reference.Name],
@@ -121,12 +134,17 @@ static class PersonaCompleteness
 
     static bool? Condition(PolicyConditionSyntax condition, SpecificationCallerSyntax caller) => condition switch
     {
+        NotPolicyConditionSyntax not => !Condition(not.Operand, caller),
+        LogicalPolicyConditionSyntax logical => Combine(Condition(logical.Left, caller), logical.Operator, Condition(logical.Right, caller)),
+        _ => AtomicCondition(condition, caller)
+    };
+
+    static bool? AtomicCondition(PolicyConditionSyntax condition, SpecificationCallerSyntax caller) => condition switch
+    {
         AuthenticatedConditionSyntax => caller.Authenticated,
         AnonymousConditionSyntax => true,
         RoleConditionSyntax role => caller.Roles.Contains(role.Role, StringComparer.Ordinal),
         ClaimConditionSyntax claim => Claim(claim, caller),
-        NotPolicyConditionSyntax not => !Condition(not.Operand, caller),
-        LogicalPolicyConditionSyntax logical => Combine(Condition(logical.Left, caller), logical.Operator, Condition(logical.Right, caller)),
         _ => null
     };
 

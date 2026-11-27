@@ -2,14 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, beforeEach, it } from 'vitest';
-import { CompilationResult, parse } from '../ScreenplayCompiler';
+import { CompilationResult, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import type { NavigationItemSyntax, OutletFilterSyntax, OutletGroupSyntax, OutletStatSyntax, OutletTabSyntax } from '../Syntax/Outlets';
 import type { ToolbarButtonSyntax } from '../Syntax/Screens';
 
-// A module, feature or slice screen changes an outlet its template declares; the declaring layout and template stay
-// opaque to this compiler, as do the checks of what an item names.
+const parse = (source: string) => parseForAuthoring(source, undefined, undefined, false);
+
+// Parsing recovers authored outlet overrides independently of declaration-dependent validation.
 describe('when parsing outlets', () => {
     let result: CompilationResult<ApplicationSyntax>;
 

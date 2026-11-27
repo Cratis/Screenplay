@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileApplication } from '../PlayApplicationAssembly';
 
-const shell = 'import "feature.play"\nmodule Shop\n  outlet sidebar extends\n    item projects title "Projects" target Shop.Projects screen Projects';
+const shell = 'import "feature.play"\nlayout Shell\n  outlet sidebar of navigation\nmodule Shop\n  outlet sidebar extends\n    item projects title "Projects" target Shop.Projects screen Projects';
 const feature = 'module Shop\n  feature Projects\n    slice StateView Listing\n      screen Projects';
 
 describe('when validating assembled navigation screen targets', () => {

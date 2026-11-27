@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { validateNavigationScreenTargets } from './Parsing/NavigationScreenTargetValidator';
+import { validateOutletPresentation } from './Parsing/OutletPresentationValidator';
+import { validateTemplateCategories } from './Parsing/TemplateCategoryValidator';
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { validateProvides } from './Parsing/ProvideValidator';
 import { validateAvailability, validateAvailabilityInvocations } from './Parsing/AvailabilityValidator';
@@ -111,7 +112,8 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
 function validateApplicationContracts(value: ApplicationSyntax, context: ParserContext): ApplicationSyntax {
     validateApplicationHandlers(value, context);
     validateIdentity(value, context);
-    validateNavigationScreenTargets(value, context);
+    validateOutletPresentation(value, context);
+    validateTemplateCategories(value, context);
     validateProvides(value, context);
     validateAvailability(value, context);
     validateAvailabilityInvocations(value, context);

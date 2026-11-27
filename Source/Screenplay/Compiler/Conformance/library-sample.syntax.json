@@ -73,6 +73,27 @@
       "kind": "ModuleSyntax",
       "authorize": null,
       "description": "Books, the members who borrow them, and the loans between them",
+      "dialogTemplates": [
+        {
+          "kind": "DialogTemplateSyntax",
+          "arrangement": null,
+          "category": "Dialog",
+          "exposes": [],
+          "name": "Dialog",
+          "recursiveSlots": [],
+          "slots": [
+            {
+              "kind": "SlotSyntax",
+              "name": "body"
+            },
+            {
+              "kind": "SlotSyntax",
+              "name": "actions"
+            }
+          ],
+          "templateType": null
+        }
+      ],
       "features": [
         {
           "kind": "FeatureSyntax",

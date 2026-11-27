@@ -2,13 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, beforeEach, it } from 'vitest';
-import { CompilationResult, parse } from '../ScreenplayCompiler';
+import { CompilationResult, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
 import { ScreenShowSyntax, ScreenTemplateReferenceSyntax, ScreenToolbarSyntax, ToolbarButtonSyntax } from '../Syntax/Screens';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 
-// Cratis/Screenplay#1178: where a slice's screen fits, how a hook opens its slice and what a template slot shows, read the
-// way the C# compiler reads them. Whether what a line names exists is the C# compiler's check.
+const parse = (source: string) => parseForAuthoring(source, undefined, undefined, false);
+
+// Parsing placement and hooks independently of declaration-dependent validation.
 describe('when parsing placement and hooks', () => {
     let result: CompilationResult<ApplicationSyntax>;
     let feature: FeatureSyntax;

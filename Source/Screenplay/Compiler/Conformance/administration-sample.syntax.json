@@ -146,6 +146,224 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "gap": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "admin",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Admin"
+              },
+              "title": "Administration"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/admin.svg",
+            "title": "Administration"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "users",
+              "id": "users",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Users",
+                "module": "Admin"
+              },
+              "title": "Users"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "shield",
+              "id": "roles",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Roles",
+                "module": "Admin"
+              },
+              "title": "Roles"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "cog",
+              "id": "settings",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Settings",
+                "module": "Admin"
+              },
+              "title": "Settings"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "list",
+              "id": "audit",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Audit",
+                "module": "Admin"
+              },
+              "title": "Audit log"
+            }
+          ],
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer"
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",

@@ -1,0 +1,111 @@
+numbers exact
+
+concept RecordId : Uuid
+
+layout Shell
+  category application
+  type shell
+  exposes selected RecordId
+  slot nested
+  scopes application
+  navigation panel optional
+  main page routed by record primary
+  aside pane
+  outlet actions of actions for item in main
+    default save title "Save" icon check
+    default more title "More"
+  outlet filters of filters
+    default search title "Search" sets Records.name
+  outlet tabs of tabs
+    default overview title "Overview" shows Overview
+  outlet stats of stats
+    default total title "Total" value from Summary.count
+  outlet sidebar of navigation in navigation
+    logo image "/logo.svg" title "Workshop"
+    default work title "Work" target Work.Tasks
+      item tasks title "Tasks" target Work.Tasks
+
+  arrangement flow
+    row gap 12
+      navigation width 240
+      main grow 2
+      aside span 2
+
+    when width compact
+      column
+        main
+        navigation
+
+module Work
+
+  screen template List
+    fits slot main
+
+    category lists
+    type catalogue
+    exposes selected RecordId
+    slot recursive
+    display "Record list"
+    description "A reusable list"
+    scopes module, feature, slice stateview
+    body page primary
+    detail pane optional
+    content body
+      title "Records"
+    outlet actions of actions for screen
+      default inspect title "Inspect"
+
+    arrangement flow
+      column gap 8
+        body grow
+        detail height 200
+
+  dialog template Editor
+    display "Edit record"
+    description "A reusable editor"
+    scopes slice statechange
+    form pane
+
+    arrangement freeform
+      variant width regular, height regular
+        place form at 0,0 size fill,600
+
+      variant width compact, height compact
+        place form hidden
+
+  contribute to sidebar
+    item records title "Records" target Work.Tasks
+
+  contribute to actions
+    navigate to Overview
+    id overview
+    icon eye
+    presentation button
+    group main
+    destination slot detail
+    label "Overview"
+    order 2
+
+  feature Tasks
+
+    slice StateView Listing
+
+      query Records => Row[]
+        filter name String
+
+      query Summary => Counts
+
+      readmodel Row
+        id RecordId key
+        name String
+
+      readmodel Counts
+        count Int
+
+    contribute to actions
+      button inspect title "Inspect"
+
+    screen Overview
+      template List
+        body
+          title "Overview"

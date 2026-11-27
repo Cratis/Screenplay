@@ -2,9 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, it } from 'vitest';
-import { parse } from '../ScreenplayCompiler';
+import { parseForAuthoring } from '../ScreenplayCompiler';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import type { NavigationItemSyntax, OutletFilterSyntax, OutletGroupSyntax, OutletStatSyntax, OutletTabSyntax } from '../Syntax/Outlets';
+
+const parse = (source: string) => parseForAuthoring(source, undefined, undefined, false);
 
 // Every malformed outlet item reports the same code the C# compiler does, and the well formed parts survive.
 describe('when parsing outlet items that are wrong', () => {

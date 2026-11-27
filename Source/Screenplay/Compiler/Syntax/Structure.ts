@@ -31,6 +31,8 @@ import type { ShapeSyntax, UsesScreenSyntax } from './Shapes';
 import type { OutletSyntax } from './Outlets';
 import { SpecificationExampleSyntax, SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
+import { BehaviorSyntax } from './Interactions';
+import type { ContributionSyntax, DialogTemplateSyntax, LayoutSyntax, ScreenTemplateSyntax } from './Layouts';
 import { SourceOptions } from './SourceOptions';
 import { TranslationDirection } from './TranslationDirection';
 import { PurposeReferenceSyntax, PurposeSyntax } from './Purposes';
@@ -95,6 +97,7 @@ export interface DependsOnSyntax extends SyntaxNode {
 }
 
 export interface FeatureSyntax extends SyntaxNode {
+    readonly contributions?: readonly ContributionSyntax[];
     readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
@@ -119,6 +122,9 @@ export interface FeatureSyntax extends SyntaxNode {
 }
 
 export interface ModuleSyntax extends SyntaxNode {
+    readonly screenTemplates?: readonly ScreenTemplateSyntax[];
+    readonly dialogTemplates?: readonly DialogTemplateSyntax[];
+    readonly contributions?: readonly ContributionSyntax[];
     readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly provides?: readonly ProvideSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
@@ -153,6 +159,8 @@ export interface ContextMemberSyntax extends SyntaxNode {
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
+    readonly behaviors?: readonly BehaviorSyntax[];
+    readonly layouts?: readonly LayoutSyntax[];
     readonly agents?: AgentsSyntax | null;
     // The 'audience' and 'availability' declarations, written only when present.
     readonly audiences?: readonly AudienceSyntax[];

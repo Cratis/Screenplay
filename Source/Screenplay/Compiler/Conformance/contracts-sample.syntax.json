@@ -46,6 +46,212 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "gap": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "contracts",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Contracts"
+              },
+              "title": "Contracts"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/contracts.svg",
+            "title": "Contracts"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "folder",
+              "id": "contracts",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Contracts",
+                "module": "Contracts"
+              },
+              "title": "Contracts"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "chart",
+              "id": "timeline",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Timeline",
+                "module": "Contracts"
+              },
+              "title": "Timeline"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "check",
+              "id": "needsAttention",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "NeedsAttention",
+                "module": "Contracts"
+              },
+              "title": "Needs attention"
+            }
+          ],
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer"
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",

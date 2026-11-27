@@ -7,7 +7,7 @@ import { parse } from '../ScreenplayCompiler';
 function source(scope: string, selection = ' screen Projects', fits = '', extra = ''): string {
     const screen = `screen Shared\n  outlet sidebar extends\n    item selected title "Selected" target Shop.Projects${selection}\n`;
     const indent = (spaces: number) => screen.trimEnd().split('\n').map(line => ' '.repeat(spaces) + line).join('\n') + '\n';
-    return (scope === 'application' ? screen : '') +
+    return 'layout Shell\n  outlet sidebar of navigation\n' + (scope === 'application' ? screen : '') +
         'module Shop\n' +
         (scope === 'module' ? indent(2) : '') +
         '  feature Projects\n' +

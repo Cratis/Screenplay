@@ -1,0 +1,92 @@
+numbers exact
+domain Interactions
+
+behavior ConfirmChanges
+  description "Confirm changes"
+  order -2
+  parameter message String
+  parameter target
+  file behaviors/confirm.ts
+  on click
+    confirm message
+      on success
+        execute Save
+          with id from item.id
+          on failure
+            notify error "Save failed"
+      on failure
+        notify warning $strings.cancelled
+  on double click
+    when item.status == "ready"
+      execute Save
+      navigate to Details
+        with id from item.id
+    when item.status == "new"
+      open dialog Editor
+        with id from item.id
+        on result
+          set selected to $result.id
+          close dialog
+    otherwise
+      notify info "Not ready"
+      navigate back
+  on event Changed
+    refresh Items
+  on interval 5 minutes
+    raise Tick
+  on Tick
+    set selected to item.id
+
+layout Shell
+  category Test
+  main
+  on enter
+    refresh Items
+  uses ConfirmChanges
+    message "Proceed?"
+    target item.id
+
+module Work
+  screen template Workspace
+    category Test
+    fits slot main
+    content
+    on load
+      notify info $strings.loaded
+    uses ConfirmChanges
+      message "Workspace"
+      target item.id
+
+  dialog template Editor
+    category Test
+    content
+    on unload
+      refresh Items
+    uses ConfirmChanges
+      message "Editor"
+      target item.id
+
+  feature Items
+    slice StateView Details
+      screen Details
+        on enter
+          refresh Items
+        uses ConfirmChanges
+          message "Screen"
+          target item.id
+        table Item
+          column id
+          on select
+            where item.enabled
+            execute Save
+              with id from item.id
+          uses ConfirmChanges
+            message "Table"
+            target item.id
+        component Controls.Picker picker
+          on change
+            execute Save
+          uses ConfirmChanges
+            message "Component"
+            target item.id
+        title "Sibling"

@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { ArrangementContainerSyntax, ArrangementNodeSyntax, ArrangementOverrideSyntax, ArrangementSlotSyntax, ArrangementSyntax, ContributionSyntax, DialogTemplateSyntax, LayoutSyntax, PlaceSyntax, ScreenTemplateSyntax, SlotSyntax, TemplateSlotContentSyntax, VariantSyntax } from './Layouts';
 import { StorylineStepSyntax, StorylineSyntax } from './Storylines';
+import { InteractionSyntaxWalker } from './InteractionSyntaxWalker';
 import type { ScreenProvisionSyntax, ShapeSyntax, UsesScreenSyntax } from './Shapes';
 import { AgentOperationSyntax, AgentsSyntax, AgentTokensSyntax } from './Agents';
 import { GraphHandlerSyntax, GraphEdgeBlockSyntax, GraphNodeBlockSyntax, GraphProjectionSyntax, GraphQuerySyntax, GraphSyntax, SpecificationGraphEdgeSyntax, SpecificationGraphElementSyntax, SpecificationGraphSyntax } from './Graphs';
@@ -57,7 +59,7 @@ import { ReadsSyntax, ConcurrencySyntax, ReducerSyntax, ReducerRuleSyntax, FormS
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
 // method calls visitNode and then walks the node's children, so an emitter overrides only the nodes it
 // cares about - and calls the base method when it still wants the children walked.
-export abstract class ScreenplaySyntaxWalker {
+export abstract class ScreenplaySyntaxWalker extends InteractionSyntaxWalker {
     visitNode(_node: SyntaxNode): void {}
 
     visitApplication(syntax: ApplicationSyntax): void {
@@ -109,6 +111,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.agents != null) this.visitAgents(syntax.agents);
         syntax.designSystems?.forEach(node => this.visitDesignSystem(node));
         syntax.themes?.forEach(node => this.visitTheme(node));
+        this.visitApplicationInteractions(syntax);
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
@@ -357,6 +360,8 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        this.visitModuleInteractions(syntax);
+        syntax.contributions?.forEach(node => this.visitContribution(node));
         syntax.outlets?.forEach(node => this.visitOutlet(node));
         syntax.screens?.forEach(node => this.visitScreen(node));
         syntax.features.forEach(node => this.visitFeature(node));
@@ -372,6 +377,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
+        syntax.contributions?.forEach(node => this.visitContribution(node));
         syntax.screens?.forEach(node => this.visitScreen(node));
         syntax.slices.forEach(node => this.visitSlice(node));
         syntax.outlets?.forEach(node => this.visitOutlet(node));
@@ -975,8 +981,58 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.outlets?.forEach(node => this.visitOutlet(node));
     }
 
+    visitLayout(syntax: LayoutSyntax): void { this.visitLayoutMembers(syntax); }
+    visitScreenTemplate(syntax: ScreenTemplateSyntax): void { this.visitLayoutMembers(syntax); }
+    visitDialogTemplate(syntax: DialogTemplateSyntax): void { this.visitLayoutMembers(syntax); }
+
+    private visitLayoutMembers(syntax: LayoutSyntax | ScreenTemplateSyntax | DialogTemplateSyntax): void {
+        this.visitNode(syntax);
+        syntax.slots.forEach(node => this.visitSlot(node));
+        if (syntax.arrangement != null) this.visitArrangement(syntax.arrangement);
+        this.visitAttachments(syntax.behaviors, syntax.usedBehaviors);
+        if ('content' in syntax) syntax.content?.forEach(node => this.visitTemplateSlotContent(node));
+        syntax.outlets?.forEach(node => this.visitOutlet(node));
+    }
+
+    visitSlot(syntax: SlotSyntax): void { this.visitNode(syntax); }
+    visitTemplateSlotContent(syntax: TemplateSlotContentSyntax): void {
+        this.visitNode(syntax);
+        syntax.directives.forEach(node => this.visitScreenDirective(node));
+    }
+    visitArrangement(syntax: ArrangementSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.root != null) this.visitArrangementNode(syntax.root);
+        syntax.overrides?.forEach(node => this.visitArrangementOverride(node));
+        syntax.variants?.forEach(node => this.visitVariant(node));
+    }
+    visitArrangementNode(syntax: ArrangementNodeSyntax): void {
+        if (syntax.kind === 'ArrangementContainerSyntax') this.visitArrangementContainer(syntax);
+        else this.visitArrangementSlot(syntax);
+    }
+    visitArrangementContainer(syntax: ArrangementContainerSyntax): void {
+        this.visitNode(syntax);
+        syntax.children.forEach(node => this.visitArrangementNode(node));
+    }
+    visitArrangementSlot(syntax: ArrangementSlotSyntax): void { this.visitNode(syntax); }
+    visitArrangementOverride(syntax: ArrangementOverrideSyntax): void {
+        this.visitNode(syntax);
+        this.visitArrangementNode(syntax.root);
+    }
+    visitVariant(syntax: VariantSyntax): void {
+        this.visitNode(syntax);
+        syntax.places.forEach(node => this.visitPlace(node));
+    }
+    visitPlace(syntax: PlaceSyntax): void { this.visitNode(syntax); }
+    visitContribution(syntax: ContributionSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.destination != null) this.visitNode(syntax.destination);
+        if (syntax.navigate != null) this.visitScreenDirective(syntax.navigate);
+        syntax.items.forEach(node => this.visitOutletItem(node));
+    }
+
     visitOutlet(syntax: OutletSyntax): void {
         this.visitNode(syntax);
+        if (syntax.logo != null) this.visitNode(syntax.logo);
         syntax.items.forEach(item => this.visitOutletItem(item));
         syntax.hides?.forEach(node => this.visitNode(node));
     }
@@ -1001,6 +1057,7 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitScreenDirective(syntax: ScreenDirectiveSyntax): void {
+        if (this.visitInteractionDirective(syntax)) return;
         if (syntax.kind === 'ScreenGuardedActionSyntax') {
             this.visitScreenGuardedAction(syntax);
             return;
@@ -1026,15 +1083,8 @@ export abstract class ScreenplaySyntaxWalker {
             case 'ScreenSectionSyntax':
                 syntax.directives.forEach(node => this.visitScreenDirective(node));
                 break;
-            case 'ScreenTableSyntax':
-                syntax.columns.forEach(node => this.visitNode(node));
-                if (syntax.rowClick !== null) this.visitScreenDirective(syntax.rowClick);
-                break;
             case 'ScreenSummarySyntax':
                 syntax.fields.forEach(node => this.visitNode(node));
-                break;
-            case 'ScreenComponentSyntax':
-                this.visitScreenComponentChildren(syntax);
                 break;
             case 'ScreenToolbarSyntax':
                 this.visitScreenToolbarChildren(syntax);
@@ -1059,7 +1109,7 @@ export abstract class ScreenplaySyntaxWalker {
         });
     }
 
-    private visitScreenComponentChildren(syntax: ScreenComponentSyntax): void {
+    protected visitScreenComponentChildren(syntax: ScreenComponentSyntax): void {
         if (syntax.context !== null) this.visitUiBinding(syntax.context);
         syntax.properties.forEach(property => this.visitComponentProperty(property));
         syntax.exposes.forEach(exposed => this.visitComponentExposedValue(exposed));

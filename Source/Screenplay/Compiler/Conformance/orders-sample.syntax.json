@@ -81,6 +81,212 @@
   "eventSources": [],
   "fileImports": [],
   "imports": [],
+  "layouts": [
+    {
+      "kind": "LayoutSyntax",
+      "arrangement": {
+        "kind": "ArrangementSyntax",
+        "mode": "Flow",
+        "overrides": [
+          {
+            "kind": "ArrangementOverrideSyntax",
+            "height": null,
+            "root": {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 48,
+                      "name": "topbar",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": 64,
+                      "name": "navigation",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Column"
+                }
+              ],
+              "syntaxKind": "Flat"
+            },
+            "width": "compact"
+          }
+        ],
+        "root": {
+          "kind": "ArrangementContainerSyntax",
+          "children": [
+            {
+              "kind": "ArrangementContainerSyntax",
+              "children": [
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 56,
+                  "name": "topbar",
+                  "span": null,
+                  "width": null
+                },
+                {
+                  "kind": "ArrangementContainerSyntax",
+                  "children": [
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": false,
+                      "height": null,
+                      "name": "navigation",
+                      "span": null,
+                      "width": 240
+                    },
+                    {
+                      "kind": "ArrangementSlotSyntax",
+                      "grow": true,
+                      "height": null,
+                      "name": "content",
+                      "span": null,
+                      "width": null
+                    }
+                  ],
+                  "gap": null,
+                  "syntaxKind": "Row"
+                },
+                {
+                  "kind": "ArrangementSlotSyntax",
+                  "grow": false,
+                  "height": 32,
+                  "name": "footer",
+                  "span": null,
+                  "width": null
+                }
+              ],
+              "gap": null,
+              "syntaxKind": "Column"
+            }
+          ],
+          "syntaxKind": "Flat"
+        }
+      },
+      "category": "Shell",
+      "exposes": [],
+      "name": "AppShell",
+      "outlets": [
+        {
+          "kind": "OutletSyntax",
+          "items": [],
+          "mode": "Unspecified",
+          "name": "Navigation",
+          "slot": "navigation",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "id": "orders",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": null,
+                "module": "Orders"
+              },
+              "title": "Orders"
+            }
+          ],
+          "logo": {
+            "kind": "NavigationLogoSyntax",
+            "image": "/assets/orders.svg",
+            "title": "Orders"
+          },
+          "mode": "Unspecified",
+          "name": "topbar",
+          "syntaxKind": "Navigation"
+        },
+        {
+          "kind": "OutletSyntax",
+          "items": [
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "shopping-cart",
+              "id": "orders",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Orders",
+                "module": "Orders"
+              },
+              "title": "Orders"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "columns",
+              "id": "fulfilment",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Fulfilment",
+                "module": "Orders"
+              },
+              "title": "Fulfilment"
+            },
+            {
+              "kind": "NavigationItemSyntax",
+              "icon": "calendar",
+              "id": "deliveries",
+              "isDefault": true,
+              "target": {
+                "kind": "NavigationTargetSyntax",
+                "feature": "Deliveries",
+                "module": "Orders"
+              },
+              "title": "Deliveries"
+            }
+          ],
+          "mode": "Unspecified",
+          "name": "sidebar",
+          "syntaxKind": "Navigation"
+        }
+      ],
+      "recursiveSlots": [],
+      "slots": [
+        {
+          "kind": "SlotSyntax",
+          "name": "topbar"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "navigation"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "content"
+        },
+        {
+          "kind": "SlotSyntax",
+          "name": "footer"
+        }
+      ],
+      "templateType": null
+    }
+  ],
   "modules": [
     {
       "kind": "ModuleSyntax",
