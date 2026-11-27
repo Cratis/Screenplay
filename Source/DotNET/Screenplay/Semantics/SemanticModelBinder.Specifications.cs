@@ -67,7 +67,7 @@ public sealed partial class SemanticModelBinder
 
         static SemanticTypeReference? UniqueSpecificationSourceType(SemanticTypeReference[] types) => types.Length == 1 ? types[0] : null;
 
-        static bool HasUnroutedEventConflict(SpecificationEventSyntax value, bool expectedFact) => !expectedFact || value.Stream is not null;
+        static bool HasUnroutedEventConflict(SpecificationEventSyntax value, SpecificationEventRole role) => role != SpecificationEventRole.Expected || value.Stream is not null;
 
         SemanticSpecification? BindSpecification(
             SemanticAddress slice,
@@ -208,7 +208,12 @@ public sealed partial class SemanticModelBinder
 
         void RecordSpecificationOrigin(SemanticId id, EffectiveSpecification? origin)
         {
-            if (origin is not null && (origin.Case is not null || origin.Steps.Any(step => step.Example is not null)))
+            if (origin is null)
+            {
+                return;
+            }
+
+            if (origin.Case is not null || origin.Steps.Any(step => step.Example is not null))
             {
                 _specificationOrigins.TryAdd(id, origin);
             }
@@ -221,10 +226,10 @@ public sealed partial class SemanticModelBinder
             SemanticCommand? command,
             (SpecificationQuerySyntax Syntax, SemanticKeyedQuery? Query)[] queries)
         {
-            var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).OfType<SemanticSpecificationEvent>().ToImmutableArray();
+            var givenEvents = specification.Given.Select(value => BindSpecificationEventStep(value, commands, SpecificationEventRole.Historical)).OfType<SemanticSpecificationEvent>().ToImmutableArray();
             var givenReadModels = BindSpecificationReadModels(specification.GivenReadModels);
             var when = specification.When is null ? null : BindRoutedSpecificationCommand(specification.When, command!);
-            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands, expectedFact: true)).OfType<SemanticSpecificationEvent>().ToImmutableArray();
+            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEventStep(value, commands, SpecificationEventRole.Expected)).OfType<SemanticSpecificationEvent>().ToImmutableArray();
             var thenReadModels = BindSpecificationReadModels(specification.ThenReadModels);
             var thenQueries = queries.Select(value => BindSpecificationQuery(value.Syntax, value.Query!)).OfType<SemanticSpecificationQueryResult>().ToImmutableArray();
             var thenAbsentReadModels = BindAbsentReadModels(specification);
@@ -382,20 +387,31 @@ public sealed partial class SemanticModelBinder
 
         SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
         {
-            var bound = BindSpecificationEvent(value, commands, historicalFact: false);
+            var bound = BindSpecificationEventStep(value, commands, SpecificationEventRole.Append);
             return bound is null ? null : new(bound.EventContract, bound.Values) { EventSource = bound.EventSource, Route = bound.Route };
         }
 
-        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false, bool expectedFact = false, SemanticTypeReference? subjectKey = null)
+        SemanticSpecificationEvent? BindSpecificationEvent(
+            SpecificationEventSyntax value,
+            Dictionary<string, SemanticCommand> commands,
+            bool historicalFact = false,
+            SemanticTypeReference? subjectKey = null) =>
+            BindSpecificationEventStep(value, commands, historicalFact ? SpecificationEventRole.Historical : SpecificationEventRole.Append, subjectKey);
+
+        SemanticSpecificationEvent? BindSpecificationEventStep(
+            SpecificationEventSyntax value,
+            Dictionary<string, SemanticCommand> commands,
+            SpecificationEventRole role,
+            SemanticTypeReference? subjectKey = null)
         {
-            ValidateSpecificationEventRoute(value, expectedFact);
+            ValidateSpecificationEventRoute(value, role);
             if (!_events.TryGetValue(ShortName(value.EventType), out var @event))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification event '{value.EventType}' is unresolved.", value.Location);
                 return null;
             }
 
-            if (!ValidateSpecificationEventRevision(value, @event, historicalFact))
+            if (!ValidateSpecificationEventRevision(value, @event, role == SpecificationEventRole.Historical))
             {
                 return null;
             }
@@ -412,18 +428,23 @@ public sealed partial class SemanticModelBinder
                 EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type, value.EventType),
                 Route = BindFixtureRoute(value),
                 Unrouted = value.NoStream is not null,
-                ExpectedTags = expectedFact ? BindExpectedTags(value) : null
+                ExpectedTags = role == SpecificationEventRole.Expected ? BindExpectedTags(value) : null
             };
         }
 
-        void ValidateSpecificationEventRoute(SpecificationEventSyntax value, bool expectedFact)
+        void ValidateSpecificationEventRoute(SpecificationEventSyntax value, SpecificationEventRole role)
         {
-            if (value.NoStream is { } noStream && HasUnroutedEventConflict(value, expectedFact))
+            if (value.NoStream is { } noStream && HasUnroutedEventConflict(value, role))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, "'no stream' is only valid on a then event and cannot accompany a route.", noStream.Location);
             }
 
-            if (!expectedFact && value.Stream is { } stream && value.For is null)
+            if (role == SpecificationEventRole.Expected)
+            {
+                return;
+            }
+
+            if (value.Stream is { } stream && value.For is null)
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, "A routed given or when append event requires 'for <literal>'.", stream.Location);
             }
@@ -674,6 +695,13 @@ public sealed partial class SemanticModelBinder
             var inferredResultKey = !query.KeyParts.IsEmpty || (identifiers.Length == 1 && query.KeyProperty == identifiers[0].Id) ? key : null;
             return value.Results.Select(result => BindReadModelState(readModel, result.Properties, result.Location, inferredResultKey))
                 .OfType<SemanticSpecificationReadModel>().ToImmutableArray();
+        }
+
+        enum SpecificationEventRole
+        {
+            Historical,
+            Append,
+            Expected
         }
     }
 }
