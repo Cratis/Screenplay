@@ -74,117 +74,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         return compilation.WithRefusedSpecifications([.. compilation.RefusedSpecifications.Select(refusal => refusal with { Diagnostics = [.. refusal.Diagnostics.Select(diagnostic => diagnostics[diagnostic])] })]);
     }
 
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
-    {
-        if (EsmSchemaV60Support.SelectBoundVersions(application) is { } availability) return availability;
-        if (SemanticModelValidator.UsesAbilityInvocations(application)) return (LanguageVersion.V51, SemanticVersion.V51);
-        if (!application.Systems.IsDefaultOrEmpty) return (LanguageVersion.V50, SemanticVersion.V50);
-        if (SemanticModelValidator.UsesCallerIdentity(application)) return (LanguageVersion.V49, SemanticVersion.V49);
-        if (application.Agents is not null) return (LanguageVersion.V48, SemanticVersion.V48);
-        if (SemanticModelValidator.UsesNarrowing(application)) return (LanguageVersion.V47, SemanticVersion.V47);
-        if (SemanticModelValidator.UsesPolicyInputs(application)) return (LanguageVersion.V46, SemanticVersion.V46);
-        if (SemanticModelValidator.UsesTextOperators(application)) return (LanguageVersion.V45, SemanticVersion.V45);
-        if (SemanticModelValidator.UsesStatePolicies(application)) return (LanguageVersion.V44, SemanticVersion.V44);
-        if (SemanticModelValidator.UsesProjectionParity(application)) return (LanguageVersion.V43, SemanticVersion.V43);
-        if (SemanticModelValidator.UsesGraphForEach(application)) return (LanguageVersion.V41, SemanticVersion.V41);
-        if (SemanticModelValidator.UsesGraphQueries(application)) return (LanguageVersion.V40, SemanticVersion.V40);
-        if (SemanticModelValidator.UsesGraphs(application)) return (LanguageVersion.V38, SemanticVersion.V38);
-        if (SemanticClockUsage.Uses(application)) return (LanguageVersion.V37, SemanticVersion.V37);
-        if (SemanticModelValidator.UsesLifecycles(application)) return (LanguageVersion.V36, SemanticVersion.V36);
-        if (SemanticModelValidator.UsesHandlerResultV2(application)) return (LanguageVersion.V35, SemanticVersion.V35);
-        if (SemanticModelValidator.UsesThenInvocations(application)) return (LanguageVersion.V34, SemanticVersion.V34);
-        if (SemanticModelValidator.UsesEventSourceCaptureKeys(application)) return (LanguageVersion.V33, SemanticVersion.V33);
-        return SelectVersionsBeforeEventSourceCaptureKeys(application, semanticVersion, usesStoredEventNames);
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectVersionsBeforeEventSourceCaptureKeys(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
-    {
-        if (SemanticModelValidator.UsesTypedCaptureKeys(application)) return (LanguageVersion.V32, SemanticVersion.V32);
-        if (SemanticModelValidator.UsesAnonymousPolicies(application)) return (LanguageVersion.V31, SemanticVersion.V31);
-        if (SemanticModelValidator.UsesAcmeSecondAdmissions(application)) return (LanguageVersion.V30, SemanticVersion.V30);
-        if (SemanticModelValidator.UsesAcmeAdmissions(application)) return (LanguageVersion.V29, SemanticVersion.V29);
-        if (SemanticModelValidator.UsesUuidComparisons(application)) return (LanguageVersion.V28, SemanticVersion.V28);
-        if (SemanticModelValidator.UsesCompositeReadModelKeys(application)) return (LanguageVersion.V27, SemanticVersion.V27);
-        if (SemanticModelValidator.UsesDateComparisons(application)) return (LanguageVersion.V26, SemanticVersion.V26);
-        if (application.CommandReadMode is not null) return (LanguageVersion.V25, SemanticVersion.V25);
-        if (SemanticModelValidator.UsesTextRules(application)) return (LanguageVersion.V24, SemanticVersion.V24);
-        if (SemanticModelValidator.UsesDescribedHandlers(application)) return (LanguageVersion.V23, SemanticVersion.V23);
-        if (application.ReactionProductionMode is not null) return (LanguageVersion.V22, SemanticVersion.V22);
-        if (SemanticModelValidator.UsesPhase3Generation(application)) return (LanguageVersion.V21, SemanticVersion.V21);
-        if (SemanticModelValidator.UsesGeneratedConceptRules(application))
-        {
-            return (LanguageVersion.V20, SemanticVersion.V20);
-        }
-
-        if (SemanticModelValidator.UsesRefusalBranches(application))
-        {
-            return (LanguageVersion.V19, SemanticVersion.V19);
-        }
-
-        if (SemanticModelValidator.UsesQueryRejections(application))
-        {
-            return (LanguageVersion.V18, SemanticVersion.V18);
-        }
-
-        if (SemanticModelValidator.UsesRecoverySpecifications(application))
-        {
-            return (LanguageVersion.V17, SemanticVersion.V17);
-        }
-
-        return usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
-    {
-        if (SemanticModelValidator.UsesConceptGeneration(application))
-        {
-            return (LanguageVersion.V15, SemanticVersion.V15);
-        }
-
-        if (SemanticModelValidator.UsesQueryFilters(application))
-        {
-            return (LanguageVersion.V14, SemanticVersion.V14);
-        }
-
-        if (SemanticModelValidator.UsesConceptCompliance(application))
-        {
-            return (LanguageVersion.V13, SemanticVersion.V13);
-        }
-
-        if (SemanticModelValidator.UsesEnumMemberNumbers(application))
-        {
-            return (LanguageVersion.V12, SemanticVersion.V12);
-        }
-
-        // Number lowering is pure. Select v11 from the retained graph with the validator's own
-        // value walk, after examples and routed fixtures have reached their final bound shape.
-        if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
-        {
-            return (LanguageVersion.V11, SemanticVersion.V11);
-        }
-
-        return null;
-    }
-
-    static (LanguageVersion Language, SemanticVersion Semantic) InitialBoundVersions(BindingContext context) => context switch
-    {
-        { UsesV10: true } or { UsesReactionIdentity: true } => (LanguageVersion.V10, SemanticVersion.V10),
-        { UsesPublicEvents: true } => (LanguageVersion.V9, SemanticVersion.V9),
-        { UsesEventRoutes: true } => (LanguageVersion.V8, SemanticVersion.V8),
-        { UsesV7: true } => (LanguageVersion.V7, SemanticVersion.V7),
-        _ => LegacyBoundVersions(context)
-    };
-
-    static (LanguageVersion Language, SemanticVersion Semantic) LegacyBoundVersions(BindingContext context) => context switch
-    {
-        { UsesV6: true } => (LanguageVersion.V6, SemanticVersion.V6),
-        { UsesV5: true } => (LanguageVersion.V5, SemanticVersion.V5),
-        { UsesV4: true } => (LanguageVersion.V4, SemanticVersion.V4),
-        { UsesV3: true } => (LanguageVersion.V3, SemanticVersion.V3),
-        { UsesV2: true } => (LanguageVersion.V2, SemanticVersion.V2),
-        _ => (LanguageVersion.V1, SemanticVersion.V1)
-    };
-
     // Every refusal of a model that no executable model admits, in report order: command productions, agent exposure, read-model
     // member types, identity details, then public-event boundaries. Any diagnostic collected here, of any severity, refuses the model.
     static List<Diagnostic> CollectAdmissionDiagnostics(ApplicationSyntax syntax)
@@ -265,35 +154,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
             }
 
-            var (languageVersion, semanticVersion) = InitialBoundVersions(context);
-
-            if (SelectBoundVersions(application, semanticVersion, context.UsesStoredEventNames) is { } numberVersions)
-            {
-                languageVersion = numberVersions.Language;
-                semanticVersion = numberVersions.Semantic;
-                application = BindingContext.PromoteV2Destinations(application);
-                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
-            }
-
-            if (context.UsesV30 && !semanticVersion.IsAtLeast(SemanticVersion.V30))
-            {
-                languageVersion = LanguageVersion.V30;
-                semanticVersion = SemanticVersion.V30;
-                application = BindingContext.PromoteV2Destinations(application);
-                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
-            }
-
-            EsmSchemaV60Support.EnsureSupported(languageVersion, semanticVersion);
-            var failures = SemanticModelValidator.Collect(application, semanticVersion, context.UtcAssessmentYear);
-            if (!failures.IsEmpty && !semanticVersion.IsAtLeast(SemanticVersion.V29) &&
-                SemanticModelValidator.Collect(application, SemanticVersion.V29, context.UtcAssessmentYear).IsEmpty)
-            {
-                // Only a construct admitted by decision 0098 (a concept converted to another over the same primitive) is refused
-                // below ESM v29 and accepted at it.
-                languageVersion = LanguageVersion.V29;
-                semanticVersion = SemanticVersion.V29;
-                failures = [];
-            }
+            var prepared = ApplyRequiredVersions(context, application, descriptors);
+            application = prepared.Application;
+            descriptors = prepared.Descriptors;
+            var (languageVersion, semanticVersion, failures) = ValidateAtRequiredVersion(application, prepared.Language, prepared.Semantic, context.UtcAssessmentYear);
 
             if (!failures.IsEmpty)
             {
