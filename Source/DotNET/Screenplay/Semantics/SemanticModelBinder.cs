@@ -109,20 +109,17 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
     static CompilationResult<SemanticCompilation>? RefuseUnsupportedSyntax(ApplicationSyntax syntax)
     {
         if (syntax.ReactionProductionMode is { } mode && mode != ReactionProductionMode.Atomic)
-
         {
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(DiagnosticCodes.InvalidReactionBatchesDeclaration, "Declare 'reaction batches atomic' once at the application root.", syntax.Location)]);
         }
 
         var numeric = SourceNumericModes.Errors(syntax);
         if (numeric.Count > 0)
-
         {
             return CompilationResult<SemanticCompilation>.Failed(numeric);
         }
 
         if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
-
         {
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
                 DiagnosticCodes.UnsupportedSemanticSyntax,
@@ -141,7 +138,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         application = application with { Agents = context.BindAgents(application) };
         var failureDescriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
         if (context.HasStructuralErrors)
-
         {
             return FailedBinding(context, failureDescriptors);
         }
@@ -149,7 +145,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var prepared = ApplyRequiredVersions(context, application, failureDescriptors);
         var (languageVersion, semanticVersion, failures) = ValidateAtRequiredVersion(prepared.Application, prepared.Language, prepared.Semantic, context.UtcAssessmentYear);
         if (!failures.IsEmpty)
-
         {
             ReportValidationFailures(context, failures);
             return FailedBinding(context, prepared.Descriptors);
@@ -163,7 +158,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
     static void ReportValidationFailures(BindingContext context, ImmutableArray<SemanticModelValidator.SemanticValidationFailure> failures)
     {
         foreach (var failure in failures)
-
         {
             context.Error(DiagnosticCodes.InvalidSemanticBinding, failure.Message, context.FailureLocation(failure));
         }
@@ -193,14 +187,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
     CompilationResult<SemanticCompilation> BindCore(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
     {
         if (RefuseUnsupportedSyntax(syntax) is { } refusal)
-
         {
             return refusal;
         }
 
         var expansion = SpecificationExamples.Expand(syntax);
         if (expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
-
         {
             return CompilationResult<SemanticCompilation>.Failed(expansion.Diagnostics);
         }
@@ -213,19 +205,16 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         var syntax = expansion.Application;
         var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
         foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps))
-
         {
             steps.TryAdd(step.Effective, step);
         }
 
         var context = new BindingContext(applicationName, syntax, documents, steps, expansion, _utcAssessmentYear ?? DateTimeOffset.UtcNow.Year);
         try
-
         {
             return CompileBoundApplication(context, syntax, documents);
         }
         catch (InvalidSemanticContract exception)
-
         {
             context.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location);
             return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
@@ -377,7 +366,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 .SelectMany(@case => @case.Values.Select(value => (@case.Name, Value: value)))
                 .FirstOrDefault(value => value.Value.Source.Location.Line > 1 && value.Value.Source.Location == location);
             if (caseValue.Value is { } parameter)
-
             {
                 message = CaseDiagnosticMessage(caseValue.Name, parameter.Property, message);
                 arguments = CaseDiagnosticArguments(caseValue.Name, parameter.Property, code, arguments);
@@ -409,7 +397,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var source = command.Produces.Where(produced => CanPromoteDestination(command, produced))
                 .Select(produced => produced.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
             if (command.Destination is not null || source is null || MustKeepGeneratedDestination(command))
-
             {
                 return command;
             }
@@ -442,7 +429,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var eventSources = BindEventSources(concepts);
             if (syntax.CommandReadMode is not null)
-
             {
                 RegisterDecisionReadProjections(concepts);
             }
@@ -527,7 +513,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         void ReportAuthoringDispositions()
         {
             if (syntax.Domain is { } domain)
-
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, "A domain declaration is authoring metadata and is not part of ESM v1 behavior.", domain.Location);
             }
@@ -539,7 +524,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var knownPolicies = syntax.Policies.Select(policy => policy.Name).ToHashSet(StringComparer.Ordinal);
             foreach (var persona in syntax.Personas ?? [])
-
             {
                 ReportPersonaDisposition(persona, knownPolicies);
             }
@@ -548,7 +532,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         void ReportPersonaDisposition(PersonaSyntax persona, HashSet<string> knownPolicies)
         {
             foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
-
             {
                 Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
             }
@@ -562,13 +545,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             ReportInformation(syntax.Sinks, Code, sink => $"Sink '{sink.Name}' is realization metadata and is not part of ESM behavior.");
 
             if (syntax.Authentication is { } authentication)
-
             {
                 Information(Code, "Authentication providers are realization metadata and are not part of ESM v1 behavior.", authentication.Location);
             }
 
             if (syntax.Onboarding is { } onboarding)
-
             {
                 Information(Code, "Onboarding is realization metadata and is not part of ESM v1 behavior.", onboarding.Location);
             }
@@ -608,7 +589,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             where TSyntax : SyntaxNode
         {
             foreach (var declaration in declarations)
-
             {
                 Information(code, message(declaration), declaration.Location);
             }
@@ -682,7 +662,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         void RegisterQueryDeclaration(SemanticAddress sliceAddress, QuerySyntax query, string module, ImmutableArray<string> featurePath)
         {
             if (BindQuery(sliceAddress, query) is { } bound)
-
             {
                 _queryDeclarations.Add(query, bound with
                 {
@@ -696,7 +675,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 });
             }
             else if (query.Performer is not null)
-
             {
                 AuthorizePerformedQuery(query, module, featurePath);
             }

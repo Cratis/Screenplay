@@ -74,7 +74,6 @@ public sealed partial class SemanticModelBinder
     {
         var (languageVersion, semanticVersion) = InitialBoundVersions(context);
         if (SelectBoundVersions(application, semanticVersion, context.UsesStoredEventNames) is { } required)
-
         {
             (languageVersion, semanticVersion) = required;
             (application, descriptors) = PromoteDestinationsAndRefreshDescriptors(context, application);
@@ -82,7 +81,6 @@ public sealed partial class SemanticModelBinder
 
         // A v30 floor can require a second promotion and descriptor refresh.
         if (context.UsesV30 && !semanticVersion.IsAtLeast(SemanticVersion.V30))
-
         {
             languageVersion = LanguageVersion.V30;
             semanticVersion = SemanticVersion.V30;
@@ -109,7 +107,6 @@ public sealed partial class SemanticModelBinder
         EsmSchemaV60Support.EnsureSupported(languageVersion, semanticVersion);
         var failures = SemanticModelValidator.Collect(application, semanticVersion, utcAssessmentYear);
         if (failures.IsEmpty || semanticVersion.IsAtLeast(SemanticVersion.V29))
-
         {
             return (languageVersion, semanticVersion, failures);
         }
