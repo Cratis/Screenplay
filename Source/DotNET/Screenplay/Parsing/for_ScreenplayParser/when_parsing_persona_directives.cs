@@ -33,7 +33,7 @@ public class when_parsing_persona_directives : Specification
     {
         _result = new ScreenplayCompiler().Compile(Source);
         _messages = [.. _result.Diagnostics.Select(diagnostic => $"{diagnostic.Code} {diagnostic.Message}")];
-        _buyer = _result.Value!.Personas.Single(persona => persona.Name == "Buyer");
+        _buyer = _result.Value!.Personas!.Single(persona => persona.Name == "Buyer");
     }
 
     [Fact] void should_report_the_invalid_goal() => _messages.ShouldContain($"{DiagnosticCodes.InvalidPersonaDeclaration} Invalid goal 'goal Find things' - expected 'goal \"<text>\"'");
