@@ -375,15 +375,7 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", command.Name);
         WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, property) => WriteProperty(output, property, version.IsAtLeast(SemanticVersion.V7)));
         WriteArray(writer, "validations", command.Validations, WriteValidation);
-        if (!command.CodeValidations.IsEmpty)
-        {
-            WriteArray(writer, "codeValidations", command.CodeValidations, (output, block) =>
-            {
-                output.WriteStartObject();
-                CanonicalJson.WriteString(output, "requirementId", block.RequirementId);
-                output.WriteEndObject();
-            });
-        }
+        WriteCodeValidations(writer, command.CodeValidations);
         WriteArray(writer, "produces", command.Produces, (output, produced) => WriteProducedEvent(output, produced, version, false));
         if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
         if (command.Authorization is not null)
@@ -392,15 +384,7 @@ public static partial class SemanticModelCanonicalJson
             WriteAuthorization(writer, command.Authorization);
         }
         WriteAvailable(writer, command.Available, version);
-        if (command.Destination is not null)
-        {
-            writer.WritePropertyName("destination");
-            writer.WriteStartObject();
-            writer.WritePropertyName("type");
-            WriteTypeReference(writer, command.Destination.Type);
-            WriteOptionalExpression(writer, "value", command.Destination.Value);
-            writer.WriteEndObject();
-        }
+        WriteCommandDestination(writer, command.Destination);
         if (command.Response is not null)
         {
             writer.WritePropertyName("response");
@@ -414,6 +398,36 @@ public static partial class SemanticModelCanonicalJson
         }
         if (!command.Reads.IsDefaultOrEmpty) WriteArray(writer, "reads", command.Reads, WriteDecisionRead);
         WriteCommandCalendar(writer, command.Calendar);
+        writer.WriteEndObject();
+    }
+
+    static void WriteCodeValidations(Utf8JsonWriter writer, ImmutableArray<SemanticCodeValidation> validations)
+    {
+        if (!validations.IsEmpty)
+        {
+            WriteArray(writer, "codeValidations", validations, WriteCodeValidation);
+        }
+    }
+
+    static void WriteCodeValidation(Utf8JsonWriter writer, SemanticCodeValidation validation)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "requirementId", validation.RequirementId);
+        writer.WriteEndObject();
+    }
+
+    static void WriteCommandDestination(Utf8JsonWriter writer, SemanticStateChangeDestination? destination)
+    {
+        if (destination is null)
+        {
+            return;
+        }
+
+        writer.WritePropertyName("destination");
+        writer.WriteStartObject();
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, destination.Type);
+        WriteOptionalExpression(writer, "value", destination.Value);
         writer.WriteEndObject();
     }
 
@@ -432,7 +446,7 @@ public static partial class SemanticModelCanonicalJson
 
     static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced, ProducedEventWriteContext context)
     {
-        if (produced.DestinationType is not null && (!context.Reaction || !context.Version.IsAtLeast(SemanticVersion.V6)))
+        if (produced.DestinationType is not null && !CanWriteProductionDestinationType(context))
         {
             throw new InvalidSemanticContract("A production destination type requires an ESM v6 reaction.");
         }
@@ -456,6 +470,9 @@ public static partial class SemanticModelCanonicalJson
         if (produced.Route is not null) WriteCommandRoute(writer, produced.Route);
         writer.WriteEndObject();
     }
+
+    static bool CanWriteProductionDestinationType(ProducedEventWriteContext context) =>
+        context.Reaction && context.Version.IsAtLeast(SemanticVersion.V6);
 
     static void WriteProductionPayload(Utf8JsonWriter writer, SemanticProducedEvent produced, bool possibleEvent)
     {
